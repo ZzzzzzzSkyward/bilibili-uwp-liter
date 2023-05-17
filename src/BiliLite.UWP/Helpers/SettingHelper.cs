@@ -1,7 +1,10 @@
 ﻿using BiliLite.Models;
 using Microsoft.Toolkit.Uwp.Helpers;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using Windows.Storage;
+        using System.IO;
+using Google.Protobuf.WellKnownTypes;
 
 namespace BiliLite.Helpers
 {
@@ -12,16 +15,17 @@ namespace BiliLite.Helpers
         {
             if (storageHelper.KeyExists(key))
             {
-                return storageHelper.Read<T>(key);
+                try
+                {
+                    return JsonConvert.DeserializeObject<T>(storageHelper.Read<string>(key));
+                }
+                catch { }
             }
-            else
-            {
-                return _default;
-            }
+            return _default;
         }
         public static void SetValue<T>(string key, T value)
         {
-            storageHelper.Save<T>(key, value);
+            storageHelper.Save<string>(key, JsonConvert.SerializeObject(value));
         }
         public class UI
         {
