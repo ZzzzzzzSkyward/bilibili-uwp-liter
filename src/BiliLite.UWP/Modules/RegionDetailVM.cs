@@ -2,14 +2,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using BiliLite.Modules.Home;
 using BiliLite.Helpers;
 using System.Windows.Input;
 using BiliLite.Models;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
 
 namespace BiliLite.Modules

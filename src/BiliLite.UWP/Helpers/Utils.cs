@@ -1,18 +1,15 @@
 ﻿using BiliLite.Api;
 using BiliLite.Controls;
 using Microsoft.Toolkit.Uwp.Helpers;
-using Microsoft.Toolkit.Uwp.UI.Animations;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
 using Windows.Storage.Streams;
-using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Controls;
 using Windows.UI;
@@ -315,7 +312,7 @@ namespace BiliLite.Helpers
             {
                 var result = await new GitApi().CheckUpdate().Request();
                 var ver = JsonConvert.DeserializeObject<NewVersion>(result.results);
-                var num = $"{SystemInformation.ApplicationVersion.Major}{SystemInformation.ApplicationVersion.Minor.ToString("00")}{SystemInformation.ApplicationVersion.Build.ToString("00")}";
+                var num = $"{SystemInformation.Instance.ApplicationVersion.Major}{SystemInformation.Instance.ApplicationVersion.Minor.ToString("00")}{SystemInformation.Instance.ApplicationVersion.Build.ToString("00")}";
                 var v = int.Parse(num);
                 if (ver.version_num > v)
                 {

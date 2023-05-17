@@ -10,7 +10,7 @@
     PrimaryButtonText="开始"
     SecondaryButtonText="取消"
     PrimaryButtonClick="ContentDialog_PrimaryButtonClick"
-    SecondaryButtonClick="ContentDialog_SecondaryButtonClick">
+    SecondaryButtonClick="ContentDialog_SecondaryButtonClick" Background="Transparent">
 
     <Grid Width="360">
         <Grid.RowDefinitions>

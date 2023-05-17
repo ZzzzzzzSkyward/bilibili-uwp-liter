@@ -9,7 +9,7 @@
     xmlns:modules="using:BiliLite.Modules"
     xmlns:font="using:FontAwesome5"
     xmlns:covert="using:BiliLite.Converters" xmlns:controls="using:Microsoft.UI.Xaml.Controls" xmlns:controls1="using:Microsoft.Toolkit.Uwp.UI.Controls"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
         <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"></SolidColorBrush>
         <SolidColorBrush x:Key="SystemControlHighlightAltAccentBrush" Color="White"></SolidColorBrush>
@@ -324,7 +324,7 @@
                         <TextBlock Margin="0 16 0 8" FontSize="16">SESSDATA</TextBlock>
                         <TextBox Margin="0 0 0 8" MinWidth="200" PlaceholderText="请输入SESSDATA"></TextBox>
                         <TextBlock Margin="0 16 0 8" FontSize="16">APPKEY</TextBlock>
-                        <controls1:MarkdownTextBlock x:Name="dbginfo" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="16" LinkClicked="txtHelp_LinkClicked" IsTextSelectionEnabled="True" ></controls1:MarkdownTextBlock>
+                        <controls1:MarkdownTextBlock x:Name="dbginfo" Background="{ThemeResource TransparentBackground}" Padding="16" LinkClicked="txtHelp_LinkClicked" IsTextSelectionEnabled="True" ></controls1:MarkdownTextBlock>
                         <StackPanel Margin="0 0 8 0">
                             <TextBlock FontWeight="Bold">android:</TextBlock>
                             <StackPanel Orientation="Horizontal">
@@ -582,7 +582,7 @@
                     <TextBlock FontSize="15">帮助</TextBlock>
                 </PivotItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <controls1:MarkdownTextBlock x:Name="txtHelp" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}" Padding="16" LinkClicked="txtHelp_LinkClicked" IsTextSelectionEnabled="True" ></controls1:MarkdownTextBlock>
+                    <controls1:MarkdownTextBlock x:Name="txtHelp" Background="{ThemeResource TransparentBackground}" Padding="16" LinkClicked="txtHelp_LinkClicked" IsTextSelectionEnabled="True" ></controls1:MarkdownTextBlock>
                 </ScrollViewer>
             </PivotItem>
             <PivotItem Margin="0">
@@ -590,23 +590,8 @@
                     <TextBlock FontSize="15">关于</TextBlock>
                 </PivotItem.Header>
                 <ScrollViewer Padding="12 0" VerticalScrollBarVisibility="Auto">
-                    <StackPanel >
-                        <TextBlock  Margin="0 8"  FontSize="16">哔哩哔哩 Lite</TextBlock>
-                        <TextBlock  Margin="0 0 0 8"  FontSize="14" x:Name="version">版本 1.0.0</TextBlock>
-                        <TextBlock  Margin="0 8"  FontSize="16">开发</TextBlock>
-                        <TextBlock  Margin="0 0 0 8"  FontSize="14">开发者 : xiaoyaocz</TextBlock>
-                        <TextBlock  Margin="0 0 0 8"  FontSize="14" Text="修复：ZzzzzzzSkyward"/>
-                        <TextBlock  Margin="0 0 0 8"  FontSize="14">Logo绘制 : xiaoyaomengo</TextBlock>
-                        <TextBlock  Margin="0 8"  FontSize="16">反馈</TextBlock>
-                        <TextBlock  Margin="0 0 0 8"  FontSize="14" IsTextSelectionEnabled="True">Email : biliuwp@iill.moe</TextBlock>
-                        <TextBlock  Margin="0 8"  FontSize="16">说明</TextBlock>
-                        <TextBlock  Margin="0 0 0 8"  FontSize="14" TextWrapping="Wrap">这是一个第三方客户端，应用所有数据来源均来自哔哩哔哩。</TextBlock>
-                        <TextBlock  Margin="0 0 0 8"  FontSize="14" TextWrapping="Wrap">本程序仅供学习交流编程技术使用。</TextBlock>
-                        <TextBlock  Margin="0 0 0 8"  FontSize="14" TextWrapping="Wrap">如果侵犯您的合法权益，请及时联系本人以第一时间删除。</TextBlock>
-                        <TextBlock  Margin="0 8"  FontSize="16">参考及引用</TextBlock>
-                        <HyperlinkButton NavigateUri="https://www.bilibili.com" >哔哩哔哩官网</HyperlinkButton>
-                        <HyperlinkButton NavigateUri="https://nsapps.cn/index.php/bilibili-privacy.html" >隐私策略</HyperlinkButton>
-                        <HyperlinkButton NavigateUri="https://nsapps.cn/index.php/bilibili-opensource.html">开源代码许可/项目引用</HyperlinkButton>
+					<StackPanel>
+					    <controls1:MarkdownTextBlock x:Name="Info" Background="{ThemeResource TransparentBackground}" Padding="16" IsTextSelectionEnabled="True" ></controls1:MarkdownTextBlock>
                     </StackPanel>
                 </ScrollViewer>
             </PivotItem>

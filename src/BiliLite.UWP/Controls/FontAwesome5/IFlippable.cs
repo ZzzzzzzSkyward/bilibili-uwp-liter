@@ -1,18 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-
-namespace FontAwesome5
+﻿namespace FontAwesome5
 {
     /// <summary>
     /// Defines the different flip orientations that a icon can have.
     /// </summary>
-    #if !WINDOWS_UWP
+#if !WINDOWS_UWP
     [Localizability(LocalizationCategory.None, Readability = Readability.Unreadable)]
-    #endif
+#endif
     public enum EFlipOrientation
     {
         /// <summary>

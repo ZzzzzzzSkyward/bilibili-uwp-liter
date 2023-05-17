@@ -4,26 +4,16 @@ using BiliLite.Modules;
 using FFmpegInteropX;
 using Microsoft.Toolkit.Uwp.Helpers;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Graphics.Display;
-using Windows.Storage;
 using Windows.UI;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
-using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
 namespace BiliLite
@@ -169,7 +159,7 @@ namespace BiliLite
         private async void InitBili()
         {
             //首次运行设置首页的显示样式
-            if (SystemInformation.IsFirstRun)
+            if (SystemInformation.Instance.IsFirstRun)
             {
                 var display = DisplayInformation.GetForCurrentView();
                 if (display.ScreenWidthInRawPixels >= 1920 && (display.ScreenWidthInRawPixels / display.ScreenHeightInRawPixels > 16 / 9))

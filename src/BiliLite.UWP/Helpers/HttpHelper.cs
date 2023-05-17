@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
-using RestSharp;
 using System.IO;
 using Windows.Web.Http;
 using Windows.Storage.Streams;

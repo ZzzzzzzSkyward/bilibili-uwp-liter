@@ -1,13 +1,10 @@
 ﻿using BiliLite.Helpers;
 using Microsoft.Toolkit.Collections;
-using Microsoft.Toolkit.Uwp;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;

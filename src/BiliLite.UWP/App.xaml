@@ -6,7 +6,7 @@
    
     xmlns:local="using:BiliLite"
     xmlns:Custom="using:Microsoft.Toolkit.Uwp.UI.Controls"
-    xmlns:convert="using:BiliLite.Converters">
+    xmlns:convert="using:BiliLite.Converters" xmlns:media="using:MicaForUWP.Media">
     <Application.Resources>
         <ResourceDictionary >
 
@@ -16,24 +16,53 @@
                 <ResourceDictionary Source="ms-appx:///Controls/RoundButton/RoundButton.xaml"/>
                 <ResourceDictionary Source="ms-appx:///Controls/ScrollGridView/ScrollGridView.xaml"/>
                 <ResourceDictionary>
-                    <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="{ThemeResource TopPaneBackground}" />
+                    <SolidColorBrush x:Key="NavigationViewTopPaneBackground" Color="Transparent" />
+                    <SolidColorBrush x:Key="LayerFillColorDefaultBrush" Color="Transparent" />
                     <SolidColorBrush x:Key="TabViewItemHeaderBackgroundSelected" Color="{ThemeResource TopPaneBackground}"/>
+                    <SolidColorBrush x:Key="TransparentWhite" Color="Transparent" />
+                    <SolidColorBrush x:Key="ApplicationPageBackgroundThemeBrush" Color="#00FFFFFF" />
+                    <StaticResource x:Key="NavigationViewContentBackground" ResourceKey="LayerFillColorDefaultBrush" />
+                    <StaticResource x:Key="NavigationViewContentGridBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
+                    <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="Transparent" />
+                    <SolidColorBrush x:Key="TabViewBorderBrush" Color="Transparent"/>
+                    <media:BackdropMicaBrush
+            x:Key="TransparentBackground_crash"
+            BackgroundSource="Backdrop"
+                        TintOpacity="0.1"
+            FallbackColor="#0000ff"
+            TintColor="#ffff00" />
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
-                    <Color x:Key="TopPaneBackground">#FFF7F7F7</Color>
+                    <Color x:Key="TopPaneBackground">#00F7F7F7</Color>
                     <Color x:Key="HighLightColor">#ec407a</Color>
                     <Color x:Key="TextColor">#CC000000</Color>
                     <Color x:Key="SystemColorHighlightColor">#ec407a</Color>
-                    <Color x:Key="CardColor">#C8FFFFFF</Color>
+                    <Color x:Key="CardColor">#00FFFFFF</Color>
+                    <Color x:Key="ForegroundGridColor">#aaaaaa</Color>
+                    <Color x:Key="ForegroundTextColor">#555555</Color>
+                    <AcrylicBrush x:Key="TransparentBackground"
+            BackgroundSource="HostBackdrop"
+            TintColor="#c0FF0000"
+            TintOpacity="0.0"
+            TintLuminosityOpacity="0.2"
+            FallbackColor="#ffffff"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
-                    <Color x:Key="TopPaneBackground">#FF3B3B3B</Color>
-                    <Color x:Key="HighLightColor">#ec407a</Color>
-                    <Color x:Key="TextColor">#CCFFFFFF</Color>
-                    <Color x:Key="SystemColorHighlightColor">#ec407a</Color>
-                    <Color x:Key="CardColor">#C8000000</Color>
+                    <Color x:Key="TopPaneBackground">#003B3B3B</Color>
+                    <Color x:Key="HighLightColor">#5000407a</Color>
+                    <Color x:Key="TextColor">#ffFFFFFF</Color>
+                    <Color x:Key="SystemColorHighlightColor">#5000407a</Color>
+                    <Color x:Key="CardColor">#00000000</Color>
+                    <Color x:Key="ForegroundTextColor">#dddddd</Color>
+                    <Color x:Key="ForegroundGridColor">#dddddd</Color>
+                    <AcrylicBrush x:Key="TransparentBackground"
+            BackgroundSource="HostBackdrop"
+            TintColor="#c0000000"
+            TintOpacity="0.2"
+            TintLuminosityOpacity="0.5"
+            FallbackColor="#000000"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
            

@@ -1,18 +1,10 @@
-﻿using Microsoft.Toolkit.Uwp.UI.Animations;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+﻿using BiliLite.Controls;
+using Microsoft.Toolkit.Uwp.UI.Animations;
+using Windows.UI.Composition;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Navigation;
 
 //https://go.microsoft.com/fwlink/?LinkId=234236 上介绍了“用户控件”项模板
 
@@ -49,7 +41,7 @@ namespace BiliLite.Dialogs
         }
         public async void Close()
         {
-            await RootBorder.Fade(value: 0, duration: 200, delay: 0, easingType: EasingType.Default, easingMode: Windows.UI.Xaml.Media.Animation.EasingMode.EaseOut).StartAsync();
+            await RootBorder.FadeOutAsync(duration: 200);
             this.popup.IsOpen = false;
         }
         private async void CommentDialog_Loaded(object sender, RoutedEventArgs e)
@@ -58,9 +50,9 @@ namespace BiliLite.Dialogs
 
             Window.Current.SizeChanged += Current_SizeChanged;
 
-            await RootBorder.Fade(value: 1, duration: 200, delay: 0, easingType: EasingType.Default, easingMode: Windows.UI.Xaml.Media.Animation.EasingMode.EaseIn).StartAsync();
+            await RootBorder.FadeInAsync(duration: 200);
 
-           
+
         }
 
         private void Current_SizeChanged(object sender, Windows.UI.Core.WindowSizeChangedEventArgs e)

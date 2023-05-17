@@ -3,24 +3,18 @@ using BiliLite.Models;
 using BiliLite.Pages;
 using BiliLite.Pages.Other;
 using BiliLite.Pages.User;
-using Microsoft.Toolkit.Uwp.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Windows.System;
-using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 //using Windows.UI.WindowManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Primitives;
-using Windows.UI.Xaml.Hosting;
 using Windows.Web.Http.Filters;
 
 namespace BiliLite.Helpers

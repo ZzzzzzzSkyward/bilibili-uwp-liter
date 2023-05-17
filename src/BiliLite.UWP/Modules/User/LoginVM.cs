@@ -6,12 +6,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Input;
 using Windows.System;
-using Windows.UI.Xaml.Controls;
 
 namespace BiliLite.Modules.User
 {

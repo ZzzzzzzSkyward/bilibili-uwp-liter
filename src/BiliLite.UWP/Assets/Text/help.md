@@ -1,4 +1,4 @@
-﻿﻿# 原版说明
+﻿# 原版说明
 
 此页面可能更新不及时，请到[https://b.nsapps.cn/#/docs/help](https://b.nsapps.cn/#/docs/help)查阅最新内容
 

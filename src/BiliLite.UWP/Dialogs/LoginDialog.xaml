@@ -13,7 +13,7 @@
     xmlns:user="using:BiliLite.Modules.User"
     PrimaryButtonClick="ContentDialog_PrimaryButtonClick"
     IsPrimaryButtonEnabled="{x:Bind Path=loginVM.PrimaryButtonEnable,Mode=OneWay}"
-    SecondaryButtonClick="ContentDialog_SecondaryButtonClick">
+    SecondaryButtonClick="ContentDialog_SecondaryButtonClick" Background="#0f000000">
     <Grid>
         <StackPanel>
             <!--密码登录-->

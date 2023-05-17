@@ -1,17 +1,13 @@
 ﻿using BiliLite.Models;
 using Microsoft.Toolkit.Uwp.Helpers;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Windows.Storage;
 
 namespace BiliLite.Helpers
 {
     public class SettingHelper
     {
-
-        public static LocalObjectStorageHelper storageHelper = new LocalObjectStorageHelper();
+        public static ApplicationDataStorageHelper storageHelper = ApplicationDataStorageHelper.GetCurrent();
         public static T GetValue<T>(string key, T _default)
         {
             if (storageHelper.KeyExists(key))

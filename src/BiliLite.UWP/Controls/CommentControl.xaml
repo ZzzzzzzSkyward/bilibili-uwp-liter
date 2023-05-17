@@ -171,7 +171,7 @@
                     <AppBarButton Visibility="Collapsed" Style="{StaticResource AppBarButtonNoChevronStyle}" Flyout="{StaticResource ResourceKey=menu}" HorizontalAlignment="Right" Icon="More"  Width="48" ></AppBarButton>
                 </StackPanel>
 
-                <TextBlock Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" FontSize="12" Foreground="Gray" Margin="4 0" VerticalAlignment="Top" ToolTipService.ToolTip="{x:Bind Path=ctime,Converter={StaticResource datetime}}">
+                <TextBlock Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="2" FontSize="12" Foreground="{ThemeResource ForegroundGridColor}" Margin="4 0" VerticalAlignment="Top" ToolTipService.ToolTip="{x:Bind Path=ctime,Converter={StaticResource datetime}}">
                     <!--#<Run Text="{Binding Path=floor}"></Run>-->
                     <Run Text="{x:Bind Path=time}"></Run> 
                     <Run Text="{x:Bind Path=content.plat_str}"></Run>
@@ -218,18 +218,18 @@
                                 <TextBlock  Margin="4 0" Text="{x:Bind like_str,Mode=OneWay}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
-                        <HyperlinkButton  Click="btn_ShowComment_Click" Foreground="Gray"  Margin="8 0" HorizontalContentAlignment="Left">
+                        <HyperlinkButton  Click="btn_ShowComment_Click" Foreground="{ThemeResource ForegroundGridColor}"  Margin="8 0" HorizontalContentAlignment="Left">
                             <StackPanel Orientation="Horizontal">
                                 <fa:FontAwesome Icon="Regular_Comment" FontSize="14"></fa:FontAwesome>
                                 <TextBlock Margin="4 0" Text="{x:Bind rcount_str,Mode=OneWay}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
-                        <HyperlinkButton Visibility="{x:Bind showReplyBtn,Mode=OneWay}" Click="btn_ShowReplyBtn_Click" Foreground="Gray" Margin="8 0" HorizontalContentAlignment="Left">
+                        <HyperlinkButton Visibility="{x:Bind showReplyBtn,Mode=OneWay}" Click="btn_ShowReplyBtn_Click" Foreground="{ThemeResource ForegroundGridColor}" Margin="8 0" HorizontalContentAlignment="Left">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Margin="4 0">回复</TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
-                        <HyperlinkButton Click="btn_DonotLike_Click" Visibility="Collapsed" Foreground="Gray" Margin="8 0" HorizontalContentAlignment="Left">
+                        <HyperlinkButton Click="btn_DonotLike_Click" Visibility="Collapsed" Foreground="{ThemeResource ForegroundGridColor}" Margin="8 0" HorizontalContentAlignment="Left">
                             <StackPanel Orientation="Horizontal">
                                 <FontIcon VerticalAlignment="Center" FontSize="14" FontFamily="Segoe MDL2 Assets" Glyph="&#xE19E;" />
                                 <TextBlock ></TextBlock>
@@ -238,7 +238,7 @@
                     </StackPanel>
 
                     <Border Visibility="{x:Bind Path=up_action.like,Mode=OneWay}" Background="#3C808080" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="2">
-                        <TextBlock FontSize="12" Margin="8 4" Foreground="Gray">UP主觉得很赞</TextBlock>
+                        <TextBlock FontSize="12" Margin="8 4" Foreground="{ThemeResource ForegroundGridColor}">UP主觉得很赞</TextBlock>
                     </Border>
                 </Grid>
 
@@ -279,7 +279,7 @@
                                             <Image Height="12" Margin="8 0" Source="{Binding Path=member.LV}"></Image>
                                         </StackPanel>
                                     </HyperlinkButton>
-                                    <TextBlock FontSize="12"  IsTextSelectionEnabled="True" Foreground="Gray" VerticalAlignment="Center"  ToolTipService.ToolTip="{Binding Path=ctime,Converter={StaticResource datetime}}">
+                                    <TextBlock FontSize="12"  IsTextSelectionEnabled="True" Foreground="{ThemeResource ForegroundGridColor}" VerticalAlignment="Center"  ToolTipService.ToolTip="{Binding Path=ctime,Converter={StaticResource datetime}}">
                                                 <Run Text="{Binding Path=time}"></Run>
                                                 <Run Text="{Binding Path=reply_control.location}"></Run>
                                     </TextBlock>
@@ -298,7 +298,7 @@
                                                 </StackPanel>
                                             </HyperlinkButton>
 
-                                            <HyperlinkButton Click="btn_ShowReplyBtn_Click" Margin="8 0" Foreground="Gray">
+                                            <HyperlinkButton Click="btn_ShowReplyBtn_Click" Margin="8 0" Foreground="{ThemeResource ForegroundGridColor}">
                                                 <StackPanel Orientation="Horizontal">
 
                                                     <TextBlock  Margin="4 0">回复</TextBlock>
@@ -306,13 +306,13 @@
                                             </HyperlinkButton>
                                         </StackPanel>
                                         <StackPanel Orientation="Horizontal" Margin="0 4" HorizontalAlignment="Right">
-                                            <HyperlinkButton Visibility="{Binding showDelete}" Click="btn_DeleteComment_Click" Foreground="Gray" >
+                                            <HyperlinkButton Visibility="{Binding showDelete}" Click="btn_DeleteComment_Click" Foreground="{ThemeResource ForegroundGridColor}" >
                                                 <StackPanel Orientation="Horizontal">
 
                                                     <TextBlock  Margin="4 0">删除</TextBlock>
                                                 </StackPanel>
                                             </HyperlinkButton>
-                                            <HyperlinkButton Foreground="Gray" >
+                                            <HyperlinkButton Foreground="{ThemeResource ForegroundGridColor}" >
                                                 <StackPanel Orientation="Horizontal">
 
                                                     <TextBlock  Margin="4 0">举报</TextBlock>
@@ -403,8 +403,8 @@
                     <HyperlinkButton x:Name="btn_LoadMore" Click="btn_LoadMore_Click" HorizontalAlignment="Center">
                         <TextBlock>加载更多</TextBlock>
                     </HyperlinkButton>
-                    <TextBlock x:Name="noRepost" Visibility="Collapsed" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0 24">还没有人评论</TextBlock>
-                    <TextBlock x:Name="closeRepost" Visibility="Collapsed" Foreground="Gray" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0 24">禁止评论</TextBlock>
+                    <TextBlock x:Name="noRepost" Visibility="Collapsed" Foreground="{ThemeResource ForegroundGridColor}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0 24">还没有人评论</TextBlock>
+                    <TextBlock x:Name="closeRepost" Visibility="Collapsed" Foreground="{ThemeResource ForegroundGridColor}" VerticalAlignment="Center" HorizontalAlignment="Center" Margin="0 24">禁止评论</TextBlock>
                 </StackPanel>
             </ListView.Footer>
         </ListView>

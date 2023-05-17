@@ -1,9 +1,6 @@
 ﻿using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using FontAwesome5.Extensions;
-using Windows.UI.ViewManagement;
-using Windows.UI.Core;
-using BiliLite.Helpers;
 using System;
 using System.Diagnostics;
 

@@ -11,15 +11,15 @@
   IgnorableNamespaces="uap mp uap3">
 
   <Identity
-    Name="BilibiliUWP"
+    Name="BilibiliUWPLiter"
     Publisher="CN=Zhu"
-    Version="4.4.43.0" />
+    Version="1.0.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="8bceed6a-7e89-4141-a693-923401d5b2ac" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Bilibili UWP Fix</DisplayName>
-    <PublisherDisplayName>逍遥橙子</PublisherDisplayName>
+    <DisplayName>Bilibili UWP Liter</DisplayName>
+    <PublisherDisplayName>Zhu</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -33,12 +33,12 @@
   <Applications>
     <Application Id="App"
       Executable="$targetnametoken$.exe"
-      EntryPoint="BiliLite.App">
+      EntryPoint="BiliLiter.App">
       <uap:VisualElements
         DisplayName="ms-resource:AppName"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
-        Description="哔哩哔哩UWP V4 修复版" BackgroundColor="transparent">
+        Description="Bilibili UWP Liter" BackgroundColor="transparent">
         <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png" ShortName="哔哩哔哩">
           <uap:ShowNameOnTiles>
             <uap:ShowOn Tile="square150x150Logo"/>
@@ -49,9 +49,9 @@
         <uap:SplashScreen Image="Assets\SplashScreen.png"   BackgroundColor="#E6E6E6" uap5:Optional="true"/>
       </uap:VisualElements>
       <Extensions>
-        <uap:Extension Category="windows.protocol" EntryPoint="BiliLite.App">
+        <uap:Extension Category="windows.protocol" EntryPoint="BiliLiter.App">
           <uap:Protocol Name="bilibili">
-            <uap:DisplayName>哔哩哔哩 UWP</uap:DisplayName>
+            <uap:DisplayName>Bilibili UWP Lite</uap:DisplayName>
           </uap:Protocol>
         </uap:Extension>
       </Extensions>

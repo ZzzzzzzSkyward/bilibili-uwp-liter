@@ -1,14 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace FontAwesome5
-{    
+﻿namespace FontAwesome5
+{
     /// <summary>
-     /// Represents a spinable control
-     /// </summary>
+    /// Represents a spinable control
+    /// </summary>
     public interface ISpinable
     {
         /// <summary>

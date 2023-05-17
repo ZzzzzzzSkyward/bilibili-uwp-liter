@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BiliLite.Models.Dynamic
+﻿namespace BiliLite.Models.Dynamic
 {
-   
+
     public class DynamicCardDescUserProfileInfoModel
     {
         public long uid { get; set; }

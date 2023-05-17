@@ -1,11 +1,4 @@
-﻿using BiliLite.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BiliLite.Api.User
+﻿namespace BiliLite.Api.User
 {
     public class FollowAPI
     {

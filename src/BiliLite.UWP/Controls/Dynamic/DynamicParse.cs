@@ -2,18 +2,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Documents;
 using Windows.UI.Xaml.Markup;
 using BiliLite.Helpers;
-using BiliLite.Modules.User;
 using Newtonsoft.Json;
 using BiliLite.Models.Dynamic;
-using System.Web;
-using ColorCode.Compilation.Languages;
 
 namespace BiliLite.Controls.Dynamic
 {
