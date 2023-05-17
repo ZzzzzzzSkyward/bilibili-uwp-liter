@@ -24,11 +24,11 @@
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <GenerateTestArtifacts>False</GenerateTestArtifacts>
     <AppxBundle>Auto</AppxBundle>
-    <AppxBundlePlatforms>arm64</AppxBundlePlatforms>
+    <AppxBundlePlatforms>x64</AppxBundlePlatforms>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
-    <PackageCertificateThumbprint>
-    </PackageCertificateThumbprint>
-    <PackageCertificateKeyFile>BiliLite.UWP_TemporaryKey.pfx</PackageCertificateKeyFile>
+    <PackageCertificateThumbprint>42621A9CE0525C9351F5142E87F349D063DFE89B</PackageCertificateThumbprint>
+    <PackageCertificateKeyFile>
+    </PackageCertificateKeyFile>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
     <AppxPackageDir>z:\</AppxPackageDir>
   </PropertyGroup>
@@ -591,6 +591,7 @@
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
     <Content Include="Assets\Wide310x150Logo.scale-400.png" />
     <Content Include="Properties\Default.rd.xml" />
+    <None Include="BiliLite.UWP_TemporaryKey.pfx" />
     <PRIResource Include="Strings\en\Resources.resw" />
   </ItemGroup>
   <ItemGroup>
