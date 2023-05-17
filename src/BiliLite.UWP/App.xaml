@@ -6,7 +6,7 @@
    
     xmlns:local="using:BiliLite"
     xmlns:Custom="using:Microsoft.Toolkit.Uwp.UI.Controls"
-    xmlns:convert="using:BiliLite.Converters" xmlns:media="using:MicaForUWP.Media">
+    xmlns:convert="using:BiliLite.Converters">
     <Application.Resources>
         <ResourceDictionary >
 
@@ -25,12 +25,7 @@
                     <StaticResource x:Key="NavigationViewContentGridBorderBrush" ResourceKey="CardStrokeColorDefaultBrush" />
                     <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="Transparent" />
                     <SolidColorBrush x:Key="TabViewBorderBrush" Color="Transparent"/>
-                    <media:BackdropMicaBrush
-            x:Key="TransparentBackground_crash"
-            BackgroundSource="Backdrop"
-                        TintOpacity="0.1"
-            FallbackColor="#0000ff"
-            TintColor="#ffff00" />
+                    
                 </ResourceDictionary>
             </ResourceDictionary.MergedDictionaries>
             <ResourceDictionary.ThemeDictionaries>
