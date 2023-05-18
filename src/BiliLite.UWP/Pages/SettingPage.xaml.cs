@@ -1,7 +1,6 @@
 ﻿using BiliLite.Api;
 using BiliLite.Helpers;
 using BiliLite.Modules;
-using Microsoft.Toolkit.Uwp.Helpers;
 using Microsoft.Toolkit.Uwp.UI;
 using Microsoft.UI.Xaml.Controls;
 using System;

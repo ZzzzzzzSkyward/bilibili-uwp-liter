@@ -248,6 +248,7 @@
                         <TextBlock  Margin="0 16 0 8"  FontSize="16">视频默认倍速</TextBlock>
                         <ComboBox x:Name="cbVideoSpeed" SelectedIndex="0" MinWidth="200">
                             <ComboBox.Items>
+                                <ComboBoxItem Content="3.0x" ></ComboBoxItem>
                                 <ComboBoxItem Content="2.0x" ></ComboBoxItem>
                                 <ComboBoxItem Content="1.5x" ></ComboBoxItem>
                                 <ComboBoxItem Content="1.25x" ></ComboBoxItem>
