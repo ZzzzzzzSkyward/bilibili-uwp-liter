@@ -17,6 +17,15 @@ using Windows.UI.Popups;
 using Windows.UI.Xaml.Controls;
 using static BiliLite.Api.User.DynamicAPI;
 using BiliLite.Dialogs;
+using System.Reflection;
+using Windows.Storage.Pickers;
+using Windows.Storage.Provider;
+using Windows.Storage;
+using System.IO;
+using System.Security.Policy;
+using System.Net.Http;
+using Grpc.Core;
+using System.Net;
 
 namespace BiliLite.Modules.User
 {
@@ -54,12 +63,19 @@ namespace BiliLite.Modules.User
             LotteryCommand = new RelayCommand<object>(OpenLottery);
             VoteCommand = new RelayCommand<object>(OpenVote);
             ImageCommand = new RelayCommand<object>(OpenImage);
+            SaveImageCommand = new RelayCommand<object>(SaveImage);
             CommentCommand = new RelayCommand<DynamicItemDisplayModel>(OpenComment);
             DeleteCommand = new RelayCommand<DynamicItemDisplayModel>(Delete);
             LikeCommand = new RelayCommand<DynamicItemDisplayModel>(DoLike);
             RepostCommand = new RelayCommand<DynamicItemDisplayModel>(OpenSendDynamicDialog);
             DetailCommand = new RelayCommand<DynamicItemDisplayModel>(OpenDetail);
         }
+
+        public async void SaveImage(object obj)
+        {
+            await SaveImageAsync(obj);
+        }
+
         public event EventHandler<DynamicItemDisplayModel> OpenCommentEvent;
         public ICommand VoteCommand { get; set; }
         public ICommand UserCommand { get; set; }
@@ -68,6 +84,7 @@ namespace BiliLite.Modules.User
         public ICommand WebCommand { get; set; }
         public ICommand TagCommand { get; set; }
         public ICommand ImageCommand { get; set; }
+        public ICommand SaveImageCommand { get; set; }
         public ICommand CommentCommand { get; set; }
         public ICommand RepostCommand { get; set; }
         public ICommand LikeCommand { get; set; }
@@ -157,6 +174,34 @@ namespace BiliLite.Modules.User
         {
             DyanmicItemDisplayImageInfo info = data as DyanmicItemDisplayImageInfo;
             MessageCenter.OpenImageViewer(info.AllImages, info.Index);
+        }
+        public async Task SaveImageAsync(object data)
+        {
+            FileSavePicker save = new FileSavePicker();
+            save.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+            save.FileTypeChoices.Add("图片", new List<string>() { Path.GetExtension(data as string) });
+            save.SuggestedFileName = "bili_img_" + DateTime.Now.ToString("yyyyMMddHHmmss");
+
+            StorageFile file = await save.PickSaveFileAsync();
+            if (file != null)
+            {
+                var httpClient = new HttpClient();
+                var response = await httpClient.GetAsync(data as string);
+                if (response != null && response.StatusCode == HttpStatusCode.OK)
+                {
+                    using (var stream = await file.OpenStreamForWriteAsync())
+                    {
+                        await response.Content.CopyToAsync(stream);
+                    }
+                    FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
+                    if (status == FileUpdateStatus.Complete)
+                        Utils.ShowMessageToast("保存成功");
+                    else
+                        Utils.ShowMessageToast("保存失败");
+                    return;
+                }
+                Utils.ShowMessageToast("下载失败");
+            }
         }
         public void OpenTag(object name)
         {
@@ -476,6 +521,7 @@ namespace BiliLite.Modules.User
                     VoteCommand = VoteCommand,
                     IsSelf = item.desc.uid == SettingHelper.Account.UserID,
                     ImageCommand = ImageCommand,
+                    SaveImageCommand = SaveImageCommand,
                     CommentCommand = CommentCommand,
                     LikeCommand = LikeCommand,
                     DeleteCommand = DeleteCommand,
@@ -513,7 +559,8 @@ namespace BiliLite.Modules.User
                             Height = img["img_height"].ToInt32(),
                             Width = img["img_width"].ToInt32(),
                             Index = i,
-                            ImageCommand = ImageCommand
+                            ImageCommand = ImageCommand,
+                            SaveImageCommand = SaveImageCommand
                         });
                         i++;
                     }

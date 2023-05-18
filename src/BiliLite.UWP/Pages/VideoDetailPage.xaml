@@ -280,6 +280,15 @@
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="12">
                                 <Border x:Name="VideoCover" Margin="0 0 0 8" CornerRadius="{StaticResource ImageCornerRadius}">
+									<Border.ContextFlyout>
+										<MenuFlyout>
+											<MenuFlyoutItem Text="保存" Command="{Binding Path=DynamicVM.SaveImageCommand}" CommandParameter="{Binding Path=videoDetailVM.VideoInfo.pic}">
+												<MenuFlyoutItem.Icon>
+													<SymbolIcon Symbol="Save"></SymbolIcon>
+												</MenuFlyoutItem.Icon>
+											</MenuFlyoutItem>
+										</MenuFlyout>
+									</Border.ContextFlyout>
                                     <toolkit:ImageEx IsCacheEnabled="True" 
                                                  Tapped="ImageEx_Tapped"
                                              PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=videoDetailVM.VideoInfo.pic,Mode=OneWay,Converter={StaticResource imageConvert},ConverterParameter='400w'}">

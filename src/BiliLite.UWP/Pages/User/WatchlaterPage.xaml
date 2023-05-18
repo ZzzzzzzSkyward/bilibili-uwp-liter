@@ -30,9 +30,9 @@
                     <toolkit:ImageEx IsCacheEnabled="True" Height="80" Width="120" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=pic,Converter={StaticResource imageConvert},ConverterParameter='160w'}"></toolkit:ImageEx>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
-                    <TextBlock MaxLines="2" Margin="0 0 0 4" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray" >UP:<Run Text="{x:Bind Path=owner.name}"/></TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray" Text="{x:Bind Path=state}"></TextBlock>
+                    <TextBlock TextWrapping="Wrap" MaxLines="2" Height="Auto" MinHeight="40" FontSize="15" HorizontalAlignment="Stretch" Margin="0 0 0 0" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
+                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=owner.name}"/></TextBlock>
+                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=state}"></TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>
@@ -64,7 +64,7 @@
               
             </toolkit:AdaptiveGridView>
             <ProgressRing IsActive="True" HorizontalAlignment="Center"  Visibility="{x:Bind Path=watchLaterVM.Loading,Mode=OneWay}"></ProgressRing>
-            <TextBlock Visibility="{x:Bind Path=watchLaterVM.Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray" >这里还什么都没有呢~</TextBlock>
+            <TextBlock Visibility="{x:Bind Path=watchLaterVM.Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}" >这里还什么都没有呢~</TextBlock>
         </Grid>
         <controls:RoundButton Grid.Row="1" Command="{x:Bind Path=watchLaterVM.RefreshCommand}" Visibility="{x:Bind Path=watchLaterVM.Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
             <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>

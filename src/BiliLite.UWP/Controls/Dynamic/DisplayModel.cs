@@ -169,6 +169,10 @@ namespace BiliLite.Controls.Dynamic
         /// </summary>
         public ICommand ImageCommand { get; set; }
         /// <summary>
+        /// 保存图片
+        /// </summary>
+        public ICommand SaveImageCommand { get; set; }
+        /// <summary>
         /// 点赞
         /// </summary>
         public ICommand LikeCommand { get; set; }
@@ -278,5 +282,7 @@ namespace BiliLite.Controls.Dynamic
                 }
             }
         }
+
+        public ICommand SaveImageCommand { get; internal set; }
     }
 }

@@ -84,6 +84,15 @@
                 <Border HorizontalAlignment="Left" CornerRadius="4" MaxHeight="500" MaxWidth="400">
                     <Grid>
                         <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding Path=ImagesInfo[0]}">
+                            <HyperlinkButton.ContextFlyout>
+                                <MenuFlyout>
+                                    <MenuFlyoutItem Text="保存" Command="{Binding Path=SaveImageCommand}" CommandParameter="{Binding Path=ImagesInfo[0].ImageUrl}">
+                                        <MenuFlyoutItem.Icon>
+                                            <SymbolIcon Symbol="Save"></SymbolIcon>
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                </MenuFlyout>
+                            </HyperlinkButton.ContextFlyout>
                             <controls:ImageEx  
                         IsCacheEnabled="True" 
                        
@@ -107,6 +116,15 @@
                     <GridView.ItemTemplate>
                         <DataTemplate>
                             <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding}">
+                                <HyperlinkButton.ContextFlyout>
+                                    <MenuFlyout>
+                                        <MenuFlyoutItem Text="保存" Command="{Binding Path=SaveImageCommand}" CommandParameter="{Binding Path=ImageUrl}">
+                                            <MenuFlyoutItem.Icon>
+                                                <SymbolIcon Symbol="Save"></SymbolIcon>
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                    </MenuFlyout>
+                                </HyperlinkButton.ContextFlyout>
                                 <Border  CornerRadius="4" >
                                     <controls:ImageEx  
                         IsCacheEnabled="True" 
