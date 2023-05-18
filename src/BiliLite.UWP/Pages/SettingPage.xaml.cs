@@ -16,6 +16,7 @@ using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -240,6 +241,8 @@ namespace BiliLite.Pages
             gridHomeCustom.ItemsSource = SettingHelper.GetValue<ObservableCollection<HomeNavItem>>(SettingHelper.UI.HOEM_ORDER, HomeVM.GetAllNavItems());
             ExceptHomeNavItems();
 
+            //背景
+            SetBackground();
 
         }
         private void LoadPlayer()
@@ -778,17 +781,17 @@ namespace BiliLite.Pages
         }
 
         // 在代码中定义一个名为 Log 的方法，用于向日志文本框中添加新的日志
-        private int loglength = 10000;
+        private readonly int loglength = 10000;
         public void Log(StringBuilder logBuilder)
         {
-            if (!EnableLog.IsOn) return;
-            Console.Write("Log");
             int leng = logBuilder.ToString().Length;
             if (leng > loglength*2)
             {
                 logBuilder.Remove(0, leng - loglength);
             }
 
+            if (!EnableLog.IsOn) return;
+            Console.Write("Log");
             // 将 StringBuilder 对象中的所有内容显示到日志文本框中
             logTextBox.Text = logBuilder.ToString();
         }
@@ -920,9 +923,44 @@ namespace BiliLite.Pages
         {
             settingVM.CDNServerDelayTest();
         }
-
-        private void TextBlock_SelectionChanged(object sender, RoutedEventArgs e)
+        private async void SetBackground()
         {
+            var background = SettingHelper.GetValue(SettingHelper.UI.BACKGROUND_IMAGE, AppHelper.BACKGROUND_IAMGE_URL);
+            if (background == AppHelper.BACKGROUND_IAMGE_URL)
+            {
+                BGImage.Source = new BitmapImage(new Uri(background));
+            }
+            else
+            {
+                StorageFile file = null;
+                try
+                {
+                    file = await StorageFile.GetFileFromPathAsync(background);
+                }
+                catch
+                {
+                    Utils.ShowMessageToast("请授予系统存储权限", 5);
+                }
+                if (file == null)
+                {
+                    return;
+                }
+                var img = new BitmapImage();
+                img.SetSource(await file.OpenReadAsync());
+                BGImage.Source = img;
+            }
+        }
+
+        private async void BGImage_Click(object sender, RoutedEventArgs e) {
+            FileOpenPicker fileOpenPicker = new FileOpenPicker();
+            fileOpenPicker.FileTypeFilter.Add(".png");
+            fileOpenPicker.FileTypeFilter.Add(".jpg");
+            StorageFile file = await fileOpenPicker.PickSingleFileAsync();
+            if (file != null)
+            {
+                SettingHelper.SetValue(SettingHelper.UI.BACKGROUND_IMAGE, file.Path);
+                SetBackground();
+            }
 
         }
     }

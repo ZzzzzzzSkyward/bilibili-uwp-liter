@@ -57,7 +57,7 @@
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
     <NoWarn>$(NoWarn);NU1702</NoWarn>
     <EntryPointProjectUniqueName>..\BiliLite.UWP\BiliLite.UWP.csproj</EntryPointProjectUniqueName>
-    <PackageCertificateThumbprint>6EDD81B901CE43EA1F3485C541A512162E97B33C</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>42621A9CE0525C9351F5142E87F349D063DFE89B</PackageCertificateThumbprint>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxPackageSigningTimestampDigestAlgorithm>SHA256</AppxPackageSigningTimestampDigestAlgorithm>
     <AppxAutoIncrementPackageRevision>True</AppxAutoIncrementPackageRevision>

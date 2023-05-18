@@ -154,7 +154,9 @@
                             <TextBlock  Margin="0 0 0 8" FontSize="16">图片圆角半径(重启生效)</TextBlock>
                             <controls:NumberBox x:Name="numImageCornerRadius" Minimum="0" Margin="0 0 0 8" Width="200" HorizontalAlignment="Left" Value="0" SpinButtonPlacementMode="Compact" SmallChange="2" ></controls:NumberBox>
                             <Border x:Name="ImageCornerRadiusExample" Width="120" Height="120" HorizontalAlignment="Left" Background="#99808080">
-                                <Image Source="/Assets/Image/background.jpg" Stretch="UniformToFill"></Image>
+								<Button  Click="BGImage_Click" Background="Transparent" Width="120" Height="120">									
+                                    <Image Source="/Assets/Image/background.jpg" x:Name="BGImage" Stretch="UniformToFill"></Image>
+								</Button>
                             </Border>
                             <StackPanel  Margin="0 0 0 8">
                                 <TextBlock  Margin="0 8"  FontSize="16">视频详情显示封面</TextBlock>

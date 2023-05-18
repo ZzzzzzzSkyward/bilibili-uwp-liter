@@ -34,10 +34,11 @@
                     <Color x:Key="HighLightColor">#ec407a</Color>
                     <Color x:Key="TextColor">#CC000000</Color>
                     <Color x:Key="SystemColorHighlightColor">#ec407a</Color>
-                    <Color x:Key="CardColor">#00FFFFFF</Color>
+                    <Color x:Key="CardColor">#a0FFFFFF</Color>
                     <Color x:Key="ForegroundGridColor">#aaaaaa</Color>
                     <Color x:Key="ForegroundTextColor">#555555</Color>
                     <Color x:Key="ForegroundBackColor">#555555</Color>
+                    <Color x:Key="ForegroundTransparentColor">#aaffffff</Color>
                     <AcrylicBrush x:Key="TransparentBackground"
             BackgroundSource="HostBackdrop"
             TintColor="#ffffff"
@@ -46,6 +47,7 @@
             FallbackColor="#ffffff"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="ForegroundTransparentColor">#aa000000</Color>
                     <Color x:Key="TopPaneBackground">#003B3B3B</Color>
                     <Color x:Key="HighLightTextColor">#fff47bcf</Color>
                     <Color x:Key="HighLightColor">#ffa47bcf</Color>

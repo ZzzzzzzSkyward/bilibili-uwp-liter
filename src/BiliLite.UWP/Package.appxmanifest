@@ -13,7 +13,7 @@
   <Identity
     Name="BilibiliUWPLiter"
     Publisher="CN=Zhu"
-    Version="1.0.0.0" />
+    Version="1.0.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="8bceed6a-7e89-4141-a693-923401d5b2ac" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -54,20 +54,6 @@
             <uap:DisplayName>Bilibili UWP Lite</uap:DisplayName>
           </uap:Protocol>
         </uap:Extension>
-        <uap:Extension Category="windows.fileOpenPicker">
-          <uap:FileOpenPicker>
-            <uap:SupportedFileTypes>
-              <uap:SupportsAnyFileType/>
-            </uap:SupportedFileTypes>
-          </uap:FileOpenPicker>
-        </uap:Extension>
-        <uap:Extension Category="windows.fileSavePicker">
-          <uap:FileSavePicker>
-            <uap:SupportedFileTypes>
-              <uap:SupportsAnyFileType/>
-            </uap:SupportedFileTypes>
-          </uap:FileSavePicker>
-        </uap:Extension>
       </Extensions>
     </Application>
   </Applications>
@@ -75,7 +61,10 @@
   <Capabilities>
     <Capability Name="internetClient" />
     <uap:Capability Name="videosLibrary"/>
+    <rescap:Capability Name="broadFileSystemAccess"/>
     <uap:Capability Name="picturesLibrary"/>
+    <rescap:Capability Name="documentsLibrary"/>
     <uap3:Capability Name="backgroundMediaPlayback"/>
+    <uap:Capability Name="removableStorage"/>
   </Capabilities>
 </Package>

@@ -6,7 +6,9 @@
 
 ## 更新说明
 
-使用VS2022，Win10 x64 21H2版本升级了所有依赖。启用亚克力背景。
+使用VS2022，Win10 x64 21H2版本升级了所有依赖。最低版本18362，但是17763可能也行。
+
+启用亚克力背景。
 
 签名换了一个，到2024年过期。
 
@@ -23,6 +25,8 @@
 ## 其他fork
 
 https://github.com/ywmoyue/biliuwp-lite
+
+提供17763版本 https://github.com/ZzzzzzzSkyward/biliuwp-lite-fix
 
 ## 参考
 

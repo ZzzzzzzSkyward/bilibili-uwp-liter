@@ -44,7 +44,7 @@ namespace BiliLite.Pages
                 }
                 catch
                 {
-
+                    Utils.ShowMessageToast("请授予系统存储权限", 5);
                 }
                 if (file == null)
                 {
