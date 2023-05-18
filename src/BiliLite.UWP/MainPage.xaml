@@ -15,7 +15,7 @@
 
     <Grid>
         <winui:TabView x:Name="tabView" TabItemsChanged="tabView_TabItemsChanged" VerticalAlignment="Stretch" VerticalContentAlignment="Stretch" Loaded="tabView_Loaded" IsAddTabButtonVisible="True" TabCloseRequested="TabView_TabCloseRequested" AddTabButtonClick="TabView_AddTabButtonClick"
-                  Background="{ThemeResource TransparentBackground}"    >
+                  Background="{ThemeResource TransparentBackground}" TabWidthMode="SizeToContent" >
             <!--<winui:TabView.Resources>
                 <ResourceDictionary>
                     <ResourceDictionary.ThemeDictionaries>

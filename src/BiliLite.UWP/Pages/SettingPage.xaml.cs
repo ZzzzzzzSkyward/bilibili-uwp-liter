@@ -784,15 +784,18 @@ namespace BiliLite.Pages
         public void Log(StringBuilder logBuilder)
         {
             int leng = logBuilder.ToString().Length;
-            if (leng > loglength*2)
+            if (leng > loglength * 2)
             {
                 logBuilder.Remove(0, leng - loglength);
             }
-
-            if (!EnableLog.IsOn) return;
-            Console.Write("Log");
-            // 将 StringBuilder 对象中的所有内容显示到日志文本框中
-            logTextBox.Text = logBuilder.ToString();
+            //这个地方老是崩
+            try
+            {
+                // 将 StringBuilder 对象中的所有内容显示到日志文本框中
+                if (EnableLog.IsOn)
+                    logTextBox.Text = logBuilder.ToString();
+            }
+            catch (Exception e) { }
         }
 
         private async void DanmuSettingAddWord_Click(object sender, RoutedEventArgs e)

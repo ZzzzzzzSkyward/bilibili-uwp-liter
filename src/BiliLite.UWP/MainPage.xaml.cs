@@ -80,6 +80,7 @@ namespace BiliLite
             var item = new TabViewItem()
             {
                 Header = e.title,
+                MaxWidth=400,
                 IconSource = new Microsoft.UI.Xaml.Controls.SymbolIconSource() { Symbol = e.icon }
             };
             var frame = new MyFrame();
