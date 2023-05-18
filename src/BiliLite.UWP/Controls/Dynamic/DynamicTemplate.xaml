@@ -22,13 +22,13 @@
             <local:DynamicItemControl.CardContent>
 
                 <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="#C8E5E9EF" CornerRadius="4">
-                    <HyperlinkButton Padding="0" Margin="0" Command="{Binding Path=LaunchUrlCommand}" CommandParameter="{Binding Path=OneRowInfo.Url}">
+                    <HyperlinkButton Padding="0" Margin="0" Command="{Binding Path=LaunchUrlCommand}" CommandParameter="{Binding Path=OneRowInfo.Url}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                         <HyperlinkButton.ContextFlyout>
                             <MenuFlyout>
                                 <MenuFlyoutItem Visibility="{Binding Path=ShowWatchLater}" Icon="Add" Text="添加到稍后再看" Command="{Binding Path=WatchLaterCommand}" CommandParameter="{Binding Path=OneRowInfo.ID}"></MenuFlyoutItem>
                             </MenuFlyout>
                         </HyperlinkButton.ContextFlyout>
-                        <Grid >
+                        <Grid HorizontalAlignment="Stretch">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto" />
                                 <ColumnDefinition />
@@ -46,9 +46,9 @@
                             </Grid>
 
                             <StackPanel HorizontalAlignment="Stretch" Grid.Column="1" Margin="8 4 8 0">
-                                <TextBlock Text="{Binding Path=OneRowInfo.Title}" Foreground="{ThemeResource TextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"></TextBlock>
-                                <TextBlock Visibility="Collapsed" Text="{Binding Path=OneRowInfo.Desc}" Margin="0 4" FontSize="14" Foreground="Gray" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"></TextBlock>
-                                <TextBlock Margin="0 8 0 0" Text="{Binding Path=OneRowInfo.Subtitle}" FontSize="14" Foreground="Gray"></TextBlock>
+                                <TextBlock FontSize="20" Text="{Binding Path=OneRowInfo.Title}" Foreground="{ThemeResource TextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"></TextBlock>
+                                <TextBlock Visibility="Collapsed" Text="{Binding Path=OneRowInfo.Desc}" Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"></TextBlock>
+                                <TextBlock Margin="0 8 0 0" Text="{Binding Path=OneRowInfo.Subtitle}" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}"></TextBlock>
                             </StackPanel>
                         </Grid>
                     </HyperlinkButton>
@@ -81,7 +81,7 @@
     <DataTemplate x:Key="Photo1x1">
         <local:DynamicItemControl Model="{Binding}">
             <local:DynamicItemControl.CardContent>
-                <Border HorizontalAlignment="Left" CornerRadius="4" MaxWidth="240">
+                <Border HorizontalAlignment="Left" CornerRadius="4" MaxHeight="500" MaxWidth="400">
                     <Grid>
                         <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding Path=ImagesInfo[0]}">
                             <controls:ImageEx  
@@ -142,8 +142,8 @@
     <DataTemplate x:Key="Miss">
         <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="#C8E5E9EF" CornerRadius="4">
             <StackPanel Orientation="Horizontal"  Margin="12">
-                <FontIcon Foreground="Gray" FontSize="14" FontFamily="Segoe MDL2 Assets" Glyph="&#xE7BA;" />
-                <TextBlock Foreground="Gray" Margin="8 0 0 0">资源已失效</TextBlock>
+                <FontIcon Foreground="{ThemeResource ForegroundTextColor}" FontSize="14" FontFamily="Segoe MDL2 Assets" Glyph="&#xE7BA;" />
+                <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="8 0 0 0">资源已失效</TextBlock>
             </StackPanel>
         </Border>
     </DataTemplate>

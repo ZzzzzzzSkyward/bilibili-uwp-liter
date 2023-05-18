@@ -26,7 +26,7 @@
                     <ComboBoxItem>
                         <StackPanel Orientation="Horizontal">
                             <TextBlock >FLV/H264</TextBlock>
-                            <TextBlock VerticalAlignment="Center"  FontSize="12" Foreground="Gray" Margin="8 0">限速、不支持4K</TextBlock>
+                            <TextBlock VerticalAlignment="Center"  FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Margin="8 0">限速、不支持4K</TextBlock>
                         </StackPanel>
                     </ComboBoxItem>
                     <ComboBoxItem>
@@ -73,9 +73,9 @@
                                 <TextBlock  Grid.Column="2" FontSize="12" VerticalAlignment="Center" Foreground="Red"  Visibility="{x:Bind Path=State,Mode=OneWay,Converter={StaticResource display},ConverterParameter=99}" Text="{x:Bind Path=ErrorMessage,Mode=OneWay}"></TextBlock>
                                 <ProgressRing Grid.Column="2" Visibility="{x:Bind Path=State,Mode=OneWay,Converter={StaticResource display},ConverterParameter=1}" HorizontalAlignment="Right" IsActive="True"></ProgressRing>
 
-                                <TextBlock Grid.Column="2"  Visibility="{x:Bind Path=State,Mode=OneWay,Converter={StaticResource display},ConverterParameter=2}" FontSize="12" Foreground="Gray" Margin="4">下载中</TextBlock>
+                                <TextBlock Grid.Column="2"  Visibility="{x:Bind Path=State,Mode=OneWay,Converter={StaticResource display},ConverterParameter=2}" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Margin="4">下载中</TextBlock>
                             
-                                <Border Grid.Column="2"  Visibility="{x:Bind Path=State,Mode=OneWay,Converter={StaticResource display},ConverterParameter=3}" HorizontalAlignment="Right" Background="Gray" CornerRadius="4">
+                                <Border Grid.Column="2"  Visibility="{x:Bind Path=State,Mode=OneWay,Converter={StaticResource display},ConverterParameter=3}" HorizontalAlignment="Right" Background="{ThemeResource ForegroundTextColor}" CornerRadius="4">
                                     <TextBlock FontSize="12" Foreground="White" Margin="4">已下载</TextBlock>
                                 </Border>
                             </Grid>

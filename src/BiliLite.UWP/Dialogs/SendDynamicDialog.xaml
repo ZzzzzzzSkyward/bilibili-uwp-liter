@@ -6,7 +6,7 @@
     xmlns:modules="using:BiliLite.Modules"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d" Background="Transparent">
     <ContentDialog.Resources>
         <Flyout  x:Key="FaceFlyout" x:Name="FaceFlyout">
             <Grid Width="320">
@@ -62,7 +62,7 @@
                           DisplayMemberPath="Display">
                     <ListView.Footer>
                         <Grid>
-                            <HyperlinkButton  Command="{x:Bind Path=atVM.LoadMoreCommand}" Visibility="{x:Bind Path=atVM.Loading,Mode=OneWay,Converter={StaticResource display}}" Foreground="Gray" HorizontalAlignment="Center" x:Name="btnLoadMore">
+                            <HyperlinkButton  Command="{x:Bind Path=atVM.LoadMoreCommand}" Visibility="{x:Bind Path=atVM.Loading,Mode=OneWay,Converter={StaticResource display}}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" x:Name="btnLoadMore">
                                 <TextBlock>加载更多</TextBlock>
                             </HyperlinkButton>
                             <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=atVM.Loading,Mode=OneWay}"></ProgressRing>
@@ -105,7 +105,7 @@
 
             <StackPanel Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay}" Margin="0 8" Padding="8" Background="#33808080">
                 <TextBlock MaxLines="1" TextTrimming="CharacterEllipsis">@<Run Text="{x:Bind Path=sendDynamicVM.RepostInfo.UserName,Mode=OneWay}"></Run></TextBlock>
-                <TextBlock Text="{x:Bind Path=sendDynamicVM.RepostInfo.ContentStr,Mode=OneWay}" MaxLines="1" TextTrimming="CharacterEllipsis" FontSize="14" Foreground="Gray"></TextBlock>
+                <TextBlock Text="{x:Bind Path=sendDynamicVM.RepostInfo.ContentStr,Mode=OneWay}" MaxLines="1" TextTrimming="CharacterEllipsis" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}"></TextBlock>
             </StackPanel>
 
             <Grid Margin="0 4 0 0">
@@ -146,14 +146,14 @@
                     </Button>-->
                 </StackPanel>
                 <StackPanel Orientation="Horizontal"  HorizontalAlignment="Right">
-                    <TextBlock x:Name="txtLength" VerticalAlignment="Center" Foreground="Gray">233</TextBlock>
+                    <TextBlock x:Name="txtLength" VerticalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">233</TextBlock>
                     <Button x:Name="btnClose" Width="64" Click="btn_Close_Click" Margin="4 0">取消</Button>
                     <Button  x:Name="btnSend" Click="btnSend_Click" Width="64" Foreground="White" Background="{ThemeResource SystemAccentColor}" >发表</Button>
                 </StackPanel>
             </Grid>
             <StackPanel x:Name="pr_Upload" Margin="0 4" Visibility="{x:Bind Path=sendDynamicVM.Uploading,Mode=OneWay}">
                 <ProgressBar Background="#00000000" IsIndeterminate="True" ></ProgressBar>
-                <TextBlock FontSize="14" Foreground="Gray" Margin="4 0" VerticalAlignment="Center">图片上传中...</TextBlock>
+                <TextBlock FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Margin="4 0" VerticalAlignment="Center">图片上传中...</TextBlock>
             </StackPanel>
 
             <StackPanel x:Name="pics" Visibility="{x:Bind Path=sendDynamicVM.ShowImage,Mode=OneWay}" Margin="0 4" Padding="4" Background="#33808080">

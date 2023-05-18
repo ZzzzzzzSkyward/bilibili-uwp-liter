@@ -147,7 +147,7 @@ namespace BiliLite.Helpers
             {
                 get
                 {
-                    return storageHelper.Read<MyProfileModel>(USER_PROFILE);
+                    return JsonConvert.DeserializeObject<MyProfileModel>(storageHelper.Read<string>(USER_PROFILE));
                 }
             }
             public static bool Logined

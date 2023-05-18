@@ -60,8 +60,8 @@
                                     <ColumnDefinition Width="auto"/>
                                     <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
-                                <FontIcon Foreground="Gray" FontFamily="Segoe MDL2 Assets" Glyph="&#xE946;" />
-                                <TextBlock Foreground="Gray" Margin="8 0 0 0" Grid.Column="1" Text="{x:Bind Path=ToolTip,Mode=OneWay}"></TextBlock>
+                                <FontIcon Foreground="{ThemeResource ForegroundTextColor}" FontFamily="Segoe MDL2 Assets" Glyph="&#xE946;" />
+                                <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="8 0 0 0" Grid.Column="1" Text="{x:Bind Path=ToolTip,Mode=OneWay}"></TextBlock>
                             </Grid>
                         </toolkit:AdaptiveGridView.Header>
                         <toolkit:AdaptiveGridView.ItemTemplate>
@@ -88,10 +88,10 @@
                                         </Grid>
                                     </Border>
                                     <StackPanel Grid.Column="1" Margin="4 0 0 0" >
-                                        <TextBlock TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=title}"></TextBlock>
-                                        <TextBlock Foreground="Gray" Margin="0 8 0 0">观看:<Run Text="{x:Bind Path=stat.view,Converter={StaticResource numberToStringConvert}}"/> 弹幕:<Run Text="{x:Bind Path=stat.danmaku,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                                        <TextBlock FontSize="20" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=title}"></TextBlock>
+                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 8 0 0">观看:<Run Text="{x:Bind Path=stat.view,Converter={StaticResource numberToStringConvert}}"/> 弹幕:<Run Text="{x:Bind Path=stat.danmaku,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
 
-                                        <TextBlock Margin="0 2 0 0" Foreground="Gray" VerticalAlignment="Center" >UP:<Run Text="{x:Bind Path=owner.name}"/></TextBlock>
+                                        <TextBlock Margin="0 2 0 0" Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" >UP:<Run Text="{x:Bind Path=owner.name}"/></TextBlock>
 
                                        
                                     </StackPanel>

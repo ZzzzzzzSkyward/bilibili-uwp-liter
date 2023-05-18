@@ -43,17 +43,17 @@
                             <ColumnDefinition Width="Auto"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <HyperlinkButton Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}" Padding="0" VerticalAlignment="Top" >
+                        <HyperlinkButton Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}" Padding="0" VerticalAlignment="Top" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                             <Grid  Height="56" >
                                 <StackPanel VerticalAlignment="Center" >
                                     <StackPanel Orientation="Horizontal" >
                                         <Border Visibility="{x:Bind Path=Model.ShowTag,Mode=OneWay}" Margin="0 0 4 0" Background="HotPink" CornerRadius="2">
                                             <TextBlock Foreground="White" FontSize="12" Margin="4 2" Text="{x:Bind Path=Model.TagName,Mode=OneWay}"></TextBlock>
                                         </Border>
-                                        <TextBlock Text="{x:Bind Path=Model.UserName,Mode=OneWay}" Foreground="DeepPink"  Opacity=".8" Visibility="{x:Bind Path=Model.IsYearVip,Mode=OneWay}"></TextBlock>
+                                        <TextBlock Text="{x:Bind Path=Model.UserName,Mode=OneWay}" Foreground="{ThemeResource HighLightTextColor}"  Opacity=".8" Visibility="{x:Bind Path=Model.IsYearVip,Mode=OneWay}"></TextBlock>
                                         <TextBlock Text="{x:Bind Path=Model.UserName,Mode=OneWay}" Foreground="{ThemeResource TextColor}" Visibility="{x:Bind Path=Model.IsYearVip,Mode=OneWay,Converter={StaticResource display}}"></TextBlock>
                                     </StackPanel>
-                                    <TextBlock Margin="0 4 0 0" FontSize="12" Foreground="Gray" ToolTipService.ToolTip="{x:Bind Path=Model.Datetime,Mode=OneWay}" Text="{x:Bind Path=Model.Time,Mode=OneWay}"></TextBlock>
+                                    <TextBlock Margin="0 4 0 0" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" ToolTipService.ToolTip="{x:Bind Path=Model.Datetime,Mode=OneWay}" Text="{x:Bind Path=Model.Time,Mode=OneWay}"></TextBlock>
                                 </StackPanel>
 
                             </Grid>
@@ -62,7 +62,7 @@
                             <Image Height="44" Source="{x:Bind Path=Model.DecorateImage,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='64h.png'}"></Image>
                             <TextBlock FontSize="12" Visibility="{x:Bind Path=Model.ShowDecorateText,Mode=OneWay}" FontFamily="{StaticResource FansNum}"  VerticalAlignment="Center" Margin="0 0 40 0" HorizontalAlignment="Right" Foreground="{x:Bind Path=Model.DecorateColor,Mode=OneWay,Converter={StaticResource colorConvert}}"  Text="{x:Bind Path=Model.DecorateText,Mode=OneWay}"></TextBlock>
                         </Grid>
-                        <AppBarButton Style="{StaticResource AppBarButtonNoChevronStyle}" Width="40" VerticalAlignment="Center" Height="40" Grid.Column="2" Icon="More" Foreground="Gray">
+                        <AppBarButton Style="{StaticResource AppBarButtonNoChevronStyle}" Width="40" VerticalAlignment="Center" Height="40" Grid.Column="2" Icon="More" Foreground="{ThemeResource ForegroundTextColor}">
                             <AppBarButton.Flyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="打开详情" Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}">
@@ -100,11 +100,11 @@
                                 </Ellipse>
                                 <TextBlock VerticalAlignment="Center" Foreground="#178bcf">
                                 <Run Text="{x:Bind Path=Model.UserName,Mode=OneWay}"></Run>
-                                <Run Text="{x:Bind Path=Model.Tooltip,Mode=OneWay}" Foreground="Gray" FontSize="12"></Run>
+                                <Run Text="{x:Bind Path=Model.Tooltip,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" FontSize="12"></Run>
                                 </TextBlock>
 
                             </StackPanel>
-                            <Button Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" HorizontalAlignment="Right" Foreground="Gray" Background="Transparent" Visibility="{x:Bind Path=Model.IsRepost,Mode=OneWay}">
+                            <Button Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" HorizontalAlignment="Right" Foreground="{ThemeResource ForegroundTextColor}" Background="Transparent" Visibility="{x:Bind Path=Model.IsRepost,Mode=OneWay}">
                                 <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE17C;" />
                             </Button>
                         </Grid>
@@ -115,19 +115,19 @@
                     <!--卡片-->
                     <ContentPresenter Content="{x:Bind Path=CardContent,Mode=OneWay}" Padding="0 4 0 0"></ContentPresenter>
                     <StackPanel Visibility="{x:Bind Path=Model.IsRepost,Converter={StaticResource display},Mode=OneWay}" Margin="0 4 0 0" Orientation="Horizontal">
-                        <HyperlinkButton Width="100" Command="{x:Bind Path=Model.RepostCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="Gray" HorizontalContentAlignment="Left" >
+                        <HyperlinkButton Width="100" Command="{x:Bind Path=Model.RepostCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left" >
                             <StackPanel Orientation="Horizontal">
                                 <fa:FontAwesome Icon="Solid_Share" Margin="0 2 0 0" FontSize="14"></fa:FontAwesome>
                                 <TextBlock Margin="8 0" Text="{x:Bind Path=Model.ShareCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='转发'}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
-                        <HyperlinkButton Width="100" Command="{x:Bind Path=Model.CommentCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="Gray" HorizontalContentAlignment="Left" >
+                        <HyperlinkButton Width="100" Command="{x:Bind Path=Model.CommentCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left" >
                             <StackPanel Orientation="Horizontal">
                                 <fa:FontAwesome Icon="Regular_Comment" Margin="0 2 0 0" FontSize="14"></fa:FontAwesome>
                                 <TextBlock Margin="8 0" Text="{x:Bind Path=Model.CommentCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='评论'}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
-                        <HyperlinkButton Width="100" Visibility="{x:Bind Path=Model.Liked,Mode=OneWay,Converter={StaticResource display}}" Command="{x:Bind Path=Model.LikeCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="Gray" HorizontalContentAlignment="Left" >
+                        <HyperlinkButton Width="100" Visibility="{x:Bind Path=Model.Liked,Mode=OneWay,Converter={StaticResource display}}" Command="{x:Bind Path=Model.LikeCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left" >
                             <StackPanel Orientation="Horizontal">
                                 <fa:FontAwesome Icon="Regular_ThumbsUp" Margin="0 2 0 0" FontSize="14"></fa:FontAwesome>
                                 <TextBlock Margin="8 0" Text="{x:Bind Path=Model.LikeCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='点赞'}"></TextBlock>

@@ -59,6 +59,10 @@ namespace BiliLite.Pages
                         case 2:
                             rootFrame.RequestedTheme = ElementTheme.Dark;
                             break;
+                        case 3:
+                            rootFrame.RequestedTheme = (ElementTheme)AppTheme.TransparentDark; break;
+                        case 4:
+                            rootFrame.RequestedTheme = (ElementTheme)AppTheme.TransparentLight; break;
                         default:
                             rootFrame.RequestedTheme = ElementTheme.Default;
                             break;

@@ -31,13 +31,25 @@ namespace BiliLite.Pages
         private async void SetBackground()
         {
             var background = SettingHelper.GetValue(SettingHelper.UI.BACKGROUND_IMAGE,AppHelper.BACKGROUND_IAMGE_URL);
-            if (background== AppHelper.BACKGROUND_IAMGE_URL)
+            if (background == AppHelper.BACKGROUND_IAMGE_URL)
             {
-                backgroundImage.Source = new BitmapImage(new Uri(background));
+                //backgroundImage.Source = new BitmapImage(new Uri(background));
             }
             else
             {
-                var file = await StorageFile.GetFileFromPathAsync(background);
+                StorageFile file = null;
+                try
+                {
+                    file = await StorageFile.GetFileFromPathAsync(background);
+                }
+                catch
+                {
+
+                }
+                if (file == null)
+                {
+                    return;
+                }
                 var img = new BitmapImage();
                 img.SetSource(await file.OpenReadAsync());
                 backgroundImage.Source = img;

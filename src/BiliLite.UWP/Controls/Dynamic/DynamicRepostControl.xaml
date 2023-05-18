@@ -36,19 +36,19 @@
                                 <StackPanel VerticalAlignment="Center" >
                                     <TextBlock Text="{x:Bind Path=UserName,Mode=OneWay}" Foreground="DeepPink"  Opacity=".8" Visibility="{x:Bind Path=IsYearVip,Mode=OneWay}"></TextBlock>
                                     <TextBlock Text="{x:Bind Path=UserName,Mode=OneWay}" Foreground="{ThemeResource TextColor}" Visibility="{x:Bind Path=IsYearVip,Mode=OneWay,Converter={StaticResource display}}"></TextBlock>
-                                    <TextBlock Margin="0 4 0 0" FontSize="12" Foreground="Gray" ToolTipService.ToolTip="{x:Bind Path=Datetime,Mode=OneWay}" Text="{x:Bind Path=Time,Mode=OneWay}"></TextBlock>
+                                    <TextBlock Margin="0 4 0 0" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" ToolTipService.ToolTip="{x:Bind Path=Datetime,Mode=OneWay}" Text="{x:Bind Path=Time,Mode=OneWay}"></TextBlock>
                                 </StackPanel>
 
                             </StackPanel>
                         </HyperlinkButton>
                         <TextBlock Margin="0 8" TextWrapping="Wrap" IsTextSelectionEnabled="True" Text="{x:Bind Path=ContentStr,Mode=OneWay}"></TextBlock>
-                        <Border BorderThickness="0 1 0 0" Margin="0 0 0 8" BorderBrush="Gray" Opacity=".2"></Border>
+                        <Border BorderThickness="0 1 0 0" Margin="0 0 0 8" BorderBrush="{ThemeResource ForegroundTextColor}" Opacity=".2"></Border>
                     </StackPanel>
                 </DataTemplate>
             </ListView.ItemTemplate>
             <ListView.Footer>
                 <Grid>
-                    <HyperlinkButton Visibility="{x:Bind Path=dynamicRepostVM.Loading,Mode=OneWay,Converter={StaticResource display}}" Foreground="Gray" HorizontalAlignment="Center"  Command="{x:Bind Path=dynamicRepostVM.LoadMoreCommand}">
+                    <HyperlinkButton Visibility="{x:Bind Path=dynamicRepostVM.Loading,Mode=OneWay,Converter={StaticResource display}}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center"  Command="{x:Bind Path=dynamicRepostVM.LoadMoreCommand}">
                         <TextBlock>加载更多</TextBlock>
                     </HyperlinkButton>
                     <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicRepostVM.Loading,Mode=OneWay}"></ProgressRing>

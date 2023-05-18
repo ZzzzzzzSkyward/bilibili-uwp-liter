@@ -42,7 +42,7 @@
                     </Grid>
                 </Border>
                 <TextBlock Grid.Row="1" Margin="4 4 4 0" MaxLines="1" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=title}"></TextBlock>
-                <TextBlock Grid.Row="2" Margin="4 0 4 4" TextWrapping="Wrap" FontSize="12" Foreground="Gray" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=index_show}"></TextBlock>
+                <TextBlock Grid.Row="2" Margin="4 0 4 4" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=index_show}"></TextBlock>
             </Grid>
         </DataTemplate>
     </Page.Resources>
@@ -137,7 +137,7 @@
                                             </Grid>
                                         </Border>
                                         <TextBlock Grid.Row="1" Margin="4 4 4 0" MaxLines="1" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=title}"></TextBlock>
-                                        <TextBlock Grid.Row="2" Margin="4 0 4 4" TextWrapping="Wrap" FontSize="12" Foreground="Gray" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=progress_text}"></TextBlock>
+                                        <TextBlock Grid.Row="2" Margin="4 0 4 4" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=progress_text}"></TextBlock>
                                     </Grid>
                                 </DataTemplate>
                             </GridView.ItemTemplate>
@@ -193,7 +193,7 @@
                                             </Grid>
                                         </Border>
                                         <TextBlock Grid.Row="1" Margin="4 4 4 0" MaxLines="1" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding title}"></TextBlock>
-                                        <TextBlock Grid.Row="2" Margin="4 0 4 4" TextWrapping="Wrap" FontSize="12" Foreground="Gray" TextTrimming="CharacterEllipsis" Text="{Binding pub_index}"></TextBlock>
+                                        <TextBlock Grid.Row="2" Margin="4 0 4 4" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" Text="{Binding pub_index}"></TextBlock>
                                     </Grid>
                                 </DataTemplate>
                             </GridView.ItemTemplate>
@@ -286,13 +286,13 @@
                                                     </Grid.RowDefinitions>
                                                     <toolkit:ImageEx IsCacheEnabled="True" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='180h'}"></toolkit:ImageEx>
                                                     <TextBlock Grid.Row="1" Margin="4" MaxLines="1" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                                                    <!--<TextBlock  Grid.Row="2" Margin="4 0 4 4" FontSize="12" Foreground="Gray" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding desc}"></TextBlock>-->
+                                                    <!--<TextBlock  Grid.Row="2" Margin="4 0 4 4" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding desc}"></TextBlock>-->
                                                 </Grid>
                                             </DataTemplate>
                                         </toolkit:AdaptiveGridView.ItemTemplate>
                                     </toolkit:AdaptiveGridView>
                                     <Grid>
-                                        <HyperlinkButton x:Name="btnLoadMoreFall" Visibility="{x:Bind Path=ShowMore,Mode=OneWay}" Click="btnLoadMoreFall_Click" HorizontalAlignment="Center" Padding="4" Foreground="Gray">
+                                        <HyperlinkButton x:Name="btnLoadMoreFall" Visibility="{x:Bind Path=ShowMore,Mode=OneWay}" Click="btnLoadMoreFall_Click" HorizontalAlignment="Center" Padding="4" Foreground="{ThemeResource ForegroundTextColor}">
                                             <TextBlock>加载更多</TextBlock>
                                         </HyperlinkButton>
                                         <ProgressRing IsActive="True" Visibility="{x:Bind Path=ShowMore,Converter={StaticResource display},Mode=OneWay}" HorizontalAlignment="Center"></ProgressRing>

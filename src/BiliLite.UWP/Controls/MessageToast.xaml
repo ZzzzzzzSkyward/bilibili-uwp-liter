@@ -14,7 +14,7 @@
     <Grid x:Name="mainGrid" >
 
 
-        <Border x:Name="border" Grid.Row="1" BorderThickness="2" BorderBrush="#b1b1b1" Background="#e7e7e7"  HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="36,0,36,0" Padding="16,8" >
+        <Border x:Name="border" Grid.Row="1" BorderThickness="2" BorderBrush="#b1b1b1" Background="#e7e7e7"  HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="36,0,36,72" Padding="16,8">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition/>
@@ -26,8 +26,26 @@
                 </StackPanel>
 
             </Grid>
-
+            <Border.Resources>
+                <Storyboard x:Name="EnterStoryboard">
+                    <DoubleAnimation Storyboard.TargetName="border"
+                                             Storyboard.TargetProperty="Opacity"
+                                             Duration="0:0:1" From="0" To="1">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseOut"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+                <Storyboard x:Name="ExitStoryboard">
+                    <DoubleAnimation Storyboard.TargetName="border"
+                                             Storyboard.TargetProperty="Opacity"
+                                             Duration="0:0:1" From="1" To="0">
+                        <DoubleAnimation.EasingFunction>
+                            <CubicEase EasingMode="EaseIn"/>
+                        </DoubleAnimation.EasingFunction>
+                    </DoubleAnimation>
+                </Storyboard>
+            </Border.Resources>
         </Border>
-
     </Grid>
 </UserControl>

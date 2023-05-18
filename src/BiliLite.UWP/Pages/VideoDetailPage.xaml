@@ -91,7 +91,7 @@
                                 Foreground="{x:Bind Path=videoDetailVM.VideoInfo.req_user.dislike,Mode=OneWay,Converter={StaticResource colorSelct},ConverterParameter=1}">
                             <StackPanel>
                                 <FontIcon Margin="0 -2 0 2" FontFamily="{StaticResource BiliIconFont}" Glyph="&#xE6C5;" />
-                                <TextBlock  FontSize="12" TextAlignment="Center" Text="不喜欢"></TextBlock>
+                                <TextBlock Margin="-10 0 -10 0" FontSize="12" TextAlignment="Center" Text="不喜欢"></TextBlock>
                             </StackPanel>
                         </Button>
                         <Button Background="Transparent"

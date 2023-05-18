@@ -27,8 +27,8 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{x:Bind Path=title}"></TextBlock>
-                        <TextBlock Foreground="Gray" Grid.Column="1" Visibility="{x:Bind Path=privacy,Converter={StaticResource display}}">公开</TextBlock>
-                        <TextBlock Foreground="Gray" Grid.Column="1" Visibility="{x:Bind Path=privacy}">私密</TextBlock>
+                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Grid.Column="1" Visibility="{x:Bind Path=privacy,Converter={StaticResource display}}">公开</TextBlock>
+                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Grid.Column="1" Visibility="{x:Bind Path=privacy}">私密</TextBlock>
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>

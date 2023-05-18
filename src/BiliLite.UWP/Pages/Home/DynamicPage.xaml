@@ -37,17 +37,17 @@
                     </Grid>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
-                    <TextBlock TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=video.title}"></TextBlock>
-                    <TextBlock Foreground="Gray" Margin="0 2 0 0">观看:<Run Text="{x:Bind Path=video.stat.view,Converter={StaticResource numberToStringConvert}}"/> 弹幕:<Run Text="{x:Bind Path=video.stat.danmaku,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                    <TextBlock FontSize="20" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=video.title}"></TextBlock>
+                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">观看:<Run Text="{x:Bind Path=video.stat.view,Converter={StaticResource numberToStringConvert}}"/> 弹幕:<Run Text="{x:Bind Path=video.stat.danmaku,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="24" Height="24">
                             <Ellipse.Fill>
                                 <ImageBrush ImageSource="{x:Bind Path=video.owner.face,Converter={StaticResource imageConvert2},ConverterParameter='36h'}"></ImageBrush>
                             </Ellipse.Fill>
                         </Ellipse>
-                        <TextBlock Margin="8 0 0 0" Foreground="Gray" VerticalAlignment="Center" Text="{x:Bind Path=video.owner.name}"></TextBlock>
+                        <TextBlock Margin="8 0 0 0" Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" Text="{x:Bind Path=video.owner.name}"></TextBlock>
                     </StackPanel>
-                    <TextBlock Foreground="Gray" Margin="0 2 0 0">发表于 <Run Text="{x:Bind Path=video.pubdate,Converter={StaticResource time},ConverterParameter='ts'}"/></TextBlock>
+                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">发表于 <Run Text="{x:Bind Path=video.pubdate,Converter={StaticResource time},ConverterParameter='ts'}"/></TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>
@@ -66,8 +66,8 @@
                 </Grid>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                     <TextBlock TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=season.season.title}"></TextBlock>
-                    <TextBlock  Foreground="Gray" VerticalAlignment="Center" Text="{x:Bind Path=season.new_desc}"></TextBlock>
-                    <TextBlock Foreground="Gray" Margin="0 2 0 0">更新于 <Run Text="{x:Bind Path=desc.timestamp,Converter={StaticResource time},ConverterParameter='ts'}"/></TextBlock>
+                    <TextBlock  Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" Text="{x:Bind Path=season.new_desc}"></TextBlock>
+                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">更新于 <Run Text="{x:Bind Path=desc.timestamp,Converter={StaticResource time},ConverterParameter='ts'}"/></TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>
@@ -110,16 +110,16 @@
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis">【鹅厂珍藏】awsl！全球限量3000个这是第0705号隔壁动物园都馋哭了</TextBlock>
-                                <TextBlock Foreground="Gray" Margin="0 2 0 0">观看:11.4万 弹幕:2000</TextBlock>
+                                <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">观看:11.4万 弹幕:2000</TextBlock>
                                 <StackPanel Orientation="Horizontal">
                                         <Ellipse Width="24" Height="24">
                                             <Ellipse.Fill>
                                                 <ImageBrush ImageSource="https://i1.hdslb.com/bfs/face/31706c82949b3ba4756a411825c3f16aeb14ad44.jpg"></ImageBrush>
                                             </Ellipse.Fill>
                                         </Ellipse>
-                                        <TextBlock Margin="8 0 0 0" Foreground="Gray" VerticalAlignment="Center">腾讯公司官方帐号</TextBlock>
+                                        <TextBlock Margin="8 0 0 0" Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center">腾讯公司官方帐号</TextBlock>
                                     </StackPanel>
-                                    <TextBlock Foreground="Gray" Margin="0 2 0 0">发表于 2小时前</TextBlock>
+                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">发表于 2小时前</TextBlock>
                                 
                             </StackPanel>
                             </Grid>
@@ -140,8 +140,8 @@
                             </Grid>
                             <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                 <TextBlock TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis">这个勇者明明超强却过分慎重</TextBlock>
-                                <TextBlock  Foreground="Gray" VerticalAlignment="Center">第10话 明明是老人却过于厉害</TextBlock>
-                                <TextBlock Foreground="Gray" Margin="0 2 0 0">更新于 2小时前</TextBlock>
+                                <TextBlock  Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center">第10话 明明是老人却过于厉害</TextBlock>
+                                <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">更新于 2小时前</TextBlock>
 
                             </StackPanel>
                         </Grid>
@@ -151,7 +151,7 @@
                 
                 <toolkit:AdaptiveGridView.Footer>
                     <StackPanel>
-                        <HyperlinkButton  Command="{x:Bind Path=dynamicVM.LoadMoreCommand}" Visibility="{x:Bind Path=dynamicVM.Loading,Mode=OneWay,Converter={StaticResource display}}" Foreground="Gray" HorizontalAlignment="Center" x:Name="btnLoadMore">
+                        <HyperlinkButton  Command="{x:Bind Path=dynamicVM.LoadMoreCommand}" Visibility="{x:Bind Path=dynamicVM.Loading,Mode=OneWay,Converter={StaticResource display}}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" x:Name="btnLoadMore">
                             <TextBlock>加载更多</TextBlock>
                         </HyperlinkButton>
                         <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.Loading,Mode=OneWay}"></ProgressRing>

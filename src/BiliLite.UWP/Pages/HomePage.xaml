@@ -26,7 +26,7 @@
                                PaneDisplayMode="Top"  
                                IsBackButtonVisible="Collapsed" >
             <winui:NavigationView.AutoSuggestBox>
-                <AutoSuggestBox x:Name="SearchBox" QuerySubmitted="SearchBox_QuerySubmitted" MinWidth="140" PlaceholderText="你想找什么呢?" QueryIcon="Find"></AutoSuggestBox>
+                <AutoSuggestBox x:Name="SearchBox" QuerySubmitted="SearchBox_QuerySubmitted" MinWidth="140" PlaceholderText="你想找什么呢?" QueryIcon="Find" Background="Transparent"></AutoSuggestBox>
             </winui:NavigationView.AutoSuggestBox>
             <winui:NavigationView.PaneFooter>
                 <StackPanel Margin="-8 0 0 0" Orientation="Horizontal">
