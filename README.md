@@ -16,7 +16,9 @@
 
 ## 已知bug
 
-无法使用密码、手机登录，因为验证码显示不出来。所以只能二维码登录
+- 无法使用密码、手机登录。所以只能二维码登录
+
+- 无法合并视频，因为没访问权限
 
 ## 下载
 
@@ -27,6 +29,14 @@
 https://github.com/ywmoyue/biliuwp-lite
 
 提供17763版本 https://github.com/ZzzzzzzSkyward/biliuwp-lite-fix
+
+## 功能建议
+
+去[ywmoyue](https://github.com/ywmoyue/biliuwp-lite)那边提交
+
+## 预览
+
+[screenshot](./screenshot/ui.png)
 
 ## 参考
 

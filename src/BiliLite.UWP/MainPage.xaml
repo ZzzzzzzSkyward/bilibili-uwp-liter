@@ -32,9 +32,10 @@
             <winui:TabView.KeyboardAccelerators>
                 <KeyboardAccelerator Key="T" Modifiers="Control" Invoked="NewTabKeyboardAccelerator_Invoked" />
                 <KeyboardAccelerator Key="W" Modifiers="Control" Invoked="CloseSelectedTabKeyboardAccelerator_Invoked" />
+                <KeyboardAccelerator Key="T" Modifiers="Control,Shift" Invoked="ReopenLastTab" />
             </winui:TabView.KeyboardAccelerators>
             <winui:TabView.TabItems>
-                <winui:TabViewItem IsClosable="False" Header="首页">
+                <winui:TabViewItem IsClosable="False" Header="首页" MinWidth="100" >
                     <winui:TabViewItem.IconSource>
                         <winui:SymbolIconSource Symbol="Home" />
                     </winui:TabViewItem.IconSource>

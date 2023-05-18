@@ -224,13 +224,23 @@ namespace BiliLite
         }
         public bool IsViewing()
         {
-            return imgViewer.Visibility == Visibility.Visible;
+            return gridViewer.Visibility == Visibility.Visible;
         }
         public async void CloseView()
         {
             imgViewer.ClearImage();
             await gridViewer.FadeOutAsync();
             gridViewer.Visibility = Visibility.Collapsed;
+        }
+
+        private void ReopenLastTab(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            MessageCenter.NavigateToPage(this, new NavigationInfo()
+            {
+                page = typeof(NewPage),
+                title = "新建页面"
+            });
+            args.Handled = true;
         }
     }
 }
