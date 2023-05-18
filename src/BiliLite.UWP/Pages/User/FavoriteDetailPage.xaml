@@ -24,6 +24,7 @@
                 <Grid.ContextFlyout>
                     <MenuFlyout>
                         <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看"/>
+                        <MenuFlyoutItem x:Name="Remover" Click="Remove_Click" Icon="Add" Text="取消收藏"/>
                     </MenuFlyout>
                 </Grid.ContextFlyout>
                 <Grid.ColumnDefinitions>
@@ -39,9 +40,9 @@
                     <toolkit:ImageEx IsCacheEnabled="True" Height="80" Width="120" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}"></toolkit:ImageEx>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
-                    <TextBlock MaxLines="2" Margin="0 0 0 4" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=upper.name}"/></TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">播放:<Run Text="{x:Bind Path=cnt_info.play,Converter={StaticResource numberToStringConvert}}"></Run> 弹幕:<Run Text="{x:Bind Path=cnt_info.danmaku,Converter={StaticResource numberToStringConvert}}"></Run></TextBlock>
+                    <TextBlock MaxLines="2" Margin="0 0 0 0" TextTrimming="CharacterEllipsis" Text="{x:Bind title}" FontSize="15" MinHeight="40" TextWrapping="Wrap"></TextBlock>
+                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=upper.name}"/></TextBlock>
+                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">播放:<Run Text="{x:Bind Path=cnt_info.play,Converter={StaticResource numberToStringConvert}}"></Run> 弹幕:<Run Text="{x:Bind Path=cnt_info.danmaku,Converter={StaticResource numberToStringConvert}}"></Run></TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>

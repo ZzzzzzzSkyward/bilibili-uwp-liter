@@ -52,8 +52,8 @@
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                     <TextBlock MaxLines="2" Margin="0 4" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray" Text="{x:Bind Path=new_ep.index_show}"></TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray" Text="{x:Bind Path=progress_text}"></TextBlock>
+                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=new_ep.index_show}"></TextBlock>
+                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=progress_text}"></TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>
@@ -75,9 +75,9 @@
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray">共<Run Text="{x:Bind Path=media_count}"/>个视频</TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray" Visibility="{x:Bind Path=privacy,Converter={StaticResource display}}">公开</TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray" Visibility="{x:Bind Path=privacy}">私密</TextBlock>
+                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">共<Run Text="{x:Bind Path=media_count}"/>个视频</TextBlock>
+                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Visibility="{x:Bind Path=privacy,Converter={StaticResource display}}">公开</TextBlock>
+                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Visibility="{x:Bind Path=privacy}">私密</TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>
@@ -117,7 +117,7 @@
                                 </toolkit:AdaptiveGridView.Header>
                                 <toolkit:AdaptiveGridView.Footer>
                                     <Grid>
-                                        <HyperlinkButton Command="{x:Bind Path=videoVM.LoadMoreCommand}" Visibility="{x:Bind Path=videoVM.HasMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center" >
+                                        <HyperlinkButton Command="{x:Bind Path=videoVM.LoadMoreCommand}" Visibility="{x:Bind Path=videoVM.HasMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" >
                                             <TextBlock>加载更多</TextBlock>
                                         </HyperlinkButton>
                                     </Grid>
@@ -210,14 +210,14 @@
                         </GridView.Header>
                         <toolkit:AdaptiveGridView.Footer>
                             <StackPanel>
-                                <HyperlinkButton Command="{x:Bind Path=animeVM.LoadMoreCommand}" Visibility="{x:Bind Path=animeVM.ShowLoadMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center" x:Name="btnLoadMore">
+                                <HyperlinkButton Command="{x:Bind Path=animeVM.LoadMoreCommand}" Visibility="{x:Bind Path=animeVM.ShowLoadMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" x:Name="btnLoadMore">
                                     <TextBlock>加载更多</TextBlock>
                                 </HyperlinkButton>
                                 <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=animeVM.Loading,Mode=OneWay}"></ProgressRing>
                             </StackPanel>
                         </toolkit:AdaptiveGridView.Footer>
                     </controls:MyAdaptiveGridView>
-                    <TextBlock Visibility="{x:Bind Path=animeVM.Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">这里还什么都没有呢~</TextBlock>
+                    <TextBlock Visibility="{x:Bind Path=animeVM.Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">这里还什么都没有呢~</TextBlock>
                     <controls:RoundButton  Command="{x:Bind Path=animeVM.RefreshCommand}" Visibility="{x:Bind Path=animeVM.Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                         <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                     </controls:RoundButton>
@@ -282,14 +282,14 @@
                         </GridView.Header>
                         <toolkit:AdaptiveGridView.Footer>
                             <StackPanel>
-                                <HyperlinkButton  Command="{x:Bind Path=cinemaVM.LoadMoreCommand}" Visibility="{x:Bind Path=cinemaVM.ShowLoadMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center">
+                                <HyperlinkButton  Command="{x:Bind Path=cinemaVM.LoadMoreCommand}" Visibility="{x:Bind Path=cinemaVM.ShowLoadMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center">
                                     <TextBlock>加载更多</TextBlock>
                                 </HyperlinkButton>
                                 <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=cinemaVM.Loading,Mode=OneWay}"></ProgressRing>
                             </StackPanel>
                         </toolkit:AdaptiveGridView.Footer>
                     </controls:MyAdaptiveGridView>
-                    <TextBlock Visibility="{x:Bind Path=cinemaVM.Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">这里还什么都没有呢~</TextBlock>
+                    <TextBlock Visibility="{x:Bind Path=cinemaVM.Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">这里还什么都没有呢~</TextBlock>
                     <controls:RoundButton  Command="{x:Bind Path=cinemaVM.RefreshCommand}" Visibility="{x:Bind Path=cinemaVM.Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                         <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                     </controls:RoundButton>

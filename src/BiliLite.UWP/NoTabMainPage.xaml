@@ -22,7 +22,7 @@
                 <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="14" Glyph="&#xE0A6;" />
             </Button>
             <Border Grid.Column="1"  x:Name="TitleBar"  Background="#00000000">
-                <TextBlock x:Name="txtTitle" Margin="12 0" VerticalAlignment="Center">哔哩哔哩 UWP</TextBlock>
+                <TextBlock x:Name="txtTitle" Margin="12 0" VerticalAlignment="Center">哔哩哔哩 UWP Lite</TextBlock>
             </Border>
         </Grid>
 

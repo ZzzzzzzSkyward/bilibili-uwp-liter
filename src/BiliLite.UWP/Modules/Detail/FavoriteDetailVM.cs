@@ -167,6 +167,10 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
+        public async Task Delete(FavoriteInfoVideoItemModel item)
+        {
+            await Delete(new List<FavoriteInfoVideoItemModel> { item });
+        }
         public async Task Delete(List<FavoriteInfoVideoItemModel> items)
         {
             try

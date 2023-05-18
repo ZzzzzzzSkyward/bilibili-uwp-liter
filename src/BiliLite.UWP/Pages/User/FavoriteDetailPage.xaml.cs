@@ -91,6 +91,12 @@ namespace BiliLite.Pages.User
             }
         }
 
+        private async void Remove_Click(object sender, RoutedEventArgs e)
+        {
+            var data = (sender as MenuFlyoutItem).DataContext as FavoriteInfoVideoItemModel;
+            await favoriteDetailVM.Delete(data);
+        }
+
         private async void btnMove_Click(object sender, RoutedEventArgs e)
         {
             if (listView.SelectedItems.Count > 0)
