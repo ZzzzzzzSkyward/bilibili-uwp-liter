@@ -66,5 +66,6 @@
     <rescap:Capability Name="documentsLibrary"/>
     <uap3:Capability Name="backgroundMediaPlayback"/>
     <uap:Capability Name="removableStorage"/>
+    <rescap:Capability Name="confirmAppClose"/>
   </Capabilities>
 </Package>

@@ -192,9 +192,7 @@ namespace BiliLite
         {
             if (gridViewer.Visibility == Visibility.Visible)
             {
-                imgViewer.ClearImage();
-                await gridViewer.FadeOutAsync();
-                gridViewer.Visibility = Visibility.Collapsed;
+                CloseView();
             }
         }
 
@@ -222,6 +220,16 @@ namespace BiliLite
         private void tabView_TabItemsChanged(TabView sender, IVectorChangedEventArgs args)
         {
             
+        }
+        public bool IsViewing()
+        {
+            return imgViewer.Visibility == Visibility.Visible;
+        }
+        public async void CloseView()
+        {
+            imgViewer.ClearImage();
+            await gridViewer.FadeOutAsync();
+            gridViewer.Visibility = Visibility.Collapsed;
         }
     }
 }

@@ -11,6 +11,8 @@ using Windows.ApplicationModel.Core;
 using Windows.Foundation;
 using Windows.Graphics.Display;
 using Windows.UI;
+using Windows.UI.Core.Preview;
+using Windows.UI.Popups;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -160,6 +162,7 @@ namespace BiliLite
                 }
                 // 确保当前窗口处于活动状态
                 Window.Current.Activate();
+                SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += OnExiting;
                 ExtendAcrylicIntoTitleBar();
             }
         }
@@ -242,6 +245,54 @@ namespace BiliLite
             }
            
         }
+        /// <summary>
+        /// 在将要挂起应用程序执行时调用。  在不知道应用程序
+        /// 无需知道应用程序会被终止还是会恢复，
+        /// 并让内存内容保持不变。
+        /// 有图片时要确认
+        /// </summary>
+        /// <param name="sender">挂起的请求的源。</param>
+        /// <param name="e">有关挂起请求的详细信息。</param>
+        private async void OnExiting(object sender, SystemNavigationCloseRequestedPreviewEventArgs e)
+        {
+            var deferral = e.GetDeferral();
+            try
+            {
+                var rootFrame = Window.Current.Content as Frame;
+                var mainPage = rootFrame.Content as MainPage;
+                if (mainPage.IsViewing())
+                {
+                    mainPage.CloseView();
+                    e.Handled = true;
+                    /*
+                                       var messageDialog = new ContentDialog
+                                       {
+                                           Title = "图片浏览",
+                                           Content = "你是不是按错了?",
+                                           PrimaryButtonText = "关闭图片",
+                                           CloseButtonText = "退出APP"
+                                       };
 
+                                       messageDialog.DefaultButton = ContentDialogButton.Primary;
+
+                                       var result = await messageDialog.ShowAsync();
+                                       switch (result)
+                                       {
+                                           case ContentDialogResult.None:
+                                               e.Handled = true;
+                                               break;
+                                           case ContentDialogResult.Primary:
+                                               break;
+                                           case ContentDialogResult.Secondary:
+                                               break;
+                                           default:
+                                               break;
+                                       }
+                    */
+                }
+            }
+            catch (Exception ex) { }
+            deferral.Complete();
+        }
     }
 }
