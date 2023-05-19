@@ -8,7 +8,19 @@ using Windows.Web.Http.Filters;
 namespace BiliLite.Api
 {
     public static class ApiHelper
-    { 
+    {
+        static ApiHelper()
+        {
+            var sets = new List<string>();
+            bool single = false;
+            foreach (var i in settingsname)
+            {
+                single=!single;
+                sets.Add(
+                SettingHelper.GetValue(i, single?DefaultKey.Appkey:DefaultKey.Secret));
+            }
+            Init(sets);
+        }
         // BiliLite.WebApi 项目部署的服务器
         //public static string baseUrl = "http://localhost:5000";
         public const string IL_BASE_URL = "https://biliapi.iliili.cn";
@@ -22,7 +34,18 @@ namespace BiliLite.Api
 
         //漫游默认的服务器
         public const string ROMAING_PROXY_URL = "https://b.chuchai.vip";
-
+        public static List<string> settingsname = new List<string>() {
+    "appkey_android_1",
+    "appkey_android_2",
+    "appkey_login_1",
+    "appkey_login_2",
+    "appkey_video_1",
+    "appkey_video_2",
+    "appkey_tv_1",
+    "appkey_tv_2",
+    "appkey_web_1",
+    "appkey_web_2",
+        };
         public static ApiKeyInfo DefaultKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
         public static ApiKeyInfo AndroidKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
         public static ApiKeyInfo AndroidVideoKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
@@ -92,7 +115,7 @@ namespace BiliLite.Api
                 stringBuilder.Append((stringBuilder.Length > 0 ? "&" : string.Empty));
                 stringBuilder.Append(str1);
             }
-            stringBuilder.Append(apiKeyInfo.Secret);
+            stringBuilder.Append(string.IsNullOrEmpty(apiKeyInfo.Secret)?DefaultKey.Secret:apiKeyInfo.Secret);
             result = Utils.ToMD5(stringBuilder.ToString()).ToLower();
             return par + result;
         }
