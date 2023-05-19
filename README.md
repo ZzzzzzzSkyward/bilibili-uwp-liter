@@ -36,7 +36,7 @@ https://github.com/ywmoyue/biliuwp-lite
 
 ## 预览
 
-[screenshot](./screenshot/ui.png)
+![screenshot](./screenshot/ui.png)
 
 ## 参考
 
