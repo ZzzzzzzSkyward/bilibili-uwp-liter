@@ -64,7 +64,7 @@
                     <RowDefinition/>
                     <RowDefinition Height="Auto" x:Name="BottomInfo"/>
                 </Grid.RowDefinitions>
-                <Grid Background="Black">
+                <Grid Background="Transparent">
                     <control:PlayerControl x:Name="player" AllMediaEndEvent="player_AllMediaEndEvent" FullScreenEvent="PlayerControl_FullScreenEvent" FullWindowEvent="PlayerControl_FullWindowEvent" ChangeEpisodeEvent="PlayerControl_ChangeEpisodeEvent"/>
                 </Grid>
                 <Grid Grid.Row="1" SizeChanged="OnGridSizeChanged">

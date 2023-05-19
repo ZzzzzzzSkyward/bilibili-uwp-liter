@@ -88,14 +88,21 @@
                         <HyperlinkButton.CommandParameter>
                             <x:Int32>2</x:Int32>
                         </HyperlinkButton.CommandParameter>
-                        <TextBlock>切换至二维码登录</TextBlock>
+                        <TextBlock>二维码登录</TextBlock>
                     </HyperlinkButton>
                     <TextBlock Margin="4 0" VerticalAlignment="Center">/</TextBlock>
                     <HyperlinkButton  Command="{x:Bind Path=loginVM.LoginTypeCommand}"  >
                         <HyperlinkButton.CommandParameter>
                             <x:Int32>0</x:Int32>
                         </HyperlinkButton.CommandParameter>
-                        <TextBlock>切换至密码登录</TextBlock>
+                        <TextBlock>密码登录</TextBlock>
+                    </HyperlinkButton>
+                    <TextBlock Margin="4 0" VerticalAlignment="Center">/</TextBlock>
+                    <HyperlinkButton  Command="{x:Bind Path=loginVM.LoginTypeCommand}"  >
+                        <HyperlinkButton.CommandParameter>
+                            <x:Int32>3</x:Int32>
+                        </HyperlinkButton.CommandParameter>
+                        <TextBlock>手动登录</TextBlock>
                     </HyperlinkButton>
                 </StackPanel>
             </StackPanel>
@@ -115,25 +122,43 @@
                         <HyperlinkButton.CommandParameter>
                             <x:Int32>0</x:Int32>
                         </HyperlinkButton.CommandParameter>
-                        <TextBlock>切换至密码登录</TextBlock>
+                        <TextBlock>密码登录</TextBlock>
                     </HyperlinkButton>
                     <TextBlock Margin="4 0" VerticalAlignment="Center">/</TextBlock>
                     <HyperlinkButton Command="{x:Bind Path=loginVM.LoginTypeCommand}"  >
                         <HyperlinkButton.CommandParameter>
                             <x:Int32>1</x:Int32>
                         </HyperlinkButton.CommandParameter>
-                        <TextBlock>切换至短信登录</TextBlock>
+                        <TextBlock>短信登录</TextBlock>
+                    </HyperlinkButton>
+                    <TextBlock Margin="4 0" VerticalAlignment="Center">/</TextBlock>
+                    <HyperlinkButton Command="{x:Bind Path=loginVM.LoginTypeCommand}"  >
+                        <HyperlinkButton.CommandParameter>
+                            <x:Int32>3</x:Int32>
+                        </HyperlinkButton.CommandParameter>
+                        <TextBlock>手动登录</TextBlock>
                     </HyperlinkButton>
                 </StackPanel>
             </StackPanel>
             <!--手动登录-->
-            <StackPanel Visibility="{x:Bind Path=loginVM.Manual,Mode=OneWay}">
-                <RichTextBlock Margin="4 0" FocusVisualPrimaryBrush="#E4D12A2A" Foreground="#E44035A6" >
-                    <Paragraph TextDecorations="Strikethrough">由于WebView无法加载证书过期的网站</Paragraph>
-                    <Paragraph TextDecorations="Strikethrough">请使用打开的网页手动加载验证码，然后把网址复制过来</Paragraph>
-                    <Paragraph >会发生密匙错误，不知道怎么回事</Paragraph>
+            <StackPanel Visibility="{x:Bind Path=loginVM.LoginType,Mode=OneWay,Converter={StaticResource display},ConverterParameter=3}">
+                <TextBox Margin="4 0" x:Name="APPKEY" PlaceholderText="appkey" TextChanged="RefreshURL"></TextBox>
+                <TextBox Margin="4 0" x:Name="APPSEC" PlaceholderText="appsec" TextChanged="RefreshURL"></TextBox>
+                <RichTextBlock Margin="4 0"  Foreground="{ThemeResource ForegroundTextColor}" AllowFocusOnInteraction="True" IsTextSelectionEnabled="True">
+                    <RichTextBlock.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem MaxWidth="1000" Click="CopyURL" x:Name="MenuItem"></MenuFlyoutItem>
+                        </MenuFlyout>
+                    </RichTextBlock.ContextFlyout>
+                    <Paragraph>
+                        打开
+                        <Hyperlink x:Name="Hyper">
+                            <Run x:Name="HyperText"></Run>                </Hyperlink>
+                    </Paragraph>
+                    <Paragraph>然后把mid和access_key的值复制过来</Paragraph>
                 </RichTextBlock>
-                <TextBox Margin="4 0" x:Name="ManualResult" PlaceholderText="形如geetest.result?..." Foreground="#E43D4FC1" TextChanged="ManualLogin"></TextBox>
+                <TextBox Margin="4 0" x:Name="UID" PlaceholderText="uid"></TextBox>
+                <TextBox Margin="4 0" x:Name="ManualResult" PlaceholderText="access_key"></TextBox>
             </StackPanel>
         </StackPanel>
         <StackPanel VerticalAlignment="Bottom" IsHitTestVisible="False" Margin="0 0 0 70" Visibility="{x:Bind Path=loginVM.LoginType,Mode=OneWay,Converter={StaticResource display},ConverterParameter=2}">

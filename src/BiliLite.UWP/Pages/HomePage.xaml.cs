@@ -50,7 +50,7 @@ namespace BiliLite.Pages
         {
             if (!NetworkHelper.Instance.ConnectionInformation.IsInternetAvailable)
             {
-                return;
+               // return;
             }
 
             if (SettingHelper.Account.Logined)
@@ -217,6 +217,11 @@ namespace BiliLite.Pages
 
         private void MenuUserCenter_Click(object sender, RoutedEventArgs e)
         {
+            if(SettingHelper.Account.Profile is null)
+            {
+                Utils.ShowMessageToast("无法获取用户名");
+                return;
+            }
             MessageCenter.NavigateToPage(this, new NavigationInfo()
             {
                 icon = Symbol.Contact,
@@ -304,6 +309,10 @@ namespace BiliLite.Pages
             });
         }
 
+        private void btnUser_Click(object sender, RoutedEventArgs e)
+        {
+            homeVM.LoginUserCard();
+        }
     }
 
 

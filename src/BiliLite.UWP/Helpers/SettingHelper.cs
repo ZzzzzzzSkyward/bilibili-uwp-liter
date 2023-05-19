@@ -137,7 +137,7 @@ namespace BiliLite.Helpers
             /// </summary>
             public const string USER_ID = "uid";
             /// <summary>
-            /// 到期时间
+            /// 用户主页
             /// </summary>
             public const string USER_PROFILE = "userProfile";
             public static MyProfileModel Profile

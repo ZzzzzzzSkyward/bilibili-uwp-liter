@@ -12,9 +12,11 @@ using Windows.Web.Http.Filters;
 using BiliLite.Models;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Diagnostics;
+using System.Timers;
 
 namespace BiliLite.Helpers
 {
+
     /// <summary>
     /// 网络请求方法封装
     /// </summary>
@@ -27,8 +29,20 @@ namespace BiliLite.Helpers
         /// <param name="headers"></param>
         /// <param name="cookie"></param>
         /// <returns></returns>
-        public async static Task<HttpResults> Get(string url, IDictionary<string, string> headers = null)
+        public static DateTime lasttime=System.DateTime.Now;
+        public static TimeSpan dt = new TimeSpan(1);
+        public async static Task<HttpResults> Get( string url)
         {
+            return await Get(url, null);
+        }
+        public async static Task<HttpResults> Get( string url, IDictionary<string, string> headers)
+        {
+            //wait 
+            var t=DateTime.Now;
+            if (t - lasttime < dt)
+            {
+                await Task.Delay(dt + (lasttime - t));
+            }
             Debug.WriteLine("GET:" + url);
             Utils.AddALog("[GET]" + url);
             try

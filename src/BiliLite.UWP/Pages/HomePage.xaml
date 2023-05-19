@@ -30,7 +30,7 @@
             </winui:NavigationView.AutoSuggestBox>
             <winui:NavigationView.PaneFooter>
                 <StackPanel Margin="-8 0 0 0" Orientation="Horizontal">
-                    <Button x:Name="btnUser" Visibility="{x:Bind Path=homeVM.IsLogin,Mode=OneWay}" BorderThickness="0"  Width="48" Height="40" Background="Transparent">
+                    <Button x:Name="btnUser" Visibility="{x:Bind Path=homeVM.IsLogin,Mode=OneWay}" BorderThickness="0"  Width="48" Height="40" Background="Transparent" Click="btnUser_Click">
                         <Ellipse Width="24" Height="24" >
                             <Ellipse.Fill>
                                 <ImageBrush  x:Name="imgPhoto"  ImageSource="{x:Bind Path=homeVM.Profile.face,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='100w'}"/>

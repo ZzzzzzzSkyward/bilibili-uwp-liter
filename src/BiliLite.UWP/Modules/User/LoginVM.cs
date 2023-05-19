@@ -39,7 +39,7 @@ namespace BiliLite.Modules.User
         public ICommand SendSMSCommand { get; private set; }
         public ICommand RefreshQRCommand { get; private set; }
 
-        private int loginType = 1;
+        public int loginType = 1;
         /// <summary>
         /// 登录类型
         /// 0=账号密码，1=短信登录，2=二维码登录
@@ -81,7 +81,7 @@ namespace BiliLite.Modules.User
         public void ChangeLoginType(int type)
         {
             LoginType = type;
-           
+
             switch (type)
             {
                 case 0:
@@ -108,6 +108,11 @@ namespace BiliLite.Modules.User
                     GetQRAuthInfo();
                     Manual = false;
                     break;
+                case 3:
+                    Title = "手动登录";
+                    Utils.ShowMessageToast("记得调整一下appkey！");
+                    Manual = true;
+                    break;
                 default:
                     break;
             }
@@ -123,6 +128,7 @@ namespace BiliLite.Modules.User
             {
                 DoPasswordLogin();
             }
+
         }
 
         public async void ValidateLogin(JObject jObject)
