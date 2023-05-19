@@ -287,7 +287,7 @@
     <Grid Background="Black">
 
 
-        <SplitView x:Name="SplitView"  PanePlacement="Right" PaneBackground="#C8000000">
+        <SplitView x:Name="SplitView"  PanePlacement="Right" PaneBackground="{ThemeResource TransparentLayer}">
             <SplitView.Pane>
                 <Grid x:Name="Setting">
                     <Pivot x:Name="SettingPivot" RequestedTheme="Dark">
@@ -434,8 +434,8 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate>
-                                                <HyperlinkButton Margin="0 0 8 0" Foreground="White">
-                                                    <Border CornerRadius="4" Padding="8 4" Background="{ThemeResource ForegroundTextColor}">
+                                                <HyperlinkButton Margin="0 0 8 0" Foreground="{ThemeResource ForegroundBackColor}">
+                                                    <Border CornerRadius="4" Padding="8 4" Background="{ThemeResource ForegroundGridColor}">
                                                         <TextBlock FontSize="12" Text="{Binding}" ></TextBlock>
                                                     </Border>
                                                 </HyperlinkButton>

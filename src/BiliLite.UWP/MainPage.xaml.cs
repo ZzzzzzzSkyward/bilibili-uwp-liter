@@ -60,7 +60,7 @@ namespace BiliLite
 
             if (e.NavigationMode == NavigationMode.New && e.Parameter != null&&!string.IsNullOrEmpty(e.Parameter.ToString()))
             {
-                var result = await MessageCenter.HandelUrl(e.Parameter.ToString());
+                var result = await MessageCenter.HandleUrl(e.Parameter.ToString());
                 if (!result)
                 {
                     Utils.ShowMessageToast("无法打开链接:" + e.Parameter.ToString());

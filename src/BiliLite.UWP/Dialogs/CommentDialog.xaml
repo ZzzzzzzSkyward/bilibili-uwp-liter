@@ -6,11 +6,12 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:BiliLite.Controls"
     mc:Ignorable="d"
-    d:DesignHeight="800"
+    d:DesignHeight="800" Visibility="{x:Bind isvisible, Mode=OneWay}" 
     d:DesignWidth="1000">
 
     <Grid Background="#00FFFFFF" Tapped="Grid_Tapped">
-        <Grid x:Name="RootBorder" Tapped="RootBorder_Tapped" BorderThickness="1" BorderBrush="#31808080" Margin="24 32" Background="{ThemeResource SystemControlChromeLowAcrylicElementBrush}"  MaxWidth="600"  CornerRadius="8" >
+        <Grid x:Name="RootBorder" Tapped="RootBorder_Tapped" BorderThickness="1" BorderBrush="#31808080" Margin="24 32" Background="{ThemeResource TransparentLayer}"  MaxWidth="600"  CornerRadius="8" CanDrag="True" PointerPressed="RootBorder_PointerPressed"
+               PointerReleased="RootBorder_PointerReleased" PointerMoved="RootBorder_PointerMoved" RenderTransformOrigin="0.5 0.5">
 
             <controls:CommentControl x:Name="comment" HorizontalAlignment="Stretch"></controls:CommentControl>
 

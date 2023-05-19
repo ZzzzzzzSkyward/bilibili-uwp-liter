@@ -200,6 +200,85 @@ namespace BiliLite.Modules
                 };
             }
         }
+        
+        /// <summary>
+        /// 登录V3 2023
+        /// </summary>
+        /// <returns></returns>
+        public async Task<LoginCallbackModel> Login2023(string username, string password)
+        {
+            try
+            {
+
+                var results = await accountApi.LoginV3(username, await EncryptedPassword(password)).Request();
+                if (results.status)
+                {
+                    var m = await results.GetData<LoginDataV3Model>();
+                    if (m.code == 0)
+                    {
+                        if (m.data.status == 0)
+                        {
+                            await SaveLogin(m.data.token_info.access_token, m.data.token_info.refresh_token, m.data.token_info.expires_in, m.data.token_info.mid, m.data.sso,m.data.cookie_info);
+                            return new LoginCallbackModel()
+                            {
+                                status = LoginStatus.Success,
+                                message = "登录成功"
+                            };
+                        }
+                        if (m.data.status == 1 || m.data.status == 2)
+                        {
+                            return new LoginCallbackModel()
+                            {
+                                status = LoginStatus.NeedValidate,
+                                message = "本次登录需要安全验证",
+                                url = m.data.url
+                            };
+                        }
+                        return new LoginCallbackModel()
+                        {
+                            status = LoginStatus.Fail,
+                            message = m.message
+                        };
+                    }
+                    else if (m.code == -105)
+                    {
+                        return new LoginCallbackModel()
+                        {
+                            status = LoginStatus.NeedCaptcha,
+                            url = m.data.url,
+                            message = "登录需要验证码"
+                        };
+                    }
+                    else
+                    {
+                        return new LoginCallbackModel()
+                        {
+                            status = LoginStatus.Fail,
+                            message = m.message
+                        };
+                    }
+                }
+                else
+                {
+                    LogHelper.Log("登录V3 2023请求失败错误", LogType.ERROR);
+                    return new LoginCallbackModel()
+                    {
+                        status = LoginStatus.Error,
+                        message = results.message
+                    };
+                }
+
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("登录V3 2023错误", LogType.ERROR, ex);
+                return new LoginCallbackModel()
+                {
+                    status = LoginStatus.Error,
+                    message = "登录出现小问题,请重试"
+                };
+            }
+        }
 
 
         /// <summary>

@@ -23,7 +23,8 @@
                 </Grid.ColumnDefinitions>
                 <Grid.ContextFlyout>
                     <MenuFlyout>
-                        <MenuFlyoutItem Text="移除" Command="{x:Bind Path=DeleteCommand}" CommandParameter="{x:Bind}"></MenuFlyoutItem>
+						<MenuFlyoutItem Text="移除" Command="{x:Bind Path=DeleteCommand}" Icon="Delete" CommandParameter="{x:Bind}"></MenuFlyoutItem>
+						<!--MenuFlyoutItem Text="收藏" Command="{x:Bind Path=FavoriteCommand}" Icon="Add" CommandParameter="{x:Bind}"></MenuFlyoutItem-->
                     </MenuFlyout>
                 </Grid.ContextFlyout>
                 <Border CornerRadius="{StaticResource ImageCornerRadius}">

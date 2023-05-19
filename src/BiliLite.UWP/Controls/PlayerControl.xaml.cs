@@ -360,6 +360,9 @@ namespace BiliLite.Controls
              * x/m       下一p
              * f1/f2     速度
              * f3/v      静音/100音量
+             * f4/ctrl+s        下载
+             * f5        刷新
+             * f7        [系统使用]
              */
             switch (args.VirtualKey)
             {

@@ -75,7 +75,7 @@ namespace BiliLite.Pages.Home
 
         private async void gvFall_ItemClick(object sender, ItemClickEventArgs e)
         {
-            var result = await MessageCenter.HandelUrl((e.ClickedItem as CinemaHomeFallItemModel).link);
+            var result = await MessageCenter.HandleUrl((e.ClickedItem as CinemaHomeFallItemModel).link);
             if (!result)
             {
                 Utils.ShowMessageToast("不支持打开的链接");
@@ -88,7 +88,7 @@ namespace BiliLite.Pages.Home
 
         private async void BannerItem_Click(object sender, RoutedEventArgs e)
         {
-            var result = await MessageCenter.HandelUrl(((sender as HyperlinkButton).DataContext as CinemaHomeBannerModel).url);
+            var result = await MessageCenter.HandleUrl(((sender as HyperlinkButton).DataContext as CinemaHomeBannerModel).url);
             if (!result)
             {
                 Utils.ShowMessageToast("不支持打开的链接");

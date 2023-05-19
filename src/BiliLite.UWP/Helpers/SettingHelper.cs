@@ -144,14 +144,14 @@ namespace BiliLite.Helpers
             {
                 get
                 {
-                    return JsonConvert.DeserializeObject<MyProfileModel>(storageHelper.Read<string>(USER_PROFILE));
+                    return GetValue<MyProfileModel>(USER_PROFILE, null);
                 }
             }
             public static bool Logined
             {
                 get
                 {
-                    return storageHelper.KeyExists(Account.ACCESS_KEY) && !string.IsNullOrEmpty(storageHelper.Read<string>(Account.ACCESS_KEY, null));
+                    return storageHelper.KeyExists(Account.ACCESS_KEY) && !string.IsNullOrEmpty(GetValue(Account.ACCESS_KEY, ""));
                 }
             }
             public static string AccessKey

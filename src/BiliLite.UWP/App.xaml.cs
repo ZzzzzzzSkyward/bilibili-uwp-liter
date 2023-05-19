@@ -156,7 +156,7 @@ namespace BiliLite
                 {
                     if (arguments != null && !string.IsNullOrEmpty(arguments.ToString()))
                     {
-                       await MessageCenter.HandelUrl(arguments.ToString());
+                       await MessageCenter.HandleUrl(arguments.ToString());
                     }
                     
                 }

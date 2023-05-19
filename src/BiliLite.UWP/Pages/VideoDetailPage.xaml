@@ -244,7 +244,8 @@
                                 <fa:FontAwesome Icon="Solid_Sync"></fa:FontAwesome>
                             </AppBarButton.Icon>
                             <AppBarButton.KeyboardAccelerators>
-                                <KeyboardAccelerator Key="F7"></KeyboardAccelerator>
+                                <KeyboardAccelerator Key="F4"></KeyboardAccelerator>
+                                <KeyboardAccelerator Key="S" Modifiers="Control"></KeyboardAccelerator>
                             </AppBarButton.KeyboardAccelerators>
                         </AppBarButton>
                         
@@ -263,7 +264,7 @@
                                     <MenuFlyoutItem Click="btnOpenQR_Click" >手机观看</MenuFlyoutItem>
                                     <MenuFlyoutItem Click="btnOpenWeb_Click" >浏览器打开</MenuFlyoutItem>
                                     <MenuFlyoutItem ToolTipService.ToolTip="F5" Click="btnRefresh_Click">刷新F5</MenuFlyoutItem>
-                                    <MenuFlyoutItem ToolTipService.ToolTip="F7" Click="btnDownload_Click">下载F7</MenuFlyoutItem>
+                                    <MenuFlyoutItem ToolTipService.ToolTip="F4" Click="btnDownload_Click">下载F4</MenuFlyoutItem>
                                 </MenuFlyout>
                             </Button.Flyout>
                         </Button>

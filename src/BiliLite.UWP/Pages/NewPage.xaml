@@ -35,6 +35,14 @@
                         </StackPanel>
                     </Border>
                 </HyperlinkButton>
+                <HyperlinkButton x:Name="BtnBilibili" Click="BtnBilibili_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                    <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
+                        <StackPanel VerticalAlignment="Center">
+                            <FontIcon FontFamily="{StaticResource BiliIconFont}" Glyph="&#xe6b6;" />
+                            <TextBlock TextAlignment="Center" Margin="0 8 0 0">B站</TextBlock>
+                        </StackPanel>
+                    </Border>
+                </HyperlinkButton>
                 <HyperlinkButton x:Name="BtnOpenLive" Click="BtnOpenLive_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">

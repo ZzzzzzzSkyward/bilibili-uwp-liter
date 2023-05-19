@@ -153,7 +153,7 @@ namespace BiliLite.Modules.User
         }
         public async void LaunchUrl(object url)
         {
-            var result = await MessageCenter.HandelUrl(url.ToString());
+            var result = await MessageCenter.HandleUrl(url.ToString());
             if (!result)
             {
                 Utils.ShowMessageToast("无法打开Url");

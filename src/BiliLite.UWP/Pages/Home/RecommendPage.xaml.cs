@@ -85,7 +85,7 @@ namespace BiliLite.Pages.Home
                 {
                     url = data.ad_info.creative_content.click_url ?? data.ad_info.creative_content.url;
                 }
-                await MessageCenter.HandelUrl(url);
+                await MessageCenter.HandleUrl(url);
               
                 //MessageCenter.NavigateToPage(this, new NavigationInfo()
                 //{
@@ -107,12 +107,12 @@ namespace BiliLite.Pages.Home
                 });
                 return;
             }
-            if (await MessageCenter.HandelUrl(data.uri))
+            if (await MessageCenter.HandleUrl(data.uri))
             {
                 return;
             }
             var browserUri = data.three_point_v2.FirstOrDefault(x => x.type == "browser")?.url ?? "";
-            if (!string.IsNullOrEmpty(browserUri)&& await MessageCenter.HandelUrl(browserUri))
+            if (!string.IsNullOrEmpty(browserUri)&& await MessageCenter.HandleUrl(browserUri))
             {
                 return;
             }
@@ -127,7 +127,7 @@ namespace BiliLite.Pages.Home
      
         private async void BannerItem_Click(object sender, RoutedEventArgs e)
         {
-            await MessageCenter.HandelUrl(((sender as HyperlinkButton).DataContext as RecommendBannerItemModel).uri);
+            await MessageCenter.HandleUrl(((sender as HyperlinkButton).DataContext as RecommendBannerItemModel).uri);
            
         }
 

@@ -29,9 +29,9 @@ namespace BiliLite.Api
         public static ApiKeyInfo WebVideoKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
         public static ApiKeyInfo AndroidTVKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
         public static ApiKeyInfo LoginKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
-        private const string build = "70000100";
-        private const string _mobi_app = "android";
-        private const string _platform = "android";
+        public const string build = "7160300";
+        public const string _mobi_app = "android";
+        public const string _platform = "android";
         public static string deviceId = "";
         public static string customcookie = "";
         //二级网址
@@ -72,6 +72,13 @@ namespace BiliLite.Api
                 }
             }
             return csrf;
+        }
+
+        public static string GetSign(string url)
+        {
+            ApiKeyInfo apiKeyInfo = LoginKey;
+            return GetSign(url, apiKeyInfo);
+
         }
         public static string GetSign(string url, ApiKeyInfo apiKeyInfo, string par = "&sign=")
         {

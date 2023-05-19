@@ -3,6 +3,7 @@ using BiliLite.Modules.User;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -180,6 +181,11 @@ namespace BiliLite.Dialogs
                 }
                 return;
             }
+        }
+        private void WebView_NavigationFailed(object sender, WebViewNavigationFailedEventArgs e)
+        {
+            string errorMessage = $"Navigation to {e.Uri} failed with error {e.WebErrorStatus}";
+            Utils.ShowMessageToast(errorMessage);
         }
 
         private void ManualLogin(object sender, TextChangedEventArgs e)

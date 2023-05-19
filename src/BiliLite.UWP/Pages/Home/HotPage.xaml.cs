@@ -56,7 +56,7 @@ namespace BiliLite.Pages.Home
             }
             else
             {
-                await MessageCenter.HandelUrl(data.uri);
+                await MessageCenter.HandleUrl(data.uri);
             }
         }
 
@@ -74,7 +74,7 @@ namespace BiliLite.Pages.Home
             }
             else
             {
-                await MessageCenter.HandelUrl(data.uri);
+                await MessageCenter.HandleUrl(data.uri);
             }
         }
 

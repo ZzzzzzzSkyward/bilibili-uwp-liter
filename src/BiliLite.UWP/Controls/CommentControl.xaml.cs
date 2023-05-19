@@ -952,7 +952,7 @@ namespace BiliLite.Controls
 
         private async void ButtonClick(object paramenter)
         {
-            await MessageCenter.HandelUrl(paramenter.ToString());
+            await MessageCenter.HandleUrl(paramenter.ToString());
             return;
 
 

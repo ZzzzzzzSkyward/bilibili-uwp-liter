@@ -39,7 +39,7 @@ namespace BiliLite.Pages.Home
         private async void webView_NewWindowRequested(WebView sender, WebViewNewWindowRequestedEventArgs args)
         {
             args.Handled = true;
-            var re = await MessageCenter.HandelUrl(args.Uri.AbsoluteUri);
+            var re = await MessageCenter.HandleUrl(args.Uri.AbsoluteUri);
             if (!re)
             {
                 var md = new MessageDialog("是否使用外部浏览器打开此链接？");

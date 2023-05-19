@@ -134,7 +134,7 @@ namespace BiliLite.Pages
 
         private async void BtnOpenBanner_Click(object sender, RoutedEventArgs e)
         {
-           await MessageCenter.HandelUrl(((sender as HyperlinkButton).DataContext as RegionHomeBannerItemModel).uri);
+           await MessageCenter.HandleUrl(((sender as HyperlinkButton).DataContext as RegionHomeBannerItemModel).uri);
         }
 
         private void AddToWatchLater_Click(object sender, RoutedEventArgs e)

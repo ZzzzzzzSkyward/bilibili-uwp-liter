@@ -43,7 +43,7 @@ namespace BiliLite.Modules
         private async void LaunchUrl(object paramenter)
         {
 
-            await MessageCenter.HandelUrl(paramenter.ToString());
+            await MessageCenter.HandleUrl(paramenter.ToString());
             return;
 
 

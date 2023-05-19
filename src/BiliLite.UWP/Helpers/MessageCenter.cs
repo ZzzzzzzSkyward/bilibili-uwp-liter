@@ -56,16 +56,16 @@ namespace BiliLite.Helpers
         /// </summary>
         public static void SendLogout()
         {
-            SettingHelper.SetValue<string>(SettingHelper.Account.ACCESS_KEY, null);
+            SettingHelper.SetValue<string>(SettingHelper.Account.ACCESS_KEY, "");
             SettingHelper.SetValue<long>(SettingHelper.Account.USER_ID, 0);
             SettingHelper.SetValue<DateTime>(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.Now);
-            SettingHelper.SetValue<string>(SettingHelper.Account.REFRESH_KEY, null);
+            SettingHelper.SetValue<string>(SettingHelper.Account.REFRESH_KEY, "");
             SettingHelper.SetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, null);
-            ClaerCookie();
+            ClearCookie();
             LogoutedEvent?.Invoke(null, null);
         }
 
-        private static void ClaerCookie()
+        private static void ClearCookie()
         {
             try
             {
@@ -98,7 +98,7 @@ namespace BiliLite.Helpers
         ///统一处理Url
         /// </summary>
         /// <param name="par"></param>
-        public async static Task<bool> HandelUrl(string url)
+        public async static Task<bool> HandleUrl(string url)
         {
             if (url.First() == '@')
             {

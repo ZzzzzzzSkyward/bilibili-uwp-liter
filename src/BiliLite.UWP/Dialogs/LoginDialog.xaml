@@ -10,7 +10,7 @@
     Title="{x:Bind Path=loginVM.Title,Mode=OneWay}"
     PrimaryButtonText="登录"
     SecondaryButtonText="取消"
-    xmlns:user="using:BiliLite.Modules.User"
+    xmlns:user="using:BiliLite.Modules.User" xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
     PrimaryButtonClick="ContentDialog_PrimaryButtonClick"
     IsPrimaryButtonEnabled="{x:Bind Path=loginVM.PrimaryButtonEnable,Mode=OneWay}"
     SecondaryButtonClick="ContentDialog_SecondaryButtonClick" Background="#0f000000">
@@ -100,7 +100,7 @@
                 </StackPanel>
             </StackPanel>
             <!--二维码登录-->
-            <StackPanel Visibility="{x:Bind Path=loginVM.LoginType,Mode=OneWay,Converter={StaticResource display},ConverterParameter=2}">
+            <StackPanel Visibility="{x:Bind Path=loginVM.LoginType,Mode=OneWay,Converter={StaticResource display},ConverterParameter=2}" Opacity="0.95">
                 <Grid Visibility="Visible">
                     <Image x:Name="imgQR" Width="200" Height="200" Source="{x:Bind Path=loginVM.QRImageSource,Mode=OneWay}" ></Image>
                     <ProgressRing Visibility="{x:Bind Path=loginVM.QRLoadding,Mode=OneWay}" Width="48" Height="48" IsActive="True"></ProgressRing>
@@ -136,10 +136,17 @@
                 <TextBox Margin="4 0" x:Name="ManualResult" PlaceholderText="形如geetest.result?..." Foreground="#E43D4FC1" TextChanged="ManualLogin"></TextBox>
             </StackPanel>
         </StackPanel>
+        <StackPanel VerticalAlignment="Bottom" IsHitTestVisible="False" Margin="0 0 0 70" Visibility="{x:Bind Path=loginVM.LoginType,Mode=OneWay,Converter={StaticResource display},ConverterParameter=2}">
+            <controls:DropShadowPanel ShadowOpacity="0.5" Color="White" BlurRadius="10" OffsetX="0" OffsetY="0">
+                    
+                <Image x:Name="QRBackground" Source="ms-appx:///Assets/Image/2233login.png" Visibility="Visible" Width="440" Height="Auto" >
+                </Image>
+            </controls:DropShadowPanel>
+        </StackPanel>
         <!--WebView-->
         <!--muxc:WebView2 x:Name="webView2" AllowDrop="True" AllowFocusOnInteraction="True" IsDoubleTapEnabled="True" Source="file:///JiYan/极验.htm" Width="320" Visibility="Visible" Margin="150,48,0,0" 
         Opacity="0.5"/-->
-        <WebView x:Name="webView" NavigationStarting="webView_NavigationStarting" NavigationCompleted="WebView_NavigationCompleted"  Height="360" Width="320" Visibility="Collapsed" ></WebView>
+        <WebView x:Name="webView" NavigationStarting="webView_NavigationStarting" NavigationCompleted="WebView_NavigationCompleted" NavigationFailed="WebView_NavigationFailed"  Height="360" Width="320" Visibility="Collapsed" ></WebView>
     </Grid>
 
 </ContentDialog>

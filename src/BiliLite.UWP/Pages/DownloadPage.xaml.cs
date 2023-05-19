@@ -198,7 +198,7 @@ namespace BiliLite.Pages
             {
                 url += "av" + data.ID;
             }
-            await MessageCenter.HandelUrl(url);
+            await MessageCenter.HandleUrl(url);
         }
 
         private async void btnMenuFolder_Click(object sender, RoutedEventArgs e)

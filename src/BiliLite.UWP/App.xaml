@@ -39,6 +39,8 @@
                     <Color x:Key="ForegroundTextColor">#555555</Color>
                     <Color x:Key="ForegroundBackColor">#555555</Color>
                     <Color x:Key="ForegroundTransparentColor">#aaffffff</Color>
+                    <Color x:Key="SolidTransparentBackground">#00ffffff</Color>
+                    <AcrylicBrush x:Key="TransparentLayer" TintColor="White" TintOpacity="0.1" TintLuminosityOpacity="0.5" FallbackColor="#a0ffffff"></AcrylicBrush>
                     <AcrylicBrush x:Key="TransparentBackground"
             BackgroundSource="HostBackdrop"
             TintColor="#ffffff"
@@ -47,6 +49,7 @@
             FallbackColor="#ffffff"/>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="SolidTransparentBackground">#00000000</Color>
                     <Color x:Key="ForegroundTransparentColor">#aa000000</Color>
                     <Color x:Key="TopPaneBackground">#003B3B3B</Color>
                     <Color x:Key="HighLightTextColor">#fff47bcf</Color>
@@ -57,6 +60,7 @@
                     <Color x:Key="ForegroundTextColor">#dddddd</Color>
                     <Color x:Key="ForegroundGridColor">#dddddd</Color>
                     <Color x:Key="ForegroundBackColor">#555555</Color>
+                    <AcrylicBrush x:Key="TransparentLayer" TintColor="Black" TintOpacity="0.1" TintLuminosityOpacity="0.5" FallbackColor="#a0000000"></AcrylicBrush>
                     <AcrylicBrush x:Key="TransparentBackground"
             BackgroundSource="HostBackdrop"
             TintColor="#000000"

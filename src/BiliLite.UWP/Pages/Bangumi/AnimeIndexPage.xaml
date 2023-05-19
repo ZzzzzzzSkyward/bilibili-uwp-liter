@@ -30,7 +30,7 @@
                     <DataTemplate x:DataType="model:SeasonIndexConditionFilterModel">
                         <StackPanel Padding="8">
                             <TextBlock Margin="4 0 0 4" Text="{x:Bind Path=name}"></TextBlock>
-                            <ComboBox Width="100" SelectionChanged="ComboBox_SelectionChanged" ItemsSource="{x:Bind Path=values}" SelectedItem="{x:Bind Path=current,Mode=TwoWay}" DisplayMemberPath="name"></ComboBox>
+                            <ComboBox Width="110" SelectionChanged="ComboBox_SelectionChanged" ItemsSource="{x:Bind Path=values}" SelectedItem="{x:Bind Path=current,Mode=TwoWay}" DisplayMemberPath="name"></ComboBox>
                         </StackPanel>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>

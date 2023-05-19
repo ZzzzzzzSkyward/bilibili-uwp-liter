@@ -125,9 +125,11 @@ namespace BiliLite.Modules
 
         private void LoadBanner(RecommendItemModel banner)
         {
+            if(SettingHelper.GetValue("dontloadbanner",false)==true) { return; }
             try
             {
-                if (Banner != null || Banner.Count == 0)
+                if (Banner == null) Banner = new ObservableCollection<RecommendBannerItemModel>();
+                if (Banner.Count == 0)
                 {
                     foreach (var item in banner.banner_item)
                     {

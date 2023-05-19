@@ -14,6 +14,7 @@
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/acc/info",
                 parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,needAccesskey:true)+$"&mid={mid}",
+                need_cookie=true,
             };
 
             return api;
@@ -30,6 +31,7 @@
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/acc/info",
                 parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,needAccesskey:true)+$"&mid={mid}",
+                need_cookie = true,
             };
 
             return api;

@@ -12,6 +12,15 @@ namespace BiliLite.Converters
             {
                 return Visibility.Collapsed;
             }
+            //如果是字符串，则返回非空
+            if(value is string)
+            {
+                if (string.IsNullOrEmpty(value as string))
+                {
+                    return Visibility.Collapsed;
+                }
+                return Visibility.Visible;
+            }
             //如果是bool，反转下结果返回
             if(value is bool)
             {

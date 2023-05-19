@@ -65,8 +65,8 @@
                                     <StackPanel Grid.Column="1" Margin="4 0 0 0" >
                                         <TextBlock FontSize="20" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=title}"></TextBlock>
                                         <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0"><Run Text="{x:Bind Path=new_ep.index_show}"/></TextBlock>
-                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0" Visibility="{x:Bind Path=show_danmaku}">弹幕:<Run Text="{x:Bind Path=stat.danmaku,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
-                                        <TextBlock Foreground="{ThemeResource ForegroundBackColor}" Margin="0 2 0 0">综合评分 <Run Text="{x:Bind Path=pts}"/></TextBlock>
+                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0" Visibility="{x:Bind Path=show_danmaku}">追番 <Run Text="{x:Bind Path=stat.follow,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">观看 <Run Text="{x:Bind Path=stat.view,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>

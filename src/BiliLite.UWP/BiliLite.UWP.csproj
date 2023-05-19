@@ -500,6 +500,7 @@
     <Content Include="Assets\Icon\索引.png" />
     <Content Include="Assets\Icon\纪录片.png" />
     <Content Include="Assets\Icon\综艺.png" />
+    <Content Include="Assets\Image\2233login.png" />
     <Content Include="Assets\Image\DefaultImage.png" />
     <Content Include="Assets\JiYan\极验.htm" />
     <Content Include="Assets\JiYan\极验_files\fullpage.0.0.0.js" />

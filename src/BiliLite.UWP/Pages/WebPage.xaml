@@ -34,17 +34,17 @@
                     </AppBarButton.Icon>
                 </AppBarButton>
                 <AppBarButton x:Name="btnRefresh"  Width="48" Icon="Refresh" Click="btnRefresh_Click"></AppBarButton>
-                <AppBarButton x:Name="btnInfo" Visibility="Collapsed"  Width="48" Icon="Emoji2" Margin="24 0" Foreground="Transparent" Click="btnInfo_Click"></AppBarButton>
                 
             </StackPanel>
-            <AutoSuggestBox PlaceholderText="地址栏" Visibility="Collapsed" Grid.Column="1" VerticalAlignment="Center" QueryIcon="Go"></AutoSuggestBox>
+            <AutoSuggestBox x:Name="UrlBox" PlaceholderText="地址栏" Visibility="Visible" Grid.Column="1" VerticalAlignment="Center" QueryIcon="Go"></AutoSuggestBox>
             <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <AppBarButton x:Name="btnShare" ToolTipService.ToolTip="分享" Width="48" Click="btnShare_Click">
+                <AppBarButton x:Name="btnInfo" Visibility="Visible"  Width="48" Icon="Emoji2" Margin="0 0"  Click="btnInfo_Click"></AppBarButton>
+                <AppBarButton x:Name="btnShare" ToolTipService.ToolTip="复制网址" Width="48" Click="btnShare_Click">
                     <AppBarButton.Icon>
-                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE72D;" />
+                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE16F;" />
                     </AppBarButton.Icon>
                 </AppBarButton>
-                <AppBarButton x:Name="btnOpenBrowser" Icon="World" ToolTipService.ToolTip="使用浏览器打开" Width="48" Click="btnOpenBrowser_Click">
+                <AppBarButton x:Name="btnOpenBrowser" Icon="World" ToolTipService.ToolTip="在浏览器打开" Width="48" Click="btnOpenBrowser_Click">
                    
                 </AppBarButton>
             </StackPanel>

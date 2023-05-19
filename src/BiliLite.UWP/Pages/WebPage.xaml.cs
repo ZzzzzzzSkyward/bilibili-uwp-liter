@@ -57,6 +57,7 @@ namespace BiliLite.Pages
                     webView.Visibility = Visibility.Collapsed;
                 }
                 webView.Navigate(new Uri(uri));
+                UrlBox.Text = uri;
 
             }
 
@@ -105,6 +106,7 @@ namespace BiliLite.Pages
                     if (!string.IsNullOrEmpty(webView.DocumentTitle))
                     {
                         ((this.Parent as Frame).Parent as TabViewItem).Header = webView.DocumentTitle;
+                        UrlBox.Text = webView.Source.AbsoluteUri;
                     }
                 }
                 else
@@ -166,7 +168,7 @@ $('.author-container').css('margin','12px 0px -12px 0px');"
         private async void webView_NewWindowRequested(WebView sender, WebViewNewWindowRequestedEventArgs args)
         {
             args.Handled = true;
-            var re = await MessageCenter.HandelUrl(args.Uri.AbsoluteUri);
+            var re = await MessageCenter.HandleUrl(args.Uri.AbsoluteUri);
             if (!re)
             {
                 var md = new MessageDialog("是否使用外部浏览器打开此链接？");
@@ -200,7 +202,7 @@ $('.author-container').css('margin','12px 0px -12px 0px');"
             if (args.Uri.AbsoluteUri.Contains("bilibili://"))
             {
                 args.Handled = true;
-                var re = await MessageCenter.HandelUrl(args.Uri.AbsoluteUri);
+                var re = await MessageCenter.HandleUrl(args.Uri.AbsoluteUri);
                 if (!re)
                 {
                     Utils.ShowMessageToast("不支持打开的链接" + args.Uri.AbsoluteUri);

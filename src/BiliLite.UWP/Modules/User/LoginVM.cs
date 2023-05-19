@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Timers;
 using System.Windows.Input;
@@ -386,8 +387,8 @@ namespace BiliLite.Modules.User
                 if (results.status)
                 {
                     var data = await results.GetData<LoginResultModel>();
-                    var result = await HandelLoginResult(data.code, data.message, data.data);
-                    HnadelResult(result);
+                    var result = await HandleLoginResult(data.code, data.message, data.data);
+                    HandleResult(result);
                 }
                 else
                 {
@@ -448,9 +449,9 @@ namespace BiliLite.Modules.User
                 if (results.status)
                 {
                     var data = await results.GetData<LoginResultModel>();
-                    var result = await HandelLoginResult(data.code, data.message, data.data);
+                    var result = await HandleLoginResult(data.code, data.message, data.data);
 
-                    HnadelResult(result);
+                    HandleResult(result);
                 }
                 else
                 {
@@ -560,7 +561,7 @@ namespace BiliLite.Modules.User
 
         #endregion
 
-        private async Task<LoginCallbackModel> HandelLoginResult(int code, string message, LoginResultModel result)
+        private async Task<LoginCallbackModel> HandleLoginResult(int code, string message, LoginResultModel result)
         {
             if (code == 0)
             {
@@ -607,8 +608,9 @@ namespace BiliLite.Modules.User
             }
 
         }
-        private void HnadelResult(LoginCallbackModel result)
+        private void HandleResult(LoginCallbackModel result)
         {
+            var uri = new Uri(string.IsNullOrEmpty(result.url) ? "https://www.bilibili.com" : result.url);
             switch (result.status)
             {
                 case LoginStatus.Success:
@@ -620,19 +622,26 @@ namespace BiliLite.Modules.User
                     Utils.ShowMessageToast(result.message);
                     break;
                 case LoginStatus.NeedCaptcha:
-                    var uri = new Uri(result.url);
                     SetWebViewVisibility?.Invoke(this, true);
                     //验证码重定向
                     //源码:https://github.com/xiaoyaocz/some_web
                     var newuri = new Uri("https://l78z.nsapps.cn/bili_gt.html" + uri.Query + "&app=uwp");
                     if (Manual)
+                    {
                         Launcher.LaunchUriAsync(newuri);
+                        string gt = Regex.Match(uri.Query, "gt=(.*)&").Groups[1].Value;
+                        string cha= Regex.Match(uri.Query, "challenge=(.*)&").Groups[1].Value;
+                        Utils.SetClipboard(gt + " " + cha);
+                    }
                     else
                         OpenWebView?.Invoke(this, newuri);
                     break;
                 case LoginStatus.NeedValidate:
                     SetWebViewVisibility?.Invoke(this, true);
-                    OpenWebView?.Invoke(this, new Uri(result.url));
+                    if (Manual)
+                        Launcher.LaunchUriAsync(uri);
+                    else
+                        OpenWebView?.Invoke(this, uri);
                     break;
                 default:
                     break;

@@ -37,8 +37,8 @@ namespace BiliLite.Modules.User
         {
             try
             {
-                var result = await userDetailAPI.UserInfo(mid).Request();
-                var request = userDetailAPI.UserInfov2(mid);
+                var api = usev2 ? userDetailAPI.UserInfov2(mid) : userDetailAPI.UserInfo(mid);
+                var result = await api.Request();
                 if (result.status)
                 {
                     var data = await result.GetData<UserCenterInfoModel>();
@@ -52,7 +52,10 @@ namespace BiliLite.Modules.User
                         if (usev2)
                             Utils.ShowMessageToast(data.message);
                         else
+                        {
+                            await Task.Delay(100);
                             GetUserInfo(true);
+                        }
                     }
                 }
                 else
@@ -60,8 +63,10 @@ namespace BiliLite.Modules.User
                     if (usev2)
                         Utils.ShowMessageToast(result.message);
                     else
+                    {
+                        await Task.Delay(100);
                         GetUserInfo(true);
-
+                    }
                 }
             }
             catch (Exception ex)

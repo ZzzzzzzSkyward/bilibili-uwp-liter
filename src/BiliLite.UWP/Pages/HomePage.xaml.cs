@@ -30,12 +30,12 @@ namespace BiliLite.Pages
         }
         private void MessageCenter_LogoutedEvent(object sender, EventArgs e)
         {
-            LaodUserStatus();
+            LoadUserStatus();
         }
 
         private void MessageCenter_LoginedEvent(object sender, object e)
         {
-            LaodUserStatus();
+            LoadUserStatus();
         }
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -85,7 +85,7 @@ namespace BiliLite.Pages
         }
 
 
-        private async void LaodUserStatus()
+        private async void LoadUserStatus()
         {
             if (SettingHelper.Account.Logined)
             {
@@ -154,7 +154,7 @@ namespace BiliLite.Pages
                 return;
             }
 
-            if (await MessageCenter.HandelUrl(SearchBox.Text))
+            if (await MessageCenter.HandleUrl(SearchBox.Text))
             {
                 return;
             }

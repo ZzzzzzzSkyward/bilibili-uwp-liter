@@ -90,7 +90,7 @@ namespace BiliLite.Pages
                 return;
             }
 
-            if (await MessageCenter.HandelUrl(txtKeyword.Text))
+            if (await MessageCenter.HandleUrl(txtKeyword.Text))
             {
                 return;
             }

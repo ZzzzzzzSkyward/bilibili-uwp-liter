@@ -1,22 +1,33 @@
 ﻿using BiliLite.Api;
 using BiliLite.Helpers;
+using BiliLite.Models;
 using BiliLite.Modules;
+using BiliLite.Modules.User;
 using Microsoft.Toolkit.Uwp.UI;
 using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Windows.Foundation;
+using Windows.Security.Cryptography.Core;
 using Windows.Storage;
 using Windows.Storage.Pickers;
+using Windows.Storage.Streams;
+using Windows.System;
 using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using Windows.Web.Http.Filters;
+using ZXing;
+using static BiliLite.Helpers.SettingHelper;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
 
@@ -40,6 +51,7 @@ namespace BiliLite.Pages
             LoadDanmu();
             LoadLiveDanmu();
             LoadDownlaod();
+            api = new Api.AccountApi();
         }
         private void LoadUI()
         {
@@ -234,6 +246,16 @@ namespace BiliLite.Pages
                 swOpenUrlWithBrowser.Toggled += new RoutedEventHandler((obj, args) =>
                 {
                     SettingHelper.SetValue(SettingHelper.UI.OPEN_URL_BROWSER, swOpenUrlWithBrowser.IsOn);
+                });
+            });
+
+            //隐藏横幅
+            swHideBanner.IsOn = SettingHelper.GetValue<bool>("dontloadbanner", false);
+            swHideBanner.Loaded += new RoutedEventHandler((sender, e) =>
+            {
+                swHideBanner.Toggled += new RoutedEventHandler((obj, args) =>
+                {
+                    SettingHelper.SetValue("dontloadbanner", swHideBanner.IsOn);
                 });
             });
 
@@ -965,5 +987,152 @@ namespace BiliLite.Pages
             }
 
         }
+        private async Task<LoginCallbackModel> HandleLoginResult(int code, string message, LoginResultModel result)
+        {
+            if (code == 0)
+            {
+                if (result.status == 0)
+                {
+                    dbgacc.Text = result.token_info.access_token;
+                    dbgtoken.Text = result.token_info.refresh_token;
+                    dbgmsg.Text = result.token_info.mid + "&" + result.sso + "&" + result.cookie_info;
+                    return new LoginCallbackModel()
+                    {
+                        status = LoginStatus.Success,
+                        message = "登录成功"
+                    };
+                }
+                if (result.status == 1 || result.status == 2)
+                {
+                    dbgmsg.Text = "需要安全验证";
+                    return new LoginCallbackModel()
+                    {
+                        status = LoginStatus.NeedValidate,
+                        message = "本次登录需要安全验证",
+                        url = result.url
+                    };
+                }
+                dbgmsg.Text = result.message;
+                return new LoginCallbackModel()
+                {
+                    status = LoginStatus.Fail,
+                    message = result.message
+                };
+            }
+            else if (code == -105)
+            {
+                dbgmsg.Text = "需要验证码";
+                return new LoginCallbackModel()
+                {
+                    status = LoginStatus.NeedCaptcha,
+                    url = result.url,
+                    message = "登录需要验证码"
+                };
+            }
+            else
+            {
+                dbgmsg.Text = message;
+                return new LoginCallbackModel()
+                {
+                    status = LoginStatus.Fail,
+                    message = message
+                };
+            }
+
+        }
+        Api.AccountApi api;
+        public async Task<string> EncryptedPassword(string passWord)
+        {
+            string base64String;
+            try
+            {
+                HttpBaseProtocolFilter httpBaseProtocolFilter = new HttpBaseProtocolFilter();
+                httpBaseProtocolFilter.IgnorableServerCertificateErrors.Add(Windows.Security.Cryptography.Certificates.ChainValidationResult.Expired);
+                httpBaseProtocolFilter.IgnorableServerCertificateErrors.Add(Windows.Security.Cryptography.Certificates.ChainValidationResult.Untrusted);
+                var jObjects = (await api.GetKey2023().Request()).GetJObject();
+                string str = jObjects["data"]["hash"].ToString();
+                string str1 = jObjects["data"]["key"].ToString();
+                string str2 = string.Concat(str, passWord);
+                string str3 = Regex.Match(str1, "BEGIN PUBLIC KEY-----(?<key>[\\s\\S]+)-----END PUBLIC KEY").Groups["key"].Value.Trim();
+                byte[] numArray = Convert.FromBase64String(str3);
+                AsymmetricKeyAlgorithmProvider asymmetricKeyAlgorithmProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaPkcs1);
+                CryptographicKey cryptographicKey = asymmetricKeyAlgorithmProvider.ImportPublicKey(WindowsRuntimeBufferExtensions.AsBuffer(numArray), 0);
+                IBuffer buffer = CryptographicEngine.Encrypt(cryptographicKey, WindowsRuntimeBufferExtensions.AsBuffer(Encoding.UTF8.GetBytes(str2)), null);
+                base64String = Convert.ToBase64String(WindowsRuntimeBufferExtensions.ToArray(buffer));
+            }
+            catch (Exception)
+            {
+                base64String = passWord;
+            }
+            return base64String;
+        }
+        private async void DoLogin(object sender, RoutedEventArgs e) {
+            var user = dbguser.Text;
+            var password = dbgpwd.Text;
+            var val=dbgval.Text;
+            var cap = dbgcap.Text;
+            var challenge = dbgch.Text;
+            if (string.IsNullOrEmpty(val))
+            {
+                //第一步，啥都没
+                var pwd = await EncryptedPassword(password);
+                var results = await api.Login2023(user, pwd).Request();
+                if (results.status)
+                {
+                    var data = await results.GetData<LoginResultModel>();
+                    var result = await HandleLoginResult(data.code, data.message, data.data);
+                    HandleResult(result);
+                }
+                else
+                {
+                    Utils.ShowMessageToast(results.message);
+                }
+            }
+            else
+            {
+                //带验证码登录
+                var pwd = await EncryptedPassword(password);
+                var results = await api.Login2023(user, pwd,challenge,cap,val).Request();
+                if (results.status)
+                {
+                    var data = await results.GetData<LoginResultModel>();
+                    var result = await HandleLoginResult(data.code, data.message, data.data);
+                    HandleResult(result);
+                }
+                else
+                {
+                    Utils.ShowMessageToast(results.message);
+                }
+            }
+
+
+
+        }
+        private void HandleResult(LoginCallbackModel result)
+        {
+            var uri = new Uri(string.IsNullOrEmpty(result.url) ? "https://www.bilibili.com" : result.url);
+            switch (result.status)
+            {
+                case LoginStatus.Success:
+                    break;
+                case LoginStatus.Fail:
+                case LoginStatus.Error:
+                    break;
+                case LoginStatus.NeedCaptcha:
+                    string gt = Regex.Match(uri.Query, "gee_gt=(.*?)&").Groups[1].Value;
+                    string cha = Regex.Match(uri.Query, "gee_challenge=(.*?)&").Groups[1].Value;
+                    string cap= Regex.Match(uri.Query, "recaptcha_token=(.*?)&").Groups[1].Value;
+                    dbggt.Text = gt;
+                    dbgch.Text = cha;
+                    dbgcap.Text = cap;
+                    break;
+                case LoginStatus.NeedValidate:
+                    dbgcap.Text = result.url;
+                    break;
+                default:
+                    break;
+            }
+        }
+
     }
 }

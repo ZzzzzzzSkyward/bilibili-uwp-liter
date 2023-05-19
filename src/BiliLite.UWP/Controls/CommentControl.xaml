@@ -212,21 +212,21 @@
                 <Grid Margin="0 8 0 0" Grid.Column="1" Grid.ColumnSpan="2" Grid.Row="4">
                     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 
-                        <HyperlinkButton  Click="btn_Like_Click" Foreground="{x:Bind LikeColor,Mode=OneWay}" Margin="4 0 8 0" HorizontalContentAlignment="Left">
+                        <HyperlinkButton  Click="btn_Like_Click" Foreground="{x:Bind LikeColor,Mode=OneWay}" Margin="4 0 0 0" HorizontalContentAlignment="Left">
                             <StackPanel Orientation="Horizontal">
                                 <fa:FontAwesome Icon="Regular_ThumbsUp" FontSize="14"></fa:FontAwesome>
-                                <TextBlock  Margin="4 0" Text="{x:Bind like_str,Mode=OneWay}"></TextBlock>
+                                <TextBlock  Margin="4 0 0 0" Text="{x:Bind like_str,Mode=OneWay}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
-                        <HyperlinkButton  Click="btn_ShowComment_Click" Foreground="{ThemeResource ForegroundGridColor}"  Margin="8 0" HorizontalContentAlignment="Left">
+                        <HyperlinkButton  Click="btn_ShowComment_Click" Foreground="{ThemeResource ForegroundGridColor}"  Margin="0 0" HorizontalContentAlignment="Left">
                             <StackPanel Orientation="Horizontal">
                                 <fa:FontAwesome Icon="Regular_Comment" FontSize="14"></fa:FontAwesome>
-                                <TextBlock Margin="4 0" Text="{x:Bind rcount_str,Mode=OneWay}"></TextBlock>
+                                <TextBlock Margin="4 0 0 0" Text="{x:Bind rcount_str,Mode=OneWay}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
                         <HyperlinkButton Visibility="{x:Bind showReplyBtn,Mode=OneWay}" Click="btn_ShowReplyBtn_Click" Foreground="{ThemeResource ForegroundGridColor}" Margin="8 0" HorizontalContentAlignment="Left">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Margin="4 0">回复</TextBlock>
+                                <TextBlock Margin="4 0 0 0">回复</TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
                         <HyperlinkButton Click="btn_DonotLike_Click" Visibility="Collapsed" Foreground="{ThemeResource ForegroundGridColor}" Margin="8 0" HorizontalContentAlignment="Left">
@@ -290,18 +290,17 @@
 
                                     <Grid>
                                         <StackPanel Margin="0 4" Orientation="Horizontal">
-                                           
-                                            <HyperlinkButton  Click="btn_Like_Click" Foreground="{Binding LikeColor}" Margin="8 0" HorizontalContentAlignment="Left">
+
+                                            <HyperlinkButton  Click="btn_Like_Click" Foreground="{Binding LikeColor}" Margin="0 0 0 0" HorizontalContentAlignment="Left" >
                                                 <StackPanel Orientation="Horizontal">
                                                     <fa:FontAwesome Icon="Regular_ThumbsUp" FontSize="14"></fa:FontAwesome>
-                                                    <TextBlock  Margin="4 0" Text="{Binding Path=like_str}"></TextBlock>
+                                                    <TextBlock  Margin="4 0 0 0" Text="{Binding Path=like_str,Converter={StaticResource numberToStringConvert}}"></TextBlock>
                                                 </StackPanel>
                                             </HyperlinkButton>
 
-                                            <HyperlinkButton Click="btn_ShowReplyBtn_Click" Margin="8 0" Foreground="{ThemeResource ForegroundGridColor}">
+                                            <HyperlinkButton Click="btn_ShowReplyBtn_Click" Margin="0" Foreground="{ThemeResource ForegroundGridColor}">
                                                 <StackPanel Orientation="Horizontal">
-
-                                                    <TextBlock  Margin="4 0">回复</TextBlock>
+                                                    <FontIcon FontFamily="{StaticResource BiliIconFont}" Glyph="&#xe6df;" FontSize="16" />
                                                 </StackPanel>
                                             </HyperlinkButton>
                                         </StackPanel>
@@ -312,7 +311,7 @@
                                                     <TextBlock  Margin="4 0">删除</TextBlock>
                                                 </StackPanel>
                                             </HyperlinkButton>
-                                            <HyperlinkButton Foreground="{ThemeResource ForegroundGridColor}" >
+                                            <HyperlinkButton Foreground="{ThemeResource ForegroundGridColor}" Visibility="Collapsed">
                                                 <StackPanel Orientation="Horizontal">
 
                                                     <TextBlock  Margin="4 0">举报</TextBlock>

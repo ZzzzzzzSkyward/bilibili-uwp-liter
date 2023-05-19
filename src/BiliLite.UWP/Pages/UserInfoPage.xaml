@@ -270,7 +270,7 @@
                                 <TextBlock FontSize="15">动态</TextBlock>
                             </PivotItem.Header>
 
-                            <Grid Background="{ThemeResource AppBarBackgroundThemeBrush}">
+                            <Grid Background="{ThemeResource TransparentBackground}">
 
 
                                 <control:MyListView SelectionMode="None" 

@@ -58,7 +58,7 @@ namespace BiliLite.Pages.Home
 
         private async void BannerItem_Click(object sender, RoutedEventArgs e)
         {
-            var result = await MessageCenter.HandelUrl(((sender as HyperlinkButton).DataContext as LiveHomeBannerModel).link);
+            var result = await MessageCenter.HandleUrl(((sender as HyperlinkButton).DataContext as LiveHomeBannerModel).link);
             if (!result)
             {
                 Utils.ShowMessageToast("不支持打开的链接");

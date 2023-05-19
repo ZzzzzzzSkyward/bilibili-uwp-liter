@@ -150,7 +150,7 @@ namespace BiliLite.Modules
             else
             {
                 var weblink = e.ClickedItem.GetType().GetProperty("link").GetValue(e.ClickedItem, null)??"";
-                var result= await MessageCenter.HandelUrl(weblink.ToString());
+                var result= await MessageCenter.HandleUrl(weblink.ToString());
                 if (!result) Utils.ShowMessageToast("无法打开此链接");
             }
            

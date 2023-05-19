@@ -107,7 +107,7 @@ namespace BiliLite.Pages
                 Utils.ShowMessageToast("关键字不能为空");
                 return;
             }
-            if (await MessageCenter.HandelUrl(SearchBox.Text))
+            if (await MessageCenter.HandleUrl(SearchBox.Text))
             {
                 return;
             }
@@ -169,6 +169,17 @@ namespace BiliLite.Pages
                 icon = Symbol.Document,
                 page = typeof(Live.LiveRecommendPage),
                 title = "全部直播"
+            });
+        }
+
+        private void BtnBilibili_Click(object sender, RoutedEventArgs e)
+        {
+            MessageCenter.NavigateToPage(this, new NavigationInfo()
+            {
+                icon = (Symbol)57755,
+                page = typeof(WebPage),
+                title = "B站",
+                parameters="https://www.bilibili.com"
             });
         }
     }
