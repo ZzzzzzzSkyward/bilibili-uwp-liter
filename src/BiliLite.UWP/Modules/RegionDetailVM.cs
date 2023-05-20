@@ -437,7 +437,8 @@ namespace BiliLite.Modules
         public string name { get; set; }
         public int play { get; set; }
         public int danmaku { get; set; }
-        public string rname { get; set; }
         public int duration { get; set; }
+        public int like { get; set; }
+        public string pubdate { get; set; }
     }
 }

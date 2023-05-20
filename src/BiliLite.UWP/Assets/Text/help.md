@@ -136,36 +136,38 @@ Webp图片扩展安装地址:[ms-windows-store://pdp/?productid=9PG2DK419DRG](ms
 
 ### 日志文件
 
-路径:`%USERPROFILE%\AppData\Local\Packages\5421.502643927C6AD_wp9dg7z2zqgtj\LocalState\log`
+路径:`%USERPROFILE%\AppData\Local\Packages\BilibiliUWPLiter_agd62dfed6f7t\LocalState\log`
 
 为了你的账号安全，发送日志时请一定要移除access_key=...里的内容
 
 [点击打开日志存放目录](OpenLog)
 
-# 更新说明
+## 更新说明
 
-使用VS2019，Win10 x64 1809 17763版本升级了所有依赖，但是由于很多包都要求18362版本所以我没法升到最新的。
+使用VS2022，Win10 x64 21H2版本升级了所有依赖。最低版本18362，但是17763可能也行。
+
+启用亚克力背景。
 
 签名换了一个，到2024年过期。
 
 包名换了一个，版本号改了。
 
-## bug修复
+## 已知bug
 
-`appkey`统一改成TV版，以应付B站的`appkey`与`access_key`检验
+- 无法使用密码、手机登录。所以只能二维码登录或者手动在浏览器里登录。
 
-修复评论相关API缺少`csrf`字段，方案来自@ywmoyue
+- 无法合并视频，因为没访问权限
 
-修复评论里面出现了超过`int`范围的数字
+## 下载
 
-修复B站返回错误json数据导致无法读取
+看release
 
-修复关闭直播间太快导致后台还在加载而出错
+## 其他fork
 
-## bug增加
+https://github.com/ywmoyue/biliuwp-lite
 
-调试时动态页面发生`Not Implemented`崩溃，但是我不会修，因为我找不到到底是哪个函数
+提供17763版本 https://github.com/ZzzzzzzSkyward/biliuwp-lite-fix
 
-无法使用密码、手机登录，因为验证码显示不出来。所以只能二维码登录
+## 功能建议
 
-日志文件的路径显示错误
+去[ywmoyue](https://github.com/ywmoyue/biliuwp-lite)那边提交

@@ -100,7 +100,7 @@
                             <GridView.ItemContainerStyle>
                                 <Style TargetType="GridViewItem">
                                     <Setter Property="Margin" Value="4"></Setter>
-                                    <Setter Property="Height" Value="180"></Setter>
+                                    <Setter Property="Height" Value="auto"></Setter>
                                     <Setter Property="Width" Value="200"></Setter>
                                 </Style>
                             </GridView.ItemContainerStyle>

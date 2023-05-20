@@ -396,6 +396,7 @@ namespace BiliLite.Modules
         public string id { get; set; }
         public string cover { get; set; }
         public string title { get; set; }
+        public string intro { get; set; }
         public FavoriteInfoVideoItemUpperModel upper { get; set; }
         public FavoriteInfoVideoItemStatModel cnt_info { get; set; }
     }

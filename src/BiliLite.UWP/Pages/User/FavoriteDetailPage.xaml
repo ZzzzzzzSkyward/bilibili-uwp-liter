@@ -32,12 +32,23 @@
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
                 <Border CornerRadius="{StaticResource ImageCornerRadius}">
-                    <toolkit:ImageEx IsCacheEnabled="True" Height="80" Width="120" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}"></toolkit:ImageEx>
+                    <toolkit:ImageEx IsCacheEnabled="True" Height="80" Width="120" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}">
+							<ToolTipService.ToolTip>
+								<ToolTip>
+									<TextBlock Text="{x:Bind Path=intro}" TextWrapping="Wrap" FontSize="14" />
+								</ToolTip>
+							</ToolTipService.ToolTip>
+					</toolkit:ImageEx>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                     <TextBlock MaxLines="2" Margin="0 0 0 0" TextTrimming="CharacterEllipsis" Text="{x:Bind title}" FontSize="15" MinHeight="40" TextWrapping="Wrap"></TextBlock>
                     <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=upper.name}"/></TextBlock>
-                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">播放:<Run Text="{x:Bind Path=cnt_info.play,Converter={StaticResource numberToStringConvert}}"></Run> 弹幕:<Run Text="{x:Bind Path=cnt_info.danmaku,Converter={StaticResource numberToStringConvert}}"></Run></TextBlock>
+                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">
+						播放:<Run Text="{x:Bind Path=cnt_info.play,Converter={StaticResource numberToStringConvert}}"></Run>
+						弹幕:<Run Text="{x:Bind Path=cnt_info.danmaku,Converter={StaticResource numberToStringConvert}}"></Run>
+						收藏:<Run Text="{x:Bind Path=cnt_info.collect,Converter={StaticResource numberToStringConvert}}"></Run>
+						
+					</TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>

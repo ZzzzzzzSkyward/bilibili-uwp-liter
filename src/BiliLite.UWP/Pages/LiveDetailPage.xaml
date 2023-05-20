@@ -698,7 +698,7 @@
                             </Grid>
                         </Button>
 
-                        <ScrollViewer Grid.Column="1" Visibility="{x:Bind Path=liveRoomVM.ShowBag,Mode=OneWay,Converter={StaticResource display}}" HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Enabled" >
+                        <ScrollViewer Grid.Column="1" Visibility="{x:Bind Path=liveRoomVM.ShowBag,Mode=OneWay,Converter={StaticResource display}}" HorizontalScrollBarVisibility="Auto" HorizontalScrollMode="Enabled" VerticalScrollBarVisibility="Hidden">
                             <ItemsControl  ItemsSource="{x:Bind Path=liveRoomVM.Gifts,Mode=OneWay}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>

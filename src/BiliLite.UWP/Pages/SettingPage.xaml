@@ -100,8 +100,8 @@
 							<GridView x:Name="gridHomeCustom" SelectionMode="None" IsItemClickEnabled="True"  CanDragItems="True" CanReorderItems="True" AllowDrop="True" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" DragItemsCompleted="gridHomeCustom_DragItemsCompleted">
 								<GridView.ItemContainerStyle>
 									<Style TargetType="GridViewItem">
-										<Setter Property="BorderBrush" Value="#cecece"></Setter>
-										<Setter Property="Foreground" Value="{ThemeResource TextColor}"></Setter>
+										<Setter Property="BorderBrush" Value="{ThemeResource HighLightColor}"></Setter>
+										<Setter Property="Foreground" Value="{ThemeResource ForegroundBackColor}"></Setter>
 										<Setter Property="Width" Value="100"></Setter>
 										<Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
 										<Setter Property="VerticalContentAlignment" Value="Stretch"></Setter>
@@ -110,7 +110,7 @@
 								</GridView.ItemContainerStyle>
 								<GridView.ItemTemplate>
 									<DataTemplate x:DataType="modules:HomeNavItem">
-										<Grid Background="#00FFFFFF">
+										<Grid Background="{ThemeResource ForegroundTransparentColor}">
 											<Grid.ContextFlyout>
 												<MenuFlyout>
 													<MenuFlyoutItem x:Name="menuRemoveHomeItem" Click="menuRemoveHomeItem_Click">移除</MenuFlyoutItem>
@@ -636,6 +636,7 @@
 				</PivotItem.Header>
 				<ScrollViewer Padding="12 0" VerticalScrollBarVisibility="Auto">
 					<StackPanel>
+						<TextBlock x:Name="version"  Margin="0 16 0 8" FontSize="16"/>
 						<controls1:MarkdownTextBlock x:Name="Info" Background="{ThemeResource TransparentBackground}" Padding="16" IsTextSelectionEnabled="True" ></controls1:MarkdownTextBlock>
 					</StackPanel>
 				</ScrollViewer>

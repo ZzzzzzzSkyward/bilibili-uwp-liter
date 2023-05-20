@@ -163,11 +163,11 @@
                                 </Border>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock TextWrapping="Wrap" Text="{x:Bind Path=seasonDetailVM.Detail.title,Mode=OneWay}"></TextBlock>
-                                    <TextBlock Margin="0 2" Foreground="Gray"><Run Text="{x:Bind Path=seasonDetailVM.Detail.stat.play,Mode=OneWay}"/> <Run Text="{x:Bind Path=seasonDetailVM.Detail.stat.followers,Mode=OneWay}"/></TextBlock>
-                                    <TextBlock Margin="0 2" Foreground="Gray" Text="{x:Bind Path=seasonDetailVM.Detail.publish.pub_time_show,Mode=OneWay}"></TextBlock>
-                                    <TextBlock Margin="0 2" Foreground="Gray"  Text="{x:Bind Path=seasonDetailVM.Detail.publish.time_length_show,Mode=OneWay}"></TextBlock>
+                                    <TextBlock Margin="0 2" Foreground="{ThemeResource ForegroundTextColor}"><Run Text="{x:Bind Path=seasonDetailVM.Detail.stat.play,Mode=OneWay}"/> <Run Text="{x:Bind Path=seasonDetailVM.Detail.stat.followers,Mode=OneWay}"/></TextBlock>
+                                    <TextBlock Margin="0 2" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=seasonDetailVM.Detail.publish.pub_time_show,Mode=OneWay}"></TextBlock>
+                                    <TextBlock Margin="0 2" Foreground="{ThemeResource ForegroundTextColor}"  Text="{x:Bind Path=seasonDetailVM.Detail.publish.time_length_show,Mode=OneWay}"></TextBlock>
                                     <TextBlock Visibility="{x:Bind Path=seasonDetailVM.Detail.show_rating,Mode=OneWay}" Margin="0 2 0 0" FontSize="18" FontWeight="Bold" Foreground="Orange" Text="{x:Bind Path=seasonDetailVM.Detail.rating.score,Mode=OneWay}"><Run FontSize="12" FontWeight="Normal">分</Run></TextBlock>
-                                    <TextBlock Visibility="{x:Bind Path=seasonDetailVM.Detail.show_rating,Mode=OneWay}" FontSize="12" Foreground="Gray"><Run Text="{x:Bind Path=seasonDetailVM.Detail.rating.count,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>人评分</TextBlock>
+                                    <TextBlock Visibility="{x:Bind Path=seasonDetailVM.Detail.show_rating,Mode=OneWay}" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}"><Run Text="{x:Bind Path=seasonDetailVM.Detail.rating.count,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>人评分</TextBlock>
                                 </StackPanel>
                             </Grid>
                             <Button Margin="0 16 0 0" Visibility="{x:Bind Path=seasonDetailVM.Detail.show_payment,Mode=OneWay}" BorderBrush="#FFFB9E60" Background="Transparent" HorizontalAlignment="Stretch" Foreground="#FFFB9E60">
@@ -184,7 +184,7 @@
                                 <GridView.ItemContainerStyle>
                                     <Style TargetType="GridViewItem">
                                         <Setter Property="BorderThickness" Value="1"></Setter>
-                                        <Setter Property="BorderBrush" Value="#e9e9e9"></Setter>
+                                        <Setter Property="BorderBrush" Value="{ThemeResource ForegroundBackColor}"></Setter>
                                         <Setter Property="VerticalContentAlignment" Value="Stretch"></Setter>
                                         <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
                                     </Style>
@@ -276,7 +276,7 @@
                             <TextBlock IsTextSelectionEnabled="True" TextWrapping="Wrap" Text="{x:Bind Path=seasonDetailVM.Detail.alias,Mode=OneWay}"></TextBlock>
                             <TextBlock IsTextSelectionEnabled="True" Margin="0 4" TextWrapping="Wrap" Text="{x:Bind Path=seasonDetailVM.Detail.origin_name,Mode=OneWay}"></TextBlock>
                             <TextBlock Margin="0 8" FontSize="18" FontWeight="Bold" Text="简介"></TextBlock>
-                            <TextBlock  Foreground="Gray" TextWrapping="Wrap" IsTextSelectionEnabled="True" Text="{x:Bind Path=seasonDetailVM.Detail.evaluate,Mode=OneWay}"></TextBlock>
+                            <TextBlock  Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Text="{x:Bind Path=seasonDetailVM.Detail.evaluate,Mode=OneWay}"></TextBlock>
                             <TextBlock Margin="0 8" FontSize="18" FontWeight="Bold">地区</TextBlock>
                             <ItemsControl ItemsSource="{x:Bind Path=seasonDetailVM.Detail.areas,Mode=OneWay}">
                                 <ItemsControl.ItemsPanel>
@@ -312,9 +312,9 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                             <TextBlock Margin="0 8" FontSize="18" FontWeight="Bold" Text="{x:Bind Path=seasonDetailVM.Detail.actor.title,Mode=OneWay}"></TextBlock>
-                            <TextBlock Foreground="Gray" TextWrapping="Wrap" IsTextSelectionEnabled="True" Text="{x:Bind Path=seasonDetailVM.Detail.actor.info,Mode=OneWay}"></TextBlock>
+                            <TextBlock Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Text="{x:Bind Path=seasonDetailVM.Detail.actor.info,Mode=OneWay}"></TextBlock>
                             <TextBlock Margin="0 8" FontSize="18" FontWeight="Bold" Text="{x:Bind Path=seasonDetailVM.Detail.staff.title,Mode=OneWay}"></TextBlock>
-                            <TextBlock Foreground="Gray" TextWrapping="Wrap" IsTextSelectionEnabled="True" Text="{x:Bind Path=seasonDetailVM.Detail.staff.info,Mode=OneWay}"></TextBlock>
+                            <TextBlock Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Text="{x:Bind Path=seasonDetailVM.Detail.staff.info,Mode=OneWay}"></TextBlock>
                             
                         </StackPanel>
                     </ScrollViewer>
@@ -329,7 +329,7 @@
                             <ListView.Header>
                                 <StackPanel Margin="0 8">
                                     <my:RatingControl FontSize="36" Caption="{x:Bind Path=seasonDetailVM.Detail.rating.score,Mode=OneWay}"  Value="{x:Bind Path=seasonDetailVM.Detail.rating.score_5,Mode=OneWay}" IsReadOnly="True"></my:RatingControl>
-                                    <TextBlock FontSize="12" HorizontalAlignment="Center" Foreground="Gray">共<Run Text="{x:Bind Path=seasonDetailVM.Detail.rating.count,Mode=OneWay}"></Run>人评分</TextBlock>
+                                    <TextBlock FontSize="12" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">共<Run Text="{x:Bind Path=seasonDetailVM.Detail.rating.count,Mode=OneWay}"></Run>人评分</TextBlock>
                                 </StackPanel>
                             </ListView.Header>
                             <ListView.ItemContainerStyle>
@@ -359,7 +359,7 @@
                                                 
                                             </StackPanel>-->
                                                 <TextBlock VerticalAlignment="Center" Text="{x:Bind Path=author.uname}" Foreground="{x:Bind Path=author.vip.vipType,Converter={StaticResource colorSelct},ConverterParameter=2}"></TextBlock>
-                                                <TextBlock FontSize="12" Foreground="Gray" Text="{x:Bind Path=ctime,Converter={StaticResource datetime},ConverterParameter='ts'}"></TextBlock>
+                                                <TextBlock FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=ctime,Converter={StaticResource datetime},ConverterParameter='ts'}"></TextBlock>
                                                 
                                             </StackPanel>
                                             <Viewbox Height="20"  Grid.Column="2">
@@ -382,7 +382,7 @@
                                             <HyperlinkButton Width="56"
                                                              Click="btnReviewLike_Click"
                                                              Visibility="{x:Bind Path=stat.liked,Mode=OneWay,Converter={StaticResource display},ConverterParameter=0}"
-                                                             Foreground="Gray" 
+                                                             Foreground="{ThemeResource ForegroundTextColor}" 
                                                              HorizontalContentAlignment="Left">
                                                 <StackPanel Orientation="Horizontal">
                                                     <fa:FontAwesome Icon="Regular_ThumbsUp" FontSize="14"></fa:FontAwesome>
@@ -391,7 +391,7 @@
                                             </HyperlinkButton>
   
                                             <HyperlinkButton
-                                                Foreground="Gray" 
+                                                Foreground="{ThemeResource ForegroundTextColor}" 
                                                  x:Name="btnReviewDislike"
                                                              Click="btnReviewDislike_Click"
                                                 HorizontalContentAlignment="Left">

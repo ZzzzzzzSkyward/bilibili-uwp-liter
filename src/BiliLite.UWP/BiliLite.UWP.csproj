@@ -581,6 +581,7 @@
     <Content Include="Assets\Fonts\FansNum.otf" />
     <Content Include="Assets\Fonts\biliicon.ttf" />
     <Content Include="Assets\Text\dbginfo.md" />
+    <None Include="Assets\Text\info.md" />
     <None Include="Assets\Text\new_version.json" />
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>

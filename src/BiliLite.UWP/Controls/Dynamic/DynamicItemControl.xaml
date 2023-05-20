@@ -18,7 +18,7 @@
         </Style>
     </UserControl.Resources>
     <Grid>
-        <Border CornerRadius="4" Padding="8" Background="{ThemeResource CardColor}">
+        <Border CornerRadius="4" Padding="8" Background="{ThemeResource SolidHalfTransparentBackground}">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>

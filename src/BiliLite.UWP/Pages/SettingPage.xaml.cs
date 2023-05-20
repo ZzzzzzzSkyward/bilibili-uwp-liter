@@ -3,6 +3,7 @@ using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Modules;
 using BiliLite.Modules.User;
+using Microsoft.Toolkit.Uwp.Helpers;
 using Microsoft.Toolkit.Uwp.UI;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -784,7 +785,7 @@ namespace BiliLite.Pages
             base.OnNavigatedTo(e);
             try
             {
-                //version.Text = $"版本 {SystemInformation.Instance.ApplicationVersion.Major}.{SystemInformation.Instance.ApplicationVersion.Minor}.{SystemInformation.Instance.ApplicationVersion.Build}.{SystemInformation.Instance.ApplicationVersion.Revision}";
+                version.Text = $"版本 {SystemInformation.Instance.ApplicationVersion.Major}.{SystemInformation.Instance.ApplicationVersion.Minor}.{SystemInformation.Instance.ApplicationVersion.Build}.{SystemInformation.Instance.ApplicationVersion.Revision}";
                 txtHelp.Text = await FileIO.ReadTextAsync(await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/Text/help.md")));
             }
             catch (Exception)
@@ -794,6 +795,14 @@ namespace BiliLite.Pages
             try
             {
                 dbginfo.Text = await FileIO.ReadTextAsync(await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/Text/dbginfo.md")));
+            }
+            catch (Exception)
+            {
+                //throw;
+            }
+            try
+            {
+                Info.Text = await FileIO.ReadTextAsync(await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/Text/info.md")));
             }
             catch (Exception)
             {
