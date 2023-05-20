@@ -79,7 +79,13 @@ namespace BiliLite.Helpers
                 subtitle= subtitle ,
                 isDash=isDash
             });
-            await Windows.ApplicationModel.FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
+            try
+            {
+                await Windows.ApplicationModel.FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
+            }
+            catch {
+                Utils.ShowMessageToast("没有权限");
+            }
         }
 
     }

@@ -106,7 +106,7 @@ namespace BiliLite.Pages
             //    Oid = id
             //});
         }
-        protected  override void OnNavigatedTo(NavigationEventArgs e)
+        protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             SetStaggered();
@@ -149,7 +149,7 @@ namespace BiliLite.Pages
                 {
                     pivot.SelectedIndex = tabIndex;
                 }
-               
+
             }
         }
 
@@ -184,7 +184,7 @@ namespace BiliLite.Pages
                 icon = Symbol.Message,
                 title = "消息中心",
                 page = typeof(WebPage),
-                parameters = $"https://message.bilibili.com/#whisper/mid{ userDetailVM.mid}"
+                parameters = $"https://message.bilibili.com/#whisper/mid{userDetailVM.mid}"
             });
         }
 
@@ -284,7 +284,7 @@ namespace BiliLite.Pages
                 {
                     await followVM.GetTags();
                 }
-                
+
                 await followVM.Get();
             }
             if (pivot.SelectedIndex == 5 && fansVM.Items == null)
@@ -368,6 +368,12 @@ namespace BiliLite.Pages
         private void searchFollow_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
             followVM.Refresh();
+        }
+
+        private async void RefreshUserDetail(object sender, RoutedEventArgs e)
+        {
+            if (userDetailVM.UserInfo == null) { }
+            userDetailVM?.Refresh();
         }
     }
 }

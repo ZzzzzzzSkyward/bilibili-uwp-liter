@@ -230,7 +230,7 @@ namespace BiliLite.Modules.User
             {
                 Width = 500,
                 Height = 500,
-                Source = new Uri($"https://t.bilibili.com/lottery/h5/index/#/result?business_id={ id.ToString()}&business_type=1&isWeb=1"),
+                Source = new Uri($"https://t.bilibili.com/lottery/h5/index/#/result?business_id={id.ToString()}&business_type=1&isWeb=1"),
             };
             await contentDialog.ShowAsync();
         }
@@ -241,7 +241,7 @@ namespace BiliLite.Modules.User
                 icon = Symbol.Document,
                 page = typeof(WebPage),
                 title = "投票",
-                parameters = $"https://t.bilibili.com/vote/h5/index/#/result?vote_id={ id.ToString()}"
+                parameters = $"https://t.bilibili.com/vote/h5/index/#/result?vote_id={id.ToString()}"
             });
             //ContentDialog contentDialog = new ContentDialog()
             //{
@@ -405,7 +405,7 @@ namespace BiliLite.Modules.User
                 if (results.status)
                 {
                     var data = results.GetJObject();
-                    if (data!=null && (data["code"].ToInt32() == 0))
+                    if (data != null && (data["code"].ToInt32() == 0))
                     {
                         var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["cards"]?.ToString() ?? "[]");
                         if (items.Count > 0)
@@ -500,6 +500,7 @@ namespace BiliLite.Modules.User
 
                 var card = JObject.Parse(item.card);
                 var extend_json = JObject.Parse(item.extend_json);
+                var display=item.display;
                 var data = new DynamicItemDisplayModel()
                 {
                     CommentCount = item.desc.comment,
@@ -641,6 +642,33 @@ namespace BiliLite.Modules.User
                     content = card["vest"]["content"]?.ToString();
                 }
 
+
+                //直播预约
+                if (display?.add_on_card_info != null)
+                {
+                    var arr = new JArray();
+                    foreach (var _info in display.add_on_card_info)
+                    {
+                        var info = _info.reserve_attach_card;
+                        if (info == null) { continue; }
+                        var tp = info.type;
+                        if (tp != null && tp.ToString() == "reserve")
+                        {
+                            //这个是一个预约
+                            var time = info.desc_first?.text;
+                            var people = info.desc_second;
+                            var title = info.title;
+                            arr.Add(new JObject(
+                                new JProperty("time", time),
+                                new JProperty("people", people),
+                                new JProperty("title", title)
+                            ));
+                        }
+                    }
+                    extend_json["直播"] = arr;
+                }
+
+
                 if (!string.IsNullOrEmpty(content))
                 {
                     data.ContentStr = content;
@@ -651,14 +679,20 @@ namespace BiliLite.Modules.User
                     data.ShowContent = false;
                 }
 
-
+                if (item.desc.user_profile == null && card["owner"] != null)
+                {
+                    data.UserName = card["owner"]["name"]?.ToString();
+                    data.Photo = card["owner"]["face"]?.ToString();
+                    data.Verify = AppHelper.TRANSPARENT_IMAGE;
+                    data.Mid = long.Parse(card["owner"]["mid"]?.ToString());
+                }
                 if (item.desc.user_profile != null)
                 {
                     data.UserName = item.desc.user_profile.info.uname;
                     data.Photo = item.desc.user_profile.info.face;
                     if (item.desc.user_profile.vip != null)
                     {
-                        data.IsYearVip = item.desc.user_profile.vip.vipStatus==1&& item.desc.user_profile.vip.vipType == 2;
+                        data.IsYearVip = item.desc.user_profile.vip.vipStatus == 1 && item.desc.user_profile.vip.vipType == 2;
                     }
                     switch (item.desc.user_profile.card?.official_verify?.type ?? 3)
                     {
@@ -682,6 +716,7 @@ namespace BiliLite.Modules.User
                     data.DecorateColor = item.desc.user_profile.decorate_card?.fan?.color;
                     data.DecorateImage = item.desc.user_profile.decorate_card?.big_card_url;
                 }
+
 
 
                 if (card.ContainsKey("apiSeasonInfo"))

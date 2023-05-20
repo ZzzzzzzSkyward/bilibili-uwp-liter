@@ -102,7 +102,7 @@
                         <RowDefinition/>
                     </Grid.RowDefinitions>
                     <Grid Padding="8 0" Background="{ThemeResource TopPaneBackground}" VerticalAlignment="Top" Height="48">
-                        <Button Background="Transparent" Padding="0" HorizontalAlignment="Left">
+                        <Button Background="Transparent" Padding="0" HorizontalAlignment="Left" Click="RefreshUserDetail">
                             <Button.Content>
                                 <StackPanel VerticalAlignment="Center" Orientation="Horizontal" >
                                     <Ellipse Width="36" Height="36">

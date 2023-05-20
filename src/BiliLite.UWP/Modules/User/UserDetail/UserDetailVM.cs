@@ -196,6 +196,10 @@ namespace BiliLite.Modules.User
 
 
         }
+        public async void Refresh()
+        {
+            GetUserInfo();
+        }
 
 
     }
@@ -407,5 +411,6 @@ namespace BiliLite.Modules.User
                 }
             }
         }
+
     }
 }

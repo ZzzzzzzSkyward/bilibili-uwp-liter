@@ -9,6 +9,7 @@ using Windows.UI.Xaml.Markup;
 using BiliLite.Helpers;
 using Newtonsoft.Json;
 using BiliLite.Models.Dynamic;
+using System.Xml;
 
 namespace BiliLite.Controls.Dynamic
 {
@@ -341,26 +342,31 @@ namespace BiliLite.Controls.Dynamic
                 input = input.Replace("\r\n", "<LineBreak/>");
                 input = input.Replace("\n", "<LineBreak/>");
                 //处理@
-                input = HandelAtAndVote(input, txt, extend_json);
+                input = HandleAtAndVote(input, txt, extend_json);
                 //处理网页🔗
-                input = HandelUrl(input);
+                input = HandleUrl(input);
                
                 //处理表情
-                input = HandelEmoji(input, emote);
+                input = HandleEmoji(input, emote);
                 //处理话题
-                input = HandelTag(input);
+                input = HandleTag(input);
 
 
                 //互动抽奖🎁
-                input = HandelLottery(input, id, extend_json);
-                input = HandelVideoID(input);
+                input = HandleLottery(input, id, extend_json);
+                input = HandleVideoID(input);
                 input = input.Replace("^x$%^", "@");
                 //生成xaml
                 var xaml = string.Format(@"<RichTextBlock HorizontalAlignment=""Stretch"" TextWrapping=""Wrap""  xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation""
                                             xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"" xmlns:d=""http://schemas.microsoft.com/expression/blend/2008""
     xmlns:mc = ""http://schemas.openxmlformats.org/markup-compatibility/2006"" LineHeight=""20"">
                                           <Paragraph>{0}</Paragraph>
-                                      </RichTextBlock>", input);
+                ",input);
+                                      //</RichTextBlock>", input);
+                //处理直播
+                var more = HandleCard(input, extend_json["直播"] as JArray  );
+                xaml += more;
+                xaml += "</RichTextBlock>";
                 var p = (RichTextBlock)XamlReader.Load(xaml);
                 return p;
 
@@ -380,7 +386,7 @@ namespace BiliLite.Controls.Dynamic
         /// <summary>
         /// 处理表情
         /// </summary>
-        private static string HandelEmoji(string input, List<DynamicCardDisplayEmojiInfoItemModel> emote)
+        private static string HandleEmoji(string input, List<DynamicCardDisplayEmojiInfoItemModel> emote)
         {
 
             if (emote == null) return input;
@@ -407,18 +413,18 @@ namespace BiliLite.Controls.Dynamic
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        private static string HandelTag(string input)
+        private static string HandleTag(string input)
         {
             //处理话题
             MatchCollection av = Regex.Matches(input, @"\#(.*?)\#");
-            List<string> handel = new List<string>();
+            List<string> Handle = new List<string>();
             foreach (Match item in av)
             {
-                if (!handel.Contains(item.Groups[0].Value))
+                if (!Handle.Contains(item.Groups[0].Value))
                 {
                     var data = @"<InlineUIContainer><HyperlinkButton Command=""{Binding TagCommand}""  IsEnabled=""True"" Margin=""0 -4 4 -4"" Padding=""0"" " + string.Format(@" Tag=""{1}""  CommandParameter=""{1}"" ><TextBlock>{0}</TextBlock></HyperlinkButton></InlineUIContainer>",
                    item.Groups[0].Value, item.Groups[1].Value);
-                    handel.Add(item.Groups[0].Value);
+                    Handle.Add(item.Groups[0].Value);
                     input = input.Replace(item.Groups[0].Value, data);
                 }
 
@@ -434,7 +440,7 @@ namespace BiliLite.Controls.Dynamic
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        private static string HandelUrl(string input)
+        private static string HandleUrl(string input)
         {
             List<string> keyword = new List<string>();
             MatchCollection url = Regex.Matches(input, @"(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]");
@@ -458,7 +464,7 @@ namespace BiliLite.Controls.Dynamic
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        private static string HandelAtAndVote(string input, string origin_content, JObject extendJson)
+        private static string HandleAtAndVote(string input, string origin_content, JObject extendJson)
         {
             var content = origin_content;
             List<CtrlItem> ctrls = new List<CtrlItem>();
@@ -513,7 +519,7 @@ namespace BiliLite.Controls.Dynamic
         /// <param name="input"></param>
         /// <param name="extendJson"></param>
         /// <returns></returns>
-        private static string HandelLottery(string input, string id, JObject extendJson)
+        private static string HandleLottery(string input, string id, JObject extendJson)
         {
             if (!extendJson.ContainsKey("lott")) return input;
            
@@ -524,12 +530,56 @@ namespace BiliLite.Controls.Dynamic
             input = input.Insert(0, $@"<InlineUIContainer><HyperlinkButton Command=""{{Binding LotteryCommand}}""  CommandParameter=""{id}"" IsEnabled=""True"" Margin=""0 -4 4 -4"" Padding=""0"" ><TextBlock>🎁互动抽奖</TextBlock></HyperlinkButton></InlineUIContainer>");
             return input;
         }
+
+
+        /// <summary>
+        /// 处理直播
+        /// </summary>
+        /// <param name="input"></param>
+        /// <param name="card"></param>
+        /// <returns></returns>
+        private static string HandleCard(string input, JArray card)
+        {
+            var xaml = "";
+            if (card == null) return xaml;
+            foreach (var i in card)
+            {
+                // 处理直播卡片
+                //https://api.vc.bilibili.com/dynamic_mix/v1/dynamic_mix/reserve_attach_card_button
+                //cur_btn_status=1&dynamic_id=797438860053184599&attach_card_type=reserve&reserve_total=4866&reserve_id=1549931&spmid=&csrf=7e87c3ad033f16c3b806cc5feb6b194d
+                //
+                var title = i["title"];
+                var live_time = i["time"];
+                var live_people = i["people"];
+                xaml += $@"<Paragraph>
+                            <InlineUIContainer>
+                                <Grid Margin=""10"" HorizontalAlignment=""Stretch"">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width=""*"" />
+                                        <ColumnDefinition Width=""Auto"" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height=""Auto"" />
+                                        <RowDefinition Height=""Auto"" />
+                                    </Grid.RowDefinitions>
+                                    <TextBlock Grid.Row=""0"" Grid.Column=""0"" Text=""{title}"" FontSize=""20"" FontWeight=""Bold"" Margin=""0,0,0,10"" IsTextSelectionEnabled=""True""/>
+                                    <StackPanel Grid.Row=""1"" Grid.Column=""0"" Orientation=""Horizontal"" Margin=""0,10,0,0"">
+                                        <TextBlock Text=""{live_time}"" Margin=""0,0,20,0"" IsTextSelectionEnabled=""True""/>
+                                        <TextBlock Text=""{live_people}"" Margin=""0,0,20,0"" IsTextSelectionEnabled=""True""/>
+                                        <Button Content=""预约"" Visibility=""Collapsed"" />
+                                    </StackPanel>
+                                </Grid>
+                            </InlineUIContainer>
+                        </Paragraph>";
+            }
+            return xaml;
+        }
         /// <summary>
         /// 处理视频AVID,BVID,CVID
         /// </summary>
         /// <param name="input"></param>
         /// <returns></returns>
-        private static string HandelVideoID(string input)
+        private static string HandleVideoID(string input)
         {
             List<string> keyword = new List<string>();
             //如果是链接就不处理了

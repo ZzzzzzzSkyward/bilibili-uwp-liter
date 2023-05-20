@@ -1,3 +1,4 @@
+目前B站要求登录的appkey必须对应日常使用的appkey
 |      APPKEY      |              APPSEC              |  platform2   |      APP类型       | neuronAppId1 |     mobi_app2     |                    备注                    |
 | :--------------: | :------------------------------: | :----------: | :----------------: | :----------: | :---------------: | :----------------------------------------: |
 | 9d5889cf67e615cd | 8fd9bb32efea8cef801fd895bef2713d |  `android`   | Ai4cCreatorAndroid |              |                   |                                            |
@@ -5,7 +6,7 @@
 | 783bbb7264451d82 | 2653583c8873dea268ab9386918b1d65 |  `android`   |    普通版(粉版)    |     `1`      |     `android`     |    仅获取用户信息时使用(7.X及更新版本)     |
 | 57263273bc6b67f6 | a0488e488d1567960d3a765e8d129f90 |  `android`   |    普通版(粉版)    |     `1`      |     `android`     |                可能来自旧版                |
 | 07da50c9a0bf829f | 25bdede4e1581c836cab73a48790ca6e |  `android`   |    概念版(蓝版)    |     `3`      |    `android_b`    |                                            |
-| 191c3b6b975af184 | ******************************** |  `android`   |    概念版(蓝版)    |     `3`      |    `android_b`    | 新出现, 仅获取用户信息时使用. 暂未知appsec |
+| 191c3b6b975af184 | 未知                              |  `android`   |    概念版(蓝版)    |     `3`      |    `android_b`    | 新出现, 仅获取用户信息时使用. 暂未知appsec |
 | 178cf125136ca8ea | 34381a26236dd1171185c0beb042e1c6 |  `android`   |    概念版(蓝版)    |     `3`      |    `android_b`    |                可能来自旧版                |
 | 7d336ec01856996b | a1ce6983bc89e20a36c37f40c4f1a0dd |  `android`   |    概念版(蓝版)    |     `3`      |    `android_b`    |                可能来自旧版                |
 | dfca71928277209b | b5475a8825547a4fc26c7d518eaaa02e |  `android`   |        HD版        |     `5`      |   `android_hd`    |                                            |

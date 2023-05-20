@@ -371,11 +371,12 @@
 								<TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入web APPSEC 59b43e04bdc2a02f707f4d86f4c5494a" x:Name="appkey_web_2"/>
 							</StackPanel>
 						</StackPanel>
-						<TextBlock Margin="0 16 0 8" FontSize="16">平台</TextBlock>
-						<ComboBox x:Name="api_platform"  MinWidth="200" PlaceholderText="Andriod" >
+						<TextBlock Margin="0 16 0 8" FontSize="16" Foreground="Gray">平台</TextBlock>
+						<ComboBox x:Name="api_platform"  MinWidth="200" PlaceholderText="Andriod" IsEnabled="false">
 							<ComboBox.Items>
 								<ComboBoxItem>Android</ComboBoxItem>
-								<ComboBoxItem>IPhone</ComboBoxItem>
+								<ComboBoxItem>IOS</ComboBoxItem>
+								<ComboBoxItem>TV</ComboBoxItem>
 							</ComboBox.Items>
 						</ComboBox>
 						<TextBlock Margin="0 16 0 8" FontSize="16">api.bili</TextBlock>
@@ -383,8 +384,10 @@
 						<TextBlock Margin="0 16 0 8" FontSize="16">APIv2</TextBlock>
 						<TextBox Margin="0 0 0 8" MinWidth="200" PlaceholderText="/x/v2" x:Name="api_web_secondary"></TextBox>
 						<StackPanel>
-							<TextBlock FontSize="16">登录</TextBlock>
+							<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+							<TextBlock FontSize="16">极验登录测试</TextBlock>
 							<Button Click="DoLogin">登录</Button>
+							</StackPanel>
 							<StackPanel Orientation="Vertical">
 							<TextBlock>用户名</TextBlock>
 								<TextBox x:Name="dbguser" Margin="0 0 0 8" MinWidth="400"></TextBox>
