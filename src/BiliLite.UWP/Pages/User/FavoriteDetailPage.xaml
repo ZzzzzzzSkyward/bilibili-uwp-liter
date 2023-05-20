@@ -68,7 +68,7 @@
                 <TextBlock Margin="0 4" Foreground="{ThemeResource ForegroundTextColor}" >创建者:<Run Text="{x:Bind Path=favoriteDetailVM.FavoriteInfo.upper.name,Mode=OneWay}"/>,共<Run Text="{x:Bind Path=favoriteDetailVM.FavoriteInfo.media_count,Mode=OneWay}"/>个视频</TextBlock>
             </StackPanel>
             <StackPanel  Visibility="{x:Bind Path=favoriteDetailVM.IsItemClickEnabled,Mode=OneWay}" Grid.Column="1" Margin="12 0" VerticalAlignment="Center" Orientation="Horizontal">
-                <AutoSuggestBox x:Name="searchBox" Width="160" QueryIcon="Find" Margin="12 0" PlaceholderText="搜索" VerticalAlignment="Center" QuerySubmitted="AutoSuggestBox_QuerySubmitted"></AutoSuggestBox>
+                <AutoSuggestBox x:Name="searchBox" Width="160" QueryIcon="Find" Margin="12 0" PlaceholderText="搜索" VerticalAlignment="Center" QuerySubmitted="AutoSuggestBox_QuerySubmitted" Background="{ThemeResource TransparentBackground}"></AutoSuggestBox>
                 <AppBarButton x:Name="PlayAll" Click="PlayAll_Click" ToolTipService.ToolTip="播放全部" Icon="Play" Width="40" Height="40"></AppBarButton>
                 <AppBarButton ToolTipService.ToolTip="收藏" 
                               Visibility="{x:Bind Path=favoriteDetailVM.ShowCollect,Mode=OneWay}" 

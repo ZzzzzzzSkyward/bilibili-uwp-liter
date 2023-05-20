@@ -77,7 +77,7 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Grid x:Name="gridTopBar" MaxWidth="800" Margin="8 0">
-                        <Border x:Name="borderTopBar" Margin="12 4"  CornerRadius="4"  Background="{ThemeResource CardColor}">
+                        <Border x:Name="borderTopBar" Margin="12 4"  CornerRadius="4"  Background="{ThemeResource TransparentLayer}">
                             <Pivot x:Name="pivot" SelectionChanged="pivot_SelectionChanged">
                                 <Pivot.RightHeader>
                                     <StackPanel Orientation="Horizontal">

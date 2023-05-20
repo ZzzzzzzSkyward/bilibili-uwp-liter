@@ -717,7 +717,7 @@ namespace BiliLite.Controls
             {
                 if (action == 0)
                 {
-                    return new SolidColorBrush((Color)Application.Current.Resources["ForegroundGridColor"]);
+                    return new SolidColorBrush((Color)Application.Current.Resources["ForegroundTextColor"]);
                 }
                 else
                 {
