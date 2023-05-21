@@ -241,7 +241,7 @@
                         </AppBarButton>
                         <AppBarButton x:Name="btnDownload2" Visibility="Collapsed" Label="下载" Click="btnDownload_Click" Foreground="{ThemeResource TextColor}" >
                             <AppBarButton.Icon>
-                                <fa:FontAwesome Icon="Solid_Sync"></fa:FontAwesome>
+                                <fa:FontAwesome Icon="Solid_Download"></fa:FontAwesome>
                             </AppBarButton.Icon>
                             <AppBarButton.KeyboardAccelerators>
                                 <KeyboardAccelerator Key="F4"></KeyboardAccelerator>
@@ -263,8 +263,8 @@
                                     <MenuFlyoutItem Click="btnWatchLater_Click" >稍后再看</MenuFlyoutItem>
                                     <MenuFlyoutItem Click="btnOpenQR_Click" >手机观看</MenuFlyoutItem>
                                     <MenuFlyoutItem Click="btnOpenWeb_Click" >浏览器打开</MenuFlyoutItem>
-                                    <MenuFlyoutItem ToolTipService.ToolTip="F5" Click="btnRefresh_Click">刷新F5</MenuFlyoutItem>
-                                    <MenuFlyoutItem ToolTipService.ToolTip="F4" Click="btnDownload_Click">下载F4</MenuFlyoutItem>
+                                    <MenuFlyoutItem ToolTipService.ToolTip="" Click="btnRefresh_Click">刷新</MenuFlyoutItem>
+                                    <MenuFlyoutItem ToolTipService.ToolTip="" Click="btnDownload_Click">下载</MenuFlyoutItem>
                                 </MenuFlyout>
                             </Button.Flyout>
                         </Button>

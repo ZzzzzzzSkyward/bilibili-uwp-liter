@@ -552,6 +552,8 @@ namespace BiliLite.Controls
                         }
                     }
                     break;
+                case Windows.System.VirtualKey.F4:
+                    break;
                 default:
                     break;
             }
