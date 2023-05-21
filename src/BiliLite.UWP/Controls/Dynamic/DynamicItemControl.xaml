@@ -62,32 +62,12 @@
                             <Image Height="44" Source="{x:Bind Path=Model.DecorateImage,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='64h.png'}"></Image>
                             <TextBlock FontSize="12" Visibility="{x:Bind Path=Model.ShowDecorateText,Mode=OneWay}" FontFamily="{StaticResource FansNum}"  VerticalAlignment="Center" Margin="0 0 40 0" HorizontalAlignment="Right" Foreground="{x:Bind Path=Model.DecorateColor,Mode=OneWay,Converter={StaticResource colorConvert}}"  Text="{x:Bind Path=Model.DecorateText,Mode=OneWay}"></TextBlock>
                         </Grid>
-                        <AppBarButton Style="{StaticResource AppBarButtonNoChevronStyle}" Width="40" VerticalAlignment="Center" Height="Auto" Grid.Column="2" Icon="More" Foreground="{ThemeResource ForegroundTextColor}">
-                            <AppBarButton.Flyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem Text="打开详情" Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}">
-                                        <MenuFlyoutItem.Icon>
-                                            <SymbolIcon Symbol="OpenWith"></SymbolIcon>
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="网页打开" Command="{x:Bind Path=Model.WebCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.DynamicUrl,Mode=OneWay}">
-                                        <MenuFlyoutItem.Icon>
-                                            <SymbolIcon Symbol="World"></SymbolIcon>
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="举报">
-                                        <MenuFlyoutItem.Icon>
-                                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE7BA;" />
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="删除" Command="{x:Bind Path=Model.DeleteCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Visibility="{x:Bind Path=Model.IsSelf,Mode=OneWay}">
-                                        <MenuFlyoutItem.Icon>
-                                            <SymbolIcon Symbol="Delete"></SymbolIcon>
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                </MenuFlyout>
-                            </AppBarButton.Flyout>
-                        </AppBarButton>
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="2" Opacity="0.5">
+                            <AppBarButton Icon="OpenFile" ToolTipService.ToolTip="打开详情" Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Width="30"/>
+                            <AppBarButton Icon="Globe" ToolTipService.ToolTip="网页打开" Command="{x:Bind Path=Model.WebCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.DynamicUrl,Mode=OneWay}" Width="30" />
+                            <AppBarButton Icon="Flag" ToolTipService.ToolTip="举报" Visibility="Collapsed"  Width="30"/>
+                            <AppBarButton Icon="Delete" ToolTipService.ToolTip="删除" Command="{x:Bind Path=Model.DeleteCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Visibility="{x:Bind Path=Model.IsSelf,Mode=OneWay}"  Width="30" />
+                        </StackPanel>
                     </Grid>
 
                     <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.IsRepost,Mode=OneWay}" Padding="0"  Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}">

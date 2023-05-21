@@ -436,7 +436,7 @@ namespace BiliLite.Modules
             {
                 var sd = new SeasonDetailStyleItemModel();
                 sd.name = item;
-                sd.id = item;
+                sd.id = null;//标记该标签不可打开
                 sd.url = "";
                 this.styles.Add(sd);    
             }

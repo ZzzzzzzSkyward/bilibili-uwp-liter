@@ -425,6 +425,8 @@ namespace BiliLite.Pages
         {
 
             var data = (sender as HyperlinkButton).DataContext as SeasonDetailStyleItemModel;
+            //防止报错
+            if (string.IsNullOrEmpty(data.id)) return;
             MessageCenter.NavigateToPage(this, new NavigationInfo()
             {
                 icon = Symbol.Filter,

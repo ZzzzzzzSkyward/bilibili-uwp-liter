@@ -1,5 +1,6 @@
 ﻿using BiliLite.Api;
 using BiliLite.Api.Live;
+using BiliLite.Converters;
 using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Modules.Live;
@@ -68,7 +69,7 @@ namespace BiliLite.Modules
                     Messages.Add(new DanmuMsgModel()
                     {
                         username = message.ToString(),
-                        uname_color = new SolidColorBrush(Colors.Gray)
+                        uname_color = new SolidColorBrush((Color)App.Current.Resources["TextColor"])
                     });
                     break;
                 case MessageType.Online:
@@ -77,14 +78,14 @@ namespace BiliLite.Modules
                 case MessageType.Danmu:
                     {
                         var m = message as DanmuMsgModel;
-                        m.uname_color = new SolidColorBrush(Colors.Gray);
-                        if (m.medalColor != null && m.medalColor != "")
+                        m.uname_color = new SolidColorBrush((Color)App.Current.Resources["TextColor"]);
+                    if (m.medalColor != null && m.medalColor != "")
                         {
                             m.ul_color = new SolidColorBrush(Utils.ToColor(m.ulColor));
                         }
                         else
                         {
-                            m.ul_color = new SolidColorBrush(Colors.Gray);
+                            m.ul_color = new SolidColorBrush((Color)App.Current.Resources["TextColor"]);
                         }
                         if (m.medalColor != null && m.medalColor != "")
                         {

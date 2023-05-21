@@ -56,15 +56,15 @@
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray" >UP:<Run Text="{x:Bind Path=author}"/></TextBlock>
-                                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray">播放:<Run Text="{x:Bind Path=play,Converter={StaticResource numberToStringConvert}}"></Run> 弹幕:<Run Text="{x:Bind Path=video_review,Converter={StaticResource numberToStringConvert}}"></Run></TextBlock>
+                                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=author}"/></TextBlock>
+                                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">播放:<Run Text="{x:Bind Path=play,Converter={StaticResource numberToStringConvert}}"></Run> 弹幕:<Run Text="{x:Bind Path=video_review,Converter={StaticResource numberToStringConvert}}"></Run></TextBlock>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
                     </toolkit:AdaptiveGridView.ItemTemplate>
                     <toolkit:AdaptiveGridView.Footer>
                         <StackPanel>
-                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center" x:Name="btnLoadMore">
+                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" x:Name="btnLoadMore">
                                 <TextBlock>加载更多</TextBlock>
                             </HyperlinkButton>
                             <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=Loading,Mode=OneWay}"></ProgressRing>
@@ -72,7 +72,7 @@
                     </toolkit:AdaptiveGridView.Footer>
                 </toolkit:AdaptiveGridView>
 
-                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">什么都没有找到呢~</TextBlock>
+                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">什么都没有找到呢~</TextBlock>
                 <control:RoundButton Grid.RowSpan="2" Command="{x:Bind Path=RefreshCommand}" Visibility="{x:Bind Path=Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                     <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                 </control:RoundButton>
@@ -104,25 +104,25 @@
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="Gray" >类型：<Run Text="{x:Bind season_type_name}"/></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="Gray" >地区：<Run Text="{x:Bind areas}"/></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="Gray" >风格：<Run Text="{x:Bind styles}"/></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="Gray" >开播时间：<Run Text="{x:Bind Path=pubtime,Converter={StaticResource ts},ConverterParameter='yyyy-MM-dd'}"/></TextBlock>
-                                    <!--<TextBlock Margin="0" MaxLines="2" FontSize="14" Foreground="Gray" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=desc}"></TextBlock>-->
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >类型：<Run Text="{x:Bind season_type_name}"/></TextBlock>
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >地区：<Run Text="{x:Bind areas}"/></TextBlock>
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >风格：<Run Text="{x:Bind styles}"/></TextBlock>
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >开播时间：<Run Text="{x:Bind Path=pubtime,Converter={StaticResource ts},ConverterParameter='yyyy-MM-dd'}"/></TextBlock>
+                                    <!--<TextBlock Margin="0" MaxLines="2" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=desc}"></TextBlock>-->
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
                     </toolkit:AdaptiveGridView.ItemTemplate>
                     <toolkit:AdaptiveGridView.Footer>
                         <StackPanel>
-                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center" x:Name="btnLoadMore">
+                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" x:Name="btnLoadMore">
                                 <TextBlock>加载更多</TextBlock>
                             </HyperlinkButton>
                             <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=Loading,Mode=OneWay}"></ProgressRing>
                         </StackPanel>
                     </toolkit:AdaptiveGridView.Footer>
                 </toolkit:AdaptiveGridView>
-                <TextBlock Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">什么都没有找到呢~</TextBlock>
+                <TextBlock Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">什么都没有找到呢~</TextBlock>
                 <control:RoundButton  Command="{x:Bind Path=RefreshCommand}" Visibility="{x:Bind Path=Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                     <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                 </control:RoundButton>
@@ -169,24 +169,24 @@
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis" Text="{x:Bind uname}"></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="Gray" >稿件:<Run Text="{x:Bind Path=videos,Converter={StaticResource numberToStringConvert}}"/> 粉丝:<Run Text="{x:Bind Path=fans,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis" MaxLines="1" FontSize="14" Foreground="Gray" Text="{x:Bind sign}"/>
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >稿件:<Run Text="{x:Bind Path=videos,Converter={StaticResource numberToStringConvert}}"/> 粉丝:<Run Text="{x:Bind Path=fans,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                                    <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis" MaxLines="1" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind sign}"/>
 
-                                    <!--<TextBlock Margin="0" MaxLines="2" FontSize="14" Foreground="Gray" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=desc}"></TextBlock>-->
+                                    <!--<TextBlock Margin="0" MaxLines="2" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=desc}"></TextBlock>-->
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
                     </toolkit:AdaptiveGridView.ItemTemplate>
                     <toolkit:AdaptiveGridView.Footer>
                         <StackPanel>
-                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center" x:Name="btnLoadMore">
+                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" x:Name="btnLoadMore">
                                 <TextBlock>加载更多</TextBlock>
                             </HyperlinkButton>
                             <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=Loading,Mode=OneWay}"></ProgressRing>
                         </StackPanel>
                     </toolkit:AdaptiveGridView.Footer>
                 </toolkit:AdaptiveGridView>
-                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">什么都没有找到呢~</TextBlock>
+                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">什么都没有找到呢~</TextBlock>
                 <control:RoundButton Grid.RowSpan="2" Command="{x:Bind Path=RefreshCommand}" Visibility="{x:Bind Path=Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                     <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                 </control:RoundButton>
@@ -224,7 +224,7 @@
                                         <ColumnDefinition Width="48"/>
                                         <ColumnDefinition/>
                                     </Grid.ColumnDefinitions>
-                                    <Ellipse Width="48"  Height="48" Stroke="Gray" StrokeThickness="1">
+                                    <Ellipse Width="48"  Height="48" Stroke="{ThemeResource ForegroundTextColor}" StrokeThickness="1">
                                         <Ellipse.Fill>
                                             <ImageBrush ImageSource="{x:Bind Path=uface,Converter={StaticResource imageConvert2},ConverterParameter='56w'}"/>
                                         </Ellipse.Fill>
@@ -237,8 +237,8 @@
                                         <ColumnDefinition/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock  TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12" Foreground="Gray" TextTrimming="CharacterEllipsis" Text="{x:Bind uname}"></TextBlock>
-                                    <TextBlock  Grid.Column="1" FontSize="12" HorizontalAlignment="Right" Foreground="Gray" >人气:<Run  Text="{x:Bind Path=online,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                                    <TextBlock  TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" Text="{x:Bind uname}"></TextBlock>
+                                    <TextBlock  Grid.Column="1" FontSize="12" HorizontalAlignment="Right" Foreground="{ThemeResource ForegroundTextColor}" >人气:<Run  Text="{x:Bind Path=online,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
                                 </Grid>
                             </Grid>
                         </DataTemplate>
@@ -251,14 +251,14 @@
                     </toolkit:AdaptiveGridView.ItemContainerStyle>
                     <toolkit:AdaptiveGridView.Footer>
                         <StackPanel>
-                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center" x:Name="btnLoadMore">
+                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" x:Name="btnLoadMore">
                                 <TextBlock>加载更多</TextBlock>
                             </HyperlinkButton>
                             <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=Loading,Mode=OneWay}"></ProgressRing>
                         </StackPanel>
                     </toolkit:AdaptiveGridView.Footer>
                 </toolkit:AdaptiveGridView>
-                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">什么都没有找到呢~</TextBlock>
+                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">什么都没有找到呢~</TextBlock>
                 <control:RoundButton Grid.RowSpan="2" Command="{x:Bind Path=RefreshCommand}" Visibility="{x:Bind Path=Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                     <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                 </control:RoundButton>
@@ -300,15 +300,15 @@
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray" >阅读:<Run Text="{x:Bind Path=view,Converter={StaticResource numberToStringConvert}}"></Run> 评论:<Run Text="{x:Bind Path=reply,Converter={StaticResource numberToStringConvert}}"></Run> 喜欢:<Run Text="{x:Bind Path=like,Converter={StaticResource numberToStringConvert}}"></Run></TextBlock>
-                                    <TextBlock Margin="0 4" FontSize="14" MaxLines="2" Foreground="Gray" >分区:<Run Text="{x:Bind Path=category_name}"/></TextBlock>
+                                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >阅读:<Run Text="{x:Bind Path=view,Converter={StaticResource numberToStringConvert}}"></Run> 评论:<Run Text="{x:Bind Path=reply,Converter={StaticResource numberToStringConvert}}"></Run> 喜欢:<Run Text="{x:Bind Path=like,Converter={StaticResource numberToStringConvert}}"></Run></TextBlock>
+                                    <TextBlock Margin="0 4" FontSize="14" MaxLines="2" Foreground="{ThemeResource ForegroundTextColor}" >分区:<Run Text="{x:Bind Path=category_name}"/></TextBlock>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
                     </toolkit:AdaptiveGridView.ItemTemplate>
                     <toolkit:AdaptiveGridView.Footer>
                         <StackPanel>
-                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center" x:Name="btnLoadMore">
+                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" x:Name="btnLoadMore">
                                 <TextBlock>加载更多</TextBlock>
                             </HyperlinkButton>
                             <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=Loading,Mode=OneWay}"></ProgressRing>
@@ -316,7 +316,7 @@
                     </toolkit:AdaptiveGridView.Footer>
                 </toolkit:AdaptiveGridView>
 
-                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">什么都没有找到呢~</TextBlock>
+                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">什么都没有找到呢~</TextBlock>
                 <control:RoundButton Grid.RowSpan="2" Command="{x:Bind Path=RefreshCommand}" Visibility="{x:Bind Path=Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                     <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                 </control:RoundButton>
@@ -350,15 +350,15 @@
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                                    <TextBlock Margin="0 4" FontSize="14" TextWrapping="Wrap" MaxLines="2" Foreground="Gray" Text="{x:Bind description}" TextTrimming="CharacterEllipsis"></TextBlock>
-                                    <TextBlock Margin="0 4" FontSize="14" Foreground="Gray" >时间:<Run Text="{x:Bind Path=pubdate,Converter={StaticResource ts},ConverterParameter='yyyy-MM-dd'}"></Run></TextBlock>
+                                    <TextBlock Margin="0 4" FontSize="14" TextWrapping="Wrap" MaxLines="2" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind description}" TextTrimming="CharacterEllipsis"></TextBlock>
+                                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >时间:<Run Text="{x:Bind Path=pubdate,Converter={StaticResource ts},ConverterParameter='yyyy-MM-dd'}"></Run></TextBlock>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
                     </toolkit:AdaptiveGridView.ItemTemplate>
                     <toolkit:AdaptiveGridView.Footer>
                         <StackPanel>
-                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center" x:Name="btnLoadMore">
+                            <HyperlinkButton Command="{x:Bind Path=LoadMoreCommand}" Visibility="{x:Bind Path=ShowLoadMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" x:Name="btnLoadMore">
                                 <TextBlock>加载更多</TextBlock>
                             </HyperlinkButton>
                             <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=Loading,Mode=OneWay}"></ProgressRing>
@@ -366,7 +366,7 @@
                     </toolkit:AdaptiveGridView.Footer>
                 </toolkit:AdaptiveGridView>
 
-                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">什么都没有找到呢~</TextBlock>
+                <TextBlock Grid.Row="1" Visibility="{x:Bind Path=Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">什么都没有找到呢~</TextBlock>
                 <control:RoundButton Grid.RowSpan="2" Command="{x:Bind Path=RefreshCommand}" Visibility="{x:Bind Path=Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                     <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                 </control:RoundButton>

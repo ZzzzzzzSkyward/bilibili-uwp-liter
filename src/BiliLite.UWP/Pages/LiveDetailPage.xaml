@@ -287,13 +287,13 @@
                     <InlineUIContainer >
                         <StackPanel  Orientation="Horizontal" VerticalAlignment="Center" Padding="0 0 0 -4">
                             <Border Visibility="{Binding isAdmin}" BorderThickness="1" BorderBrush="DarkOrange" Background="DarkOrange" Margin="0 0 4 0" CornerRadius="2" Padding="2">
-                                <TextBlock FontSize="12" Foreground="White">房管</TextBlock>
+                                <TextBlock FontSize="12" Foreground="{ThemeResource ForegroundTextColor}">房管</TextBlock>
                             </Border>
                             <Border Visibility="{Binding isVip}" BorderThickness="1" BorderBrush="DarkOrange" Background="DarkOrange" Margin="0 0 4 0" CornerRadius="2" Padding="2">
-                                <TextBlock FontSize="12" Foreground="White">爷</TextBlock>
+                                <TextBlock FontSize="12" Foreground="{ThemeResource ForegroundTextColor}">爷</TextBlock>
                             </Border>
                             <Border Visibility="{Binding isBigVip}" BorderThickness="1" BorderBrush="HotPink" Background="HotPink" Margin="0 0 4 0" CornerRadius="2" Padding="2">
-                                <TextBlock FontSize="12" Foreground="White">爷</TextBlock>
+                                <TextBlock FontSize="12" Foreground="{ThemeResource ForegroundTextColor}">爷</TextBlock>
                             </Border>
                             <Border Visibility="{Binding hasMedal}" VerticalAlignment="Center" BorderThickness="1" BorderBrush="{Binding medal_color}" CornerRadius="2" Margin="0 0 4 0">
                                 <Grid>
@@ -302,9 +302,9 @@
                                         <ColumnDefinition/>
                                     </Grid.ColumnDefinitions>
                                     <Grid Background="{Binding medal_color}" Padding="2 0">
-                                        <TextBlock FontSize="12" Foreground="White" Text="{Binding medal_name}"></TextBlock>
+                                        <TextBlock FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Text="{Binding medal_name}"></TextBlock>
                                     </Grid>
-                                    <Grid Grid.Column="1" Background="White" Padding="4 0">
+                                    <Grid Grid.Column="1" Background="{ThemeResource ForegroundTextColor}" Padding="4 0">
                                         <TextBlock FontSize="12" Foreground="{Binding medal_color}" Text="{Binding medal_lv}"></TextBlock>
                                     </Grid>
                                 </Grid>
@@ -313,7 +313,7 @@
                             <Border  Visibility="{Binding hasUL}" BorderThickness="1" VerticalAlignment="Center" BorderBrush="{Binding ul_color}" Margin="0 0 4 0" CornerRadius="2" Padding="2 0">
                                 <TextBlock FontSize="12" Foreground="{Binding ul_color}" Text="{Binding ul}"></TextBlock>
                             </Border>
-                            <!--<TextBlock TextWrapping="WrapWholeWords"><Run  Foreground="Gray"  Text="{Binding username}"></Run></TextBlock>-->
+                            <!--<TextBlock TextWrapping="WrapWholeWords"><Run  Foreground="{ThemeResource ForegroundTextColor}"  Text="{Binding username}"></Run></TextBlock>-->
                         </StackPanel>
                     </InlineUIContainer>
                     <Run Foreground="{Binding uname_color}" Text="{Binding username}"></Run>
@@ -355,10 +355,10 @@
                     </Grid>
                     <!--亮度-->
                     <Grid x:Name="BrightnessShield" Tapped="Grid_Tapped" Background="#99000000" Opacity="0"></Grid>
-                    <TextBlock Visibility="{x:Bind Path=liveRoomVM.Liveing,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="24" Foreground="Gray">主播正在换女装</TextBlock>
+                    <TextBlock Visibility="{x:Bind Path=liveRoomVM.Liveing,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Center" HorizontalAlignment="Center" FontSize="24" Foreground="{ThemeResource ForegroundTextColor}">主播正在换女装</TextBlock>
                     <StackPanel x:Name="PlayerLoading" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center">
                         <ProgressRing IsActive="True" Width="56" Height="56"></ProgressRing>
-                        <TextBlock x:Name="PlayerLoadText" TextAlignment="Center" Margin="0 8" Foreground="Gray">加载中</TextBlock>
+                        <TextBlock x:Name="PlayerLoadText" TextAlignment="Center" Margin="0 8" Foreground="{ThemeResource ForegroundTextColor}">加载中</TextBlock>
                     </StackPanel>
                     <Border x:Name="ToolTip" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="8" Padding="16" Background="#CCFFFFFF">
                         <TextBlock x:Name="TxtToolTip" Foreground="Black" FontSize="20" Text=""></TextBlock>
@@ -381,10 +381,10 @@
                                     <ColumnDefinition/>
                                     <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock x:Name="TopTitle" VerticalAlignment="Center" Foreground="White" FontSize="18" Margin="12 0" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=liveRoomVM.LiveInfo.room_info.title,Mode=OneWay}"></TextBlock>
+                                <TextBlock x:Name="TopTitle" VerticalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}" FontSize="18" Margin="12 0" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=liveRoomVM.LiveInfo.room_info.title,Mode=OneWay}"></TextBlock>
                                 <StackPanel Grid.Column="1" Orientation="Horizontal">
 
-                                    <Button x:Name="TopBtnShare" Foreground="White" Background="Transparent" Padding="0" Width="48" Height="48">
+                                    <Button x:Name="TopBtnShare" Foreground="{ThemeResource ForegroundTextColor}" Background="Transparent" Padding="0" Width="48" Height="48">
                                         <FontIcon FontSize="28" FontFamily="Segoe MDL2 Assets" Glyph="&#xE72D;" />
                                         <Button.Flyout>
                                             <MenuFlyout>
@@ -451,8 +451,8 @@
                                                                 <ItemsControl.ItemTemplate>
                                                                     <DataTemplate>
                                                                         <HyperlinkButton Margin="0 0 8 0" Click="btnRemoveWords_Click">
-                                                                            <Border CornerRadius="4" Padding="8 4" Background="Gray">
-                                                                                <TextBlock FontSize="12" Foreground="white" Text="{Binding}" ></TextBlock>
+                                                                            <Border CornerRadius="4" Padding="8 4" Background="{ThemeResource ForegroundTextColor}">
+                                                                                <TextBlock FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Text="{Binding}" ></TextBlock>
                                                                             </Border>
                                                                         </HyperlinkButton>
                                                                     </DataTemplate>
@@ -482,19 +482,19 @@
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
                                     <StackPanel Orientation="Horizontal">
-                                        <HyperlinkButton x:Name="BottomBtnPause" Click="BottomBtnPause_Click" Visibility="Collapsed" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <HyperlinkButton x:Name="BottomBtnPause" Click="BottomBtnPause_Click" Visibility="Collapsed" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                             <fa:FontAwesome Icon="Solid_Pause"  FontSize="20"></fa:FontAwesome>
                                         </HyperlinkButton>
-                                        <HyperlinkButton x:Name="BottomBtnPlay" Click="BottomBtnPlay_Click" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <HyperlinkButton x:Name="BottomBtnPlay" Click="BottomBtnPlay_Click" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                             <fa:FontAwesome Icon="Solid_Play"  FontSize="20"></fa:FontAwesome>
                                         </HyperlinkButton>
-                                        <HyperlinkButton x:Name="BottomBtnRefresh" Click="BottomBtnRefresh_Click" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <HyperlinkButton x:Name="BottomBtnRefresh" Click="BottomBtnRefresh_Click" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                             <fa:FontAwesome Icon="Solid_SyncAlt"  FontSize="20"></fa:FontAwesome>
                                             <HyperlinkButton.KeyboardAccelerators>
                                                 <KeyboardAccelerator Key="F5"></KeyboardAccelerator>
                                             </HyperlinkButton.KeyboardAccelerators>
                                         </HyperlinkButton>
-                                        <TextBlock x:Name="BottomTextPostion" VerticalAlignment="Center" Foreground="White" Margin="8 0" FontSize="18" Text="{x:Bind Path=liveRoomVM.LiveTime,Mode=OneWay}"></TextBlock>
+                                        <TextBlock x:Name="BottomTextPostion" VerticalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}" Margin="8 0" FontSize="18" Text="{x:Bind Path=liveRoomVM.LiveTime,Mode=OneWay}"></TextBlock>
 
 
                                         <Button x:Name="TopBtnOpenDanmaku" Click="TopBtnOpenDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay,Converter={StaticResource display}}" Background="Transparent" Padding="0" Width="48" Height="48">
@@ -539,18 +539,18 @@
                                                 </Flyout>
                                             </Button.Flyout>
                                         </Button>
-                                        <!--<HyperlinkButton x:Name="BottomBtnSendDanmaku" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <!--<HyperlinkButton x:Name="BottomBtnSendDanmaku" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                     <fa:FontAwesome Icon="Solid_Comments" FontSize="20"></fa:FontAwesome>
                                 </HyperlinkButton>-->
                                     </StackPanel>
                                     <Grid  x:Name="BottomBtnSendDanmakuWide" Visibility="Collapsed" Grid.Column="1" Margin="12 0" MaxWidth="400">
-                                        <TextBox x:Name="SendDanmakuTextBox"  Padding="8 8 56 8" BorderThickness="0"  Foreground="White" Background="#66FFFFFF"  VerticalAlignment="Center" PlaceholderText="发个友善的弹幕见证当下"></TextBox>
-                                        <Button x:Name="SendDanmakuButton"  BorderThickness="0"  Background="Gray" VerticalAlignment="Stretch" HorizontalAlignment="Right" Height="35" Width="56" Foreground="White" Opacity="0.8">发送</Button>
+                                        <TextBox x:Name="SendDanmakuTextBox"  Padding="8 8 56 8" BorderThickness="0"  Foreground="{ThemeResource ForegroundTextColor}" Background="#66FFFFFF"  VerticalAlignment="Center" PlaceholderText="发个友善的弹幕见证当下"></TextBox>
+                                        <Button x:Name="SendDanmakuButton"  BorderThickness="0"  Background="{ThemeResource ForegroundTextColor}" VerticalAlignment="Stretch" HorizontalAlignment="Right" Height="35" Width="56" Foreground="{ThemeResource ForegroundTextColor}" Opacity="0.8">发送</Button>
                                     </Grid>
 
 
                                     <StackPanel Orientation="Horizontal" Grid.Column="2">
-                                        <Button x:Name="BottomBtnVolume" Background="Transparent" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <Button x:Name="BottomBtnVolume" Background="Transparent" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                             <fa:FontAwesome x:Name="BottomBtnVolumeIcon" Icon="Solid_VolumeUp"  FontSize="20"></fa:FontAwesome>
                                             <Button.Flyout>
                                                 <Flyout>
@@ -562,26 +562,26 @@
                                             </Button.Flyout>
                                         </Button>
 
-                                        <ComboBox x:Name="BottomCBQuality" Visibility="{x:Bind Path=liveRoomVM.Liveing,Mode=OneWay}" ItemsSource="{x:Bind Path=liveRoomVM.qualites,Mode=OneWay}" SelectionChanged="BottomCBQuality_SelectionChanged" DisplayMemberPath="desc" ToolTipService.ToolTip="清晰度" HorizontalContentAlignment="Center" Style="{StaticResource PlayerComboBoxStyle}" Foreground="White" BorderThickness="0" FontSize="18" Width="80" VerticalAlignment="Center" Background="Transparent">
+                                        <ComboBox x:Name="BottomCBQuality" Visibility="{x:Bind Path=liveRoomVM.Liveing,Mode=OneWay}" ItemsSource="{x:Bind Path=liveRoomVM.qualites,Mode=OneWay}" SelectionChanged="BottomCBQuality_SelectionChanged" DisplayMemberPath="desc" ToolTipService.ToolTip="清晰度" HorizontalContentAlignment="Center" Style="{StaticResource PlayerComboBoxStyle}" Foreground="{ThemeResource ForegroundTextColor}" BorderThickness="0" FontSize="18" Width="80" VerticalAlignment="Center" Background="Transparent">
 
                                         </ComboBox>
-                                        <ComboBox x:Name="BottomCBLine"  Visibility="{x:Bind Path=liveRoomVM.Liveing,Mode=OneWay}" Width="80" SelectionChanged="BottomCBLine_SelectionChanged" DisplayMemberPath="name" ToolTipService.ToolTip="线路" HorizontalContentAlignment="Center" Style="{StaticResource PlayerComboBoxStyle}" Foreground="White" BorderThickness="0" FontSize="18" VerticalAlignment="Center" Background="Transparent">
+                                        <ComboBox x:Name="BottomCBLine"  Visibility="{x:Bind Path=liveRoomVM.Liveing,Mode=OneWay}" Width="80" SelectionChanged="BottomCBLine_SelectionChanged" DisplayMemberPath="name" ToolTipService.ToolTip="线路" HorizontalContentAlignment="Center" Style="{StaticResource PlayerComboBoxStyle}" Foreground="{ThemeResource ForegroundTextColor}" BorderThickness="0" FontSize="18" VerticalAlignment="Center" Background="Transparent">
 
                                         </ComboBox>
 
-                                        <HyperlinkButton x:Name="BottomBtnMiniWindows" Click="BottomBtnMiniWindows_Click"  ToolTipService.ToolTip="小窗置顶" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <HyperlinkButton x:Name="BottomBtnMiniWindows" Click="BottomBtnMiniWindows_Click"  ToolTipService.ToolTip="小窗置顶" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                             <fa:FontAwesome Icon="Regular_WindowRestore"  FontSize="20"></fa:FontAwesome>
                                         </HyperlinkButton>
-                                        <HyperlinkButton x:Name="BottomBtnFullWindows" Click="BottomBtnFullWindows_Click" ToolTipService.ToolTip="铺满窗口" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <HyperlinkButton x:Name="BottomBtnFullWindows" Click="BottomBtnFullWindows_Click" ToolTipService.ToolTip="铺满窗口" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                             <fa:FontAwesome Icon="Regular_WindowMaximize"  FontSize="20"></fa:FontAwesome>
                                         </HyperlinkButton>
-                                        <HyperlinkButton x:Name="BottomBtnExitFullWindows" Click="BottomBtnExitFullWindows_Click" Visibility="Collapsed" ToolTipService.ToolTip="取消铺满窗口" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <HyperlinkButton x:Name="BottomBtnExitFullWindows" Click="BottomBtnExitFullWindows_Click" Visibility="Collapsed" ToolTipService.ToolTip="取消铺满窗口" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                             <fa:FontAwesome Icon="Solid_Columns"  FontSize="20"></fa:FontAwesome>
                                         </HyperlinkButton>
-                                        <HyperlinkButton x:Name="BottomBtnFull" Click="BottomBtnFull_Click" ToolTipService.ToolTip="全屏" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <HyperlinkButton x:Name="BottomBtnFull" Click="BottomBtnFull_Click" ToolTipService.ToolTip="全屏" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                             <fa:FontAwesome Icon="Solid_Expand"  FontSize="20"></fa:FontAwesome>
                                         </HyperlinkButton>
-                                        <HyperlinkButton x:Name="BottomBtnExitFull" Click="BottomBtnExitFull_Click" ToolTipService.ToolTip="退出全屏" Visibility="Collapsed" Foreground="White" Padding="8" Width="48" Height="48">
+                                        <HyperlinkButton x:Name="BottomBtnExitFull" Click="BottomBtnExitFull_Click" ToolTipService.ToolTip="退出全屏" Visibility="Collapsed" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                             <fa:FontAwesome Icon="Solid_Compress"  FontSize="20"></fa:FontAwesome>
                                         </HyperlinkButton>
                                     </StackPanel>
@@ -596,10 +596,10 @@
                                 </LinearGradientBrush>
                             </Grid.Background>
                             <StackPanel VerticalAlignment="Bottom" Orientation="Horizontal">
-                                <HyperlinkButton  Click="BottomBtnPause_Click" Visibility="{Binding ElementName=BottomBtnPause,Path=Visibility,Mode=OneWay}" Foreground="White" Padding="8" Width="48" Height="48">
+                                <HyperlinkButton  Click="BottomBtnPause_Click" Visibility="{Binding ElementName=BottomBtnPause,Path=Visibility,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                     <fa:FontAwesome Icon="Solid_Pause"  FontSize="20"></fa:FontAwesome>
                                 </HyperlinkButton>
-                                <HyperlinkButton  Click="BottomBtnPlay_Click" Visibility="{Binding ElementName=BottomBtnPlay,Path=Visibility,Mode=OneWay}" Foreground="White" Padding="8" Width="48" Height="48">
+                                <HyperlinkButton  Click="BottomBtnPlay_Click" Visibility="{Binding ElementName=BottomBtnPlay,Path=Visibility,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                     <fa:FontAwesome Icon="Solid_Play"  FontSize="20"></fa:FontAwesome>
                                 </HyperlinkButton>
                                 <Button Click="TopBtnOpenDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay,Converter={StaticResource display}}" Background="Transparent" Padding="0" Width="48" Height="48">
@@ -608,7 +608,7 @@
                                 <Button  Click="TopBtnCloseDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay}" Background="Transparent" Padding="0" Width="48" Height="48">
                                     <Image Width="28" Height="28" Source="/Assets/Icon/icon_danmaku_close.png" ></Image>
                                 </Button>
-                                <HyperlinkButton x:Name="BottomBtnExitMiniWindows"  VerticalAlignment="Bottom" Click="BottomBtnExitMiniWindows_Click"  ToolTipService.ToolTip="退出小窗置顶" Foreground="White" Padding="8" Width="48" Height="48">
+                                <HyperlinkButton x:Name="BottomBtnExitMiniWindows"  VerticalAlignment="Bottom" Click="BottomBtnExitMiniWindows_Click"  ToolTipService.ToolTip="退出小窗置顶" Foreground="{ThemeResource ForegroundTextColor}" Padding="8" Width="48" Height="48">
                                     <fa:FontAwesome Icon="Regular_WindowMaximize"  FontSize="20"></fa:FontAwesome>
                                 </HyperlinkButton>
                             </StackPanel>
@@ -646,11 +646,11 @@
                                             <TextBlock FontSize="20" >天选时刻</TextBlock>
                                             <TextBlock FontSize="20" HorizontalAlignment="Right" Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.DownTime,Mode=OneWay}"></TextBlock>
                                         </Grid>
-                                        <TextBlock Margin="0 4" TextWrapping="Wrap"><Run Foreground="Gray">奖品名称：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.award_name,Mode=OneWay}"/></TextBlock>
-                                        <TextBlock Margin="0 4" TextWrapping="Wrap"><Run Foreground="Gray">中奖人数：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.award_num,Mode=OneWay}"/>人</TextBlock>
-                                        <TextBlock Margin="0 4" TextWrapping="Wrap"><Run Foreground="Gray">弹幕口令：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.danmu,Mode=OneWay}"/></TextBlock>
-                                        <TextBlock Margin="0 4" TextWrapping="Wrap" Visibility="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.show_gift,Mode=OneWay}"><Run Foreground="Gray">赠送礼物：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.gift_name,Mode=OneWay}"/>x<Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.gift_num,Mode=OneWay}"/></TextBlock>
-                                        <TextBlock Margin="0 4" TextWrapping="Wrap"><Run Foreground="Gray">限制条件：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.require_text,Mode=OneWay}"/></TextBlock>
+                                        <TextBlock Margin="0 4" TextWrapping="Wrap"><Run Foreground="{ThemeResource ForegroundTextColor}">奖品名称：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.award_name,Mode=OneWay}"/></TextBlock>
+                                        <TextBlock Margin="0 4" TextWrapping="Wrap"><Run Foreground="{ThemeResource ForegroundTextColor}">中奖人数：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.award_num,Mode=OneWay}"/>人</TextBlock>
+                                        <TextBlock Margin="0 4" TextWrapping="Wrap"><Run Foreground="{ThemeResource ForegroundTextColor}">弹幕口令：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.danmu,Mode=OneWay}"/></TextBlock>
+                                        <TextBlock Margin="0 4" TextWrapping="Wrap" Visibility="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.show_gift,Mode=OneWay}"><Run Foreground="{ThemeResource ForegroundTextColor}">赠送礼物：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.gift_name,Mode=OneWay}"/>x<Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.gift_num,Mode=OneWay}"/></TextBlock>
+                                        <TextBlock Margin="0 4" TextWrapping="Wrap"><Run Foreground="{ThemeResource ForegroundTextColor}">限制条件：</Run><Run Text="{x:Bind Path=liveRoomVM.anchorLotteryVM.LotteryInfo.require_text,Mode=OneWay}"/></TextBlock>
                                         <Button x:Name="BtnSendLotteryDanmu" Click="BtnSendLotteryDanmu_Click" Margin="0 4 0 0" HorizontalAlignment="Stretch">一键发弹幕</Button>
                                     </StackPanel>
                                 </Flyout>
@@ -726,11 +726,11 @@
                                                                     <TextBlock Text="{x:Bind name}" MaxWidth="200"></TextBlock>
                                                                     <Image Width="16"  Margin="8 0 0 0" Visibility="{x:Bind Path=is_gold}" Source="ms-appx:///Assets/Icon/ic_live_center_gold_recharge.png"></Image>
                                                                     <Image Width="16"  Margin="8 0 0 0" Visibility="{x:Bind Path=is_gold,Converter={StaticResource display}}" Source="ms-appx:///Assets/Icon/ic_live_center_silver_recharge.png"></Image>
-                                                                    <TextBlock Margin="4 0 0 0" Text="{x:Bind price}" Foreground="Gray"></TextBlock>
+                                                                    <TextBlock Margin="4 0 0 0" Text="{x:Bind price}" Foreground="{ThemeResource ForegroundTextColor}"></TextBlock>
                                                                 </StackPanel>
 
-                                                                <TextBlock Text="{x:Bind desc}" FontSize="12" Margin="0 4 0 0" MaxWidth="200" TextWrapping="Wrap" Foreground="Gray"></TextBlock>
-                                                                <TextBlock Text="{x:Bind rights}" FontSize="12" Margin="0 4 0 0" MaxWidth="200" TextWrapping="Wrap" Foreground="Gray"></TextBlock>
+                                                                <TextBlock Text="{x:Bind desc}" FontSize="12" Margin="0 4 0 0" MaxWidth="200" TextWrapping="Wrap" Foreground="{ThemeResource ForegroundTextColor}"></TextBlock>
+                                                                <TextBlock Text="{x:Bind rights}" FontSize="12" Margin="0 4 0 0" MaxWidth="200" TextWrapping="Wrap" Foreground="{ThemeResource ForegroundTextColor}"></TextBlock>
                                                             </StackPanel>
 
                                                         </StackPanel>
@@ -774,14 +774,14 @@
                                                                 <StackPanel Orientation="Horizontal">
                                                                     <TextBlock Text="{x:Bind name}" MaxWidth="200"></TextBlock>
                                                                    
-                                                                    <TextBlock Margin="4 0 0 0"  Foreground="Gray">
+                                                                    <TextBlock Margin="4 0 0 0"  Foreground="{ThemeResource ForegroundTextColor}">
                                                                         拥有数量:
                                                                         <Run Text="{x:Bind gift_num}"/>
                                                                     </TextBlock>
                                                                 </StackPanel>
 
-                                                                <TextBlock Text="{x:Bind desc}" FontSize="12" Margin="0 4 0 0" MaxWidth="200" TextWrapping="Wrap" Foreground="Gray"></TextBlock>
-                                                                <TextBlock Text="{x:Bind rights}" FontSize="12" Margin="0 4 0 0" MaxWidth="200" TextWrapping="Wrap" Foreground="Gray"></TextBlock>
+                                                                <TextBlock Text="{x:Bind desc}" FontSize="12" Margin="0 4 0 0" MaxWidth="200" TextWrapping="Wrap" Foreground="{ThemeResource ForegroundTextColor}"></TextBlock>
+                                                                <TextBlock Text="{x:Bind rights}" FontSize="12" Margin="0 4 0 0" MaxWidth="200" TextWrapping="Wrap" Foreground="{ThemeResource ForegroundTextColor}"></TextBlock>
                                                             </StackPanel>
 
                                                         </StackPanel>
@@ -823,9 +823,9 @@
                     </HyperlinkButton>
                     <StackPanel Grid.Column="1" Margin="8 0" VerticalAlignment="Center">
                         <TextBlock Text="{x:Bind Path=liveRoomVM.LiveInfo.anchor_info.base_info.uname,Mode=OneWay}"></TextBlock>
-                        <TextBlock Margin="0 4 0 0" Foreground="Gray" FontSize="12"> 人气:<Run Text="{x:Bind Path=liveRoomVM.Online,Converter={StaticResource numberToStringConvert},Mode=OneWay}"/> 粉丝:<Run Text="{x:Bind Path=liveRoomVM.LiveInfo.anchor_info.relation_info.attention,Converter={StaticResource numberToStringConvert},Mode=OneWay}"/></TextBlock>
+                        <TextBlock Margin="0 4 0 0" Foreground="{ThemeResource ForegroundTextColor}" FontSize="12"> 人气:<Run Text="{x:Bind Path=liveRoomVM.Online,Converter={StaticResource numberToStringConvert},Mode=OneWay}"/> 粉丝:<Run Text="{x:Bind Path=liveRoomVM.LiveInfo.anchor_info.relation_info.attention,Converter={StaticResource numberToStringConvert},Mode=OneWay}"/></TextBlock>
                     </StackPanel>
-                    <Button x:Name="BtnAttention" Click="BtnAttention_Click" FontSize="12" Visibility="{x:Bind Path=liveRoomVM.Attention,Mode=OneWay,Converter={StaticResource display}}" Grid.Column="2" Background="{ThemeResource HighLightColor}" Foreground="White">关注</Button>
+                    <Button x:Name="BtnAttention" Click="BtnAttention_Click" FontSize="12" Visibility="{x:Bind Path=liveRoomVM.Attention,Mode=OneWay,Converter={StaticResource display}}" Grid.Column="2" Background="{ThemeResource HighLightColor}" Foreground="{ThemeResource ForegroundTextColor}">关注</Button>
                     <Button x:Name="BtnCacnelAttention" Click="BtnCacnelAttention_Click" FontSize="12" Visibility="{x:Bind Path=liveRoomVM.Attention,Mode=OneWay}" Grid.Column="2">已关注</Button>
                 </Grid>
                 <Pivot Grid.Row="1" x:Name="pivot" SelectionChanged="pivot_SelectionChanged">
@@ -867,7 +867,7 @@
 
 
 
-                                                        <TextBlock Grid.Column="1" Foreground="White" Margin="8 0" VerticalAlignment="Center">￥<Run Text="{x:Bind Path=price}"/></TextBlock>
+                                                        <TextBlock Grid.Column="1" Foreground="{ThemeResource ForegroundTextColor}" Margin="8 0" VerticalAlignment="Center">￥<Run Text="{x:Bind Path=price}"/></TextBlock>
                                                     </Grid>
                                                 </Border>
                                                 <Button.Flyout>
@@ -891,11 +891,11 @@
 
                                                                 <StackPanel  VerticalAlignment="Center" Grid.Column="1">
                                                                     <TextBlock FontSize="12" Foreground="Black" Text="{x:Bind username}"></TextBlock>
-                                                                    <TextBlock Foreground="Black">￥<Run Text="{x:Bind Path=price}"/> <Run Foreground="Gray" FontSize="12" Text="("/><Run Foreground="Gray" FontSize="12" Text="{x:Bind Path=price_gold,Converter={StaticResource numberToStringConvert}}"/><Run Foreground="Gray" FontSize="12" Text="金瓜子)"/></TextBlock>
+                                                                    <TextBlock Foreground="Black">￥<Run Text="{x:Bind Path=price}"/> <Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="("/><Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=price_gold,Converter={StaticResource numberToStringConvert}}"/><Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="金瓜子)"/></TextBlock>
                                                                 </StackPanel>
                                                             </Grid>
                                                             <Grid Padding="12" Background="{x:Bind Path=background_bottom_color,Mode=OneWay,Converter={StaticResource colorConvert}}">
-                                                                <TextBlock TextWrapping="Wrap" FontSize="14" Foreground="white" Text="{x:Bind Path=message}"></TextBlock>
+                                                                <TextBlock TextWrapping="Wrap" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=message}"></TextBlock>
                                                             </Grid>
                                                         </StackPanel>
                                                     </Flyout>
@@ -966,10 +966,10 @@
 
 
                                 <TextBlock TextAlignment="Center" Text="{x:Bind Path=liveRoomVM.Profile.uname,Mode=OneWay}"></TextBlock>
-                                <TextBlock TextAlignment="Center" FontSize="12" Foreground="Gray" Text="{x:Bind Path=liveRoomVM.Profile.desc,Mode=OneWay}"></TextBlock>
+                                <TextBlock TextAlignment="Center" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=liveRoomVM.Profile.desc,Mode=OneWay}"></TextBlock>
 
                                 <TextBlock Margin="4">分区</TextBlock>
-                                <TextBlock Margin="4" Foreground="Gray" Text="{x:Bind Path=liveRoomVM.Profile.area_name,Mode=OneWay}"></TextBlock>
+                                <TextBlock Margin="4" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=liveRoomVM.Profile.area_name,Mode=OneWay}"></TextBlock>
                                 <TextBlock Margin="4">荣誉</TextBlock>
                                 <GridView ItemsSource="{x:Bind Path=liveRoomVM.Profile.glory_info,Mode=OneWay}" HorizontalAlignment="Center" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden"  SelectionMode="None" IsItemClickEnabled="False">
                                     <GridView.ItemTemplate>
@@ -978,8 +978,8 @@
                                                 <StackPanel>
                                                     <Image HorizontalAlignment="Center" Width="56" Height="56" Source="{Binding pic_url}"></Image>
                                                     <TextBlock FontSize="12" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding name}"></TextBlock>
-                                                    <TextBlock FontSize="10" HorizontalAlignment="Center" Foreground="Gray" TextTrimming="CharacterEllipsis" Text="{Binding activity_name}"></TextBlock>
-                                                    <TextBlock FontSize="10" HorizontalAlignment="Center" Foreground="Gray" TextTrimming="CharacterEllipsis" Text="{Binding activity_date}"></TextBlock>
+                                                    <TextBlock FontSize="10" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" Text="{Binding activity_name}"></TextBlock>
+                                                    <TextBlock FontSize="10" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" Text="{Binding activity_date}"></TextBlock>
                                                 </StackPanel>
                                             </HyperlinkButton>
 
@@ -1022,9 +1022,9 @@
                                                                         <ColumnDefinition/>
                                                                     </Grid.ColumnDefinitions>
                                                                     <Grid Background="{x:Bind Path=color,Converter={StaticResource colorConvert}}" Padding="2 0">
-                                                                        <TextBlock FontSize="12" Foreground="White" Text="{x:Bind medal_name}"></TextBlock>
+                                                                        <TextBlock FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind medal_name}"></TextBlock>
                                                                     </Grid>
-                                                                    <Grid Grid.Column="1" Background="White" Padding="4 0">
+                                                                    <Grid Grid.Column="1" Background="{ThemeResource ForegroundTextColor}" Padding="4 0">
                                                                         <TextBlock FontSize="12" Foreground="{x:Bind Path=color,Converter={StaticResource colorConvert}}" Text="{x:Bind level}"></TextBlock>
                                                                     </Grid>
                                                                 </Grid>
@@ -1051,13 +1051,13 @@
                                             </ListView.ItemContainerStyle>
 
                                         </ListView>
-                                        <HyperlinkButton  Command="{x:Bind Path=liveRoomVM.SelectRank.LoadMoreCommand,Mode=OneWay}" Visibility="{x:Bind Path=liveRoomVM.SelectRank.CanLoadMore,Mode=OneWay}" Foreground="Gray" HorizontalAlignment="Center" >
+                                        <HyperlinkButton  Command="{x:Bind Path=liveRoomVM.SelectRank.LoadMoreCommand,Mode=OneWay}" Visibility="{x:Bind Path=liveRoomVM.SelectRank.CanLoadMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" >
                                             <TextBlock>加载更多</TextBlock>
                                         </HyperlinkButton>
                                         <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=liveRoomVM.SelectRank.Loading,Mode=OneWay}"></ProgressRing>
                                     </StackPanel>
                                 </ScrollViewer>
-                                <TextBlock  Visibility="{x:Bind Path=liveRoomVM.SelectRank.Items.Count,Mode=OneWay,Converter={StaticResource display},ConverterParameter=0}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">好像还没有榜单啊</TextBlock>
+                                <TextBlock  Visibility="{x:Bind Path=liveRoomVM.SelectRank.Items.Count,Mode=OneWay,Converter={StaticResource display},ConverterParameter=0}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">好像还没有榜单啊</TextBlock>
                             </Grid>
                         </Grid>
                     </PivotItem>
@@ -1085,13 +1085,13 @@
                                         </ListView.ItemContainerStyle>
 
                                     </ListView>
-                                    <HyperlinkButton  Command="{x:Bind Path=liveRoomVM.LoadMoreGuardCommand}" Visibility="{x:Bind Path=liveRoomVM.LoadingGuard,Mode=OneWay,Converter={StaticResource display}}" Foreground="Gray" HorizontalAlignment="Center" >
+                                    <HyperlinkButton  Command="{x:Bind Path=liveRoomVM.LoadMoreGuardCommand}" Visibility="{x:Bind Path=liveRoomVM.LoadingGuard,Mode=OneWay,Converter={StaticResource display}}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" >
                                         <TextBlock>加载更多</TextBlock>
                                     </HyperlinkButton>
                                     <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=liveRoomVM.LoadingGuard,Mode=OneWay}"></ProgressRing>
                                 </StackPanel>
                             </ScrollViewer>
-                            <TextBlock x:Name="noGuardRank" Visibility="{x:Bind Path=liveRoomVM.Guards.Count,Mode=OneWay,Converter={StaticResource display},ConverterParameter=0}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="Gray">好像没有人上船啊</TextBlock>
+                            <TextBlock x:Name="noGuardRank" Visibility="{x:Bind Path=liveRoomVM.Guards.Count,Mode=OneWay,Converter={StaticResource display},ConverterParameter=0}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">好像没有人上船啊</TextBlock>
                         </Grid>
 
                     </PivotItem>

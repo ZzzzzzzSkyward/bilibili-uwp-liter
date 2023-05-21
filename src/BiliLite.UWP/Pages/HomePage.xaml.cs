@@ -1,7 +1,10 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Modules;
+using FontAwesome5;
 using Microsoft.Toolkit.Uwp.Connectivity;
 using System;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -312,6 +315,36 @@ namespace BiliLite.Pages
         private void btnUser_Click(object sender, RoutedEventArgs e)
         {
             homeVM.LoginUserCard();
+        }
+        private ElementTheme theme
+        {
+            get
+            {
+                return homeVM.ThemeIcon == EFontAwesomeIcon.Regular_Sun ? ElementTheme.Light : ElementTheme.Dark;
+            }
+            set
+            {
+                homeVM.ThemeIcon = value == ElementTheme.Dark ? EFontAwesomeIcon.Regular_Sun : EFontAwesomeIcon.Regular_Moon;
+            }
+        }
+
+        private void Theme_Click(object sender, RoutedEventArgs e)
+        {
+            Frame rootFrame = Window.Current.Content as Frame;
+            var theme = rootFrame.RequestedTheme;
+            var savedtheme = ElementTheme.Dark;
+            if (theme == ElementTheme.Light)
+            {
+                savedtheme = ElementTheme.Dark;
+            }
+            else
+            {
+                savedtheme = ElementTheme.Light;
+            }
+            theme = savedtheme;
+            SettingHelper.SetValue(SettingHelper.UI.THEME, savedtheme == ElementTheme.Light ? 1 : 2);
+            rootFrame.RequestedTheme = savedtheme;
+            App.ExtendAcrylicIntoTitleBar();
         }
     }
 

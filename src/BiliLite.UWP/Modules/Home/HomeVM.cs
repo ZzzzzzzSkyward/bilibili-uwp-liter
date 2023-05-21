@@ -10,8 +10,10 @@ namespace BiliLite.Modules
     public class HomeVM : IModules
     {
         Account account;
+        public EFontAwesomeIcon ThemeIcon { get; set; } 
         public HomeVM()
         {
+            ThemeIcon = SettingHelper.GetValue(SettingHelper.UI.THEME, 0) == 2 ? EFontAwesomeIcon.Regular_Moon : EFontAwesomeIcon.Regular_Sun;
             account = new Account();
             HomeNavItems = SettingHelper.GetValue<ObservableCollection<HomeNavItem>>(SettingHelper.UI.HOEM_ORDER, GetAllNavItems());
             //var chanel=HomeNavItems.FirstOrDefault(x => x.Icon == EFontAwesomeIcon.Solid_Shapes);

@@ -9,7 +9,7 @@
     xmlns:winui="using:Microsoft.UI.Xaml.Controls"
     xmlns:fa="using:FontAwesome5"
     xmlns:pages="using:BiliLite.Pages.Home"
-    xmlns:modules="using:BiliLite.Modules" xmlns:converters="using:BiliLite.Converters"
+    xmlns:modules="using:BiliLite.Modules" xmlns:converters="using:BiliLite.Converters" d:DataContext="{d:DesignInstance Type=modules:HomeVM}"
     NavigationCacheMode="Required"
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
@@ -145,6 +145,9 @@
                     <AppBarButton x:Name="MenuWatchlater2" Height="48" Width="48" Click="MenuWatchlater_Click" Icon="Play"/>
                     <AppBarButton x:Name="btnHistory" Height="48" Width="48" Click="MenuHistory_Click" Icon="Clock"/>
                     <AppBarButton x:Name="btnFavorite" Height="48" Width="48" Click="MenuMyFollow_Click" Icon="OutlineStar"/>
+                    <AppBarButton x:Name="btnTheme" Height="48" Width="48" Click="Theme_Click">
+                        <fa:FontAwesome Icon="{Binding ThemeIcon, Mode=OneWay}" FontSize="14"></fa:FontAwesome>
+                    </AppBarButton>
                     <AppBarButton x:Name="btnSetting" Height="48" Click="btnSetting_Click" Width="48" Icon="Setting" ></AppBarButton>
                 </StackPanel>
             </winui:NavigationView.PaneFooter>
