@@ -203,16 +203,16 @@
                                     <toolkit:AdaptiveGridView.Header>
                                         <Grid Margin="4 8">
                                             <StackPanel Orientation="Horizontal">
-                                                <ComboBox DisplayMemberPath="name" ItemsSource="{x:Bind Path=userSubmitVideoVM.Tlist,Mode=OneWay}" SelectionChanged="ComboBox_SelectionChanged" SelectedItem="{x:Bind Path=userSubmitVideoVM.SelectTid,Mode=TwoWay}">
+                                                <ComboBox DisplayMemberPath="name" ItemsSource="{x:Bind Path=userSubmitVideoVM.Tlist,Mode=OneWay}" SelectionChanged="ComboBox_SelectionChanged" SelectedItem="{x:Bind Path=userSubmitVideoVM.SelectTid,Mode=TwoWay}" Background="{ThemeResource TransparentBackground}" Width="120">
 
                                                 </ComboBox>
-                                                <ComboBox x:Name="comVideoOrder" SelectionChanged="comVideoOrder_SelectionChanged" Margin="8 0"  SelectedIndex="{x:Bind Path=userSubmitVideoVM.SelectOrder,Mode=TwoWay}">
+                                                <ComboBox x:Name="comVideoOrder" SelectionChanged="comVideoOrder_SelectionChanged" Margin="8 0"  SelectedIndex="{x:Bind Path=userSubmitVideoVM.SelectOrder,Mode=TwoWay}"  Background="{ThemeResource TransparentBackground}">
                                                     <ComboBoxItem>最新发布</ComboBoxItem>
                                                     <ComboBoxItem>最多播放</ComboBoxItem>
                                                     <ComboBoxItem>最多收藏</ComboBoxItem>
                                                 </ComboBox>
                                             </StackPanel>
-                                            <AutoSuggestBox Text="{x:Bind Path=userSubmitVideoVM.Keyword,Mode=TwoWay}" x:Name="searchVideo" QuerySubmitted="searchVideo_QuerySubmitted" QueryIcon="Find" PlaceholderText="搜索视频" Width="160" HorizontalAlignment="Right"></AutoSuggestBox>
+                                            <AutoSuggestBox Text="{x:Bind Path=userSubmitVideoVM.Keyword,Mode=TwoWay}" x:Name="searchVideo" QuerySubmitted="searchVideo_QuerySubmitted" QueryIcon="Find" PlaceholderText="搜索视频" Width="160" HorizontalAlignment="Right" Background="{ThemeResource TransparentBackground}"></AutoSuggestBox>
                                         </Grid>
                                     </toolkit:AdaptiveGridView.Header>
                                     <toolkit:AdaptiveGridView.ItemContainerStyle>

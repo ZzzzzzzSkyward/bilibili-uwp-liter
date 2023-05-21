@@ -21,7 +21,7 @@
         <local:DynamicItemControl Model="{Binding}">
             <local:DynamicItemControl.CardContent>
 
-                <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="#C8E5E9EF" CornerRadius="4">
+                <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="{ThemeResource ForegroundTextColor}" CornerRadius="4">
                     <HyperlinkButton Padding="0" Margin="0" Command="{Binding Path=LaunchUrlCommand}" CommandParameter="{Binding Path=OneRowInfo.Url}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
                         <HyperlinkButton.ContextFlyout>
                             <MenuFlyout>
@@ -158,7 +158,7 @@
         </local:DynamicItemControl>
     </DataTemplate>
     <DataTemplate x:Key="Miss">
-        <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="#C8E5E9EF" CornerRadius="4">
+        <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="{ThemeResource ForegroundBorderColor}" CornerRadius="4">
             <StackPanel Orientation="Horizontal"  Margin="12">
                 <FontIcon Foreground="{ThemeResource ForegroundTextColor}" FontSize="14" FontFamily="Segoe MDL2 Assets" Glyph="&#xE7BA;" />
                 <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="8 0 0 0">资源已失效</TextBlock>
@@ -166,7 +166,7 @@
         </Border>
     </DataTemplate>
     <DataTemplate x:Key="Other">
-        <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="#C8E5E9EF" CornerRadius="4">
+        <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="{ThemeResource ForegroundBorderColor}" CornerRadius="4">
             <StackPanel Margin="12">
                 <TextBlock TextWrapping="Wrap">无法显示此动态,请将以下内容复制给开发者适配</TextBlock>
                 <TextBlock Margin="0 0 8 0" Text="{Binding Path=ContentStr}" TextWrapping="Wrap" IsTextSelectionEnabled="True"></TextBlock>
@@ -176,7 +176,7 @@
     <DataTemplate x:Key="Repost">
         <local:DynamicItemControl Model="{Binding}">
             <local:DynamicItemControl.CardContent>
-                <Border BorderThickness="1"  BorderBrush="#C8E5E9EF"  CornerRadius="4" Background="{ThemeResource TopPaneBackground}">
+                <Border BorderThickness="1"  BorderBrush="{ThemeResource ForegroundBorderColor}"  CornerRadius="4" Background="{ThemeResource TopPaneBackground}">
                     <ListView 
                         SelectionMode="None" 
                         IsItemClickEnabled="false" 

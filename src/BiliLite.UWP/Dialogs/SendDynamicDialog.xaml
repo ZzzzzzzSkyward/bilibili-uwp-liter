@@ -113,7 +113,7 @@
 
                     <Button Width="36" Height="36" x:Name="btnEmoji" Click="btnEmoji_Click" ToolTipService.ToolTip="表情"   >
                         <StackPanel Orientation="Horizontal">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="14"  Glyph="&#xE170;" />
+                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="12"  Glyph="&#xE170;" />
                         </StackPanel>
                     </Button>
                     <!--<Button Width="36" Height="36" x:Name="btnVote" Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" ToolTipService.ToolTip="发起投票"  Margin="4 0 0 0"   >
@@ -123,13 +123,13 @@
                     </Button>-->
                     <Button x:Name="btnImage" Click="btnImage_Click" Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" ToolTipService.ToolTip="上传图片"  Width="36" Height="36"  Margin="4 0 0 0" >
                         <StackPanel Orientation="Horizontal">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="14"  Glyph="&#xEB9F;" />
+                            <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="12"  Glyph="&#xEB9F;" />
 
                         </StackPanel>
                     </Button>
                     <Button x:Name="btnAt" Click="btnAt_Click" Width="36" Height="36"    Margin="4 0 0 0"   ToolTipService.ToolTip="@" >
                         <StackPanel Orientation="Horizontal">
-                            <FontIcon FontFamily="Segoe MDL2 Assets"  FontSize="14" Glyph="&#xE168;" />
+                            <FontIcon FontFamily="Segoe MDL2 Assets"  FontSize="12" Glyph="&#xE168;" />
                         </StackPanel>
                        
                     </Button>

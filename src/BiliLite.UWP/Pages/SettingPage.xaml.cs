@@ -230,16 +230,6 @@ namespace BiliLite.Pages
                 });
             });
 
-            //鼠标侧键返回
-            swHideADBtn.IsOn = SettingHelper.GetValue<bool>(SettingHelper.UI.HIDE_AD, false);
-            swHideADBtn.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swHideADBtn.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.UI.HIDE_AD, swHideADBtn.IsOn);
-                });
-            });
-
             //浏览器打开无法处理的链接
             swOpenUrlWithBrowser.IsOn = SettingHelper.GetValue<bool>(SettingHelper.UI.OPEN_URL_BROWSER, false);
             swOpenUrlWithBrowser.Loaded += new RoutedEventHandler((sender, e) =>
@@ -257,6 +247,15 @@ namespace BiliLite.Pages
                 swHideBanner.Toggled += new RoutedEventHandler((obj, args) =>
                 {
                     SettingHelper.SetValue("dontloadbanner", swHideBanner.IsOn);
+                });
+            }); 
+            //背景动态
+            swShowBGOnDynamic.IsOn = SettingHelper.GetValue<bool>("dontloadbanner", false);
+            swShowBGOnDynamic.Loaded += new RoutedEventHandler((sender, e) =>
+            {
+                swShowBGOnDynamic.Toggled += new RoutedEventHandler((obj, args) =>
+                {
+                    SettingHelper.SetValue("showbgondynamic", swShowBGOnDynamic.IsOn);
                 });
             });
 

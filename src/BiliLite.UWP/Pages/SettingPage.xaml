@@ -206,9 +206,9 @@
 								<TextBlock  Margin="0 8"  FontSize="16">隐藏横幅</TextBlock>
 								<ToggleSwitch x:Name="swHideBanner" ></ToggleSwitch>
 							</StackPanel>
-							<StackPanel Margin="0 0 0 8" Visibility="Collapsed">
-								<TextBlock  Margin="0 8"  FontSize="16">隐藏首页右上角广告按钮</TextBlock>
-								<ToggleSwitch x:Name="swHideADBtn" ></ToggleSwitch>
+							<StackPanel Margin="0 0 0 8" >
+								<TextBlock  Margin="0 8"  FontSize="16">动态页显示背景</TextBlock>
+								<ToggleSwitch x:Name="swShowBGOnDynamic" ></ToggleSwitch>
 							</StackPanel>
 						</StackPanel>
 					</StackPanel>

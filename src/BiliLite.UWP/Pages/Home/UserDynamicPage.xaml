@@ -70,7 +70,7 @@
         <SplitView.Content>
             <Grid  >
                 <!--背景图-->
-                <Image Visibility="Collapsed" Stretch="UniformToFill" Source="https://i0.hdslb.com/bfs/album/eb65ae5ee6f66b6381090f5bee4fe6cbabfd6d0d.png@1920w.jpg"></Image>
+                <Image Visibility="Collapsed" Stretch="UniformToFill" Source="https://i0.hdslb.com/bfs/album/eb65ae5ee6f66b6381090f5bee4fe6cbabfd6d0d.png@1920w.jpg" x:Name="BGImage"></Image>
                 <Grid >
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -81,8 +81,7 @@
                             <Pivot x:Name="pivot" SelectionChanged="pivot_SelectionChanged">
                                 <Pivot.RightHeader>
                                     <StackPanel Orientation="Horizontal">
-
-                                        <Button Command="{x:Bind Path=dynamicVM.RepostCommand,Mode=OneWay}" Background="Transparent" Margin="8 0">
+                                        <Button Command="{x:Bind Path=dynamicVM.RepostCommand,Mode=OneWay}" Margin="8 0">
                                             <StackPanel Orientation="Horizontal">
                                                 <FontIcon FontSize="14" FontFamily="Segoe MDL2 Assets" Glyph="&#xE104;" />
                                                 <TextBlock Margin="8 0 0 0">发表动态</TextBlock>

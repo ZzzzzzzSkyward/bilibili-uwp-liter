@@ -106,10 +106,9 @@ namespace BiliLite.Modules
                 if (results.status)
                 {
 
-                    //通过代理访问番剧详情
                     //尝试不兼容获取
                     var data = await results.GetJson<ApiResultModel<SeasonDetailModel>>();
-                    if (false && (data == null || !data.success))
+                    if (data == null || !data.success)
                     {
                         var data3=await results.GetJson<ApiResultModel<SeasonDetailModel_Web>>();
                         if(data3!=null && data3.success)
@@ -431,6 +430,16 @@ namespace BiliLite.Modules
             this.publish = sw.publish;
             this.seasons = sw.seasons;
             this.stat = sw.stat;
+            //处理标签string->object
+            this.styles = new List<SeasonDetailStyleItemModel>();
+            foreach(var item in sw.styles)
+            {
+                var sd = new SeasonDetailStyleItemModel();
+                sd.name = item;
+                sd.id = item;
+                sd.url = "";
+                this.styles.Add(sd);    
+            }
             var otherFields = this.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             var allProperties = this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
             // Copy values of fields
@@ -469,6 +478,7 @@ namespace BiliLite.Modules
     {
         public new string actor { get; set; }
         public new string staff { get; set; }
+        public new List<string> styles { get; set; }
     }
     public class SeasonDetailUpInfoModel
     {
@@ -497,6 +507,7 @@ namespace BiliLite.Modules
     public class SeasonDetailEpisodeModel
     {
         public string aid { get; set; }
+        public string bvid { get; set; }
         public string cid { get; set; }
         public int badge_type { get; set; }
         public string badge { get; set; }
@@ -508,7 +519,6 @@ namespace BiliLite.Modules
             }
         }
         public string cover { get; set; }
-        public string bvid { get; set; }
 
         private int? _id;
         public int id

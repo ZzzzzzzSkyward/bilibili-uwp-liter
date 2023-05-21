@@ -424,8 +424,6 @@ namespace BiliLite.Helpers
         }
     public async Task<T> GetJson<T>()
         {
-            return await Task.Run<T>(() =>
-             {
                  try
                  {
                      return JsonConvert.DeserializeObject<T>(results);
@@ -441,10 +439,9 @@ namespace BiliLite.Helpers
                  catch(Exception e)
                  {
                      Console.WriteLine("解析json失败", e.ToString());
-                     Utils.AddALog("[JSON][FAIL]" + results.ToString());
+                     Utils.AddALog("[JSON][FAIL]" + results.ToString().Substring(0,100));
                  }
                  return default(T);
-             });
 
         }
         public JObject GetJObject()
