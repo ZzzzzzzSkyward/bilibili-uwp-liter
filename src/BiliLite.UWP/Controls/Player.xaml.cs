@@ -33,6 +33,7 @@ namespace BiliLite.Controls
         End,
         Error
     }
+
     public enum PlayEngine
     {
         Native = 1,
@@ -41,20 +42,24 @@ namespace BiliLite.Controls
         FFmpegInteropMSSH265 = 4,
         VLC = 5
     }
+
     public enum PlayMediaType
     {
         Single,
         MultiFlv,
         Dash
     }
+
     //TODO 写得太复杂了，需要重写
     public sealed partial class Player : UserControl, IDisposable, INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
+
         private void DoPropertyChanged(string name)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
+
         public PlayState PlayState { get; set; }
         public PlayMediaType PlayMediaType { get; set; }
         public VideoPlayHistoryHelper.ABPlayHistoryEntry ABPlay { get; set; }
@@ -63,26 +68,28 @@ namespace BiliLite.Controls
 
         private FFmpegMediaSource _ffmpegMSSVideo;
         private MediaPlayer _playerVideo;
+
         //音视频分离
         private FFmpegMediaSource _ffmpegMSSAudio;
+
         private MediaPlayer _playerAudio;
         private MediaTimelineController _mediaTimelineController;
 
         //多段FLV
         private List<FFmpegMediaSource> _ffmpegMSSItems;
+
         private MediaPlaybackList _mediaPlaybackList;
-
-
-
 
         /// <summary>
         /// 播放状态变更
         /// </summary>
         public event EventHandler<PlayState> PlayStateChanged;
+
         /// <summary>
         /// 媒体加载完成
         /// </summary>
         public event EventHandler PlayMediaOpened;
+
         /// <summary>
         /// 播放完成
         /// </summary>
@@ -92,6 +99,7 @@ namespace BiliLite.Controls
         /// 播放错误
         /// </summary>
         public event EventHandler<string> PlayMediaError;
+
         /// <summary>
         /// 更改播放引擎
         /// </summary>
@@ -105,8 +113,10 @@ namespace BiliLite.Controls
             get { return (double)GetValue(PositionProperty); }
             set { SetValue(PositionProperty, value); }
         }
+
         public static readonly DependencyProperty PositionProperty =
             DependencyProperty.Register("Position", typeof(double), typeof(Player), new PropertyMetadata(0.0, OnPositionChanged));
+
         private static void OnPositionChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var sender = d as Player;
@@ -155,8 +165,10 @@ namespace BiliLite.Controls
                 SetValue(VolumeProperty, value);
             }
         }
+
         public static readonly DependencyProperty VolumeProperty =
             DependencyProperty.Register("Volume", typeof(double), typeof(Player), new PropertyMetadata(1.0, OnVolumeChanged));
+
         private static void OnVolumeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             var sender = d as Player;
@@ -172,7 +184,6 @@ namespace BiliLite.Controls
             sender.SetVolume(value);
         }
 
-
         /// <summary>
         /// 是否缓冲中
         /// </summary>
@@ -181,9 +192,9 @@ namespace BiliLite.Controls
             get { return (bool)GetValue(BufferingProperty); }
             set { SetValue(BufferingProperty, value); }
         }
+
         public static readonly DependencyProperty BufferingProperty =
             DependencyProperty.Register("Buffering", typeof(bool), typeof(Player), new PropertyMetadata(false));
-
 
         /// <summary>
         /// 缓冲进度,0-100
@@ -194,18 +205,13 @@ namespace BiliLite.Controls
             set { SetValue(BufferCacheProperty, value); }
         }
 
-
         public static readonly DependencyProperty BufferCacheProperty =
             DependencyProperty.Register("BufferCache", typeof(double), typeof(Player), new PropertyMetadata(1));
-
-
-
 
         /// <summary>
         /// 播放速度
         /// </summary>
         public double Rate { get; set; } = 1.0;
-
 
         /// <summary>
         /// 媒体信息
@@ -220,8 +226,8 @@ namespace BiliLite.Controls
         public static readonly DependencyProperty MediaInfoProperty =
             DependencyProperty.Register("MediaInfo", typeof(string), typeof(Player), new PropertyMetadata(""));
 
-
         public bool Opening { get; set; }
+
         public Player()
         {
             this.InitializeComponent();
@@ -233,8 +239,8 @@ namespace BiliLite.Controls
                 SYEngine.Core.ForceSoftwareDecode = !SettingHelper.GetValue<bool>(SettingHelper.Player.HARDWARE_DECODING, false);
             }
             //_ffmpegConfig.StreamBufferSize = 655360;//1024 * 30;
-
         }
+
         /// <summary>
         /// 使用AdaptiveMediaSource播放视频
         /// </summary>
@@ -259,7 +265,6 @@ namespace BiliLite.Controls
                 PlayStateChanged?.Invoke(this, PlayState);
                 ClosePlay();
 
-
                 //设置播放器
                 _playerVideo = new MediaPlayer();
                 //_playerVideo.Source = MediaSource.CreateFromUri(new Uri(videoUrl.baseUrl));
@@ -275,7 +280,7 @@ namespace BiliLite.Controls
 
                 _playerVideo.Source = MediaSource.CreateFromAdaptiveMediaSource(mediaSource);
                 Buffering = true;
-              
+
                 //设置时长
                 _playerVideo.MediaOpened += new TypedEventHandler<MediaPlayer, object>(async (e, arg) =>
                 {
@@ -341,8 +346,6 @@ namespace BiliLite.Controls
                         Buffering = true;
                         BufferCache = e.BufferingProgress;
                     });
-
-
                 });
                 //缓冲进行中
                 _playerVideo.PlaybackSession.BufferingEnded += new TypedEventHandler<MediaPlaybackSession, object>(async (e, arg) =>
@@ -393,6 +396,7 @@ namespace BiliLite.Controls
                 };
             }
         }
+
         /// <summary>
         /// 使用eMediaSource播放视频
         /// </summary>
@@ -426,7 +430,6 @@ namespace BiliLite.Controls
                 {
                     _playerVideo.Source = MediaSource.CreateFromUri(new Uri(url));
                 }
-
 
                 //设置时长
                 _playerVideo.MediaOpened += new TypedEventHandler<MediaPlayer, object>(async (e, arg) =>
@@ -492,8 +495,6 @@ namespace BiliLite.Controls
                         Buffering = true;
                         BufferCache = e.BufferingProgress;
                     });
-
-
                 });
                 //缓冲进行中
                 _playerVideo.PlaybackSession.BufferingEnded += new TypedEventHandler<MediaPlaybackSession, object>(async (e, arg) =>
@@ -573,7 +574,6 @@ namespace BiliLite.Controls
                 var _ffmpegConfig = CreateFFmpegInteropConfig(userAgent, referer);
                 if (isLocal)
                 {
-
                     var videoFile = await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Video.Url);
                     _ffmpegMSSVideo = await FFmpegMediaSource.CreateFromStreamAsync(await videoFile.OpenAsync(FileAccessMode.Read), _ffmpegConfig);
                     if (dashPlayUrlInfo.Audio != null)
@@ -589,9 +589,7 @@ namespace BiliLite.Controls
                     {
                         _ffmpegMSSAudio = await FFmpegMediaSource.CreateFromUriAsync(dashPlayUrlInfo.Audio.Url, _ffmpegConfig);
                     }
-
                 }
-
 
                 //设置时长
                 Duration = _ffmpegMSSVideo.Duration.TotalSeconds;
@@ -652,7 +650,6 @@ namespace BiliLite.Controls
                             message = arg.ErrorMessage
                         });
                     });
-
                 });
                 //缓冲开始
                 _playerVideo.PlaybackSession.BufferingStarted += new TypedEventHandler<MediaPlaybackSession, object>(async (e, arg) =>
@@ -661,11 +658,7 @@ namespace BiliLite.Controls
                     {
                         Buffering = true;
                     });
-
-
                 });
-
-
 
                 //缓冲进行中
                 _playerVideo.PlaybackSession.BufferingProgressChanged += new TypedEventHandler<MediaPlaybackSession, object>(async (e, arg) =>
@@ -675,7 +668,6 @@ namespace BiliLite.Controls
                         Buffering = true;
                         BufferCache = e.BufferingProgress;
                     });
-
                 });
 
                 //缓冲进行中
@@ -758,6 +750,7 @@ namespace BiliLite.Controls
                 };
             }
         }
+
         /// <summary>
         /// 使用FFmpeg解码播放单FLV视频
         /// </summary>
@@ -767,7 +760,6 @@ namespace BiliLite.Controls
         /// <returns></returns>
         public async Task<PlayerOpenResult> PlayDashUrlUseFFmpegInterop(string url, string userAgent, string referer, double positon = 0, bool needConfig = true)
         {
-
             try
             {
                 mediaPlayerVideo.Visibility = Visibility.Visible;
@@ -783,7 +775,6 @@ namespace BiliLite.Controls
 
                 var _ffmpegConfig = CreateFFmpegInteropConfig(userAgent, referer);
                 _ffmpegMSSVideo = await FFmpegMediaSource.CreateFromUriAsync(url, _ffmpegConfig);
-
 
                 //设置时长
                 Duration = _ffmpegMSSVideo.Duration.TotalSeconds;
@@ -900,6 +891,7 @@ namespace BiliLite.Controls
                 };
             }
         }
+
         /// <summary>
         /// 使用FFmpeg解码播放单FLV视频
         /// </summary>
@@ -909,7 +901,6 @@ namespace BiliLite.Controls
         /// <returns></returns>
         public async Task<PlayerOpenResult> PlaySingleFlvUseFFmpegInterop(string url, string userAgent, string referer, double positon = 0, bool needConfig = true)
         {
-
             try
             {
                 mediaPlayerVideo.Visibility = Visibility.Visible;
@@ -927,7 +918,6 @@ namespace BiliLite.Controls
                 var _ffmpegConfig = CreateFFmpegInteropConfig(userAgent, referer);
                 _ffmpegMSSVideo = await FFmpegMediaSource.CreateFromUriAsync(url, _ffmpegConfig);
 
-
                 //设置时长
                 Duration = _ffmpegMSSVideo.Duration.TotalSeconds;
                 //设置播放器
@@ -1043,6 +1033,7 @@ namespace BiliLite.Controls
                 };
             }
         }
+
         /// <summary>
         /// 使用SYEngine解码播放FLV视频
         /// </summary>
@@ -1053,7 +1044,6 @@ namespace BiliLite.Controls
         /// <returns></returns>
         public async Task<PlayerOpenResult> PlaySingleFlvUseSYEngine(string url, string userAgent, string referer, double positon = 0, bool needConfig = true, string epId = "")
         {
-
             try
             {
                 mediaPlayerVideo.Visibility = Visibility.Visible;
@@ -1085,7 +1075,6 @@ namespace BiliLite.Controls
                     {
                         Duration = _playerVideo.PlaybackSession.NaturalDuration.TotalSeconds;
                         PlayMediaOpened?.Invoke(this, new EventArgs());
-
                     });
                 });
                 //播放完成
@@ -1117,7 +1106,6 @@ namespace BiliLite.Controls
                             play_type = PlayMediaType.Single,
                             message = arg.ErrorMessage
                         });
-
                     });
                 });
                 //缓冲开始
@@ -1127,7 +1115,6 @@ namespace BiliLite.Controls
                     {
                         Buffering = true;
                     });
-
                 });
                 //缓冲进行中
                 _playerVideo.PlaybackSession.BufferingProgressChanged += new TypedEventHandler<MediaPlaybackSession, object>(async (e, arg) =>
@@ -1190,6 +1177,7 @@ namespace BiliLite.Controls
                 };
             }
         }
+
         /// <summary>
         /// 使用SYEngine解码播放多段FLV视频
         /// </summary>
@@ -1242,7 +1230,6 @@ namespace BiliLite.Controls
                     var mediaSource = await playList.SaveAndGetFileUriAsync();
 
                     _playerVideo.Source = MediaSource.CreateFromUri(mediaSource);
-
                 }
                 _playerVideo.MediaOpened += new TypedEventHandler<MediaPlayer, object>(async (e, arg) =>
                 {
@@ -1355,7 +1342,6 @@ namespace BiliLite.Controls
 
         public void SetRatioMode(int mode)
         {
-
             switch (mode)
             {
                 case 0:
@@ -1363,25 +1349,30 @@ namespace BiliLite.Controls
                     mediaPlayerVideo.Height = double.NaN;
                     mediaPlayerVideo.Stretch = Stretch.Uniform;
                     break;
+
                 case 1:
                     mediaPlayerVideo.Width = double.NaN;
                     mediaPlayerVideo.Height = double.NaN;
                     mediaPlayerVideo.Stretch = Stretch.UniformToFill;
                     break;
+
                 case 2:
                     mediaPlayerVideo.Stretch = Stretch.Fill;
                     mediaPlayerVideo.Height = this.ActualHeight;
                     mediaPlayerVideo.Width = this.ActualHeight * 16 / 9;
                     break;
+
                 case 3:
                     mediaPlayerVideo.Stretch = Stretch.Fill;
                     mediaPlayerVideo.Height = this.ActualHeight;
                     mediaPlayerVideo.Width = this.ActualHeight * 4 / 3;
                     break;
+
                 default:
                     break;
             }
         }
+
         /// <summary>
         /// 设置进度
         /// </summary>
@@ -1395,8 +1386,8 @@ namespace BiliLite.Controls
             {
                 _playerVideo.PlaybackSession.Position = TimeSpan.FromSeconds(position);
             }
-
         }
+
         /// <summary>
         /// 暂停
         /// </summary>
@@ -1426,7 +1417,6 @@ namespace BiliLite.Controls
             {
                 LogHelper.Log("暂停出现错误", LogType.ERROR, ex);
             }
-
         }
 
         /// <summary>
@@ -1448,7 +1438,6 @@ namespace BiliLite.Controls
                     PlayState = PlayState.Playing;
                 }
             }
-
             else
             {
                 _playerVideo.Play();
@@ -1457,6 +1446,7 @@ namespace BiliLite.Controls
 
             PlayStateChanged?.Invoke(this, PlayState);
         }
+
         /// <summary>
         /// 设置播放速度
         /// </summary>
@@ -1475,8 +1465,8 @@ namespace BiliLite.Controls
                     _playerVideo.PlaybackSession.PlaybackRate = value;
                 }
             }
-
         }
+
         /// <summary>
         /// 停止播放
         /// </summary>
@@ -1486,7 +1476,6 @@ namespace BiliLite.Controls
             if (mediaPlayerVideo.MediaPlayer != null)
             {
                 mediaPlayerVideo.SetMediaPlayer(null);
-
             }
             if (mediaPlayerAudio.MediaPlayer != null)
             {
@@ -1529,19 +1518,18 @@ namespace BiliLite.Controls
                 _ffmpegMSSItems = null;
             }
 
-
             PlayState = PlayState.End;
             //进度设置为0
             Position = 0;
             Duration = 0;
         }
+
         /// <summary>
         /// 设置音量
         /// </summary>
         /// <param name="volume"></param>
         public void SetVolume(double volume)
         {
-
             if (mediaPlayerAudio.MediaPlayer != null)
             {
                 mediaPlayerAudio.MediaPlayer.Volume = volume;
@@ -1562,12 +1550,15 @@ namespace BiliLite.Controls
                     case PlayMediaType.Single:
                         info += $"Type: single_video\r\n";
                         break;
+
                     case PlayMediaType.MultiFlv:
                         info += $"Type: multi_video\r\n";
                         break;
+
                     case PlayMediaType.Dash:
                         info += $"Type: dash\r\n";
                         break;
+
                     default:
                         break;
                 }
@@ -1600,7 +1591,7 @@ namespace BiliLite.Controls
                         info += $"Average Frame: {_dashInfo.Video.FrameRate}\r\n";
                         info += $"Audio Codec: {_dashInfo.Audio.Codecs}\r\n";
                         info += $"Audio DataRate: {(_dashInfo.Audio.BandWidth / 1024).ToString("0.0")}Kbps\r\n";
-                        info += $"Video Host: { _dashInfo.Video.Host}\r\n";
+                        info += $"Video Host: {_dashInfo.Video.Host}\r\n";
                         info += $"Audio Host: {_dashInfo.Audio.Host}\r\n";
                     }
                     else
@@ -1616,7 +1607,6 @@ namespace BiliLite.Controls
                 //MediaInfo = "读取失败";
                 return "读取视频信息失败";
             }
-
         }
 
         public void Dispose()
@@ -1635,8 +1625,8 @@ namespace BiliLite.Controls
             //catch (Exception)
             //{
             //}
-
         }
+
         private async Task<AdaptiveMediaSource> CreateAdaptiveMediaSource(BiliDashPlayUrlInfo dashInfo, string userAgent, string referer)
         {
             try
@@ -1693,8 +1683,6 @@ namespace BiliLite.Controls
                 </MPD>";
                 }
 
-
-
                 var stream = new MemoryStream(Encoding.UTF8.GetBytes(mpdStr)).AsInputStream();
                 var soure = await AdaptiveMediaSource.CreateFromStreamAsync(stream, new Uri(dashInfo.Video.Url), "application/dash+xml", httpClient);
                 soure.MediaSource.AdvancedSettings.AllSegmentsIndependent = true;
@@ -1713,12 +1701,11 @@ namespace BiliLite.Controls
             {
                 return null;
             }
-
         }
+
         private MediaSourceConfig CreateFFmpegInteropConfig(string userAgent, string referer)
         {
-
-            var passthrough = SettingHelper.GetValue<int>("playertype", 0)==2;
+            var passthrough = SettingHelper.GetValue<int>("playertype", 0) == 2;
             var _ffmpegConfig = new MediaSourceConfig();
             if (userAgent != null && userAgent.Length > 0)
             {
@@ -1735,7 +1722,6 @@ namespace BiliLite.Controls
 
         private SYEngine.PlaylistNetworkConfigs CreatePlaylistNetworkConfigs(string userAgent, string referer, string epId = "")
         {
-
             SYEngine.PlaylistNetworkConfigs config = new SYEngine.PlaylistNetworkConfigs();
             config.DownloadRetryOnFail = true;
             config.HttpCookie = string.Empty;
@@ -1775,13 +1761,16 @@ namespace BiliLite.Controls
         public string message { get; set; }
         public string detail_message { get; set; }
     }
+
     public class ChangePlayerEngine
     {
         public bool need_change { get; set; }
+
         /// <summary>
         /// 当前引擎
         /// </summary>
         public PlayEngine current_mode { get; set; }
+
         /// <summary>
         /// 更换引擎
         /// </summary>
@@ -1790,5 +1779,4 @@ namespace BiliLite.Controls
         public PlayMediaType play_type { get; set; }
         public string message { get; set; }
     }
-
 }

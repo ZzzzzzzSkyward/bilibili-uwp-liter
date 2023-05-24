@@ -5,7 +5,7 @@ using Windows.UI.Xaml.Input;
 
 namespace BiliLite.Controls
 {
-    partial class Carousel
+    internal partial class Carousel
     {
         private bool _isArrowVisible = false;
         private bool _isArrowOver = false;
@@ -13,6 +13,7 @@ namespace BiliLite.Controls
         private DispatcherTimer _fadeTimer = null;
 
         #region Create/Dispose FadeTimer
+
         private void CreateFadeTimer()
         {
             _fadeTimer = new DispatcherTimer();
@@ -29,9 +30,11 @@ namespace BiliLite.Controls
                 fadeTimer.Stop();
             }
         }
-        #endregion
+
+        #endregion Create/Dispose FadeTimer
 
         #region ArrowPointerEntered/ArrowPointerExited
+
         private void OnArrowPointerEntered(object sender, PointerRoutedEventArgs e)
         {
             _isArrowOver = true;
@@ -41,9 +44,11 @@ namespace BiliLite.Controls
         {
             _isArrowOver = false;
         }
-        #endregion
+
+        #endregion ArrowPointerEntered/ArrowPointerExited
 
         #region LeftClick/RightClick
+
         private void OnLeftClick(object sender, RoutedEventArgs e)
         {
             MoveBack();
@@ -54,7 +59,7 @@ namespace BiliLite.Controls
             MoveForward();
         }
 
-        #endregion
+        #endregion LeftClick/RightClick
 
         private void OnPointerMoved(object sender, PointerRoutedEventArgs e)
         {

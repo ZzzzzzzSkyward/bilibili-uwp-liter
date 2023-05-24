@@ -6,10 +6,10 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-     xmlns:model="using:BiliLite.Modules" 
-      xmlns:controls="using:BiliLite.Controls" 
-      xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls" 
-      xmlns:winui="using:Microsoft.UI.Xaml.Controls" 
+     xmlns:model="using:BiliLite.Modules"
+      xmlns:controls="using:BiliLite.Controls"
+      xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
+      xmlns:winui="using:Microsoft.UI.Xaml.Controls"
       xmlns:fa="using:FontAwesome5"
     xmlns:models="using:BiliLite.Models"
     Background="{ThemeResource TransparentBackground}">
@@ -119,17 +119,17 @@
                                 <TextBlock>查看全部</TextBlock>
                             </HyperlinkButton>
                         </Grid>
-                        <controls:ScrollGridView 
-                            MoveOffset="600" 
-                            AlwayShowButton="False" 
-                            ItemClick="{x:Bind Path=cinemaVM.SeasonItemClick}" 
-                            ItemsSource="{x:Bind Path=cinemaVM.Follows,Mode=OneWay}" 
-                            SelectionMode="None" 
+                        <controls:ScrollGridView
+                            MoveOffset="600"
+                            AlwayShowButton="False"
+                            ItemClick="{x:Bind Path=cinemaVM.SeasonItemClick}"
+                            ItemsSource="{x:Bind Path=cinemaVM.Follows,Mode=OneWay}"
+                            SelectionMode="None"
                             Margin="-4 0 0 0"
                             ScrollViewer.HorizontalScrollMode="Enabled"
                             ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                            ScrollViewer.VerticalScrollMode="Disabled" 
-                            ScrollViewer.VerticalScrollBarVisibility="Hidden" 
+                            ScrollViewer.VerticalScrollMode="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Hidden"
                             IsItemClickEnabled="True">
                             <GridView.ItemContainerStyle>
                                 <Style TargetType="GridViewItem">
@@ -181,16 +181,16 @@
                         <Grid>
                             <TextBlock FontSize="18" FontWeight="Bold">即将开播</TextBlock>
                         </Grid>
-                        <controls:ScrollGridView 
+                        <controls:ScrollGridView
                                                  Margin="-4 0 0 0"
-                                                 MoveOffset="600" 
-                            AlwayShowButton="False" SelectionMode="None" 
+                                                 MoveOffset="600"
+                            AlwayShowButton="False" SelectionMode="None"
                             ItemsSource="{x:Bind Path=cinemaVM.HomeData.update,Mode=OneWay}"
-                            ItemClick="{x:Bind Path=cinemaVM.SeasonItemClick}" 
-                            ScrollViewer.VerticalScrollMode="Disabled" 
-                            ScrollViewer.VerticalScrollBarVisibility="Hidden" 
-                            ScrollViewer.HorizontalScrollBarVisibility="Hidden" 
-                            ScrollViewer.HorizontalScrollMode="Disabled" 
+                            ItemClick="{x:Bind Path=cinemaVM.SeasonItemClick}"
+                            ScrollViewer.VerticalScrollMode="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Hidden"
+                            ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                            ScrollViewer.HorizontalScrollMode="Disabled"
                             IsItemClickEnabled="True">
                             <GridView.ItemContainerStyle>
                                 <Style TargetType="GridViewItem">
@@ -245,7 +245,7 @@
                                 <TextBlock>纪录片索引</TextBlock>
                             </HyperlinkButton>
                         </Grid>
-                        <controls:ScrollGridView 
+                        <controls:ScrollGridView
                                                  Margin="-4 0 0 0"
                                                  MoveOffset="600" AlwayShowButton="False" SelectionMode="None" ItemClick="{x:Bind Path=cinemaVM.SeasonItemClick}" ItemsSource="{x:Bind Path=cinemaVM.HomeData.documentary,Mode=OneWay}" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollMode="Disabled" ItemTemplate="{StaticResource HotAnimeItem}" IsItemClickEnabled="True">
                             <GridView.ItemContainerStyle>
@@ -269,7 +269,7 @@
                                 <TextBlock>电影索引</TextBlock>
                             </HyperlinkButton>
                         </Grid>
-                        <controls:ScrollGridView 
+                        <controls:ScrollGridView
                                                  Margin="-4 0 0 0"
                                                  MoveOffset="600" AlwayShowButton="False" SelectionMode="None" ItemClick="{x:Bind Path=cinemaVM.SeasonItemClick}" ItemsSource="{x:Bind Path=cinemaVM.HomeData.movie,Mode=OneWay}" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollMode="Disabled" ItemTemplate="{StaticResource HotAnimeItem}" IsItemClickEnabled="True">
                             <GridView.ItemContainerStyle>
@@ -297,7 +297,7 @@
                             ItemContainerStyle="{StaticResource HotWideStyle}"
                                                  Margin="-4 0 0 0"
                                                  MoveOffset="600" AlwayShowButton="False" SelectionMode="None" ItemClick="{x:Bind Path=cinemaVM.SeasonItemClick}" ItemsSource="{x:Bind Path=cinemaVM.HomeData.tv,Mode=OneWay}" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollMode="Disabled" ItemTemplate="{StaticResource HotAnimeItemWide}" IsItemClickEnabled="True">
-                         
+
                             <GridView.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <ItemsStackPanel Orientation="Horizontal"></ItemsStackPanel>
@@ -316,7 +316,7 @@
                                                  Margin="-4 0 0 0"
                             ItemContainerStyle="{StaticResource HotWideStyle}"
                                                  MoveOffset="600" AlwayShowButton="False" SelectionMode="None" ItemClick="{x:Bind Path=cinemaVM.SeasonItemClick}" ItemsSource="{x:Bind Path=cinemaVM.HomeData.variety,Mode=OneWay}" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollMode="Disabled" ItemTemplate="{StaticResource HotAnimeItemWide}" IsItemClickEnabled="True">
-                           
+
                             <GridView.ItemsPanel>
                                 <ItemsPanelTemplate>
                                     <ItemsStackPanel Orientation="Horizontal"></ItemsStackPanel>
@@ -333,14 +333,14 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="model:CinemaHomeFallModel">
                                 <StackPanel>
-                                    <toolkit:AdaptiveGridView ItemClick="gvFall_ItemClick" 
-                                                              Margin="-4 0 0 0" 
-                                                              OneRowModeEnabled="False" 
-                                                              ScrollViewer.VerticalScrollMode="Disabled" 
-                                                              ScrollViewer.VerticalScrollBarVisibility="Hidden" 
+                                    <toolkit:AdaptiveGridView ItemClick="gvFall_ItemClick"
+                                                              Margin="-4 0 0 0"
+                                                              OneRowModeEnabled="False"
+                                                              ScrollViewer.VerticalScrollMode="Disabled"
+                                                              ScrollViewer.VerticalScrollBarVisibility="Hidden"
                                                               StretchContentForSingleRow="False"
-                                                              ItemsSource="{x:Bind Path=items,Mode=OneWay}" 
-                                                              ItemHeight="168" DesiredWidth="540" 
+                                                              ItemsSource="{x:Bind Path=items,Mode=OneWay}"
+                                                              ItemHeight="168" DesiredWidth="540"
                                                               SelectionMode="None" IsItemClickEnabled="True">
                                         <toolkit:AdaptiveGridView.ItemContainerStyle>
                                             <Style TargetType="GridViewItem">
@@ -359,7 +359,7 @@
                                                     <Grid.RowDefinitions>
                                                         <RowDefinition />
                                                         <RowDefinition Height="28" />
-                                                        <!--<RowDefinition Height="48"/>-->
+                                                        <!--<RowDefinition Height="48" />-->
                                                     </Grid.RowDefinitions>
                                                     <toolkit:ImageEx IsCacheEnabled="True" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='180h'}"></toolkit:ImageEx>
                                                     <TextBlock Grid.Row="1" Margin="4" MaxLines="1" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>

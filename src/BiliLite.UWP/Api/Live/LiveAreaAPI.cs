@@ -13,7 +13,8 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-        public ApiModel LiveAreaRoomList(int area_id=0,int parent_area_id=0, int page = 1, string sort_type = "online")
+
+        public ApiModel LiveAreaRoomList(int area_id = 0, int parent_area_id = 0, int page = 1, string sort_type = "online")
         {
             ApiModel api = new ApiModel()
             {

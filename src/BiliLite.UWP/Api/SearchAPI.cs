@@ -15,7 +15,7 @@ namespace BiliLite.Api
         /// <param name="pn">页码</param>
         /// <param name="ps">页数</param>
         /// <returns></returns>
-        public ApiModel Search(string keyword,string order="",int duration=0,int rid=0, int pn=1,int ps=20)
+        public ApiModel Search(string keyword, string order = "", int duration = 0, int rid = 0, int pn = 1, int ps = 20)
         {
             ApiModel api = new ApiModel()
             {
@@ -28,7 +28,7 @@ namespace BiliLite.Api
             {
                 api.parameter += $"&order={order}";
             }
-            if (duration!=0)
+            if (duration != 0)
             {
                 api.parameter += $"&duration={duration}";
             }
@@ -39,10 +39,8 @@ namespace BiliLite.Api
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-    
-    
 
-        public ApiModel WebSearchVideo(string keyword,int pn=1,string order="",string duration="",string region="0",string area="")
+        public ApiModel WebSearchVideo(string keyword, int pn = 1, string order = "", string duration = "", string region = "0", string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
             if (!string.IsNullOrEmpty(area))
@@ -62,6 +60,7 @@ namespace BiliLite.Api
             }
             return api;
         }
+
         public ApiModel WebSearchAnime(string keyword, int pn = 1, string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
@@ -82,6 +81,7 @@ namespace BiliLite.Api
             }
             return api;
         }
+
         public ApiModel WebSearchMovie(string keyword, int pn = 1, string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
@@ -95,13 +95,14 @@ namespace BiliLite.Api
                 need_cookie = true,
                 baseUrl = $"{baseUrl}/x/web-interface/search/type",
                 parameter = $"context=&search_type=media_ft&page={pn}&order=&keyword={Uri.EscapeDataString(keyword)}&category_id=&__refresh__=true&highlight=1&single_column=0"
-            }; 
+            };
             if (!string.IsNullOrEmpty(area))
             {
                 api.parameter += $"&area={area}";
             }
             return api;
         }
+
         public ApiModel WebSearchUser(string keyword, int pn = 1, string order = "&order=&order_sort=", string type = "&user_type=", string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
@@ -122,6 +123,7 @@ namespace BiliLite.Api
             }
             return api;
         }
+
         public ApiModel WebSearchLive(string keyword, int pn = 1, string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
@@ -142,6 +144,7 @@ namespace BiliLite.Api
             }
             return api;
         }
+
         public ApiModel WebSearchArticle(string keyword, int pn = 1, string order = "totalrank", string region = "0", string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
@@ -162,6 +165,7 @@ namespace BiliLite.Api
             }
             return api;
         }
+
         public ApiModel WebSearchTopic(string keyword, int pn = 1, string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;

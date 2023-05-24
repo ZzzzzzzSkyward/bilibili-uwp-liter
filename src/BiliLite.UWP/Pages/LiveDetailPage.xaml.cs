@@ -36,14 +36,15 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class LiveDetailPage : BasePage
     {
-        DisplayRequest dispRequest;
-        readonly MediaSourceConfig _config;
-        FFmpegInteropX.FFmpegMediaSource interopMSS;
-        LiveRoomVM liveRoomVM;
-        SettingVM settingVM;
-        readonly MediaPlayer mediaPlayer;
-        DispatcherTimer timer_focus;
-        DispatcherTimer controlTimer;
+        private DisplayRequest dispRequest;
+        private readonly MediaSourceConfig _config;
+        private FFmpegInteropX.FFmpegMediaSource interopMSS;
+        private LiveRoomVM liveRoomVM;
+        private SettingVM settingVM;
+        private readonly MediaPlayer mediaPlayer;
+        private DispatcherTimer timer_focus;
+        private DispatcherTimer controlTimer;
+
         public LiveDetailPage()
         {
             this.InitializeComponent();
@@ -80,8 +81,6 @@ namespace BiliLite.Pages
             this.Unloaded += LiveDetailPage_Unloaded;
         }
 
-
-
         private void ControlTimer_Tick(object sender, object e)
         {
             if (showControlsFlag != -1)
@@ -109,8 +108,8 @@ namespace BiliLite.Pages
             {
                 BtnFoucs.Focus(FocusState.Programmatic);
             }
-
         }
+
         private void LiveRoomVM_LotteryEnd(object sender, LiveRoomEndAnchorLotteryInfoModel e)
         {
             var str = "";
@@ -121,7 +120,6 @@ namespace BiliLite.Pages
             str = str.TrimEnd('、');
 
             Utils.ShowMessageToast($"开奖信息:\r\n奖品:{e.award_name}\r\n中奖用户:{str}", new List<MyUICommand>() { }, 10);
-
         }
 
         private void LiveRoomVM_AddNewDanmu(object sender, string e)
@@ -141,11 +139,11 @@ namespace BiliLite.Pages
                     //记录错误，不弹出通知
                     LogHelper.Log(ex.Message, LogType.ERROR, ex);
                 }
-               
             }
-
         }
+
         #region 播放器事件
+
         private async void MediaPlayer_MediaEnded(MediaPlayer sender, object args)
         {
             await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
@@ -162,7 +160,6 @@ namespace BiliLite.Pages
             {
                 PlayerLoading.Visibility = Visibility.Collapsed;
             });
-
         }
 
         private async void PlaybackSession_BufferingProgressChanged(MediaPlaybackSession sender, object args)
@@ -189,7 +186,6 @@ namespace BiliLite.Pages
                  LogHelper.Log("直播加载失败", LogType.ERROR, new Exception(args.ErrorMessage));
                  await new MessageDialog($"啊，直播加载失败了\r\n错误信息:{args.ErrorMessage}\r\n请尝试在直播设置中打开/关闭硬解试试", "播放失败").ShowAsync();
              });
-
         }
 
         private async void MediaPlayer_MediaOpened(MediaPlayer sender, object args)
@@ -202,6 +198,7 @@ namespace BiliLite.Pages
                 SetMediaInfo();
             });
         }
+
         private void SetMediaInfo()
         {
             try
@@ -219,10 +216,8 @@ namespace BiliLite.Pages
             {
                 txtInfo.Text = "Url";
             }
-
-
-
         }
+
         private async void PlaybackSession_PlaybackStateChanged(MediaPlaybackSession sender, object args)
         {
             await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
@@ -231,30 +226,37 @@ namespace BiliLite.Pages
                 {
                     case MediaPlaybackState.None:
                         break;
+
                     case MediaPlaybackState.Opening:
                         PlayerLoading.Visibility = Visibility.Visible;
                         PlayerLoadText.Text = "加载中";
                         break;
+
                     case MediaPlaybackState.Buffering:
                         PlayerLoading.Visibility = Visibility.Visible;
                         break;
+
                     case MediaPlaybackState.Playing:
                         BottomBtnPlay.Visibility = Visibility.Collapsed;
                         BottomBtnPause.Visibility = Visibility.Visible;
                         break;
+
                     case MediaPlaybackState.Paused:
                         BottomBtnPlay.Visibility = Visibility.Visible;
                         BottomBtnPause.Visibility = Visibility.Collapsed;
                         break;
+
                     default:
                         break;
                 }
             });
         }
-        #endregion
 
-        string url = "";
-        bool flag = false;
+        #endregion 播放器事件
+
+        private string url = "";
+        private bool flag = false;
+
         private void LiveRoomVM_ChangedPlayUrl(object sender, LiveRoomPlayUrlModel e)
         {
             flag = true;
@@ -263,6 +265,7 @@ namespace BiliLite.Pages
             BottomCBQuality.SelectedItem = liveRoomVM.current_qn;
             flag = false;
         }
+
         private void LiveDetailPage_Unloaded(object sender, RoutedEventArgs e)
         {
             Window.Current.CoreWindow.KeyDown -= CoreWindow_KeyDown;
@@ -283,11 +286,13 @@ namespace BiliLite.Pages
             timer_focus.Start();
             controlTimer.Start();
         }
+
         //判断是否按下mod键
         private bool IsDown(Windows.System.VirtualKey key)
         {
             return Window.Current.CoreWindow.GetKeyState(key).HasFlag(Windows.UI.Core.CoreVirtualKeyStates.Down);
         }
+
         private bool NoMod()
         {
             return !IsDown(Windows.System.VirtualKey.Shift) &&
@@ -343,10 +348,12 @@ namespace BiliLite.Pages
                         ToolTip.Visibility = Visibility.Collapsed;
                     }
                     break;
+
                 case VirtualKey.Escape:
                     SetFullScreen(false);
 
                     break;
+
                 case VirtualKey.F8:
                 case VirtualKey.T:
                     if (NoMod())
@@ -355,6 +362,7 @@ namespace BiliLite.Pages
                         MiniWidnows(BottomBtnMiniWindows.Visibility == Visibility.Visible);
                     }
                     break;
+
                 case VirtualKey.F12:
                 case VirtualKey.W:
                     if (NoMod())
@@ -362,17 +370,20 @@ namespace BiliLite.Pages
                         SetFullWindow(BottomBtnFullWindows.Visibility == Visibility.Visible);
                     }
                     break;
+
                 case VirtualKey.F11:
                 case VirtualKey.F:
                 case VirtualKey.Enter:
                     SetFullScreen(BottomBtnFull.Visibility == Visibility.Visible);
                     break;
+
                 case VirtualKey.F10:
                     if (NoMod())
                     {
                         await CaptureVideo();
                     }
                     break;
+
                 case VirtualKey.F9:
                 case VirtualKey.D:
                     if (NoMod())
@@ -398,11 +409,11 @@ namespace BiliLite.Pages
             }
         }
 
-
         private void LiveDetailPage_ClosedPage(object sender, EventArgs e)
         {
             StopPlay();
         }
+
         private void StopPlay()
         {
             if (mediaPlayer != null)
@@ -425,8 +436,10 @@ namespace BiliLite.Pages
             SetFullScreen(false);
             MiniWidnows(false);
         }
-        string roomid;
-        protected async override void OnNavigatedTo(NavigationEventArgs e)
+
+        private string roomid;
+
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New)
@@ -440,7 +453,8 @@ namespace BiliLite.Pages
                     Title = liveRoomVM?.LiveInfo.anchor_info.base_info.uname + "的直播间";
                     ChangeTitle(liveRoomVM.LiveInfo.anchor_info.base_info.uname + "的直播间");
                 }
-                catch(Exception ex){
+                catch (Exception ex)
+                {
                     Utils.ShowMessageToast("直播间标题获取失败", ex.ToString());
                 }
             }
@@ -450,13 +464,14 @@ namespace BiliLite.Pages
                 MessageCenter.ChangeTitle(Title);
             }
         }
+
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
-            if (e.NavigationMode == NavigationMode.Back )
+            if (e.NavigationMode == NavigationMode.Back)
                 StopPlay();
             base.OnNavigatingFrom(e);
         }
-        
+
         private void LoadSetting()
         {
             //音量
@@ -514,7 +529,6 @@ namespace BiliLite.Pages
                     SettingHelper.SetValue<int>(SettingHelper.Live.BORDER_STYLE, DanmuSettingStyle.SelectedIndex);
                 }
             });
-
 
             //弹幕显示区域
             DanmuControl.DanmakuArea = SettingHelper.GetValue<double>(SettingHelper.Live.AREA, 1);
@@ -605,9 +619,7 @@ namespace BiliLite.Pages
                 liveRoomVM.ReceiveLotteryMsg = !LiveSettingDotReceiveLotteryMsg.IsOn;
                 SettingHelper.SetValue<bool>(SettingHelper.Live.HIDE_LOTTERY, LiveSettingDotReceiveLotteryMsg.IsOn);
             });
-
         }
-
 
         public void ChangeTitle(string title)
         {
@@ -649,7 +661,6 @@ namespace BiliLite.Pages
             {
                 Utils.ShowMessageToast("播放失败" + ex.Message);
             }
-
         }
 
         private async void BottomCBQuality_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -685,32 +696,26 @@ namespace BiliLite.Pages
 
         private void BottomBtnFullWindows_Click(object sender, RoutedEventArgs e)
         {
-
-
             SetFullWindow(true);
         }
 
         private void BottomBtnExitFullWindows_Click(object sender, RoutedEventArgs e)
         {
-
             SetFullWindow(false);
         }
 
         private void BottomBtnFull_Click(object sender, RoutedEventArgs e)
         {
-
             SetFullScreen(true);
         }
 
         private void BottomBtnExitFull_Click(object sender, RoutedEventArgs e)
         {
-
             SetFullScreen(false);
         }
 
         private void SetFullWindow(bool e)
         {
-
             if (e)
             {
                 BottomBtnFullWindows.Visibility = Visibility.Collapsed;
@@ -726,6 +731,7 @@ namespace BiliLite.Pages
                 BottomInfo.Height = GridLength.Auto;
             }
         }
+
         private void SetFullScreen(bool e)
         {
             ApplicationView view = ApplicationView.GetForCurrentView();
@@ -757,8 +763,6 @@ namespace BiliLite.Pages
             }
         }
 
-
-
         private async void BottomBtnRefresh_Click(object sender, RoutedEventArgs e)
         {
             await liveRoomVM.LoadLiveRoomDetail(roomid);
@@ -768,13 +772,13 @@ namespace BiliLite.Pages
         {
             var giftInfo = (sender as Button).DataContext as LiveGiftItem;
             liveRoomVM.SendGift(giftInfo);
-
         }
 
         private async void TopBtnScreenshot_Click(object sender, RoutedEventArgs e)
         {
             await CaptureVideo();
         }
+
         private async Task CaptureVideo()
         {
             try
@@ -851,7 +855,6 @@ namespace BiliLite.Pages
             {
                 DanmuText.Text = "";
             }
-
         }
 
         private async void BtnAttention_Click(object sender, RoutedEventArgs e)
@@ -864,7 +867,6 @@ namespace BiliLite.Pages
                     liveRoomVM.Attention = true;
                 }
             }
-
         }
 
         private async void BtnCacnelAttention_Click(object sender, RoutedEventArgs e)
@@ -909,7 +911,6 @@ namespace BiliLite.Pages
             var data = cb_Rank.SelectedItem as LiveRoomRankVM;
             if (!data.Loading && data.Items.Count == 0)
             {
-
                 await data.LoadData();
             }
         }
@@ -936,21 +937,21 @@ namespace BiliLite.Pages
                     Utils.ShowMessageToast("弹幕发送成功");
                     FlyoutLottery.Hide();
                 }
-
             }
         }
 
         private void BottomBtnMiniWindows_Click(object sender, RoutedEventArgs e)
         {
             MiniWidnows(true);
-
         }
 
         private void BottomBtnExitMiniWindows_Click(object sender, RoutedEventArgs e)
         {
             MiniWidnows(false);
         }
-        bool isMini = false;
+
+        private bool isMini = false;
+
         private async void MiniWidnows(bool mini)
         {
             isMini = mini;
@@ -991,7 +992,6 @@ namespace BiliLite.Pages
             var word = (sender as HyperlinkButton).DataContext as string;
             settingVM.LiveWords.Remove(word);
             SettingHelper.SetValue(SettingHelper.Live.SHIELD_WORD, settingVM.LiveWords);
-
         }
 
         private void DanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
@@ -1011,15 +1011,17 @@ namespace BiliLite.Pages
         }
 
         #region 播放器手势
-        int showControlsFlag = 0;
-        bool pointer_in_player = false;
+
+        private int showControlsFlag = 0;
+        private bool pointer_in_player = false;
 
         private void Grid_Tapped(object sender, TappedRoutedEventArgs e)
         {
             ShowControl(control.Visibility == Visibility.Collapsed);
-
         }
-        bool runing = false;
+
+        private bool runing = false;
+
         private async void ShowControl(bool show)
         {
             if (runing) return;
@@ -1029,7 +1031,6 @@ namespace BiliLite.Pages
                 showControlsFlag = 0;
                 control.Visibility = Visibility.Visible;
                 await control.FadeInAsync(280);
-
             }
             else
             {
@@ -1042,6 +1043,7 @@ namespace BiliLite.Pages
             }
             runing = false;
         }
+
         private void Grid_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
             if (BottomBtnFull.Visibility == Visibility.Visible)
@@ -1053,6 +1055,7 @@ namespace BiliLite.Pages
                 BottomBtnExitFull_Click(sender, null);
             }
         }
+
         private void Grid_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
             pointer_in_player = true;
@@ -1070,10 +1073,10 @@ namespace BiliLite.Pages
             {
                 Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
             }
-
         }
 
-        bool ManipulatingBrightness = false;
+        private bool ManipulatingBrightness = false;
+
         private void Grid_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
         {
             e.Handled = true;
@@ -1083,7 +1086,6 @@ namespace BiliLite.Pages
             else
                 HandleSlideVolumeDelta(e.Delta.Translation.Y);
         }
-
 
         private void HandleSlideVolumeDelta(double delta)
         {
@@ -1095,7 +1097,6 @@ namespace BiliLite.Pages
                 var volume = mediaPlayer.Volume - dd;
                 if (volume < 0) volume = 0;
                 SliderVolume.Value = volume;
-
             }
             else
             {
@@ -1109,6 +1110,7 @@ namespace BiliLite.Pages
 
             //Utils.ShowMessageToast("音量:" +  mediaElement.MediaPlayer.Volume.ToString("P"), 3000);
         }
+
         private void HandleSlideBrightnessDelta(double delta)
         {
             double dd = Math.Abs(delta) / (this.ActualHeight * 0.8);
@@ -1122,6 +1124,7 @@ namespace BiliLite.Pages
             }
             TxtToolTip.Text = "亮度:" + Math.Abs(Brightness - 1).ToString("P");
         }
+
         private void Grid_ManipulationStarted(object sender, ManipulationStartedRoutedEventArgs e)
         {
             e.Handled = true;
@@ -1132,11 +1135,11 @@ namespace BiliLite.Pages
                 ManipulatingBrightness = true;
             else
                 ManipulatingBrightness = false;
-
         }
 
-        double _brightness;
-        double Brightness
+        private double _brightness;
+
+        private double Brightness
         {
             get => _brightness;
             set
@@ -1152,23 +1155,27 @@ namespace BiliLite.Pages
             e.Handled = true;
             ToolTip.Visibility = Visibility.Collapsed;
         }
-        #endregion
+
+        #endregion 播放器手势
 
         private void btnSendBagGift_Click(object sender, RoutedEventArgs e)
         {
             var giftInfo = (sender as Button).DataContext as LiveGiftItem;
             liveRoomVM.SendBagGift(giftInfo);
         }
+
         private void DataTransferManager_DataRequested(DataTransferManager sender, DataRequestedEventArgs args)
         {
             DataRequest request = args.Request;
             request.Data.Properties.Title = liveRoomVM.LiveInfo.room_info.title;
             request.Data.SetWebLink(new Uri("https://live.bilibili.com/" + liveRoomVM.RoomID));
         }
+
         private void btnShare_Click(object sender, RoutedEventArgs e)
         {
             DataTransferManager.ShowShareUI();
         }
+
         private void btnShareCopy_Click(object sender, RoutedEventArgs e)
         {
             Utils.SetClipboard($"{liveRoomVM.LiveInfo.room_info.title} - {liveRoomVM.LiveInfo.anchor_info.base_info.uname}的直播间\r\nhttps://live.bilibili.com/{liveRoomVM.RoomID}");
@@ -1180,6 +1187,5 @@ namespace BiliLite.Pages
             Utils.SetClipboard("https://live.bilibili.com/" + liveRoomVM.RoomID);
             Utils.ShowMessageToast("已复制链接到剪切板");
         }
-
     }
 }

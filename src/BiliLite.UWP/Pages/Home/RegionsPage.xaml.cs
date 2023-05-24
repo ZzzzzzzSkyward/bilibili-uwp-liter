@@ -13,7 +13,8 @@ namespace BiliLite.Pages.Home
     /// </summary>
     public sealed partial class RegionsPage : Page
     {
-        RegionVM channelVM;
+        private RegionVM channelVM;
+
         public RegionsPage()
         {
             this.InitializeComponent();
@@ -28,14 +29,13 @@ namespace BiliLite.Pages.Home
             }
         }
 
-        protected async override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New && channelVM.Regions == null)
             {
                 await channelVM.GetRegions();
             }
-
         }
 
         private void GridView_ItemClick(object sender, ItemClickEventArgs e)
@@ -47,26 +47,26 @@ namespace BiliLite.Pages.Home
                 {
                     icon = Symbol.World,
                     page = typeof(WebPage),
-                    title =item.name,
+                    title = item.name,
                     parameters = item.uri
                 });
                 return;
             }
-            if (item.children!=null)
+            if (item.children != null)
             {
                 MessageCenter.NavigateToPage(this, new NavigationInfo()
                 {
                     icon = Symbol.Document,
                     page = typeof(Pages.RegionDetailPage),
                     title = item.name,
-                    parameters=new OpenRegionInfo()
+                    parameters = new OpenRegionInfo()
                     {
-                        id=item.tid
+                        id = item.tid
                     }
                 });
                 return;
             }
-            if (item.name== "番剧")
+            if (item.name == "番剧")
             {
                 MessageCenter.NavigateToPage(this, new NavigationInfo()
                 {
@@ -108,7 +108,7 @@ namespace BiliLite.Pages.Home
                 });
                 return;
             }
-            if(item.name== "全区排行榜")
+            if (item.name == "全区排行榜")
             {
                 MessageCenter.NavigateToPage(this, new NavigationInfo()
                 {

@@ -16,19 +16,22 @@ namespace BiliLite.Pages.User
         public int Type { get; set; } = 11;
         public string Id { get; set; }
     }
+
     /// <summary>
     /// 收藏夹详情、播放列表详情
     /// </summary>
     public sealed partial class FavoriteDetailPage : BasePage
     {
-        FavoriteDetailVM favoriteDetailVM;
+        private FavoriteDetailVM favoriteDetailVM;
+
         public FavoriteDetailPage()
         {
             this.InitializeComponent();
             Title = "收藏夹详情";
             favoriteDetailVM = new FavoriteDetailVM();
         }
-        protected async override void OnNavigatedTo(NavigationEventArgs e)
+
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New && favoriteDetailVM.FavoriteInfo == null)
@@ -144,7 +147,6 @@ namespace BiliLite.Pages.User
 
         private async void PlayAll_Click(object sender, RoutedEventArgs e)
         {
-
             if (favoriteDetailVM.ShowLoadMore)
             {
                 Utils.ShowMessageToast("正在读取全部视频，请稍后");
@@ -166,7 +168,6 @@ namespace BiliLite.Pages.User
                         Title = item.title
                     });
                 }
-
             }
             MessageCenter.NavigateToPage(this, new NavigationInfo()
             {

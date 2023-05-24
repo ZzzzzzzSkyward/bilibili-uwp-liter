@@ -17,9 +17,10 @@ namespace BiliLite.Win32Tools
     /// </summary>
     public partial class MainWindow : Window
     {
-        ConvertFileInfo convertFileInfo;
-        string currentDir = "";
-        string ffmpegFile = "";
+        private ConvertFileInfo convertFileInfo;
+        private string currentDir = "";
+        private string ffmpegFile = "";
+
         public MainWindow()
         {
             InitializeComponent();
@@ -54,12 +55,10 @@ namespace BiliLite.Win32Tools
                 progressBar.Visibility = Visibility.Collapsed;
                 txtStatus.Text = $"执行任务失败：\r\n{ex.Message}";
             }
-
         }
 
         private async Task<bool> DecompressFFmpeg()
         {
-
             var zipDir = Assembly.GetExecutingAssembly().Location;
             zipDir = System.IO.Path.GetDirectoryName(zipDir);
             currentDir = Windows.Storage.ApplicationData.Current.LocalFolder.Path;
@@ -67,7 +66,6 @@ namespace BiliLite.Win32Tools
             {
                 try
                 {
-
                     var ffmpeg7ZipPath = System.IO.Path.Combine(zipDir, "ffmpeg.7z");
                     ffmpegFile = System.IO.Path.Combine(currentDir, "ffmpeg.exe");
                     //检查文件是否存在
@@ -117,14 +115,13 @@ namespace BiliLite.Win32Tools
                 {
                     await ConvertDashWithSubtitle();
                 }
-
             }
             else
             {
                 await ConvertToMp4();
             }
-
         }
+
         private async Task ConvertDash()
         {
             try
@@ -142,8 +139,8 @@ namespace BiliLite.Win32Tools
                 progressBar.Visibility = Visibility.Collapsed;
                 txtStatus.Text = $"视频导出失败：\r\n{ex.Message}";
             }
-
         }
+
         private async Task ConvertToMp4()
         {
             try
@@ -166,8 +163,8 @@ namespace BiliLite.Win32Tools
                 progressBar.Visibility = Visibility.Collapsed;
                 txtStatus.Text = $"视频导出失败：\r\n{ex.Message}";
             }
-
         }
+
         private async Task ConvertDashWithSubtitle()
         {
             try
@@ -186,12 +183,8 @@ namespace BiliLite.Win32Tools
                 progressBar.Visibility = Visibility.Collapsed;
                 txtStatus.Text = $"视频导出失败：\r\n{ex.Message}";
             }
-
         }
-
-
     }
-
 
     public class ConvertFileInfo
     {

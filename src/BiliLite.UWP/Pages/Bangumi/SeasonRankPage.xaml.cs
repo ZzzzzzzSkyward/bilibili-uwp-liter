@@ -12,7 +12,8 @@ namespace BiliLite.Pages.Bangumi
     /// </summary>
     public sealed partial class SeasonRankPage : BasePage
     {
-        readonly SeasonRankVM seasonRankVM;
+        private readonly SeasonRankVM seasonRankVM;
+
         public SeasonRankPage()
         {
             this.InitializeComponent();
@@ -26,7 +27,7 @@ namespace BiliLite.Pages.Bangumi
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New)
             {
-                 seasonRankVM.LoadRankRegion((int)e.Parameter);
+                seasonRankVM.LoadRankRegion((int)e.Parameter);
             }
         }
 
@@ -54,6 +55,5 @@ namespace BiliLite.Pages.Bangumi
                 parameters = item.season_id
             });
         }
-
     }
 }

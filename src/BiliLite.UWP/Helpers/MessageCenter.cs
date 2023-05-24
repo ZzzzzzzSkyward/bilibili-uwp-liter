@@ -12,6 +12,7 @@ using Windows.Foundation;
 using Windows.System;
 using Windows.UI.Core;
 using Windows.UI.ViewManagement;
+
 //using Windows.UI.WindowManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -25,32 +26,42 @@ namespace BiliLite.Helpers
     public static class MessageCenter
     {
         public static event EventHandler<bool> MiniWindowEvent;
+
         public static event EventHandler<NavigationInfo> NavigateToPageEvent;
+
         public static event EventHandler<string> ChangeTitleEvent;
+
         public static event EventHandler<object> LoginedEvent;
+
         public static event EventHandler<ImageViewerParameter> ViewImageEvent;
+
         public static event EventHandler LogoutedEvent;
+
         public static void NavigateToPage(object sender, NavigationInfo navigationInfo)
         {
             NavigateToPageEvent?.Invoke(sender, navigationInfo);
         }
+
         public static void SetMiniWindow(bool mini)
         {
             MiniWindowEvent?.Invoke(null, mini);
         }
+
         public static void ChangeTitle(string title)
         {
             ChangeTitleEvent?.Invoke(null, title);
         }
+
         /// <summary>
         /// 发送登录完成事件
         /// </summary>
-        public async static void SendLogined()
+        public static async void SendLogined()
         {
             LoginedEvent?.Invoke(null, null);
             //同步弹幕屏蔽信息
             await new Modules.SettingVM().SyncDanmuFilter();
         }
+
         /// <summary>
         /// 发送注销事件
         /// </summary>
@@ -86,7 +97,6 @@ namespace BiliLite.Helpers
                         httpBaseProtocolFilter.CookieManager.DeleteCookie(item);
                     }
                 }
-
             }
             catch (Exception ex)
             {
@@ -98,7 +108,7 @@ namespace BiliLite.Helpers
         ///统一处理Url
         /// </summary>
         /// <param name="par"></param>
-        public async static Task<bool> HandleUrl(string url)
+        public static async Task<bool> HandleUrl(string url)
         {
             if (url.First() == '@')
             {
@@ -186,7 +196,7 @@ namespace BiliLite.Helpers
                 return true;
             }
 
-            /* 
+            /*
              * 番剧/影视
              * https://bangumi.bilibili.com/anime/21680
              * https://www.bilibili.com/bangumi/play/ss21715
@@ -225,7 +235,6 @@ namespace BiliLite.Helpers
                 return true;
             }
 
-
             /*
              * 点评
              * https://www.bilibili.com/bangumi/media/md11592/
@@ -240,8 +249,6 @@ namespace BiliLite.Helpers
             //    await new Windows.UI.Popups.MessageDialog("请求打开点评" + review).ShowAsync();
             //    return true;
             //}
-
-
 
             /*
             * 直播
@@ -279,7 +286,6 @@ namespace BiliLite.Helpers
             //    return true;
             //}
 
-
             /*
             * 专栏
             * http://www.bilibili.com/read/cv242568
@@ -299,7 +305,6 @@ namespace BiliLite.Helpers
                 });
                 return true;
             }
-
 
             /*
              * 音频
@@ -340,7 +345,6 @@ namespace BiliLite.Helpers
                 return true;
             }
 
-
             /*
              * 相簿及动态
              * http://h.bilibili.com/ywh/h5/2403422
@@ -362,7 +366,6 @@ namespace BiliLite.Helpers
                 //InfoNavigateToEvent(typeof(DynamicInfoPage), album);
                 return true;
             }
-
 
             /*
             * 用户中心
@@ -414,7 +417,6 @@ namespace BiliLite.Helpers
                 return true;
             }
 
-
             /*
              * 播单
              * https://www.bilibili.com/playlist/detail/pl792
@@ -436,8 +438,6 @@ namespace BiliLite.Helpers
 
                 return true;
             }
-
-
 
             /*
              * 投稿
@@ -500,9 +500,6 @@ namespace BiliLite.Helpers
                 return true;
             }
 
-
-
-
             if (url.Contains("http://") || url.Contains("https://"))
             {
                 if (SettingHelper.GetValue<bool>(SettingHelper.UI.OPEN_URL_BROWSER, false))
@@ -521,10 +518,9 @@ namespace BiliLite.Helpers
             }
 
             return false;
-
         }
 
-        public async static Task<string> HandelSeasonID(string url)
+        public static async Task<string> HandelSeasonID(string url)
         {
             var bangumi = Utils.RegexMatch(url.Replace("movie", "ss").Replace("anime", "ss").Replace("season", "ss").Replace("/", ""), @"ss(\d+)");
             if (bangumi != "")
@@ -554,11 +550,10 @@ namespace BiliLite.Helpers
             {
                 ViewImageEvent?.Invoke(null, par);
             }
-
         }
-        public async static void OpenWindow(Type page, object par)
-        {
 
+        public static async void OpenWindow(Type page, object par)
+        {
             CoreApplicationView newView = CoreApplication.CreateNewView();
             int newViewId = 0;
 
@@ -577,11 +572,7 @@ namespace BiliLite.Helpers
                 };
             });
             bool viewShown = await ApplicationViewSwitcher.TryShowAsStandaloneAsync(newViewId);
-
-
-
         }
-
     }
 
     public class NavigationInfo
@@ -591,6 +582,4 @@ namespace BiliLite.Helpers
         public string title { get; set; }
         public object parameters { get; set; }
     }
-
-
 }

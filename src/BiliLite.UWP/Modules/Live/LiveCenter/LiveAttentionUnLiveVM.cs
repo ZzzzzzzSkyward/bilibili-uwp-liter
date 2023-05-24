@@ -10,7 +10,7 @@ namespace BiliLite.Modules.Live.LiveCenter
 {
     public class LiveAttentionUnLiveVM : IModules
     {
-        readonly Api.Live.LiveCenterAPI liveCenterAPI;
+        private readonly Api.Live.LiveCenterAPI liveCenterAPI;
 
         public LiveAttentionUnLiveVM()
         {
@@ -20,27 +20,31 @@ namespace BiliLite.Modules.Live.LiveCenter
         }
 
         private bool _Loading = true;
+
         public bool Loading
         {
             get { return _Loading; }
             set { _Loading = value; DoPropertyChanged("Loading"); }
         }
+
         private bool _CanLoadMore = false;
+
         public bool CanLoadMore
         {
             get { return _CanLoadMore; }
             set { _CanLoadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
+
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
 
         private ObservableCollection<LiveFollowUnliveAnchorModel> _Items;
+
         public ObservableCollection<LiveFollowUnliveAnchorModel> Items
         {
             get { return _Items; }
             set { _Items = value; DoPropertyChanged("Items"); }
         }
-
 
         private bool _Nothing = false;
 
@@ -60,7 +64,7 @@ namespace BiliLite.Modules.Live.LiveCenter
                 CanLoadMore = false;
                 Loading = true;
                 var api = liveCenterAPI.FollowUnLive(Page);
-              
+
                 var results = await api.Request();
                 if (results.status)
                 {
@@ -85,7 +89,7 @@ namespace BiliLite.Modules.Live.LiveCenter
                         }
 
                         var has_more = data.data["has_more"]?.ToInt32() ?? 0;
-                        if (has_more==0)
+                        if (has_more == 0)
                         {
                             CanLoadMore = false;
                         }
@@ -103,7 +107,6 @@ namespace BiliLite.Modules.Live.LiveCenter
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -116,6 +119,7 @@ namespace BiliLite.Modules.Live.LiveCenter
                 Loading = false;
             }
         }
+
         public async void Refresh()
         {
             if (Loading)
@@ -126,6 +130,7 @@ namespace BiliLite.Modules.Live.LiveCenter
             Page = 1;
             await Get();
         }
+
         public async void LoadMore()
         {
             if (Loading)
@@ -139,6 +144,7 @@ namespace BiliLite.Modules.Live.LiveCenter
             await Get();
         }
     }
+
     public class LiveFollowUnliveAnchorModel
     {
         public int roomid { get; set; }

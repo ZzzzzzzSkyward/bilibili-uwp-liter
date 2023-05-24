@@ -1,17 +1,17 @@
-﻿using System;
+﻿using BiliLite.Helpers;
+using BiliLite.Models;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using BiliLite.Models;
-using BiliLite.Helpers;
-
 
 namespace BiliLite.Modules
 {
     public class AnimeTimelineVM : IModules
     {
-        readonly Api.Home.AnimeAPI animeApi;
+        private readonly Api.Home.AnimeAPI animeApi;
         public AnimeType animeType { get; set; }
+
         public AnimeTimelineVM(AnimeType type)
         {
             animeApi = new Api.Home.AnimeAPI();
@@ -30,9 +30,10 @@ namespace BiliLite.Modules
                 };
             SelectAnimeType = AnimeTypeItems.FirstOrDefault(x => x.AnimeType == type);
             animeType = type;
-            
         }
+
         private bool _loading = true;
+
         public bool Loading
         {
             get { return _loading; }
@@ -47,7 +48,6 @@ namespace BiliLite.Modules
             set { _animeTypeItems = value; DoPropertyChanged("AnimeTypeItems"); }
         }
 
-
         private AnimeTypeItem _selectAnimeType;
 
         public AnimeTypeItem SelectAnimeType
@@ -55,7 +55,6 @@ namespace BiliLite.Modules
             get { return _selectAnimeType; }
             set { _selectAnimeType = value; DoPropertyChanged("SelectAnimeType"); }
         }
-
 
         private AnimeTimelineModel _today;
 
@@ -97,7 +96,6 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -110,13 +108,14 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-
     }
+
     public class AnimeTypeItem
     {
         public string Name { get; set; }
         public AnimeType AnimeType { get; set; }
     }
+
     public class AnimeTimelineModel
     {
         public string week { get; set; }
@@ -125,6 +124,7 @@ namespace BiliLite.Modules
         public bool is_today { get; set; }
         public List<AnimeTimelineItemModel> seasons { get; set; }
     }
+
     public class AnimeTimelineItemModel
     {
         public int season_id { get; set; }

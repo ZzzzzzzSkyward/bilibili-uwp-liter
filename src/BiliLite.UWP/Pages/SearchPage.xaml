@@ -13,26 +13,26 @@
     xmlns:control="using:BiliLite.Controls"
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
-        <convert:DatetimeConvert x:Key="ts"/>
+        <convert:DatetimeConvert x:Key="ts" />
         <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"></SolidColorBrush>
         <SolidColorBrush x:Key="SystemControlHighlightAltAccentBrush" Color="White"></SolidColorBrush>
         <DataTemplate x:Key="VideoTpl" x:DataType="modules:SearchVideoVM">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition/>
+                    <RowDefinition />
                 </Grid.RowDefinitions>
-                <Grid Margin="0 8" >
+                <Grid Margin="0 8">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
+                        <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <ComboBox HorizontalAlignment="Stretch" SelectionChanged="ComboBox_SelectionChanged"  ItemsSource="{x:Bind Path=OrderFilters}" SelectedItem="{x:Bind Path=SelectOrder,Mode=TwoWay}" DisplayMemberPath="name" SelectedValuePath="value" Margin="8 0"></ComboBox>
                     <ComboBox HorizontalAlignment="Stretch" SelectionChanged="ComboBox_SelectionChanged"  Grid.Column="1" ItemsSource="{x:Bind Path=DurationFilters}" SelectedItem="{x:Bind Path=SelectDuration,Mode=TwoWay}" DisplayMemberPath="name" SelectedValuePath="value" Margin="8 0"></ComboBox>
                     <ComboBox HorizontalAlignment="Stretch" SelectionChanged="ComboBox_SelectionChanged"  Grid.Column="2" ItemsSource="{x:Bind Path=RegionFilters}" SelectedItem="{x:Bind Path=SelectRegion,Mode=TwoWay}" DisplayMemberPath="name" SelectedValuePath="value" Margin="8 0"></ComboBox>
                 </Grid>
-                <toolkit:AdaptiveGridView SelectionMode="None" 
+                <toolkit:AdaptiveGridView SelectionMode="None"
                                           IsItemClickEnabled="True"
                                           DesiredWidth="600"
                                           Grid.Row="1"
@@ -45,8 +45,8 @@
                         <DataTemplate x:DataType="modules:SearchVideoItem">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <Grid>
                                     <toolkit:ImageEx IsCacheEnabled="True" Height="100" Width="160" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=pic,Converter={StaticResource imageConvert},ConverterParameter='160w'}"></toolkit:ImageEx>
@@ -56,7 +56,7 @@
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=author}"/></TextBlock>
+                                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=author}" /></TextBlock>
                                     <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">播放:<Run Text="{x:Bind Path=play,Converter={StaticResource numberToStringConvert}}"></Run> 弹幕:<Run Text="{x:Bind Path=video_review,Converter={StaticResource numberToStringConvert}}"></Run></TextBlock>
                                 </StackPanel>
                             </Grid>
@@ -80,7 +80,7 @@
         </DataTemplate>
         <DataTemplate x:Key="AnimeTpl" x:DataType="modules:SearchAnimeVM">
             <Grid>
-                <toolkit:AdaptiveGridView SelectionMode="None" 
+                <toolkit:AdaptiveGridView SelectionMode="None"
                                           IsItemClickEnabled="True"
                                           DesiredWidth="600"
                                           Grid.Row="1"
@@ -93,8 +93,8 @@
                         <DataTemplate x:DataType="modules:SearchAnimeItem">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <Grid>
                                     <toolkit:ImageEx IsCacheEnabled="True" Height="140" Width="105" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}"></toolkit:ImageEx>
@@ -104,10 +104,10 @@
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >类型：<Run Text="{x:Bind season_type_name}"/></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >地区：<Run Text="{x:Bind areas}"/></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >风格：<Run Text="{x:Bind styles}"/></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >开播时间：<Run Text="{x:Bind Path=pubtime,Converter={StaticResource ts},ConverterParameter='yyyy-MM-dd'}"/></TextBlock>
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >类型：<Run Text="{x:Bind season_type_name}" /></TextBlock>
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >地区：<Run Text="{x:Bind areas}" /></TextBlock>
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >风格：<Run Text="{x:Bind styles}" /></TextBlock>
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >开播时间：<Run Text="{x:Bind Path=pubtime,Converter={StaticResource ts},ConverterParameter='yyyy-MM-dd'}" /></TextBlock>
                                     <!--<TextBlock Margin="0" MaxLines="2" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=desc}"></TextBlock>-->
                                 </StackPanel>
                             </Grid>
@@ -132,18 +132,17 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition/>
+                    <RowDefinition />
                 </Grid.RowDefinitions>
-                <Grid Margin="0 8" >
+                <Grid Margin="0 8">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <ComboBox HorizontalAlignment="Stretch" SelectionChanged="ComboBox_SelectionChanged"  ItemsSource="{x:Bind Path=OrderFilters}" SelectedItem="{x:Bind Path=SelectOrder,Mode=TwoWay}" DisplayMemberPath="name" SelectedValuePath="value" Margin="8 0"></ComboBox>
                     <ComboBox HorizontalAlignment="Stretch" SelectionChanged="ComboBox_SelectionChanged"  Grid.Column="1" ItemsSource="{x:Bind Path=TypeFilters}" SelectedItem="{x:Bind Path=SelectType,Mode=TwoWay}" DisplayMemberPath="name" SelectedValuePath="value" Margin="8 0"></ComboBox>
-
                 </Grid>
-                <toolkit:AdaptiveGridView SelectionMode="None" 
+                <toolkit:AdaptiveGridView SelectionMode="None"
                                           IsItemClickEnabled="True"
                                           DesiredWidth="600"
                                           Grid.Row="1"
@@ -156,21 +155,21 @@
                         <DataTemplate x:DataType="modules:SearchUserItem">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <Grid>
                                     <Ellipse Width="56" Height="56" Margin="4 0 0 0">
                                         <Ellipse.Fill>
-                                            <ImageBrush Stretch="UniformToFill" ImageSource="{x:Bind Path=upic}"/>
+                                            <ImageBrush Stretch="UniformToFill" ImageSource="{x:Bind Path=upic}" />
                                         </Ellipse.Fill>
                                     </Ellipse>
                                     <Image Width="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0 0 0 8" Height="20" Source="{x:Bind Path=Verify}"></Image>
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis" Text="{x:Bind uname}"></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >稿件:<Run Text="{x:Bind Path=videos,Converter={StaticResource numberToStringConvert}}"/> 粉丝:<Run Text="{x:Bind Path=fans,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
-                                    <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis" MaxLines="1" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind sign}"/>
+                                    <TextBlock Margin="0 0 0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >稿件:<Run Text="{x:Bind Path=videos,Converter={StaticResource numberToStringConvert}}" /> 粉丝:<Run Text="{x:Bind Path=fans,Converter={StaticResource numberToStringConvert}}" /></TextBlock>
+                                    <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis" MaxLines="1" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind sign}" />
 
                                     <!--<TextBlock Margin="0" MaxLines="2" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=desc}"></TextBlock>-->
                                 </StackPanel>
@@ -196,10 +195,10 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition/>
+                    <RowDefinition />
                 </Grid.RowDefinitions>
 
-                <toolkit:AdaptiveGridView SelectionMode="None" 
+                <toolkit:AdaptiveGridView SelectionMode="None"
                                           IsItemClickEnabled="True"
                                            ItemHeight="220"
                                           DesiredWidth="260"
@@ -212,33 +211,33 @@
                         <DataTemplate x:DataType="modules:SearchLiveRoomItem">
                             <Grid>
                                 <Grid.RowDefinitions>
-                                    <RowDefinition/>
-                                    <RowDefinition Height="24"/>
-                                    <RowDefinition Height="32"/>
+                                    <RowDefinition />
+                                    <RowDefinition Height="24" />
+                                    <RowDefinition Height="32" />
                                 </Grid.RowDefinitions>
                                 <Grid>
                                     <toolkit:ImageEx IsCacheEnabled="True"  PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png"   Stretch="UniformToFill" Source="{x:Bind Path=user_cover,Converter={StaticResource imageConvert},ConverterParameter='200h'}"></toolkit:ImageEx>
                                 </Grid>
                                 <Grid Grid.Row="1" Margin="4 -24 4 0">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="48"/>
-                                        <ColumnDefinition/>
+                                        <ColumnDefinition Width="48" />
+                                        <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <Ellipse Width="48"  Height="48" Stroke="{ThemeResource ForegroundTextColor}" StrokeThickness="1">
                                         <Ellipse.Fill>
-                                            <ImageBrush ImageSource="{x:Bind Path=uface,Converter={StaticResource imageConvert2},ConverterParameter='56w'}"/>
+                                            <ImageBrush ImageSource="{x:Bind Path=uface,Converter={StaticResource imageConvert2},ConverterParameter='56w'}" />
                                         </Ellipse.Fill>
                                     </Ellipse>
                                     <TextBlock Grid.Column="1" Margin="4 24 4 0" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
                                 </Grid>
 
-                                <Grid  Grid.Row="2" Margin="8 4" >
+                                <Grid  Grid.Row="2" Margin="8 4">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition/>
-                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition />
+                                        <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock  TextWrapping="Wrap" VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" Text="{x:Bind uname}"></TextBlock>
-                                    <TextBlock  Grid.Column="1" FontSize="12" HorizontalAlignment="Right" Foreground="{ThemeResource ForegroundTextColor}" >人气:<Run  Text="{x:Bind Path=online,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                                    <TextBlock  Grid.Column="1" FontSize="12" HorizontalAlignment="Right" Foreground="{ThemeResource ForegroundTextColor}" >人气:<Run  Text="{x:Bind Path=online,Converter={StaticResource numberToStringConvert}}" /></TextBlock>
                                 </Grid>
                             </Grid>
                         </DataTemplate>
@@ -246,7 +245,6 @@
                     <toolkit:AdaptiveGridView.ItemContainerStyle>
                         <Style TargetType="GridViewItem">
                             <Setter Property="Margin" Value="8"></Setter>
-
                         </Style>
                     </toolkit:AdaptiveGridView.ItemContainerStyle>
                     <toolkit:AdaptiveGridView.Footer>
@@ -268,17 +266,17 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition/>
+                    <RowDefinition />
                 </Grid.RowDefinitions>
-                <Grid Margin="0 8" >
+                <Grid Margin="0 8">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
+                        <ColumnDefinition />
+                        <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <ComboBox HorizontalAlignment="Stretch" SelectionChanged="ComboBox_SelectionChanged" ItemsSource="{x:Bind Path=OrderFilters}" SelectedItem="{x:Bind Path=SelectOrder,Mode=TwoWay}" DisplayMemberPath="name" SelectedValuePath="value" Margin="8 0"></ComboBox>
                     <ComboBox HorizontalAlignment="Stretch" SelectionChanged="ComboBox_SelectionChanged" Grid.Column="2" ItemsSource="{x:Bind Path=RegionFilters}" SelectedItem="{x:Bind Path=SelectRegion,Mode=TwoWay}" DisplayMemberPath="name" SelectedValuePath="value" Margin="8 0"></ComboBox>
                 </Grid>
-                <toolkit:AdaptiveGridView SelectionMode="None" 
+                <toolkit:AdaptiveGridView SelectionMode="None"
                                           IsItemClickEnabled="True"
                                           DesiredWidth="600"
                                           Grid.Row="1"
@@ -291,17 +289,16 @@
                         <DataTemplate x:DataType="modules:SearchArticleItem">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <Grid>
                                     <toolkit:ImageEx IsCacheEnabled="True" Height="100" Width="160" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}"></toolkit:ImageEx>
-
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
                                     <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >阅读:<Run Text="{x:Bind Path=view,Converter={StaticResource numberToStringConvert}}"></Run> 评论:<Run Text="{x:Bind Path=reply,Converter={StaticResource numberToStringConvert}}"></Run> 喜欢:<Run Text="{x:Bind Path=like,Converter={StaticResource numberToStringConvert}}"></Run></TextBlock>
-                                    <TextBlock Margin="0 4" FontSize="14" MaxLines="2" Foreground="{ThemeResource ForegroundTextColor}" >分区:<Run Text="{x:Bind Path=category_name}"/></TextBlock>
+                                    <TextBlock Margin="0 4" FontSize="14" MaxLines="2" Foreground="{ThemeResource ForegroundTextColor}" >分区:<Run Text="{x:Bind Path=category_name}" /></TextBlock>
                                 </StackPanel>
                             </Grid>
                         </DataTemplate>
@@ -326,9 +323,9 @@
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition/>
+                    <RowDefinition />
                 </Grid.RowDefinitions>
-                <toolkit:AdaptiveGridView SelectionMode="None" 
+                <toolkit:AdaptiveGridView SelectionMode="None"
                                           IsItemClickEnabled="True"
                                           DesiredWidth="600"
                                           Grid.Row="1"
@@ -341,12 +338,11 @@
                         <DataTemplate x:DataType="modules:SearchTopicItem">
                             <Grid>
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition />
                                 </Grid.ColumnDefinitions>
                                 <Grid>
                                     <toolkit:ImageEx IsCacheEnabled="True" Height="100" Width="80" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}"></toolkit:ImageEx>
-
                                 </Grid>
                                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
@@ -375,26 +371,26 @@
         <DataTemplate x:Key="TestTpl">
             <TextBlock>还没写好</TextBlock>
         </DataTemplate>
-        <local:SearchDataTemplateSelector x:Key="tplSelect" 
+        <local:SearchDataTemplateSelector x:Key="tplSelect"
                                           LiveRoomTemplate="{StaticResource LiveRoomTpl}"
                                           VideoTemplate="{StaticResource VideoTpl}"
                                           AnimeTemplate="{StaticResource AnimeTpl}"
                                           UserTemplate="{StaticResource UserTpl}"
                                           ArticTemplate="{StaticResource ArticTpl}"
                                           TopicTemplate="{StaticResource TopicTpl}"
-                                          TestTemplate="{StaticResource TestTpl}"/>
+                                          TestTemplate="{StaticResource TestTpl}" />
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
         </Grid.RowDefinitions>
         <Grid  Background="{ThemeResource TopPaneBackground}" Padding="8 8 8 0">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
             </Grid.ColumnDefinitions>
-            <ComboBox x:Name="cbArea" SelectionChanged="cbArea_SelectionChanged" ItemsSource="{x:Bind Path=searchVM.Areas}" SelectedItem="{x:Bind Path=searchVM.Area,Mode=TwoWay}" DisplayMemberPath="name" SelectedValuePath="area" VerticalAlignment="Center" Margin="0 0 8 0" >
+            <ComboBox x:Name="cbArea" SelectionChanged="cbArea_SelectionChanged" ItemsSource="{x:Bind Path=searchVM.Areas}" SelectedItem="{x:Bind Path=searchVM.Area,Mode=TwoWay}" DisplayMemberPath="name" SelectedValuePath="area" VerticalAlignment="Center" Margin="0 0 8 0">
                 <ComboBoxItem>默认地区</ComboBoxItem>
                 <ComboBoxItem>大陆地区</ComboBoxItem>
                 <ComboBoxItem>香港地区</ComboBoxItem>
@@ -413,8 +409,6 @@
                     <Setter Property="Margin" Value="0"></Setter>
                 </Style>
             </Pivot.ItemContainerStyle>
-
-
         </Pivot>
     </Grid>
 </local:BasePage>

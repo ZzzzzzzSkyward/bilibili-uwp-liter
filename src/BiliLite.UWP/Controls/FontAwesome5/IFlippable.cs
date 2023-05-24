@@ -6,16 +6,19 @@
 #if !WINDOWS_UWP
     [Localizability(LocalizationCategory.None, Readability = Readability.Unreadable)]
 #endif
+
     public enum EFlipOrientation
     {
         /// <summary>
         /// Default
         /// </summary>
         Normal = 0,
+
         /// <summary>
         /// Flip horizontally (on x-achsis)
         /// </summary>
         Horizontal,
+
         /// <summary>
         /// Flip vertically (on y-achsis)
         /// </summary>

@@ -1,18 +1,19 @@
-﻿using System;
+﻿using BiliLite.Helpers;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using BiliLite.Helpers;
-using System.Collections.ObjectModel;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
 using System.Windows.Input;
 
 namespace BiliLite.Modules
 {
     public class RecommendVM : IModules
     {
-        readonly Api.Home.RecommendAPI recommendAPI;
+        private readonly Api.Home.RecommendAPI recommendAPI;
+
         public RecommendVM()
         {
             recommendAPI = new Api.Home.RecommendAPI();
@@ -20,10 +21,12 @@ namespace BiliLite.Modules
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
+
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
 
         private bool _loading = true;
+
         public bool Loading
         {
             get { return _loading; }
@@ -45,7 +48,6 @@ namespace BiliLite.Modules
             get { return _items; }
             set { _items = value; DoPropertyChanged("Items"); }
         }
-
 
         public async Task GetRecommend(string idx = "0")
         {
@@ -84,9 +86,8 @@ namespace BiliLite.Modules
                                     type = "browser"
                                 });
                             }
-
                         }
-                        
+
                         if (Items == null)
                         {
                             Items = items;
@@ -99,7 +100,6 @@ namespace BiliLite.Modules
                                 Items.Add(item);
                             }
                         }
-
                     }
                     else
                     {
@@ -113,7 +113,6 @@ namespace BiliLite.Modules
             }
             catch (Exception ex)
             {
-
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
@@ -125,7 +124,7 @@ namespace BiliLite.Modules
 
         private void LoadBanner(RecommendItemModel banner)
         {
-            if(SettingHelper.GetValue("dontloadbanner",false)==true) { return; }
+            if (SettingHelper.GetValue("dontloadbanner", false) == true) { return; }
             try
             {
                 if (Banner == null) Banner = new ObservableCollection<RecommendBannerItemModel>();
@@ -147,8 +146,8 @@ namespace BiliLite.Modules
             catch (Exception)
             {
             }
-           
         }
+
         public async void LoadMore()
         {
             if (Items == null || Items.Count == 0)
@@ -161,6 +160,7 @@ namespace BiliLite.Modules
             }
             await GetRecommend(Items.LastOrDefault().idx);
         }
+
         public async void Refresh()
         {
             if (Loading)
@@ -212,14 +212,15 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(handel.message);
             }
         }
-
-
     }
+
     public class RecommendItemModel
     {
         //public ObservableCollection<RecommendBannerItemModel> banner_item { get; set; }
         public JArray banner_item { get; set; }
+
         private string _title = "";
+
         public string title
         {
             get
@@ -286,7 +287,6 @@ namespace BiliLite.Modules
             set { _three_point_v2 = value; }
         }
 
-
         public RecommendItemArgsModel args { get; set; }
 
         public RecommendRcmdReasonStyleModel rcmd_reason_style { get; set; }
@@ -297,6 +297,7 @@ namespace BiliLite.Modules
         public int cover_left_icon_1 { get; set; }
 
         public int cover_left_icon_2 { get; set; }
+
         public string left_text
         {
             get
@@ -304,9 +305,11 @@ namespace BiliLite.Modules
                 return $"{iconToText(cover_left_icon_1)}{cover_left_text_1 ?? ""} {iconToText(cover_left_icon_2)}{cover_left_text_2 ?? ""}";
             }
         }
+
         public string cover_right_text { get; set; }
 
         public string badge { get; set; }
+
         public bool showBadge
         {
             get
@@ -322,6 +325,7 @@ namespace BiliLite.Modules
                 return !string.IsNullOrEmpty(cover_left_text_1) || !string.IsNullOrEmpty(cover_left_text_2) || !string.IsNullOrEmpty(cover_right_text);
             }
         }
+
         public bool showRcmd
         {
             get
@@ -329,6 +333,7 @@ namespace BiliLite.Modules
                 return rcmd_reason_style != null;
             }
         }
+
         public bool showAD
         {
             get
@@ -336,6 +341,7 @@ namespace BiliLite.Modules
                 return ad_info != null && ad_info.creative_content != null;
             }
         }
+
         public string bottomText
         {
             get
@@ -344,13 +350,14 @@ namespace BiliLite.Modules
                 {
                     return desc_button.text;
                 }
-                if (card_goto=="live")
+                if (card_goto == "live")
                 {
                     return args.up_name;
                 }
                 return args.up_name;
             }
         }
+
         public string timeText
         {
             get
@@ -360,7 +367,7 @@ namespace BiliLite.Modules
                 {
                     return desc_button.text;
                 }
-                if (card_goto=="live")
+                if (card_goto == "live")
                 {
                     return args.up_name;
                 }
@@ -374,65 +381,74 @@ namespace BiliLite.Modules
                 case 1:
                 case 6:
                     return "观看:";
+
                 case 2:
                     return "人气:";
+
                 case 3:
                     return "弹幕:";
+
                 case 4:
                     return "追番:";
+
                 case 7:
                     return "评论:";
+
                 default:
                     return "";
             }
         }
     }
+
     public class RecommendBannerItemModel
     {
         public long id { get; set; }
         public string title { get; set; }
         public string image { get; set; }
 
-
         public string hash { get; set; }
 
         public string uri { get; set; }
 
         public string request_id { get; set; }
+
         /// <summary>
         /// Server_type
         /// </summary>
         public int server_type { get; set; }
+
         /// <summary>
         /// Resource_id
         /// </summary>
         public int resource_id { get; set; }
+
         /// <summary>
         /// Index
         /// </summary>
         public int index { get; set; }
+
         /// <summary>
         /// Cm_mark
         /// </summary>
         public int cm_mark { get; set; }
     }
+
     public class RecommendThreePointV2ItemModel
     {
-
         public string idx { get; set; }
         public string title { get; set; }
         public string type { get; set; }
         public string subtitle { get; set; }
         public string url { get; set; }
         public List<RecommendThreePointV2ItemReasonsModel> reasons { get; set; }
-
     }
+
     public class RecommendThreePointV2ItemReasonsModel
     {
         public long id { get; set; }
         public string name { get; set; }
-
     }
+
     public class RecommendItemArgsModel
     {
         public string up_id { get; set; }
@@ -442,8 +458,8 @@ namespace BiliLite.Modules
         public string tname { get; set; }
         public string rname { get; set; }
         public int aid { get; set; }
-
     }
+
     public class RecommendRcmdReasonStyleModel
     {
         public string text { get; set; }
@@ -456,18 +472,20 @@ namespace BiliLite.Modules
         public string bg_color_night { get; set; }
         public string border_color_night { get; set; }
         public int bg_style { get; set; }
-
     }
+
     public class RecommendDescButtonModel
     {
         public string text { get; set; }
         public string uri { get; set; }
     }
+
     public class RecommendADInfoModel
     {
         public string creative_id { get; set; }
         public RecommendADInfoCreativeModel creative_content { get; set; }
     }
+
     public class RecommendADInfoCreativeModel
     {
         public string description { get; set; }

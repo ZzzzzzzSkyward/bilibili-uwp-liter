@@ -5,22 +5,24 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 
-
 namespace BiliLite.Controls
 {
     public class IntEventArgs : EventArgs
     {
         public int Value { get; private set; }
+
         public IntEventArgs(int value)
         {
             this.Value = value;
         }
     }
-    partial class CarouselPanel
+
+    internal partial class CarouselPanel
     {
         public event EventHandler<IntEventArgs> SelectedIndexChanged;
 
         #region ItemTemplate
+
         public DataTemplate ItemTemplate
         {
             get { return (DataTemplate)GetValue(ItemTemplateProperty); }
@@ -34,9 +36,11 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty ItemTemplateProperty = DependencyProperty.Register("ItemTemplate", typeof(DataTemplate), typeof(CarouselPanel), new PropertyMetadata(null, ItemTemplateChanged));
-        #endregion
+
+        #endregion ItemTemplate
 
         #region ItemWidth
+
         public double ItemWidth
         {
             get { return (double)GetValue(ItemWidthProperty); }
@@ -50,9 +54,11 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty ItemWidthProperty = DependencyProperty.Register("ItemWidth", typeof(double), typeof(CarouselPanel), new PropertyMetadata(400.0, ItemWidthChanged));
-        #endregion
+
+        #endregion ItemWidth
 
         #region ItemHeight
+
         public double ItemHeight
         {
             get { return (double)GetValue(ItemHeightProperty); }
@@ -66,9 +72,11 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty ItemHeightProperty = DependencyProperty.Register("ItemHeight", typeof(double), typeof(CarouselPanel), new PropertyMetadata(300.0, ItemHeightChanged));
-        #endregion
+
+        #endregion ItemHeight
 
         #region ItemClickCommand
+
         public ICommand ItemClickCommand
         {
             get { return (ICommand)GetValue(ItemClickCommandProperty); }
@@ -76,7 +84,8 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty ItemClickCommandProperty = DependencyProperty.Register("ItemClickCommand", typeof(ICommand), typeof(CarouselPanel), new PropertyMetadata(null));
-        #endregion
+
+        #endregion ItemClickCommand
 
         private void OnPaneTapped(object sender, TappedRoutedEventArgs e)
         {

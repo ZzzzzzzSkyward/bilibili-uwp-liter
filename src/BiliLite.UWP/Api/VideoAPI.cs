@@ -4,17 +4,18 @@ namespace BiliLite.Api
 {
     public class VideoAPI
     {
-        public ApiModel Detail(string id,bool isbvid)
+        public ApiModel Detail(string id, bool isbvid)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://app.bilibili.com{ApiHelper.api2}/view",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&{(isbvid?"bvid=":"aid=")}{id}&plat=0"
+                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&{(isbvid ? "bvid=" : "aid=")}{id}&plat=0"
             };
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
+
         public ApiModel DetailProxy(string id, bool isbvid)
         {
             ApiModel api = new ApiModel()
@@ -29,13 +30,14 @@ namespace BiliLite.Api
             api.parameter = "url=" + apiUrl;
             return api;
         }
+
         /// <summary>
         ///点赞
         /// </summary>
         /// <param name="dislike"> 当前dislike状态</param>
         /// <param name="like">当前like状态</param>
         /// <returns></returns>
-        public ApiModel Like(string aid, int dislike,int like)
+        public ApiModel Like(string aid, int dislike, int like)
         {
             ApiModel api = new ApiModel()
             {
@@ -46,6 +48,7 @@ namespace BiliLite.Api
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
+
         /// <summary>
         ///点赞
         /// </summary>
@@ -60,7 +63,7 @@ namespace BiliLite.Api
                 baseUrl = $"https://app.biliapi.net{ApiHelper.api2}/view/dislike",
                 body = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&aid={aid}&dislike={dislike}&from=7&like={like}"
             };
-            api.body+= ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
+            api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
 
@@ -91,13 +94,14 @@ namespace BiliLite.Api
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
+
         /// <summary>
         /// 关注
         /// </summary>
         /// <param name="mid">用户ID</param>
         /// <param name="mode">1为关注，2为取消关注</param>
         /// <returns></returns>
-        public ApiModel Attention(string mid,string mode)
+        public ApiModel Attention(string mid, string mode)
         {
             ApiModel api = new ApiModel()
             {
@@ -108,7 +112,5 @@ namespace BiliLite.Api
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
-
-
     }
 }

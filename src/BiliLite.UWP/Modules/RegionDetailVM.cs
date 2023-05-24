@@ -1,14 +1,14 @@
 ﻿using BiliLite.Api;
+using BiliLite.Helpers;
+using BiliLite.Models;
+using BiliLite.Modules.Home;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Collections.ObjectModel;
-using BiliLite.Modules.Home;
-using BiliLite.Helpers;
 using System.Windows.Input;
-using BiliLite.Models;
-using Newtonsoft.Json;
 
 namespace BiliLite.Modules
 {
@@ -16,15 +16,18 @@ namespace BiliLite.Modules
     {
         public RegionDetailVM()
         {
-
         }
+
         private ObservableCollection<IRegionVM> _Regions;
+
         public ObservableCollection<IRegionVM> Regions
         {
             get { return _Regions; }
             set { _Regions = value; DoPropertyChanged("Regions"); }
         }
+
         private IRegionVM _SelectRegion;
+
         public IRegionVM SelectRegion
         {
             get { return _SelectRegion; }
@@ -50,8 +53,8 @@ namespace BiliLite.Modules
                 SelectRegion = Regions.FirstOrDefault(x => x.ID == tid);
             }
         }
-
     }
+
     public interface IRegionVM
     {
         ICommand RefreshCommand { get; set; }
@@ -60,6 +63,7 @@ namespace BiliLite.Modules
         string RegionName { get; set; }
         bool Loading { get; set; }
     }
+
     public class RegionDetailHomeVM : IModules, IRegionVM
     {
         public long ID { get; set; }
@@ -68,6 +72,7 @@ namespace BiliLite.Modules
         public ICommand RefreshCommand { get; set; }
         public ICommand LoadMoreCommand { get; set; }
         private bool _loading = false;
+
         public bool Loading
         {
             get { return _loading; }
@@ -90,9 +95,9 @@ namespace BiliLite.Modules
             set { _regionVideos = value; DoPropertyChanged("Videos"); }
         }
 
-
         private RegionItem _region;
-        RegionAPI regionAPI;
+        private RegionAPI regionAPI;
+
         public RegionDetailHomeVM(RegionItem regionItem)
         {
             regionAPI = new RegionAPI();
@@ -102,7 +107,9 @@ namespace BiliLite.Modules
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
+
         private string next_id = "";
+
         public async Task LoadHome()
         {
             try
@@ -123,7 +130,7 @@ namespace BiliLite.Modules
                         var ls = JsonConvert.DeserializeObject<ObservableCollection<RegionVideoItemModel>>(data["data"]["new"].ToString());
                         if (next_id == "")
                         {
-                            var recommend = JsonConvert.DeserializeObject<ObservableCollection<RegionVideoItemModel>>(data["data"]["recommend"]?.ToString()??"[]");
+                            var recommend = JsonConvert.DeserializeObject<ObservableCollection<RegionVideoItemModel>>(data["data"]["recommend"]?.ToString() ?? "[]");
                             foreach (var item in recommend)
                             {
                                 ls.Insert(0, item);
@@ -149,7 +156,6 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -168,25 +174,30 @@ namespace BiliLite.Modules
             next_id = "";
             await LoadHome();
         }
+
         public async void LoadMore()
         {
             await LoadHome();
         }
     }
+
     public class RegionDetailChildVM : IModules, IRegionVM
     {
         public string RegionName { get; set; }
         public long ID { get; set; }
         private bool _loading = false;
+
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
+
         public ICommand RefreshCommand { get; set; }
         public ICommand LoadMoreCommand { get; set; }
         private RegionChildrenItem _region;
-        RegionAPI regionAPI;
+        private RegionAPI regionAPI;
+
         public RegionDetailChildVM(RegionChildrenItem regionItem)
         {
             regionAPI = new RegionAPI();
@@ -205,6 +216,7 @@ namespace BiliLite.Modules
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
+
         public List<RegionChildOrderModel> Orders { get; set; }
 
         private RegionChildOrderModel _SelectOrder;
@@ -232,12 +244,11 @@ namespace BiliLite.Modules
                 {
                     _SelectTag = value;
                 }
-               
             }
         }
 
-
         private List<RegionTagItemModel> _tag;
+
         public List<RegionTagItemModel> Tasgs
         {
             get { return _tag; }
@@ -245,24 +256,26 @@ namespace BiliLite.Modules
         }
 
         private ObservableCollection<RegionVideoItemModel> _regionVideos;
+
         public ObservableCollection<RegionVideoItemModel> Videos
         {
             get { return _regionVideos; }
             set { _regionVideos = value; DoPropertyChanged("Videos"); }
         }
+
         public string next_id = "";
-        
+
         public async Task LoadHome()
         {
             try
             {
                 Loading = true;
-                var api = regionAPI.RegionChildDynamic(ID, (SelectTag==null)?0: SelectTag.tid);
+                var api = regionAPI.RegionChildDynamic(ID, (SelectTag == null) ? 0 : SelectTag.tid);
                 if (next_id != "")
                 {
                     api = regionAPI.RegionChildDynamic(ID, next_id, (SelectTag == null) ? 0 : SelectTag.tid);
                 }
-                
+
                 var results = await api.Request();
                 if (results.status)
                 {
@@ -272,18 +285,18 @@ namespace BiliLite.Modules
                         var ls = JsonConvert.DeserializeObject<ObservableCollection<RegionVideoItemModel>>(data["data"]["new"].ToString());
                         if (next_id == "")
                         {
-                            var tags = JsonConvert.DeserializeObject<List<RegionTagItemModel>>(data["data"]["top_tag"]?.ToString()??"[]");
+                            var tags = JsonConvert.DeserializeObject<List<RegionTagItemModel>>(data["data"]["top_tag"]?.ToString() ?? "[]");
                             tags.Insert(0, new RegionTagItemModel()
                             {
                                 tid = 0,
                                 tname = "全部标签"
                             });
-                            if (Tasgs==null|| Tasgs.Count==0)
+                            if (Tasgs == null || Tasgs.Count == 0)
                             {
                                 Tasgs = tags;
                                 SelectTag = Tasgs[0];
                             }
-                           
+
                             Videos = ls;
                         }
                         else
@@ -293,7 +306,7 @@ namespace BiliLite.Modules
                                 Videos.Add(item);
                             }
                         }
-                        next_id = data["data"]["cbottom"]?.ToString()??"";
+                        next_id = data["data"]["cbottom"]?.ToString() ?? "";
                     }
                     else
                     {
@@ -303,7 +316,6 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -316,13 +328,15 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
+
         public int page = 1;
+
         public async Task LoadList()
         {
             try
             {
                 Loading = true;
-                var api = regionAPI.RegionChildList(ID,SelectOrder.order,page, SelectTag.tid);
+                var api = regionAPI.RegionChildList(ID, SelectOrder.order, page, SelectTag.tid);
                 var results = await api.Request();
                 if (results.status)
                 {
@@ -351,7 +365,6 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -381,15 +394,15 @@ namespace BiliLite.Modules
                 page = 1;
                 await LoadList();
             }
-            
         }
+
         public async void LoadMore()
         {
             if (Loading)
             {
                 return;
             }
-            if (SelectOrder == null|| SelectOrder.order=="")
+            if (SelectOrder == null || SelectOrder.order == "")
             {
                 await LoadHome();
             }
@@ -398,9 +411,7 @@ namespace BiliLite.Modules
                 await LoadList();
             }
         }
-
     }
-
 
     public class RegionHomeBannerItemModel
     {
@@ -409,6 +420,7 @@ namespace BiliLite.Modules
         public string image { get; set; }
         public string uri { get; set; }
     }
+
     public class RegionChildOrderModel
     {
         public RegionChildOrderModel(string name, string order)
@@ -416,9 +428,11 @@ namespace BiliLite.Modules
             this.name = name;
             this.order = order;
         }
+
         public string name { get; set; }
         public string order { get; set; }
     }
+
     public class RegionTagItemModel
     {
         public int tid { get; set; }
@@ -428,6 +442,7 @@ namespace BiliLite.Modules
         public string rname { get; set; }
         public string rename { get; set; }
     }
+
     public class RegionVideoItemModel
     {
         public long id { get; set; }

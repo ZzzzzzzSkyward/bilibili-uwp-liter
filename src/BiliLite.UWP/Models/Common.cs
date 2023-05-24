@@ -8,25 +8,25 @@ namespace BiliLite.Models.Common
     public class NotePicture
     {
         /// <summary>
-        /// Õº∆¨µÿ÷∑	
+        /// Õº∆¨µÿ÷∑
         /// </summary>
         [JsonProperty("img_src")]
         public string ImgSrc { get; set; }
 
         /// <summary>
-        /// Õº∆¨øÌ∂»	
+        /// Õº∆¨øÌ∂»
         /// </summary>
         [JsonProperty("img_width")]
         public float ImgWidth { get; set; }
 
         /// <summary>
-        /// Õº∆¨∏ﬂ∂»	
+        /// Õº∆¨∏ﬂ∂»
         /// </summary>
         [JsonProperty("img_height")]
         public float ImgHeight { get; set; }
 
         /// <summary>
-        /// Õº∆¨¥Û–°	
+        /// Õº∆¨¥Û–°
         /// </summary>
         [JsonProperty("img_size")]
         public float ImgSize { get; set; }

@@ -1,12 +1,12 @@
-﻿using System;
+﻿using BiliLite.Api;
+using BiliLite.Helpers;
+using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using BiliLite.Helpers;
-using System.Collections.ObjectModel;
-using Newtonsoft.Json;
 using System.Windows.Input;
-using BiliLite.Api;
 
 namespace BiliLite.Modules
 {
@@ -19,6 +19,7 @@ namespace BiliLite.Modules
         TV = 5,
         Variety = 7
     }
+
     public class SeasonIndexParameter
     {
         public IndexSeasonType type { get; set; } = IndexSeasonType.Anime;
@@ -28,32 +29,35 @@ namespace BiliLite.Modules
         public string month { get; set; } = "-1";
         public string order { get; set; } = "3";
     }
+
     public class SeasonIndexVM : IModules
     {
-        readonly SeasonIndexAPI seasonIndexAPI;
+        private readonly SeasonIndexAPI seasonIndexAPI;
+
         public SeasonIndexVM()
         {
             seasonIndexAPI = new SeasonIndexAPI();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
+
         public SeasonIndexParameter Parameter { get; set; }
 
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
 
         private bool _loading = true;
+
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-      
 
         private bool CanLoadMore = true;
-      
 
         private bool _Conditionsloading = true;
+
         public bool ConditionsLoading
         {
             get { return _Conditionsloading; }
@@ -61,6 +65,7 @@ namespace BiliLite.Modules
         }
 
         private ObservableCollection<SeasonIndexConditionFilterModel> _Conditions;
+
         public ObservableCollection<SeasonIndexConditionFilterModel> Conditions
         {
             get { return _Conditions; }
@@ -68,6 +73,7 @@ namespace BiliLite.Modules
         }
 
         private ObservableCollection<SeasonIndexResultItemModel> _result;
+
         public ObservableCollection<SeasonIndexResultItemModel> Result
         {
             get { return _result; }
@@ -75,6 +81,7 @@ namespace BiliLite.Modules
         }
 
         private int _page = 1;
+
         public int Page
         {
             get { return _page; }
@@ -158,7 +165,7 @@ namespace BiliLite.Modules
             try
             {
                 if (Loading) return;
-               
+
                 if (Page == 1)
                 {
                     CanLoadMore = true;
@@ -203,7 +210,6 @@ namespace BiliLite.Modules
                         }
                         else
                         {
-                           
                             CanLoadMore = false;
                             Utils.ShowMessageToast("加载完了");
                         }
@@ -241,6 +247,7 @@ namespace BiliLite.Modules
                 await LoadResult();
             }
         }
+
         public async void LoadMore()
         {
             if (Loading)
@@ -253,7 +260,6 @@ namespace BiliLite.Modules
             }
             await LoadResult();
         }
-
     }
 
     public class SeasonIndexConditionFilterModel : IModules
@@ -262,18 +268,20 @@ namespace BiliLite.Modules
         public string name { get; set; }
 
         private SeasonIndexConditionFilterItemModel _current;
+
         public SeasonIndexConditionFilterItemModel current
         {
             get { return _current; }
             set { _current = value; }
         }
+
         public List<SeasonIndexConditionFilterItemModel> values { get; set; }
     }
+
     public class SeasonIndexConditionFilterItemModel
     {
         public string keyword { get; set; }
         public string name { get; set; }
-
     }
 
     public class SeasonIndexResultItemModel
@@ -282,6 +290,7 @@ namespace BiliLite.Modules
         public string title { get; set; }
         public string badge { get; set; }
         public int badge_type { get; set; }
+
         public bool show_badge
         {
             get
@@ -289,6 +298,7 @@ namespace BiliLite.Modules
                 return !string.IsNullOrEmpty(badge);
             }
         }
+
         public string cover { get; set; }
         public string index_show { get; set; }
         public int is_finish { get; set; }
@@ -296,6 +306,7 @@ namespace BiliLite.Modules
         public int media_id { get; set; }
         public string order { get; set; }
         public string order_type { get; set; }
+
         public bool show_score
         {
             get
@@ -306,6 +317,7 @@ namespace BiliLite.Modules
 
         //public SeasonIndexResultItemOrderModel order { get; set; }
     }
+
     public class SeasonIndexResultItemOrderModel
     {
         public string follow { get; set; }
@@ -315,6 +327,7 @@ namespace BiliLite.Modules
         public long pub_real_time { get; set; }
         public long renewal_time { get; set; }
         public string type { get; set; }
+
         public string bottom_text
         {
             get
@@ -329,6 +342,7 @@ namespace BiliLite.Modules
                 }
             }
         }
+
         public bool show_score
         {
             get

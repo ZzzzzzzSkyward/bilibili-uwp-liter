@@ -12,18 +12,22 @@ namespace BiliLite.Controls
         {
             elem.GetCompositeTransform().TranslateX = x;
         }
+
         public static void TranslateY(this FrameworkElement elem, double y)
         {
             elem.GetCompositeTransform().TranslateY = y;
         }
+
         public static double GetTranslateX(this FrameworkElement elem)
         {
             return elem.GetCompositeTransform().TranslateX;
         }
+
         public static double GetTranslateY(this FrameworkElement elem)
         {
             return elem.GetCompositeTransform().TranslateY;
         }
+
         public static CompositeTransform GetCompositeTransform(this FrameworkElement elem)
         {
             if (elem == null)
@@ -39,29 +43,34 @@ namespace BiliLite.Controls
             }
             return trans;
         }
+
         public static void TranslateDeltaX(this FrameworkElement elem, double x)
         {
             elem.GetCompositeTransform().TranslateX += x;
         }
+
         public static void TranslateDeltaY(this FrameworkElement elem, double y)
         {
             elem.GetCompositeTransform().TranslateY += y;
         }
+
         public static async Task AnimateXAsync(this FrameworkElement element, double x, double duration = 250, EasingFunctionBase easingFunction = null)
         {
             if (element.GetTranslateX() != x)
             {
-               // await element.Offset(offsetX: (float)element.GetTranslateX(), offsetY: 0, duration: duration, delay: 0, easingType: EasingType.Default).StartAsync();  //Offset animation can be awaited
+                // await element.Offset(offsetX: (float)element.GetTranslateX(), offsetY: 0, duration: duration, delay: 0, easingType: EasingType.Default).StartAsync();  //Offset animation can be awaited
                 await AnimateDoublePropertyAsync(element.GetCompositeTransform(), "TranslateX", element.GetTranslateX(), x, duration, easingFunction);
             }
         }
+
         public static async Task AnimateYAsync(this FrameworkElement element, double from, double to, double duration = 250, EasingFunctionBase easingFunction = null)
         {
             await AnimateDoublePropertyAsync(element.GetCompositeTransform(), "TranslateY", from, to, duration, easingFunction);
         }
+
         public static int Mod(this int value, int module)
         {
-            if (module==0)
+            if (module == 0)
             {
                 return 0;
             }
@@ -81,6 +90,7 @@ namespace BiliLite.Controls
             }
             return null;
         }
+
         public static async Task FadeInAsync(this UIElement element, double duration = 250, EasingFunctionBase easingFunction = null)
         {
             if (element.Opacity < 1.0)
@@ -101,6 +111,7 @@ namespace BiliLite.Controls
             }
             return null;
         }
+
         public static async Task FadeOutAsync(this UIElement element, double duration = 250, EasingFunctionBase easingFunction = null)
         {
             if (element.Opacity > 0.0)
@@ -108,6 +119,7 @@ namespace BiliLite.Controls
                 await AnimateDoublePropertyAsync(element, "Opacity", element.Opacity, 0.0, duration, easingFunction);
             }
         }
+
         public static Task AnimateDoublePropertyAsync(this DependencyObject target, string property, double from, double to, double duration = 250, EasingFunctionBase easingFunction = null)
         {
             TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
@@ -118,6 +130,7 @@ namespace BiliLite.Controls
             };
             return tcs.Task;
         }
+
         public static Storyboard AnimateDoubleProperty(this DependencyObject target, string property, double from, double to, double duration = 250, EasingFunctionBase easingFunction = null)
         {
             var storyboard = new Storyboard();

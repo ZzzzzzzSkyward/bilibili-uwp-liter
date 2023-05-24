@@ -13,27 +13,25 @@ namespace BiliLite.JSBridge
             md = new MessageDialog(message);
             md.ShowAsync();
         }
+
         public event EventHandler<string> ValidateLoginEvent;
+
         public void ValidateLogin(string data)
         {
             if (ValidateLoginEvent != null)
             {
                 ValidateLoginEvent(this, data);
             }
-
-
         }
+
         public event EventHandler<string> CloseBrowserEvent;
+
         public void CloseBrowser()
         {
             if (CloseBrowserEvent != null)
             {
                 CloseBrowserEvent(this, "");
             }
-
-
         }
-
-
     }
 }

@@ -14,10 +14,11 @@ namespace BiliLite.Dialogs
 {
     public sealed partial class SendDynamicDialog : ContentDialog
     {
-        readonly EmoteVM emoteVM;
-        readonly AtVM atVM;
-        readonly SendDynamicVM sendDynamicVM;
-        readonly TopicVM topicVM;
+        private readonly EmoteVM emoteVM;
+        private readonly AtVM atVM;
+        private readonly SendDynamicVM sendDynamicVM;
+        private readonly TopicVM topicVM;
+
         public SendDynamicDialog()
         {
             this.InitializeComponent();
@@ -26,6 +27,7 @@ namespace BiliLite.Dialogs
             sendDynamicVM = new SendDynamicVM();
             topicVM = new TopicVM();
         }
+
         public SendDynamicDialog(DynamicItemDisplayModel dynamicItem)
         {
             this.InitializeComponent();
@@ -34,12 +36,12 @@ namespace BiliLite.Dialogs
             topicVM = new TopicVM();
             sendDynamicVM = new SendDynamicVM(dynamicItem);
         }
-       
+
         private void btn_Close_Click(object sender, RoutedEventArgs e)
         {
             this.Hide();
         }
-        
+
         private async void btnEmoji_Click(object sender, RoutedEventArgs e)
         {
             FaceFlyout.ShowAt(sender as Button);
@@ -83,7 +85,7 @@ namespace BiliLite.Dialogs
         private async void btnAt_Click(object sender, RoutedEventArgs e)
         {
             AtFlyout.ShowAt(sender as Button);
-            if (atVM.Users.Count==0&&string.IsNullOrEmpty( atVM.Keyword))
+            if (atVM.Users.Count == 0 && string.IsNullOrEmpty(atVM.Keyword))
             {
                 await atVM.GetUser();
             }
@@ -145,7 +147,7 @@ namespace BiliLite.Dialogs
             btnSend.IsEnabled = false;
             if (sendDynamicVM.IsRepost)
             {
-                result=await sendDynamicVM.SendRepost();
+                result = await sendDynamicVM.SendRepost();
             }
             else
             {
@@ -159,7 +161,6 @@ namespace BiliLite.Dialogs
             {
                 btnSend.IsEnabled = true;
             }
-            
         }
     }
 }

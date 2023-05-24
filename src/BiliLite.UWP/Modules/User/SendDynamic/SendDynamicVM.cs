@@ -16,28 +16,33 @@ namespace BiliLite.Modules.User
 {
     public class SendDynamicVM : IModules
     {
-        readonly Api.User.DynamicAPI dynamicAPI;
+        private readonly Api.User.DynamicAPI dynamicAPI;
+
         public SendDynamicVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
             Images = new ObservableCollection<UploadImagesModel>();
         }
+
         public SendDynamicVM(DynamicItemDisplayModel repostInfo)
         {
             dynamicAPI = new Api.User.DynamicAPI();
             RepostInfo = repostInfo;
             IsRepost = true;
         }
+
         private bool _IsRepost = false;
+
         public bool IsRepost
         {
             get { return _IsRepost; }
             set { _IsRepost = value; DoPropertyChanged("IsRepost"); }
         }
-      
+
         public DynamicItemDisplayModel RepostInfo { get; set; }
 
         private string _Content = "";
+
         public string Content
         {
             get { return _Content; }
@@ -51,6 +56,7 @@ namespace BiliLite.Modules.User
             get { return _images; }
             set { _images = value; DoPropertyChanged("Images"); }
         }
+
         private bool _uploading;
 
         public bool Uploading
@@ -59,24 +65,24 @@ namespace BiliLite.Modules.User
             set { _uploading = value; DoPropertyChanged("Uploading"); }
         }
 
-        private bool _showImage=false;
+        private bool _showImage = false;
 
         public bool ShowImage
         {
             get { return _showImage; }
             set { _showImage = value; DoPropertyChanged("ShowImage"); }
         }
+
         public List<AtDisplayModel> AtDisplaylist = new List<AtDisplayModel>();
         public List<AtModel> Atlist = new List<AtModel>();
+
         public async void UploadImage(StorageFile file)
         {
             try
             {
-
                 Uploading = true;
                 var api = dynamicAPI.UploadImage();
-               
-              
+
                 IRandomAccessStream fileStream = await file.OpenAsync(FileAccessMode.Read);
                 var bytes = new byte[fileStream.Size];
                 await fileStream.ReadAsync(bytes.AsBuffer(), (uint)fileStream.Size, Windows.Storage.Streams.InputStreamOptions.None);
@@ -109,7 +115,6 @@ namespace BiliLite.Modules.User
             {
                 Uploading = false;
                 ShowImage = Images.Count > 0;
-              
             }
         }
 
@@ -121,10 +126,9 @@ namespace BiliLite.Modules.User
             var ctrl = "[]";
             var at_uids = "";
             Atlist.Clear();
-        
+
             if (AtDisplaylist.Count != 0)
             {
-
                 foreach (var item in AtDisplaylist)
                 {
                     if (Content.Contains(item.text))
@@ -151,41 +155,36 @@ namespace BiliLite.Modules.User
             }
             try
             {
-
-                HttpResults httpResults = await dynamicAPI.RepostDynamic(RepostInfo.DynamicID,Content, at_uids, ctrl).Request();
+                HttpResults httpResults = await dynamicAPI.RepostDynamic(RepostInfo.DynamicID, Content, at_uids, ctrl).Request();
                 if (httpResults.status)
                 {
                     var data = await httpResults.GetData<JObject>();
                     if (data.code == 0)
                     {
-                      
                         Utils.ShowMessageToast("转发成功");
                         AtDisplaylist.Clear();
                         return true;
                     }
                     else
                     {
-                    
                         Utils.ShowMessageToast("发表动态失败:" + data.message);
                         return false;
                     }
                 }
                 else
                 {
-                    
                     Utils.ShowMessageToast(httpResults.message);
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
-                Utils.ShowMessageToast("转发动态失败"+ex.Message);
+                Utils.ShowMessageToast("转发动态失败" + ex.Message);
                 LogHelper.Log("转发动态失败", LogType.ERROR, ex);
                 return false;
             }
-
         }
+
         public async Task<bool> SendDynamic()
         {
             if (Content.Trim().Length == 0)
@@ -218,7 +217,6 @@ namespace BiliLite.Modules.User
                 }
                 ctrl = JsonConvert.SerializeObject(Atlist);
                 at_uids = at_uids.Remove(at_uids.Length - 1, 1);
-
             }
 
             List<SendImagesModel> send_pics = new List<SendImagesModel>();
@@ -249,14 +247,12 @@ namespace BiliLite.Modules.User
                     var data = await httpResults.GetData<JObject>();
                     if (data.code == 0)
                     {
-                       
                         Utils.ShowMessageToast("发表动态成功");
                         AtDisplaylist.Clear();
                         return true;
                     }
                     else
                     {
-                       
                         Utils.ShowMessageToast("发表动态失败:" + data.message);
                         return false;
                     }
@@ -266,16 +262,13 @@ namespace BiliLite.Modules.User
                     Utils.ShowMessageToast(httpResults.message);
                     return false;
                 }
-
             }
             catch (Exception ex)
             {
-               
                 Utils.ShowMessageToast("发表动态发生错误");
                 LogHelper.Log("发表动态失败", LogType.ERROR, ex);
                 return false;
             }
-
         }
     }
 
@@ -293,20 +286,19 @@ namespace BiliLite.Modules.User
                 return image_url + "@120w_120h_1e_1c.jpg";
             }
         }
-        public int image_width { get; set; }
 
+        public int image_width { get; set; }
     }
+
     public class SendImagesModel
     {
-
-
         public int img_height { get; set; }
         public string img_src { get; set; }
 
         public double img_size { get; set; }
         public int img_width { get; set; }
-
     }
+
     public class AtModel
     {
         public string data { get; set; }
@@ -314,6 +306,7 @@ namespace BiliLite.Modules.User
         public int length { get; set; }
         public int type { get; set; } = 1;
     }
+
     public class AtDisplayModel
     {
         public long data { get; set; }
@@ -321,5 +314,4 @@ namespace BiliLite.Modules.User
         public int location { get; set; }
         public int length { get; set; }
     }
-
 }

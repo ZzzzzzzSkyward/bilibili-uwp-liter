@@ -201,7 +201,7 @@
 							<StackPanel Margin="0 0 0 8" >
 								<TextBlock  Margin="0 8"  FontSize="16">使用浏览器打开无法处理的链接</TextBlock>
 								<ToggleSwitch x:Name="swOpenUrlWithBrowser" ></ToggleSwitch>
-							</StackPanel>	
+							</StackPanel>
 							<StackPanel Margin="0 0 0 8" >
 								<TextBlock  Margin="0 8"  FontSize="16">隐藏横幅</TextBlock>
 								<ToggleSwitch x:Name="swHideBanner" ></ToggleSwitch>
@@ -389,36 +389,36 @@
 						<TextBox Margin="0 0 0 8" MinWidth="200" PlaceholderText="/x/v2" x:Name="api_web_secondary"></TextBox>
 						<StackPanel>
 							<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-							<TextBlock FontSize="16">极验登录测试</TextBlock>
-							<Button Click="DoLogin">登录</Button>
+								<TextBlock FontSize="16">极验登录测试</TextBlock>
+								<Button Click="DoLogin">登录</Button>
 							</StackPanel>
 							<StackPanel Orientation="Vertical">
-							<TextBlock>用户名</TextBlock>
+								<TextBlock>用户名</TextBlock>
 								<TextBox x:Name="dbguser" Margin="0 0 0 8" MinWidth="400"></TextBox>
 
-							<TextBlock>密码</TextBlock>
+								<TextBlock>密码</TextBlock>
 								<TextBox x:Name="dbgpwd" Margin="0 0 0 8" MinWidth="400"></TextBox>
-							
-							<TextBlock>gt</TextBlock>
+
+								<TextBlock>gt</TextBlock>
 								<TextBox x:Name="dbggt" Margin="0 0 0 8" MinWidth="400"></TextBox>
-							<TextBlock>challenge</TextBlock>
+								<TextBlock>challenge</TextBlock>
 								<TextBox x:Name="dbgch" Margin="0 0 0 8" MinWidth="400"></TextBox>
-							<TextBlock>captcha token</TextBlock>
+								<TextBlock>captcha token</TextBlock>
 								<TextBox x:Name="dbgcap" Margin="0 0 0 8" MinWidth="400"></TextBox>
-							<TextBlock>validate</TextBlock>
+								<TextBlock>validate</TextBlock>
 								<TextBox x:Name="dbgval" Margin="0 0 0 8" MinWidth="400"></TextBox>
-							<TextBlock>seccode</TextBlock>
+								<TextBlock>seccode</TextBlock>
 								<TextBox x:Name="dbgseccode" Margin="0 0 0 8" MinWidth="400"></TextBox>
-							<TextBlock>accesskey</TextBlock>
+								<TextBlock>accesskey</TextBlock>
 								<TextBox x:Name="dbgacc" Margin="0 0 0 8" MinWidth="400"></TextBox>
-							<TextBlock>cookie</TextBlock>
+								<TextBlock>cookie</TextBlock>
 								<TextBox x:Name="dbgcookie" Margin="0 0 0 8" MinWidth="400"></TextBox>
-							<TextBlock>message</TextBlock>
+								<TextBlock>message</TextBlock>
 								<TextBox x:Name="dbgmsg" Margin="0 0 0 8" MinWidth="400"></TextBox>
-							<TextBlock>token</TextBlock>
+								<TextBlock>token</TextBlock>
 								<TextBox x:Name="dbgtoken" Margin="0 0 0 8" MinWidth="400"></TextBox>
 							</StackPanel>
-							
+
 						</StackPanel>
 					</StackPanel>
 				</ScrollViewer>

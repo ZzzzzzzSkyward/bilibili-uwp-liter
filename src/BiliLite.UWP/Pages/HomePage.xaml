@@ -16,24 +16,24 @@
         <converters:CountDisplayConvert x:Name="countDisplayConvert"></converters:CountDisplayConvert>
     </Page.Resources>
 
-    <Grid >
-        <winui:NavigationView  x:Name="navView" 
-                               SelectedItem="{x:Bind Path=homeVM.SelectItem,Mode=TwoWay}" 
-                               MenuItemsSource="{x:Bind Path=homeVM.HomeNavItems,Mode=OneWay}" 
+    <Grid>
+        <winui:NavigationView  x:Name="navView"
+                               SelectedItem="{x:Bind Path=homeVM.SelectItem,Mode=TwoWay}"
+                               MenuItemsSource="{x:Bind Path=homeVM.HomeNavItems,Mode=OneWay}"
                                Background="Transparent"
-                               SelectionChanged="navView_SelectionChanged" 
-                               IsSettingsVisible="False"  
-                               PaneDisplayMode="Top"  
-                               IsBackButtonVisible="Collapsed" >
+                               SelectionChanged="navView_SelectionChanged"
+                               IsSettingsVisible="False"
+                               PaneDisplayMode="Top"
+                               IsBackButtonVisible="Collapsed">
             <winui:NavigationView.AutoSuggestBox>
                 <AutoSuggestBox x:Name="SearchBox" QuerySubmitted="SearchBox_QuerySubmitted" MinWidth="140" PlaceholderText="你想找什么呢?" QueryIcon="Find" Background="Transparent"></AutoSuggestBox>
             </winui:NavigationView.AutoSuggestBox>
             <winui:NavigationView.PaneFooter>
                 <StackPanel Margin="-8 0 0 0" Orientation="Horizontal">
                     <Button x:Name="btnUser" Visibility="{x:Bind Path=homeVM.IsLogin,Mode=OneWay}" BorderThickness="0"  Width="48" Height="40" Background="Transparent" Click="btnUser_Click">
-                        <Ellipse Width="24" Height="24" >
+                        <Ellipse Width="24" Height="24">
                             <Ellipse.Fill>
-                                <ImageBrush  x:Name="imgPhoto"  ImageSource="{x:Bind Path=homeVM.Profile.face,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='100w'}"/>
+                                <ImageBrush  x:Name="imgPhoto"  ImageSource="{x:Bind Path=homeVM.Profile.face,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='100w'}" />
                             </Ellipse.Fill>
                         </Ellipse>
                         <Button.Flyout>
@@ -42,32 +42,32 @@
                                     <Grid>
                                         <Ellipse Width="48" Height="48">
                                             <Ellipse.Fill>
-                                                <ImageBrush ImageSource="{x:Bind Path=homeVM.Profile.face,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='100w'}"/>
+                                                <ImageBrush ImageSource="{x:Bind Path=homeVM.Profile.face,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='100w'}" />
                                             </Ellipse.Fill>
                                         </Ellipse>
                                         <Image Width="72"  Height="72" Source="{x:Bind Path=homeVM.Profile.pendant,Mode=OneWay}"></Image>
                                     </Grid>
-                                    
-                                    <!--<Ellipse Width="48" Height="48" >
+
+                                    <!--<Ellipse Width="48" Height="48">
                                         <Ellipse.Fill>
-                                            <ImageBrush ImageSource="https://i1.hdslb.com/bfs/face/3e323499026ad0019be48dcd76f8e03199bd606c.jpg@70w_70h_1c_100q.webp"/>
+                                            <ImageBrush ImageSource="https://i1.hdslb.com/bfs/face/3e323499026ad0019be48dcd76f8e03199bd606c.jpg@70w_70h_1c_100q.webp" />
                                         </Ellipse.Fill>
                                     </Ellipse>-->
                                     <TextBlock TextAlignment="Center" Foreground="HotPink" FontWeight="Medium" Text="{x:Bind Path=homeVM.Profile.name,Mode=OneWay}"></TextBlock>
                                     <Border Background="HotPink" Visibility="{x:Bind Path=homeVM.Profile.show_vip,Mode=OneWay}" Margin="4" Padding="4 2" CornerRadius="4" HorizontalAlignment="Center">
                                         <TextBlock Foreground="White" FontSize="12" Text="{x:Bind Path=homeVM.Profile.vip,Mode=OneWay}"></TextBlock>
                                     </Border>
-                                    <Grid Margin="12 4" >
-                                        <TextBlock Foreground="{ThemeResource TextColor}">等级<Run Text="{x:Bind Path=homeVM.Profile.level,Mode=OneWay}"/></TextBlock>
-                                        <TextBlock FontSize="12" VerticalAlignment="Center" Foreground="Gray" HorizontalAlignment="Right"><Run Text="{x:Bind Path=homeVM.Profile.current_exp,Mode=OneWay}"/>/<Run Text="{x:Bind Path=homeVM.Profile.next_exp,Mode=OneWay}"/></TextBlock>
+                                    <Grid Margin="12 4">
+                                        <TextBlock Foreground="{ThemeResource TextColor}">等级<Run Text="{x:Bind Path=homeVM.Profile.level,Mode=OneWay}" /></TextBlock>
+                                        <TextBlock FontSize="12" VerticalAlignment="Center" Foreground="Gray" HorizontalAlignment="Right"><Run Text="{x:Bind Path=homeVM.Profile.current_exp,Mode=OneWay}" />/<Run Text="{x:Bind Path=homeVM.Profile.next_exp,Mode=OneWay}" /></TextBlock>
                                     </Grid>
                                     <ProgressBar Margin="12 4"  Background="#33808080" Value="{x:Bind Path=homeVM.Profile.current_exp,Mode=OneWay}" Maximum="{x:Bind Path=homeVM.Profile.next_exp,Mode=OneWay}"></ProgressBar>
 
                                     <Grid Padding="0 12" BorderThickness="0 1 0 1" Margin="0 4" BorderBrush="#19808080">
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition/>
+                                            <ColumnDefinition />
+                                            <ColumnDefinition />
+                                            <ColumnDefinition />
                                         </Grid.ColumnDefinitions>
                                         <HyperlinkButton Click="btnOpenAttention_Click" Foreground="{ThemeResource TextColor}" HorizontalAlignment="Center" Padding="0">
                                             <StackPanel>
@@ -142,9 +142,9 @@
                             <TextBlock  FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White" Text="{x:Bind Path=downloadVM.Downloadings.Count,Mode=OneWay}"></TextBlock>
                         </Border>
                     </Grid>
-                    <AppBarButton x:Name="MenuWatchlater2" Height="48" Width="48" Click="MenuWatchlater_Click" Icon="Play"/>
-                    <AppBarButton x:Name="btnHistory" Height="48" Width="48" Click="MenuHistory_Click" Icon="Clock"/>
-                    <AppBarButton x:Name="btnFavorite" Height="48" Width="48" Click="MenuMyFollow_Click" Icon="OutlineStar"/>
+                    <AppBarButton x:Name="MenuWatchlater2" Height="48" Width="48" Click="MenuWatchlater_Click" Icon="Play" />
+                    <AppBarButton x:Name="btnHistory" Height="48" Width="48" Click="MenuHistory_Click" Icon="Clock" />
+                    <AppBarButton x:Name="btnFavorite" Height="48" Width="48" Click="MenuMyFollow_Click" Icon="OutlineStar" />
                     <AppBarButton x:Name="btnTheme" Height="48" Width="48" Click="Theme_Click">
                         <fa:FontAwesome Icon="{Binding ThemeIcon, Mode=OneWay}" FontSize="14"></fa:FontAwesome>
                     </AppBarButton>
@@ -152,18 +152,16 @@
                 </StackPanel>
             </winui:NavigationView.PaneFooter>
             <winui:NavigationView.MenuItemTemplate>
-                <DataTemplate x:DataType="modules:HomeNavItem" >
+                <DataTemplate x:DataType="modules:HomeNavItem">
                     <winui:NavigationViewItem Content="{x:Bind Title}" Visibility="{x:Bind Path=Show,Mode=OneWay}" ToolTipService.ToolTip="{x:Bind Title}">
                         <winui:NavigationViewItem.Icon>
                             <fa:FontAwesome Icon="{x:Bind Icon}" Margin="0 2 0 0"></fa:FontAwesome>
                         </winui:NavigationViewItem.Icon>
                     </winui:NavigationViewItem>
                 </DataTemplate>
-
             </winui:NavigationView.MenuItemTemplate>
-         
+
             <Frame x:Name="frame">
-               
             </Frame>
         </winui:NavigationView>
 

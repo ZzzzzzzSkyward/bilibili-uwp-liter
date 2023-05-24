@@ -9,20 +9,20 @@ using System.Windows.Input;
 
 namespace BiliLite.Modules.User.UserDetail
 {
-    public class UserFavlistVM:IModules
+    public class UserFavlistVM : IModules
     {
         public string mid { get; set; }
         private readonly UserDetailAPI userDetailAPI;
+
         public UserFavlistVM()
         {
             userDetailAPI = new UserDetailAPI();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
-
-
         }
-       
+
         private bool _Loading = true;
+
         public bool Loading
         {
             get { return _Loading; }
@@ -33,12 +33,12 @@ namespace BiliLite.Modules.User.UserDetail
         public ICommand LoadMoreCommand { get; private set; }
 
         private ObservableCollection<FavFolderItemModel> _Items;
+
         public ObservableCollection<FavFolderItemModel> Items
         {
             get { return _Items; }
             set { _Items = value; DoPropertyChanged("Items"); }
         }
-
 
         private bool _Nothing = false;
 
@@ -47,7 +47,6 @@ namespace BiliLite.Modules.User.UserDetail
             get { return _Nothing; }
             set { _Nothing = value; DoPropertyChanged("Nothing"); }
         }
-
 
         public async Task Get()
         {
@@ -78,12 +77,11 @@ namespace BiliLite.Modules.User.UserDetail
                                 }
                             }
                         }
-                      
+
                         if ((Items == null || Items.Count == 0))
                         {
                             Nothing = true;
                         }
-
                     }
                     else
                     {
@@ -93,7 +91,6 @@ namespace BiliLite.Modules.User.UserDetail
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -106,6 +103,7 @@ namespace BiliLite.Modules.User.UserDetail
                 Loading = false;
             }
         }
+
         public async void Refresh()
         {
             if (Loading)
@@ -115,6 +113,7 @@ namespace BiliLite.Modules.User.UserDetail
             Items = null;
             await Get();
         }
+
         public async void LoadMore()
         {
             if (Loading)
@@ -137,5 +136,4 @@ namespace BiliLite.Modules.User.UserDetail
         public int media_count { get; set; }
         public string title { get; set; }
     }
-
 }

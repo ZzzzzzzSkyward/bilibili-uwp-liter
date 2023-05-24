@@ -1,14 +1,14 @@
-﻿<Page x:Class="BiliLite.Pages.Home.AnimePage" 
-      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
-      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" 
-      xmlns:local="using:BiliLite.Pages.Home" 
-      xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
-      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-      mc:Ignorable="d" 
-      xmlns:model="using:BiliLite.Modules" 
-      xmlns:controls="using:BiliLite.Controls" 
-      xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls" 
-      xmlns:winui="using:Microsoft.UI.Xaml.Controls" 
+﻿<Page x:Class="BiliLite.Pages.Home.AnimePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:BiliLite.Pages.Home"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      mc:Ignorable="d"
+      xmlns:model="using:BiliLite.Modules"
+      xmlns:controls="using:BiliLite.Controls"
+      xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
+      xmlns:winui="using:Microsoft.UI.Xaml.Controls"
       xmlns:fa="using:FontAwesome5"
       xmlns:models="using:BiliLite.Models"
       Background="{ThemeResource TransparentBackground}">
@@ -85,17 +85,17 @@
                                 <TextBlock>查看全部</TextBlock>
                             </HyperlinkButton>
                         </Grid>
-                        <controls:ScrollGridView 
-                            MoveOffset="600" 
-                            AlwayShowButton="False" 
-                            ItemClick="{x:Bind Path=homeBangumi.SeasonItemClick}" 
-                            ItemsSource="{x:Bind Path=homeBangumi.Follows,Mode=OneWay}" 
-                            SelectionMode="None" 
+                        <controls:ScrollGridView
+                            MoveOffset="600"
+                            AlwayShowButton="False"
+                            ItemClick="{x:Bind Path=homeBangumi.SeasonItemClick}"
+                            ItemsSource="{x:Bind Path=homeBangumi.Follows,Mode=OneWay}"
+                            SelectionMode="None"
                             Margin="-4 0 0 0"
                             ScrollViewer.HorizontalScrollMode="Enabled"
                             ScrollViewer.HorizontalScrollBarVisibility="Hidden"
-                            ScrollViewer.VerticalScrollMode="Disabled" 
-                            ScrollViewer.VerticalScrollBarVisibility="Hidden" 
+                            ScrollViewer.VerticalScrollMode="Disabled"
+                            ScrollViewer.VerticalScrollBarVisibility="Hidden"
                             IsItemClickEnabled="True">
                             <GridView.ItemContainerStyle>
                                 <Style TargetType="GridViewItem">
@@ -150,10 +150,10 @@
                                 <TextBlock>完整时间表</TextBlock>
                             </HyperlinkButton>
                         </Grid>
-                        <controls:ScrollGridView ItemClick="{x:Bind Path=homeBangumi.SeasonItemClick}" 
+                        <controls:ScrollGridView ItemClick="{x:Bind Path=homeBangumi.SeasonItemClick}"
                                                  Margin="-4 0 0 0"
-                                                 MoveOffset="600" 
-                                                 AlwayShowButton="False" 
+                                                 MoveOffset="600"
+                                                 AlwayShowButton="False"
                                                  ItemsSource="{x:Bind Path=homeBangumi.HomeData.today,Mode=OneWay}" SelectionMode="None" IsItemClickEnabled="True">
                             <GridView.ItemContainerStyle>
                                 <Style TargetType="GridViewItem">
@@ -206,7 +206,7 @@
                                 <TextBlock>番剧索引</TextBlock>
                             </HyperlinkButton>
                         </Grid>
-                        <controls:ScrollGridView x:Name="gridView" 
+                        <controls:ScrollGridView x:Name="gridView"
                                                  Margin="-4 0 0 0"
                                                  MoveOffset="600" AlwayShowButton="False" SelectionMode="None" ItemClick="{x:Bind Path=homeBangumi.SeasonItemClick}" ItemsSource="{x:Bind Path=homeBangumi.HomeData.ranks,Mode=OneWay}" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollBarVisibility="Hidden" ScrollViewer.HorizontalScrollMode="Disabled" ItemTemplate="{StaticResource HotAnimeItem}" IsItemClickEnabled="True">
                             <GridView.ItemContainerStyle>
@@ -256,14 +256,14 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="model:AnimeFallModel">
                                 <StackPanel>
-                                    <toolkit:AdaptiveGridView ItemClick="gvFall_ItemClick" 
-                                                              Margin="-4 0 0 0" 
-                                                              OneRowModeEnabled="False" 
-                                                              ScrollViewer.VerticalScrollMode="Disabled" 
-                                                              ScrollViewer.VerticalScrollBarVisibility="Hidden" 
+                                    <toolkit:AdaptiveGridView ItemClick="gvFall_ItemClick"
+                                                              Margin="-4 0 0 0"
+                                                              OneRowModeEnabled="False"
+                                                              ScrollViewer.VerticalScrollMode="Disabled"
+                                                              ScrollViewer.VerticalScrollBarVisibility="Hidden"
                                                               StretchContentForSingleRow="False"
-                                                              ItemsSource="{x:Bind Path=items,Mode=OneWay}" 
-                                                              ItemHeight="168" DesiredWidth="540" 
+                                                              ItemsSource="{x:Bind Path=items,Mode=OneWay}"
+                                                              ItemHeight="168" DesiredWidth="540"
                                                               SelectionMode="None" IsItemClickEnabled="True">
                                         <toolkit:AdaptiveGridView.ItemContainerStyle>
                                             <Style TargetType="GridViewItem">
@@ -282,7 +282,7 @@
                                                     <Grid.RowDefinitions>
                                                         <RowDefinition />
                                                         <RowDefinition Height="28" />
-                                                        <!--<RowDefinition Height="48"/>-->
+                                                        <!--<RowDefinition Height="48" />-->
                                                     </Grid.RowDefinitions>
                                                     <toolkit:ImageEx IsCacheEnabled="True" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='180h'}"></toolkit:ImageEx>
                                                     <TextBlock Grid.Row="1" Margin="4" MaxLines="1" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>

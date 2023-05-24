@@ -6,7 +6,7 @@ using System.ComponentModel;
 namespace BiliLite.Modules
 {
     public class IModules : INotifyPropertyChanged
-    { 
+    {
         public virtual ReturnModel<T> HandelError<T>(Exception ex)
         {
             if (LogHelper.IsNetworkError(ex))
@@ -34,6 +34,5 @@ namespace BiliLite.Modules
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
-
     }
 }

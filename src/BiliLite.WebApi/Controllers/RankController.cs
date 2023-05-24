@@ -1,8 +1,8 @@
-﻿using System.Collections.Generic;
-using System.Net.Http;
-using BiliLite.WebApi.Models;
+﻿using BiliLite.WebApi.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
+using System.Collections.Generic;
+using System.Net.Http;
 
 namespace BiliLite.WebApi.Controllers
 {
@@ -10,8 +10,9 @@ namespace BiliLite.WebApi.Controllers
     [ApiController]
     public class RankController : ControllerBase
     {
-        readonly IDistributedCache distributedCache;
-        readonly IHttpClientFactory client;
+        private readonly IDistributedCache distributedCache;
+        private readonly IHttpClientFactory client;
+
         public RankController(IHttpClientFactory httpContext, IDistributedCache cache)
         {
             client = httpContext;
@@ -23,9 +24,9 @@ namespace BiliLite.WebApi.Controllers
         {
             return new JsonResult(new ApiModel<List<RankRegionModel>>()
             {
-                code=0,
-                message="",
-                data=new List<RankRegionModel>()
+                code = 0,
+                message = "",
+                data = new List<RankRegionModel>()
                 {
                     new RankRegionModel(0,"全站"),
                     new RankRegionModel(1,"动画"),
@@ -44,21 +45,17 @@ namespace BiliLite.WebApi.Controllers
                 }
             });
         }
-       
-       
-
-
     }
+
     public class RankRegionModel
     {
-        public RankRegionModel(int id,string rname)
+        public RankRegionModel(int id, string rname)
         {
             rid = id;
             name = rname;
         }
+
         public string name { get; set; }
         public int rid { get; set; }
     }
-
-  
 }

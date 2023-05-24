@@ -23,13 +23,13 @@
             <Grid Background="#00FFFFFF">
                 <Grid.ContextFlyout>
                     <MenuFlyout>
-                        <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="稍后再看"/>
-                        <MenuFlyoutItem x:Name="Remover" Click="Remove_Click" Icon="Delete" Text="取消收藏"/>
+                        <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="稍后再看" />
+                        <MenuFlyoutItem x:Name="Remover" Click="Remove_Click" Icon="Delete" Text="取消收藏" />
                     </MenuFlyout>
                 </Grid.ContextFlyout>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition/>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Border CornerRadius="{StaticResource ImageCornerRadius}">
                     <toolkit:ImageEx IsCacheEnabled="True" Height="80" Width="120" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}">
@@ -42,12 +42,11 @@
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                     <TextBlock MaxLines="2" Margin="0 0 0 0" TextTrimming="CharacterEllipsis" Text="{x:Bind title}" FontSize="15" MinHeight="40" TextWrapping="Wrap"></TextBlock>
-                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=upper.name}"/></TextBlock>
+                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=upper.name}" /></TextBlock>
                     <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">
 						播放:<Run Text="{x:Bind Path=cnt_info.play,Converter={StaticResource numberToStringConvert}}"></Run>
 						弹幕:<Run Text="{x:Bind Path=cnt_info.danmaku,Converter={StaticResource numberToStringConvert}}"></Run>
 						收藏:<Run Text="{x:Bind Path=cnt_info.collect,Converter={StaticResource numberToStringConvert}}"></Run>
-						
 					</TextBlock>
                 </StackPanel>
             </Grid>
@@ -55,27 +54,27 @@
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
         </Grid.RowDefinitions>
         <Grid Background="{ThemeResource NavigationViewTopPaneBackground}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Margin="12 4" VerticalAlignment="Center">
                 <TextBlock VerticalAlignment="Center" Text="{x:Bind Path=favoriteDetailVM.FavoriteInfo.title,Mode=OneWay}"></TextBlock>
-                <TextBlock Margin="0 4" Foreground="{ThemeResource ForegroundTextColor}" >创建者:<Run Text="{x:Bind Path=favoriteDetailVM.FavoriteInfo.upper.name,Mode=OneWay}"/>,共<Run Text="{x:Bind Path=favoriteDetailVM.FavoriteInfo.media_count,Mode=OneWay}"/>个视频</TextBlock>
+                <TextBlock Margin="0 4" Foreground="{ThemeResource ForegroundTextColor}" >创建者:<Run Text="{x:Bind Path=favoriteDetailVM.FavoriteInfo.upper.name,Mode=OneWay}" />,共<Run Text="{x:Bind Path=favoriteDetailVM.FavoriteInfo.media_count,Mode=OneWay}" />个视频</TextBlock>
             </StackPanel>
             <StackPanel  Visibility="{x:Bind Path=favoriteDetailVM.IsItemClickEnabled,Mode=OneWay}" Grid.Column="1" Margin="12 0" VerticalAlignment="Center" Orientation="Horizontal">
                 <AutoSuggestBox x:Name="searchBox" Width="160" QueryIcon="Find" Margin="12 0" PlaceholderText="搜索" VerticalAlignment="Center" QuerySubmitted="AutoSuggestBox_QuerySubmitted" Background="{ThemeResource TransparentBackground}"></AutoSuggestBox>
                 <AppBarButton x:Name="PlayAll" Click="PlayAll_Click" ToolTipService.ToolTip="播放全部" Icon="Play" Width="40" Height="40"></AppBarButton>
-                <AppBarButton ToolTipService.ToolTip="收藏" 
-                              Visibility="{x:Bind Path=favoriteDetailVM.ShowCollect,Mode=OneWay}" 
+                <AppBarButton ToolTipService.ToolTip="收藏"
+                              Visibility="{x:Bind Path=favoriteDetailVM.ShowCollect,Mode=OneWay}"
                               Command="{x:Bind Path=favoriteDetailVM.CollectCommand}"
                               Icon="OutlineStar" Width="40" Height="40"></AppBarButton>
-                <AppBarButton ToolTipService.ToolTip="取消收藏" 
-                              Visibility="{x:Bind Path=favoriteDetailVM.ShowCancelCollect,Mode=OneWay}" 
+                <AppBarButton ToolTipService.ToolTip="取消收藏"
+                              Visibility="{x:Bind Path=favoriteDetailVM.ShowCancelCollect,Mode=OneWay}"
                               Command="{x:Bind Path=favoriteDetailVM.CancelCollectCommand}"
                               Icon="SolidStar" Width="40" Height="40"></AppBarButton>
                 <AppBarButton ToolTipService.ToolTip="清除失效" Click="btnClean_Click" Visibility="{x:Bind Path=favoriteDetailVM.IsSelf,Mode=OneWay}" Icon="Delete" Width="40" Height="40"></AppBarButton>
@@ -88,12 +87,11 @@
                 <Button x:Name="btnCopy" Click="btnCopy_Click"  Margin="4 0">复制到...</Button>
                 <AppBarButton ToolTipService.ToolTip="退出批量操作" Command="{x:Bind Path=favoriteDetailVM.SelectCommand}" Icon="Cancel" Width="40" Height="40"></AppBarButton>
             </StackPanel>
-            
         </Grid>
-        
+
         <Grid Grid.Row="1">
 
-            <toolkit:AdaptiveGridView SelectionMode="{x:Bind Path=favoriteDetailVM.SelectionMode,Mode=OneWay}" 
+            <toolkit:AdaptiveGridView SelectionMode="{x:Bind Path=favoriteDetailVM.SelectionMode,Mode=OneWay}"
                                           IsItemClickEnabled="{x:Bind Path=favoriteDetailVM.IsItemClickEnabled,Mode=OneWay}"
                                           DesiredWidth="600"
                                           x:Name="listView"
@@ -114,7 +112,6 @@
                 </toolkit:AdaptiveGridView.Footer>
             </toolkit:AdaptiveGridView>
             <TextBlock Visibility="{x:Bind Path=favoriteDetailVM.Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Left" Foreground="{ThemeResource ForegroundTextColor}" Margin="444,0,0,0">这里还什么都没有呢~</TextBlock>
-            
         </Grid>
         <controls:RoundButton Grid.RowSpan="2" Command="{x:Bind Path=favoriteDetailVM.RefreshCommand}" Visibility="{x:Bind Path=favoriteDetailVM.Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
             <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>

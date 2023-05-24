@@ -7,23 +7,29 @@ namespace BiliLite.Modules.Other
 {
     public class FindMoreVM : IModules
     {
-        readonly Api.GitApi gitApi;
+        private readonly Api.GitApi gitApi;
+
         public FindMoreVM()
         {
             gitApi = new Api.GitApi();
         }
+
         private bool _loading = true;
+
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
+
         private List<FindMoreEntranceModel> _Items;
+
         public List<FindMoreEntranceModel> Items
         {
             get { return _Items; }
             set { _Items = value; DoPropertyChanged("Items"); }
         }
+
         public async void LoadEntrance()
         {
             try
@@ -34,12 +40,11 @@ namespace BiliLite.Modules.Other
                 {
                     var data = await results.GetJson<List<FindMoreEntranceModel>>();
                     await Task.Delay(2000);
-                    Items=data;
+                    Items = data;
                 }
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -52,8 +57,8 @@ namespace BiliLite.Modules.Other
                 Loading = false;
             }
         }
-
     }
+
     public class FindMoreEntranceModel
     {
         public string name { get; set; }

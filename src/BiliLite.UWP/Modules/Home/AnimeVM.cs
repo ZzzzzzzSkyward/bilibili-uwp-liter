@@ -1,14 +1,14 @@
-﻿using System;
+﻿using BiliLite.Helpers;
+using BiliLite.Models;
+using BiliLite.Pages.Bangumi;
+using BiliLite.Pages.User;
+using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
-using BiliLite.Models;
-using BiliLite.Helpers;
-using System.Collections.ObjectModel;
 using Windows.UI.Xaml.Controls;
-using Newtonsoft.Json.Linq;
-using BiliLite.Pages.User;
-using BiliLite.Pages.Bangumi;
 
 namespace BiliLite.Modules
 {
@@ -20,9 +20,10 @@ namespace BiliLite.Modules
 
     public class AnimeVM : IModules
     {
-        readonly Api.User.FollowAPI followAPI;
-        readonly Api.Home.AnimeAPI bangumiApi;
-        readonly AnimeType animeType;
+        private readonly Api.User.FollowAPI followAPI;
+        private readonly Api.Home.AnimeAPI bangumiApi;
+        private readonly AnimeType animeType;
+
         public AnimeVM(AnimeType type)
         {
             bangumiApi = new Api.Home.AnimeAPI();
@@ -75,8 +76,10 @@ namespace BiliLite.Modules
                 },
             };
         }
+
         public List<PageEntranceModel> Entrances { get; set; }
         private bool _showFollows = false;
+
         public bool ShowFollows
         {
             get { return _showFollows; }
@@ -84,12 +87,15 @@ namespace BiliLite.Modules
         }
 
         private bool _loading = true;
+
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
+
         private bool _loadingFollow = true;
+
         public bool LoadingFollow
         {
             get { return _loadingFollow; }
@@ -105,23 +111,26 @@ namespace BiliLite.Modules
         }
 
         private AnimeHomeModel _homeData;
+
         public AnimeHomeModel HomeData
         {
             get { return _homeData; }
             set { _homeData = value; DoPropertyChanged("HomeData"); }
         }
-      
-        public void SeasonItemClick(object sender,ItemClickEventArgs e)
+
+        public void SeasonItemClick(object sender, ItemClickEventArgs e)
         {
             var seasonId = e.ClickedItem.GetType().GetProperty("season_id").GetValue(e.ClickedItem, null);
-            var title = e.ClickedItem.GetType().GetProperty("title").GetValue(e.ClickedItem, null)??"";
-            MessageCenter.NavigateToPage(sender,new NavigationInfo() {
-                icon= Symbol.Play,
-                page=typeof(Pages.SeasonDetailPage),
-                parameters= seasonId,
-                title= title.ToString()
+            var title = e.ClickedItem.GetType().GetProperty("title").GetValue(e.ClickedItem, null) ?? "";
+            MessageCenter.NavigateToPage(sender, new NavigationInfo()
+            {
+                icon = Symbol.Play,
+                page = typeof(Pages.SeasonDetailPage),
+                parameters = seasonId,
+                title = title.ToString()
             });
         }
+
         public void LinkItemClick(object sender, ItemClickEventArgs e)
         {
             var weblink = e.ClickedItem.GetType().GetProperty("link").GetValue(e.ClickedItem, null);
@@ -141,7 +150,7 @@ namespace BiliLite.Modules
             {
                 Loading = true;
                 var api = bangumiApi.BangumiHome();
-                if (animeType== AnimeType.guochuang)
+                if (animeType == AnimeType.guochuang)
                 {
                     api = bangumiApi.GuochuangHome();
                 }
@@ -161,7 +170,6 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -196,7 +204,6 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -209,7 +216,6 @@ namespace BiliLite.Modules
                 LoadingFollow = false;
             }
         }
-
 
         public async Task GetFallMore(AnimeFallModel AnimeFallModel)
         {
@@ -224,7 +230,6 @@ namespace BiliLite.Modules
                     {
                         AnimeFallModel.items.Add(item);
                     }
-                   
                 }
                 else
                 {
@@ -233,7 +238,7 @@ namespace BiliLite.Modules
             }
             catch (Exception ex)
             {
-                var handel= HandelError<List<AnimeFallItemModel>>(ex);
+                var handel = HandelError<List<AnimeFallItemModel>>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
             finally
@@ -241,7 +246,6 @@ namespace BiliLite.Modules
                 AnimeFallModel.ShowMore = true;
             }
         }
-
     }
 
     public class AnimeHomeModel
@@ -252,20 +256,23 @@ namespace BiliLite.Modules
         public List<AnimeTimelineItemModel> today { get; set; }
         public List<AnimeFallModel> falls { get; set; }
     }
+
     public class AnimeFallModel : IModules
     {
         public int wid { get; set; }
         public string title { get; set; }
 
         private bool _showMore = true;
+
         public bool ShowMore
         {
             get { return _showMore; }
             set { _showMore = value; DoPropertyChanged("ShowMore"); DoPropertyChanged("ShowLoading"); }
         }
-     
+
         public ObservableCollection<AnimeFallItemModel> items { get; set; }
     }
+
     public class AnimeFallItemModel
     {
         public string cover { get; set; }
@@ -275,12 +282,14 @@ namespace BiliLite.Modules
         public long cursor { get; set; }
         public int wid { get; set; }
     }
+
     public class AnimeBannerModel
     {
         public string title { get; set; }
         public string img { get; set; }
         public string url { get; set; }
     }
+
     public class AnimeRankModel
     {
         public string display { get; set; }
@@ -291,6 +300,7 @@ namespace BiliLite.Modules
         public int follow { get; set; }
         public int danmaku { get; set; }
         public int view { get; set; }
+
         public bool show_badge
         {
             get
@@ -298,9 +308,7 @@ namespace BiliLite.Modules
                 return !string.IsNullOrEmpty(badge);
             }
         }
+
         public string badge { get; set; }
     }
-  
-
-
 }

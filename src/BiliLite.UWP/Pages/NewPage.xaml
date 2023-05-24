@@ -7,27 +7,26 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="using:BiliLite.Controls"
     mc:Ignorable="d"
-    xmlns:model="using:BiliLite.Modules" 
-      xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls" 
-      xmlns:winui="using:Microsoft.UI.Xaml.Controls" 
-      xmlns:fa="using:FontAwesome5" 
+    xmlns:model="using:BiliLite.Modules"
+      xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
+      xmlns:winui="using:Microsoft.UI.Xaml.Controls"
+      xmlns:fa="using:FontAwesome5"
     Background="{ThemeResource TransparentBackground}">
 
     <Grid>
         <Image x:Name="backgroundImage" Stretch="UniformToFill" ></Image>
-        <StackPanel VerticalAlignment="Center" >
+        <StackPanel VerticalAlignment="Center">
             <Grid Margin="24"  MaxWidth="540">
                 <AutoSuggestBox QueryIcon="Find" x:Name="SearchBox" QuerySubmitted="SearchBox_QuerySubmitted" PlaceholderText="输入关键词搜索或哔哩哔哩链接跳转" Background="{ThemeResource CardColor}"></AutoSuggestBox>
-               
             </Grid>
-            
+
             <ItemsControl HorizontalAlignment="Center" MaxWidth="600">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <ItemsWrapGrid Orientation="Horizontal"/>
+                        <ItemsWrapGrid Orientation="Horizontal" />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
-                <HyperlinkButton x:Name="BtnOpenRank" Click="BtnOpenRank_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                <HyperlinkButton x:Name="BtnOpenRank" Click="BtnOpenRank_Click" Foreground="{ThemeResource TextColor}" Margin="8">
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">
                             <fa:FontAwesome Icon="Solid_Trophy"></fa:FontAwesome>
@@ -35,7 +34,7 @@
                         </StackPanel>
                     </Border>
                 </HyperlinkButton>
-                <HyperlinkButton x:Name="BtnBilibili" Click="BtnBilibili_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                <HyperlinkButton x:Name="BtnBilibili" Click="BtnBilibili_Click" Foreground="{ThemeResource TextColor}" Margin="8">
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">
                             <FontIcon FontFamily="{StaticResource BiliIconFont}" Glyph="&#xe6b6;" />
@@ -43,7 +42,7 @@
                         </StackPanel>
                     </Border>
                 </HyperlinkButton>
-                <HyperlinkButton x:Name="BtnOpenLive" Click="BtnOpenLive_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                <HyperlinkButton x:Name="BtnOpenLive" Click="BtnOpenLive_Click" Foreground="{ThemeResource TextColor}" Margin="8">
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">
                             <fa:FontAwesome Icon="Solid_Fire"></fa:FontAwesome>
@@ -51,7 +50,7 @@
                         </StackPanel>
                     </Border>
                 </HyperlinkButton>
-                <HyperlinkButton x:Name="BtnOpenBangumiIndex" Click="BtnOpenBangumiIndex_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                <HyperlinkButton x:Name="BtnOpenBangumiIndex" Click="BtnOpenBangumiIndex_Click" Foreground="{ThemeResource TextColor}" Margin="8">
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">
                             <fa:FontAwesome Icon="Solid_Filter"></fa:FontAwesome>
@@ -59,7 +58,7 @@
                         </StackPanel>
                     </Border>
                 </HyperlinkButton>
-                <HyperlinkButton x:Name="BtnOpenBangumiTimeline" Click="BtnOpenBangumiTimeline_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                <HyperlinkButton x:Name="BtnOpenBangumiTimeline" Click="BtnOpenBangumiTimeline_Click" Foreground="{ThemeResource TextColor}" Margin="8">
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">
                             <fa:FontAwesome Icon="Solid_CalendarAlt"></fa:FontAwesome>
@@ -67,7 +66,7 @@
                         </StackPanel>
                     </Border>
                 </HyperlinkButton>
-                <HyperlinkButton x:Name="BtnOpenMyFollow" Click="BtnOpenMyFollow_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                <HyperlinkButton x:Name="BtnOpenMyFollow" Click="BtnOpenMyFollow_Click" Foreground="{ThemeResource TextColor}" Margin="8">
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">
                             <fa:FontAwesome Icon="Solid_Star"></fa:FontAwesome>
@@ -75,7 +74,7 @@
                         </StackPanel>
                     </Border>
                 </HyperlinkButton>
-                <HyperlinkButton x:Name="BtnOpenDownload" Click="BtnOpenDownload_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                <HyperlinkButton x:Name="BtnOpenDownload" Click="BtnOpenDownload_Click" Foreground="{ThemeResource TextColor}" Margin="8">
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">
                             <fa:FontAwesome Icon="Solid_CloudDownloadAlt"></fa:FontAwesome>
@@ -83,7 +82,7 @@
                         </StackPanel>
                     </Border>
                 </HyperlinkButton>
-                <HyperlinkButton x:Name="BtnOpenHistory" Click="BtnOpenHistory_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                <HyperlinkButton x:Name="BtnOpenHistory" Click="BtnOpenHistory_Click" Foreground="{ThemeResource TextColor}" Margin="8">
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">
                             <fa:FontAwesome Icon="Solid_History"></fa:FontAwesome>
@@ -91,7 +90,7 @@
                         </StackPanel>
                     </Border>
                 </HyperlinkButton>
-                <HyperlinkButton x:Name="BtnOpenSetting" Click="BtnOpenSetting_Click" Foreground="{ThemeResource TextColor}" Margin="8" >
+                <HyperlinkButton x:Name="BtnOpenSetting" Click="BtnOpenSetting_Click" Foreground="{ThemeResource TextColor}" Margin="8">
                     <Border Background="{ThemeResource CardColor}" CornerRadius="4" Width="120" Height="80">
                         <StackPanel VerticalAlignment="Center">
                             <fa:FontAwesome Icon="Solid_Cog"></fa:FontAwesome>
@@ -100,9 +99,8 @@
                     </Border>
                 </HyperlinkButton>
             </ItemsControl>
-            
             </StackPanel>
-        <Button Background="Transparent" Visibility="Visible" HorizontalAlignment="Right" Height="48" Width="48" VerticalAlignment="Top" >
+        <Button Background="Transparent" Visibility="Visible" HorizontalAlignment="Right" Height="48" Width="48" VerticalAlignment="Top">
             <FontIcon FontFamily="Segoe MDL2 Assets" Foreground="Gray" Glyph="&#xE700;" />
             <Button.Flyout>
                 <MenuFlyout>

@@ -13,6 +13,7 @@
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
+
         public ApiModel Watchlater()
         {
             ApiModel api = new ApiModel()
@@ -24,35 +25,38 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
+
         public ApiModel Clear()
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Post,
                 baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}/history/toview/clear",
-                body = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) 
+                body = ApiHelper.MustParameter(ApiHelper.AndroidKey, true)
             };
             api.parameter += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
+
         public ApiModel Del()
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Post,
                 baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}/history/toview/del",
-                body = ApiHelper.MustParameter(ApiHelper.AndroidKey, true)+ "&viewed=true"
+                body = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + "&viewed=true"
             };
             api.parameter += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
+
         public ApiModel Del(string id)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Post,
                 baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}/history/toview/del",
-                body = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + "&aid="+id
+                body = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + "&aid=" + id
             };
             api.parameter += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;

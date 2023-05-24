@@ -21,10 +21,10 @@ namespace BiliLite.Converters
                 {
                     obj = c.ToString("X2");
                 }
-                
-                if (obj.Length<=6)
+
+                if (obj.Length <= 6)
                 {
-                    obj = obj.PadLeft(6,'0');
+                    obj = obj.PadLeft(6, '0');
                     color.R = byte.Parse(obj.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
                     color.G = byte.Parse(obj.Substring(2, 2), System.Globalization.NumberStyles.HexNumber);
                     color.B = byte.Parse(obj.Substring(4, 2), System.Globalization.NumberStyles.HexNumber);
@@ -38,13 +38,12 @@ namespace BiliLite.Converters
                     color.B = byte.Parse(obj.Substring(6, 2), System.Globalization.NumberStyles.HexNumber);
                     color.A = byte.Parse(obj.Substring(0, 2), System.Globalization.NumberStyles.HexNumber);
                 }
-               
             }
             catch (Exception)
             {
                 color = Colors.Transparent;
             }
-            if (parameter !=null)
+            if (parameter != null)
             {
                 return color;
             }

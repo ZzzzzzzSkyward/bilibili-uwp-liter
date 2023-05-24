@@ -24,7 +24,7 @@
                     <Grid>
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition />
-                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="{x:Bind Path=title}"></TextBlock>
                         <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Grid.Column="1" Visibility="{x:Bind Path=privacy,Converter={StaticResource display}}">公开</TextBlock>
@@ -32,7 +32,6 @@
                     </Grid>
                 </DataTemplate>
             </ListView.ItemTemplate>
-          
         </ListView>
         <ProgressRing IsActive="True" x:Name="prLoading"></ProgressRing>
     </Grid>

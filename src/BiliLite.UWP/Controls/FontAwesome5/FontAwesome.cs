@@ -1,8 +1,8 @@
-﻿using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-using FontAwesome5.Extensions;
+﻿using FontAwesome5.Extensions;
 using System;
 using System.Diagnostics;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Controls;
 
 namespace FontAwesome5
 {
@@ -13,7 +13,6 @@ namespace FontAwesome5
     {
         static FontAwesome()
         {
-
         }
 
         /// <summary>
@@ -74,8 +73,6 @@ namespace FontAwesome5
                 //TODO 在新窗口中存在线程问题，待解决
                 Debug.WriteLine(ex.Message);
             }
-            
-
         }
 
         /// <summary>

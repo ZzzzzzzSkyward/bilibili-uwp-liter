@@ -7,6 +7,7 @@ namespace BiliLite.Modules
     {
         private Action<T> _Command;
         private Func<T, bool> _CanExecute;
+
         public event EventHandler CanExecuteChanged;
 
         public RelayCommand(Action<T> command) : this(command, null)
@@ -33,10 +34,12 @@ namespace BiliLite.Modules
             _Command((T)parameter);
         }
     }
+
     public class RelayCommand : ICommand
     {
         private Action _Command;
         private Action<bool> _CanExecute;
+
         public event EventHandler CanExecuteChanged;
 
         public RelayCommand(Action command) : this(command, null)

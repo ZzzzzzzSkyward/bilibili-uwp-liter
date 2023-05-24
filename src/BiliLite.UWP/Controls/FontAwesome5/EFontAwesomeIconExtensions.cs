@@ -20,6 +20,7 @@ namespace FontAwesome5.Extensions
 
             return info.Label;
         }
+
         /// <summary>
         /// Get the FontFamily of an icon
         /// </summary>
@@ -38,6 +39,7 @@ namespace FontAwesome5.Extensions
 
             return null;
         }
+
         /// <summary>
         /// Get the Font Awesome Style of an icon
         /// </summary>
@@ -58,7 +60,6 @@ namespace FontAwesome5.Extensions
             path = string.Empty;
             width = -1;
             height = -1;
-
 
             var svgInfo = icon.GetInformationAttribute<FontAwesomeSvgInformationAttribute>();
             if (svgInfo == null)

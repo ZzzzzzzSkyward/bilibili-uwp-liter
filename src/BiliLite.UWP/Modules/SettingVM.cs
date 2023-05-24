@@ -1,19 +1,20 @@
 ﻿using BiliLite.Api;
 using BiliLite.Helpers;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
 using System.Diagnostics;
+using System.Linq;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace BiliLite.Modules
 {
     public class SettingVM : IModules
     {
-        PlayerAPI playerAPI;
+        private PlayerAPI playerAPI;
+
         public SettingVM()
         {
             playerAPI = new PlayerAPI();
@@ -80,6 +81,7 @@ namespace BiliLite.Modules
         /// 弹幕屏蔽关键词列表
         /// </summary>
         public ObservableCollection<string> ShieldWords { get; set; }
+
         public ObservableCollection<string> LiveWords { get; set; }
         public ObservableCollection<string> ShieldUsers { get; set; }
         public ObservableCollection<string> ShieldRegulars { get; set; }
@@ -172,6 +174,7 @@ namespace BiliLite.Modules
                 return false;
             }
         }
+
         /// <summary>
         /// CDN延迟测试
         /// </summary>
@@ -183,10 +186,12 @@ namespace BiliLite.Modules
                 item.Delay = time;
             }
         }
+
         private HttpClient _httpClient = new HttpClient()
         {
             Timeout = TimeSpan.FromSeconds(2)
         };
+
         private async Task<long> GetDelay(string server)
         {
             //随便整个链接
@@ -203,7 +208,6 @@ namespace BiliLite.Modules
             {
                 return -1;
             }
-
         }
 
         //傻逼微软，UWP连个Ping都不支持
@@ -236,10 +240,9 @@ namespace BiliLite.Modules
         //        return -1;
         //    }
 
-
         //}
-
     }
+
     public class DanmuFilterItem
     {
         public long id { get; set; }
@@ -249,8 +252,8 @@ namespace BiliLite.Modules
         public string comment { get; set; }
         public long ctime { get; set; }
         public long mtime { get; set; }
-
     }
+
     public class AppThemeColor
     {
         public bool use_system_color { get; set; } = false;
@@ -258,6 +261,7 @@ namespace BiliLite.Modules
         public string name { get; set; }
         public string theme { get; set; }
     }
+
     public class CDNServerItem : IModules
     {
         public CDNServerItem(string server, string remark)
@@ -265,6 +269,7 @@ namespace BiliLite.Modules
             this.Server = server;
             this.Remark = remark;
         }
+
         public string Server { get; set; }
         public string Remark { get; set; }
 
@@ -275,6 +280,7 @@ namespace BiliLite.Modules
                 return Delay > 0;
             }
         }
+
         public bool ShowTimeOut
         {
             get
@@ -282,7 +288,9 @@ namespace BiliLite.Modules
                 return Delay < 0;
             }
         }
+
         private long _Delay = 0;
+
         public long Delay
         {
             get { return _Delay; }
@@ -294,6 +302,5 @@ namespace BiliLite.Modules
                 DoPropertyChanged("ShowTimeOut");
             }
         }
-
     }
 }

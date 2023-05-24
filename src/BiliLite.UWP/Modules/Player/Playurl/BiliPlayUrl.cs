@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 
 namespace BiliLite.Modules.Player.Playurl
 {
-
     public class BiliPlayUrl
     {
         public bool IsDownload { get; set; } = false;
+
         public BiliPlayUrl(bool isDownload)
         {
             IsDownload = isDownload;
@@ -25,9 +25,5 @@ namespace BiliLite.Modules.Player.Playurl
             }
             return await request.GetPlayUrlInfo(playInfo, qualityID);
         }
-
     }
-  
-    
-
 }

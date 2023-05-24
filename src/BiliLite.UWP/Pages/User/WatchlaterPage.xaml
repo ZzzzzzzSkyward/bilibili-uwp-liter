@@ -9,7 +9,7 @@
     mc:Ignorable="d"
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
-       
+
         <Style x:Key="ItemStyle" TargetType="GridViewItem">
             <Setter Property="Margin" Value="8"></Setter>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
@@ -18,8 +18,8 @@
         <DataTemplate x:Key="VideoDataTemplate" x:DataType="user:WatchlaterItemModel">
             <Grid  Background="#00FFFFFF">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition/>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
                 </Grid.ColumnDefinitions>
                 <Grid.ContextFlyout>
                     <MenuFlyout>
@@ -32,7 +32,7 @@
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                     <TextBlock TextWrapping="Wrap" MaxLines="2" Height="Auto" MinHeight="40" FontSize="15" HorizontalAlignment="Stretch" Margin="0 0 0 0" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=owner.name}"/></TextBlock>
+                    <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=owner.name}" /></TextBlock>
                     <TextBlock Margin="0 0" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=state}"></TextBlock>
                 </StackPanel>
             </Grid>
@@ -40,18 +40,18 @@
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="48"/>
-            <RowDefinition/>
+            <RowDefinition Height="48" />
+            <RowDefinition />
         </Grid.RowDefinitions>
         <Grid Background="{ThemeResource TopPaneBackground}">
-            <TextBlock Margin="12 0" FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Left">稍后再看(<Run Text="{x:Bind Path=watchLaterVM.Videos.Count,Mode=OneWay}"/>个视频)</TextBlock>
+            <TextBlock Margin="12 0" FontSize="15" VerticalAlignment="Center" HorizontalAlignment="Left">稍后再看(<Run Text="{x:Bind Path=watchLaterVM.Videos.Count,Mode=OneWay}" />个视频)</TextBlock>
             <StackPanel Margin="12 0" HorizontalAlignment="Right" Orientation="Horizontal">
                 <Button Command="{x:Bind Path=watchLaterVM.CleanCommand}" Margin="8 0">一键清空</Button>
                 <Button Command="{x:Bind Path=watchLaterVM.CleanViewedCommand}">移除已观看</Button>
             </StackPanel>
         </Grid>
         <Grid Grid.Row="1">
-            <toolkit:AdaptiveGridView SelectionMode="None" 
+            <toolkit:AdaptiveGridView SelectionMode="None"
                                       Padding="8"
                                           IsItemClickEnabled="True"
                                           DesiredWidth="600"
@@ -61,8 +61,6 @@
                                           ItemTemplate="{StaticResource VideoDataTemplate}"
                                           ItemsSource="{x:Bind Path=watchLaterVM.Videos,Mode=OneWay}"
                                           ItemHeight="80" Grid.ColumnSpan="2">
-
-              
             </toolkit:AdaptiveGridView>
             <ProgressRing IsActive="True" HorizontalAlignment="Center"  Visibility="{x:Bind Path=watchLaterVM.Loading,Mode=OneWay}"></ProgressRing>
             <TextBlock Visibility="{x:Bind Path=watchLaterVM.Nothing,Mode=OneWay}" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}" >这里还什么都没有呢~</TextBlock>

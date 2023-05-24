@@ -15,6 +15,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Imaging;
+
 //https://go.microsoft.com/fwlink/?LinkId=234236 上介绍了“用户控件”项模板
 
 namespace BiliLite.Controls
@@ -24,9 +25,11 @@ namespace BiliLite.Controls
         public int Index { get; set; }
         public List<string> Images { get; set; }
     }
+
     public sealed partial class ImageViewerControl : UserControl
     {
         public event EventHandler CloseEvent;
+
         public ImageViewerControl()
         {
             this.InitializeComponent();
@@ -34,10 +37,11 @@ namespace BiliLite.Controls
 
         public List<ImageInfo> imgs;
 
-        int index = 0;
+        private int index = 0;
+
         public void InitImage(ImageViewerParameter e)
         {
-            imgs=new List<ImageInfo>();
+            imgs = new List<ImageInfo>();
             foreach (var item in e.Images)
             {
                 imgs.Add(new ImageInfo()
@@ -48,15 +52,15 @@ namespace BiliLite.Controls
             ChangedImage(e.Index);
             btnOrigin.Focus(FocusState.Programmatic);
         }
+
         public void ClearImage()
         {
             image.Source = null;
             imgs = null;
-            
         }
+
         private async void ChangedImage(int i)
         {
-
             try
             {
                 loadFaild.Visibility = Visibility.Collapsed;
@@ -70,7 +74,6 @@ namespace BiliLite.Controls
                     var imgBytes = await LoadImage(imgs[i].ImageUrl);
 
                     imgs[i].ImageBytes = imgBytes;
-
                 }
                 MemoryStream memoryStream = new MemoryStream(imgs[i].ImageBytes);
                 var img = new BitmapImage();
@@ -81,7 +84,6 @@ namespace BiliLite.Controls
                 UpdateLayout();
                 var factor = scrollViewer.ViewportHeight / imgs[i].Height;
                 scrollViewer.ChangeView(null, null, factor > 1 ? 1 : (float)factor);
-
             }
             catch (Exception ex)
             {
@@ -92,18 +94,15 @@ namespace BiliLite.Controls
                 loading.Visibility = Visibility.Collapsed;
             }
         }
+
         private async Task<byte[]> LoadImage(string url)
         {
-
             using (HttpClient clinet = new HttpClient())
             {
                 var data = await clinet.GetByteArrayAsync(url);
 
-
-
                 return data;
             }
-
         }
 
         private void btnZoomIn_Click(object sender, RoutedEventArgs e)
@@ -146,15 +145,11 @@ namespace BiliLite.Controls
             FileSavePicker save = new FileSavePicker();
             save.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
 
-
-
             save.FileTypeChoices.Add("图片", new List<string>() { Path.GetExtension(imgs[index].ImageUrl) });
             save.SuggestedFileName = "bili_img_" + DateTime.Now.ToString("yyyyMMddHHmmss");
             StorageFile file = await save.PickSaveFileAsync();
             if (file != null)
             {
-
-
                 CachedFileManager.DeferUpdates(file);
                 await FileIO.WriteBytesAsync(file, bytes);
                 FileUpdateStatus status = await CachedFileManager.CompleteUpdatesAsync(file);
@@ -177,7 +172,7 @@ namespace BiliLite.Controls
 
         private void Grid_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            CloseEvent?.Invoke(sender,new EventArgs());
+            CloseEvent?.Invoke(sender, new EventArgs());
         }
 
         private async void btnCopy_Click(object sender, RoutedEventArgs e)
@@ -188,14 +183,12 @@ namespace BiliLite.Controls
             var data = new DataPackage();
             InMemoryRandomAccessStream randomAccessStream = new InMemoryRandomAccessStream();
             await randomAccessStream.WriteAsync(bytes.AsBuffer());
-            randomAccessStream.Seek(0); 
-
-          
+            randomAccessStream.Seek(0);
 
             data.SetBitmap(RandomAccessStreamReference.CreateFromStream(randomAccessStream));
-         
+
             data.RequestedOperation = DataPackageOperation.Copy;
-           var rsult=  Clipboard.SetContentWithOptions(data,null);
+            var rsult = Clipboard.SetContentWithOptions(data, null);
             Utils.ShowMessageToast("已复制到剪切板");
         }
     }

@@ -17,8 +17,8 @@
                         </DataTemplate>
                     </Pivot.HeaderTemplate>
                     <Pivot.ItemTemplate>
-                        <DataTemplate >
-                            <GridView  ItemClick="gvEmoji_ItemClick" ItemsSource="{Binding Path=emote,Mode=OneWay}" MaxHeight="300" SelectionMode="None" IsItemClickEnabled="True" >
+                        <DataTemplate>
+                            <GridView  ItemClick="gvEmoji_ItemClick" ItemsSource="{Binding Path=emote,Mode=OneWay}" MaxHeight="300" SelectionMode="None" IsItemClickEnabled="True">
                                 <!--<GridView.ItemContainerStyle>
                                                 -->
                                 <!--<Style TargetType="GridViewItem">
@@ -28,15 +28,12 @@
                                             </GridView.ItemContainerStyle>-->
                                 <GridView.ItemTemplate>
                                     <DataTemplate>
-                                        <StackPanel >
+                                        <StackPanel>
                                             <Image Visibility="{Binding Path=showImage}"  Source="{Binding url}" Width="36" Margin="4 0"></Image>
                                             <TextBlock Width="90" TextAlignment="Center" Visibility="{Binding Path=showImage,Converter={StaticResource display}}" FontSize="12" HorizontalAlignment="Center" Text="{Binding text}"></TextBlock>
-
-
                                         </StackPanel>
                                     </DataTemplate>
                                 </GridView.ItemTemplate>
-
                             </GridView>
                         </DataTemplate>
                     </Pivot.ItemTemplate>
@@ -47,18 +44,18 @@
         <Flyout  x:Key="AtFlyout" x:Name="AtFlyout">
             <Grid Width="320" Height="360">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
                 </Grid.RowDefinitions>
                 <AutoSuggestBox PlaceholderText="搜索用户"
                                 QuerySubmitted="AutoSuggestBox_QuerySubmitted"
                                 QueryIcon="Find"></AutoSuggestBox>
-                <ListView x:Name="listAt" 
+                <ListView x:Name="listAt"
                           Grid.Row="1"
                           ItemsSource="{x:Bind Path=atVM.Users,Mode=OneWay}"
-                          ItemClick="listAt_ItemClick" 
+                          ItemClick="listAt_ItemClick"
                           IsItemClickEnabled="True"
-                          SelectionMode="None" 
+                          SelectionMode="None"
                           DisplayMemberPath="Display">
                     <ListView.Footer>
                         <Grid>
@@ -74,18 +71,18 @@
         <Flyout  x:Key="TopicFlyout" x:Name="TopicFlyout">
             <Grid Width="320" Height="360">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition/>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
                 </Grid.RowDefinitions>
                 <AutoSuggestBox PlaceholderText="添加话题"
                                 QuerySubmitted="TextTopic_QuerySubmitted"
                                 QueryIcon="Add"></AutoSuggestBox>
-                <ListView x:Name="listTopic" 
+                <ListView x:Name="listTopic"
                           Grid.Row="1"
                           ItemsSource="{x:Bind Path=topicVM.Items,Mode=OneWay}"
-                          ItemClick="listTopic_ItemClick" 
+                          ItemClick="listTopic_ItemClick"
                           IsItemClickEnabled="True"
-                          SelectionMode="None" 
+                          SelectionMode="None"
                           DisplayMemberPath="display">
                     <ListView.Footer>
                         <Grid>
@@ -111,35 +108,32 @@
             <Grid Margin="0 4 0 0">
                 <StackPanel Orientation="Horizontal">
 
-                    <Button Width="36" Height="36" x:Name="btnEmoji" Click="btnEmoji_Click" ToolTipService.ToolTip="表情"   >
+                    <Button Width="36" Height="36" x:Name="btnEmoji" Click="btnEmoji_Click" ToolTipService.ToolTip="表情">
                         <StackPanel Orientation="Horizontal">
                             <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="12"  Glyph="&#xE170;" />
                         </StackPanel>
                     </Button>
-                    <!--<Button Width="36" Height="36" x:Name="btnVote" Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" ToolTipService.ToolTip="发起投票"  Margin="4 0 0 0"   >
+                    <!--<Button Width="36" Height="36" x:Name="btnVote" Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" ToolTipService.ToolTip="发起投票"  Margin="4 0 0 0">
                         <StackPanel Orientation="Horizontal">
                             <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="14"  Glyph="&#xE1E9;" />
                         </StackPanel>
                     </Button>-->
-                    <Button x:Name="btnImage" Click="btnImage_Click" Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" ToolTipService.ToolTip="上传图片"  Width="36" Height="36"  Margin="4 0 0 0" >
+                    <Button x:Name="btnImage" Click="btnImage_Click" Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" ToolTipService.ToolTip="上传图片"  Width="36" Height="36"  Margin="4 0 0 0">
                         <StackPanel Orientation="Horizontal">
                             <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="12"  Glyph="&#xEB9F;" />
-
                         </StackPanel>
                     </Button>
-                    <Button x:Name="btnAt" Click="btnAt_Click" Width="36" Height="36"    Margin="4 0 0 0"   ToolTipService.ToolTip="@" >
+                    <Button x:Name="btnAt" Click="btnAt_Click" Width="36" Height="36"    Margin="4 0 0 0"   ToolTipService.ToolTip="@">
                         <StackPanel Orientation="Horizontal">
                             <FontIcon FontFamily="Segoe MDL2 Assets"  FontSize="12" Glyph="&#xE168;" />
                         </StackPanel>
-                       
                     </Button>
-                    <Button x:Name="btnTopic" Click="btnTopic_Click"  Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" Width="36" Height="36"    Margin="4 0 0 0"   ToolTipService.ToolTip="话题" >
+                    <Button x:Name="btnTopic" Click="btnTopic_Click"  Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" Width="36" Height="36"    Margin="4 0 0 0"   ToolTipService.ToolTip="话题">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock  FontSize="18" Text="#" />
                         </StackPanel>
-
                     </Button>
-                    <!--<Button Width="36" Height="36"  Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" x:Name="btnTime" ToolTipService.ToolTip="定时发布" Margin="4 0 0 0" >
+                    <!--<Button Width="36" Height="36"  Visibility="{x:Bind Path=sendDynamicVM.IsRepost,Mode=OneWay,Converter={StaticResource display}}" x:Name="btnTime" ToolTipService.ToolTip="定时发布" Margin="4 0 0 0">
                         <StackPanel Orientation="Horizontal">
                             <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="14"  Glyph="&#xE916;" />
                         </StackPanel>
@@ -170,14 +164,8 @@
                             </Grid>
                         </DataTemplate>
                     </GridView.ItemTemplate>
-
                 </GridView>
             </StackPanel>
-
-
-
         </StackPanel>
-
-
     </Grid>
 </ContentDialog>

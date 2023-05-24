@@ -23,6 +23,7 @@ namespace BiliLite.Pages
             Title = "网页浏览";
             this.Loaded += WebPage_Loaded;
         }
+
         private void WebPage_Loaded(object sender, RoutedEventArgs e)
         {
             if (this.Parent is MyFrame)
@@ -58,10 +59,9 @@ namespace BiliLite.Pages
                 }
                 webView.Navigate(new Uri(uri));
                 UrlBox.Text = uri;
-
             }
-
         }
+
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
             if (e.NavigationMode == NavigationMode.Back || e.SourcePageType == typeof(BlankPage))
@@ -74,7 +74,6 @@ namespace BiliLite.Pages
             }
             base.OnNavigatingFrom(e);
         }
-
 
         private void btnForword_Click(object sender, RoutedEventArgs e)
         {
@@ -116,7 +115,6 @@ namespace BiliLite.Pages
             }
             try
             {
-
                 //专栏阅读设置
                 if (args.Uri != null && args.Uri.AbsoluteUri.Contains("read/cv"))
                 {
@@ -141,18 +139,12 @@ $('.author-container').css('margin','12px 0px -12px 0px');"
                     });
                 }
 
-
-
                 await webView?.InvokeScriptAsync("eval", new List<string>() {
                     "$('.h5-download-bar').hide()"
                 });
-
-
-
             }
             catch (Exception)
             {
-
             }
             finally
             {
@@ -208,7 +200,6 @@ $('.author-container').css('margin','12px 0px -12px 0px');"
                     Utils.ShowMessageToast("不支持打开的链接" + args.Uri.AbsoluteUri);
                 }
             }
-
         }
 
         private void btnInfo_Click(object sender, RoutedEventArgs e)

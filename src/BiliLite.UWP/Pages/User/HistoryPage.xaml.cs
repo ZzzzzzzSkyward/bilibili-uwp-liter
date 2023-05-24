@@ -13,14 +13,16 @@ namespace BiliLite.Pages.User
     /// </summary>
     public sealed partial class HistoryPage : BasePage
     {
-        HistoryVM historyVM;
+        private HistoryVM historyVM;
+
         public HistoryPage()
         {
             this.InitializeComponent();
             Title = "历史记录";
             historyVM = new HistoryVM();
         }
-        protected async override void OnNavigatedTo(NavigationEventArgs e)
+
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New && historyVM.Videos == null)
@@ -30,12 +32,10 @@ namespace BiliLite.Pages.User
             }
         }
 
-
-
         private void Video_ItemClick(object sender, ItemClickEventArgs e)
         {
             var data = e.ClickedItem as HistoryItemModel;
-            if(data.business== "pgc")
+            if (data.business == "pgc")
             {
                 MessageCenter.NavigateToPage(this, new NavigationInfo()
                 {
@@ -55,7 +55,6 @@ namespace BiliLite.Pages.User
                     parameters = data.aid
                 });
             }
-            
         }
 
         private void removeVideoHistory_Click(object sender, RoutedEventArgs e)

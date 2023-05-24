@@ -3,8 +3,6 @@ using BiliLite.Modules;
 using FontAwesome5;
 using Microsoft.Toolkit.Uwp.Connectivity;
 using System;
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -18,9 +16,10 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class HomePage : Page
     {
-        DownloadVM downloadVM;
-        readonly HomeVM homeVM;
-        readonly Account account;
+        private DownloadVM downloadVM;
+        private readonly HomeVM homeVM;
+        private readonly Account account;
+
         public HomePage()
         {
             this.InitializeComponent();
@@ -31,6 +30,7 @@ namespace BiliLite.Pages
             downloadVM = DownloadVM.Instance;
             this.DataContext = homeVM;
         }
+
         private void MessageCenter_LogoutedEvent(object sender, EventArgs e)
         {
             LoadUserStatus();
@@ -40,6 +40,7 @@ namespace BiliLite.Pages
         {
             LoadUserStatus();
         }
+
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -49,11 +50,12 @@ namespace BiliLite.Pages
                 //await homeVM.LoginUserCard();
             }
         }
+
         private async void CheckLoginStatus()
         {
             if (!NetworkHelper.Instance.ConnectionInformation.IsInternetAvailable)
             {
-               // return;
+                // return;
             }
 
             if (SettingHelper.Account.Logined)
@@ -83,10 +85,8 @@ namespace BiliLite.Pages
                     Utils.ShowMessageToast("读取登录信息失败，请重新登录");
                     //throw;
                 }
-
             }
         }
-
 
         private async void LoadUserStatus()
         {
@@ -126,7 +126,6 @@ namespace BiliLite.Pages
             this.UpdateLayout();
         }
 
-
         private async void btnLogin_Click(object sender, RoutedEventArgs e)
         {
             var data = await Utils.ShowLoginDialog();
@@ -145,7 +144,6 @@ namespace BiliLite.Pages
                 icon = Symbol.Download,
                 page = typeof(DownloadPage),
                 title = "下载",
-
             });
         }
 
@@ -203,10 +201,8 @@ namespace BiliLite.Pages
                 icon = Symbol.Contact,
                 page = typeof(Live.LiveCenterPage),
                 title = "直播中心",
-
             });
         }
-
 
         private void MenuHistory_Click(object sender, RoutedEventArgs e)
         {
@@ -220,7 +216,7 @@ namespace BiliLite.Pages
 
         private void MenuUserCenter_Click(object sender, RoutedEventArgs e)
         {
-            if(SettingHelper.Account.Profile is null)
+            if (SettingHelper.Account.Profile is null)
             {
                 Utils.ShowMessageToast("无法获取用户名");
                 return;
@@ -257,7 +253,6 @@ namespace BiliLite.Pages
                 icon = Symbol.Play,
                 page = typeof(User.WatchlaterPage),
                 title = "稍后再看",
-
             });
         }
 
@@ -282,6 +277,7 @@ namespace BiliLite.Pages
             //    parameters = "https://space.bilibili.com/h5/follow"
             //});
         }
+
         private void btnOpenAttention_Click(object sender, RoutedEventArgs e)
         {
             MessageCenter.NavigateToPage(this, new NavigationInfo()
@@ -316,6 +312,7 @@ namespace BiliLite.Pages
         {
             homeVM.LoginUserCard();
         }
+
         private ElementTheme theme
         {
             get
@@ -347,6 +344,4 @@ namespace BiliLite.Pages
             App.ExtendAcrylicIntoTitleBar();
         }
     }
-
-
 }

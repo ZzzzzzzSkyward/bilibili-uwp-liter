@@ -6,6 +6,7 @@
         /// 评论区
         /// </summary>
         reply,
+
         /// <summary>
         /// 动态
         /// </summary>
@@ -14,7 +15,6 @@
 
     public class EmoteApi
     {
-        
         public ApiModel UserEmote(EmoteBusiness business)
         {
             var type = business.ToString();

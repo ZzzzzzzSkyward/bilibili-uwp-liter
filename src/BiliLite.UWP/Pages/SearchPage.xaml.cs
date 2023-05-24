@@ -15,52 +15,63 @@ namespace BiliLite.Pages
         /// 视频
         /// </summary>
         Video = 0,
+
         /// <summary>
         /// 番剧
         /// </summary>
         Anime = 1,
+
         /// <summary>
         /// 直播
         /// </summary>
         Live = 2,
+
         /// <summary>
         /// 主播
         /// </summary>
-        Anchor=3,
+        Anchor = 3,
+
         /// <summary>
         /// 用户
         /// </summary>
         User = 4,
+
         /// <summary>
         /// 影视
         /// </summary>
         Movie = 5,
+
         /// <summary>
         /// 专栏
         /// </summary>
         Article = 6,
+
         /// <summary>
         /// 话题
         /// </summary>
         Topic = 7
     }
+
     public class SearchParameter
     {
         public string keyword { get; set; }
         public SearchType searchType { get; set; } = SearchType.Video;
     }
+
     /// <summary>
     /// 可用于自身或导航至 Frame 内部的空白页。
     /// </summary>
     public sealed partial class SearchPage : BasePage
     {
-        SearchVM searchVM;
+        private SearchVM searchVM;
+
         public SearchPage()
         {
             this.InitializeComponent();
             Title = "搜索";
             searchVM = new SearchVM();
         }
+
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -73,7 +84,7 @@ namespace BiliLite.Pages
             {
                 par.keyword = e.Parameter.ToString();
             }
-            par.keyword= par.keyword.TrimStart('@');
+            par.keyword = par.keyword.TrimStart('@');
             txtKeyword.Text = par.keyword;
             foreach (var item in searchVM.SearchItems)
             {
@@ -82,9 +93,10 @@ namespace BiliLite.Pages
             }
             pivot.SelectedIndex = (int)par.searchType;
         }
+
         private async void txtKeyword_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
         {
-            if (string.IsNullOrEmpty( txtKeyword.Text))
+            if (string.IsNullOrEmpty(txtKeyword.Text))
             {
                 Utils.ShowMessageToast("关键字不能为空啊，喂(#`O′)");
                 return;
@@ -98,13 +110,14 @@ namespace BiliLite.Pages
             foreach (var item in searchVM.SearchItems)
             {
                 item.Keyword = txtKeyword.Text;
-                item.Area= searchVM.Area.area;
+                item.Area = searchVM.Area.area;
                 item.Page = 1;
                 item.HasData = false;
             }
             searchVM.SelectItem.Refresh();
-            ChangeTitle("搜索:"+txtKeyword.Text);
+            ChangeTitle("搜索:" + txtKeyword.Text);
         }
+
         public void ChangeTitle(string title)
         {
             if ((this.Parent as Frame).Parent is TabViewItem)
@@ -119,6 +132,7 @@ namespace BiliLite.Pages
                 MessageCenter.ChangeTitle(title);
             }
         }
+
         private async void pivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (pivot.SelectedItem != null)
@@ -129,7 +143,6 @@ namespace BiliLite.Pages
                     await item.LoadData();
                 }
             }
-
         }
 
         private void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -140,9 +153,9 @@ namespace BiliLite.Pages
                 data.Refresh();
             }
         }
+
         private void Search_ItemClick(object sender, ItemClickEventArgs e)
         {
-           
             if (e.ClickedItem is SearchVideoItem)
             {
                 var data = e.ClickedItem as SearchVideoItem;
@@ -219,7 +232,7 @@ namespace BiliLite.Pages
 
         private void cbArea_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (cbArea.SelectedItem!=null)
+            if (cbArea.SelectedItem != null)
             {
                 foreach (var item in searchVM.SearchItems)
                 {
@@ -231,6 +244,7 @@ namespace BiliLite.Pages
             }
         }
     }
+
     public class SearchDataTemplateSelector : DataTemplateSelector
     {
         public DataTemplate VideoTemplate { get; set; }
@@ -240,6 +254,7 @@ namespace BiliLite.Pages
         public DataTemplate UserTemplate { get; set; }
         public DataTemplate ArticTemplate { get; set; }
         public DataTemplate TopicTemplate { get; set; }
+
         protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
         {
             var data = item as ISearchVM;
@@ -247,24 +262,29 @@ namespace BiliLite.Pages
             {
                 case SearchType.Video:
                     return VideoTemplate;
+
                 case SearchType.Anime:
                 case SearchType.Movie:
                     return AnimeTemplate;
+
                 case SearchType.User:
                     return UserTemplate;
+
                 case SearchType.Live:
                     return LiveRoomTemplate;
+
                 case SearchType.Article:
                     return ArticTemplate;
+
                 case SearchType.Topic:
                     return TopicTemplate;
+
                 case SearchType.Anchor:
                     return TestTemplate;
+
                 default:
                     return TestTemplate;
             }
-
-
         }
     }
 }

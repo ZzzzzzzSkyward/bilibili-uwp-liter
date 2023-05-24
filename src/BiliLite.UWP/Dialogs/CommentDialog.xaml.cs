@@ -2,7 +2,6 @@
 using Windows.Foundation;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Controls.Maps;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
@@ -15,6 +14,7 @@ namespace BiliLite.Dialogs
     {
         public bool isvisible;
         private Popup popup;
+
         public CommentDialog()
         {
             isvisible = true;
@@ -31,7 +31,8 @@ namespace BiliLite.Dialogs
         {
             Window.Current.SizeChanged -= Current_SizeChanged;
         }
-        public void Show(string oid,int commentMode, Api.CommentApi.CommentSort commentSort)
+
+        public void Show(string oid, int commentMode, Api.CommentApi.CommentSort commentSort)
         {
             this.popup.IsOpen = true;
             comment.LoadComment(new Controls.LoadCommentInfo()
@@ -39,23 +40,21 @@ namespace BiliLite.Dialogs
                 CommentMode = commentMode,
                 CommentSort = commentSort,
                 Oid = oid,
-                IsDialog=true
+                IsDialog = true
             });
         }
+
         public async void Close()
         {
             await RootBorder.FadeOutAsync(duration: 200);
             this.popup.IsOpen = false;
         }
+
         private async void CommentDialog_Loaded(object sender, RoutedEventArgs e)
         {
-
-
             Window.Current.SizeChanged += Current_SizeChanged;
 
             await RootBorder.FadeInAsync(duration: 200);
-
-
         }
 
         private void Current_SizeChanged(object sender, Windows.UI.Core.WindowSizeChangedEventArgs e)
@@ -66,7 +65,7 @@ namespace BiliLite.Dialogs
 
         private void btnClose_Click(object sender, RoutedEventArgs e)
         {
-            this.Close(); 
+            this.Close();
         }
 
         private void Grid_Tapped(object sender, TappedRoutedEventArgs e)
@@ -96,6 +95,7 @@ namespace BiliLite.Dialogs
             RootBorder.ReleasePointerCapture(e.Pointer);
             e.Handled = false;
         }
+
         private void RootBorder_PointerMoved(object sender, PointerRoutedEventArgs e)
         {
             if (isDragging)

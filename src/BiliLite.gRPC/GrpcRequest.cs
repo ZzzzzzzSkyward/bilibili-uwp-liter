@@ -10,6 +10,7 @@ namespace BiliLite.gRPC
     public class GrpcRequest
     {
         private static GrpcRequest _instance;
+
         public static GrpcRequest Instance
         {
             get
@@ -21,7 +22,6 @@ namespace BiliLite.gRPC
                 return _instance;
             }
         }
-
 
         /// <summary>
         /// 发送请求
@@ -45,7 +45,7 @@ namespace BiliLite.gRPC
                 httpClient.DefaultRequestHeaders.Add("User-Agent", ua);
                 httpClient.DefaultRequestHeaders.Add("APP-KEY", "android");
                 httpClient.DefaultRequestHeaders.Add("x-bili-metadata-bin", config.GetMetadataBin());
-                httpClient.DefaultRequestHeaders.Add("authorization", "identify_v1 "+access_key);
+                httpClient.DefaultRequestHeaders.Add("authorization", "identify_v1 " + access_key);
                 httpClient.DefaultRequestHeaders.Add("x-bili-device-bin", config.GetDeviceBin());
                 httpClient.DefaultRequestHeaders.Add("x-bili-network-bin", config.GetNetworkBin());
                 httpClient.DefaultRequestHeaders.Add("x-bili-restriction-bin", "");
@@ -92,14 +92,13 @@ namespace BiliLite.gRPC
                     };
                 }
             }
-
             catch (Exception ex)
             {
                 return new GrpcResult()
                 {
                     code = ex.HResult,
                     status = false,
-                    message = "发送gRPC请求失败"+ex.Message
+                    message = "发送gRPC请求失败" + ex.Message
                 };
             }
         }
@@ -111,7 +110,7 @@ namespace BiliLite.gRPC
                 using (HttpClient httpClient = new HttpClient())
                 {
                     var data = await httpClient.GetByteArrayAsync(url);
-                   // var data = await response.Content.ReadAsByteArrayAsync();
+                    // var data = await response.Content.ReadAsByteArrayAsync();
                     if (data.Length > 5)
                     {
                         return new GrpcResult()
@@ -131,7 +130,7 @@ namespace BiliLite.gRPC
                             message = "请求失败,没有数据返回",
                         };
                     }
-                }       
+                }
             }
             catch (Exception ex)
             {

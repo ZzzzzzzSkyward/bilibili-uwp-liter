@@ -8,7 +8,7 @@ namespace BiliLite.Modules.Live.LiveCenter
 {
     public class LiveCenterHistoryVM : IModules
     {
-        readonly Api.Live.LiveCenterAPI liveCenterAPI;
+        private readonly Api.Live.LiveCenterAPI liveCenterAPI;
 
         public LiveCenterHistoryVM()
         {
@@ -18,27 +18,31 @@ namespace BiliLite.Modules.Live.LiveCenter
         }
 
         private bool _Loading = true;
+
         public bool Loading
         {
             get { return _Loading; }
             set { _Loading = value; DoPropertyChanged("Loading"); }
         }
+
         private bool _CanLoadMore = false;
+
         public bool CanLoadMore
         {
             get { return _CanLoadMore; }
             set { _CanLoadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
+
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
 
         private ObservableCollection<LiveHistoryItemModel> _Items;
+
         public ObservableCollection<LiveHistoryItemModel> Items
         {
             get { return _Items; }
             set { _Items = value; DoPropertyChanged("Items"); }
         }
-
 
         private bool _Nothing = false;
 
@@ -82,8 +86,7 @@ namespace BiliLite.Modules.Live.LiveCenter
                             Nothing = true;
                         }
 
-                    
-                        if (items!=null&& items.Count>0)
+                        if (items != null && items.Count > 0)
                         {
                             CanLoadMore = false;
                         }
@@ -101,7 +104,6 @@ namespace BiliLite.Modules.Live.LiveCenter
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -114,6 +116,7 @@ namespace BiliLite.Modules.Live.LiveCenter
                 Loading = false;
             }
         }
+
         public async void Refresh()
         {
             if (Loading)
@@ -124,6 +127,7 @@ namespace BiliLite.Modules.Live.LiveCenter
             Page = 1;
             await Get();
         }
+
         public async void LoadMore()
         {
             if (Loading)
@@ -137,6 +141,7 @@ namespace BiliLite.Modules.Live.LiveCenter
             await Get();
         }
     }
+
     public class LiveHistoryItemModel
     {
         public int roomid { get; set; }
@@ -148,6 +153,7 @@ namespace BiliLite.Modules.Live.LiveCenter
         public string uri { get; set; }
         public LiveHistoryItemHistoryModel history { get; set; }
     }
+
     public class LiveHistoryItemHistoryModel
     {
         public int oid { get; set; }

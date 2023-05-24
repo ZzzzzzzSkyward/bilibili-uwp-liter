@@ -1,15 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Threading.Tasks;
-using BiliLite.WebApi.Models;
+﻿using BiliLite.WebApi.Models;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Distributed;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace BiliLite.WebApi.Controllers
 {
@@ -17,8 +17,9 @@ namespace BiliLite.WebApi.Controllers
     [ApiController]
     public class AnimeController : ControllerBase
     {
-        readonly IDistributedCache distributedCache;
-        readonly IHttpClientFactory client;
+        private readonly IDistributedCache distributedCache;
+        private readonly IHttpClientFactory client;
+
         public AnimeController(IHttpClientFactory httpContext, IDistributedCache cache)
         {
             client = httpContext;
@@ -146,7 +147,6 @@ namespace BiliLite.WebApi.Controllers
                 });
             }
 
-
             var timelines = await GetTimeLine(type);
 
             if (timelines.Count != 0)
@@ -163,7 +163,6 @@ namespace BiliLite.WebApi.Controllers
                 data = timelines
             });
         }
-
 
         [Route("BangumiFalls")]
         public async Task<JsonResult> BangumiFalls(int wid, long cursor = 0)
@@ -191,18 +190,16 @@ namespace BiliLite.WebApi.Controllers
                         title = img.Attributes["alt"].Value,
                         url = item.Attributes["href"].Value
                     });
-
                 }
 
                 return banners.Distinct(new Compare()).ToList();
             }
             catch (Exception)
             {
-
                 return new List<BannerModel>();
             }
-
         }
+
         private async Task<List<AnimeRank>> GetRanks(int type = 1)
         {
             try
@@ -230,16 +227,16 @@ namespace BiliLite.WebApi.Controllers
             }
             catch (Exception)
             {
-
                 return new List<AnimeRank>();
             }
         }
+
         private async Task<List<AnimeRank>> GetHots(int type = 1)
         {
             try
             {
                 var http = client.CreateClient("http");
-                var results = await http.GetStringAsync($"https://api.bilibili.com/pgc/season/index/result?st=1&order=2&season_version=-1&area=-1&is_finish=-1&copyright=-1&season_status=-1&season_month=-1&year=-1&style_id=-1&sort=0&page=1&season_type={ type }&pagesize=20&type=1");
+                var results = await http.GetStringAsync($"https://api.bilibili.com/pgc/season/index/result?st=1&order=2&season_version=-1&area=-1&is_finish=-1&copyright=-1&season_status=-1&season_month=-1&year=-1&style_id=-1&sort=0&page=1&season_type={type}&pagesize=20&type=1");
                 var obj = JObject.Parse(results);
                 List<AnimeRank> ranks = new List<AnimeRank>();
                 foreach (var item in obj["data"]["list"].Take(20))
@@ -258,10 +255,10 @@ namespace BiliLite.WebApi.Controllers
             }
             catch (Exception)
             {
-
                 return new List<AnimeRank>();
             }
         }
+
         /// <summary>
         /// 时间表
         /// </summary>
@@ -286,7 +283,6 @@ namespace BiliLite.WebApi.Controllers
                     List<BangumiTimelineItem> seasons = new List<BangumiTimelineItem>();
                     foreach (var item2 in item["seasons"])
                     {
-
                         var pub_index = "";
                         if (Convert.ToInt32(item2["delay"]) == 1)
                         {
@@ -320,7 +316,6 @@ namespace BiliLite.WebApi.Controllers
 
         private async Task<List<FallItemModel>> GetFalls(int wid, long cursor = 0)
         {
-
             try
             {
                 var key = "Falls" + wid + "Cursor" + cursor;
@@ -330,7 +325,7 @@ namespace BiliLite.WebApi.Controllers
                     return JsonConvert.DeserializeObject<List<FallItemModel>>(value);
                 }
                 var http = client.CreateClient("http");
-                var results = await http.GetStringAsync($"https://bangumi.bilibili.com/api/fall?appkey=1d8b6e7d45233436&build=5442100&cursor={ cursor}&mobi_app=android&pagesize=4&platform=android&ts={ Utils.GetTimestampS()}&wid={wid}");
+                var results = await http.GetStringAsync($"https://bangumi.bilibili.com/api/fall?appkey=1d8b6e7d45233436&build=5442100&cursor={cursor}&mobi_app=android&pagesize=4&platform=android&ts={Utils.GetTimestampS()}&wid={wid}");
                 var obj = JObject.Parse(results);
                 List<FallItemModel> list = new List<FallItemModel>();
                 foreach (var item in obj["result"])
@@ -359,22 +354,22 @@ namespace BiliLite.WebApi.Controllers
             {
                 return new List<FallItemModel>();
             }
-
-
         }
-
     }
+
     public class Compare : IEqualityComparer<BannerModel>
     {
         public bool Equals(BannerModel x, BannerModel y)
         {
-            return x.url==y.url ;
+            return x.url == y.url;
         }
+
         public int GetHashCode(BannerModel obj)
         {
             return obj.url.GetHashCode();
         }
     }
+
     public class BangumiHomeModel
     {
         public List<AnimeRank> hots { get; set; }
@@ -383,12 +378,14 @@ namespace BiliLite.WebApi.Controllers
         public List<BangumiTimelineItem> today { get; set; }
         public List<FallModel> falls { get; set; }
     }
+
     public class FallModel
     {
         public int wid { get; set; }
         public string title { get; set; }
         public List<FallItemModel> items { get; set; }
     }
+
     public class FallItemModel
     {
         public string cover { get; set; }
@@ -398,12 +395,14 @@ namespace BiliLite.WebApi.Controllers
         public long cursor { get; set; }
         public int wid { get; set; }
     }
+
     public class BannerModel
     {
         public string title { get; set; }
         public string img { get; set; }
         public string url { get; set; }
     }
+
     public class AnimeRank
     {
         public string display { get; set; }
@@ -414,6 +413,7 @@ namespace BiliLite.WebApi.Controllers
         public int follow { get; set; }
         public int danmaku { get; set; }
         public int view { get; set; }
+
         public bool show_badge
         {
             get
@@ -421,6 +421,7 @@ namespace BiliLite.WebApi.Controllers
                 return !string.IsNullOrEmpty(badge);
             }
         }
+
         public string badge { get; set; }
     }
 
@@ -429,34 +430,43 @@ namespace BiliLite.WebApi.Controllers
         public int day_week { get; set; }
         public string date { get; set; }
         public bool is_today { get; set; }
+
         public string week
         {
             get
             {
                 switch (day_week)
                 {
-
                     case 1:
                         return "周一";
+
                     case 2:
                         return "周二";
+
                     case 3:
                         return "周三";
+
                     case 4:
                         return "周四";
+
                     case 5:
                         return "周五";
+
                     case 6:
                         return "周六";
+
                     case 7:
                         return "周日";
+
                     default:
                         return "未知";
                 }
             }
         }
+
         public List<BangumiTimelineItem> seasons { get; set; }
     }
+
     public class BangumiTimelineItem
     {
         public int season_id { get; set; }

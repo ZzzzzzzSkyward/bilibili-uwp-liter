@@ -22,7 +22,6 @@ namespace BiliLite.Converters
                 {
                     return ((double)number / 10000).ToString("0.0") + "万";
                 }
-               
             }
             return value.ToString();
         }
@@ -33,4 +32,3 @@ namespace BiliLite.Converters
         }
     }
 }
-

@@ -15,11 +15,12 @@ namespace BiliLite.Dialogs
 {
     public sealed partial class CopyOrMoveFavVideoDialog : ContentDialog
     {
-        readonly string fid, mid;
-        readonly bool isMove;
-        readonly List<FavoriteInfoVideoItemModel> selectItems;
-        readonly FavoriteApi favoriteApi;
-        public CopyOrMoveFavVideoDialog(string fid,string mid, bool isMove, List<FavoriteInfoVideoItemModel> items)
+        private readonly string fid, mid;
+        private readonly bool isMove;
+        private readonly List<FavoriteInfoVideoItemModel> selectItems;
+        private readonly FavoriteApi favoriteApi;
+
+        public CopyOrMoveFavVideoDialog(string fid, string mid, bool isMove, List<FavoriteInfoVideoItemModel> items)
         {
             this.InitializeComponent();
             favoriteApi = new FavoriteApi();
@@ -32,7 +33,6 @@ namespace BiliLite.Dialogs
 
         private async void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-
             if (listView.SelectedItem == null) { Utils.ShowMessageToast("请选择收藏夹"); return; }
             try
             {
@@ -50,7 +50,7 @@ namespace BiliLite.Dialogs
                 }
                 else
                 {
-                    results = await favoriteApi.Copy(fid, item.id, ids,mid).Request();
+                    results = await favoriteApi.Copy(fid, item.id, ids, mid).Request();
                 }
                 if (results.status)
                 {
@@ -69,8 +69,6 @@ namespace BiliLite.Dialogs
                 {
                     Utils.ShowMessageToast(results.message);
                 }
-
-
             }
             catch (Exception ex)
             {
@@ -80,7 +78,6 @@ namespace BiliLite.Dialogs
             {
                 IsPrimaryButtonEnabled = true;
             }
-           
         }
 
         private void ContentDialog_SecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
@@ -118,7 +115,6 @@ namespace BiliLite.Dialogs
             }
             catch (Exception ex)
             {
-
                 Utils.ShowMessageToast(ex.Message);
             }
             finally
@@ -126,6 +122,5 @@ namespace BiliLite.Dialogs
                 prLoading.Visibility = Visibility.Collapsed;
             }
         }
-
     }
 }

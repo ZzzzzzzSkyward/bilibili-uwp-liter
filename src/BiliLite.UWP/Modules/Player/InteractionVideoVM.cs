@@ -9,11 +9,12 @@ using Windows.UI.Xaml.Media;
 
 namespace BiliLite.Modules.Player
 {
-    public class InteractionVideoVM:IModules
+    public class InteractionVideoVM : IModules
     {
-        readonly PlayerAPI playerAPI;
+        private readonly PlayerAPI playerAPI;
         private string Aid { get; }
-        private int GraphVersion { get;  } 
+        private int GraphVersion { get; }
+
         public InteractionVideoVM(string avid, int graph_version)
         {
             this.Aid = avid;
@@ -22,20 +23,20 @@ namespace BiliLite.Modules.Player
         }
 
         private bool _loading;
+
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
 
-
         private InteractionEdgeInfoModel _info;
+
         public InteractionEdgeInfoModel Info
         {
             get { return _info; }
             set { _info = value; DoPropertyChanged("Info"); }
         }
-
 
         private List<InteractionEdgeInfoStoryListModel> _list;
 
@@ -44,7 +45,6 @@ namespace BiliLite.Modules.Player
             get { return _list; }
             set { _list = value; DoPropertyChanged("List"); }
         }
-
 
         private InteractionEdgeInfoStoryListModel _select;
 
@@ -66,7 +66,7 @@ namespace BiliLite.Modules.Player
                     var data = await result.GetData<InteractionEdgeInfoModel>();
                     if (data.code == 0)
                     {
-                        if(data.data.edges!=null&& data.data.edges.questions != null)
+                        if (data.data.edges != null && data.data.edges.questions != null)
                         {
                             foreach (var item in data.data.edges.questions)
                             {
@@ -77,13 +77,12 @@ namespace BiliLite.Modules.Player
                                 }
                             }
                         }
-                       
+
                         Info = data.data;
                         List = data.data.story_list;
                         Select = Info.story_list.FirstOrDefault(x => x.edge_id == Info.edge_id);
                     }
                 }
-               
             }
             catch (Exception ex)
             {
@@ -94,22 +93,26 @@ namespace BiliLite.Modules.Player
                 Loading = false;
             }
         }
-
     }
+
     public class InteractionEdgeInfoModel
     {
         public string title { get; set; }
         public int edge_id { get; set; }
+
         /// <summary>
         /// 已解锁的节点
         /// </summary>
         public List<InteractionEdgeInfoStoryListModel> story_list { get; set; }
+
         /// <summary>
         /// 选项信息
         /// </summary>
         public InteractionEdgeInfoEdgesModel edges { get; set; }
+
         public int is_leaf { get; set; }
     }
+
     public class InteractionEdgeInfoStoryListModel
     {
         public int node_id { get; set; }
@@ -122,7 +125,6 @@ namespace BiliLite.Modules.Player
         public int? is_current { get; set; }
     }
 
-  
     public class InteractionEdgeInfoChoiceModel
     {
         public long id { get; set; }
@@ -151,7 +153,8 @@ namespace BiliLite.Modules.Player
     {
         public string choice_image { get; set; }
         public string title_text_color { get; set; }
-        public SolidColorBrush text_color 
+
+        public SolidColorBrush text_color
         {
             get
             {
@@ -163,6 +166,7 @@ namespace BiliLite.Modules.Player
                 return new SolidColorBrush(color);
             }
         }
+
         public string title_shadow_color { get; set; }
         public double title_shadow_offset_y { get; set; }
         public string progressbar_color { get; set; }
@@ -174,8 +178,4 @@ namespace BiliLite.Modules.Player
         public List<InteractionEdgeInfoQuestionModel> questions { get; set; }
         public InteractionEdgeInfoSkinModel skin { get; set; }
     }
-
-  
-   
-
 }

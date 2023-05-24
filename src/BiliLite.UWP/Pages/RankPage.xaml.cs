@@ -13,24 +13,26 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class RankPage : BasePage
     {
-        readonly RankVM rankVM;
+        private readonly RankVM rankVM;
+
         public RankPage()
         {
             this.InitializeComponent();
             Title = "排行榜";
             rankVM = new RankVM();
         }
+
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            if(e.NavigationMode== NavigationMode.New)
+            if (e.NavigationMode == NavigationMode.New)
             {
                 var rid = 0;
                 if (e.Parameter != null)
                 {
                     rid = e.Parameter.ToInt32();
                 }
-                 rankVM.LoadRankRegion(rid);
+                rankVM.LoadRankRegion(rid);
             }
         }
 
@@ -41,7 +43,7 @@ namespace BiliLite.Pages
                 return;
             }
             var data = pivot.SelectedItem as RankRegionModel;
-            if (data.Items==null||data.Items.Count==0)
+            if (data.Items == null || data.Items.Count == 0)
             {
                 await rankVM.LoadRankDetail(data);
             }
@@ -49,12 +51,13 @@ namespace BiliLite.Pages
 
         private void AdaptiveGridView_ItemClick(object sender, ItemClickEventArgs e)
         {
-           var item= e.ClickedItem as RankItemModel;
-            MessageCenter.NavigateToPage(this,new NavigationInfo() { 
-                icon= Symbol.Play,
-                page=typeof(VideoDetailPage),
-                title=item.title,
-                parameters=item.aid
+            var item = e.ClickedItem as RankItemModel;
+            MessageCenter.NavigateToPage(this, new NavigationInfo()
+            {
+                icon = Symbol.Play,
+                page = typeof(VideoDetailPage),
+                title = item.title,
+                parameters = item.aid
             });
         }
 

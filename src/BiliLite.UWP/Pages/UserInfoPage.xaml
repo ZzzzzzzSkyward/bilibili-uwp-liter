@@ -15,17 +15,17 @@
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Controls/Dynamic/DynamicTemplate.xaml"/>
+                <ResourceDictionary Source="/Controls/Dynamic/DynamicTemplate.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <Style TargetType="HyperlinkButton">
                 <Setter Property="Foreground" Value="#178bcf" />
             </Style>
-            <convert:DatetimeConvert x:Key="time"/>
+            <convert:DatetimeConvert x:Key="time" />
 
             <SolidColorBrush x:Key="SystemControlHighlightAltAccentBrush" Color="White"></SolidColorBrush>
             <ItemsPanelTemplate x:Key="GridPanel">
-                <toolkit:StaggeredPanel DesiredColumnWidth="500" 
+                <toolkit:StaggeredPanel DesiredColumnWidth="500"
                                           HorizontalAlignment="Stretch"
                                           ColumnSpacing="-12"
                                           RowSpacing="8" />
@@ -37,33 +37,30 @@
             <DataTemplate x:Key="UserTpl" x:DataType="modules1:UserFollowItemModel">
                 <Grid Padding="0 8">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition/>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition />
                     </Grid.ColumnDefinitions>
                     <Grid>
                         <Ellipse Width="48" Height="48" Margin="4 0 0 0">
                             <Ellipse.Fill>
-                                <ImageBrush Stretch="UniformToFill" ImageSource="{x:Bind Path=face,Converter={StaticResource imageConvert2},ConverterParameter='56w'}"/>
+                                <ImageBrush Stretch="UniformToFill" ImageSource="{x:Bind Path=face,Converter={StaticResource imageConvert2},ConverterParameter='56w'}" />
                             </Ellipse.Fill>
                         </Ellipse>
                         <Image Width="20" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0 0 0 0" Height="20" Source="{x:Bind Path=Verify}"></Image>
                     </Grid>
                     <StackPanel Grid.Column="1" Margin="12 0 0 0" VerticalAlignment="Center">
                         <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis" Text="{x:Bind uname}"></TextBlock>
-                        <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis" MaxLines="1" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind sign}"/>
+                        <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis" MaxLines="1" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind sign}" />
                     </StackPanel>
                 </Grid>
             </DataTemplate>
-
         </ResourceDictionary>
-
     </Page.Resources>
     <Grid>
 
-
         <SplitView x:Name="splitView" OpenPaneLength="360" PaneBackground="Transparent" PanePlacement="Right" IsPaneOpen="False" DisplayMode="Overlay">
             <SplitView.Pane>
-                <Border x:Name="RootBorder" Padding="12,0,0,0" >
+                <Border x:Name="RootBorder" Padding="12,0,0,0">
                     <Grid>
                         <toolkit:DropShadowPanel BlurRadius="12"
                                           Color="Black"
@@ -76,20 +73,19 @@
                             <Pivot x:Name="pivotRight" SelectionChanged="pivotRight_SelectionChanged">
                                 <PivotItem Margin="0">
                                     <PivotItem.Header>
-                                        <TextBlock FontSize="15">转发(<Run x:Name="repostCount"/>)</TextBlock>
+                                        <TextBlock FontSize="15">转发(<Run x:Name="repostCount" />)</TextBlock>
                                     </PivotItem.Header>
                                     <control:DynamicRepostControl x:Name="repost"></control:DynamicRepostControl>
                                 </PivotItem>
                                 <PivotItem Margin="0">
                                     <PivotItem.Header>
-                                        <TextBlock FontSize="15">评论(<Run x:Name="commentCount"/>)</TextBlock>
+                                        <TextBlock FontSize="15">评论(<Run x:Name="commentCount" />)</TextBlock>
                                     </PivotItem.Header>
                                     <control:CommentControl x:Name="comment"></control:CommentControl>
                                 </PivotItem>
                             </Pivot>
                         </Grid>
                     </Grid>
-
                 </Border>
             </SplitView.Pane>
             <SplitView.Content>
@@ -98,13 +94,13 @@
                         <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"></SolidColorBrush>
                     </Grid.Resources>
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="auto"/>
-                        <RowDefinition/>
+                        <RowDefinition Height="auto" />
+                        <RowDefinition />
                     </Grid.RowDefinitions>
                     <Grid Padding="8 0" Background="{ThemeResource TopPaneBackground}" VerticalAlignment="Top" Height="48">
                         <Button Background="Transparent" Padding="0" HorizontalAlignment="Left" Click="RefreshUserDetail">
                             <Button.Content>
-                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal" >
+                                <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                                     <Ellipse Width="36" Height="36">
                                         <Ellipse.Fill>
                                             <ImageBrush ImageSource="{x:Bind Path=userDetailVM.UserInfo.face,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='56h'}"></ImageBrush>
@@ -120,11 +116,10 @@
                                         <Grid VerticalAlignment="Top" Margin="0 80 0 0">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition  />
-
+                                                <ColumnDefinition />
                                             </Grid.ColumnDefinitions>
-                                            <Grid Margin="12 0"  VerticalAlignment="Top" >
-                                                <Ellipse  Width="56" Height="56" Stroke="White" StrokeThickness="2" >
+                                            <Grid Margin="12 0"  VerticalAlignment="Top">
+                                                <Ellipse  Width="56" Height="56" Stroke="White" StrokeThickness="2">
                                                     <Ellipse.Fill>
                                                         <ImageBrush ImageSource="{x:Bind Path=userDetailVM.UserInfo.face,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='56h'}"></ImageBrush>
                                                     </Ellipse.Fill>
@@ -139,7 +134,7 @@
                                                     <TextBlock Visibility="{x:Bind Path=userDetailVM.UserInfo.vip.status,Mode=OneWay,Converter={StaticResource display},ConverterParameter=1}" FontWeight="Bold" Foreground="HotPink" VerticalAlignment="Center" Text="{x:Bind Path=userDetailVM.UserInfo.name,Mode=OneWay}"></TextBlock>
                                                     <TextBlock Visibility="{x:Bind Path=userDetailVM.UserInfo.vip.status,Mode=OneWay,Converter={StaticResource display},ConverterParameter=0}" FontWeight="Bold"  VerticalAlignment="Center" Text="{x:Bind Path=userDetailVM.UserInfo.name,Mode=OneWay}"></TextBlock>
                                                     <Border Background="{x:Bind Path=userDetailVM.UserInfo.level_color,Mode=OneWay}" Opacity=".8" Margin="8 0" CornerRadius="2">
-                                                        <TextBlock Margin="4 2" Foreground="White" FontSize="12">LV<Run Text="{x:Bind Path=userDetailVM.UserInfo.level,Mode=OneWay}"/></TextBlock>
+                                                        <TextBlock Margin="4 2" Foreground="White" FontSize="12">LV<Run Text="{x:Bind Path=userDetailVM.UserInfo.level,Mode=OneWay}" /></TextBlock>
                                                     </Border>
                                                     <Border Visibility="{x:Bind Path=userDetailVM.UserInfo.vip.status,Mode=OneWay,Converter={StaticResource display},ConverterParameter=1}" Background="HotPink" Opacity=".8" CornerRadius="2">
                                                         <TextBlock Margin="4 2" Foreground="White" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.vip.label.text,Mode=OneWay}"></TextBlock>
@@ -167,9 +162,8 @@
                                 </AppBarButton.Icon>
                             </AppBarButton>
                             <AppBarButton x:Name="btnChat" Click="btnChat_Click" Label="私信" Icon="Message">
-
                             </AppBarButton>
-                            <AppBarButton Visibility="{x:Bind Path=userDetailVM.UserInfo.live_room.liveStatus,Mode=OneWay,Converter={StaticResource display},ConverterParameter=1}" x:Name="btnLiveRoom" Click="btnLiveRoom_Click" Label="直播间" >
+                            <AppBarButton Visibility="{x:Bind Path=userDetailVM.UserInfo.live_room.liveStatus,Mode=OneWay,Converter={StaticResource display},ConverterParameter=1}" x:Name="btnLiveRoom" Click="btnLiveRoom_Click" Label="直播间">
                                 <AppBarButton.Icon>
                                     <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE960;" />
                                 </AppBarButton.Icon>
@@ -184,16 +178,16 @@
             </Pivot.RightHeader>-->
                         <PivotItem Margin="0">
                             <PivotItem.Header>
-                                <TextBlock FontSize="15">视频<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.video,Mode=OneWay}"/></TextBlock>
+                                <TextBlock FontSize="15">视频<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.video,Mode=OneWay}" /></TextBlock>
                             </PivotItem.Header>
                             <Grid>
                                 <control:MyAdaptiveGridView
-                                    Padding="12 8" 
-                                    ItemHeight="100" 
-                                    DesiredWidth="600" 
-                                    StretchContentForSingleRow="False" 
-                                    SelectionMode="None" 
-                                    IsItemClickEnabled="True" 
+                                    Padding="12 8"
+                                    ItemHeight="100"
+                                    DesiredWidth="600"
+                                    StretchContentForSingleRow="False"
+                                    SelectionMode="None"
+                                    IsItemClickEnabled="True"
                                     CanLoadMore="{x:Bind Path=userSubmitVideoVM.SubmitVideoCanLoadMore,Mode=OneWay}"
                                     LoadMoreBottomOffset="0"
                                     LoadMoreCommand="{x:Bind Path=userSubmitVideoVM.LoadMoreSubmitVideoCommand}"
@@ -204,7 +198,6 @@
                                         <Grid Margin="4 8">
                                             <StackPanel Orientation="Horizontal">
                                                 <ComboBox DisplayMemberPath="name" ItemsSource="{x:Bind Path=userSubmitVideoVM.Tlist,Mode=OneWay}" SelectionChanged="ComboBox_SelectionChanged" SelectedItem="{x:Bind Path=userSubmitVideoVM.SelectTid,Mode=TwoWay}" Background="{ThemeResource TransparentBackground}" Width="120">
-
                                                 </ComboBox>
                                                 <ComboBox x:Name="comVideoOrder" SelectionChanged="comVideoOrder_SelectionChanged" Margin="8 0"  SelectedIndex="{x:Bind Path=userSubmitVideoVM.SelectOrder,Mode=TwoWay}"  Background="{ThemeResource TransparentBackground}">
                                                     <ComboBoxItem>最新发布</ComboBoxItem>
@@ -225,11 +218,11 @@
                                             <Grid Background="#00FFFFFF">
                                                 <Grid.ContextFlyout>
                                                     <MenuFlyout>
-                                                        <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看"/>
+                                                        <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看" />
                                                     </MenuFlyout>
                                                 </Grid.ContextFlyout>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="160"/>
+                                                    <ColumnDefinition Width="160" />
                                                     <ColumnDefinition />
                                                 </Grid.ColumnDefinitions>
                                                 <Border Margin="4" CornerRadius="{StaticResource ImageCornerRadius}">
@@ -240,11 +233,11 @@
                                                         </Border>
                                                     </Grid>
                                                 </Border>
-                                                <StackPanel Grid.Column="1" Margin="4 0 0 0" >
+                                                <StackPanel Grid.Column="1" Margin="4 0 0 0">
                                                     <TextBlock MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
 
-                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 4 0 0">观看:<Run Text="{x:Bind Path=play,Converter={StaticResource numberToStringConvert}}"/> 弹幕:<Run Text="{x:Bind Path=video_review,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
-                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 4 0 0">发表于 <Run Text="{x:Bind Path=created,Converter={StaticResource time},ConverterParameter='ts'}"/></TextBlock>
+                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 4 0 0">观看:<Run Text="{x:Bind Path=play,Converter={StaticResource numberToStringConvert}}" /> 弹幕:<Run Text="{x:Bind Path=video_review,Converter={StaticResource numberToStringConvert}}" /></TextBlock>
+                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 4 0 0">发表于 <Run Text="{x:Bind Path=created,Converter={StaticResource time},ConverterParameter='ts'}" /></TextBlock>
                                                 </StackPanel>
                                                 <!--<TextBlock  Grid.Row="2" Margin="4 0 4 4" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding desc}"></TextBlock>-->
                                             </Grid>
@@ -272,15 +265,14 @@
 
                             <Grid Background="{ThemeResource TransparentBackground}">
 
-
-                                <control:MyListView SelectionMode="None" 
-                  IsItemClickEnabled="false" 
+                                <control:MyListView SelectionMode="None"
+                  IsItemClickEnabled="false"
                           x:Name="list"
-                  ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}" 
+                  ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}"
                                          CanLoadMore="{x:Bind Path=dynamicVM.CanLoadMore,Mode=OneWay}"
                                          LoadMoreBottomOffset="0"
                                          LoadMoreCommand="{x:Bind Path=dynamicVM.LoadMoreCommand}"
-                  Padding="4" 
+                  Padding="4"
                   Grid.Row="1"
                  ItemTemplateSelector="{StaticResource select}"
                   HorizontalContentAlignment="Center">
@@ -289,20 +281,19 @@
                                             <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
                                             <Setter Property="MaxWidth" Value="800"></Setter>
                                             <Setter Property="Margin" Value="4"></Setter>
-
                                         </Style>
                                     </control:MyListView.ItemContainerStyle>
                                 </control:MyListView>
                                 <ProgressRing Grid.Row="1" VerticalAlignment="Bottom" Margin="8" IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.Loading,Mode=OneWay}"></ProgressRing>
                                 <StackPanel Orientation="Vertical"  Grid.Row="1" VerticalAlignment="Bottom" Margin="20 12" HorizontalAlignment="Right">
                                     <control:RoundButton x:Name="btnGrid"  ToolTipService.ToolTip="切换为瀑布流" Click="btnGrid_Click" Margin="0 0 0 8"  Padding="12">
-                                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE80A;"  Foreground="White"/>
+                                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE80A;"  Foreground="White" />
                                     </control:RoundButton>
                                     <control:RoundButton x:Name="btnList"  Visibility="Collapsed" ToolTipService.ToolTip="切换为列表" Click="btnList_Click" Margin="0 0 0 8"  Padding="12">
-                                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE292;" Foreground="White"/>
+                                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE292;" Foreground="White" />
                                     </control:RoundButton>
                                     <control:RoundButton x:Name="btnTop" Click="btnTop_Click" ToolTipService.ToolTip="返回顶部"  Margin="0 0 0 8"  Padding="12">
-                                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE110;" Foreground="White"/>
+                                        <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE110;" Foreground="White" />
                                     </control:RoundButton>
                                     <control:RoundButton x:Name="btnRefreshDynamic"  Command="{x:Bind Path=dynamicVM.RefreshCommand}"   Padding="12">
                                         <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
@@ -312,16 +303,16 @@
                         </PivotItem>
                         <PivotItem Margin="0">
                             <PivotItem.Header>
-                                <TextBlock FontSize="15">专栏<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.article,Mode=OneWay}"/></TextBlock>
+                                <TextBlock FontSize="15">专栏<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.article,Mode=OneWay}" /></TextBlock>
                             </PivotItem.Header>
                             <Grid>
                                 <control:MyAdaptiveGridView
-                                    Padding="12 8" 
-                                    ItemHeight="100" 
-                                    DesiredWidth="600" 
-                                    StretchContentForSingleRow="False" 
-                                    SelectionMode="None" 
-                                    IsItemClickEnabled="True" 
+                                    Padding="12 8"
+                                    ItemHeight="100"
+                                    DesiredWidth="600"
+                                    StretchContentForSingleRow="False"
+                                    SelectionMode="None"
+                                    IsItemClickEnabled="True"
                                     CanLoadMore="{x:Bind Path=userSubmitArticleVM.SubmitArticleCanLoadMore,Mode=OneWay}"
                                     LoadMoreBottomOffset="0"
                                     LoadMoreCommand="{x:Bind Path=userSubmitArticleVM.LoadMoreSubmitArticleCommand}"
@@ -338,7 +329,6 @@
                                                     <ComboBoxItem>最多收藏</ComboBoxItem>
                                                 </ComboBox>
                                             </StackPanel>
-
                                         </Grid>
                                     </toolkit:AdaptiveGridView.Header>
                                     <toolkit:AdaptiveGridView.ItemContainerStyle>
@@ -350,24 +340,24 @@
                                         <DataTemplate x:DataType="modules1:SubmitArticleItemModel">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="160"/>
+                                                    <ColumnDefinition Width="160" />
                                                     <ColumnDefinition />
                                                 </Grid.ColumnDefinitions>
                                                 <Border Margin="4" CornerRadius="{StaticResource ImageCornerRadius}">
-                                                    <Grid >
+                                                    <Grid>
                                                         <toolkit:ImageEx IsCacheEnabled="True" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='120h'}"></toolkit:ImageEx>
                                                         <Border CornerRadius="4" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="4" Padding="4 2" Background="#99000000">
-                                                            <TextBlock Foreground="White" FontSize="12" >
+                                                            <TextBlock Foreground="White" FontSize="12">
                                                             <Run Text="{x:Bind Path=category.name}"></Run>
                                                             </TextBlock>
                                                         </Border>
                                                     </Grid>
                                                 </Border>
-                                                <StackPanel Grid.Column="1" Margin="4 0 0 0" >
+                                                <StackPanel Grid.Column="1" Margin="4 0 0 0">
                                                     <TextBlock MaxLines="1" TextWrapping="Wrap"  TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
                                                     <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 4 0 0" MaxLines="1" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=summary}"></TextBlock>
-                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 4 0 0">观看:<Run Text="{x:Bind Path=stats.view,Converter={StaticResource numberToStringConvert}}"/> 点赞:<Run Text="{x:Bind Path=stats.like,Converter={StaticResource numberToStringConvert}}"/> 评论:<Run Text="{x:Bind Path=stats.reply,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
-                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 4 0 0">发表于 <Run Text="{x:Bind Path=publish_time,Converter={StaticResource time},ConverterParameter='ts'}"/></TextBlock>
+                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 4 0 0">观看:<Run Text="{x:Bind Path=stats.view,Converter={StaticResource numberToStringConvert}}" /> 点赞:<Run Text="{x:Bind Path=stats.like,Converter={StaticResource numberToStringConvert}}" /> 评论:<Run Text="{x:Bind Path=stats.reply,Converter={StaticResource numberToStringConvert}}" /></TextBlock>
+                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 4 0 0">发表于 <Run Text="{x:Bind Path=publish_time,Converter={StaticResource time},ConverterParameter='ts'}" /></TextBlock>
                                                 </StackPanel>
                                                 <!--<TextBlock  Grid.Row="2" Margin="4 0 4 4" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding desc}"></TextBlock>-->
                                             </Grid>
@@ -395,15 +385,15 @@
                         </PivotItem>-->
                         <PivotItem Margin="0">
                             <PivotItem.Header>
-                                <TextBlock FontSize="15">收藏<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.favourite,Mode=OneWay}"/></TextBlock>
+                                <TextBlock FontSize="15">收藏<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.favourite,Mode=OneWay}" /></TextBlock>
                             </PivotItem.Header>
                             <Grid>
-                                <toolkit:AdaptiveGridView 
-                                    Padding="12 8" 
-                                    DesiredWidth="300" 
-                                    StretchContentForSingleRow="False" 
-                                    SelectionMode="None" 
-                                    IsItemClickEnabled="True" 
+                                <toolkit:AdaptiveGridView
+                                    Padding="12 8"
+                                    DesiredWidth="300"
+                                    StretchContentForSingleRow="False"
+                                    SelectionMode="None"
+                                    IsItemClickEnabled="True"
                                     ItemsSource="{x:Bind Path=userFavlistVM.Items,Mode=OneWay}"
                                     ItemClick="FavList_ItemClick"
                                     OneRowModeEnabled="False">
@@ -417,40 +407,38 @@
                                         <DataTemplate x:DataType="modules1:FavFolderItemModel">
                                             <Grid Padding="8">
                                                 <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto"/>
+                                                    <ColumnDefinition Width="Auto" />
                                                     <ColumnDefinition />
                                                 </Grid.ColumnDefinitions>
                                                 <fa:FontAwesome Foreground="Orange" FontSize="36" Icon="Solid_Folder"></fa:FontAwesome>
                                                 <StackPanel Margin="12 0 0 0" Grid.Column="1">
                                                     <TextBlock Text="{x:Bind Path=title}"></TextBlock>
-                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" >
-                                                        <Run Text="{x:Bind Path=media_count}"/>
+                                                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" FontSize="12">
+                                                        <Run Text="{x:Bind Path=media_count}" />
                                                         个内容
                                                     </TextBlock>
                                                 </StackPanel>
                                             </Grid>
                                         </DataTemplate>
                                     </toolkit:AdaptiveGridView.ItemTemplate>
-
                                 </toolkit:AdaptiveGridView>
                                 <TextBlock Visibility="{x:Bind Path=userFavlistVM.Nothing,Mode=OneWay}" Text="这里什么都没有呢..." Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" HorizontalAlignment="Center"></TextBlock>
                                 <control:RoundButton  Command="{x:Bind Path=userFavlistVM.RefreshCommand}"  VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                                     <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                                 </control:RoundButton>
                             </Grid>
-
                         </PivotItem>
                         <PivotItem Margin="0">
                             <PivotItem.Header>
-                                <TextBlock FontSize="15">关注<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.attention,Mode=OneWay}"/></TextBlock>
+                                <TextBlock FontSize="15">关注<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.attention,Mode=OneWay}" /></TextBlock>
                             </PivotItem.Header>
                             <Grid>
                                 <control:MyAdaptiveGridView
-                                    Padding="12 8" 
-                                    DesiredWidth="600" 
-                                    StretchContentForSingleRow="False" 
-                                    SelectionMode="None" 
-                                    IsItemClickEnabled="True" 
+                                    Padding="12 8"
+                                    DesiredWidth="600"
+                                    StretchContentForSingleRow="False"
+                                    SelectionMode="None"
+                                    IsItemClickEnabled="True"
                                     CanLoadMore="{x:Bind Path=followVM.CanLoadMore,Mode=OneWay}"
                                     LoadMoreBottomOffset="0"
                                     LoadMoreCommand="{x:Bind Path=followVM.LoadMoreCommand}"
@@ -462,13 +450,10 @@
                                         <Grid Margin="4 8" x:Name="followHeader">
                                             <StackPanel Orientation="Horizontal">
                                                 <ComboBox DisplayMemberPath="name" ItemsSource="{x:Bind Path=followVM.Tlist,Mode=OneWay}" SelectionChanged="ComboBox_SelectionChanged_1" SelectedItem="{x:Bind Path=followVM.SelectTid,Mode=TwoWay}">
-
                                                 </ComboBox>
                                                 <ComboBox x:Name="comFollowOrder" SelectionChanged="comFollowOrder_SelectionChanged" Margin="8 0"  SelectedIndex="{x:Bind Path=followVM.SelectOrder,Mode=TwoWay}">
                                                     <ComboBoxItem>关注时间</ComboBoxItem>
                                                     <ComboBoxItem>最常访问</ComboBoxItem>
-                                                 
-
                                                 </ComboBox>
                                             </StackPanel>
                                             <AutoSuggestBox Text="{x:Bind Path=followVM.Keyword,Mode=TwoWay}" x:Name="searchFollow"  QuerySubmitted="searchFollow_QuerySubmitted" QueryIcon="Find" PlaceholderText="搜索关注的人" Width="160" HorizontalAlignment="Right"></AutoSuggestBox>
@@ -497,15 +482,15 @@
                         </PivotItem>
                         <PivotItem Margin="0">
                             <PivotItem.Header>
-                                <TextBlock FontSize="15">粉丝<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.fans,Mode=OneWay}"/></TextBlock>
+                                <TextBlock FontSize="15">粉丝<Run Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind Path=userDetailVM.UserInfo.stat.fans,Mode=OneWay}" /></TextBlock>
                             </PivotItem.Header>
                             <Grid>
                                 <control:MyAdaptiveGridView
-                                    Padding="12 8" 
-                                    DesiredWidth="600" 
-                                    StretchContentForSingleRow="False" 
-                                    SelectionMode="None" 
-                                    IsItemClickEnabled="True" 
+                                    Padding="12 8"
+                                    DesiredWidth="600"
+                                    StretchContentForSingleRow="False"
+                                    SelectionMode="None"
+                                    IsItemClickEnabled="True"
                                     CanLoadMore="{x:Bind Path=fansVM.CanLoadMore,Mode=OneWay}"
                                     LoadMoreBottomOffset="0"
                                     LoadMoreCommand="{x:Bind Path=fansVM.LoadMoreCommand}"
@@ -536,7 +521,6 @@
                             </Grid>
                         </PivotItem>
                     </Pivot>
-
                 </Grid>
             </SplitView.Content>
         </SplitView>

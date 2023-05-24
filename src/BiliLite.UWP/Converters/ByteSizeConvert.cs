@@ -22,18 +22,17 @@ namespace BiliLite.Converters
             }
             if (unit == "GB")
             {
-                return (size / 1024d / 1024d / 1024d).ToString("0.00")+ unit;
+                return (size / 1024d / 1024d / 1024d).ToString("0.00") + unit;
             }
             else
             if (unit == "MB")
             {
-                return (size / 1024d / 1024d ).ToString("0.00") + unit;
+                return (size / 1024d / 1024d).ToString("0.00") + unit;
             }
             else
             {
                 return (size / 1024d).ToString("0.00") + unit;
             }
-           
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)

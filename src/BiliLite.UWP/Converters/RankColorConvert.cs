@@ -20,12 +20,15 @@ namespace BiliLite.Converters
                 case 1:
                     color = Colors.DarkOrange;
                     break;
+
                 case 2:
                     color = Colors.Silver;
                     break;
+
                 case 3:
                     color = Colors.Orange;
                     break;
+
                 default:
                     color = Colors.Gray;
                     break;

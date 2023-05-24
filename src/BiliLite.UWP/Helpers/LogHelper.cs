@@ -3,7 +3,6 @@ using NLog.Config;
 using System;
 using System.Diagnostics;
 
-
 namespace BiliLite.Helpers
 {
     public enum LogType
@@ -13,10 +12,12 @@ namespace BiliLite.Helpers
         ERROR,
         FATAL
     }
+
     public class LogHelper
     {
         public static LoggingConfiguration config;
         public static NLog.Logger logger = NLog.LogManager.GetCurrentClassLogger();
+
         public static void Log(string message, LogType type, Exception ex = null)
         {
             if (config == null)
@@ -42,19 +43,24 @@ namespace BiliLite.Helpers
                 case LogType.INFO:
                     logger.Info(message);
                     break;
+
                 case LogType.DEBUG:
                     logger.Debug(message);
                     break;
+
                 case LogType.ERROR:
                     logger.Error(ex, message);
                     break;
+
                 case LogType.FATAL:
                     logger.Fatal(ex, message);
                     break;
+
                 default:
                     break;
             }
         }
+
         public static bool IsNetworkError(Exception ex)
         {
             if (ex.HResult == -2147012867 || ex.HResult == -2147012889)
@@ -65,6 +71,5 @@ namespace BiliLite.Helpers
                 return false;
             }
         }
-
     }
 }

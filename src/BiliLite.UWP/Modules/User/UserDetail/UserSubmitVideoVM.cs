@@ -15,6 +15,7 @@ namespace BiliLite.Modules.User.UserDetail
     {
         public string mid { get; set; }
         private readonly UserDetailAPI userDetailAPI;
+
         public UserSubmitVideoVM()
         {
             userDetailAPI = new UserDetailAPI();
@@ -32,23 +33,26 @@ namespace BiliLite.Modules.User.UserDetail
 
         public int SelectOrder { get; set; } = 0;
 
-
-
         private bool _LoadingSubmitVideo = true;
+
         public bool LoadingSubmitVideo
         {
             get { return _LoadingSubmitVideo; }
             set { _LoadingSubmitVideo = value; DoPropertyChanged("LoadingSubmitVideo"); }
         }
+
         private bool _SubmitVideoCanLoadMore = false;
+
         public bool SubmitVideoCanLoadMore
         {
             get { return _SubmitVideoCanLoadMore; }
             set { _SubmitVideoCanLoadMore = value; DoPropertyChanged("SubmitVideoCanLoadMore"); }
         }
+
         public ICommand RefreshSubmitVideoCommand { get; private set; }
         public ICommand LoadMoreSubmitVideoCommand { get; private set; }
         private ObservableCollection<SubmitVideoItemModel> _SubmitVideoItems;
+
         public ObservableCollection<SubmitVideoItemModel> SubmitVideoItems
         {
             get { return _SubmitVideoItems; }
@@ -70,6 +74,7 @@ namespace BiliLite.Modules.User.UserDetail
             get { return _selectTid; }
             set { if (value == null) return; _selectTid = value; }
         }
+
         private bool _Nothing = false;
 
         public bool Nothing
@@ -104,8 +109,6 @@ namespace BiliLite.Modules.User.UserDetail
                             {
                                 Tlist.Add(JsonConvert.DeserializeObject<SubmitVideoTlistItemModel>(item.First.ToString()));
                             }
-
-
                         }
 
                         var items = JsonConvert.DeserializeObject<ObservableCollection<SubmitVideoItemModel>>(data["data"]["list"]["vlist"].ToString());
@@ -125,8 +128,6 @@ namespace BiliLite.Modules.User.UserDetail
                             Nothing = true;
                         }
 
-
-
                         var count = data["data"]["page"]["count"].ToInt32();
                         if (SubmitVideoItems.Count >= count)
                         {
@@ -137,10 +138,6 @@ namespace BiliLite.Modules.User.UserDetail
                             SubmitVideoCanLoadMore = true;
                             SubmitVideoPage++;
                         }
-
-
-
-
                     }
                     else
                     {
@@ -150,7 +147,6 @@ namespace BiliLite.Modules.User.UserDetail
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -163,6 +159,7 @@ namespace BiliLite.Modules.User.UserDetail
                 LoadingSubmitVideo = false;
             }
         }
+
         public async void Refresh()
         {
             if (LoadingSubmitVideo)
@@ -173,6 +170,7 @@ namespace BiliLite.Modules.User.UserDetail
             SubmitVideoPage = 1;
             await GetSubmitVideo();
         }
+
         public async void LoadMore()
         {
             if (LoadingSubmitVideo)
@@ -186,12 +184,14 @@ namespace BiliLite.Modules.User.UserDetail
             await GetSubmitVideo();
         }
     }
+
     public class SubmitVideoTlistItemModel
     {
         public int tid { get; set; }
         public string name { get; set; }
         public int count { get; set; }
     }
+
     public class SubmitVideoItemModel
     {
         public int comment { get; set; }
@@ -206,5 +206,4 @@ namespace BiliLite.Modules.User.UserDetail
         public long created { get; set; }
         public int video_review { get; set; }
     }
-
 }

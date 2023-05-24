@@ -20,13 +20,15 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class DownloadPage : BasePage
     {
-        DownloadVM downloadVM;
+        private DownloadVM downloadVM;
+
         public DownloadPage()
         {
             downloadVM = DownloadVM.Instance;
             this.InitializeComponent();
             Title = "下载";
         }
+
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -35,6 +37,7 @@ namespace BiliLite.Pages
                 downloadVM.RefreshDownloaded();
             }
         }
+
         private void listDowned_ItemClick(object sender, ItemClickEventArgs e)
         {
             var data = e.ClickedItem as DownloadedItem;
@@ -226,8 +229,6 @@ namespace BiliLite.Pages
                 Utils.ShowMessageToast("目录删除失败，请检查是否文件是否被占用");
                 LogHelper.Log("删除下载视频失败", LogType.FATAL, ex);
             }
-
-
         }
 
         private async void btnMerge_Click(object sender, RoutedEventArgs e)
@@ -286,7 +287,6 @@ namespace BiliLite.Pages
                     Utils.ShowMessageToast("转换SRT字幕失败");
                     LogHelper.Log("转换字幕失败", LogType.ERROR, ex);
                 }
-
             }
 
             var savePicker = new Windows.Storage.Pickers.FileSavePicker();
@@ -299,7 +299,5 @@ namespace BiliLite.Pages
                 return;
             await AppHelper.LaunchConverter(data.Title + "-" + item.Title, item.Paths, file.Path, subtitles, item.IsDash);
         }
-
-
     }
 }

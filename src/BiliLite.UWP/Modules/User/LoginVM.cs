@@ -17,9 +17,10 @@ namespace BiliLite.Modules.User
     public class LoginVM : IModules
     {
         public Account account;
-        Timer smsTimer;
-        Timer qrTimer;
-        Api.AccountApi accountApi;
+        private Timer smsTimer;
+        private Timer qrTimer;
+        private Api.AccountApi accountApi;
+
         public LoginVM()
         {
             account = new Account();
@@ -32,14 +33,19 @@ namespace BiliLite.Modules.User
             smsTimer.Elapsed += SmsTimer_Elapsed;
             Manual = false;
         }
+
         public event EventHandler<Uri> OpenWebView;
+
         public event EventHandler<bool> SetWebViewVisibility;
+
         public event EventHandler CloseDialog;
+
         public ICommand LoginTypeCommand { get; private set; }
         public ICommand SendSMSCommand { get; private set; }
         public ICommand RefreshQRCommand { get; private set; }
 
         public int loginType = 1;
+
         /// <summary>
         /// 登录类型
         /// 0=账号密码，1=短信登录，2=二维码登录
@@ -51,6 +57,7 @@ namespace BiliLite.Modules.User
         }
 
         private string title = "短信登录";
+
         public string Title
         {
             get { return title; }
@@ -63,7 +70,8 @@ namespace BiliLite.Modules.User
         {
             get { return _primaryButtonEnable; }
             set { _primaryButtonEnable = value; DoPropertyChanged("PrimaryButtonEnable"); }
-        }        
+        }
+
         private bool _Manual = false;
 
         public bool Manual
@@ -74,7 +82,7 @@ namespace BiliLite.Modules.User
 
         public void OpenManualPage()
         {
-            var url= "https://l78z.nsapps.cn/bili_gt.html";
+            var url = "https://l78z.nsapps.cn/bili_gt.html";
             Launcher.LaunchUriAsync(new Uri(url));
         }
 
@@ -94,6 +102,7 @@ namespace BiliLite.Modules.User
                     Utils.ShowMessageToast("为了您的账号安全,建议扫描二维码登录");
                     Manual = true;
                     break;
+
                 case 1:
                     Title = "短信登录";
                     if (qrTimer != null)
@@ -103,16 +112,19 @@ namespace BiliLite.Modules.User
                     }
                     Manual = true;
                     break;
+
                 case 2:
                     Title = "二维码登录";
                     GetQRAuthInfo();
                     Manual = false;
                     break;
+
                 case 3:
                     Title = "手动登录";
                     Utils.ShowMessageToast("记得调整一下appkey！");
                     Manual = true;
                     break;
+
                 default:
                     break;
             }
@@ -128,7 +140,6 @@ namespace BiliLite.Modules.User
             {
                 DoPasswordLogin();
             }
-
         }
 
         public async void ValidateLogin(JObject jObject)
@@ -137,7 +148,7 @@ namespace BiliLite.Modules.User
             {
                 if (jObject["access_token"] != null)
                 {
-                    var m = await account.SaveLogin(jObject["access_token"].ToString(), jObject["refresh_token"].ToString(), jObject["expires_in"].ToInt32(), Convert.ToInt64(jObject["mid"].ToString()), null,null);
+                    var m = await account.SaveLogin(jObject["access_token"].ToString(), jObject["refresh_token"].ToString(), jObject["expires_in"].ToInt32(), Convert.ToInt64(jObject["mid"].ToString()), null, null);
 
                     if (m)
                     {
@@ -158,7 +169,6 @@ namespace BiliLite.Modules.User
                     SetWebViewVisibility?.Invoke(this, false);
                     Utils.ShowMessageToast("登录失败,请重试");
                 }
-
             }
             catch (Exception ex)
             {
@@ -167,19 +177,25 @@ namespace BiliLite.Modules.User
         }
 
         #region 短信登录
+
         private ObservableCollection<CountryItemModel> _countries;
+
         public ObservableCollection<CountryItemModel> Countries
         {
             get { return _countries; }
             set { _countries = value; DoPropertyChanged("Countries"); }
         }
+
         private CountryItemModel currentCountry;
+
         public CountryItemModel CurrentCountry
         {
             get { return currentCountry; }
             set { currentCountry = value; DoPropertyChanged("CurrentCountry"); }
         }
+
         private string phone;
+
         public string Phone
         {
             get { return phone; }
@@ -187,6 +203,7 @@ namespace BiliLite.Modules.User
         }
 
         private string code;
+
         public string Code
         {
             get { return code; }
@@ -194,26 +211,25 @@ namespace BiliLite.Modules.User
         }
 
         private bool enableSendSMS = true;
+
         public bool EnableSendSMS
         {
             get { return enableSendSMS; }
             set { enableSendSMS = value; DoPropertyChanged("EnableSendSMS"); }
         }
 
-
         private int _SMSCountDown = 60;
+
         public int SMSCountDown
         {
             get { return _SMSCountDown; }
             set { _SMSCountDown = value; DoPropertyChanged("SMSCountDown"); }
         }
 
-
         public async Task LoadCountry()
         {
             try
             {
-
                 var results = await accountApi.Country().Request();
                 if (results.status)
                 {
@@ -242,8 +258,8 @@ namespace BiliLite.Modules.User
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
-
         }
+
         private async void SmsTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
@@ -259,8 +275,10 @@ namespace BiliLite.Modules.User
                 }
             });
         }
-        string sessionId = "";
-        string captchaKey = "";
+
+        private string sessionId = "";
+        private string captchaKey = "";
+
         public async void SendSMSCode()
         {
             if (CurrentCountry == null)
@@ -288,10 +306,10 @@ namespace BiliLite.Modules.User
                             var uri = new Uri(data.data.recaptcha_url);
                             SetWebViewVisibility?.Invoke(this, true);
                             var newuri = new Uri("ms-appx-web:///Asset/JiYan/%E6%9E%81%E9%AA%8C.htm" + uri.Query + "&app=uwp");
-                            if(Manual)
-                            Launcher.LaunchUriAsync(newuri);
+                            if (Manual)
+                                Launcher.LaunchUriAsync(newuri);
                             else
-                            OpenWebView?.Invoke(this, newuri);
+                                OpenWebView?.Invoke(this, newuri);
                         }
                         else
                         {
@@ -311,7 +329,6 @@ namespace BiliLite.Modules.User
                 {
                     Utils.ShowMessageToast(results.message);
                 }
-
             }
             catch (Exception ex)
             {
@@ -319,9 +336,9 @@ namespace BiliLite.Modules.User
                 EnableSendSMS = true;
             }
         }
+
         public async void SendSMSCodeWithCaptcha(string seccode = "", string validate = "", string challenge = "", string recaptcha_token = "")
         {
-
             try
             {
                 var results = await accountApi.SendSMSWithCaptcha(CurrentCountry.country_code, Phone, sessionId, seccode, validate, challenge, recaptcha_token).Request();
@@ -340,7 +357,6 @@ namespace BiliLite.Modules.User
                                 Launcher.LaunchUriAsync(newuri);
                             else
                                 OpenWebView?.Invoke(this, newuri);
-
                         }
                         else
                         {
@@ -360,7 +376,6 @@ namespace BiliLite.Modules.User
                 {
                     Utils.ShowMessageToast(results.message);
                 }
-
             }
             catch (Exception ex)
             {
@@ -388,7 +403,6 @@ namespace BiliLite.Modules.User
             }
             try
             {
-
                 var results = await accountApi.SMSLogin(CurrentCountry.country_code, Phone, Code, sessionId, captchaKey).Request();
                 if (results.status)
                 {
@@ -400,7 +414,6 @@ namespace BiliLite.Modules.User
                 {
                     Utils.ShowMessageToast(results.message);
                 }
-
             }
             catch (Exception ex)
             {
@@ -409,8 +422,7 @@ namespace BiliLite.Modules.User
             }
         }
 
-
-        #endregion
+        #endregion 短信登录
 
         #region 密码登录
 
@@ -423,12 +435,15 @@ namespace BiliLite.Modules.User
         }
 
         private string password;
+
         public string Password
         {
             get { return password; }
             set { password = value; DoPropertyChanged("Password"); }
         }
-        string pwdSessionId = "";
+
+        private string pwdSessionId = "";
+
         public async void DoPasswordLogin(string seccode = "", string validate = "", string challenge = "", string recaptcha_token = "")
         {
             PrimaryButtonEnable = false;
@@ -449,7 +464,6 @@ namespace BiliLite.Modules.User
                     pwdSessionId = Guid.NewGuid().ToString().Replace("-", "");
                 }
 
-
                 var pwd = await account.EncryptedPassword(Password);
                 var results = await accountApi.LoginV3(UserName, pwd, pwdSessionId, seccode, validate, challenge, recaptcha_token).Request();
                 if (results.status)
@@ -467,7 +481,6 @@ namespace BiliLite.Modules.User
             catch (Exception ex)
             {
                 Utils.ShowMessageToast(ex.Message);
-
             }
             finally
             {
@@ -475,7 +488,7 @@ namespace BiliLite.Modules.User
             }
         }
 
-        #endregion
+        #endregion 密码登录
 
         #region 二维码登录
 
@@ -495,8 +508,8 @@ namespace BiliLite.Modules.User
             set { qrImageSource = value; DoPropertyChanged("QRImageSource"); }
         }
 
+        private QRAuthInfo qrAuthInfo;
 
-        QRAuthInfo qrAuthInfo;
         private async void GetQRAuthInfo()
         {
             try
@@ -530,7 +543,6 @@ namespace BiliLite.Modules.User
                 {
                     Utils.ShowMessageToast(result.message);
                 }
-
             }
             catch (Exception ex)
             {
@@ -541,7 +553,6 @@ namespace BiliLite.Modules.User
             {
                 QRLoadding = false;
             }
-
         }
 
         private void RefreshQRCode()
@@ -551,21 +562,20 @@ namespace BiliLite.Modules.User
             GetQRAuthInfo();
         }
 
-
         private async void QrTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
             await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, async () =>
             {
                 var result = await account.PollQRAuthInfo(qrAuthInfo.auth_code);
-                  if (result.status == LoginStatus.Success)
-                  {
-                      qrTimer.Stop();
+                if (result.status == LoginStatus.Success)
+                {
+                    qrTimer.Stop();
                     CloseDialog?.Invoke(this, null);
-                  }
-              });
+                }
+            });
         }
 
-        #endregion
+        #endregion 二维码登录
 
         private async Task<LoginCallbackModel> HandleLoginResult(int code, string message, LoginResultModel result)
         {
@@ -612,8 +622,8 @@ namespace BiliLite.Modules.User
                     message = message
                 };
             }
-
         }
+
         private void HandleResult(LoginCallbackModel result)
         {
             var uri = new Uri(string.IsNullOrEmpty(result.url) ? "https://www.bilibili.com" : result.url);
@@ -622,11 +632,13 @@ namespace BiliLite.Modules.User
                 case LoginStatus.Success:
                     CloseDialog?.Invoke(this, null);
                     break;
+
                 case LoginStatus.Fail:
                 case LoginStatus.Error:
                     PrimaryButtonEnable = true;
                     Utils.ShowMessageToast(result.message);
                     break;
+
                 case LoginStatus.NeedCaptcha:
                     SetWebViewVisibility?.Invoke(this, true);
                     //验证码重定向
@@ -636,12 +648,13 @@ namespace BiliLite.Modules.User
                     {
                         Launcher.LaunchUriAsync(newuri);
                         string gt = Regex.Match(uri.Query, "gt=(.*)&").Groups[1].Value;
-                        string cha= Regex.Match(uri.Query, "challenge=(.*)&").Groups[1].Value;
+                        string cha = Regex.Match(uri.Query, "challenge=(.*)&").Groups[1].Value;
                         Utils.SetClipboard(gt + " " + cha);
                     }
                     else
                         OpenWebView?.Invoke(this, newuri);
                     break;
+
                 case LoginStatus.NeedValidate:
                     SetWebViewVisibility?.Invoke(this, true);
                     if (Manual)
@@ -649,19 +662,22 @@ namespace BiliLite.Modules.User
                     else
                         OpenWebView?.Invoke(this, uri);
                     break;
+
                 default:
                     break;
             }
         }
-
     }
+
     public class CountryItemModel
     {
         public long id { get; set; }
         public string country_code { get; set; }
-        public string countryCode { get { return country_code; } }
+        public string countryCode
+        { get { return country_code; } }
         public string cname { get; set; }
     }
+
     public class SMSResultModel
     {
         public bool is_new { get; set; }
@@ -679,6 +695,7 @@ namespace BiliLite.Modules.User
         public LoginResultTokenModel token_info { get; set; }
         public LoginCookieInfo cookie_info { get; set; }
     }
+
     public class LoginResultTokenModel
     {
         public long mid { get; set; }
@@ -686,5 +703,4 @@ namespace BiliLite.Modules.User
         public int expires_in { get; set; }
         public string refresh_token { get; set; }
     }
-   
 }

@@ -16,15 +16,15 @@ namespace BiliLite.Pages.Home
     /// </summary>
     public sealed partial class AnimePage : Page
     {
-        private AnimeType animeType ;
+        private AnimeType animeType;
         public Modules.AnimeVM homeBangumi { get; set; }
+
         public AnimePage()
         {
             this.InitializeComponent();
-          
+
             MessageCenter.LoginedEvent += MessageCenter_LoginedEvent;
             MessageCenter.LogoutedEvent += MessageCenter_LogoutedEvent;
-            
         }
 
         private void MessageCenter_LogoutedEvent(object sender, EventArgs e)
@@ -38,18 +38,18 @@ namespace BiliLite.Pages.Home
             await homeBangumi.GetFollows();
         }
 
-        protected async override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New)
             {
-                animeType = (AnimeType)Convert.ToInt32( e.Parameter);
+                animeType = (AnimeType)Convert.ToInt32(e.Parameter);
                 homeBangumi = new Modules.AnimeVM(animeType);
                 this.DataContext = homeBangumi;
                 await LoadData();
             }
-
         }
+
         private async Task LoadData()
         {
             await homeBangumi.GetBangumiHome();
@@ -66,11 +66,10 @@ namespace BiliLite.Pages.Home
             var data = element.DataContext as AnimeFallModel;
             await homeBangumi.GetFallMore(element.DataContext as AnimeFallModel);
         }
-       
 
         private async void btnRefresh_Click(object sender, RoutedEventArgs e)
         {
-           await  LoadData();
+            await LoadData();
         }
 
         private async void gvFall_ItemClick(object sender, ItemClickEventArgs e)
@@ -80,7 +79,6 @@ namespace BiliLite.Pages.Home
             {
                 Utils.ShowMessageToast("不支持打开的链接");
             }
-
         }
 
         private void btnTimeline_Click(object sender, RoutedEventArgs e)
@@ -96,7 +94,7 @@ namespace BiliLite.Pages.Home
 
         private async void RefreshContainer_RefreshRequested(Microsoft.UI.Xaml.Controls.RefreshContainer sender, Microsoft.UI.Xaml.Controls.RefreshRequestedEventArgs args)
         {
-           await LoadData();
+            await LoadData();
         }
 
         private async void BannerItem_Click(object sender, RoutedEventArgs e)
@@ -114,10 +112,10 @@ namespace BiliLite.Pages.Home
             {
                 icon = Symbol.Filter,
                 page = typeof(Bangumi.AnimeIndexPage),
-                title = animeType == AnimeType.bangumi?"番剧索引":"国创索引",
-                parameters=new SeasonIndexParameter()
+                title = animeType == AnimeType.bangumi ? "番剧索引" : "国创索引",
+                parameters = new SeasonIndexParameter()
                 {
-                    type = animeType == AnimeType.bangumi ? IndexSeasonType.Anime: IndexSeasonType.Guochuang
+                    type = animeType == AnimeType.bangumi ? IndexSeasonType.Anime : IndexSeasonType.Guochuang
                 }
             });
         }
@@ -137,6 +135,7 @@ namespace BiliLite.Pages.Home
                 parameters = User.OpenFavoriteType.Bangumi
             });
         }
+
         private void GridView_ItemClick(object sender, ItemClickEventArgs e)
         {
             var item = e.ClickedItem as PageEntranceModel;

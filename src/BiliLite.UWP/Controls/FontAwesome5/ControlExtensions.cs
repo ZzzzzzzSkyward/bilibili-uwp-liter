@@ -5,7 +5,6 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 
-
 namespace FontAwesome5.Extensions
 {
     /// <summary>
@@ -66,7 +65,7 @@ namespace FontAwesome5.Extensions
         }
 
         /// <summary>
-        /// Stop the spinning animation 
+        /// Stop the spinning animation
         /// </summary>
         /// <typeparam name="T">FrameworkElement and ISpinable</typeparam>
         /// <param name="control">Control to stop the rotation.</param>
@@ -164,7 +163,7 @@ namespace FontAwesome5.Extensions
         }
 
         /// <summary>
-        /// Stop the pulse animation 
+        /// Stop the pulse animation
         /// </summary>
         /// <typeparam name="T">FrameworkElement and IPulsable</typeparam>
         /// <param name="control">Control to stop the pulse animation</param>

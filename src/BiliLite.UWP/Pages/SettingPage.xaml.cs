@@ -19,7 +19,6 @@ using Windows.Security.Cryptography.Core;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Streams;
-using Windows.System;
 using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -27,8 +26,6 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.Web.Http.Filters;
-using ZXing;
-using static BiliLite.Helpers.SettingHelper;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
 
@@ -39,7 +36,8 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class SettingPage : BasePage
     {
-        SettingVM settingVM;
+        private SettingVM settingVM;
+
         public SettingPage()
         {
             this.InitializeComponent();
@@ -54,6 +52,7 @@ namespace BiliLite.Pages
             LoadDownlaod();
             api = new Api.AccountApi();
         }
+
         private void LoadUI()
         {
             //主题
@@ -69,9 +68,11 @@ namespace BiliLite.Pages
                         case 1:
                             rootFrame.RequestedTheme = ElementTheme.Light;
                             break;
+
                         case 2:
                             rootFrame.RequestedTheme = ElementTheme.Dark;
                             break;
+
                         case 3:
                             rootFrame.RequestedTheme = (ElementTheme)AppTheme.TransparentDark; break;
                         case 4:
@@ -99,15 +100,12 @@ namespace BiliLite.Pages
                     else
                     {
                         color = Utils.ToColor((cbColor.SelectedItem as AppThemeColor).color);
-
                     }
                     (Application.Current.Resources["SystemControlHighlightAltAccentBrush"] as SolidColorBrush).Color = color;
                     (Application.Current.Resources["SystemControlHighlightAccentBrush"] as SolidColorBrush).Color = color;
                     //(App.Current.Resources.ThemeDictionaries["Light"] as ResourceDictionary)["SystemAccentColor"] = Utils.ToColor(item.color);
-
                 });
             });
-
 
             //显示模式
             cbDisplayMode.SelectedIndex = SettingHelper.GetValue<int>(SettingHelper.UI.DISPLAY_MODE, 0);
@@ -124,7 +122,6 @@ namespace BiliLite.Pages
                     {
                         Utils.ShowMessageToast("重启生效");
                     }
-
                 });
             });
             //加载原图
@@ -144,7 +141,6 @@ namespace BiliLite.Pages
                 swHomeCache.Toggled += new RoutedEventHandler((obj, args) =>
                 {
                     SettingHelper.SetValue(SettingHelper.UI.CACHE_HOME, swHomeCache.IsOn);
-
                 });
             });
 
@@ -152,7 +148,6 @@ namespace BiliLite.Pages
             numRightWidth.Value = SettingHelper.GetValue<double>(SettingHelper.UI.RIGHT_DETAIL_WIDTH, 320);
             numRightWidth.Loaded += new RoutedEventHandler((sender, e) =>
             {
-
                 numRightWidth.ValueChanged += new TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs>((obj, args) =>
                 {
                     SettingHelper.SetValue(SettingHelper.UI.RIGHT_DETAIL_WIDTH, args.NewValue);
@@ -248,7 +243,7 @@ namespace BiliLite.Pages
                 {
                     SettingHelper.SetValue("dontloadbanner", swHideBanner.IsOn);
                 });
-            }); 
+            });
             //背景动态
             swShowBGOnDynamic.IsOn = SettingHelper.GetValue<bool>("dontloadbanner", false);
             swShowBGOnDynamic.Loaded += new RoutedEventHandler((sender, e) =>
@@ -264,8 +259,8 @@ namespace BiliLite.Pages
 
             //背景
             SetBackground();
-
         }
+
         private void LoadPlayer()
         {
             //播放类型
@@ -352,7 +347,6 @@ namespace BiliLite.Pages
                 });
             });
 
-
             //双击全屏
             swPlayerSettingDoubleClickFullScreen.IsOn = SettingHelper.GetValue<bool>(SettingHelper.Player.DOUBLE_CLICK_FULL_SCREEN, false);
             swPlayerSettingDoubleClickFullScreen.Loaded += new RoutedEventHandler((sender, e) =>
@@ -390,10 +384,10 @@ namespace BiliLite.Pages
                 {
                     var server = settingVM.CDNServers[RoamingSettingCDNServer.SelectedIndex];
                     SettingHelper.SetValue(SettingHelper.Player.CDN_SERVER, server.Server);
-
                 });
             });
         }
+
         private void LoadRoaming()
         {
             //使用自定义服务器
@@ -500,11 +494,7 @@ namespace BiliLite.Pages
                     SettingHelper.SetValue("EnableLog", EnableLog.IsOn);
                 });
             });
-
-
         }
-
-
 
         private void RoamingSettingSetDefault_Click(object sender, RoutedEventArgs e)
         {
@@ -568,6 +558,7 @@ namespace BiliLite.Pages
                 });
             });
         }
+
         private void LoadLiveDanmu()
         {
             //弹幕开关
@@ -580,11 +571,13 @@ namespace BiliLite.Pages
             //弹幕关键词
             LiveDanmuSettingListWords.ItemsSource = settingVM.LiveWords;
         }
+
         private void LoadAPI()
         {
             LoadSettings();
             InitApi();
         }
+
         private void LoadSettings()
         {
             appkey_android_1.Text = SettingHelper.GetValue("appkey_android_1", "");
@@ -600,6 +593,7 @@ namespace BiliLite.Pages
             api_web_top.Text = SettingHelper.GetValue("api_web_top", "");
             api_web_secondary.Text = SettingHelper.GetValue("api_web_top", "");
         }
+
         private void SaveSettings()
         {
             SettingHelper.SetValue("appkey_android_1", appkey_android_1.Text);
@@ -615,11 +609,14 @@ namespace BiliLite.Pages
             SettingHelper.SetValue("api_web_top", api_web_top.Text);
             SettingHelper.SetValue("api_web_secondary", api_web_secondary.Text);
         }
+
         private void ApplyAPI_Click(object sender, RoutedEventArgs e)
         {
             InitApi();
         }
-        private void InitApi() { 
+
+        private void InitApi()
+        {
             var lst = new List<string>();
 
             lst.Add(appkey_android_1.Text);
@@ -639,6 +636,7 @@ namespace BiliLite.Pages
             SaveSettings();
             Utils.sp = this;
         }
+
         private void LoadDownlaod()
         {
             //下载路径
@@ -750,6 +748,7 @@ namespace BiliLite.Pages
             }
             gridHomeNavItem.ItemsSource = list;
         }
+
         private void gridHomeCustom_DragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args)
         {
             SettingHelper.SetValue(SettingHelper.UI.HOEM_ORDER, gridHomeCustom.ItemsSource as ObservableCollection<HomeNavItem>);
@@ -779,7 +778,7 @@ namespace BiliLite.Pages
             Utils.ShowMessageToast("更改成功,重启生效");
         }
 
-        protected async override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             try
@@ -811,6 +810,7 @@ namespace BiliLite.Pages
 
         // 在代码中定义一个名为 Log 的方法，用于向日志文本框中添加新的日志
         private readonly int loglength = 10000;
+
         public void Log(StringBuilder logBuilder)
         {
             int leng = logBuilder.ToString().Length;
@@ -906,7 +906,6 @@ namespace BiliLite.Pages
             }
         }
 
-
         private async void txtHelp_LinkClicked(object sender, Microsoft.Toolkit.Uwp.UI.Controls.LinkClickedEventArgs e)
         {
             if (e.Link == "OpenLog")
@@ -918,7 +917,6 @@ namespace BiliLite.Pages
             {
                 await Windows.System.Launcher.LaunchUriAsync(new Uri(e.Link));
             }
-
         }
 
         private void LiveDanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
@@ -955,6 +953,7 @@ namespace BiliLite.Pages
         {
             settingVM.CDNServerDelayTest();
         }
+
         private async void SetBackground()
         {
             var background = SettingHelper.GetValue(SettingHelper.UI.BACKGROUND_IMAGE, AppHelper.BACKGROUND_IAMGE_URL);
@@ -983,7 +982,8 @@ namespace BiliLite.Pages
             }
         }
 
-        private async void BGImage_Click(object sender, RoutedEventArgs e) {
+        private async void BGImage_Click(object sender, RoutedEventArgs e)
+        {
             FileOpenPicker fileOpenPicker = new FileOpenPicker();
             fileOpenPicker.FileTypeFilter.Add(".png");
             fileOpenPicker.FileTypeFilter.Add(".jpg");
@@ -993,8 +993,8 @@ namespace BiliLite.Pages
                 SettingHelper.SetValue(SettingHelper.UI.BACKGROUND_IMAGE, file.Path);
                 SetBackground();
             }
-
         }
+
         private async Task<LoginCallbackModel> HandleLoginResult(int code, string message, LoginResultModel result)
         {
             if (code == 0)
@@ -1046,9 +1046,10 @@ namespace BiliLite.Pages
                     message = message
                 };
             }
-
         }
-        Api.AccountApi api;
+
+        private Api.AccountApi api;
+
         public async Task<string> EncryptedPassword(string passWord)
         {
             string base64String;
@@ -1074,10 +1075,12 @@ namespace BiliLite.Pages
             }
             return base64String;
         }
-        private async void DoLogin(object sender, RoutedEventArgs e) {
+
+        private async void DoLogin(object sender, RoutedEventArgs e)
+        {
             var user = dbguser.Text;
             var password = dbgpwd.Text;
-            var val=dbgval.Text;
+            var val = dbgval.Text;
             var cap = dbgcap.Text;
             var challenge = dbgch.Text;
             if (string.IsNullOrEmpty(val))
@@ -1100,7 +1103,7 @@ namespace BiliLite.Pages
             {
                 //带验证码登录
                 var pwd = await EncryptedPassword(password);
-                var results = await api.Login2023(user, pwd,challenge,cap,val).Request();
+                var results = await api.Login2023(user, pwd, challenge, cap, val).Request();
                 if (results.status)
                 {
                     var data = await results.GetData<LoginResultModel>();
@@ -1112,10 +1115,8 @@ namespace BiliLite.Pages
                     Utils.ShowMessageToast(results.message);
                 }
             }
-
-
-
         }
+
         private void HandleResult(LoginCallbackModel result)
         {
             var uri = new Uri(string.IsNullOrEmpty(result.url) ? "https://www.bilibili.com" : result.url);
@@ -1123,24 +1124,27 @@ namespace BiliLite.Pages
             {
                 case LoginStatus.Success:
                     break;
+
                 case LoginStatus.Fail:
                 case LoginStatus.Error:
                     break;
+
                 case LoginStatus.NeedCaptcha:
                     string gt = Regex.Match(uri.Query, "gee_gt=(.*?)&").Groups[1].Value;
                     string cha = Regex.Match(uri.Query, "gee_challenge=(.*?)&").Groups[1].Value;
-                    string cap= Regex.Match(uri.Query, "recaptcha_token=(.*?)&").Groups[1].Value;
+                    string cap = Regex.Match(uri.Query, "recaptcha_token=(.*?)&").Groups[1].Value;
                     dbggt.Text = gt;
                     dbgch.Text = cha;
                     dbgcap.Text = cap;
                     break;
+
                 case LoginStatus.NeedValidate:
                     dbgcap.Text = result.url;
                     break;
+
                 default:
                     break;
             }
         }
-
     }
 }

@@ -5,20 +5,23 @@ using System.Threading.Tasks;
 
 namespace BiliLite.Modules.Live
 {
-    public class LiveAreaVM:IModules
+    public class LiveAreaVM : IModules
     {
-        readonly Api.Live.LiveAreaAPI liveAreaAPI;
+        private readonly Api.Live.LiveAreaAPI liveAreaAPI;
+
         public LiveAreaVM()
         {
             liveAreaAPI = new Api.Live.LiveAreaAPI();
-            
         }
+
         private bool _loading = false;
+
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
+
         private List<LiveAreaModel> _items;
 
         public List<LiveAreaModel> Items
@@ -26,7 +29,6 @@ namespace BiliLite.Modules.Live
             get { return _items; }
             set { _items = value; DoPropertyChanged("Items"); }
         }
-
 
         public async Task GetItems()
         {
@@ -36,7 +38,7 @@ namespace BiliLite.Modules.Live
                 var results = await liveAreaAPI.LiveAreaList().Request();
                 if (results.status)
                 {
-                    var data =await results.GetData<List<LiveAreaModel>>();
+                    var data = await results.GetData<List<LiveAreaModel>>();
                     if (data.success)
                     {
                         Items = data.data;
@@ -49,7 +51,6 @@ namespace BiliLite.Modules.Live
                 else
                 {
                     Utils.ShowMessageToast(results.message);
-
                 }
             }
             catch (Exception ex)
@@ -62,15 +63,15 @@ namespace BiliLite.Modules.Live
                 Loading = false;
             }
         }
-
-
     }
+
     public class LiveAreaModel
     {
         public long id { get; set; }
         public string name { get; set; }
         public List<LiveAreaItemModel> list { get; set; }
     }
+
     public class LiveAreaItemModel
     {
         public int id { get; set; }
@@ -79,5 +80,4 @@ namespace BiliLite.Modules.Live
         public string parent_name { get; set; }
         public string name { get; set; }
     }
-
 }

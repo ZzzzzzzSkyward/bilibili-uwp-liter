@@ -8,9 +8,9 @@ namespace BiliLite.Converters
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-           if(value is int)
+            if (value is int)
             {
-                if((int)value > 0)
+                if ((int)value > 0)
                 {
                     return Visibility.Visible;
                 }

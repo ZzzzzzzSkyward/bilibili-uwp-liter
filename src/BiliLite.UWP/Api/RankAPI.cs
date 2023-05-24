@@ -17,7 +17,7 @@
         /// <param name="rid">分区ID</param>
         /// <param name="type">all=全站，origin=原创，rookie=新人</param>
         /// <returns></returns>
-        public ApiModel Rank(int rid,string type)
+        public ApiModel Rank(int rid, string type)
         {
             ApiModel api = new ApiModel()
             {
@@ -27,7 +27,6 @@
             };
             return api;
         }
-
 
         /// <summary>
         /// 排行榜
@@ -44,7 +43,5 @@
             };
             return api;
         }
-
-
     }
 }

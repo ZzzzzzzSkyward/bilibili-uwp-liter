@@ -1,27 +1,27 @@
 ﻿using BiliLite.Api;
 using BiliLite.Controls;
+using BiliLite.Dialogs;
 using Microsoft.Toolkit.Uwp.Helpers;
+using Microsoft.Toolkit.Uwp.UI.Controls;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Security.Cryptography;
 using Windows.Security.Cryptography.Core;
 using Windows.Storage.Streams;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Controls;
-using Windows.UI;
-using System.IO;
-using BiliLite.Dialogs;
-using Windows.UI.Popups;
-using Microsoft.Toolkit.Uwp.UI.Controls;
 using Windows.System;
-using System.Runtime.Serialization.Formatters.Binary;
-using System.Runtime.Serialization;
-using Newtonsoft.Json.Linq;
-using System.Net.Http;
+using Windows.UI;
+using Windows.UI.Popups;
+using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 
 namespace BiliLite.Helpers
 {
@@ -32,7 +32,7 @@ namespace BiliLite.Helpers
         /// </summary>
         /// <param name="api"></param>
         /// <returns></returns>
-        public async static Task<HttpResults> Request(this ApiModel api)
+        public static async Task<HttpResults> Request(this ApiModel api)
         {
             if (api.method == RestSharp.Method.Get)
             {
@@ -59,6 +59,7 @@ namespace BiliLite.Helpers
             headers.Add("Referer", "https://www.bilibili.com/");
             return headers;
         }
+
         /// <summary>
         /// 将时间戳转为时间
         /// </summary>
@@ -71,6 +72,7 @@ namespace BiliLite.Helpers
             TimeSpan toNow = new TimeSpan(lTime);
             return dtStart.Add(toNow);
         }
+
         /// <summary>
         /// 生成时间戳/秒
         /// </summary>
@@ -79,6 +81,7 @@ namespace BiliLite.Helpers
         {
             return Convert.ToInt64((DateTime.Now - new DateTime(1970, 1, 1, 8, 0, 0, 0)).TotalSeconds);
         }
+
         /// <summary>
         /// 生成时间戳/豪秒
         /// </summary>
@@ -101,20 +104,24 @@ namespace BiliLite.Helpers
             var result = CryptographicBuffer.EncodeToHexString(hashed);
             return result;
         }
+
         public static void ShowMessageToast(string message, int seconds = 2, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "", [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {
             string Message = $"{message}";
             MessageToast ms = new MessageToast(Message, TimeSpan.FromSeconds(seconds));
             ms.Show();
         }
+
         public static StringBuilder sb = new StringBuilder();
         public static Pages.SettingPage sp = null;
+
         public static void AddALog(string message)
         {
             sb.AppendLine(message);
             sp?.Log(sb);
         }
-        public static void ShowMessageToast(string message,string longmsg, int seconds = 10, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "", [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
+
+        public static void ShowMessageToast(string message, string longmsg, int seconds = 10, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "", [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {
             //当有错误时延长时间
             string cutmsg = longmsg.Length > 50 ? longmsg.Substring(longmsg.Length - 50) : longmsg;
@@ -122,25 +129,27 @@ namespace BiliLite.Helpers
             MessageToast ms = new MessageToast(errorMessage, TimeSpan.FromSeconds(seconds));
             ms.Show();
             //并且记录，如果确实是一个exception
-            if(longmsg.Length>50)
-            LogHelper.logger.Error("来自Utils的报错%s", longmsg);
+            if (longmsg.Length > 50)
+                LogHelper.logger.Error("来自Utils的报错%s", longmsg);
             //并汇报
             AddALog(message);
             AddALog(longmsg);
         }
+
         public static void ShowMessageToast(string message, List<MyUICommand> commands, int seconds = 15)
         {
             MessageToast ms = new MessageToast(message, TimeSpan.FromSeconds(seconds), commands);
             ms.Show();
         }
+
         public static void ShowComment(string oid, int commentMode, Api.CommentApi.CommentSort commentSort)
         {
             CommentDialog ms = new CommentDialog();
             ms.Show(oid, commentMode, commentSort);
         }
+
         public static int ToInt32(this object obj)
         {
-
             if (int.TryParse(obj.ToString(), out var value))
             {
                 return value;
@@ -150,12 +159,12 @@ namespace BiliLite.Helpers
                 return 0;
             }
         }
+
         public static string ToCountString(this object obj)
         {
             if (obj == null) return "0";
             if (double.TryParse(obj.ToString(), out var number))
             {
-
                 if (number >= 10000)
                 {
                     return ((double)number / 10000).ToString("0.0") + "万";
@@ -172,7 +181,7 @@ namespace BiliLite.Helpers
         /// 根据Epid取番剧ID
         /// </summary>
         /// <returns></returns>
-        public async static Task<string> BangumiEpidToSid(string epid)
+        public static async Task<string> BangumiEpidToSid(string epid)
         {
             try
             {
@@ -190,7 +199,7 @@ namespace BiliLite.Helpers
         /// 短链接还原
         /// </summary>
         /// <returns></returns>
-        public async static Task<string> GetShortLinkLocation(string shortlink)
+        public static async Task<string> GetShortLinkLocation(string shortlink)
         {
             try
             {
@@ -208,11 +217,11 @@ namespace BiliLite.Helpers
             {
                 return shortlink;
             }
-
         }
 
         private static bool dialogShowing = false;
-        public async static Task<bool> ShowLoginDialog()
+
+        public static async Task<bool> ShowLoginDialog()
         {
             if (!dialogShowing)
             {
@@ -231,7 +240,7 @@ namespace BiliLite.Helpers
             }
         }
 
-        public async static Task<bool> ShowDialog(string title, string content)
+        public static async Task<bool> ShowDialog(string title, string content)
         {
             MessageDialog messageDialog = new MessageDialog(content, title);
             messageDialog.Commands.Add(new UICommand() { Label = "确定", Id = true });
@@ -252,6 +261,7 @@ namespace BiliLite.Helpers
                 return "";
             }
         }
+
         public static async Task<T> DeserializeJson<T>(this string results)
         {
             return await Task.Run<T>(() =>
@@ -259,11 +269,13 @@ namespace BiliLite.Helpers
                 return JsonConvert.DeserializeObject<T>(results);
             });
         }
+
         public static string ToSimplifiedChinese(string content)
         {
             content = ChineseConverter.TraditionalToSimplified(content);
             return content;
         }
+
         public static bool SetClipboard(string content)
         {
             try
@@ -278,7 +290,6 @@ namespace BiliLite.Helpers
             {
                 return false;
             }
-
         }
 
         public static string HandelTimestamp(string ts)
@@ -306,7 +317,7 @@ namespace BiliLite.Helpers
             }
         }
 
-        public async static Task CheckVersion()
+        public static async Task CheckVersion()
         {
             try
             {
@@ -372,6 +383,7 @@ namespace BiliLite.Helpers
             }
             return color;
         }
+
         public static void ReadB(this Stream stream, byte[] buffer, int offset, int count)
         {
             if (offset + count > buffer.Length)
@@ -434,10 +446,12 @@ namespace BiliLite.Helpers
             }
             return "cn";
         }
+
         public static string ParseArea(string title, string mid)
         {
             return ParseArea(title, mid.ToInt32());
         }
+
         public static string ChooseProxyServer(string area)
         {
             var proxyUrl = SettingHelper.GetValue(SettingHelper.Roaming.CUSTOM_SERVER_URL, ApiHelper.ROMAING_PROXY_URL);
@@ -459,6 +473,7 @@ namespace BiliLite.Helpers
             return proxyUrl;
         }
     }
+
     public class NewVersion
     {
         public string version { get; set; }

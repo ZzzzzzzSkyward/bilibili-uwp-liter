@@ -5,13 +5,11 @@ using Windows.UI.Xaml.Navigation;
 
 namespace BiliLite.Pages.Other
 {
-
     /// <summary>
     /// 可用于自身或导航至 Frame 内部的空白页。
     /// </summary>
     public sealed partial class ImageViewerPage : BasePage
     {
-
         public ImageViewerPage()
         {
             this.InitializeComponent();
@@ -20,18 +18,11 @@ namespace BiliLite.Pages.Other
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            if (e.NavigationMode == NavigationMode.New && e.Parameter != null && viewer.imgs==null)
+            if (e.NavigationMode == NavigationMode.New && e.Parameter != null && viewer.imgs == null)
             {
-
                 var info = e.Parameter as ImageViewerParameter;
                 viewer.InitImage(info);
-
-
             }
-
         }
-
     }
-
-
 }

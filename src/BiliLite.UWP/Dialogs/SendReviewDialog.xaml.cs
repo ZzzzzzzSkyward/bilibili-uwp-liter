@@ -9,7 +9,8 @@ namespace BiliLite.Dialogs
 {
     public sealed partial class SendReviewDialog : ContentDialog
     {
-        SeasonReviewVM seasonReviewVM;
+        private SeasonReviewVM seasonReviewVM;
+
         public SendReviewDialog(int mediaId)
         {
             this.InitializeComponent();
@@ -19,13 +20,13 @@ namespace BiliLite.Dialogs
 
         private async void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            if (string.IsNullOrEmpty(txtBoxContent.Text.Trim())) 
+            if (string.IsNullOrEmpty(txtBoxContent.Text.Trim()))
             {
                 Utils.ShowMessageToast("内容不能为空");
-                return; 
+                return;
             }
-            int score =  (int)rating.Value * 2;
-           var result= await seasonReviewVM.SendShortReview(txtBoxContent.Text, checkShare.IsChecked.Value, score);
+            int score = (int)rating.Value * 2;
+            var result = await seasonReviewVM.SendShortReview(txtBoxContent.Text, checkShare.IsChecked.Value, score);
             if (result)
             {
                 this.Hide();

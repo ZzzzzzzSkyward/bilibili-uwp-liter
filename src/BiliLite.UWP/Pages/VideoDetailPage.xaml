@@ -19,11 +19,11 @@
         <SolidColorBrush x:Key="ListViewItemBackgroundSelectedPointerOver" Color="{ThemeResource SystemListLowColor}" />
         <SolidColorBrush x:Key="GridViewItemBackgroundSelected" Color="{ThemeResource HighLightColor}" />
         <DataTemplate x:Name="PlayListTpl">
-            <PivotItem Margin="0" >
+            <PivotItem Margin="0">
                 <PivotItem.Header>
                     <TextBlock Text="播放列表" FontSize="18"></TextBlock>
                 </PivotItem.Header>
-                <ListView  ItemsSource="{Binding Path=Playlist}" SelectionChanged="ListView_SelectionChanged" SelectedIndex="{Binding Index}" SelectionMode="Single" >
+                <ListView  ItemsSource="{Binding Path=Playlist}" SelectionChanged="ListView_SelectionChanged" SelectedIndex="{Binding Index}" SelectionMode="Single">
                     <ListView.ItemTemplate>
                         <DataTemplate>
                             <Grid>
@@ -48,7 +48,6 @@
                             <Setter Property="Margin" Value="8 4"></Setter>
                         </Style>
                     </ListView.ItemContainerStyle>
-                  
                 </ListView>
             </PivotItem>
         </DataTemplate>
@@ -56,23 +55,23 @@
     <Grid>
         <Grid Visibility="{x:Bind Path=videoDetailVM.Loaded,Mode=OneWay}">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition/>
-                <ColumnDefinition  Width="320" x:Name="RightInfo"/>
+                <ColumnDefinition />
+                <ColumnDefinition  Width="320" x:Name="RightInfo" />
             </Grid.ColumnDefinitions>
-            <Grid  Background="{ThemeResource NavigationViewTopPaneBackground}" x:Name="playerGrid" >
+            <Grid  Background="{ThemeResource NavigationViewTopPaneBackground}" x:Name="playerGrid">
                 <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition Height="Auto" x:Name="BottomInfo"/>
+                    <RowDefinition />
+                    <RowDefinition Height="Auto" x:Name="BottomInfo" />
                 </Grid.RowDefinitions>
                 <Grid Background="Transparent">
-                    <control:PlayerControl x:Name="player" AllMediaEndEvent="player_AllMediaEndEvent" FullScreenEvent="PlayerControl_FullScreenEvent" FullWindowEvent="PlayerControl_FullWindowEvent" ChangeEpisodeEvent="PlayerControl_ChangeEpisodeEvent"/>
+                    <control:PlayerControl x:Name="player" AllMediaEndEvent="player_AllMediaEndEvent" FullScreenEvent="PlayerControl_FullScreenEvent" FullWindowEvent="PlayerControl_FullWindowEvent" ChangeEpisodeEvent="PlayerControl_ChangeEpisodeEvent" />
                 </Grid>
                 <Grid Grid.Row="1" SizeChanged="OnGridSizeChanged">
-                    <StackPanel Orientation="Horizontal" >
-                        <Button Holding="btnLike_Holding" 
+                    <StackPanel Orientation="Horizontal">
+                        <Button Holding="btnLike_Holding"
                                   RightTapped="btnLike_RightTapped"
-                                  Command="{x:Bind Path=videoDetailVM.LikeCommand}" 
-                                  Foreground="{x:Bind Path=videoDetailVM.VideoInfo.req_user.like,Mode=OneWay,Converter={StaticResource colorSelct},ConverterParameter=1}" 
+                                  Command="{x:Bind Path=videoDetailVM.LikeCommand}"
+                                  Foreground="{x:Bind Path=videoDetailVM.VideoInfo.req_user.like,Mode=OneWay,Converter={StaticResource colorSelct},ConverterParameter=1}"
                                   ToolTipService.ToolTip="右击或长按可以一键三连哦"
                                   Background="Transparent"
                                   Margin="0 0 4 0"
@@ -82,9 +81,8 @@
                                 <TextBlock FontSize="12" TextAlignment="Center" Text="{x:Bind Path=videoDetailVM.VideoInfo.stat.like,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"></TextBlock>
                                 <!--<fa:FontAwesome Icon="Solid_ThumbsUp"></fa:FontAwesome>-->
                             </StackPanel>
-
                         </Button>
-                        <Button Command="{x:Bind Path=videoDetailVM.DislikeCommand}" 
+                        <Button Command="{x:Bind Path=videoDetailVM.DislikeCommand}"
                                 Background="Transparent"
                                 Margin="0 0 4 0"
                                 Width="56"
@@ -106,7 +104,7 @@
                                 <Flyout>
                                     <Grid Width="240">
                                         <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="Auto" />
                                             <RowDefinition></RowDefinition>
                                         </Grid.RowDefinitions>
                                         <Grid Padding="4 0">
@@ -127,12 +125,11 @@
                                             <ListView.ItemTemplate>
                                                 <DataTemplate x:DataType="modules:FavoriteItemModel">
                                                     <!--<CheckBox IsChecked="{x:Bind Path=is_fav,Mode=TwoWay}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-                                                    
                                                 </CheckBox>-->
                                                     <Grid>
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition/>
-                                                            <ColumnDefinition Width="Auto"/>
+                                                            <ColumnDefinition />
+                                                            <ColumnDefinition Width="Auto" />
                                                         </Grid.ColumnDefinitions>
                                                         <TextBlock  Text="{x:Bind title}"></TextBlock>
                                                         <TextBlock  Margin="0 4" Grid.Column="1" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Visibility="{x:Bind Path=privacy,Converter={StaticResource display}}">公开</TextBlock>
@@ -141,14 +138,13 @@
                                                 </DataTemplate>
                                             </ListView.ItemTemplate>
                                         </ListView>
-
                                     </Grid>
                                 </Flyout>
                             </Button.Flyout>
                         </Button>
                         <Button Background="Transparent"
                                 Margin="0"
-                                Width="56" 
+                                Width="56"
                                 Foreground="{x:Bind Path=videoDetailVM.VideoInfo.req_user.coin,Mode=OneWay,Converter={StaticResource colorSelct},ConverterParameter=1}">
                             <StackPanel>
                                 <FontIcon FontFamily="{StaticResource BiliIconFont}" Glyph="&#xE670;" />
@@ -174,9 +170,9 @@
                                 </StackPanel>
                                 <Button.Flyout>
                                     <MenuFlyout>
-                                        <MenuFlyoutItem Click="btnShareCopyUrl_Click" Icon="Copy" Text="复制链接"/>
-                                        <MenuFlyoutItem Click="btnShareCopy_Click" Icon="Copy" Text="复制标题链接"/>
-                                        <MenuFlyoutItem Click="btnShare_Click" Icon="Share" Text="分享到..."/>
+                                        <MenuFlyoutItem Click="btnShareCopyUrl_Click" Icon="Copy" Text="复制链接" />
+                                        <MenuFlyoutItem Click="btnShareCopy_Click" Icon="Copy" Text="复制标题链接" />
+                                        <MenuFlyoutItem Click="btnShare_Click" Icon="Share" Text="分享到..." />
                                     </MenuFlyout>
                                 </Button.Flyout>
                             </Button>
@@ -216,7 +212,7 @@
                                 <Flyout x:Name="qrFlyout">
                                     <StackPanel MaxWidth="220">
                                         <TextBlock Text="{x:Bind Path=videoDetailVM.VideoInfo.title,Mode=OneWay}" TextWrapping="Wrap" TextAlignment="Center"></TextBlock>
-                                        <TextBlock  TextWrapping="Wrap" TextAlignment="Center">AV<Run Text="{x:Bind Path=videoDetailVM.VideoInfo.aid,Mode=OneWay}"/></TextBlock>
+                                        <TextBlock  TextWrapping="Wrap" TextAlignment="Center">AV<Run Text="{x:Bind Path=videoDetailVM.VideoInfo.aid,Mode=OneWay}" /></TextBlock>
                                         <Grid Margin="0 8">
                                             <Image  x:Name="imgQR" Width="200" Height="200"></Image>
                                             <Image VerticalAlignment="Center" HorizontalAlignment="Center" Width="64" Height="64" Source="ms-appx:///Assets/SmallTile.scale-100.png"></Image>
@@ -239,7 +235,7 @@
                                 <KeyboardAccelerator Key="F5"></KeyboardAccelerator>
                             </AppBarButton.KeyboardAccelerators>
                         </AppBarButton>
-                        <AppBarButton x:Name="btnDownload2" Visibility="Collapsed" Label="下载" Click="btnDownload_Click" Foreground="{ThemeResource TextColor}" >
+                        <AppBarButton x:Name="btnDownload2" Visibility="Collapsed" Label="下载" Click="btnDownload_Click" Foreground="{ThemeResource TextColor}">
                             <AppBarButton.Icon>
                                 <fa:FontAwesome Icon="Solid_Download"></fa:FontAwesome>
                             </AppBarButton.Icon>
@@ -248,10 +244,10 @@
                                 <KeyboardAccelerator Key="S" Modifiers="Control"></KeyboardAccelerator>
                             </AppBarButton.KeyboardAccelerators>
                         </AppBarButton>
-                        
+
                         <Button Background="Transparent"
                                 Margin="0"
-                                Width="56" 
+                                Width="56"
                                 x:Name="btnMore"
                                 Foreground="{ThemeResource TextColor}">
                             <StackPanel>
@@ -272,7 +268,7 @@
                 </Grid>
             </Grid>
             <Grid Grid.Column="1" Background="{ThemeResource TransparentBackground}">
-                <Pivot x:Name="pivot" >
+                <Pivot x:Name="pivot">
 
                     <PivotItem Margin="0">
                         <PivotItem.Header>
@@ -290,16 +286,16 @@
 											</MenuFlyoutItem>
 										</MenuFlyout>
 									</Border.ContextFlyout>
-                                    <toolkit:ImageEx IsCacheEnabled="True" 
+                                    <toolkit:ImageEx IsCacheEnabled="True"
                                                  Tapped="ImageEx_Tapped"
                                              PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=videoDetailVM.VideoInfo.pic,Mode=OneWay,Converter={StaticResource imageConvert},ConverterParameter='400w'}">
                                     </toolkit:ImageEx>
                                 </Border>
 
                                 <Border Padding="8"  Margin="0 0 0 8" Visibility="{x:Bind Path=videoDetailVM.VideoInfo.showArgueMsg,Mode=OneWay}" Background="#33808080" CornerRadius="4">
-                                    <Grid >
+                                    <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto"/>
+                                            <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition />
                                         </Grid.ColumnDefinitions>
                                         <fa:FontAwesome Icon="Solid_ExclamationTriangle" Margin="0 0 12 0" Foreground="Orange"></fa:FontAwesome>
@@ -307,13 +303,13 @@
                                     </Grid>
                                 </Border>
                                 <TextBlock  IsTextSelectionEnabled="True"  TextWrapping="Wrap" FontSize="18" Text="{x:Bind Path=videoDetailVM.VideoInfo.title,Mode=OneWay}"></TextBlock>
-                                <TextBlock  Margin="0 4 0 0" Foreground="{ThemeResource ForegroundTextColor}" IsTextSelectionEnabled="True"><Run Text="{x:Bind Path=videoDetailVM.VideoInfo.stat.view,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>播放 · <Run Text="{x:Bind Path=videoDetailVM.VideoInfo.stat.danmaku,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>弹幕 <Run Text="{x:Bind Path=videoDetailVM.VideoInfo.bvid,Mode=OneWay}"/></TextBlock>
+                                <TextBlock  Margin="0 4 0 0" Foreground="{ThemeResource ForegroundTextColor}" IsTextSelectionEnabled="True"><Run Text="{x:Bind Path=videoDetailVM.VideoInfo.stat.view,Mode=OneWay,Converter={StaticResource numberToStringConvert}}" />播放 · <Run Text="{x:Bind Path=videoDetailVM.VideoInfo.stat.danmaku,Mode=OneWay,Converter={StaticResource numberToStringConvert}}" />弹幕 <Run Text="{x:Bind Path=videoDetailVM.VideoInfo.bvid,Mode=OneWay}" /></TextBlock>
                                 <HyperlinkButton x:Name="btnOpenUser" Click="btnOpenUser_Click" Margin="0 8 0 0" Foreground="{ThemeResource TextColor}" Visibility="{x:Bind Path=videoDetailVM.VideoInfo.showStaff,Mode=OneWay,Converter={StaticResource display}}" HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Padding="0">
                                     <Grid>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="auto"/>
-                                            <ColumnDefinition/>
-                                            <ColumnDefinition Width="auto"/>
+                                            <ColumnDefinition Width="auto" />
+                                            <ColumnDefinition />
+                                            <ColumnDefinition Width="auto" />
                                         </Grid.ColumnDefinitions>
                                         <Ellipse Width="36" Height="36">
                                             <Ellipse.Fill>
@@ -322,29 +318,29 @@
                                         </Ellipse>
                                         <StackPanel Grid.Column="1">
                                             <TextBlock Margin="8 0"  Text="{x:Bind Path=videoDetailVM.VideoInfo.owner.name,Mode=OneWay}"></TextBlock>
-                                            <TextBlock Margin="8 0" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}"><Run Text="{x:Bind Path=videoDetailVM.VideoInfo.owner_ext.fans,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>粉丝</TextBlock>
+                                            <TextBlock Margin="8 0" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}"><Run Text="{x:Bind Path=videoDetailVM.VideoInfo.owner_ext.fans,Mode=OneWay,Converter={StaticResource numberToStringConvert}}" />粉丝</TextBlock>
                                         </StackPanel>
-                                        <Button Width="80" 
-                                    Visibility="{x:Bind Path=videoDetailVM.VideoInfo.req_user.attention,Converter={StaticResource display},ConverterParameter=1,Mode=OneWay}" 
-                                    Command="{x:Bind Path=videoDetailVM.AttentionCommand}" 
+                                        <Button Width="80"
+                                    Visibility="{x:Bind Path=videoDetailVM.VideoInfo.req_user.attention,Converter={StaticResource display},ConverterParameter=1,Mode=OneWay}"
+                                    Command="{x:Bind Path=videoDetailVM.AttentionCommand}"
                                     Grid.Column="2" Padding="16 4"  FontSize="12">已关注</Button>
-                                        <Button Width="80" 
-                                    Visibility="{x:Bind Path=videoDetailVM.VideoInfo.req_user.attention,Converter={StaticResource display},ConverterParameter=-999,Mode=OneWay}" 
-                                    Command="{x:Bind Path=videoDetailVM.AttentionCommand}" 
+                                        <Button Width="80"
+                                    Visibility="{x:Bind Path=videoDetailVM.VideoInfo.req_user.attention,Converter={StaticResource display},ConverterParameter=-999,Mode=OneWay}"
+                                    Command="{x:Bind Path=videoDetailVM.AttentionCommand}"
                                     Grid.Column="2" Padding="16 4"  BorderThickness="1" Background="Transparent" BorderBrush="{ThemeResource HighLightColor}" Foreground="{ThemeResource HighLightColor}" FontSize="12">关注</Button>
                                     </Grid>
                                 </HyperlinkButton>
 
                                 <StackPanel Visibility="{x:Bind Path=videoDetailVM.VideoInfo.showStaff,Mode=OneWay}">
-                                    <ItemsControl ItemsSource="{x:Bind Path=videoDetailVM.VideoInfo.staff,Mode=OneWay}" Margin="0 8 0 0" MaxHeight="{x:Bind Path=videoDetailVM.StaffHeight,Mode=OneWay}" >
+                                    <ItemsControl ItemsSource="{x:Bind Path=videoDetailVM.VideoInfo.staff,Mode=OneWay}" Margin="0 8 0 0" MaxHeight="{x:Bind Path=videoDetailVM.StaffHeight,Mode=OneWay}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="modules:VideoDetailStaffModel">
                                                 <HyperlinkButton  Click="btnOpenUser_Click" Foreground="{ThemeResource TextColor}" Margin="0 8 0 0"  HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Padding="0">
-                                                    <Grid >
+                                                    <Grid>
                                                         <Grid.ColumnDefinitions>
-                                                            <ColumnDefinition Width="auto"/>
-                                                            <ColumnDefinition/>
-                                                            <ColumnDefinition Width="auto"/>
+                                                            <ColumnDefinition Width="auto" />
+                                                            <ColumnDefinition />
+                                                            <ColumnDefinition Width="auto" />
                                                         </Grid.ColumnDefinitions>
                                                         <Ellipse Width="36" Height="36">
                                                             <Ellipse.Fill>
@@ -355,21 +351,20 @@
                                                             <TextBlock Margin="8 0" Text="{x:Bind name}"></TextBlock>
                                                             <TextBlock Margin="8 0" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind title}"></TextBlock>
                                                         </StackPanel>
-                                                        <Button Width="80" 
+                                                        <Button Width="80"
                                                     Visibility="{x:Bind Path=attention,Converter={StaticResource display},Mode=OneWay,ConverterParameter=1}"
                                                     Click="btnAttention_Click"
                                                     Grid.Column="2" Padding="16 4"  FontSize="12">已关注</Button>
-                                                        <Button  Width="80"  Click="btnAttention_Click" 
+                                                        <Button  Width="80"  Click="btnAttention_Click"
                                                      Visibility="{x:Bind Path=attention,Converter={StaticResource display},ConverterParameter=0,Mode=OneWay}" Grid.Column="2" Padding="16 4"  BorderThickness="1" Background="Transparent" BorderBrush="{ThemeResource HighLightColor}" Foreground="{ThemeResource HighLightColor}" FontSize="12">关注</Button>
                                                     </Grid>
                                                 </HyperlinkButton>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
-
                                     </ItemsControl>
                                     <HyperlinkButton Command="{x:Bind Path=videoDetailVM.SetStaffHeightCommand}" CommandParameter="2000.0" Visibility="{x:Bind Path=videoDetailVM.showMoreStaff,Mode=OneWay,Converter={StaticResource display}}" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}">
                                         <StackPanel>
-                                            <TextBlock>制作团队(<Run Text="{x:Bind Path=videoDetailVM.VideoInfo.staff.Count,Mode=OneWay,TargetNullValue='0'}"/>人)</TextBlock>
+                                            <TextBlock>制作团队(<Run Text="{x:Bind Path=videoDetailVM.VideoInfo.staff.Count,Mode=OneWay,TargetNullValue='0'}" />人)</TextBlock>
                                             <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE011;" />
                                         </StackPanel>
                                     </HyperlinkButton>
@@ -380,23 +375,21 @@
                                     </HyperlinkButton>
                                 </StackPanel>
 
-
-
-                                <TextBlock Margin="0 4 0 0" Foreground="{ThemeResource ForegroundTextColor}" IsTextSelectionEnabled="True">发布于 <Run Text="{x:Bind Path=videoDetailVM.VideoInfo.pubdate,Mode=OneWay,Converter={StaticResource datetime}}"/></TextBlock>
-                                <StackPanel x:Name="stDesc" Margin="0 8 0 0" >
-                                    <TextBlock x:Name="txtDesc" 
-                                           Visibility="Collapsed" 
-                                           RightTapped="txtDesc_RightTapped" 
-                                           Holding="txtDesc_Holding"  Tapped="txtDesc_Tapped" 
-                                           IsTextSelectionEnabled="False"  
-                                           TextTrimming="CharacterEllipsis" 
-                                           TextWrapping="Wrap" Foreground="{ThemeResource ForegroundTextColor}"  
+                                <TextBlock Margin="0 4 0 0" Foreground="{ThemeResource ForegroundTextColor}" IsTextSelectionEnabled="True">发布于 <Run Text="{x:Bind Path=videoDetailVM.VideoInfo.pubdate,Mode=OneWay,Converter={StaticResource datetime}}" /></TextBlock>
+                                <StackPanel x:Name="stDesc" Margin="0 8 0 0">
+                                    <TextBlock x:Name="txtDesc"
+                                           Visibility="Collapsed"
+                                           RightTapped="txtDesc_RightTapped"
+                                           Holding="txtDesc_Holding"  Tapped="txtDesc_Tapped"
+                                           IsTextSelectionEnabled="False"
+                                           TextTrimming="CharacterEllipsis"
+                                           TextWrapping="Wrap" Foreground="{ThemeResource ForegroundTextColor}"
                                            Text="{x:Bind Path=videoDetailVM.VideoInfo.desc,Mode=OneWay}"></TextBlock>
                                     <ContentControl x:Name="contentDesc"  Foreground="{ThemeResource ForegroundTextColor}"  ></ContentControl>
                                 </StackPanel>
                                 <toolkit:AdaptiveGridView Visibility="{x:Bind Path=videoDetailVM.VideoInfo.showPages,Mode=OneWay}" DesiredWidth="180" ItemHeight="36"  Margin="0 8 0 0" x:Name="listEpisode"  SelectionChanged="listEpisode_SelectionChanged" ItemsSource="{x:Bind Path=videoDetailVM.VideoInfo.pages,Mode=OneWay}">
                                     <GridView.Header>
-                                        <TextBlock Margin="0 8" FontSize="16">分集(共<Run Text="{x:Bind Path=videoDetailVM.VideoInfo.pages.Count,Mode=OneWay}"/>P)</TextBlock>
+                                        <TextBlock Margin="0 8" FontSize="16">分集(共<Run Text="{x:Bind Path=videoDetailVM.VideoInfo.pages.Count,Mode=OneWay}" />P)</TextBlock>
                                     </GridView.Header>
                                     <GridView.ItemContainerStyle>
                                         <Style TargetType="GridViewItem">
@@ -409,11 +402,10 @@
                                     <GridView.ItemTemplate>
                                         <DataTemplate x:DataType="modules:VideoDetailPagesModel">
                                             <StackPanel ToolTipService.ToolTip="{x:Bind Path=part}" VerticalAlignment="Center">
-                                                <TextBlock Margin="8 0" Foreground="{ThemeResource TextColor}" TextAlignment="Center" TextTrimming="CharacterEllipsis" >P<Run Text="{x:Bind Path=page}"/> <Run Text="{x:Bind Path=part}"/></TextBlock>
+                                                <TextBlock Margin="8 0" Foreground="{ThemeResource TextColor}" TextAlignment="Center" TextTrimming="CharacterEllipsis" >P<Run Text="{x:Bind Path=page}" /> <Run Text="{x:Bind Path=part}" /></TextBlock>
                                             </StackPanel>
                                         </DataTemplate>
                                     </GridView.ItemTemplate>
-
                                 </toolkit:AdaptiveGridView>
 
                                 <ItemsControl ItemsSource="{x:Bind Path=videoDetailVM.VideoInfo.tag,Mode=OneWay}" Margin="0 8 0 0">
@@ -457,12 +449,12 @@
                                     <Grid Background="#00FFFFFF">
                                         <Grid.ContextFlyout>
                                             <MenuFlyout>
-                                                <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看"/>
+                                                <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看" />
                                             </MenuFlyout>
                                         </Grid.ContextFlyout>
                                         <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="128"/>
-                                            <ColumnDefinition/>
+                                            <ColumnDefinition Width="128" />
+                                            <ColumnDefinition />
                                         </Grid.ColumnDefinitions>
                                         <toolkit:ImageEx MaxHeight="80" Stretch="UniformToFill" Source="{x:Bind Path=pic,Converter={StaticResource imageConvert},ConverterParameter='100h'}"></toolkit:ImageEx>
                                         <StackPanel Grid.Column="1" Margin="8 0 0 0">
@@ -477,8 +469,6 @@
                     </PivotItem>
                 </Pivot>
             </Grid>
-
-
         </Grid>
         <Grid Visibility="{x:Bind Path=videoDetailVM.ShowError,Mode=OneWay}" Background="{ThemeResource TransparentBackground}">
             <StackPanel VerticalAlignment="Center">
@@ -491,5 +481,4 @@
         </Grid>
         <ProgressRing IsActive="True" Grid.ColumnSpan="2"  HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="{x:Bind Path=videoDetailVM.Loading,Mode=OneWay}"></ProgressRing>
     </Grid>
-   
 </local:PlayPage>

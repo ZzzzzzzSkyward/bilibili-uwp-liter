@@ -4,11 +4,12 @@ using Windows.UI.Xaml.Input;
 
 namespace BiliLite.Controls
 {
-    partial class Carousel
+    internal partial class Carousel
     {
         private bool _isBusy = false;
 
         #region Position
+
         public double Position
         {
             get { return _panel.GetTranslateX(); }
@@ -17,9 +18,11 @@ namespace BiliLite.Controls
                 _panel.TranslateX(value);
             }
         }
-        #endregion
+
+        #endregion Position
 
         #region Offset
+
         public double Offset
         {
             get
@@ -32,7 +35,8 @@ namespace BiliLite.Controls
                 return -position;
             }
         }
-        #endregion
+
+        #endregion Offset
 
         private int _direction = 0;
 
