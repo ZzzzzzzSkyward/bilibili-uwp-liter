@@ -12,8 +12,7 @@ namespace BiliLite.Modules
 {
     public class DynamicVM : IModules
     {
-        private readonly Api.User.DynamicAPI dynamicAPI;
-
+        readonly Api.User.DynamicAPI dynamicAPI;
         public DynamicVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
@@ -21,16 +20,13 @@ namespace BiliLite.Modules
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
-
         public DynamicItemDataTemplateSelector dynamicItemDataTemplateSelector { get; set; }
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
         private ObservableCollection<DynamicItemModel> _Items;
@@ -78,6 +74,7 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -90,7 +87,6 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-
         public async void Refresh()
         {
             if (Loading)
@@ -100,7 +96,6 @@ namespace BiliLite.Modules
             Items = null;
             await GetDynamicItems();
         }
-
         public async void LoadMore()
         {
             if (Loading)
@@ -114,22 +109,22 @@ namespace BiliLite.Modules
             var last = Items.LastOrDefault();
             await GetDynamicItems(last.desc.dynamic_id);
         }
-    }
 
+
+
+      
+    }
     public class DynamicItemModel
     {
         /// <summary>
         /// json字符串
         /// </summary>
         public string extend_json { get; set; }
-
         /// <summary>
         /// json字符串,根据desc里的type，获得数据
         /// </summary>
         public string card { get; set; }
-
         public DynamicDescModel desc { get; set; }
-
         public DynamicVideoCardModel video
         {
             get
@@ -141,7 +136,6 @@ namespace BiliLite.Modules
                 return null;
             }
         }
-
         public DynamicSeasonCardModel season
         {
             get
@@ -154,11 +148,9 @@ namespace BiliLite.Modules
             }
         }
     }
-
     public class DynamicItemDataTemplateSelector : DataTemplateSelector
     {
         public ResourceDictionary resource;
-
         protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
         {
             var card = item as DynamicItemModel;
@@ -172,16 +164,13 @@ namespace BiliLite.Modules
             }
         }
     }
-
     public class DynamicDescModel
     {
         public string uid { get; set; }
-
         /// <summary>
         /// 8=视频，512=番剧
         /// </summary>
         public int type { get; set; }
-
         public string rid { get; set; }
         public int view { get; set; }
         public int like { get; set; }
@@ -192,7 +181,6 @@ namespace BiliLite.Modules
         public int status { get; set; }
         public long timestamp { get; set; }
     }
-
     public class DynamicVideoCardModel
     {
         public string aid { get; set; }
@@ -209,7 +197,6 @@ namespace BiliLite.Modules
         public string title { get; set; }
         public DynamicVideoCardStatModel stat { get; set; }
     }
-
     public class DynamicVideoCardStatModel
     {
         public int coin { get; set; }
@@ -220,14 +207,12 @@ namespace BiliLite.Modules
         public int share { get; set; }
         public int view { get; set; }
     }
-
     public class DynamicVideoCardOwnerModel
     {
         public string face { get; set; }
         public string mid { get; set; }
         public string name { get; set; }
     }
-
     public class DynamicSeasonCardModel
     {
         public string aid { get; set; }
@@ -242,7 +227,6 @@ namespace BiliLite.Modules
         public int episode_id { get; set; }
         public DynamicSeasonCardApiSeasonInfoModel season { get; set; }
     }
-
     public class DynamicSeasonCardApiSeasonInfoModel
     {
         public string type_name { get; set; }

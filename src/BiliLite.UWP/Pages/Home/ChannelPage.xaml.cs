@@ -26,11 +26,10 @@ namespace BiliLite.Pages.Home
             }
             web.NewWindowRequested += webView_NewWindowRequested;
         }
-
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            if (e.NavigationMode == NavigationMode.New)
+            if(e.NavigationMode== NavigationMode.New)
             {
                 web.Navigate(new Uri("https://www.bilibili.com/v/channel"));
                 Utils.ShowMessageToast("这个页面还没有完成");
@@ -49,5 +48,7 @@ namespace BiliLite.Pages.Home
                 await md.ShowAsync();
             }
         }
+
+
     }
 }

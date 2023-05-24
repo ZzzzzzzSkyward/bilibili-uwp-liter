@@ -10,21 +10,20 @@ namespace BiliLite.Modules
 {
     public class MyFollowSeasonVM : IModules
     {
-        private readonly Api.User.FollowAPI followAPI;
 
+        readonly Api.User.FollowAPI followAPI;
         public MyFollowSeasonVM(bool _isAnime)
         {
             followAPI = new Api.User.FollowAPI();
             isAnime = _isAnime;
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
-            StatusCommand = new RelayCommand<object>(ChangeStatus);
-            CancelFollowCommand = new RelayCommand<object>(CancelFollow);
+            StatusCommand= new RelayCommand<object>(ChangeStatus);
+            CancelFollowCommand=new RelayCommand<object>(CancelFollow);
             SetWantWatchCommand = new RelayCommand<object>(SetWantWatch);
             SetWatchedCommand = new RelayCommand<object>(SetWatched);
             SetWatchingCommand = new RelayCommand<object>(SetWatching);
         }
-
         private bool isAnime = true;
         public ICommand LoadMoreCommand { get; private set; }
         public ICommand RefreshCommand { get; private set; }
@@ -33,17 +32,15 @@ namespace BiliLite.Modules
         public ICommand SetWantWatchCommand { get; set; }
         public ICommand SetWatchedCommand { get; set; }
         public ICommand SetWatchingCommand { get; set; }
+        
 
         private bool _loading = false;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private ObservableCollection<FollowSeasonModel> _follows;
-
         public ObservableCollection<FollowSeasonModel> Follows
         {
             get { return _follows; }
@@ -51,7 +48,6 @@ namespace BiliLite.Modules
         }
 
         private int _Status = 2;
-
         public int Status
         {
             get { return _Status; }
@@ -65,7 +61,6 @@ namespace BiliLite.Modules
         public int Page { get; set; } = 1;
 
         private bool _Nothing = false;
-
         public bool Nothing
         {
             get { return _Nothing; }
@@ -73,7 +68,6 @@ namespace BiliLite.Modules
         }
 
         private bool _ShowLoadMore = false;
-
         public bool ShowLoadMore
         {
             get { return _ShowLoadMore; }
@@ -116,7 +110,7 @@ namespace BiliLite.Modules
                             return;
                         }
                         var ls = await data.result["follow_list"].ToString().DeserializeJson<ObservableCollection<FollowSeasonModel>>();
-                        if (ls != null && ls.Count != 0)
+                        if (ls != null&&ls.Count!=0)
                         {
                             foreach (var item in ls)
                             {
@@ -138,6 +132,7 @@ namespace BiliLite.Modules
                                 }
                             }
                             Page++;
+                            
                         }
                     }
                     else
@@ -171,7 +166,6 @@ namespace BiliLite.Modules
             Follows = null;
             await LoadFollows();
         }
-
         public async void LoadMore()
         {
             if (Loading)
@@ -187,8 +181,8 @@ namespace BiliLite.Modules
 
         public async void ChangeStatus(object value)
         {
-            var result = Convert.ToInt32(value);
-            if (result == Status)
+            var result= Convert.ToInt32(value);
+            if (result==Status)
             {
                 return;
             }
@@ -196,7 +190,6 @@ namespace BiliLite.Modules
             Page = 1;
             await LoadFollows();
         }
-
         public async void CancelFollow(object par)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -204,7 +197,7 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast("请先登录后再操作");
                 return;
             }
-            var item = par as FollowSeasonModel;
+            var item= par as FollowSeasonModel;
             try
             {
                 var api = followAPI.CancelFollowSeason(item.season_id.ToString());
@@ -243,27 +236,26 @@ namespace BiliLite.Modules
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
-        }
 
+
+        }
+   
         private async void SetWantWatch(object par)
         {
             var item = par as FollowSeasonModel;
-            await SetSeasonStatus(item, 1);
+            await SetSeasonStatus(item,1);
         }
-
         private async void SetWatched(object par)
         {
             var item = par as FollowSeasonModel;
             await SetSeasonStatus(item, 3);
         }
-
         private async void SetWatching(object par)
         {
             var item = par as FollowSeasonModel;
             await SetSeasonStatus(item, 2);
         }
-
-        private async Task SetSeasonStatus(FollowSeasonModel item, int status)
+        private async Task SetSeasonStatus(FollowSeasonModel item,int status)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
             {
@@ -272,7 +264,7 @@ namespace BiliLite.Modules
             }
             try
             {
-                var api = followAPI.SetSeasonStatus(item.season_id.ToString(), status);
+                var api = followAPI.SetSeasonStatus(item.season_id.ToString(),status);
                 var results = await api.Request();
                 if (results.status)
                 {
@@ -302,8 +294,8 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(handel.message);
             }
         }
+    
     }
-
     public class FollowSeasonModel
     {
         public ICommand CancelFollowCommand { get; set; }
@@ -312,15 +304,13 @@ namespace BiliLite.Modules
         public ICommand SetWatchingCommand { get; set; }
 
         public int status { get; set; }
-
-        public bool show_watched
+       public bool show_watched
         {
             get
             {
                 return status != 3;
             }
         }
-
         public bool show_watching
         {
             get
@@ -328,15 +318,13 @@ namespace BiliLite.Modules
                 return status != 2;
             }
         }
-
         public bool show_want_watch
         {
             get
             {
-                return status != 1;
+                return status !=1;
             }
         }
-
         public bool show_badge
         {
             get
@@ -344,14 +332,12 @@ namespace BiliLite.Modules
                 return !string.IsNullOrEmpty(badge);
             }
         }
-
         public string badge { get; set; }
         public string square_cover { get; set; }
         public string cover { get; set; }
         public string title { get; set; }
         public int season_id { get; set; }
         public string url { get; set; }
-
         public string progress_text
         {
             get
@@ -370,18 +356,18 @@ namespace BiliLite.Modules
         public FollowSeasonNewEpModel new_ep { get; set; }
         public FollowSeasonProgressModel progress { get; set; }
     }
-
     public class FollowSeasonNewEpModel
     {
+
         public string cover { get; set; }
         public int duration { get; set; }
         public long id { get; set; }
         public string index_show { get; set; }
     }
-
     public class FollowSeasonProgressModel
     {
         public int last_ep_id { get; set; }
         public string index_show { get; set; }
     }
+
 }

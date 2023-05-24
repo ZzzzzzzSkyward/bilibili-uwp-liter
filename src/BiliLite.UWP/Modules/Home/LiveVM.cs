@@ -13,33 +13,26 @@ namespace BiliLite.Modules
 {
     public class LiveVM : IModules
     {
-        private readonly Api.Home.LiveAPI liveAPI;
+        readonly Api.Home.LiveAPI liveAPI;
         public readonly LiveAttentionVM liveAttentionVM;
-
         public LiveVM()
         {
             liveAPI = new Api.Home.LiveAPI();
             liveAttentionVM = new LiveAttentionVM();
         }
-
         private bool _showFollows = false;
-
         public bool ShowFollows
         {
             get { return _showFollows; }
             set { _showFollows = value; DoPropertyChanged("ShowFollows"); }
         }
-
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private bool _loadingFollow = true;
-
         public bool LoadingFollow
         {
             get { return _loadingFollow; }
@@ -71,7 +64,6 @@ namespace BiliLite.Modules
         //}
 
         private List<LiveHomeItemsModel> _items;
-
         public List<LiveHomeItemsModel> Items
         {
             get { return _items; }
@@ -106,6 +98,7 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -118,7 +111,6 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-
         public async Task GetLiveHomeItems()
         {
             try
@@ -143,6 +135,7 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -155,14 +148,15 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-    }
 
+
+
+    }
     public class LiveHomeItemsModel
     {
         public LiveHomeItemsModuleInfoModel module_info { get; set; }
         public List<LiveHomeItemsItemModel> list { get; set; }
     }
-
     public class LiveHomeItemsModuleInfoModel
     {
         public long id { get; set; }
@@ -172,7 +166,6 @@ namespace BiliLite.Modules
         public int type { get; set; }
         public int sort { get; set; }
     }
-
     public class LiveHomeItemsItemModel
     {
         public int area_v2_id { get; set; }
@@ -189,7 +182,6 @@ namespace BiliLite.Modules
         public string uid { get; set; }
 
         public JObject pendant_Info { get; set; }
-
         public LivePendentItemModel pendent
         {
             get
@@ -204,7 +196,6 @@ namespace BiliLite.Modules
                 }
             }
         }
-
         public bool show_pendent
         {
             get
@@ -213,7 +204,6 @@ namespace BiliLite.Modules
             }
         }
     }
-
     public class LiveHomeBannerModel
     {
         public long id { get; set; }
@@ -221,7 +211,6 @@ namespace BiliLite.Modules
         public string pic { get; set; }
         public string title { get; set; }
     }
-
     public class LiveHomeAreaModel
     {
         public long id { get; set; }
@@ -233,6 +222,9 @@ namespace BiliLite.Modules
         public string link { get; set; }
     }
 
+
+
+
     public class LivePendentItemModel
     {
         public string bg_pic { get; set; }
@@ -241,4 +233,5 @@ namespace BiliLite.Modules
         public string name { get; set; }
         public string @type { get; set; }
     }
+
 }

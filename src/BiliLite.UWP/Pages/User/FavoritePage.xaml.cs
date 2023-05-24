@@ -12,21 +12,19 @@ namespace BiliLite.Pages.User
 {
     public enum OpenFavoriteType
     {
-        Video = 0,
-        Bangumi = 1,
+        Video=0,
+        Bangumi=1,
         Cinema = 2,
-        Music = 3
+        Music=3
     }
-
     /// <summary>
     /// 可用于自身或导航至 Frame 内部的空白页。
     /// </summary>
     public sealed partial class FavoritePage : BasePage
     {
-        private MyFollowSeasonVM animeVM;
-        private MyFollowSeasonVM cinemaVM;
-        private MyFollowVideoVM videoVM;
-
+        MyFollowSeasonVM animeVM;
+        MyFollowSeasonVM cinemaVM;
+        MyFollowVideoVM videoVM;
         public FavoritePage()
         {
             this.InitializeComponent();
@@ -35,19 +33,17 @@ namespace BiliLite.Pages.User
             cinemaVM = new MyFollowSeasonVM(false);
             videoVM = new MyFollowVideoVM();
         }
-
-        private OpenFavoriteType openFavoriteType = OpenFavoriteType.Video;
-
+        OpenFavoriteType openFavoriteType= OpenFavoriteType.Video;
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            if (e.NavigationMode == NavigationMode.New)
+            if(e.NavigationMode== NavigationMode.New)
             {
                 if (e.Parameter != null)
                 {
-                    openFavoriteType = (OpenFavoriteType)e.Parameter;
+                    openFavoriteType = (OpenFavoriteType)e.Parameter; 
                 }
-                if (openFavoriteType == OpenFavoriteType.Bangumi)
+                if (openFavoriteType== OpenFavoriteType.Bangumi)
                 {
                     pivot.SelectedIndex = 1;
                 }
@@ -60,7 +56,7 @@ namespace BiliLite.Pages.User
 
         private async void pivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (pivot.SelectedItem == null)
+            if (pivot.SelectedItem==null)
             {
                 return;
             }
@@ -73,15 +69,13 @@ namespace BiliLite.Pages.User
                     }
                     await videoVM.LoadFavorite();
                     break;
-
                 case 1:
-                    if (animeVM.Loading || animeVM.Follows != null)
+                    if (animeVM.Loading||animeVM.Follows!=null)
                     {
                         return;
                     }
                     await animeVM.LoadFollows();
                     break;
-
                 case 2:
                     if (cinemaVM.Loading || cinemaVM.Follows != null)
                     {
@@ -89,7 +83,6 @@ namespace BiliLite.Pages.User
                     }
                     await cinemaVM.LoadFollows();
                     break;
-
                 default:
                     break;
             }
@@ -97,7 +90,7 @@ namespace BiliLite.Pages.User
 
         private void BangumiSeason_ItemClick(object sender, ItemClickEventArgs e)
         {
-            var data = e.ClickedItem as FollowSeasonModel;
+            var data= e.ClickedItem as FollowSeasonModel;
             MessageCenter.NavigateToPage(this, new NavigationInfo()
             {
                 icon = Symbol.Play,
@@ -118,8 +111,8 @@ namespace BiliLite.Pages.User
                 parameters = new FavoriteDetailArgs()
                 {
                     Id = data.id,
-                    Type = data.type
-                }
+                    Type=data.type
+                } 
             });
         }
 
@@ -132,8 +125,8 @@ namespace BiliLite.Pages.User
 
         private async void btnFavBoxEdit_Click(object sender, RoutedEventArgs e)
         {
-            var data = (sender as MenuFlyoutItem).DataContext as FavoriteItemModel;
-            EditFavFolderDialog editFavFolderDialog = new EditFavFolderDialog(data.id, data.title, data.intro, data.privacy ? false : true);
+           var data= (sender as MenuFlyoutItem).DataContext as FavoriteItemModel;
+            EditFavFolderDialog editFavFolderDialog = new EditFavFolderDialog(data.id, data.title,data.intro,data.privacy?false:true);
             await editFavFolderDialog.ShowAsync();
             videoVM.Refresh();
         }

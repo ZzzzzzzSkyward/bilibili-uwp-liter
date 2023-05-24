@@ -13,8 +13,9 @@
         <SolidColorBrush x:Key="SystemControlHighlightAltAccentBrush" Color="White"></SolidColorBrush>
     </Page.Resources>
     <Grid>
-
-    <Pivot ItemsSource="{x:Bind Path=liveAreaVM.Items,Mode=OneWay}">
+        
+    
+    <Pivot ItemsSource="{x:Bind Path=liveAreaVM.Items,Mode=OneWay}" >
         <Pivot.HeaderTemplate>
             <DataTemplate x:DataType="modules:LiveAreaModel">
                 <TextBlock FontSize="15" Text="{x:Bind Path=name}"></TextBlock>
@@ -42,6 +43,7 @@
                             </StackPanel>
                         </DataTemplate>
                     </GridView.ItemTemplate>
+
                 </GridView>
                     </ScrollViewer>
                 </DataTemplate>

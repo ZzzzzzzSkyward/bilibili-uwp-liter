@@ -15,22 +15,19 @@ namespace BiliLite.Pages.Live
         public int area_id { get; set; } = 0;
         public int parent_id { get; set; } = 0;
     }
-
     /// <summary>
     /// 可用于自身或导航至 Frame 内部的空白页。
     /// </summary>
     public sealed partial class LiveAreaDetailPage : BasePage
     {
-        private LiveAreaDetailVM liveAreaDetailVM;
-
+        LiveAreaDetailVM liveAreaDetailVM;
         public LiveAreaDetailPage()
         {
             this.InitializeComponent();
             Title = "分区详情";
             this.NavigationCacheMode = NavigationCacheMode.Enabled;
         }
-
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New && liveAreaDetailVM == null)
@@ -62,7 +59,7 @@ namespace BiliLite.Pages.Live
         {
             var data = (sender as ToggleButton).DataContext as LiveTagItemModel;
             if (data.Select) return;
-            var select = liveAreaDetailVM.Tags.FirstOrDefault(x => x.Select);
+            var select=liveAreaDetailVM.Tags.FirstOrDefault(x => x.Select);
             select.Select = false;
             data.Select = true;
             liveAreaDetailVM.SelectTag = data;

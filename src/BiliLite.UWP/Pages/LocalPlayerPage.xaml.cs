@@ -28,10 +28,12 @@ namespace BiliLite.Pages
             if (e)
             {
                 this.Margin = new Thickness(0, SettingHelper.GetValue<int>(SettingHelper.UI.DISPLAY_MODE, 0) == 0 ? -40 : -32, 0, 0);
+
             }
             else
             {
                 this.Margin = new Thickness(0);
+
             }
         }
 
@@ -49,6 +51,7 @@ namespace BiliLite.Pages
             Player_FullScreenEvent(this, false);
             player.MiniWidnows(false);
             player?.Dispose();
+
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -68,7 +71,6 @@ namespace BiliLite.Pages
                 player.InitializePlayInfo(data.PlayInfos, data.Index);
             }
         }
-
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
             if (e.NavigationMode == NavigationMode.Back || e.SourcePageType == typeof(BlankPage))
@@ -80,7 +82,6 @@ namespace BiliLite.Pages
             base.OnNavigatingFrom(e);
         }
     }
-
     public class LocalPlayInfo
     {
         public List<PlayInfo> PlayInfos { get; set; }

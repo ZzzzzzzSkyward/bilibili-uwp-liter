@@ -8,23 +8,20 @@ using System.Threading.Tasks;
 
 namespace BiliLite.Modules.Season
 {
-    public class SeasonRankVM : IModules
+    public class SeasonRankVM:IModules
     {
-        private readonly Api.RankAPI rankAPI;
-
+        readonly Api.RankAPI rankAPI;
         public SeasonRankVM()
         {
             rankAPI = new Api.RankAPI();
+           
         }
-
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private SeasonRankModel _current;
 
         public SeasonRankModel Current
@@ -32,9 +29,7 @@ namespace BiliLite.Modules.Season
             get { return _current; }
             set { _current = value; DoPropertyChanged("Current"); }
         }
-
         private List<SeasonRankModel> _RegionItems;
-
         public List<SeasonRankModel> RegionItems
         {
             get { return _RegionItems; }
@@ -76,7 +71,7 @@ namespace BiliLite.Modules.Season
                     type=7
                 },
             };
-            Current = RegionItems.FirstOrDefault(x => x.type.Equals(type));
+            Current = RegionItems.FirstOrDefault(x=>x.type.Equals(type));
         }
 
         public async Task LoadRankDetail(SeasonRankModel region)
@@ -101,6 +96,7 @@ namespace BiliLite.Modules.Season
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -114,21 +110,18 @@ namespace BiliLite.Modules.Season
             }
         }
     }
-
     public class SeasonRankModel : IModules
     {
         public string name { get; set; }
         public int type { get; set; }
 
         private List<SeasonRankItemModel> _Items;
-
         public List<SeasonRankItemModel> Items
         {
             get { return _Items; }
             set { _Items = value; DoPropertyChanged("Items"); }
         }
     }
-
     public class SeasonRankItemModel
     {
         public int rank { get; set; }
@@ -140,21 +133,17 @@ namespace BiliLite.Modules.Season
         public string cover { get; set; }
         public int badge_type { get; set; }
         public int pts { get; set; }
-        public bool show_badge
-        { get { return !string.IsNullOrEmpty(badge); } }
-        public bool show_danmaku
-        { get { return stat != null && stat.danmaku != 0; } }
+        public bool show_badge { get { return !string.IsNullOrEmpty(badge); } }
+        public bool show_danmaku { get { return stat!=null&&stat.danmaku!=0; } }
         public SeasonRankItemStatModel stat { get; set; }
         public SeasonRankItemNewEPModel new_ep { get; set; }
     }
-
     public class SeasonRankItemStatModel
     {
         public int danmaku { get; set; }
         public int follow { get; set; }
         public int view { get; set; }
     }
-
     public class SeasonRankItemNewEPModel
     {
         public string cover { get; set; }

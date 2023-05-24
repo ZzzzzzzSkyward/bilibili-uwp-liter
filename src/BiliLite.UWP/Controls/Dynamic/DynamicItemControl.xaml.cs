@@ -7,11 +7,13 @@ namespace BiliLite.Controls.Dynamic
 {
     public sealed partial class DynamicItemControl : UserControl
     {
+      
         public DynamicItemControl()
         {
             this.InitializeComponent();
+           
         }
-
+      
         public DynamicItemDisplayModel Model
         {
             get { return (DynamicItemDisplayModel)GetValue(ModelProperty); }
@@ -22,6 +24,8 @@ namespace BiliLite.Controls.Dynamic
         public static readonly DependencyProperty ModelProperty =
             DependencyProperty.Register("Model", typeof(DynamicItemDisplayModel), typeof(DynamicItemControl), new PropertyMetadata(new DynamicItemDisplayModel()));
 
+
+
         public FrameworkElement CardContent
         {
             get { return (FrameworkElement)GetValue(CardContentProperty); }
@@ -30,5 +34,8 @@ namespace BiliLite.Controls.Dynamic
 
         public static readonly DependencyProperty CardContentProperty =
             DependencyProperty.Register("CardContent", typeof(FrameworkElement), typeof(DynamicItemControl), new PropertyMetadata(null));
+
+
+
     }
 }

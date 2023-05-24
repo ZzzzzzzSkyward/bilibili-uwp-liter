@@ -15,13 +15,12 @@ namespace BiliLite.Api
             bool single = false;
             foreach (var i in settingsname)
             {
-                single = !single;
+                single=!single;
                 sets.Add(
-                SettingHelper.GetValue(i, single ? DefaultKey.Appkey : DefaultKey.Secret));
+                SettingHelper.GetValue(i, single?DefaultKey.Appkey:DefaultKey.Secret));
             }
             Init(sets);
         }
-
         // BiliLite.WebApi 项目部署的服务器
         //public static string baseUrl = "http://localhost:5000";
         public const string IL_BASE_URL = "https://biliapi.iliili.cn";
@@ -31,12 +30,10 @@ namespace BiliLite.Api
 
         // 哔哩哔哩API
         public static string Default_API_BASE_URL = "https://api.bilibili.com";
-
         public static string API_BASE_URL = "https://api.bilibili.com";
 
         //漫游默认的服务器
         public const string ROMAING_PROXY_URL = "https://b.chuchai.vip";
-
         public static List<string> settingsname = new List<string>() {
     "appkey_android_1",
     "appkey_android_2",
@@ -49,7 +46,6 @@ namespace BiliLite.Api
     "appkey_web_1",
     "appkey_web_2",
         };
-
         public static ApiKeyInfo DefaultKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
         public static ApiKeyInfo AndroidKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
         public static ApiKeyInfo AndroidVideoKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
@@ -61,22 +57,16 @@ namespace BiliLite.Api
         public const string _platform = "android";
         public static string deviceId = "";
         public static string customcookie = "";
-
         //二级网址
         public static string default_api2 = "/x/v2";
-
         public static string api2 = "/x/v2";
-
         //api
         public static string readcomment = "/reply";
-
         public static string comment = "/reply/add";
         public static string replycomment = "/reply/add";
         public static string replyreply = "/reply/reply";
-
         //csrf
         public static string _csrf = "";
-
         public static string GetCSRF(bool isparam = false)
         {
             if (_csrf != "")
@@ -85,16 +75,17 @@ namespace BiliLite.Api
                 else return _csrf;
             }
             var fiter = new HttpBaseProtocolFilter();
-            var cookies = fiter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
+            var cookies =  fiter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
             var csrf = "";
             //没有Cookie
             if (cookies == null || cookies.Count == 0)
             {
+
             }
             else
             {
                 csrf = cookies.FirstOrDefault(x => x.Name == "bili_jct")?.Value;
-                if (csrf != null && csrf != "")
+                if (csrf!=null&&csrf!="")
                 {
                     _csrf = csrf;
                     if (isparam)
@@ -110,8 +101,8 @@ namespace BiliLite.Api
         {
             ApiKeyInfo apiKeyInfo = LoginKey;
             return GetSign(url, apiKeyInfo);
-        }
 
+        }
         public static string GetSign(string url, ApiKeyInfo apiKeyInfo, string par = "&sign=")
         {
             string result;
@@ -124,11 +115,10 @@ namespace BiliLite.Api
                 stringBuilder.Append((stringBuilder.Length > 0 ? "&" : string.Empty));
                 stringBuilder.Append(str1);
             }
-            stringBuilder.Append(string.IsNullOrEmpty(apiKeyInfo.Secret) ? DefaultKey.Secret : apiKeyInfo.Secret);
+            stringBuilder.Append(string.IsNullOrEmpty(apiKeyInfo.Secret)?DefaultKey.Secret:apiKeyInfo.Secret);
             result = Utils.ToMD5(stringBuilder.ToString()).ToLower();
             return par + result;
         }
-
         public static void Init(List<string> keys)
         {
             if (!string.IsNullOrEmpty(keys[0]) && !string.IsNullOrEmpty(keys[1]))
@@ -165,7 +155,7 @@ namespace BiliLite.Api
             else
             {
                 AndroidTVKey = DefaultKey;
-            }
+            }   
             if (keys.Count >= 10 && !string.IsNullOrEmpty(keys[8]) && !string.IsNullOrEmpty(keys[9]))
             {
                 WebVideoKey = new ApiKeyInfo(keys[8], keys[9]);
@@ -186,7 +176,6 @@ namespace BiliLite.Api
                 api2 = default_api2;
             }
         }
-
         public static string GetSign(IDictionary<string, string> pars, ApiKeyInfo apiKeyInfo)
         {
             StringBuilder sb = new StringBuilder();
@@ -216,7 +205,6 @@ namespace BiliLite.Api
             }
             return url + $"appkey={apikey.Appkey}&build={build}&mobi_app={_mobi_app}&platform={_platform}&ts={Utils.GetTimestampS()}";
         }
-
         /// <summary>
         /// 默认一些请求头
         /// </summary>
@@ -228,8 +216,8 @@ namespace BiliLite.Api
             headers.Add("Referer", "https://www.bilibili.com/");
             return headers;
         }
-    }
 
+    }
     public class ApiKeyInfo
     {
         public ApiKeyInfo(string key, string secret)
@@ -237,38 +225,31 @@ namespace BiliLite.Api
             Appkey = key;
             Secret = secret;
         }
-
         public string Appkey { get; set; }
         public string Secret { get; set; }
     }
-
     public class ApiModel
     {
         /// <summary>
         /// 请求方法
         /// </summary>
         public RestSharp.Method method { get; set; }
-
         /// <summary>
         /// API地址
         /// </summary>
         public string baseUrl { get; set; }
-
         /// <summary>
         /// Url参数
         /// </summary>
         public string parameter { get; set; }
-
         /// <summary>
         /// 发送内容体，用于POST方法
         /// </summary>
         public string body { get; set; }
-
         /// <summary>
         /// 请求头
         /// </summary>
         public IDictionary<string, string> headers { get; set; }
-
         /// <summary>
         /// 需要Cookie
         /// </summary>

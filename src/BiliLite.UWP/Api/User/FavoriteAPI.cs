@@ -24,7 +24,6 @@ namespace BiliLite.Api.User
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
         public ApiModel MyCreatedFavoriteList(int page)
         {
             ApiModel api = new ApiModel()
@@ -36,7 +35,6 @@ namespace BiliLite.Api.User
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
         /// <summary>
         /// 我创建的收藏夹
         /// </summary>
@@ -79,8 +77,9 @@ namespace BiliLite.Api.User
         /// 收藏收藏夹
         /// </summary>
         /// <returns></returns>
-        public ApiModel CollectFavorite(string media_id)
+        public ApiModel CollectFavorite( string media_id)
         {
+          
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Post,
@@ -90,13 +89,13 @@ namespace BiliLite.Api.User
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
-
         /// <summary>
         /// 取消收藏收藏夹
         /// </summary>
         /// <returns></returns>
         public ApiModel CacnelCollectFavorite(string media_id)
         {
+
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Post,
@@ -114,7 +113,7 @@ namespace BiliLite.Api.User
         /// <param name="intro">介绍</param>
         /// <param name="isOpen">是否私密</param>
         /// <returns></returns>
-        public ApiModel CreateFavorite(string title, string intro, bool isOpen)
+        public ApiModel CreateFavorite(string title,string intro, bool isOpen)
         {
             ApiModel api = new ApiModel()
             {
@@ -125,7 +124,6 @@ namespace BiliLite.Api.User
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
-
         /// <summary>
         /// 编辑收藏夹
         /// </summary>
@@ -134,7 +132,7 @@ namespace BiliLite.Api.User
         /// <param name="isOpen">是否私密</param>
         /// <param name="media_id">收藏夹ID</param>
         /// <returns></returns>
-        public ApiModel EditFavorite(string title, string intro, bool isOpen, string media_id)
+        public ApiModel EditFavorite(string title, string intro, bool isOpen,string media_id)
         {
             ApiModel api = new ApiModel()
             {
@@ -178,7 +176,6 @@ namespace BiliLite.Api.User
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
         public ApiModel FavoriteSeasonInfo(string season_id, string keyword, int page = 1)
         {
             ApiModel api = new ApiModel()
@@ -195,7 +192,7 @@ namespace BiliLite.Api.User
         /// 取消收藏
         /// </summary>
         /// <returns></returns>
-        public ApiModel Delete(string media_id, List<string> video_ids)
+        public ApiModel Delete(string media_id,List<string> video_ids)
         {
             var ids = "";
             foreach (var item in video_ids)
@@ -212,12 +209,11 @@ namespace BiliLite.Api.User
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
-
         /// <summary>
         /// 复制到自己的收藏夹
         /// </summary>
         /// <returns></returns>
-        public ApiModel Copy(string src_media_id, string tar_media_id, List<string> video_ids, string mid)
+        public ApiModel Copy(string src_media_id, string tar_media_id, List<string> video_ids,string mid)
         {
             var ids = "";
             foreach (var item in video_ids)
@@ -234,7 +230,6 @@ namespace BiliLite.Api.User
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
-
         /// <summary>
         /// 移动到收藏夹
         /// </summary>
@@ -256,7 +251,6 @@ namespace BiliLite.Api.User
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
-
         /// <summary>
         /// 清除失效
         /// </summary>

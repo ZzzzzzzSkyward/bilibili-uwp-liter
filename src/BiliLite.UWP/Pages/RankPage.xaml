@@ -6,24 +6,24 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    xmlns:controls="using:BiliLite.Controls"
-    xmlns:convert="using:BiliLite.Converters"
-    xmlns:modules="using:BiliLite.Modules"
-    xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
-    xmlns:winui="using:Microsoft.UI.Xaml.Controls"
-    xmlns:fa="using:FontAwesome5"
+    xmlns:controls="using:BiliLite.Controls" 
+    xmlns:convert="using:BiliLite.Converters" 
+    xmlns:modules="using:BiliLite.Modules" 
+    xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls" 
+    xmlns:winui="using:Microsoft.UI.Xaml.Controls" 
+    xmlns:fa="using:FontAwesome5" 
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
         <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"></SolidColorBrush>
         <SolidColorBrush x:Key="SystemControlHighlightAltAccentBrush" Color="White"></SolidColorBrush>
-        <convert:RankColorConvert x:Key="RankConvert" />
+        <convert:RankColorConvert x:Key="RankConvert"/>
         <convert:ProgressToTimeConverter x:Key="progressToTimeConverter"></convert:ProgressToTimeConverter>
     </Page.Resources>
     <Grid>
         <Pivot ItemsSource="{x:Bind Path=rankVM.RegionItems,Mode=OneWay}" SelectedItem="{x:Bind Path=rankVM.Current,Mode=TwoWay}" x:Name="pivot" SelectionChanged="pivot_SelectionChanged">
             <Pivot.RightHeader>
-                <Grid Visibility="Collapsed" Background="{ThemeResource PivotHeaderBackground}">
-                    <ComboBox x:Name="cbType" Margin="8" SelectedIndex="0">
+                <Grid Visibility="Collapsed" Background="{ThemeResource PivotHeaderBackground}" >
+                    <ComboBox x:Name="cbType" Margin="8" SelectedIndex="0" >
                         <ComboBoxItem>全站</ComboBoxItem>
                         <ComboBoxItem>原创</ComboBoxItem>
                     </ComboBox>
@@ -41,12 +41,12 @@
             </Pivot.ItemContainerStyle>
             <Pivot.ItemTemplate>
                 <DataTemplate x:DataType="modules:RankRegionModel">
-                    <toolkit:AdaptiveGridView
+                    <toolkit:AdaptiveGridView 
                     OneRowModeEnabled="False"
                         ItemClick="AdaptiveGridView_ItemClick"
                     StretchContentForSingleRow="False"
                     ItemsSource="{x:Bind Path=Items,Mode=OneWay}"
-                    ItemHeight="100" DesiredWidth="600"
+                    ItemHeight="100" DesiredWidth="600" 
                     Padding="8"
                     SelectionMode="None" IsItemClickEnabled="True">
                         <toolkit:AdaptiveGridView.ItemContainerStyle>
@@ -57,8 +57,8 @@
                         <toolkit:AdaptiveGridView.Header>
                             <Grid Padding="8">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="auto" />
-                                    <ColumnDefinition />
+                                    <ColumnDefinition Width="auto"/>
+                                    <ColumnDefinition/>
                                 </Grid.ColumnDefinitions>
                                 <FontIcon Foreground="{ThemeResource ForegroundTextColor}" FontFamily="Segoe MDL2 Assets" Glyph="&#xE946;" />
                                 <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="8 0 0 0" Grid.Column="1" Text="{x:Bind Path=ToolTip,Mode=OneWay}"></TextBlock>
@@ -69,11 +69,11 @@
                                 <Grid Background="#00FFFFFF">
                                     <Grid.ContextFlyout>
                                         <MenuFlyout>
-                                            <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看" />
+                                            <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看"/>
                                         </MenuFlyout>
                                     </Grid.ContextFlyout>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="160"/>
                                         <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <Border Margin="4" CornerRadius="{StaticResource ImageCornerRadius}">
@@ -87,11 +87,13 @@
                                             </Border>
                                         </Grid>
                                     </Border>
-                                    <StackPanel Grid.Column="1" Margin="4 0 0 0">
+                                    <StackPanel Grid.Column="1" Margin="4 0 0 0" >
                                         <TextBlock FontSize="20" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=title}"></TextBlock>
-                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 8 0 0">观看:<Run Text="{x:Bind Path=stat.view,Converter={StaticResource numberToStringConvert}}" /> 弹幕:<Run Text="{x:Bind Path=stat.danmaku,Converter={StaticResource numberToStringConvert}}" /></TextBlock>
+                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 8 0 0">观看:<Run Text="{x:Bind Path=stat.view,Converter={StaticResource numberToStringConvert}}"/> 弹幕:<Run Text="{x:Bind Path=stat.danmaku,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
 
-                                        <TextBlock Margin="0 2 0 0" Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" >UP:<Run Text="{x:Bind Path=owner.name}" /></TextBlock>
+                                        <TextBlock Margin="0 2 0 0" Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" >UP:<Run Text="{x:Bind Path=owner.name}"/></TextBlock>
+
+                                       
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>

@@ -12,11 +12,11 @@ using Windows.Foundation;
 using Windows.Graphics.Display;
 using Windows.UI;
 using Windows.UI.Core.Preview;
+using Windows.UI.Popups;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
-
 public enum AppTheme
 {
     Default,
@@ -31,7 +31,7 @@ namespace BiliLite
     /// <summary>
     /// 提供特定于应用程序的行为，以补充默认的应用程序类。
     /// </summary>
-    internal sealed partial class App : Application, ILogProvider
+    sealed partial class App : Application, ILogProvider
     {
         /// <summary>
         /// 初始化单一实例应用程序对象。这是执行的创作代码的第一行，
@@ -39,6 +39,7 @@ namespace BiliLite
         /// </summary>
         public App()
         {
+
             this.InitializeComponent();
 
             App.Current.UnhandledException += App_UnhandledException;
@@ -47,27 +48,24 @@ namespace BiliLite
             SqlHelper.InitDB();
             this.Suspending += OnSuspending;
         }
-
         private void RegisterExceptionHandlingSynchronizationContext()
         {
             ExceptionHandlingSynchronizationContext
                 .Register()
                 .UnhandledException += SynchronizationContext_UnhandledException;
         }
-
         private void SynchronizationContext_UnhandledException(object sender, AysncUnhandledExceptionEventArgs e)
         {
             e.Handled = true;
             try
             {
                 LogHelper.Log("程序运行出现错误", LogType.ERROR, e.Exception);
-                Utils.ShowMessageToast("程序出现一个错误，已记录", e.Exception.ToString());
+                Utils.ShowMessageToast("程序出现一个错误，已记录",e.Exception.ToString());
             }
             catch (Exception)
             {
             }
         }
-
         private void App_UnhandledException(object sender, Windows.UI.Xaml.UnhandledExceptionEventArgs e)
         {
             e.Handled = true;
@@ -79,13 +77,13 @@ namespace BiliLite
             catch (Exception)
             {
             }
+
         }
 
         public void Log(LogLevel level, string message)
         {
             System.Diagnostics.Debug.WriteLine("FFmpeg ({0}): {1}", level, message);
         }
-
         /// <summary>
         /// 在应用程序由最终用户正常启动时进行调用。
         /// 将在启动应用程序以打开特定文件等情况下使用。
@@ -93,10 +91,13 @@ namespace BiliLite
         /// <param name="e">有关启动请求和过程的详细信息。</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-            Navigation(e.Arguments, e.PrelaunchActivated);
+          
+            Navigation(e.Arguments,e.PrelaunchActivated);
+            
         }
 
-        private async void Navigation(object arguments, bool prelaunch = false)
+
+        private async void Navigation(object arguments, bool prelaunch=false)
         {
             // We don't have ARM64 support of SYEngine.
             if (RuntimeInformation.ProcessArchitecture != Architecture.Arm64)
@@ -112,7 +113,7 @@ namespace BiliLite
             catch (Exception)
             {
             }
-
+          
             InitBili();
             Frame rootFrame = Window.Current.Content as Frame;
 
@@ -125,6 +126,7 @@ namespace BiliLite
 
                 rootFrame.NavigationFailed += OnNavigationFailed;
 
+                
                 //主题颜色
                 rootFrame.RequestedTheme = (ElementTheme)SettingHelper.GetValue<int>(SettingHelper.UI.THEME, 0);
 
@@ -154,8 +156,9 @@ namespace BiliLite
                 {
                     if (arguments != null && !string.IsNullOrEmpty(arguments.ToString()))
                     {
-                        await MessageCenter.HandleUrl(arguments.ToString());
+                       await MessageCenter.HandleUrl(arguments.ToString());
                     }
+                    
                 }
                 // 确保当前窗口处于活动状态
                 Window.Current.Activate();
@@ -189,7 +192,7 @@ namespace BiliLite
         /// </summary>
         ///<param name="sender">导航失败的框架</param>
         ///<param name="e">有关导航失败的详细信息</param>
-        private void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
+        void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
             throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
         }
@@ -220,7 +223,6 @@ namespace BiliLite
                 titleBar.ButtonForegroundColor = TitltBarButtonColor(setting);
             });
         }
-
         private static Color TitltBarButtonColor(UISettings uISettings)
         {
             var settingTheme = SettingHelper.GetValue<int>(SettingHelper.UI.THEME, 0);
@@ -232,18 +234,17 @@ namespace BiliLite
             }
             return color;
         }
-
         protected override void OnActivated(IActivatedEventArgs args)
         {
             base.OnActivated(args);
-
+          
             if (args.Kind == ActivationKind.Protocol)
             {
                 ProtocolActivatedEventArgs eventArgs = args as ProtocolActivatedEventArgs;
-                Navigation(eventArgs.Uri.AbsoluteUri, false);
+                Navigation(eventArgs.Uri.AbsoluteUri ,false);
             }
+           
         }
-
         /// <summary>
         /// 在将要挂起应用程序执行时调用。  在不知道应用程序
         /// 无需知道应用程序会被终止还是会恢复，
@@ -280,13 +281,10 @@ namespace BiliLite
                                            case ContentDialogResult.None:
                                                e.Handled = true;
                                                break;
-
                                            case ContentDialogResult.Primary:
                                                break;
-
                                            case ContentDialogResult.Secondary:
                                                break;
-
                                            default:
                                                break;
                                        }

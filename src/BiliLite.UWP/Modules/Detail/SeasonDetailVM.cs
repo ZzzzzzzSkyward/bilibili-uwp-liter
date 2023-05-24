@@ -6,18 +6,16 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows.Input;
-
+using System.Reflection;
 namespace BiliLite.Modules
 {
     public class SeasonDetailVM : IModules
     {
-        private readonly Api.SeasonApi seasonApi;
-        private readonly PlayerAPI PlayerAPI;
-        private readonly Api.User.FollowAPI followAPI;
-
+        readonly Api.SeasonApi seasonApi;
+        readonly PlayerAPI PlayerAPI;
+        readonly Api.User.FollowAPI followAPI;
         public SeasonDetailVM()
         {
             seasonApi = new Api.SeasonApi();
@@ -25,7 +23,6 @@ namespace BiliLite.Modules
             followAPI = new Api.User.FollowAPI();
             FollowCommand = new RelayCommand(DoFollow);
         }
-
         private SeasonDetailModel _Detail;
 
         public SeasonDetailModel Detail
@@ -33,31 +30,24 @@ namespace BiliLite.Modules
             get { return _Detail; }
             set { _Detail = value; DoPropertyChanged("Detail"); }
         }
-
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private bool _loaded = false;
-
         public bool Loaded
         {
             get { return _loaded; }
             set { _loaded = value; DoPropertyChanged("Loaded"); }
         }
-
         private bool _ShowError = false;
-
         public bool ShowError
         {
             get { return _ShowError; }
             set { _ShowError = value; DoPropertyChanged("ShowError"); }
         }
-
         private string _errorMsg = "";
 
         public string ErrorMsg
@@ -69,15 +59,12 @@ namespace BiliLite.Modules
         public ICommand FollowCommand { get; private set; }
 
         private List<SeasonDetailEpisodeModel> _episodes;
-
         public List<SeasonDetailEpisodeModel> Episodes
         {
             get { return _episodes; }
             set { _episodes = value; DoPropertyChanged("Episodes"); }
         }
-
         private bool _showEpisodes = false;
-
         public bool ShowEpisodes
         {
             get { return _showEpisodes; }
@@ -85,23 +72,18 @@ namespace BiliLite.Modules
         }
 
         private List<SeasonDetailEpisodeModel> _previews;
-
         public List<SeasonDetailEpisodeModel> Previews
         {
             get { return _previews; }
             set { _previews = value; DoPropertyChanged("Previews"); }
         }
-
         private bool _showPreview = false;
-
         public bool ShowPreview
         {
             get { return _showPreview; }
             set { _showPreview = value; DoPropertyChanged("ShowPreview"); }
         }
-
         private bool _nothingPlay = false;
-
         public bool NothingPlay
         {
             get { return _nothingPlay; }
@@ -123,12 +105,13 @@ namespace BiliLite.Modules
                 }
                 if (results.status)
                 {
+
                     //尝试不兼容获取
                     var data = await results.GetJson<ApiResultModel<SeasonDetailModel>>();
                     if (data == null || !data.success)
                     {
-                        var data3 = await results.GetJson<ApiResultModel<SeasonDetailModel_Web>>();
-                        if (data3 != null && data3.success)
+                        var data3=await results.GetJson<ApiResultModel<SeasonDetailModel_Web>>();
+                        if(data3!=null && data3.success)
                         {
                             data = new ApiResultModel<SeasonDetailModel>();
                             data.result = new SeasonDetailModel();
@@ -146,11 +129,11 @@ namespace BiliLite.Modules
                     //}
                     //代理访问失败，使用Web的Api访问
                     //尝试不兼容的备用方案
-                    ApiResultModel<SeasonDetailModel_Web> data2 = null;
-                    if (data == null || !data.success)
+                    ApiResultModel<SeasonDetailModel_Web> data2=null;
+                    if (data==null || !data.success)
                     {
                         data2 = await GetWebSeasonDetail(season_id);
-                        if (data2 == null || !data2.success)
+                        if(data2==null || !data2.success)
                         {
                             return;
                         }
@@ -165,8 +148,9 @@ namespace BiliLite.Modules
                     }
                     else
                     {
+                        
                     }
-
+                   
                     if (data.success)
                     {
                         if (data.result.limit != null)
@@ -186,10 +170,10 @@ namespace BiliLite.Modules
                             try
                             {
                                 //build 6235200
-                                if (data.result.episodes == null)
-                                    data.result.episodes = JsonConvert.DeserializeObject<List<SeasonDetailEpisodeModel>>(data.result.modules.FirstOrDefault(x => x["style"].ToString() == "positive")?["data"]?["episodes"]?.ToString() ?? "[]");
-                                if (data.result.seasons == null)
-                                    data.result.seasons = JsonConvert.DeserializeObject<List<SeasonDetailSeasonItemModel>>(data.result.modules.FirstOrDefault(x => x["style"].ToString() == "season")?["data"]?["seasons"]?.ToString() ?? "[]");
+                                if(data.result.episodes==null)
+                                data.result.episodes = JsonConvert.DeserializeObject<List<SeasonDetailEpisodeModel>>(data.result.modules.FirstOrDefault(x => x["style"].ToString() == "positive")?["data"]?["episodes"]?.ToString()??"[]");
+                                if(data.result.seasons==null)
+                                data.result.seasons = JsonConvert.DeserializeObject<List<SeasonDetailSeasonItemModel>>(data.result.modules.FirstOrDefault(x => x["style"].ToString() == "season")?["data"]?["seasons"]?.ToString() ?? "[]");
                                 var pv = JsonConvert.DeserializeObject<List<SeasonDetailEpisodeModel>>(data.result.modules.FirstOrDefault(x => x["style"].ToString() == "section")?["data"]?["episodes"]?.ToString() ?? "[]");
                                 foreach (var item in pv)
                                 {
@@ -201,6 +185,8 @@ namespace BiliLite.Modules
                             {
                             }
                         }
+
+
 
                         if (data.result.section != null)
                         {
@@ -255,28 +241,28 @@ namespace BiliLite.Modules
             var reulsts_web = await seasonApi.DetailWeb(season_id).Request();
             if (reulsts_web.status)
             {
-                var data = reulsts_web.GetJObject();
+                var data= reulsts_web.GetJObject();
                 if (data["code"].ToInt32() == 0)
                 {
                     var objText = data["result"].ToString();
                     //处理下会出错的字段
                     //objText = objText.Replace("\"staff\"", "staff1");
-                    var model = JsonConvert.DeserializeObject<SeasonDetailModel_Web>(objText);
+                    var model= JsonConvert.DeserializeObject<SeasonDetailModel_Web>(objText);
                     model.episodes = await Utils.DeserializeJson<List<SeasonDetailEpisodeModel>>(data["result"]["episodes"].ToString());
                     model.user_status = new SeasonDetailUserStatusModel()
                     {
-                        follow_status = 0,
-                        follow = 0
+                        follow_status=0,
+                        follow=0
                     };
-                    return new ApiResultModel<SeasonDetailModel_Web>() { code = 0, message = "", result = model, };
+                    return new ApiResultModel<SeasonDetailModel_Web>() { code=0,message="",result=model,};
                 }
             }
-            return new ApiResultModel<SeasonDetailModel_Web>()
-            {
-                code = -101,
-                message = "无法读取内容"
+            return new ApiResultModel<SeasonDetailModel_Web>() { 
+                code=-101,
+                message="无法读取内容"
             };
         }
+
 
         public async void DoFollow()
         {
@@ -330,7 +316,10 @@ namespace BiliLite.Modules
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
+
+
         }
+
     }
 
     public class SeasonDetailModel
@@ -345,8 +334,7 @@ namespace BiliLite.Modules
         public int badge_type { get; set; }
         public int status { get; set; }
         public string subtitle { get; set; }
-        public bool show_badge
-        { get { return !string.IsNullOrEmpty(badge); } }
+        public bool show_badge { get { return !string.IsNullOrEmpty(badge); } }
         public string link { get; set; }
         public string short_link { get; set; }
         public string square_cover { get; set; }
@@ -357,7 +345,6 @@ namespace BiliLite.Modules
         public SeasonDetailActorModel actor { get; set; }
         public SeasonDetailActorModel staff { get; set; }
         public List<SeasonDetailAreaItemModel> areas { get; set; }
-
         public string area
         {
             get
@@ -377,12 +364,10 @@ namespace BiliLite.Modules
                 }
             }
         }
-
         public SeasonDetailNewEpModel new_ep { get; set; }
         public List<SeasonDetailEpisodeModel> episodes { get; set; }
         public string origin_name { get; set; }
         public SeasonDetailRatingModel rating { get; set; }
-
         public bool show_rating
         {
             get
@@ -390,10 +375,8 @@ namespace BiliLite.Modules
                 return rating != null;
             }
         }
-
         public SeasonDetailPublishModel publish { get; set; }
         public List<SeasonDetailSeasonItemModel> seasons { get; set; }
-
         public bool show_seasons
         {
             get
@@ -401,7 +384,6 @@ namespace BiliLite.Modules
                 return seasons != null && seasons.Count > 1;
             }
         }
-
         public SeasonDetailSeasonItemModel current_season
         {
             get
@@ -416,7 +398,6 @@ namespace BiliLite.Modules
                 }
             }
         }
-
         public List<SeasonDetailStyleItemModel> styles { get; set; }
         public SeasonDetailStatModel stat { get; set; }
         public int total { get; set; }
@@ -426,7 +407,6 @@ namespace BiliLite.Modules
         public SeasonDetailLimitModel limit { get; set; }
         public List<SeasonDetailSectionItemModel> section { get; set; }
         public SeasonDetailPaymentModel payment { get; set; }
-
         public bool show_payment
         {
             get
@@ -434,7 +414,6 @@ namespace BiliLite.Modules
                 return payment != null && payment.dialog != null;
             }
         }
-
         public void convert(SeasonDetailModel_Web sw)
         {
             actor = new SeasonDetailActorModel();
@@ -453,13 +432,13 @@ namespace BiliLite.Modules
             this.stat = sw.stat;
             //处理标签string->object
             this.styles = new List<SeasonDetailStyleItemModel>();
-            foreach (var item in sw.styles)
+            foreach(var item in sw.styles)
             {
                 var sd = new SeasonDetailStyleItemModel();
                 sd.name = item;
                 sd.id = null;//标记该标签不可打开
                 sd.url = "";
-                this.styles.Add(sd);
+                this.styles.Add(sd);    
             }
             var otherFields = this.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             var allProperties = this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
@@ -486,8 +465,7 @@ namespace BiliLite.Modules
                     {
                         this.GetType().GetProperty(property.Name).SetValue(this, value);
                     }
-                    catch (Exception e)
-                    {
+                    catch(Exception e) {
                         Console.WriteLine(e.ToString());
                     }
                 }
@@ -496,33 +474,29 @@ namespace BiliLite.Modules
             this.modules = new JArray();
         }
     }
-
     public class SeasonDetailModel_Web : SeasonDetailModel
     {
         public new string actor { get; set; }
         public new string staff { get; set; }
         public new List<string> styles { get; set; }
     }
-
     public class SeasonDetailUpInfoModel
     {
-        public long mid { get; set; }
+        public long mid{ get; set; }
         public string uname { get; set; }
     }
-
     public class SeasonDetailPaymentModel
     {
         public string price { get; set; }
         public string tv_price { get; set; }
         public SeasonDetailPaymentDialogModel dialog { get; set; }
     }
-
     public class SeasonDetailPaymentDialogModel
     {
         public string title { get; set; }
         public string desc { get; set; }
-    }
 
+    }
     public class SeasonDetailSectionItemModel
     {
         public string title { get; set; }
@@ -530,7 +504,6 @@ namespace BiliLite.Modules
         public int type { get; set; }
         public List<SeasonDetailEpisodeModel> episodes { get; set; }
     }
-
     public class SeasonDetailEpisodeModel
     {
         public string aid { get; set; }
@@ -538,7 +511,6 @@ namespace BiliLite.Modules
         public string cid { get; set; }
         public int badge_type { get; set; }
         public string badge { get; set; }
-
         public bool show_badge
         {
             get
@@ -546,11 +518,9 @@ namespace BiliLite.Modules
                 return !string.IsNullOrEmpty(badge);
             }
         }
-
         public string cover { get; set; }
 
         private int? _id;
-
         public int id
         {
             get
@@ -563,9 +533,7 @@ namespace BiliLite.Modules
             }
             set { _id = value; }
         }
-
         private int? _status;
-
         public int status
         {
             get
@@ -594,6 +562,7 @@ namespace BiliLite.Modules
             set { _title = value; }
         }
 
+
         private string _long_title;
 
         public string long_title
@@ -609,17 +578,17 @@ namespace BiliLite.Modules
             set { _long_title = value; }
         }
 
+
         public int? ep_id { get; set; }
         public int? episode_status { get; set; }
         public string index { get; set; }
         public string index_title { get; set; }
         public int section_type { get; set; }
-        public bool IsPreview
-        { get { return section_type != 0; } }
+        public bool IsPreview { get { return section_type != 0; } }
     }
-
     public class SeasonDetailUserStatusModel : IModules
     {
+
         private int _follow;
 
         public int follow
@@ -636,20 +605,17 @@ namespace BiliLite.Modules
         public int vip_frozen { get; set; }
         public SeasonDetailUserStatusProgressModel progress { get; set; }
     }
-
     public class SeasonDetailUserStatusProgressModel
     {
         public string last_ep_index { get; set; }
         public int last_ep_id { get; set; }
         public int last_time { get; set; }
     }
-
     public class SeasonDetailLimitModel
     {
         public string content { get; set; }
         public string image { get; set; }
     }
-
     public class SeasonDetailStatModel
     {
         public int coins { get; set; }
@@ -661,21 +627,18 @@ namespace BiliLite.Modules
         public int share { get; set; }
         public int views { get; set; }
     }
-
     public class SeasonDetailNewEpModel
     {
         public string desc { get; set; }
         public string id { get; set; }
         public string title { get; set; }
     }
-
     public class SeasonDetailStyleItemModel
     {
         public string id { get; set; }
         public string name { get; set; }
         public string url { get; set; }
     }
-
     public class SeasonDetailPublishModel
     {
         public int is_finish { get; set; }
@@ -686,7 +649,6 @@ namespace BiliLite.Modules
         public string release_date_show { get; set; }
         public string time_length_show { get; set; }
     }
-
     public class SeasonDetailSeasonItemModel
     {
         public int season_id { get; set; }
@@ -694,12 +656,10 @@ namespace BiliLite.Modules
         public string season_title { get; set; }
         public string title { get; set; }
     }
-
     public class SeasonDetailRatingModel
     {
         public int count { get; set; }
         public double score { get; set; }
-
         public double score_5
         {
             get
@@ -708,16 +668,15 @@ namespace BiliLite.Modules
             }
         }
     }
-
     public class SeasonDetailActorModel
     {
         public string title { get; set; }
         public string info { get; set; }
     }
-
     public class SeasonDetailAreaItemModel
     {
         public string id { get; set; }
         public string name { get; set; }
     }
+
 }

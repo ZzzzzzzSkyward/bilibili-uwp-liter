@@ -1,4 +1,5 @@
-﻿//using SQLite;
+﻿
+//using SQLite;
 using System;
 using System.IO;
 using Windows.Storage;
@@ -10,7 +11,7 @@ namespace BiliLite.Helpers
         /// <summary>
         /// 数据库文件所在路径
         /// </summary>
-        private static readonly string DbPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "bili.db");
+        private readonly static string DbPath = Path.Combine(ApplicationData.Current.LocalFolder.Path, "bili.db");
 
         //private static SQLiteConnection _connection;
 
@@ -27,15 +28,17 @@ namespace BiliLite.Helpers
         //    set { _connection = value; }
         //}
 
-        public static async void InitDB()
+
+        public async static void InitDB()
         {
             await ApplicationData.Current.LocalFolder.CreateFileAsync("bili.db", CreationCollisionOption.OpenIfExists);
 
             //Connection.CreateTable<LocalHistory>();
-        }
 
+        }
         //public static List<LocalHistory> GetHistory(int page = 1)
         //{
+
         //    var list = Connection.Table<LocalHistory>()
         //         .OrderByDescending(x => x.WatchTime)
         //         .Skip((page - 1) * 30)
@@ -46,6 +49,7 @@ namespace BiliLite.Helpers
 
         //public static int UpdateOrInsertHistory(LocalHistory localHistory)
         //{
+
         //    var value = GetHistoryItem(localHistory.VideoID);
         //    if (value == null)
         //    {
@@ -64,7 +68,6 @@ namespace BiliLite.Helpers
         //    return value;
         //}
     }
-
     //public class LocalHistory
     //{
     //    [PrimaryKey]

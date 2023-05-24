@@ -14,9 +14,8 @@ namespace BiliLite.Modules
 {
     public class CinemaVM : IModules
     {
-        private readonly Api.User.FollowAPI followAPI;
-        private readonly Api.Home.CinemaAPI cinemaAPI;
-
+        readonly Api.User.FollowAPI followAPI;
+        readonly Api.Home.CinemaAPI cinemaAPI;
         public CinemaVM()
         {
             cinemaAPI = new Api.Home.CinemaAPI();
@@ -97,8 +96,9 @@ namespace BiliLite.Modules
             };
         }
 
-        private bool _showFollows = false;
 
+
+        private bool _showFollows = false;
         public bool ShowFollows
         {
             get { return _showFollows; }
@@ -106,21 +106,17 @@ namespace BiliLite.Modules
         }
 
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private bool _loadingFollow = true;
-
         public bool LoadingFollow
         {
             get { return _loadingFollow; }
             set { _loadingFollow = value; DoPropertyChanged("LoadingFollow"); }
         }
-
         private ObservableCollection<FollowSeasonModel> _follows;
 
         public ObservableCollection<FollowSeasonModel> Follows
@@ -130,7 +126,6 @@ namespace BiliLite.Modules
         }
 
         private CinemaHomeModel _homeData;
-
         public CinemaHomeModel HomeData
         {
             get { return _homeData; }
@@ -138,12 +133,11 @@ namespace BiliLite.Modules
         }
 
         public List<PageEntranceModel> Entrances { get; set; }
-
         public async void SeasonItemClick(object sender, ItemClickEventArgs e)
         {
             var seasonId = e.ClickedItem.GetType().GetProperty("season_id").GetValue(e.ClickedItem, null);
             var title = e.ClickedItem.GetType().GetProperty("title").GetValue(e.ClickedItem, null) ?? "";
-            if (seasonId != null && seasonId.ToInt32() != 0)
+            if (seasonId!=null&& seasonId.ToInt32()!=0)
             {
                 MessageCenter.NavigateToPage(sender, new NavigationInfo()
                 {
@@ -155,12 +149,12 @@ namespace BiliLite.Modules
             }
             else
             {
-                var weblink = e.ClickedItem.GetType().GetProperty("link").GetValue(e.ClickedItem, null) ?? "";
-                var result = await MessageCenter.HandleUrl(weblink.ToString());
+                var weblink = e.ClickedItem.GetType().GetProperty("link").GetValue(e.ClickedItem, null)??"";
+                var result= await MessageCenter.HandleUrl(weblink.ToString());
                 if (!result) Utils.ShowMessageToast("无法打开此链接");
             }
+           
         }
-
         public void LinkItemClick(object sender, ItemClickEventArgs e)
         {
             var weblink = e.ClickedItem.GetType().GetProperty("link").GetValue(e.ClickedItem, null);
@@ -197,6 +191,7 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -231,6 +226,7 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -243,6 +239,7 @@ namespace BiliLite.Modules
                 LoadingFollow = false;
             }
         }
+
 
         public async Task GetFallMore(CinemaHomeFallModel AnimeFallModel)
         {
@@ -257,6 +254,7 @@ namespace BiliLite.Modules
                     {
                         AnimeFallModel.items.Add(item);
                     }
+
                 }
                 else
                 {
@@ -273,42 +271,39 @@ namespace BiliLite.Modules
                 AnimeFallModel.ShowMore = true;
             }
         }
+
+
     }
+
 
     public class CinemaHomeModel
     {
         public List<CinemaHomeBannerModel> banners { get; set; }
         public List<CinemaHomeFallModel> falls { get; set; }
         public List<CinemaHomeHotItem> update { get; set; }
-
         /// <summary>
         /// 记录片 87
         /// </summary>
         public List<CinemaHomeHotItem> documentary { get; set; }
-
         /// <summary>
         /// 电影 88
         /// </summary>
         public List<CinemaHomeHotItem> movie { get; set; }
-
         /// <summary>
         /// 电视剧 89
         /// </summary>
         public List<CinemaHomeHotItem> tv { get; set; }
-
         /// <summary>
         /// 综艺 173
         /// </summary>
         public List<CinemaHomeHotItem> variety { get; set; }
     }
-
     public class CinemaHomeFallModel : IModules
     {
         public int wid { get; set; }
         public string title { get; set; }
 
         private bool _showMore = true;
-
         public bool ShowMore
         {
             get { return _showMore; }
@@ -317,7 +312,6 @@ namespace BiliLite.Modules
 
         public ObservableCollection<CinemaHomeFallItemModel> items { get; set; }
     }
-
     public class CinemaHomeFallItemModel
     {
         public string cover { get; set; }
@@ -327,21 +321,18 @@ namespace BiliLite.Modules
         public long cursor { get; set; }
         public int wid { get; set; }
     }
-
     public class CinemaHomeBannerModel
     {
         public string title { get; set; }
         public string img { get; set; }
         public string url { get; set; }
     }
-
     public class CinemaHomeHotItem
     {
         public string hat { get; set; }
         public string cover { get; set; }
         public string badge { get; set; }
         public int badge_type { get; set; }
-
         public bool show_badge
         {
             get
@@ -349,7 +340,6 @@ namespace BiliLite.Modules
                 return !string.IsNullOrEmpty(badge);
             }
         }
-
         public string desc { get; set; }
         public string title { get; set; }
         public string link { get; set; }
@@ -359,7 +349,6 @@ namespace BiliLite.Modules
         public int wid { get; set; }
         public CinemaHomeStatModel stat { get; set; }
     }
-
     public class CinemaHomeStatModel
     {
         public int view { get; set; }

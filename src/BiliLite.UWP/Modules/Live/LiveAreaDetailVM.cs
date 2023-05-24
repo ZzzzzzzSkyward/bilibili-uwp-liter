@@ -9,13 +9,13 @@ using System.Windows.Input;
 
 namespace BiliLite.Modules.Live
 {
-    public class LiveAreaDetailVM : IModules
+    public class LiveAreaDetailVM:IModules
     {
         public int AreaID { get; set; }
         public int ParentAreaID { get; set; }
+        
 
-        private readonly Api.Live.LiveAreaAPI liveAreaAPI;
-
+        readonly Api.Live.LiveAreaAPI liveAreaAPI;
         public LiveAreaDetailVM(int area_id, int parent_id)
         {
             liveAreaAPI = new Api.Live.LiveAreaAPI();
@@ -27,25 +27,20 @@ namespace BiliLite.Modules.Live
         }
 
         private bool _loading = false;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private bool _CanLoadMore = false;
-
         public bool CanLoadMore
         {
             get { return _CanLoadMore; }
             set { _CanLoadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
-
         public ICommand LoadMoreCommand { get; private set; }
         public ICommand RefreshCommand { get; private set; }
         private List<LiveTagItemModel> _tags;
-
         public List<LiveTagItemModel> Tags
         {
             get { return _tags; }
@@ -53,31 +48,28 @@ namespace BiliLite.Modules.Live
         }
 
         private LiveTagItemModel _selectTag;
-
         public LiveTagItemModel SelectTag
         {
             get { return _selectTag; }
             set { _selectTag = value; DoPropertyChanged("SelectTag"); }
         }
-
         public int Page { get; set; } = 1;
         public ObservableCollection<LiveRecommendItemModel> Items { get; set; }
-
         public async Task GetItems()
         {
             try
             {
                 Loading = true;
                 CanLoadMore = false;
-                var results = await liveAreaAPI.LiveAreaRoomList(AreaID, ParentAreaID, Page, SelectTag?.sort_type ?? "").Request();
+                var results = await liveAreaAPI.LiveAreaRoomList(AreaID,ParentAreaID,Page, SelectTag?.sort_type?? "").Request();
                 if (results.status)
                 {
                     var data = results.GetJObject();
                     if (data["code"].ToInt32() == 0)
                     {
-                        if (Tags == null)
+                        if (Tags==null)
                         {
-                            Tags = JsonConvert.DeserializeObject<List<LiveTagItemModel>>(data["data"]["new_tags"].ToString());
+                            Tags= JsonConvert.DeserializeObject<List<LiveTagItemModel>>(data["data"]["new_tags"].ToString());
                             SelectTag = Tags[0];
                             SelectTag.Select = true;
                         }
@@ -104,6 +96,7 @@ namespace BiliLite.Modules.Live
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -127,7 +120,6 @@ namespace BiliLite.Modules.Live
             Page = 1;
             await GetItems();
         }
-
         public async void LoadMore()
         {
             if (Loading)
@@ -136,9 +128,9 @@ namespace BiliLite.Modules.Live
             }
             await GetItems();
         }
-    }
 
-    public class LiveTagItemModel : INotifyPropertyChanged
+    }
+    public class LiveTagItemModel:INotifyPropertyChanged
     {
         public long id { get; set; }
         public string name { get; set; }
@@ -146,18 +138,18 @@ namespace BiliLite.Modules.Live
         public string sort { get; set; }
 
         private bool _select;
-
         public bool Select
         {
             get { return _select; }
             set { _select = value; DoPropertyChanged("Select"); }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
 
+        public event PropertyChangedEventHandler PropertyChanged;
         public virtual void DoPropertyChanged(string name)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
     }
+
 }

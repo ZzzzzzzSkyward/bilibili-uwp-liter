@@ -12,11 +12,10 @@ namespace BiliLite.Dialogs
 {
     public sealed partial class SendCommentDialog : ContentDialog
     {
-        private readonly CommentApi commentApi;
-        private readonly EmoteVM emoteVM;
-        private readonly string oid;
-        private readonly CommentType commentType;
-
+        readonly CommentApi commentApi;
+        readonly EmoteVM emoteVM;
+        readonly string oid;
+        readonly CommentType commentType;
         public SendCommentDialog(string oid, CommentType commentType)
         {
             this.InitializeComponent();
@@ -28,7 +27,7 @@ namespace BiliLite.Dialogs
 
         private async void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            if (string.IsNullOrEmpty(txt_Comment.Text.Trim()))
+            if (string.IsNullOrEmpty( txt_Comment.Text.Trim()))
             {
                 Utils.ShowMessageToast("检查下你的输入哦");
                 return;
@@ -37,17 +36,19 @@ namespace BiliLite.Dialogs
             {
                 IsPrimaryButtonEnabled = false;
                 var text = txt_Comment.Text;
-                var result = await commentApi.AddComment(oid, commentType, text).Request();
-                var data = await result.GetData<object>();
+                var result=await commentApi.AddComment(oid,commentType, text).Request();
+                var data =await result.GetData<object>();
                 if (data.code == 0)
                 {
                     Utils.ShowMessageToast("发表评论成功");
                     this.Hide();
+
                 }
                 else
                 {
                     Utils.ShowMessageToast(data.message.ToString());
                 }
+
             }
             catch (Exception)
             {
@@ -64,11 +65,13 @@ namespace BiliLite.Dialogs
 
         private async void btnOpenFace_Click(object sender, RoutedEventArgs e)
         {
+            
             FaceFlyout.ShowAt(sender as Button);
-            if (emoteVM.Packages == null || emoteVM.Packages.Count == 0)
+            if(emoteVM.Packages==null|| emoteVM.Packages.Count == 0)
             {
                 await emoteVM.GetEmote(EmoteBusiness.reply);
             }
+            
         }
 
         private void GridView_ItemClick(object sender, ItemClickEventArgs e)

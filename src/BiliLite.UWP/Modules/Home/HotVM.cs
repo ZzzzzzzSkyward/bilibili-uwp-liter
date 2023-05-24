@@ -1,30 +1,27 @@
-﻿using BiliLite.Helpers;
-using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using BiliLite.Helpers;
+using System.Collections.ObjectModel;
+using Newtonsoft.Json;
 using System.Windows.Input;
 
 namespace BiliLite.Modules
 {
     public class HotVM : IModules
     {
-        private readonly Api.Home.HotAPI hotAPI;
-
+        readonly Api.Home.HotAPI hotAPI;
         public HotVM()
         {
             hotAPI = new Api.Home.HotAPI();
             RefreshCommand = new RelayCommand(Refresh);
-            LoadMoreCommand = new RelayCommand(LoadMore);
+            LoadMoreCommand=new RelayCommand(LoadMore);
         }
-
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
 
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
@@ -38,7 +35,6 @@ namespace BiliLite.Modules
             get { return _hotItems; }
             set { _hotItems = value; DoPropertyChanged("HotItems"); }
         }
-
         private List<HotTopItemModel> _topItems;
 
         public List<HotTopItemModel> TopItems
@@ -52,14 +48,14 @@ namespace BiliLite.Modules
             try
             {
                 Loading = true;
-
+            
                 var results = await hotAPI.Popular(idx, last_param).Request();
                 if (results.status)
                 {
-                    var data = results.GetJObject();
-                    if (data["code"].ToInt32() == 0)
+                    var data =  results.GetJObject();
+                    if (data["code"].ToInt32()==0)
                     {
-                        if (TopItems == null)
+                        if (TopItems==null)
                         {
                             TopItems = JsonConvert.DeserializeObject<List<HotTopItemModel>>(data["config"]["top_items"].ToString());
                         }
@@ -69,7 +65,7 @@ namespace BiliLite.Modules
                             if (items[i].card_goto != "av")
                                 items.Remove(items[i]);
                         }
-                        if (HotItems == null)
+                        if (HotItems==null)
                         {
                             HotItems = items;
                         }
@@ -89,6 +85,7 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -101,7 +98,7 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-
+    
         public async void Refresh()
         {
             if (Loading)
@@ -112,14 +109,13 @@ namespace BiliLite.Modules
             HotItems = null;
             await GetPopular();
         }
-
         public async void LoadMore()
         {
             if (Loading)
             {
                 return;
             }
-            if (HotItems == null || HotItems.Count == 0)
+            if (HotItems==null|| HotItems.Count==0)
             {
                 return;
             }
@@ -127,8 +123,7 @@ namespace BiliLite.Modules
             await GetPopular(last.idx, last.param);
         }
     }
-
-    public class HotTopItemModel
+    public class HotTopItemModel 
     {
         public int entrance_id { get; set; }
         public string icon { get; set; }
@@ -136,7 +131,6 @@ namespace BiliLite.Modules
         public string uri { get; set; }
         public string title { get; set; }
     }
-
     public class HotDataItemModel
     {
         public string card_type { get; set; }

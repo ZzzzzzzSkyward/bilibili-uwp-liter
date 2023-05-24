@@ -8,18 +8,14 @@ namespace BiliLite.Models.Dynamic
         public string max_dynamic_id { get; set; }
         public List<DynamicCardModel> cards { get; set; }
     }
-
     public class DynamicCardModel
     {
         public DynamicCardDescModel desc { get; set; }
-
         // public string card { get; set; }
         public string extend_json { get; set; }
-
         public string card { get; set; }
         public DynamicCardDisplayModel display { get; set; }
     }
-
     public class DynamicCardDescModel
     {
         public DynamicCardDescUserProfileModel user_profile { get; set; }
@@ -51,12 +47,10 @@ namespace BiliLite.Models.Dynamic
         public DynamicCardDisplayEmojiInfoModel topic_info { get; set; }
         public List<DynamicCardCardModel> add_on_card_info { get; set; }
     }
-
     public class DynamicCardCardModel
     {
         public DynamicCardReserveModel reserve_attach_card { get; set; }
     }
-
     public class DynamicCardReserveModel
 
     {
@@ -65,17 +59,16 @@ namespace BiliLite.Models.Dynamic
         public DynamicCardReserveTimeModel desc_first { get; set; }
         public string desc_second { get; set; }
     }
-
     public class DynamicCardReserveTimeModel
     {
         public string text { get; set; }
     }
 
+
     public class DynamicCardDisplayTopicInfoModel
     {
-        public List<DynamicCardDisplayTopicInfoItemModel> topic_details { get; set; }
+        public List<DynamicCardDisplayTopicInfoItemModel> topic_details{ get; set; }
     }
-
     public class DynamicCardDisplayTopicInfoItemModel
     {
         public int topic_id { get; set; }
@@ -88,7 +81,6 @@ namespace BiliLite.Models.Dynamic
     {
         public List<DynamicCardDisplayEmojiInfoItemModel> emoji_details { get; set; }
     }
-
     public class DynamicCardDisplayEmojiInfoItemModel
     {
         public long id { get; set; }
@@ -98,7 +90,6 @@ namespace BiliLite.Models.Dynamic
         public string text { get; set; }
         public DynamicCardDisplayEmojiInfoEmoteMetaModel meta { get; set; }
     }
-
     public class DynamicCardDisplayEmojiInfoEmoteMetaModel
     {
         //1=16px,2=16x2 px

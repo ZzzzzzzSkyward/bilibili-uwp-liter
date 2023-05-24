@@ -6,19 +6,18 @@ using System;
 using System.Collections.Generic;
 using System.Windows.Input;
 
+
 namespace BiliLite.Modules.Live.LiveCenter
 {
-    public class LiveCenterVM : IModules
+    public class LiveCenterVM:IModules
     {
-        private readonly LiveCenterAPI liveCenterAPI;
-
+        readonly LiveCenterAPI liveCenterAPI;
         public LiveCenterVM()
         {
             liveCenterAPI = new LiveCenterAPI();
             SignCommand = new RelayCommand(DoSign);
             TitleCommand = new RelayCommand(OpenTitle);
         }
-
         private SignInfoModel _SignInfo;
 
         public SignInfoModel SignInfo
@@ -26,10 +25,8 @@ namespace BiliLite.Modules.Live.LiveCenter
             get { return _SignInfo; }
             set { _SignInfo = value; DoPropertyChanged("SignInfo"); }
         }
-
         public ICommand SignCommand { get; private set; }
         public ICommand TitleCommand { get; private set; }
-
         public async void GetUserInfo()
         {
             try
@@ -41,12 +38,14 @@ namespace BiliLite.Modules.Live.LiveCenter
                     var data = await result.GetData<SignInfoModel>();
                     if (data.success)
                     {
+
                         SignInfo = data.data;
                     }
                     else
                     {
                         Utils.ShowMessageToast(data.message);
                     }
+
                 }
                 else
                 {
@@ -59,7 +58,7 @@ namespace BiliLite.Modules.Live.LiveCenter
                 Utils.ShowMessageToast("读取签到信息失败");
             }
         }
-
+       
         public async void DoSign()
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -76,7 +75,7 @@ namespace BiliLite.Modules.Live.LiveCenter
                     var data = await results.GetJson<ApiDataModel<JObject>>();
                     if (data.success)
                     {
-                        SignInfo.is_signed = true;
+                        SignInfo.is_signed =true;
                         Utils.ShowMessageToast(data.data["text"].ToString());
                     }
                     else
@@ -94,21 +93,23 @@ namespace BiliLite.Modules.Live.LiveCenter
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
+
+
+
         }
 
         public void OpenTitle()
         {
-            MessageCenter.NavigateToPage(this, new NavigationInfo()
-            {
-                icon = Windows.UI.Xaml.Controls.Symbol.World,
-                title = "佩戴中心",
-                page = typeof(Pages.WebPage),
-                parameters = "https://link.bilibili.com/p/center/index#/user-center/wearing-center/my-medal"
+            MessageCenter.NavigateToPage(this,new NavigationInfo() { 
+                icon= Windows.UI.Xaml.Controls.Symbol.World,
+                title="佩戴中心",
+                page=typeof(Pages.WebPage),
+                parameters= "https://link.bilibili.com/p/center/index#/user-center/wearing-center/my-medal"
             });
         }
-    }
 
-    public class SignInfoModel : IModules
+    }
+    public class SignInfoModel:IModules
     {
         private bool _is_signed;
 
@@ -124,17 +125,17 @@ namespace BiliLite.Modules.Live.LiveCenter
         public List<SignInfoAwardModel> days_award { get; set; }
         public List<SignInfoAwardModel> awards { get; set; }
     }
-
     public class SignInfoAwardModel
     {
+       
         public int count { get; set; }
         public string award { get; set; }
         public string text { get; set; }
         public SignInfoAwardImageModel img { get; set; }
     }
-
     public class SignInfoAwardImageModel
     {
+
         public int width { get; set; }
         public string src { get; set; }
         public int height { get; set; }

@@ -8,21 +8,21 @@
     mc:Ignorable="d"
     xmlns:controls="using:BiliLite.Controls"
     xmlns:dynamic="using:BiliLite.Controls.Dynamic"
-    xmlns:fa="using:FontAwesome5"
-    xmlns:converters="using:BiliLite.Converters"
+    xmlns:fa="using:FontAwesome5" 
+    xmlns:converters="using:BiliLite.Converters" 
     xmlns:controls1="using:Microsoft.Toolkit.Uwp.UI.Controls"
     Background="{ThemeResource TopPaneBackground}">
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Controls/Dynamic/DynamicTemplate.xaml" />
+                <ResourceDictionary Source="/Controls/Dynamic/DynamicTemplate.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <Style TargetType="HyperlinkButton">
                 <Setter Property="Foreground" Value="#178bcf" />
             </Style>
             <ItemsPanelTemplate x:Key="GridPanel">
-                <controls1:StaggeredPanel DesiredColumnWidth="500"
+                <controls1:StaggeredPanel DesiredColumnWidth="500" 
                                           HorizontalAlignment="Stretch"
                                           ColumnSpacing="-12"
                                           RowSpacing="8" />
@@ -30,16 +30,19 @@
             <ItemsPanelTemplate x:Key="ListPanel">
                 <ItemsStackPanel />
             </ItemsPanelTemplate>
+          
         </ResourceDictionary>
+
+
     </Page.Resources>
     <SplitView x:Name="splitView" OpenPaneLength="360" PaneBackground="Transparent" PanePlacement="Right" IsPaneOpen="False" DisplayMode="Overlay">
         <SplitView.Pane>
-            <Border x:Name="RootBorder" Padding="12,0,0,0">
+            <Border x:Name="RootBorder" Padding="12,0,0,0" >
                 <Grid>
                     <controls1:DropShadowPanel BlurRadius="12"
                                           Color="Black"
                                           Opacity="0.3"
-
+                                         
                                           HorizontalContentAlignment="Stretch"
                                           VerticalContentAlignment="Stretch">
                         <Rectangle Fill="White" />
@@ -48,29 +51,30 @@
                         <Pivot x:Name="pivotRight" SelectionChanged="pivotRight_SelectionChanged">
                             <PivotItem Margin="0">
                                 <PivotItem.Header>
-                                    <TextBlock FontSize="15">转发(<Run x:Name="repostCount" />)</TextBlock>
+                                    <TextBlock FontSize="15">转发(<Run x:Name="repostCount"/>)</TextBlock>
                                 </PivotItem.Header>
                                 <controls:DynamicRepostControl x:Name="repost"></controls:DynamicRepostControl>
                             </PivotItem>
                             <PivotItem Margin="0">
                                 <PivotItem.Header>
-                                    <TextBlock FontSize="15">评论(<Run x:Name="commentCount" />)</TextBlock>
+                                    <TextBlock FontSize="15">评论(<Run x:Name="commentCount"/>)</TextBlock>
                                 </PivotItem.Header>
                                 <controls:CommentControl x:Name="comment"></controls:CommentControl>
                             </PivotItem>
                         </Pivot>
                     </Grid>
                 </Grid>
+               
             </Border>
         </SplitView.Pane>
         <SplitView.Content>
-            <Grid>
+            <Grid  >
                 <!--背景图-->
                 <Image Visibility="Collapsed" Stretch="UniformToFill" Source="https://i0.hdslb.com/bfs/album/eb65ae5ee6f66b6381090f5bee4fe6cbabfd6d0d.png@1920w.jpg" x:Name="BGImage"></Image>
-                <Grid>
+                <Grid >
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <Grid x:Name="gridTopBar" MaxWidth="800" Margin="8 0">
                         <Border x:Name="borderTopBar" Margin="12 4"  CornerRadius="4"  Background="{ThemeResource TransparentLayer}">
@@ -84,6 +88,7 @@
                                             </StackPanel>
                                         </Button>
                                     </StackPanel>
+
                                 </Pivot.RightHeader>
                                 <PivotItem>
                                     <PivotItem.Header>
@@ -108,14 +113,14 @@
                             </Pivot>
                         </Border>
                     </Grid>
-                    <controls:MyListView SelectionMode="None"
-                  IsItemClickEnabled="false"
+                    <controls:MyListView SelectionMode="None" 
+                  IsItemClickEnabled="false" 
                           x:Name="list"
-                  ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}"
+                  ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}" 
                                          CanLoadMore="{x:Bind Path=dynamicVM.CanLoadMore,Mode=OneWay}"
                                          LoadMoreBottomOffset="0"
                                          LoadMoreCommand="{x:Bind Path=dynamicVM.LoadMoreCommand}"
-                  Padding="4"
+                  Padding="4" 
                   Grid.Row="1"
                  ItemTemplateSelector="{StaticResource select}"
                   HorizontalContentAlignment="Center">
@@ -124,11 +129,12 @@
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
                                 <Setter Property="MaxWidth" Value="800"></Setter>
                                 <Setter Property="Margin" Value="4"></Setter>
+
                             </Style>
                         </controls:MyListView.ItemContainerStyle>
                         <!--<ListView.ItemsPanel>-->
                         <!--<ItemsPanelTemplate>
-
+                     
                             <controls1:StaggeredPanel DesiredColumnWidth="500"
                                              HorizontalAlignment="Stretch"
                                              ColumnSpacing="-12"
@@ -136,24 +142,27 @@
                         </ItemsPanelTemplate>-->
 
                         <!--</ListView.ItemsPanel>-->
+                        
                     </controls:MyListView>
                     <ProgressRing Grid.Row="1" VerticalAlignment="Bottom" Margin="8" IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.Loading,Mode=OneWay}"></ProgressRing>
                     <StackPanel Orientation="Vertical"  Grid.Row="1" VerticalAlignment="Bottom" Margin="20 12" HorizontalAlignment="Right">
                         <controls:RoundButton x:Name="btnGrid"  ToolTipService.ToolTip="切换为瀑布流" Click="btnGrid_Click" Margin="0 0 0 8"  Padding="12">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE80A;"  Foreground="White" />
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE80A;"  Foreground="White"/>
                         </controls:RoundButton>
                         <controls:RoundButton x:Name="btnList"  Visibility="Collapsed" ToolTipService.ToolTip="切换为列表" Click="btnList_Click" Margin="0 0 0 8"  Padding="12">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE292;" Foreground="White" />
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE292;" Foreground="White"/>
                         </controls:RoundButton>
                         <controls:RoundButton x:Name="btnTop" Click="btnTop_Click" ToolTipService.ToolTip="返回顶部"  Margin="0 0 0 8"  Padding="12">
-                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE110;" Foreground="White" />
+                            <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE110;" Foreground="White"/>
                         </controls:RoundButton>
                         <controls:RoundButton x:Name="btnRefresh"  Command="{x:Bind Path=dynamicVM.RefreshCommand}"   Padding="12">
                             <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
                         </controls:RoundButton>
                     </StackPanel>
+
                 </Grid>
             </Grid>
         </SplitView.Content>
     </SplitView>
+
 </Page>

@@ -1,9 +1,10 @@
 ﻿using System;
-using Windows.Foundation;
+
 using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Controls;
+using Windows.Foundation;
 
 namespace BiliLite.Controls
 {
@@ -128,7 +129,6 @@ namespace BiliLite.Controls
         }
 
         #region NormalizeSize
-
         private static Size NormalizeSize(Size size)
         {
             double width = size.Width;
@@ -145,11 +145,9 @@ namespace BiliLite.Controls
 
             return new Size(width, height);
         }
-
-        #endregion NormalizeSize
+        #endregion
 
         #region Move between items
-
         public void MoveBack()
         {
             if (_isBusy)
@@ -165,7 +163,6 @@ namespace BiliLite.Controls
             _panel.TranslateDeltaX(-0.01);
             AnimateNext();
         }
-
-        #endregion Move between items
+        #endregion
     }
 }

@@ -1,22 +1,21 @@
-﻿using BiliLite.Helpers;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
+﻿using System;
 using System.Net.WebSockets;
 using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading;
 using System.Threading.Tasks;
+using System.Threading;
+using System.Linq;
+using System.IO;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Windows.UI.Xaml;
+using BiliLite.Helpers;
 using Windows.UI.Xaml.Media;
-
+using System.ComponentModel;
 /*
 * 参考文档:
 * https://github.com/lovelyyoshino/Bilibili-Live-API/blob/master/API.WebSocket.md
-*
+* 
 */
 
 namespace BiliLite.Modules.Live
@@ -30,90 +29,72 @@ namespace BiliLite.Modules.Live
         /// 连接成功
         /// </summary>
         ConnectSuccess,
-
         /// <summary>
         /// 在线人数
         /// </summary>
         Online,
-
         /// <summary>
         /// 弹幕
         /// </summary>
         Danmu,
-
         /// <summary>
         /// 赠送礼物
         /// </summary>
         Gift,
-
         /// <summary>
         /// 欢迎信息
         /// </summary>
         Welcome,
-
         /// <summary>
         /// 系统消息
         /// </summary>
         SystemMsg,
-
         /// <summary>
         /// 醒目留言
         /// </summary>
         SuperChat,
-
         /// <summary>
         /// 醒目留言（日文）
         /// </summary>
         SuperChatJpn,
-
         /// <summary>
         /// 抽奖开始
         /// </summary>
         AnchorLotteryStart,
-
         /// <summary>
         /// 抽奖结束
         /// </summary>
         AnchorLotteryEnd,
-
         /// <summary>
         /// 抽奖结果
         /// </summary>
         AnchorLotteryAward,
-
         /// <summary>
         /// 欢迎舰长
         /// </summary>
         WelcomeGuard,
-
         /// <summary>
         /// 上舰
         /// </summary>
         GuardBuy,
     }
-
     public class LiveMessage : IDisposable
     {
         public delegate void MessageHandler(MessageType type, object message);
-
         public event MessageHandler NewMessage;
-
-        private ClientWebSocket ws;
+        ClientWebSocket ws;
         public string ServerUrl { get; set; } = "wss://broadcastlv.chat.bilibili.com/sub";
-
         public LiveMessage()
         {
             ws = new ClientWebSocket();
         }
-
         private static System.Timers.Timer heartBeatTimer;
-
         public async Task Connect(int roomID, int uid, CancellationToken cancellationToken)
         {
             if (ws.State != WebSocketState.Open && ws.State != WebSocketState.Connecting)
                 //连接
                 await ws.ConnectAsync(new Uri(ServerUrl), cancellationToken);
-            else
+            else 
                 return;
             //进房
             await JoinRoomAsync(roomID, uid);
@@ -132,12 +113,13 @@ namespace BiliLite.Modules.Live
                 }
                 catch (Exception ex)
                 {
-                    if (ex is OperationCanceledException)
+                    if(ex is OperationCanceledException)
                     {
                         return;
                     }
                     LogHelper.Log("直播接收包出错", LogType.ERROR, ex);
                 }
+               
             }
         }
 
@@ -145,24 +127,22 @@ namespace BiliLite.Modules.Live
         {
             await SendHeartBeatAsync();
         }
-
         /// <summary>
         /// 发送进房信息
         /// </summary>
         /// <param name="roomId"></param>
         /// <returns></returns>
-        private async Task JoinRoomAsync(int roomId, int uid = 0)
+        private async Task JoinRoomAsync(int roomId,int uid=0)
         {
             if (ws.State == WebSocketState.Open)
             {
                 await ws.SendAsync(EncodeData(JsonConvert.SerializeObject(new
                 {
                     roomid = roomId,
-                    uid = uid
+                    uid= uid
                 }), 7), WebSocketMessageType.Binary, true, CancellationToken.None);
             }
         }
-
         /// <summary>
         /// 发送心跳包
         /// </summary>
@@ -174,7 +154,6 @@ namespace BiliLite.Modules.Live
                 await ws.SendAsync(EncodeData("", 2), WebSocketMessageType.Binary, true, CancellationToken.None);
             }
         }
-
         /// <summary>
         /// 解析内容
         /// </summary>
@@ -204,9 +183,11 @@ namespace BiliLite.Modules.Live
             }
             else if (operation == 5)
             {
+
                 if (protocolVersion == 2)
                 {
                     body = DecompressData(body);
+
                 }
                 var text = Encoding.UTF8.GetString(body);
                 //可能有多条数据，做个分割
@@ -214,6 +195,7 @@ namespace BiliLite.Modules.Live
                 foreach (var item in textLines)
                 {
                     ParseMessage(item);
+
                 }
             }
         }
@@ -224,7 +206,7 @@ namespace BiliLite.Modules.Live
             {
                 var obj = JObject.Parse(jsonMessage);
                 var cmd = obj["cmd"].ToString();
-                if (cmd.Contains("DANMU_MSG"))
+                if (cmd .Contains("DANMU_MSG"))
                 {
                     var msg = new DanmuMsgModel();
                     if (obj["info"] != null && obj["info"].ToArray().Length != 0)
@@ -338,22 +320,22 @@ namespace BiliLite.Modules.Live
                     }
                     return;
                 }
-                if (cmd == "SUPER_CHAT_MESSAGE")
+                if (cmd == "SUPER_CHAT_MESSAGE" )
                 {
                     SuperChatMsgModel msg = new SuperChatMsgModel();
                     if (obj["data"] != null)
                     {
                         msg.background_bottom_color = obj["data"]["background_bottom_color"].ToString();
-                        msg.background_color = obj["data"]["background_color"].ToString();
-                        msg.background_image = obj["data"]["background_image"].ToString();
-                        msg.end_time = obj["data"]["end_time"].ToInt32();
+                        msg.background_color= obj["data"]["background_color"].ToString();
+                        msg.background_image= obj["data"]["background_image"].ToString();
+                        msg.end_time= obj["data"]["end_time"].ToInt32();
                         msg.start_time = obj["data"]["start_time"].ToInt32();
-                        msg.time = obj["data"]["time"].ToInt32();
+                        msg.time= obj["data"]["time"].ToInt32();
                         msg.max_time = msg.end_time - msg.start_time;
                         msg.face = obj["data"]["user_info"]["face"].ToString();
                         msg.face_frame = obj["data"]["user_info"]["face_frame"].ToString();
                         msg.font_color = obj["data"]["message_font_color"].ToString();
-                        msg.message = obj["data"]["message"].ToString();
+                        msg.message= obj["data"]["message"].ToString();
                         msg.price = obj["data"]["price"].ToInt32();
                         msg.username = obj["data"]["user_info"]["uname"].ToString();
                         NewMessage?.Invoke(MessageType.SuperChat, msg);
@@ -364,6 +346,7 @@ namespace BiliLite.Modules.Live
             catch (Exception)
             {
             }
+
         }
 
         /// <summary>
@@ -401,7 +384,9 @@ namespace BiliLite.Modules.Live
                 ms.Flush();
                 return _bytes;
             }
+
         }
+
 
         /// <summary>
         /// 解压数据
@@ -425,25 +410,30 @@ namespace BiliLite.Modules.Live
                     }
                     compressedzipStream.Close();
                     return outBuffer.ToArray();
+
                 }
+
             }
+
+
         }
 
         public void Dispose()
         {
             heartBeatTimer?.Stop();
             heartBeatTimer?.Dispose();
-            ws.Dispose();
+            ws.Dispose(); 
         }
     }
 
     public class LiveDanmuModel
     {
+
         public LiveDanmuTypes type { get; set; }
         public int viewer { get; set; }
         public object value { get; set; }
-    }
 
+    }
     public class DanmuMsgModel
     {
         public string text { get; set; }
@@ -453,6 +443,7 @@ namespace BiliLite.Modules.Live
         public string ul { get; set; }//等级
         public string ulColor { get; set; }//等级颜色
         public SolidColorBrush ul_color { get; set; }//等级颜色
+
 
         public string user_title { get; set; }//头衔id（对应的是CSS名）
 
@@ -469,7 +460,6 @@ namespace BiliLite.Modules.Live
         public Visibility hasMedal { get; set; } = Visibility.Collapsed;
         public Visibility hasTitle { get; set; } = Visibility.Collapsed;
         public Visibility hasUL { get; set; } = Visibility.Visible;
-
         public string titleImg
         {
             get
@@ -477,11 +467,10 @@ namespace BiliLite.Modules.Live
                 return LiveRoomVM.Titles.FirstOrDefault(x => x.id == user_title)?.img;
             }
         }
-
         public SolidColorBrush uname_color { get; set; }
         public SolidColorBrush content_color { get; set; }
-    }
 
+    }
     public class GiftMsgModel
     {
         public string uname { get; set; }
@@ -492,24 +481,21 @@ namespace BiliLite.Modules.Live
         public string uid { get; set; }
         public string gif { get; set; }
     }
-
     public class WelcomeMsgModel
     {
         public string uname { get; set; }
         public string isadmin { get; set; }
         public string uid { get; set; }
         public bool svip { get; set; }
-    }
 
+    }
     public class SuperChatMsgModel : INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-
         private void DoPropertyChanged(string name)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
         }
-
         public string username { get; set; }
         public string face { get; set; }
         public string face_frame { get; set; }
@@ -519,16 +505,13 @@ namespace BiliLite.Modules.Live
         public int start_time { get; set; }
         public int end_time { get; set; }
         private int _time;
-
         public int time
         {
             get { return _time; }
             set { _time = value; DoPropertyChanged("time"); }
         }
-
         public int max_time { get; set; }
         public int price { get; set; }
-
         public int price_gold
         {
             get
@@ -536,7 +519,6 @@ namespace BiliLite.Modules.Live
                 return price * 100;
             }
         }
-
         public string background_color { get; set; }
         public string background_bottom_color { get; set; }
         public string font_color { get; set; }

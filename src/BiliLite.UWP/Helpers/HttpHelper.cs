@@ -1,20 +1,22 @@
-﻿using BiliLite.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Threading.Tasks;
-using Windows.Storage.Streams;
+using Newtonsoft.Json;
+using System.IO;
 using Windows.Web.Http;
+using Windows.Storage.Streams;
 using Windows.Web.Http.Filters;
+using BiliLite.Models;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Diagnostics;
+using System.Timers;
 
 namespace BiliLite.Helpers
 {
+
     /// <summary>
     /// 网络请求方法封装
     /// </summary>
@@ -27,19 +29,16 @@ namespace BiliLite.Helpers
         /// <param name="headers"></param>
         /// <param name="cookie"></param>
         /// <returns></returns>
-        public static DateTime lasttime = System.DateTime.Now;
-
+        public static DateTime lasttime=System.DateTime.Now;
         public static TimeSpan dt = new TimeSpan(1);
-
-        public static async Task<HttpResults> Get(string url)
+        public async static Task<HttpResults> Get( string url)
         {
             return await Get(url, null);
         }
-
-        public static async Task<HttpResults> Get(string url, IDictionary<string, string> headers)
+        public async static Task<HttpResults> Get( string url, IDictionary<string, string> headers)
         {
-            //wait
-            var t = DateTime.Now;
+            //wait 
+            var t=DateTime.Now;
             if (t - lasttime < dt)
             {
                 await Task.Delay(dt + (lasttime - t));
@@ -88,6 +87,9 @@ namespace BiliLite.Helpers
                     };
                     return httpResults;
                 }
+
+
+
             }
             catch (Exception ex)
             {
@@ -101,7 +103,7 @@ namespace BiliLite.Helpers
             }
         }
 
-        public static async Task<HttpResults> GetWithWebCookie(string url, IDictionary<string, string> headers = null)
+        public async static Task<HttpResults> GetWithWebCookie(string url, IDictionary<string, string> headers = null)
         {
             Debug.WriteLine("GET:" + url);
             Utils.AddALog("[GET]" + url);
@@ -114,7 +116,7 @@ namespace BiliLite.Helpers
                 HttpBaseProtocolFilter fiter = new HttpBaseProtocolFilter();
                 var cookies = fiter.CookieManager.GetCookies(new Uri("http://bilibili.com"));
                 //没有Cookie
-                if (cookies == null || cookies.Count == 0)
+                if(cookies==null|| cookies.Count == 0)
                 {
                     //访问一遍bilibili.com
                     await Get("https://www.bilibili.com");
@@ -147,7 +149,7 @@ namespace BiliLite.Helpers
         /// <param name="headers"></param>
         /// <param name="cookie"></param>
         /// <returns></returns>
-        public static async Task<Stream> GetStream(string url, IDictionary<string, string> headers = null)
+        public async static Task<Stream> GetStream(string url, IDictionary<string, string> headers = null)
         {
             Debug.WriteLine("GET:" + url);
             Utils.AddALog("[GET STREAM]" + url);
@@ -167,14 +169,19 @@ namespace BiliLite.Helpers
                     response.EnsureSuccessStatusCode();
                     return (await response.Content.ReadAsInputStreamAsync()).AsStreamForRead();
                 }
+
+
             }
             catch (Exception ex)
             {
                 LogHelper.Log("GET请求Stream失败" + url, LogType.ERROR, ex);
                 return null;
-            }
-        }
 
+            }
+
+
+
+        }
         /// <summary>
         /// 发送一个GET请求
         /// </summary>
@@ -182,7 +189,7 @@ namespace BiliLite.Helpers
         /// <param name="headers"></param>
         /// <param name="cookie"></param>
         /// <returns></returns>
-        public static async Task<IBuffer> GetBuffer(string url, IDictionary<string, string> headers = null)
+        public async static Task<IBuffer> GetBuffer(string url, IDictionary<string, string> headers = null)
         {
             Debug.WriteLine("GET:" + url);
             Utils.AddALog("[GET STREAM]" + url);
@@ -202,14 +209,19 @@ namespace BiliLite.Helpers
                     response.EnsureSuccessStatusCode();
                     return await response.Content.ReadAsBufferAsync();
                 }
+
+
             }
             catch (Exception ex)
             {
                 LogHelper.Log("GET请求Stream失败" + url, LogType.ERROR, ex);
                 return null;
-            }
-        }
 
+            }
+
+
+
+        }
         /// <summary>
         /// 发送一个GET请求
         /// </summary>
@@ -217,7 +229,7 @@ namespace BiliLite.Helpers
         /// <param name="headers"></param>
         /// <param name="cookie"></param>
         /// <returns></returns>
-        public static async Task<String> GetString(string url, IDictionary<string, string> headers = null, IDictionary<string, string> cookie = null)
+        public async static Task<String> GetString(string url, IDictionary<string, string> headers = null, IDictionary<string, string> cookie = null)
         {
             Debug.WriteLine("GET:" + url);
             Utils.AddALog("[GET]" + url);
@@ -238,13 +250,19 @@ namespace BiliLite.Helpers
                     var buffer = await response.Content.ReadAsBufferAsync();
                     return Encoding.UTF8.GetString(buffer.ToArray());
                 }
+
+
             }
             catch (Exception ex)
             {
                 LogHelper.Log("GET请求String失败" + url, LogType.ERROR, ex);
 
                 return null;
+
             }
+
+
+
         }
 
         /// <summary>
@@ -256,7 +274,7 @@ namespace BiliLite.Helpers
         /// <param name="cookie"></param>
         /// <param name="contentType"></param>
         /// <returns></returns>
-        public static async Task<HttpResults> Post(string url, string body, IDictionary<string, string> headers = null, string contentType = "application/x-www-form-urlencoded")
+        public async static Task<HttpResults> Post(string url, string body, IDictionary<string, string> headers = null, string contentType = "application/x-www-form-urlencoded")
         {
             Debug.WriteLine("POST:" + url + "\r\nBODY:" + body);
             Utils.AddALog("[POST]" + url + body);
@@ -274,7 +292,7 @@ namespace BiliLite.Helpers
                     var response = await client.PostAsync(new Uri(url), new HttpStringContent(body, Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/x-www-form-urlencoded"));
                     if (!response.IsSuccessStatusCode)
                     {
-                        Utils.AddALog("[POST][FAIL]" + url + response.StatusCode.ToString());
+                        Utils.AddALog("[POST][FAIL]"+url+response.StatusCode.ToString());
                         return new HttpResults()
                         {
                             code = (int)response.StatusCode,
@@ -294,6 +312,9 @@ namespace BiliLite.Helpers
                     };
                     return httpResults;
                 }
+
+
+
             }
             catch (Exception ex)
             {
@@ -307,20 +328,21 @@ namespace BiliLite.Helpers
             }
         }
 
+
+
+
         private static string StatusCodeToMessage(int code)
         {
+
             switch (code)
             {
                 case 0:
                 case 200:
                     return "请求成功";
-
                 case 412:
                     return "请求太频繁，请稍后再试（412）";
-
                 case 504:
                     return "请求超时了";
-
                 case 301:
                 case 302:
                 case 303:
@@ -337,16 +359,15 @@ namespace BiliLite.Helpers
                 case 503:
                 case 505:
                     return "网络请求失败，响应代码:" + code;
-
                 case -2147012867:
                 case -2147012889:
                     return "请检查的网络连接";
-
                 default:
                     return "未知错误,响应代码：" + code;
             }
         }
     }
+
 
     public class HttpResults
     {
@@ -358,7 +379,7 @@ namespace BiliLite.Helpers
         //处理两个json的情况
         public JObject FindLongestValidJsonString(string input)
         {
-            JObject obj = null;
+            JObject obj=null;
             int start = 0;
             int end = 0;
             int maxLength = 0;
@@ -401,31 +422,31 @@ namespace BiliLite.Helpers
 
             return obj;
         }
-
-        public async Task<T> GetJson<T>()
+    public async Task<T> GetJson<T>()
         {
-            try
-            {
-                return JsonConvert.DeserializeObject<T>(results);
-            }
-            catch
-            {
-            }
-            try
-            {
-                return FindLongestValidJsonString(results).ToObject<T>();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine("解析json失败", e.ToString());
-                Utils.AddALog("[JSON][FAIL]" + results.ToString().Substring(0, 100));
-            }
-            return default(T);
-        }
+                 try
+                 {
+                     return JsonConvert.DeserializeObject<T>(results);
+                 }
+                 catch
+                 {
 
+                 }
+                 try
+                 {
+                     return FindLongestValidJsonString(results).ToObject<T>();
+                 }
+                 catch(Exception e)
+                 {
+                     Console.WriteLine("解析json失败", e.ToString());
+                     Utils.AddALog("[JSON][FAIL]" + results.ToString().Substring(0,100));
+                 }
+                 return default(T);
+
+        }
         public JObject GetJObject()
         {
-            JObject obj = JObject.Parse("{}");
+            JObject obj=JObject.Parse("{}");
             try
             {
                 obj = JObject.Parse(results);
@@ -441,7 +462,7 @@ namespace BiliLite.Helpers
                 var serialized = obj.ToString();
                 return obj;
             }
-            catch (Exception e)
+            catch(Exception e)
             {
                 Utils.ShowMessageToast("解析json对象失败", e.ToString());
                 Console.WriteLine(obj.ToString());
@@ -449,7 +470,6 @@ namespace BiliLite.Helpers
                 return null;
             }
         }
-
         public async Task<ApiDataModel<T>> GetData<T>()
         {
             try
@@ -460,8 +480,8 @@ namespace BiliLite.Helpers
             {
                 return null;
             }
-        }
 
+        }
         public async Task<ApiResultModel<T>> GetResult<T>()
         {
             try
@@ -472,6 +492,7 @@ namespace BiliLite.Helpers
             {
                 return null;
             }
+
         }
     }
 }

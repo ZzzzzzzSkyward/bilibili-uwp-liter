@@ -16,5 +16,6 @@
         public string VideoFrameRate { get; set; }
         public int VideoWidth { get; set; }
         public int VideoHeight { get; set; }
+
     }
 }

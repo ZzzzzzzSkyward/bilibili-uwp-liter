@@ -1,19 +1,19 @@
-﻿using BiliLite.Helpers;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Diagnostics;
+﻿using System;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using Windows.UI.Xaml;
 using Windows.Networking;
 using Windows.Networking.Sockets;
 using Windows.Storage.Streams;
-using Windows.UI.Xaml;
+using System.Text;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.Net;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using Newtonsoft.Json.Linq;
+using BiliLite.Helpers;
 
 namespace BiliLite.Modules.Live
 {
@@ -23,64 +23,55 @@ namespace BiliLite.Modules.Live
         /// 观众
         /// </summary>
         Viewer,
-
         /// <summary>
         /// 弹幕
         /// </summary>
         Danmu,
-
         /// <summary>
         /// 礼物
         /// </summary>
         Gift,
-
         /// <summary>
         /// 欢迎
         /// </summary>
         Welcome,
-
         /// <summary>
         /// 系统信息
         /// </summary>
         SystemMsg,
-
         /// <summary>
         /// 欢迎舰长
         /// </summary>
         WELCOME_GUARD,
-
         /// <summary>
         /// 开始抽奖
         /// </summary>
         ANCHOR_LOT_START,
-
         /// <summary>
         /// 抽奖结束
         /// </summary>
         ANCHOR_LOT_END,
-
         /// <summary>
         /// 开奖信息
         /// </summary>
         ANCHOR_LOT_AWARD,
-
         /// <summary>
         /// 更新粉丝数？
         /// </summary>
         ROOM_REAL_TIME_MESSAGE_UPDATE
     }
-
     public class LiveDanmaku : IDisposable
     {
+
         public event EventHandler<LiveDanmuModel> NewMessage;
 
         private StreamSocket _clientSocket;
         private DispatcherTimer _timer;
         public int delay = 20;
         private int _roomId;
-
         public LiveDanmaku()
         {
+
         }
 
         //开始
@@ -90,10 +81,10 @@ namespace BiliLite.Modules.Live
             {
                 _roomId = roomid;
                 var server = await GetDanmuServer();
-                HostName serverHost = new HostName(server.host);  //设置服务器IP
+                HostName serverHost = new HostName(server.host);  //设置服务器IP  
 
                 _clientSocket = new StreamSocket();
-                await _clientSocket.ConnectAsync(serverHost, server.port.ToString());  //设置服务器端口号
+                await _clientSocket.ConnectAsync(serverHost, server.port.ToString());  //设置服务器端口号  
                 _StartState = true;
                 if (SendJoinChannel(roomid, userId))
                 {
@@ -109,6 +100,8 @@ namespace BiliLite.Modules.Live
             {
                 _StartState = false;
             }
+
+         
         }
 
         private async void Listen()
@@ -117,6 +110,7 @@ namespace BiliLite.Modules.Live
             byte[] stableBuffer = new byte[1024];
             while (true)
             {
+
                 if (!_StartState)
                 {
                     return;
@@ -133,7 +127,7 @@ namespace BiliLite.Modules.Live
                     }
 
                     _netStream.ReadB(stableBuffer, 0, 2);//magic
-                    _netStream.ReadB(stableBuffer, 0, 2);//protocol_version
+                    _netStream.ReadB(stableBuffer, 0, 2);//protocol_version 
 
                     _netStream.ReadB(stableBuffer, 0, 4);
                     var typeId = BitConverter.ToInt32(stableBuffer, 0);
@@ -148,6 +142,7 @@ namespace BiliLite.Modules.Live
                     }
 
                     typeId = typeId - 1;
+
 
                     var buffer = new byte[playloadlength];
                     _netStream.ReadB(buffer, 0, playloadlength);
@@ -170,6 +165,7 @@ namespace BiliLite.Modules.Live
                         {
                             using (System.IO.Compression.DeflateStream compressedzipStream = new System.IO.Compression.DeflateStream(new MemoryStream(buffer, 2, playloadlength - 2), System.IO.Compression.CompressionMode.Decompress))
                             {
+
                                 byte[] block = new byte[1024];
                                 while (true)
                                 {
@@ -197,7 +193,7 @@ namespace BiliLite.Modules.Live
                         JArray json_array = JArray.Parse(json_str);
                         foreach (var obj in json_array)
                         {
-                            if (obj["cmd"] == null)
+                            if (obj["cmd"]==null)
                             {
                                 continue;
                             }
@@ -275,7 +271,6 @@ namespace BiliLite.Modules.Live
                                     }
 
                                     break;
-
                                 case "WELCOME":
                                     var w = new WelcomeMsgModel();
                                     if (obj["data"] != null)
@@ -289,18 +284,16 @@ namespace BiliLite.Modules.Live
                                         }
                                     }
                                     break;
-
                                 case "SYS_MSG":
                                     if (obj["msg"] != null)
                                     {
                                         if (NewMessage != null)
                                         {
-                                            NewMessage(null, new LiveDanmuModel() { type = LiveDanmuTypes.SystemMsg, value = obj["msg"].ToString() });
+                                            NewMessage(null,new LiveDanmuModel() { type = LiveDanmuTypes.SystemMsg, value = obj["msg"].ToString() });
                                         }
                                     }
 
                                     break;
-
                                 case "ANCHOR_LOT_START":
                                     if (obj["data"] != null)
                                     {
@@ -310,7 +303,6 @@ namespace BiliLite.Modules.Live
                                         }
                                     }
                                     break;
-
                                 case "ANCHOR_LOT_AWARD":
                                     if (obj["data"] != null)
                                     {
@@ -320,16 +312,20 @@ namespace BiliLite.Modules.Live
                                         }
                                     }
                                     break;
-
                                 default:
 
                                     break;
                             }
                             await Task.Delay(delay);
                         }
+
                     }
 
+
+
+
                     // }
+
                 }
                 catch (Exception ex)
                 {
@@ -338,8 +334,10 @@ namespace BiliLite.Modules.Live
 
                 await Task.Delay(delay);
             }
-        }
 
+
+
+        }
         ///// <summary>
         /////十进制转SolidColorBrush
         ///// </summary>
@@ -379,9 +377,11 @@ namespace BiliLite.Modules.Live
         //        }
         //    });
 
+
         //    return solid;
 
         //}
+
 
         private async Task<(string token, string host, int port)> GetDanmuServer()
         {
@@ -390,7 +390,7 @@ namespace BiliLite.Modules.Live
                 var chat = $"https://api.live.bilibili.com/room/v1/Danmu/getConf?room_id={_roomId}&platform=pc&player=web";
                 string results = await HttpHelper.GetString(chat);
                 var obj = JObject.Parse(results);
-                if (obj["code"].ToInt32() == 0)
+                if (obj["code"].ToInt32()==0)
                 {
                     return (obj["data"]["token"].ToString(), obj["data"]["host"].ToString(), obj["data"]["port"].ToInt32());
                 }
@@ -403,7 +403,12 @@ namespace BiliLite.Modules.Live
             {
                 return (string.Empty, "broadcastlv.chat.bilibili.com", 2243);
             }
+
+
+
         }
+
+
 
         private void Timer_Tick(object sender, object e)
         {
@@ -438,7 +443,6 @@ namespace BiliLite.Modules.Live
         {
             SendSocketData(0, 16, 1, action, 1, body);
         }
-
         private async void SendSocketData(int packetlength, short magic, short ver, int action, int param = 1, string body = "")
         {
             try
@@ -468,13 +472,15 @@ namespace BiliLite.Modules.Live
                     {
                         ms.Write(playload, 0, playload.Length);
                     }
-                    DataWriter writer = new DataWriter(_clientSocket.OutputStream);  //实例化writer对象，以StreamSocket的输出流作为writer的方向
-                                                                                     // string content = "ABCDEFGH";  //发送一字符串
-                                                                                     //byte[] data = Encoding.UTF8.GetBytes(content);  //将字符串转换为字节类型，完全可以不用转换
-                    writer.WriteBytes(buffer);  //写入字节流，当然可以使用WriteString直接写入字符串
-                    await writer.StoreAsync();  //异步发送数据
-                    writer.DetachStream();  //分离
-                    writer.Dispose();  //结束writer
+                    DataWriter writer = new DataWriter(_clientSocket.OutputStream);  //实例化writer对象，以StreamSocket的输出流作为writer的方向  
+                                                                                     // string content = "ABCDEFGH";  //发送一字符串  
+                                                                                     //byte[] data = Encoding.UTF8.GetBytes(content);  //将字符串转换为字节类型，完全可以不用转换  
+                    writer.WriteBytes(buffer);  //写入字节流，当然可以使用WriteString直接写入字符串  
+                    await writer.StoreAsync();  //异步发送数据  
+                    writer.DetachStream();  //分离  
+                    writer.Dispose();  //结束writer  
+
+
 
                     // _netStream.WriteAsync(buffer, 0, buffer.Length);
                     //  _netStream.FlushAsync();
@@ -483,10 +489,14 @@ namespace BiliLite.Modules.Live
             catch (Exception)
             {
             }
+
         }
 
-        private bool _StartState = false;
 
+       
+
+
+        bool _StartState = false;
         public void Dispose()
         {
             _StartState = false;
@@ -501,5 +511,12 @@ namespace BiliLite.Modules.Live
                 _clientSocket = null;
             }
         }
+
+     
+
+
     }
+
+    
+
 }

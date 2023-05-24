@@ -1,7 +1,5 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Models;
-using BiliLite.Pages;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -9,6 +7,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
+using Newtonsoft.Json;
+using BiliLite.Pages;
 
 namespace BiliLite.Modules
 {
@@ -16,24 +16,20 @@ namespace BiliLite.Modules
     {
         public SearchType SearchType { get; set; }
         public Api.SearchAPI searchAPI;
-
         public ISearchVM()
         {
             searchAPI = new Api.SearchAPI();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
-
         public string Title { get; set; }
 
         private string _keyword;
-
         public string Keyword
         {
             get { return _keyword; }
             set { _keyword = value; }
         }
-
         public ICommand LoadMoreCommand { get; private set; }
         public ICommand RefreshCommand { get; private set; }
 
@@ -47,9 +43,7 @@ namespace BiliLite.Modules
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private bool _Nothing = false;
-
         public bool Nothing
         {
             get { return _Nothing; }
@@ -57,28 +51,24 @@ namespace BiliLite.Modules
         }
 
         private bool _ShowLoadMore = false;
-
         public bool ShowLoadMore
         {
             get { return _ShowLoadMore; }
             set { _ShowLoadMore = value; DoPropertyChanged("ShowLoadMore"); }
         }
-
-        public virtual async void Refresh()
+        public async virtual void Refresh()
         {
             HasData = false;
             Page = 1;
             await LoadData();
         }
-
-        public virtual async void LoadMore()
+        public async virtual void LoadMore()
         {
             await LoadData();
         }
-
         public bool HasData { get; set; } = false;
 
-        public virtual async Task LoadData()
+        public async virtual Task LoadData()
         {
         }
     }
@@ -89,7 +79,6 @@ namespace BiliLite.Modules
         /// 搜索请求需要cookie
         /// </summary>
         public static string cookie = "";
-
         public SearchVM()
         {
             Area = Areas[0];
@@ -115,7 +104,7 @@ namespace BiliLite.Modules
                 //new SearchLiveRoomVM()
                 //{
                 //    Title="主播",
-                //    SearchType= SearchType.Anchor
+                //    SearchType= SearchType.Anchor 
                 //},
                 new SearchUserVM()
                 {
@@ -143,10 +132,9 @@ namespace BiliLite.Modules
                 }
             };
             SelectItem = SearchItems[0];
+           
         }
-
         private ObservableCollection<ISearchVM> _items;
-
         public ObservableCollection<ISearchVM> SearchItems
         {
             get { return _items; }
@@ -160,18 +148,16 @@ namespace BiliLite.Modules
             new SearchArea("香港地区","hk"),
             new SearchArea("台湾地区","tw"),
         };
-
         public SearchArea Area { get; set; }
 
         private ISearchVM _SelectItem;
-
         public ISearchVM SelectItem
         {
             get { return _SelectItem; }
             set { _SelectItem = value; }
         }
-    }
 
+    }
     public class SearchVideoVM : ISearchVM
     {
         public SearchVideoVM()
@@ -201,11 +187,9 @@ namespace BiliLite.Modules
             }
             SelectRegion = RegionFilters[0];
         }
-
         public List<SearchFilterItem> OrderFilters { get; set; }
 
         private SearchFilterItem _SelectOrder;
-
         public SearchFilterItem SelectOrder
         {
             get { return _SelectOrder; }
@@ -215,31 +199,28 @@ namespace BiliLite.Modules
         public List<SearchFilterItem> DurationFilters { get; set; }
 
         private SearchFilterItem _SelectDuration;
-
         public SearchFilterItem SelectDuration
         {
             get { return _SelectDuration; }
             set { _SelectDuration = value; }
         }
-
         public List<SearchFilterItem> RegionFilters { get; set; }
         private SearchFilterItem _SelectRegion;
-
         public SearchFilterItem SelectRegion
         {
             get { return _SelectRegion; }
             set { _SelectRegion = value; }
         }
 
-        private ObservableCollection<SearchVideoItem> _videos;
 
+        private ObservableCollection<SearchVideoItem> _videos;
         public ObservableCollection<SearchVideoItem> Videos
         {
             get { return _videos; }
             set { _videos = value; DoPropertyChanged("Videos"); }
         }
 
-        public override async Task LoadData()
+        public async override Task LoadData()
         {
             try
             {
@@ -250,7 +231,7 @@ namespace BiliLite.Modules
                 ShowLoadMore = false;
                 Loading = true;
                 Nothing = false;
-                var results = await searchAPI.WebSearchVideo(Keyword, Page, SelectOrder.value, SelectDuration.value, SelectRegion.value, Area).Request();
+                var results = await searchAPI.WebSearchVideo(Keyword, Page, SelectOrder.value, SelectDuration.value, SelectRegion.value,Area).Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<JObject>>();
@@ -304,8 +285,9 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-    }
 
+
+    }
     public class SearchArticleVM : ISearchVM
     {
         public SearchArticleVM()
@@ -329,14 +311,12 @@ namespace BiliLite.Modules
                 new SearchFilterItem("轻小说","16"),
                 new SearchFilterItem("科技","17"),
             };
-
+            
             SelectRegion = RegionFilters[0];
         }
-
         public List<SearchFilterItem> OrderFilters { get; set; }
 
         private SearchFilterItem _SelectOrder;
-
         public SearchFilterItem SelectOrder
         {
             get { return _SelectOrder; }
@@ -345,24 +325,24 @@ namespace BiliLite.Modules
 
         public List<SearchFilterItem> DurationFilters { get; set; }
 
+      
         public List<SearchFilterItem> RegionFilters { get; set; }
         private SearchFilterItem _SelectRegion;
-
         public SearchFilterItem SelectRegion
         {
             get { return _SelectRegion; }
             set { _SelectRegion = value; }
         }
 
-        private ObservableCollection<SearchArticleItem> _Articles;
 
+        private ObservableCollection<SearchArticleItem> _Articles;
         public ObservableCollection<SearchArticleItem> Articles
         {
             get { return _Articles; }
             set { _Articles = value; DoPropertyChanged("Articles"); }
         }
 
-        public override async Task LoadData()
+        public async override Task LoadData()
         {
             try
             {
@@ -427,8 +407,9 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-    }
 
+
+    }
     public class SearchAnimeVM : ISearchVM
     {
         public SearchAnimeVM()
@@ -436,14 +417,13 @@ namespace BiliLite.Modules
         }
 
         private ObservableCollection<SearchAnimeItem> _Animes;
-
         public ObservableCollection<SearchAnimeItem> Animes
         {
             get { return _Animes; }
             set { _Animes = value; DoPropertyChanged("Animes"); }
         }
 
-        public override async Task LoadData()
+        public async override Task LoadData()
         {
             try
             {
@@ -465,6 +445,7 @@ namespace BiliLite.Modules
                     var data = await results.GetJson<ApiDataModel<JObject>>();
                     if (data.success)
                     {
+
                         var result = JsonConvert.DeserializeObject<ObservableCollection<SearchAnimeItem>>(data.data["result"]?.ToString() ?? "[]");
                         if (Page == 1)
                         {
@@ -513,8 +494,9 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-    }
 
+
+    }
     public class SearchUserVM : ISearchVM
     {
         public SearchUserVM()
@@ -534,12 +516,11 @@ namespace BiliLite.Modules
                 new SearchFilterItem("认证用户","&user_type=3")
             };
             SelectType = TypeFilters[0];
-        }
 
+        }
         public List<SearchFilterItem> OrderFilters { get; set; }
 
         private SearchFilterItem _SelectOrder;
-
         public SearchFilterItem SelectOrder
         {
             get { return _SelectOrder; }
@@ -549,22 +530,21 @@ namespace BiliLite.Modules
         public List<SearchFilterItem> TypeFilters { get; set; }
 
         private SearchFilterItem _SelectType;
-
         public SearchFilterItem SelectType
         {
             get { return _SelectType; }
             set { _SelectType = value; }
         }
 
-        private ObservableCollection<SearchUserItem> _users;
 
+        private ObservableCollection<SearchUserItem> _users;
         public ObservableCollection<SearchUserItem> Users
         {
             get { return _users; }
             set { _users = value; DoPropertyChanged("Users"); }
         }
 
-        public override async Task LoadData()
+        public async override Task LoadData()
         {
             try
             {
@@ -581,7 +561,7 @@ namespace BiliLite.Modules
                     var data = await results.GetJson<ApiDataModel<JObject>>();
                     if (data.success)
                     {
-                        var result = JsonConvert.DeserializeObject<ObservableCollection<SearchUserItem>>(data.data["result"]?.ToString() ?? "[]");
+                        var result = JsonConvert.DeserializeObject<ObservableCollection<SearchUserItem>>(data.data["result"]?.ToString()??"[]");
                         if (Page == 1)
                         {
                             if (result == null || result.Count == 0)
@@ -629,8 +609,9 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-    }
 
+
+    }
     public class SearchLiveRoomVM : ISearchVM
     {
         public SearchLiveRoomVM()
@@ -638,14 +619,13 @@ namespace BiliLite.Modules
         }
 
         private ObservableCollection<SearchLiveRoomItem> _Rooms;
-
         public ObservableCollection<SearchLiveRoomItem> Rooms
         {
             get { return _Rooms; }
             set { _Rooms = value; DoPropertyChanged("Rooms"); }
         }
 
-        public override async Task LoadData()
+        public async override Task LoadData()
         {
             try
             {
@@ -663,6 +643,7 @@ namespace BiliLite.Modules
                     var data = await results.GetJson<ApiDataModel<JObject>>();
                     if (data.success)
                     {
+
                         var result = JsonConvert.DeserializeObject<ObservableCollection<SearchLiveRoomItem>>(data.data["result"]["live_room"]?.ToString() ?? "[]");
                         if (Page == 1)
                         {
@@ -711,8 +692,9 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-    }
 
+
+    }
     public class SearchTopicVM : ISearchVM
     {
         public SearchTopicVM()
@@ -720,14 +702,13 @@ namespace BiliLite.Modules
         }
 
         private ObservableCollection<SearchTopicItem> _Topics;
-
         public ObservableCollection<SearchTopicItem> Topics
         {
             get { return _Topics; }
             set { _Topics = value; DoPropertyChanged("Topics"); }
         }
 
-        public override async Task LoadData()
+        public async override Task LoadData()
         {
             try
             {
@@ -744,6 +725,7 @@ namespace BiliLite.Modules
                     var data = await results.GetJson<ApiDataModel<JObject>>();
                     if (data.success)
                     {
+
                         var result = JsonConvert.DeserializeObject<ObservableCollection<SearchTopicItem>>(data.data["result"]?.ToString() ?? "[]");
                         if (Page == 1)
                         {
@@ -792,6 +774,8 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
+
+
     }
 
     public class SearchFilterItem
@@ -801,23 +785,19 @@ namespace BiliLite.Modules
             this.name = name;
             this.value = value;
         }
-
         public string name { get; set; }
         public string value { get; set; }
     }
-
+    
     public class SearchArea
     {
-        public SearchArea(string name, string area)
-        {
+        public SearchArea(string name,string area) { 
             this.name = name;
             this.area = area;
         }
-
         public string name { get; set; }
         public string area { get; set; }
     }
-
     public class SearchVideoItem
     {
         public string type { get; set; }
@@ -832,10 +812,10 @@ namespace BiliLite.Modules
             get { return _title; }
             set
             {
+
                 _title = System.Web.HttpUtility.HtmlDecode(value.Replace("<em class=\"keyword\">", "").Replace("</em>", ""));
             }
         }
-
         public string tag { get; set; }
         public int play { get; set; }
         public int video_review { get; set; }
@@ -843,14 +823,13 @@ namespace BiliLite.Modules
         public int favorites { get; set; }
         public string duration { get; set; }
         private string _pic;
-
         public string pic
         {
             get { return _pic; }
             set { _pic = "https:" + value; }
         }
-    }
 
+    }
     public class SearchAnimeItem
     {
         public string type { get; set; }
@@ -863,10 +842,10 @@ namespace BiliLite.Modules
             get { return _title; }
             set
             {
+
                 _title = System.Web.HttpUtility.HtmlDecode(value.Replace("<em class=\"keyword\">", "").Replace("</em>", ""));
             }
         }
-
         public string areas { get; set; }
         public string cv { get; set; }
         public string styles { get; set; }
@@ -875,15 +854,13 @@ namespace BiliLite.Modules
         public string season_type_name { get; set; }
 
         private string _pic;
-
         public string cover
         {
             get { return _pic; }
-            set { _pic = value; }
+            set { _pic =  value; }
         }
 
         public string angle_title { get; set; }
-
         public bool showBadge
         {
             get
@@ -898,7 +875,6 @@ namespace BiliLite.Modules
         public string mid { get; set; }
         public string uname { get; set; }
         private string _pic;
-
         public string upic
         {
             get { return _pic; }
@@ -909,7 +885,6 @@ namespace BiliLite.Modules
         public int videos { get; set; }
         public int fans { get; set; }
         public int is_upuser { get; set; }
-
         public string lv
         {
             get
@@ -917,9 +892,7 @@ namespace BiliLite.Modules
                 return $"ms-appx:///Assets/Icon/lv{level}.png";
             }
         }
-
         public SearchUserOfficialVerifyItem official_verify { get; set; }
-
         public string Verify
         {
             get
@@ -932,23 +905,19 @@ namespace BiliLite.Modules
                 {
                     case 0:
                         return AppHelper.VERIFY_PERSONAL_IMAGE;
-
                     case 1:
                         return AppHelper.VERIFY_OGANIZATION_IMAGE;
-
                     default:
                         return AppHelper.TRANSPARENT_IMAGE;
                 }
             }
         }
-
         public string usign { get; set; }
-
         public string sign
         {
             get
             {
-                if (official_verify != null && !string.IsNullOrEmpty(official_verify.desc))
+                if (official_verify!=null&& !string.IsNullOrEmpty( official_verify.desc))
                 {
                     return official_verify.desc;
                 }
@@ -956,9 +925,9 @@ namespace BiliLite.Modules
             }
         }
     }
-
     public class SearchLiveRoomItem
     {
+
         public string roomid { get; set; }
 
         private string _title;
@@ -968,48 +937,44 @@ namespace BiliLite.Modules
             get { return _title; }
             set
             {
+
                 _title = System.Web.HttpUtility.HtmlDecode(value.Replace("<em class=\"keyword\">", "").Replace("</em>", ""));
             }
         }
-
         public string uname { get; set; }
         public string tags { get; set; }
         public string cate_name { get; set; }
         public int online { get; set; }
 
-        private string _user_cover;
 
+        private string _user_cover;
         public string user_cover
         {
             get { return _user_cover; }
             set { _user_cover = "https:" + value; }
         }
-
         private string _uface;
-
         public string uface
         {
             get { return _uface; }
             set { _uface = "https:" + value; }
         }
-
         private string _cover;
-
         public string cover
         {
             get { return _cover; }
             set { _cover = "https:" + value; }
         }
-    }
 
+    }
     public class SearchUserOfficialVerifyItem
     {
         public string desc { get; set; }
         public int type { get; set; }
     }
-
     public class SearchArticleItem
     {
+
         public string mid { get; set; }
 
         private string _title;
@@ -1022,7 +987,6 @@ namespace BiliLite.Modules
                 _title = System.Web.HttpUtility.HtmlDecode(value.Replace("<em class=\"keyword\">", "").Replace("</em>", ""));
             }
         }
-
         public string category_name { get; set; }
         public string type { get; set; }
         public string desc { get; set; }
@@ -1031,20 +995,18 @@ namespace BiliLite.Modules
         public int reply { get; set; }
         public string id { get; set; }
         public List<string> image_urls { get; set; }
-
         public string cover
         {
             get
             {
-                if (image_urls != null && image_urls.Count != 0)
+                if (image_urls!=null&& image_urls.Count!=0)
                 {
-                    return "https:" + image_urls[0];
+                    return "https:"+image_urls[0];
                 }
                 return null;
             }
         }
     }
-
     public class SearchTopicItem
     {
         public string arcurl { get; set; }
@@ -1071,14 +1033,17 @@ namespace BiliLite.Modules
             }
         }
 
+
         public long pubdate { get; set; }
 
-        private string _pic;
 
+        private string _pic;
         public string cover
         {
             get { return _pic; }
             set { _pic = "https:" + value; }
         }
+
+
     }
 }

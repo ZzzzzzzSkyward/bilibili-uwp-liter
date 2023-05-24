@@ -10,8 +10,7 @@ namespace BiliLite.Helpers
         private const int ABPLAY_HISTORES_MAX = 200;
         private static Dictionary<string, ABPlayHistoryEntry> ABPlayHistories;
 
-        public class ABPlayHistoryEntry
-        {
+        public class ABPlayHistoryEntry {
             public double PointA { get; set; }
             public double PointB { get; set; } = double.MaxValue;
         }
@@ -57,8 +56,7 @@ namespace BiliLite.Helpers
             if (history == null)
             {
                 ABPlayHistories.Remove(info.season_id != 0 ? "ep" + info.ep_id : info.cid);
-            }
-            else
+            } else
             {
                 ABPlayHistories[info.season_id != 0 ? "ep" + info.ep_id : info.cid] = history;
             }

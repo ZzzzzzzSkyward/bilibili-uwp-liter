@@ -1,5 +1,4 @@
 ﻿using BiliLite.Controls.Dynamic;
-using BiliLite.Dialogs;
 using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Models.Dynamic;
@@ -10,19 +9,23 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.Foundation;
-using Windows.Storage;
-using Windows.Storage.Pickers;
-using Windows.Storage.Provider;
 using Windows.UI.Popups;
 using Windows.UI.Xaml.Controls;
 using static BiliLite.Api.User.DynamicAPI;
+using BiliLite.Dialogs;
+using System.Reflection;
+using Windows.Storage.Pickers;
+using Windows.Storage.Provider;
+using Windows.Storage;
+using System.IO;
+using System.Security.Policy;
+using System.Net.Http;
+using Grpc.Core;
+using System.Net;
 
 namespace BiliLite.Modules.User
 {
@@ -32,23 +35,19 @@ namespace BiliLite.Modules.User
         /// 用户关注动态
         /// </summary>
         UserDynamic,
-
         /// <summary>
         /// 话题动态
         /// </summary>
         Topic,
-
         /// <summary>
         /// 个人空间动态
         /// </summary>
         Space
     }
-
     public class DynamicVM : IModules
     {
-        private readonly WatchLaterVM watchLaterVM;
-        private readonly Api.User.DynamicAPI dynamicAPI;
-
+        readonly WatchLaterVM watchLaterVM;
+        readonly Api.User.DynamicAPI dynamicAPI;
         public DynamicVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
@@ -78,7 +77,6 @@ namespace BiliLite.Modules.User
         }
 
         public event EventHandler<DynamicItemDisplayModel> OpenCommentEvent;
-
         public ICommand VoteCommand { get; set; }
         public ICommand UserCommand { get; set; }
         public ICommand LotteryCommand { get; set; }
@@ -94,26 +92,24 @@ namespace BiliLite.Modules.User
         public ICommand DetailCommand { get; set; }
         public DynamicItemDataTemplateSelector dynamicItemDataTemplateSelector { get; set; }
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private bool _loadMore = false;
-
         public bool CanLoadMore
         {
             get { return _loadMore; }
             set { _loadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
-
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
         public DynamicType DynamicType { get; set; } = DynamicType.UserDynamic;
         public string Uid { get; set; }
         public UserDynamicType UserDynamicType { get; set; } = UserDynamicType.All;
+
+
 
         private ObservableCollection<DynamicItemDisplayModel> _Items;
 
@@ -132,7 +128,6 @@ namespace BiliLite.Modules.User
             Items = null;
             await GetDynamicItems();
         }
-
         public async void LoadMore()
         {
             if (Loading)
@@ -146,7 +141,6 @@ namespace BiliLite.Modules.User
             var last = Items.LastOrDefault();
             await GetDynamicItems(last.DynamicID);
         }
-
         public void OpenUser(object id)
         {
             MessageCenter.NavigateToPage(this, new NavigationInfo()
@@ -157,7 +151,6 @@ namespace BiliLite.Modules.User
                 parameters = id
             });
         }
-
         public async void LaunchUrl(object url)
         {
             var result = await MessageCenter.HandleUrl(url.ToString());
@@ -166,7 +159,6 @@ namespace BiliLite.Modules.User
                 Utils.ShowMessageToast("无法打开Url");
             }
         }
-
         public void OpenWeb(object url)
         {
             MessageCenter.NavigateToPage(null, new NavigationInfo()
@@ -183,7 +175,6 @@ namespace BiliLite.Modules.User
             DyanmicItemDisplayImageInfo info = data as DyanmicItemDisplayImageInfo;
             MessageCenter.OpenImageViewer(info.AllImages, info.Index);
         }
-
         public async Task SaveImageAsync(object data)
         {
             FileSavePicker save = new FileSavePicker();
@@ -212,7 +203,6 @@ namespace BiliLite.Modules.User
                 Utils.ShowMessageToast("下载失败");
             }
         }
-
         public void OpenTag(object name)
         {
             //TODO 打开话题
@@ -224,7 +214,6 @@ namespace BiliLite.Modules.User
                 parameters = "https://t.bilibili.com/topic/name/" + Uri.EscapeDataString(name.ToString())
             });
         }
-
         public async void OpenLottery(object id)
         {
             ContentDialog contentDialog = new ContentDialog()
@@ -245,7 +234,6 @@ namespace BiliLite.Modules.User
             };
             await contentDialog.ShowAsync();
         }
-
         public void OpenVote(object id)
         {
             MessageCenter.NavigateToPage(this, new NavigationInfo()
@@ -273,12 +261,10 @@ namespace BiliLite.Modules.User
             //};
             //await contentDialog.ShowAsync();
         }
-
         public void OpenComment(DynamicItemDisplayModel data)
         {
             OpenCommentEvent?.Invoke(this, data);
         }
-
         public void OpenDetail(DynamicItemDisplayModel data)
         {
             MessageCenter.NavigateToPage(this, new NavigationInfo()
@@ -289,7 +275,6 @@ namespace BiliLite.Modules.User
                 parameters = data.DynamicID
             });
         }
-
         public async void Delete(DynamicItemDisplayModel item)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -327,8 +312,8 @@ namespace BiliLite.Modules.User
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
-        }
 
+        }
         public async void DoLike(DynamicItemDisplayModel item)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -371,8 +356,11 @@ namespace BiliLite.Modules.User
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
-        }
 
+
+
+
+        }
         public async void OpenSendDynamicDialog(DynamicItemDisplayModel data)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -388,7 +376,6 @@ namespace BiliLite.Modules.User
             }
             await sendDynamicDialog.ShowAsync();
         }
-
         public async Task GetDynamicItems(string idx = "")
         {
             try
@@ -405,14 +392,11 @@ namespace BiliLite.Modules.User
                             api = dynamicAPI.HistoryDynamic(idx, UserDynamicType);
                         }
                         break;
-
                     case DynamicType.Topic:
                         break;
-
                     case DynamicType.Space:
                         api = dynamicAPI.SpaceHistory(Uid, idx);
                         break;
-
                     default:
                         break;
                 }
@@ -435,6 +419,7 @@ namespace BiliLite.Modules.User
                         }
                         if (Items == null)
                         {
+
                             Items = _ls;
                         }
                         else
@@ -453,6 +438,7 @@ namespace BiliLite.Modules.User
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -463,9 +449,9 @@ namespace BiliLite.Modules.User
             finally
             {
                 Loading = false;
+
             }
         }
-
         public async Task GetDynamicDetail(string id)
         {
             try
@@ -493,6 +479,7 @@ namespace BiliLite.Modules.User
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -503,16 +490,17 @@ namespace BiliLite.Modules.User
             finally
             {
                 Loading = false;
+
             }
         }
-
         private DynamicItemDisplayModel ConvertToDisplay(DynamicCardModel item)
         {
             try
             {
+
                 var card = JObject.Parse(item.card);
                 var extend_json = JObject.Parse(item.extend_json);
-                var display = item.display;
+                var display=item.display;
                 var data = new DynamicItemDisplayModel()
                 {
                     CommentCount = item.desc.comment,
@@ -607,6 +595,7 @@ namespace BiliLite.Modules.User
                     }
                     else
                     {
+
                         data.OriginInfo = new List<DynamicItemDisplayModel>() {
                         new DynamicItemDisplayModel()
                         {
@@ -616,6 +605,7 @@ namespace BiliLite.Modules.User
                         }
                     };
                     }
+
                 }
                 if (item.desc.comment == 0 && card.ContainsKey("stat"))
                 {
@@ -652,6 +642,7 @@ namespace BiliLite.Modules.User
                     content = card["vest"]["content"]?.ToString();
                 }
 
+
                 //直播预约
                 if (display?.add_on_card_info != null)
                 {
@@ -676,6 +667,7 @@ namespace BiliLite.Modules.User
                     }
                     extend_json["直播"] = arr;
                 }
+
 
                 if (!string.IsNullOrEmpty(content))
                 {
@@ -707,11 +699,9 @@ namespace BiliLite.Modules.User
                         case 0:
                             data.Verify = AppHelper.VERIFY_PERSONAL_IMAGE;
                             break;
-
                         case 1:
                             data.Verify = AppHelper.VERIFY_OGANIZATION_IMAGE;
                             break;
-
                         default:
                             data.Verify = AppHelper.TRANSPARENT_IMAGE;
                             break;
@@ -726,6 +716,8 @@ namespace BiliLite.Modules.User
                     data.DecorateColor = item.desc.user_profile.decorate_card?.fan?.color;
                     data.DecorateImage = item.desc.user_profile.decorate_card?.big_card_url;
                 }
+
+
 
                 if (card.ContainsKey("apiSeasonInfo"))
                 {
@@ -755,6 +747,10 @@ namespace BiliLite.Modules.User
                     ContentStr = "动态加载失败:\r\n" + JsonConvert.SerializeObject(item)
                 };
             }
+
         }
+
     }
+
+
 }

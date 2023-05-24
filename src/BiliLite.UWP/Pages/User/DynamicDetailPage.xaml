@@ -9,14 +9,14 @@
     mc:Ignorable="d"
      xmlns:controls="using:BiliLite.Controls"
      xmlns:dynamic="using:BiliLite.Controls.Dynamic"
-     xmlns:fa="using:FontAwesome5" xmlns:converters="using:BiliLite.Converters"
+     xmlns:fa="using:FontAwesome5" xmlns:converters="using:BiliLite.Converters" 
     xmlns:controls1="using:Microsoft.Toolkit.Uwp.UI.Controls"
     Background="{ThemeResource TopPaneBackground}">
 
     <Page.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <ResourceDictionary Source="/Controls/Dynamic/DynamicTemplate.xaml" />
+                <ResourceDictionary Source="/Controls/Dynamic/DynamicTemplate.xaml"/>
             </ResourceDictionary.MergedDictionaries>
 
             <Style TargetType="HyperlinkButton">
@@ -24,12 +24,15 @@
             </Style>
             <AcrylicBrush x:Key="SystemControlBaseHighAcrylicElementBrush" BackgroundSource="Backdrop" TintColor="{StaticResource SystemChromeAltHighColor}" TintOpacity="0.8" FallbackColor="{StaticResource SystemChromeAltHighColor}" />
         </ResourceDictionary>
+
+
     </Page.Resources>
     <Grid>
 
+
         <SplitView x:Name="splitView" OpenPaneLength="360" PaneBackground="Transparent" PanePlacement="Right" IsPaneOpen="False" DisplayMode="Overlay">
             <SplitView.Pane>
-                <Border x:Name="RootBorder" Padding="12,0,0,0">
+                <Border x:Name="RootBorder" Padding="12,0,0,0" >
                     <Grid>
                         <controls1:DropShadowPanel BlurRadius="12"
                                           Color="Black"
@@ -42,32 +45,33 @@
                             <Pivot x:Name="pivotRight" SelectionChanged="pivotRight_SelectionChanged">
                                 <PivotItem Margin="0">
                                     <PivotItem.Header>
-                                        <TextBlock FontSize="15">转发(<Run x:Name="repostCount" />)</TextBlock>
+                                        <TextBlock FontSize="15">转发(<Run x:Name="repostCount"/>)</TextBlock>
                                     </PivotItem.Header>
                                     <controls:DynamicRepostControl x:Name="repost"></controls:DynamicRepostControl>
                                 </PivotItem>
                                 <PivotItem Margin="0">
                                     <PivotItem.Header>
-                                        <TextBlock FontSize="15">评论(<Run x:Name="commentCount" />)</TextBlock>
+                                        <TextBlock FontSize="15">评论(<Run x:Name="commentCount"/>)</TextBlock>
                                     </PivotItem.Header>
                                     <controls:CommentControl x:Name="comment"></controls:CommentControl>
                                 </PivotItem>
                             </Pivot>
                         </Grid>
                     </Grid>
+
                 </Border>
             </SplitView.Pane>
             <SplitView.Content>
-                <Grid>
+                <Grid  >
 
-                    <controls:MyListView SelectionMode="None"
-                  IsItemClickEnabled="false"
+                    <controls:MyListView SelectionMode="None" 
+                  IsItemClickEnabled="false" 
                           x:Name="list"
-                  ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}"
+                  ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}" 
                                          CanLoadMore="{x:Bind Path=dynamicVM.CanLoadMore,Mode=OneWay}"
                                          LoadMoreBottomOffset="0"
                                          LoadMoreCommand="{x:Bind Path=dynamicVM.LoadMoreCommand}"
-                  Padding="4"
+                  Padding="4" 
                   Grid.Row="1"
                  ItemTemplateSelector="{StaticResource select}"
                   HorizontalContentAlignment="Center">
@@ -76,11 +80,12 @@
                                 <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
                                 <Setter Property="MaxWidth" Value="800"></Setter>
                                 <Setter Property="Margin" Value="4"></Setter>
+
                             </Style>
                         </controls:MyListView.ItemContainerStyle>
                         <!--<ListView.ItemsPanel>-->
                         <!--<ItemsPanelTemplate>
-
+                     
                             <controls1:StaggeredPanel DesiredColumnWidth="500"
                                              HorizontalAlignment="Stretch"
                                              ColumnSpacing="-12"
@@ -88,6 +93,7 @@
                         </ItemsPanelTemplate>-->
 
                         <!--</ListView.ItemsPanel>-->
+
                     </controls:MyListView>
                     <ProgressRing Grid.Row="1" VerticalAlignment="Center" Margin="8" IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.Loading,Mode=OneWay}"></ProgressRing>
                 </Grid>

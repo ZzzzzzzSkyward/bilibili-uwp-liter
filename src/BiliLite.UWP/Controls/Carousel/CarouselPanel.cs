@@ -1,7 +1,8 @@
 ﻿using System;
-using Windows.Foundation;
+
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.Foundation;
 
 namespace BiliLite.Controls
 {
@@ -72,7 +73,6 @@ namespace BiliLite.Controls
         }
 
         #region ArrangePanes
-
         private void ArrangePanes(double availableWidth)
         {
             double visibleWidth = Math.Min(Window.Current.Bounds.Width, availableWidth);
@@ -113,7 +113,6 @@ namespace BiliLite.Controls
             pane.Tapped += OnPaneTapped;
             return pane;
         }
-
-        #endregion ArrangePanes
+        #endregion
     }
 }

@@ -12,22 +12,21 @@ namespace BiliLite.Modules.Season
 {
     public class SeasonReviewVM : IModules
     {
-        private readonly Api.SeasonApi seasonApi;
-
+        readonly Api.SeasonApi seasonApi;
+       
         public SeasonReviewVM()
         {
+          
             Items = new ObservableCollection<SeasonShortReviewItemModel>();
             seasonApi = new Api.SeasonApi();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
-
         public ObservableCollection<SeasonShortReviewItemModel> Items { get; set; }
         public int MediaID { get; set; }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
         private bool _loading = false;
-
         public bool Loading
         {
             get { return _loading; }
@@ -35,7 +34,6 @@ namespace BiliLite.Modules.Season
         }
 
         private bool _CanLoadMore = false;
-
         public bool CanLoadMore
         {
             get { return _CanLoadMore; }
@@ -43,7 +41,6 @@ namespace BiliLite.Modules.Season
         }
 
         public string Next { get; set; } = "";
-
         public async Task GetItems()
         {
             try
@@ -80,6 +77,7 @@ namespace BiliLite.Modules.Season
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -103,7 +101,6 @@ namespace BiliLite.Modules.Season
             Next = "";
             await GetItems();
         }
-
         public async void LoadMore()
         {
             if (Loading)
@@ -122,7 +119,7 @@ namespace BiliLite.Modules.Season
             }
             try
             {
-                var api = seasonApi.LikeReview(MediaID, item.review_id, Api.ReviewType.Short);
+                var api = seasonApi.LikeReview(MediaID,item.review_id, Api.ReviewType.Short);
                 var results = await api.Request();
                 if (results.status)
                 {
@@ -130,7 +127,7 @@ namespace BiliLite.Modules.Season
                     if (data.success)
                     {
                         item.stat.liked = data.result["status"].ToInt32();
-                        if (item.stat.liked == 1)
+                        if (item.stat.liked==1)
                         {
                             item.stat.likes += 1;
                         }
@@ -154,6 +151,7 @@ namespace BiliLite.Modules.Season
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
+
         }
 
         public async void Dislike(SeasonShortReviewItemModel item)
@@ -165,7 +163,7 @@ namespace BiliLite.Modules.Season
             }
             try
             {
-                var api = seasonApi.DislikeReview(MediaID, item.review_id, Api.ReviewType.Short);
+                var api = seasonApi.DislikeReview(MediaID,item.review_id, Api.ReviewType.Short);
                 var results = await api.Request();
                 if (results.status)
                 {
@@ -189,9 +187,10 @@ namespace BiliLite.Modules.Season
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
+
         }
 
-        public async Task<bool> SendShortReview(string content, bool share, int score)
+        public async Task<bool> SendShortReview(string content,bool share,int score)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
             {
@@ -228,9 +227,11 @@ namespace BiliLite.Modules.Season
                 Utils.ShowMessageToast(handel.message);
                 return false;
             }
+
         }
     }
 
+   
     public class SeasonShortReviewItemModel
     {
         public long ctime { get; set; }
@@ -239,17 +240,13 @@ namespace BiliLite.Modules.Season
         public string content { get; set; }
         public string progress { get; set; }
         public int score { get; set; }
-
         /// <summary>
         /// 评分，转为5分制
         /// </summary>
-        public int score_5
-        { get { return score / 2; } }
-
+        public int score_5 { get { return score / 2; } }
         public SeasonShortReviewItemAuthorModel author { get; set; }
         public SeasonShortReviewItemStatModel stat { get; set; }
     }
-
     public class SeasonShortReviewItemAuthorModel
     {
         public string avatar { get; set; }
@@ -257,17 +254,14 @@ namespace BiliLite.Modules.Season
         public long mid { get; set; }
         public SeasonShortReviewItemVIPModel vip { get; set; }
     }
-
     public class SeasonShortReviewItemVIPModel
     {
         public int vipType { get; set; }
         public int vipStatus { get; set; }
     }
-
     public class SeasonShortReviewItemStatModel : IModules
     {
         private int _disliked;
-
         /// <summary>
         /// 是否已经点踩👎
         /// </summary>
@@ -278,7 +272,6 @@ namespace BiliLite.Modules.Season
         }
 
         private int _liked;
-
         /// <summary>
         /// 是否已经点赞👍
         /// </summary>
@@ -289,7 +282,6 @@ namespace BiliLite.Modules.Season
         }
 
         private int _likes;
-
         /// <summary>
         /// 点赞数量
         /// </summary>
@@ -298,5 +290,6 @@ namespace BiliLite.Modules.Season
             get { return _likes; }
             set { _likes = value; DoPropertyChanged("likes"); }
         }
+
     }
 }

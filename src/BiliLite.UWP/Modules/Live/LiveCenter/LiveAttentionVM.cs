@@ -9,16 +9,14 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace BiliLite.Modules.Live.LiveCenter
 {
-    public class LiveAttentionVM : IModules
+    public class LiveAttentionVM:IModules
     {
-        private readonly Api.Live.LiveCenterAPI liveCenterAPI;
-
+        readonly Api.Live.LiveCenterAPI liveCenterAPI;
         public LiveAttentionVM()
         {
             liveCenterAPI = new Api.Live.LiveCenterAPI();
             RefreshCommand = new RelayCommand(Refresh);
         }
-
         private ObservableCollection<LiveFollowAnchorModel> _Follow;
 
         public ObservableCollection<LiveFollowAnchorModel> Follow
@@ -28,15 +26,12 @@ namespace BiliLite.Modules.Live.LiveCenter
         }
 
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         public ICommand RefreshCommand { get; private set; }
-
         public async Task GetFollows()
         {
             try
@@ -61,6 +56,7 @@ namespace BiliLite.Modules.Live.LiveCenter
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -73,7 +69,6 @@ namespace BiliLite.Modules.Live.LiveCenter
                 Loading = false;
             }
         }
-
         public async void Refresh()
         {
             if (Loading)
@@ -84,7 +79,6 @@ namespace BiliLite.Modules.Live.LiveCenter
             await GetFollows();
         }
     }
-
     public class LiveFollowAnchorModel
     {
         public int roomid { get; set; }
@@ -102,7 +96,6 @@ namespace BiliLite.Modules.Live.LiveCenter
         public string pendent_ru { get; set; }
         public string pendent_ru_color { get; set; }
         public string pendent_ru_pic { get; set; }
-
         public BitmapImage pendent_pic
         {
             get
@@ -117,7 +110,6 @@ namespace BiliLite.Modules.Live.LiveCenter
                 }
             }
         }
-
         public bool show_pendent
         {
             get

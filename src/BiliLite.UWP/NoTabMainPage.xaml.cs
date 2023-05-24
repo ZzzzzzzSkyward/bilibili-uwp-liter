@@ -33,7 +33,6 @@ namespace BiliLite
             MessageCenter.MiniWindowEvent += MessageCenter_MiniWindowEvent;
             Window.Current.Content.PointerPressed += Content_PointerPressed;
         }
-
         private void MessageCenter_MiniWindowEvent(object sender, bool e)
         {
             if (e)
@@ -47,7 +46,6 @@ namespace BiliLite
                 Window.Current.SetTitleBar(TitleBar);
             }
         }
-
         private void Content_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
             var par = e.GetCurrentPoint(sender as Frame).Properties.PointerUpdateKind;
@@ -66,6 +64,7 @@ namespace BiliLite
                     this.frame.GoBack();
                     e.Handled = true;
                 }
+
             }
         }
 
@@ -77,7 +76,7 @@ namespace BiliLite
             }
             if (e.Content is Pages.BasePage)
             {
-                txtTitle.Text = (e.Content as BasePage).Title;
+                txtTitle.Text = (e.Content as BasePage).Title ;
             }
 
             if (frame.CanGoBack)
@@ -88,11 +87,10 @@ namespace BiliLite
             {
                 btnBack.Visibility = Visibility.Collapsed;
             }
+
         }
-
         private int mode = 1;
-
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
@@ -125,6 +123,7 @@ namespace BiliLite
                 txtTitle.Text = e.title;
                 frame.Navigate(e.page, e.parameters);
                 (frame.Content as Page).NavigationCacheMode = NavigationCacheMode.Required;
+
             }
             else
             {
@@ -142,6 +141,7 @@ namespace BiliLite
 
         private async void OpenNewWindow(NavigationInfo e)
         {
+
             CoreApplicationView newView = CoreApplication.CreateNewView();
             int newViewId = 0;
             await newView.Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
@@ -160,13 +160,11 @@ namespace BiliLite
              });
             bool viewShown = await ApplicationViewSwitcher.TryShowAsStandaloneAsync(newViewId);
         }
-
         private void MessageCenter_ViewImageEvent(object sender, ImageViewerParameter e)
         {
             gridViewer.Visibility = Visibility.Visible;
             imgViewer.InitImage(e);
         }
-
         private void imgViewer_CloseEvent(object sender, EventArgs e)
         {
             if (gridViewer.Visibility == Visibility.Visible)
@@ -180,12 +178,10 @@ namespace BiliLite
     public class NewInstanceFrame : Grid
     {
         public event NavigatedEventHandler Navigated;
-
         public NewInstanceFrame()
         {
             AddFrame();
         }
-
         public object Content
         {
             get
@@ -199,16 +195,17 @@ namespace BiliLite
         {
             var frame = new MyFrame();
             frame.Navigated += Frame_Navigated;
-
+          
             this.Children.Add(frame);
         }
 
+      
         private void Frame_Navigated(object sender, NavigationEventArgs e)
         {
             Navigated?.Invoke(sender, e);
         }
 
-        public bool Navigate(Type sourcePageType, object parameter = null)
+        public bool Navigate(Type sourcePageType, object parameter=null)
         {
             var frame = this.Children.Last() as Frame;
             //检查最后一个Frame中是否存在此页面
@@ -220,14 +217,14 @@ namespace BiliLite
             if (frame.Content is PlayPage)
             {
                 (frame.Content as PlayPage).Pause();
-            }
-
+            } 
+            
             //跳转页面
             (this.Children.Last() as Frame).Navigate(sourcePageType, parameter);
-
+           
+           
             return true;
         }
-
         public bool CanGoBack
         {
             get
@@ -250,12 +247,14 @@ namespace BiliLite
             {
                 if (this.Children.Count > 1)
                 {
-                    await frame.AnimateYAsync(0, this.ActualHeight, 300);
+                    await frame.AnimateYAsync(0, this.ActualHeight,300);
                     frame.Navigated -= Frame_Navigated;
                     frame.Close();
 
+
                     this.Children.Remove(frame);
                     //frame = this.Children.Last() as Frame;
+                    
                 }
             }
         }
@@ -277,7 +276,5 @@ namespace BiliLite
             return false;
         }
     }
-
-    public class BlankPage : Page
-    { }
+    public class BlankPage : Page { }
 }

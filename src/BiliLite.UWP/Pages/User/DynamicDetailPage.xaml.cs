@@ -12,8 +12,7 @@ namespace BiliLite.Pages.User
     /// </summary>
     public sealed partial class DynamicDetailPage : BasePage
     {
-        private readonly DynamicVM dynamicVM;
-
+        readonly DynamicVM dynamicVM;
         public DynamicDetailPage()
         {
             this.InitializeComponent();
@@ -22,15 +21,12 @@ namespace BiliLite.Pages.User
             dynamicVM.OpenCommentEvent += DynamicVM_OpenCommentEvent;
             splitView.PaneClosed += SplitView_PaneClosed;
         }
-
         private void SplitView_PaneClosed(SplitView sender, object args)
         {
             comment.ClearComment();
             repost.dynamicRepostVM.Clear();
         }
-
-        private string dynamic_id;
-
+        string dynamic_id;
         private void DynamicVM_OpenCommentEvent(object sender, Controls.Dynamic.DynamicItemDisplayModel e)
         {
             //splitView.IsPaneOpen = true;
@@ -42,37 +38,31 @@ namespace BiliLite.Pages.User
             var id = e.ReplyID;
             switch (e.Type)
             {
+
                 case Controls.Dynamic.DynamicDisplayType.Photo:
                     commentType = Api.CommentApi.CommentType.Photo;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.Video:
 
                     commentType = Api.CommentApi.CommentType.Video;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.Season:
                     id = e.OneRowInfo.AID;
                     commentType = Api.CommentApi.CommentType.Video;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.ShortVideo:
                     commentType = Api.CommentApi.CommentType.MiniVideo;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.Music:
                     commentType = Api.CommentApi.CommentType.Song;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.Article:
                     commentType = Api.CommentApi.CommentType.Article;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.MediaList:
-                    if (e.OneRowInfo.Tag != "收藏夹")
-                        commentType = Api.CommentApi.CommentType.Video;
+                    if(e.OneRowInfo.Tag!= "收藏夹")
+                    commentType = Api.CommentApi.CommentType.Video;
                     break;
-
                 default:
                     id = e.DynamicID;
                     break;
@@ -86,11 +76,13 @@ namespace BiliLite.Pages.User
             //});
         }
 
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+
+        protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New && dynamicVM.Items == null)
             {
+
                 await dynamicVM.GetDynamicDetail(e.Parameter.ToString());
             }
         }

@@ -14,22 +14,20 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class RegionDetailPage : BasePage
     {
-        private RegionDetailVM regionDetailVM;
-        private OpenRegionInfo regionInfo;
-
+        RegionDetailVM regionDetailVM;
+        OpenRegionInfo regionInfo;
         public RegionDetailPage()
         {
             this.InitializeComponent();
             Title = "分区详情";
             regionDetailVM = new RegionDetailVM();
         }
-
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            if (e.NavigationMode == NavigationMode.New || regionDetailVM.Regions == null)
+            if (e.NavigationMode == NavigationMode.New||regionDetailVM.Regions==null)
             {
-                if (e.Parameter != null)
+                if (e.Parameter!=null)
                 {
                     regionInfo = e.Parameter as OpenRegionInfo;
                 }
@@ -43,15 +41,15 @@ namespace BiliLite.Pages
 
         private async void pivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (pivot.SelectedItem == null)
+            if (pivot.SelectedItem==null)
             {
                 return;
             }
-            if (pivot.SelectedItem is RegionDetailHomeVM)
+            if(pivot.SelectedItem is RegionDetailHomeVM)
             {
                 GridOrder.Visibility = Visibility.Collapsed;
                 var data = pivot.SelectedItem as RegionDetailHomeVM;
-                if (!data.Loading && data.Banners == null)
+                if (!data.Loading&&data.Banners==null)
                 {
                     await data.LoadHome();
                 }
@@ -65,6 +63,7 @@ namespace BiliLite.Pages
                 }
                 GridOrder.Visibility = Visibility.Visible;
                 GridOrder.DataContext = data;
+               
             }
         }
 
@@ -93,23 +92,24 @@ namespace BiliLite.Pages
                     parameters = AnimeType.guochuang
                 });
                 return;
-            }
+            } 
             MessageCenter.NavigateToPage(this, new NavigationInfo()
             {
                 icon = Symbol.FourBars,
                 page = typeof(RankPage),
                 title = "排行榜",
-                parameters = regionInfo.id
+                parameters= regionInfo.id
             });
         }
 
-        private void cbTags_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private  void cbTags_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (cbTags.SelectedItem == null)
+            if (cbTags.SelectedItem==null)
             {
                 return;
             }
           (pivot.SelectedItem as RegionDetailChildVM).Refresh();
+
         }
 
         private void cbOrder_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -124,18 +124,17 @@ namespace BiliLite.Pages
         private void AdaptiveGridView_ItemClick(object sender, ItemClickEventArgs e)
         {
             var data = e.ClickedItem as RegionVideoItemModel;
-            MessageCenter.NavigateToPage(this, new NavigationInfo()
-            {
-                icon = Symbol.Play,
-                page = typeof(VideoDetailPage),
-                parameters = data.param,
-                title = data.title
+            MessageCenter.NavigateToPage(this,new NavigationInfo() { 
+                icon= Symbol.Play,
+                page=typeof(VideoDetailPage),
+                parameters=data.param,
+                title=data.title
             });
         }
 
         private async void BtnOpenBanner_Click(object sender, RoutedEventArgs e)
         {
-            await MessageCenter.HandleUrl(((sender as HyperlinkButton).DataContext as RegionHomeBannerItemModel).uri);
+           await MessageCenter.HandleUrl(((sender as HyperlinkButton).DataContext as RegionHomeBannerItemModel).uri);
         }
 
         private void AddToWatchLater_Click(object sender, RoutedEventArgs e)
@@ -145,7 +144,6 @@ namespace BiliLite.Pages
             Modules.User.WatchLaterVM.Instance.AddToWatchlater(data.param);
         }
     }
-
     public class RegionDataTemplateSelector : DataTemplateSelector
     {
         public DataTemplate HomeTemplate { get; set; }
@@ -162,6 +160,8 @@ namespace BiliLite.Pages
             {
                 return ChildTemplate;
             }
+            
+
         }
     }
 
@@ -171,7 +171,6 @@ namespace BiliLite.Pages
         /// 分区ID
         /// </summary>
         public long id { get; set; } = 1;
-
         /// <summary>
         /// 子分区ID
         /// </summary>

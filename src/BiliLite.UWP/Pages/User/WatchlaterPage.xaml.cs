@@ -13,21 +13,19 @@ namespace BiliLite.Pages.User
     /// </summary>
     public sealed partial class WatchlaterPage : BasePage
     {
-        private WatchLaterVM watchLaterVM;
-
+        WatchLaterVM watchLaterVM;
         public WatchlaterPage()
         {
             this.InitializeComponent();
             Title = "稍后再看";
             watchLaterVM = new WatchLaterVM();
         }
-
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            if (e.NavigationMode == NavigationMode.New)
+            if(e.NavigationMode== NavigationMode.New)
             {
-                await watchLaterVM.LoadData();
+               await watchLaterVM.LoadData();
             }
         }
 
@@ -48,6 +46,7 @@ namespace BiliLite.Pages.User
                         Title = item.title
                     });
                 }
+
             }
             MessageCenter.NavigateToPage(this, new NavigationInfo()
             {

@@ -6,7 +6,7 @@ namespace BiliLite.Api
 {
     public class PlayerAPI
     {
-        public ApiModel VideoPlayUrl(string aid, string cid, int qn, bool dash, bool proxy = false, string area = "")
+        public ApiModel VideoPlayUrl(string aid, string cid, int qn,bool dash,bool proxy=false,string area="")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
 
@@ -18,13 +18,13 @@ namespace BiliLite.Api
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{baseUrl}/x/player/playurl",
-                parameter = ApiHelper.MustParameter(ApiHelper.WebVideoKey, true) + $"&avid={aid}&cid={cid}&qn={qn}&type=&otype=json&mid={(SettingHelper.Account.Logined ? SettingHelper.Account.Profile.mid.ToString() : "")}"
+                parameter = ApiHelper.MustParameter(ApiHelper.WebVideoKey, true) + $"&avid={aid}&cid={cid}&qn={qn}&type=&otype=json&mid={(SettingHelper.Account.Logined? SettingHelper.Account.Profile.mid.ToString():"")}"
             };
             if (dash)
             {
                 api.parameter += "&fourk=1&fnver=0&fnval=4048";
             }
-
+           
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.WebVideoKey);
             if (proxy)
             {
@@ -33,7 +33,9 @@ namespace BiliLite.Api
             return api;
         }
 
-        public ApiModel SeasonPlayUrl(string aid, string cid, string ep_id, int qn, int season_type, bool dash, bool proxy = false, string area = "")
+       
+
+        public ApiModel SeasonPlayUrl(string aid, string cid, string ep_id, int qn,int season_type, bool dash, bool proxy = false, string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
             if (proxy)
@@ -54,7 +56,7 @@ namespace BiliLite.Api
             {
                 api.parameter += "&fourk=1&fnver=0&fnval=4048";
             }
-
+            
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.WebVideoKey);
             if (proxy)
             {
@@ -62,7 +64,6 @@ namespace BiliLite.Api
             }
             return api;
         }
-
         public ApiModel SeasonAndroidPlayUrl(string aid, string cid, int qn, int season_type, bool dash)
         {
             ApiModel api = new ApiModel()
@@ -83,13 +84,13 @@ namespace BiliLite.Api
             return api;
         }
 
-        public ApiModel LivePlayUrl(string cid, int qn = 0)
+        public ApiModel LivePlayUrl(string cid, int qn=0)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://api.live.bilibili.com/room/v1/Room/playUrl",
-                parameter = $"cid={cid}&qn={qn}&platform=web"
+                parameter =$"cid={cid}&qn={qn}&platform=web"
             };
             //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidVideoKey);
             return api;
@@ -102,7 +103,7 @@ namespace BiliLite.Api
         /// <param name="graph_version"></param>
         /// <param name="edge_id"></param>
         /// <returns></returns>
-        public ApiModel InteractionEdgeInfo(string aid, int graph_version, long edge_id = 0)
+        public ApiModel InteractionEdgeInfo(string aid,int graph_version,long edge_id=0)
         {
             ApiModel api = new ApiModel()
             {
@@ -124,7 +125,7 @@ namespace BiliLite.Api
         /// <param name="type">类型 3=视频，4=番剧</param>
         /// <param name="progress">进度/秒</param>
         /// <returns></returns>
-        public ApiModel SeasonHistoryReport(string aid, string cid, int progress, int sid = 0, string epid = "0", int type = 3)
+        public ApiModel SeasonHistoryReport(string aid,string cid, int progress, int sid=0,string epid="0",int type=3)
         {
             ApiModel api = new ApiModel()
             {
@@ -135,38 +136,36 @@ namespace BiliLite.Api
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidVideoKey);
             return api;
         }
-
-        /// <summary>
-        /// 发送弹幕
-        /// </summary>
-        /// <param name="aid">AV</param>
-        /// <param name="cid">CID</param>
-        /// <param name="color">颜色(10进制)</param>
-        /// <param name="msg">内容</param>
-        /// <param name="position">位置</param>
-        /// <param name="mode">类型</param>
-        /// <param name="plat">平台</param>
-        /// <returns></returns>
-        public ApiModel SendDanmu(string aid, string cid, string color, string msg, int position, int mode = 1, int plat = 2)
+       /// <summary>
+       /// 发送弹幕
+       /// </summary>
+       /// <param name="aid">AV</param>
+       /// <param name="cid">CID</param>
+       /// <param name="color">颜色(10进制)</param>
+       /// <param name="msg">内容</param>
+       /// <param name="position">位置</param>
+       /// <param name="mode">类型</param>
+       /// <param name="plat">平台</param>
+       /// <returns></returns>
+        public ApiModel SendDanmu(string aid,string cid,string color,string msg,int position,int mode=1,int plat=2)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Post,
                 baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}/dm/post",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidVideoKey, true) + $"&aid={aid}",
-                body = $"msg={Uri.EscapeDataString(msg)}&mode={mode}&screen_state=1&color={color}&pool=0&progress={Convert.ToInt32(position * 1000)}&fontsize=25&rnd={Utils.GetTimestampS()}&from=7&oid={cid}&plat={plat}&type=1"
+                parameter= ApiHelper.MustParameter(ApiHelper.AndroidVideoKey, true)+$"&aid={aid}",
+                body =   $"msg={Uri.EscapeDataString(msg)}&mode={mode}&screen_state=1&color={color}&pool=0&progress={Convert.ToInt32(position*1000)}&fontsize=25&rnd={Utils.GetTimestampS()}&from=7&oid={cid}&plat={plat}&type=1"
             };
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidVideoKey);
             return api;
         }
-
         /// <summary>
         /// 读取播放信息
         /// </summary>
         /// <param name="aid">AV</param>
         /// <param name="cid">CID</param>
         /// <returns></returns>
-        public ApiModel GetPlayerInfo(string aid, string cid, string bvid)
+        public ApiModel GetPlayerInfo(string aid, string cid,string bvid)
         {
             ApiModel api = new ApiModel()
             {
@@ -176,7 +175,6 @@ namespace BiliLite.Api
             };
             return api;
         }
-
         /// <summary>
         /// 读取视频在线人数
         /// </summary>
@@ -204,30 +202,28 @@ namespace BiliLite.Api
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/dm/filter/user",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidVideoKey, true)
+                parameter = ApiHelper.MustParameter(ApiHelper.AndroidVideoKey, true) 
             };
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidVideoKey);
             return api;
         }
-
         /// <summary>
         /// 添加弹幕屏蔽关键词
         /// </summary>
         /// <param name="word">关键词</param>
         /// <param name="type">类型，0=关键字，1=正则，2=用户</param>
         /// <returns></returns>
-        public ApiModel AddDanmuFilterWord(string word, int type)
+        public ApiModel AddDanmuFilterWord(string word,int type)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Post,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/dm/filter/user/add",
-                body = ApiHelper.MustParameter(ApiHelper.AndroidVideoKey, true) + $"&filter={Uri.EscapeDataString(word)}&type={type}"
+                body = ApiHelper.MustParameter(ApiHelper.AndroidVideoKey, true)+ $"&filter={Uri.EscapeDataString(word)}&type={type}"
             };
             api.body += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidVideoKey);
             return api;
         }
-
         /// <summary>
         /// 分段弹幕
         /// </summary>
@@ -252,8 +248,10 @@ namespace BiliLite.Api
         /// <returns></returns>
         public string GenerateMPD(GenerateMPDModel generate)
         {
-            var par = Newtonsoft.Json.JsonConvert.SerializeObject(generate);
+            var par=Newtonsoft.Json.JsonConvert.SerializeObject(generate);
             return $"{ApiHelper.IL_BASE_URL}/api/player/generatempd?par={Uri.EscapeDataString(par)}";
         }
+
+
     }
 }

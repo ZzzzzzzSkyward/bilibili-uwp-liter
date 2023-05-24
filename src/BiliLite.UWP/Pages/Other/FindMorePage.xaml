@@ -15,12 +15,12 @@
                                   ItemClick="AdaptiveGridView_ItemClick"
                                   StretchContentForSingleRow="False"
                                   x:Name="list"
-                                  DesiredWidth="600"
+                                  DesiredWidth="600" 
                                   Padding="8"
                                   ItemsSource="{x:Bind Path=findMoreVM.Items,Mode=OneWay}"
-                                  SelectionMode="None"
+                                  SelectionMode="None" 
                                   IsItemClickEnabled="True">
-
+           
             <toolkit:AdaptiveGridView.ItemContainerStyle>
                 <Style TargetType="GridViewItem">
                     <Setter Property="Margin" Value="8 4"></Setter>
@@ -30,10 +30,10 @@
             <toolkit:AdaptiveGridView.ItemTemplate>
                 <DataTemplate x:DataType="modules:FindMoreEntranceModel">
                     <Border Background="{ThemeResource TransparentBackground}" CornerRadius="8">
-                        <Grid Margin="8">
+                        <Grid Margin="8" >
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition />
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
                             <Image Source="{x:Bind Path=pic}" Width="80" Height="80" ></Image>
                             <StackPanel Grid.Column="1" Margin="12 0" Orientation="Vertical">
@@ -41,9 +41,11 @@
                                 <TextBlock Text="{x:Bind desc}" FontSize="12" Margin="0 4 0 0" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}">《SPY×FAMILY 間諜家家酒》、《輝夜姬想讓人告白》、《派對咖孔明》、《街角的魔族女孩》</TextBlock>
                             </StackPanel>
                         </Grid>
+                       
                     </Border>
                 </DataTemplate>
             </toolkit:AdaptiveGridView.ItemTemplate>
+            
         </toolkit:AdaptiveGridView>
         <ProgressRing VerticalAlignment="Center" IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=findMoreVM.Loading,Mode=OneWay}"></ProgressRing>
     </Grid>

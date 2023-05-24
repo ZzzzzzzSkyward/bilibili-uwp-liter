@@ -10,21 +10,17 @@ namespace BiliLite.Modules
 {
     public class RankVM : IModules
     {
-        private readonly Api.RankAPI rankAPI;
-
+        readonly Api.RankAPI rankAPI;
         public RankVM()
         {
             rankAPI = new Api.RankAPI();
         }
-
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private RankRegionModel _current;
 
         public RankRegionModel Current
@@ -32,19 +28,17 @@ namespace BiliLite.Modules
             get { return _current; }
             set { _current = value; DoPropertyChanged("Current"); }
         }
-
         private List<RankRegionModel> _RegionItems;
-
         public List<RankRegionModel> RegionItems
         {
             get { return _RegionItems; }
             set { _RegionItems = value; DoPropertyChanged("RegionItems"); }
         }
-
-        public void LoadRankRegion(int rid = 0)
+        public  void LoadRankRegion(int rid = 0)
         {
             try
             {
+
                 Loading = true;
                 //var results = await rankAPI.RankRegion().Request();
                 //if (results.status)
@@ -69,6 +63,7 @@ namespace BiliLite.Modules
                     new RankRegionModel(155,"时尚"),
                     new RankRegionModel(5,"娱乐"),
                     new RankRegionModel(181,"影视"),
+                   
                 };
                 Current = RegionItems.FirstOrDefault(x => x.rid == rid);
                 //    }
@@ -93,7 +88,6 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-
         public async Task LoadRankDetail(RankRegionModel region)
         {
             try
@@ -124,6 +118,7 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -137,37 +132,32 @@ namespace BiliLite.Modules
             }
         }
     }
-
     public enum RankRegionType
     {
         /// <summary>
         /// 全部
         /// </summary>
         all,
-
         /// <summary>
         /// 原创
         /// </summary>
         origin,
-
         /// <summary>
         /// 新人
         /// </summary>
         rookie
     }
-
     public class RankRegionModel : IModules
     {
-        public RankRegionModel(int id, string rname, RankRegionType type = RankRegionType.all)
+        public RankRegionModel(int id, string rname, RankRegionType type= RankRegionType.all)
         {
             this.rid = id;
             this.name = rname;
             this.type = type;
         }
-
         public string name { get; set; }
         public int rid { get; set; }
-        private string _tooltip = "";
+        private string _tooltip="";
 
         public string ToolTip
         {
@@ -178,14 +168,12 @@ namespace BiliLite.Modules
         public RankRegionType type { get; set; }
 
         private List<RankItemModel> _Items;
-
         public List<RankItemModel> Items
         {
             get { return _Items; }
             set { _Items = value; DoPropertyChanged("Items"); }
         }
     }
-
     public class RankItemModel
     {
         public int rank { get; set; }
@@ -202,16 +190,15 @@ namespace BiliLite.Modules
         public int state { get; set; }
         public int duration { get; set; }
         public int mission_id { get; set; }
-
+       
         public RankItemOwnerModel owner { get; set; }
         public RankItemStatModel stat { get; set; }
         public string dynamic { get; set; }
         public int cid { get; set; }
-
+       
         public string bvid { get; set; }
         public int score { get; set; }
     }
-
     public class RankItemStatModel
     {
         public int aid { get; set; }
@@ -222,11 +209,12 @@ namespace BiliLite.Modules
         public int coin { get; set; }
         public int share { get; set; }
     }
-
     public class RankItemOwnerModel
     {
         public long mid { get; set; }
         public string name { get; set; }
         public string face { get; set; }
     }
+
+
 }

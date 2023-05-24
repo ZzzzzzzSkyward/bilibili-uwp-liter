@@ -1,17 +1,16 @@
 ﻿using BiliLite.Helpers;
 using FontAwesome5;
 using System;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Collections.ObjectModel;
 
 namespace BiliLite.Modules
 {
     public class HomeVM : IModules
     {
-        private Account account;
-        public EFontAwesomeIcon ThemeIcon { get; set; }
-
+        Account account;
+        public EFontAwesomeIcon ThemeIcon { get; set; } 
         public HomeVM()
         {
             ThemeIcon = SettingHelper.GetValue(SettingHelper.UI.THEME, 0) == 2 ? EFontAwesomeIcon.Regular_Moon : EFontAwesomeIcon.Regular_Sun;
@@ -23,7 +22,7 @@ namespace BiliLite.Modules
             //    chanel = GetAllNavItems().FirstOrDefault(x => x.Icon == EFontAwesomeIcon.Solid_Shapes);
             //    SettingHelper.SetValue(SettingHelper.UI.HOEM_ORDER, HomeNavItems);
             //}
-
+         
             SelectItem = HomeNavItems.FirstOrDefault();
             if (SettingHelper.Account.Logined)
             {
@@ -34,7 +33,6 @@ namespace BiliLite.Modules
                 }
             }
         }
-
         public static ObservableCollection<HomeNavItem> GetAllNavItems()
         {
             return new ObservableCollection<HomeNavItem>() {
@@ -124,11 +122,11 @@ namespace BiliLite.Modules
                 NeedLogin=false,
                 Show=true
             },
+
         };
         }
 
         private ObservableCollection<HomeNavItem> _HomeNavItems;
-
         public ObservableCollection<HomeNavItem> HomeNavItems
         {
             get { return _HomeNavItems; }
@@ -136,7 +134,6 @@ namespace BiliLite.Modules
         }
 
         private HomeNavItem _SelectItem;
-
         public HomeNavItem SelectItem
         {
             get { return _SelectItem; }
@@ -152,7 +149,6 @@ namespace BiliLite.Modules
         }
 
         private HomeUserCardModel _profile;
-
         public HomeUserCardModel Profile
         {
             get { return _profile; }
@@ -168,9 +164,11 @@ namespace BiliLite.Modules
                 return;
             }
             //检查Token
-        }
-    }
 
+
+        }
+
+    }
     public class HomeNavItem : IModules
     {
         public string Title { get; set; }
@@ -185,5 +183,6 @@ namespace BiliLite.Modules
             get { return _show; }
             set { _show = value; DoPropertyChanged("Show"); }
         }
+
     }
 }

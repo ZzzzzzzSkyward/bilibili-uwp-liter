@@ -2,7 +2,7 @@
 {
     public class HotAPI
     {
-        public ApiModel Popular(string idx = "0", string last_param = "")
+        public ApiModel Popular(string idx = "0",string last_param="")
         {
             ApiModel api = new ApiModel()
             {
@@ -13,5 +13,6 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
+
     }
 }

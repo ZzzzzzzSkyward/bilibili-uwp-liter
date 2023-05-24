@@ -1,36 +1,30 @@
-﻿using BiliLite.Api;
-using BiliLite.Helpers;
+﻿using BiliLite.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using BiliLite.Api;
 
 namespace BiliLite.Modules.Home
 {
     public class RegionVM : IModules
     {
-        private readonly RegionAPI regionAPI;
-
+        readonly RegionAPI regionAPI;
         public RegionVM()
         {
             regionAPI = new RegionAPI();
         }
-
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private List<RegionItem> _Regions;
-
         public List<RegionItem> Regions
         {
             get { return _Regions; }
             set { _Regions = value; DoPropertyChanged("Regions"); }
         }
-
         public async Task GetRegions()
         {
             try
@@ -53,6 +47,8 @@ namespace BiliLite.Modules.Home
                 Loading = false;
             }
         }
+
+        
     }
 
     public class RegionItem
@@ -67,7 +63,6 @@ namespace BiliLite.Modules.Home
         public string _goto { get; set; }
         public List<RegionChildrenItem> children { get; set; }
     }
-
     public class RegionChildrenItem
     {
         public int tid { get; set; }

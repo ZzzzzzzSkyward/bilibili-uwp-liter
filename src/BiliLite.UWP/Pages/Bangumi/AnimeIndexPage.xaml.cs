@@ -7,14 +7,14 @@ using Windows.UI.Xaml.Navigation;
 
 namespace BiliLite.Pages.Bangumi
 {
+
     /// <summary>
     /// 可用于自身或导航至 Frame 内部的空白页。
     /// </summary>
     public sealed partial class AnimeIndexPage : BasePage
     {
         private SeasonIndexParameter indexParameter;
-        private readonly SeasonIndexVM seasonIndexVM;
-
+        readonly SeasonIndexVM seasonIndexVM;
         public AnimeIndexPage()
         {
             this.InitializeComponent();
@@ -22,8 +22,7 @@ namespace BiliLite.Pages.Bangumi
             this.NavigationCacheMode = NavigationCacheMode.Enabled;
             seasonIndexVM = new SeasonIndexVM();
         }
-
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New)
@@ -34,9 +33,9 @@ namespace BiliLite.Pages.Bangumi
                 }
                 else
                 {
-                    indexParameter = e.Parameter as SeasonIndexParameter;
+                    indexParameter=e.Parameter as SeasonIndexParameter;
                 }
-
+              
                 seasonIndexVM.Parameter = indexParameter;
                 await seasonIndexVM.LoadConditions();
                 if (seasonIndexVM.Conditions != null)
@@ -61,7 +60,7 @@ namespace BiliLite.Pages.Bangumi
         private async void ComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             var combox = sender as ComboBox;
-            if (combox.SelectedItem == null || seasonIndexVM.ConditionsLoading || seasonIndexVM.Loading)
+            if (combox.SelectedItem == null || seasonIndexVM.ConditionsLoading|| seasonIndexVM.Loading)
             {
                 return;
             }
@@ -69,4 +68,6 @@ namespace BiliLite.Pages.Bangumi
             await seasonIndexVM.LoadResult();
         }
     }
+
+    
 }

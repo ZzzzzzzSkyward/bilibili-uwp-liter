@@ -10,50 +10,42 @@ using Windows.UI.Xaml.Controls;
 
 namespace BiliLite.Modules
 {
-    public class FavoriteDetailVM : IModules
+    public class FavoriteDetailVM:IModules
     {
-        private readonly Api.User.FavoriteApi favoriteApi;
+        readonly Api.User.FavoriteApi  favoriteApi;
         public int Page { get; set; } = 1;
         public string Keyword { get; set; } = "";
         public string Id { get; set; }
         public int Type { get; set; }
-
         public FavoriteDetailVM()
         {
             favoriteApi = new Api.User.FavoriteApi();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
-            CollectCommand = new RelayCommand(DoCollect);
+            CollectCommand=new RelayCommand(DoCollect);
             CancelCollectCommand = new RelayCommand(DoCancelCollect);
             SelectCommand = new RelayCommand<object>(SetSelectMode);
         }
-
         private bool _loading = false;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private FavoriteInfoModel _FavoriteInfo;
-
         public FavoriteInfoModel FavoriteInfo
         {
             get { return _FavoriteInfo; }
             set { _FavoriteInfo = value; DoPropertyChanged("FavoriteInfo"); }
         }
-
         private ObservableCollection<FavoriteInfoVideoItemModel> _videos;
-
         public ObservableCollection<FavoriteInfoVideoItemModel> Videos
         {
             get { return _videos; }
             set { _videos = value; DoPropertyChanged("Videos"); }
         }
 
-        private ListViewSelectionMode _selectionMode = ListViewSelectionMode.None;
-
+        private ListViewSelectionMode _selectionMode= ListViewSelectionMode.None;
         public ListViewSelectionMode SelectionMode
         {
             get { return _selectionMode; }
@@ -61,20 +53,17 @@ namespace BiliLite.Modules
         }
 
         private bool _IsItemClickEnabled = true;
-
         public bool IsItemClickEnabled
         {
             get { return _IsItemClickEnabled; }
             set { _IsItemClickEnabled = value; DoPropertyChanged("IsItemClickEnabled"); }
         }
-
         public ICommand CollectCommand { get; private set; }
         public ICommand CancelCollectCommand { get; private set; }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
         public ICommand SelectCommand { get; private set; }
         private bool _Nothing = false;
-
         public bool Nothing
         {
             get { return _Nothing; }
@@ -82,15 +71,12 @@ namespace BiliLite.Modules
         }
 
         private bool _ShowLoadMore = false;
-
         public bool ShowLoadMore
         {
             get { return _ShowLoadMore; }
             set { _ShowLoadMore = value; DoPropertyChanged("ShowLoadMore"); }
         }
-
         private bool _isSelf = false;
-
         public bool IsSelf
         {
             get { return _isSelf; }
@@ -98,21 +84,17 @@ namespace BiliLite.Modules
         }
 
         private bool _showCollect = false;
-
         public bool ShowCollect
         {
             get { return _showCollect; }
             set { _showCollect = value; DoPropertyChanged("ShowCollect"); }
         }
-
         private bool _showCancelCollect = false;
-
         public bool ShowCancelCollect
         {
             get { return _showCancelCollect; }
             set { _showCancelCollect = value; DoPropertyChanged("ShowCancelCollect"); }
         }
-
         public async Task LoadFavoriteInfo()
         {
             try
@@ -121,7 +103,7 @@ namespace BiliLite.Modules
                 Loading = true;
                 Nothing = false;
                 var api = favoriteApi.FavoriteInfo(Id, Keyword, Page);
-                if (Type == 21)
+                if (Type==21)
                 {
                     api = favoriteApi.FavoriteSeasonInfo(Id, Keyword, Page);
                 }
@@ -140,13 +122,14 @@ namespace BiliLite.Modules
                                 ShowCollect = FavoriteInfo.fav_state != 1;
                                 ShowCancelCollect = !ShowCollect;
                             }
-
-                            if (data.data.medias == null || data.data.medias.Count == 0)
+                           
+                            if (data.data.medias==null|| data.data.medias.Count==0)
                             {
                                 Nothing = true;
                                 return;
                             }
                             Videos = data.data.medias;
+                           
                         }
                         else
                         {
@@ -184,12 +167,10 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-
         public async Task Delete(FavoriteInfoVideoItemModel item)
         {
             await Delete(new List<FavoriteInfoVideoItemModel> { item });
         }
-
         public async Task Delete(List<FavoriteInfoVideoItemModel> items)
         {
             try
@@ -199,7 +180,7 @@ namespace BiliLite.Modules
                     Utils.ShowMessageToast("请先登录后再操作");
                     return;
                 }
-                var results = await favoriteApi.Delete(Id, items.Select(x => x.id).ToList()).Request();
+                var results = await favoriteApi.Delete(Id, items.Select(x=>x.id).ToList()).Request();
                 if (results.status)
                 {
                     var data = await results.GetData<object>();
@@ -225,8 +206,8 @@ namespace BiliLite.Modules
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
+           
         }
-
         public async Task Clean()
         {
             try
@@ -259,8 +240,8 @@ namespace BiliLite.Modules
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
-        }
 
+        }
         public async void Refresh()
         {
             if (Loading)
@@ -272,7 +253,6 @@ namespace BiliLite.Modules
             Videos = null;
             await LoadFavoriteInfo();
         }
-
         public async void LoadMore()
         {
             if (Loading)
@@ -285,7 +265,6 @@ namespace BiliLite.Modules
             }
             await LoadFavoriteInfo();
         }
-
         public async void Search(string keyword)
         {
             if (Loading)
@@ -298,7 +277,6 @@ namespace BiliLite.Modules
             Videos = null;
             await LoadFavoriteInfo();
         }
-
         private void SetSelectMode(object data)
         {
             if (data == null)
@@ -312,7 +290,6 @@ namespace BiliLite.Modules
                 SelectionMode = ListViewSelectionMode.Multiple;
             }
         }
-
         public async void DoCollect()
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -346,8 +323,9 @@ namespace BiliLite.Modules
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
-        }
 
+
+        }
         public async void DoCancelCollect()
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -381,9 +359,10 @@ namespace BiliLite.Modules
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
+
+
         }
     }
-
     public class FavoriteDetailModel
     {
         public FavoriteInfoModel info { get; set; }
@@ -394,7 +373,6 @@ namespace BiliLite.Modules
     {
         public string cover { get; set; }
         public int attr { get; set; }
-
         public bool privacy
         {
             get
@@ -402,7 +380,6 @@ namespace BiliLite.Modules
                 return attr == 2;
             }
         }
-
         public string fid { get; set; }
         public string id { get; set; }
         public int like_state { get; set; }
@@ -423,14 +400,12 @@ namespace BiliLite.Modules
         public FavoriteInfoVideoItemUpperModel upper { get; set; }
         public FavoriteInfoVideoItemStatModel cnt_info { get; set; }
     }
-
     public class FavoriteInfoVideoItemUpperModel
     {
         public string face { get; set; }
         public string name { get; set; }
         public string mid { get; set; }
     }
-
     public class FavoriteInfoVideoItemStatModel
     {
         public int coin { get; set; }

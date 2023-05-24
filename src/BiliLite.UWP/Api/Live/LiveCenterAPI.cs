@@ -13,7 +13,6 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
         public ApiModel FollowUnLive(int page)
         {
             ApiModel api = new ApiModel()
@@ -25,7 +24,6 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
         public ApiModel History(int page)
         {
             ApiModel api = new ApiModel()
@@ -37,7 +35,6 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
         public ApiModel SignInfo()
         {
             ApiModel api = new ApiModel()
@@ -49,7 +46,6 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
         public ApiModel DoSign()
         {
             ApiModel api = new ApiModel()
@@ -61,5 +57,7 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
+
     }
+
 }

@@ -20,7 +20,6 @@ namespace BiliLite.Modules
     public class DownloadVM : IModules
     {
         private static DownloadVM _downloadVM;
-
         public static DownloadVM Instance
         {
             get
@@ -32,9 +31,7 @@ namespace BiliLite.Modules
                 return _downloadVM;
             }
         }
-
         private ObservableCollection<DownloadedItem> _downloaded;
-
         public ObservableCollection<DownloadedItem> Downloadeds
         {
             get { return _downloaded; }
@@ -42,7 +39,6 @@ namespace BiliLite.Modules
         }
 
         private ObservableCollection<DownloadingItem> _downloading;
-
         public ObservableCollection<DownloadingItem> Downloadings
         {
             get { return _downloading; }
@@ -62,7 +58,6 @@ namespace BiliLite.Modules
             StartCommand = new RelayCommand(StartAll);
             DeleteCommand = new RelayCommand(DeleteAll);
         }
-
         public ICommand PauseCommand { get; private set; }
         public ICommand StartCommand { get; private set; }
         public ICommand DeleteCommand { get; private set; }
@@ -72,7 +67,6 @@ namespace BiliLite.Modules
 
         public ICommand RefreshDownloadedCommand { get; private set; }
         private bool _loadingDownloaded = true;
-
         public bool LoadingDownloaded
         {
             get { return _loadingDownloaded; }
@@ -80,23 +74,18 @@ namespace BiliLite.Modules
         }
 
         private double _diskTotal;
-
         public double DiskTotal
         {
             get { return _diskTotal; }
             set { _diskTotal = value; DoPropertyChanged("DiskTotal"); }
         }
-
         private double _diskUse;
-
         public double DiskUse
         {
             get { return _diskUse; }
             set { _diskUse = value; DoPropertyChanged("DiskUse"); }
         }
-
         private double _diskFree;
-
         public double DiskFree
         {
             get { return _diskFree; }
@@ -112,13 +101,13 @@ namespace BiliLite.Modules
 
             LoadDownloaded();
         }
-
         /// <summary>
         /// 读取下载的视频
         /// </summary>
         /// <returns></returns>
         public async void LoadDownloaded()
         {
+
             LoadingDownloaded = true;
             Downloadeds.Clear();
             var folder = await GetDownloadFolder();
@@ -162,7 +151,9 @@ namespace BiliLite.Modules
                             stream.Seek(0);
                             bitmapImage.SetSource(stream);
                             downloadedItem.Cover = bitmapImage;
+
                         }
+
                     }
 
                     foreach (var episodeItem in await item.GetFoldersAsync())
@@ -243,6 +234,8 @@ namespace BiliLite.Modules
                     Debug.WriteLine(ex.Message);
                     continue;
                 }
+
+
             }
 
             // list = list.OrderByDescending(x => x.UpdateTime).ToList();
@@ -251,19 +244,20 @@ namespace BiliLite.Modules
                 await LoadDownloadedOld();
             }
 
+
             //foreach (var item in list)
             //{
             //    Downloadeds.Add(item);
             //}
             LoadingDownloaded = false;
         }
-
         /// <summary>
         /// 读取旧版下载的视频
         /// </summary>
         /// <returns></returns>
         public async Task LoadDownloadedOld()
         {
+
             var folder = await GetDownloadOldFolder();
 
             //var list = new List<DownloadedItem>();
@@ -277,7 +271,7 @@ namespace BiliLite.Modules
                     {
                         continue;
                     }
-
+                  
                     var info = JObject.Parse(await FileIO.ReadTextAsync(infoFile));
                     //新版下载无thumb字段
                     if (!info.ContainsKey("thumb"))
@@ -354,6 +348,7 @@ namespace BiliLite.Modules
                         files = null;
                         downloadedSubItem.DanmakuPath = Path.Combine(episodeItem.Path, downloadedSubItem.CID + ".xml");
 
+
                         lsEpisodes.Add(downloadedSubItem);
                     }
                     //排序
@@ -369,13 +364,15 @@ namespace BiliLite.Modules
                     Debug.WriteLine(ex.Message);
                     continue;
                 }
+
+
             }
 
             // list = list.OrderByDescending(x => x.UpdateTime).ToList();
 
             //return list;
-        }
 
+        }
         /// <summary>
         /// 读取磁盘可用空间
         /// </summary>
@@ -388,12 +385,11 @@ namespace BiliLite.Modules
             DiskTotal = (ulong)properties["System.Capacity"] / 1024d / 1024d / 1024d;
             DiskUse = DiskTotal - DiskFree;
         }
-
         /// <summary>
         /// 下载目录
         /// </summary>
         /// <returns></returns>
-        private static async Task<StorageFolder> GetDownloadFolder()
+        private async static Task<StorageFolder> GetDownloadFolder()
         {
             var path = SettingHelper.GetValue(SettingHelper.Download.DOWNLOAD_PATH, SettingHelper.Download.DEFAULT_PATH);
             if (path == SettingHelper.Download.DEFAULT_PATH)
@@ -406,12 +402,11 @@ namespace BiliLite.Modules
                 return await StorageFolder.GetFolderFromPathAsync(path);
             }
         }
-
         /// <summary>
         /// 旧版下载目录
         /// </summary>
         /// <returns></returns>
-        private static async Task<StorageFolder> GetDownloadOldFolder()
+        private async static Task<StorageFolder> GetDownloadOldFolder()
         {
             var path = SettingHelper.GetValue(SettingHelper.Download.OLD_DOWNLOAD_PATH, SettingHelper.Download.DEFAULT_OLD_PATH);
             if (path == SettingHelper.Download.DEFAULT_OLD_PATH)
@@ -426,9 +421,8 @@ namespace BiliLite.Modules
         }
 
         private IDictionary<string, CancellationTokenSource> cts;
-        private List<DownloadOperation> downloadOperations;
-        private List<Task> handelList;
-
+        List<DownloadOperation> downloadOperations;
+        List<Task> handelList;
         /// <summary>
         /// 读取下载中
         /// </summary>
@@ -502,13 +496,14 @@ namespace BiliLite.Modules
                 });
             }
             await Task.WhenAll(handelList);
-        }
 
+        }
         private async Task Handel(DownloadOperation downloadOperation, CancellationTokenSource cancellationTokenSource)
         {
             bool success = true;
             try
             {
+
                 Progress<DownloadOperation> progressCallback = new Progress<DownloadOperation>(DownloadProgress);
                 if (cancellationTokenSource != null)
                 {
@@ -521,6 +516,7 @@ namespace BiliLite.Modules
 
                 //var ls = list_Downing.ItemsSource as ObservableCollection<DisplayModel>;
                 RefreshDownloaded();
+
             }
             catch (TaskCanceledException)
             {
@@ -540,9 +536,9 @@ namespace BiliLite.Modules
             finally
             {
                 RemoveItem(downloadOperation.Guid.ToString(), success);
+
             }
         }
-
         private void DownloadProgress(DownloadOperation op)
         {
             try
@@ -565,11 +561,13 @@ namespace BiliLite.Modules
                         subItem.Progress = GetProgress(subItem.ProgressBytes, subItem.TotalBytes);
                     }
                 }
+
             }
             catch (Exception)
             {
                 return;
             }
+
         }
 
         private double GetProgress(ulong progress, ulong total)
@@ -583,7 +581,6 @@ namespace BiliLite.Modules
                 return 0;
             }
         }
-
         private void RemoveItem(string guid, bool success = true)
         {
             try
@@ -610,14 +607,16 @@ namespace BiliLite.Modules
                             Utils.ShowMessageToast("《" + item.Title + " " + item.EpisodeTitle + "》下载完成");
                         }
                         Downloadings.Remove(item);
+
                     }
                 }
+
             }
             catch (Exception ex)
             {
             }
-        }
 
+        }
         /// <summary>
         /// 暂停下载
         /// </summary>
@@ -633,7 +632,6 @@ namespace BiliLite.Modules
             {
             }
         }
-
         /// <summary>
         /// 开始下载
         /// </summary>
@@ -648,8 +646,8 @@ namespace BiliLite.Modules
             catch (Exception)
             {
             }
-        }
 
+        }
         /// <summary>
         /// 删除
         /// </summary>
@@ -669,6 +667,7 @@ namespace BiliLite.Modules
             catch (Exception)
             {
             }
+
         }
 
         private void StartAll()
@@ -682,7 +681,6 @@ namespace BiliLite.Modules
                 }
             }
         }
-
         private void PauseAll()
         {
             if (Downloadings.Count == 0) return;
@@ -694,7 +692,6 @@ namespace BiliLite.Modules
                 }
             }
         }
-
         private async void DeleteAll()
         {
             if (Downloadings.Count == 0) return;
@@ -713,9 +710,9 @@ namespace BiliLite.Modules
                 catch (Exception)
                 {
                 }
+
             }
         }
-
         public async void UpdateSetting()
         {
             var downList = await BackgroundDownloader.GetCurrentDownloadsForTransferGroupAsync(DownloadHelper.group);
@@ -731,12 +728,13 @@ namespace BiliLite.Modules
                 else
                 {
                     item.TransferGroup.TransferBehavior = BackgroundTransferBehavior.Serialized;
+
                 }
                 item.CostPolicy = allowCostNetwork ? BackgroundTransferCostPolicy.Always : BackgroundTransferCostPolicy.UnrestrictedOnly;
             }
+
         }
     }
-
     /// <summary>
     /// 正在下载列表
     /// </summary>
@@ -764,7 +762,6 @@ namespace BiliLite.Modules
         /// </summary>
 
         private BackgroundTransferStatus _status;
-
         /// <summary>
         /// 下载状态
         /// </summary>
@@ -775,7 +772,6 @@ namespace BiliLite.Modules
         }
 
         private ulong _TotalBytes;
-
         /// <summary>
         /// 文件总大小
         /// </summary>
@@ -790,9 +786,7 @@ namespace BiliLite.Modules
                 DoPropertyChanged("ShowStart");
             }
         }
-
         private ulong _ProgressBytes;
-
         /// <summary>
         /// 已下载大小
         /// </summary>
@@ -815,14 +809,11 @@ namespace BiliLite.Modules
         public string FileName { get; set; }
         public string EpisodeTitle { get; set; }
         public string Path { get; set; }
-        public bool ShowPause
-        { get { return Status == BackgroundTransferStatus.Running; } }
-        public bool ShowStart
-        { get { return Status != BackgroundTransferStatus.Running; } }
+        public bool ShowPause { get { return Status == BackgroundTransferStatus.Running; } }
+        public bool ShowStart { get { return Status != BackgroundTransferStatus.Running; } }
         public ICommand PauseItemCommand { get; set; }
         public ICommand ResumeItemCommand { get; set; }
     }
-
     /// <summary>
     /// 已下载的列表
     /// </summary>
@@ -838,7 +829,6 @@ namespace BiliLite.Modules
         public ObservableCollection<DownloadedSubItem> Epsidoes { get; set; }
         public string Path { get; set; }
     }
-
     public class DownloadedSubItem
     {
         public string AVID { get; set; }

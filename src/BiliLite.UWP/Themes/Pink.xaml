@@ -1,6 +1,7 @@
 ﻿<ResourceDictionary
-    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" 
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:BiliLite.Themes">
     <ResourceDictionary.ThemeDictionaries>
         <ResourceDictionary x:Key="Light">
             <Color x:Key="TopPaneBackground">#FFF7F7F7</Color>
@@ -33,7 +34,7 @@
             TintColor="#000000"
             TintOpacity="1"
             TintLuminosityOpacity="1"
-            FallbackColor="#000000" />
+            FallbackColor="#000000"/>
         </ResourceDictionary>
         <ResourceDictionary x:Key="TransparentLight">
             <Color x:Key="TopPaneBackground">#003B3B3B</Color>
@@ -49,7 +50,7 @@
             BackgroundSource="HostBackdrop"
             TintColor="#ffffff"
             TintOpacity="0"
-            FallbackColor="#ffffff" />
+            FallbackColor="#ffffff"/>
         </ResourceDictionary>
     </ResourceDictionary.ThemeDictionaries>
 </ResourceDictionary>

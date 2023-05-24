@@ -1,17 +1,17 @@
 ﻿using System;
 using System.Windows.Input;
-using Windows.Foundation.Metadata;
+
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Media;
+using Windows.Foundation.Metadata;
 
 namespace BiliLite.Controls
 {
-    internal partial class Carousel
+    partial class Carousel
     {
         private DispatcherTimer _slideTimer = null;
 
         #region ItemsSource
-
         public object ItemsSource
         {
             get { return (object)GetValue(ItemsSourceProperty); }
@@ -19,11 +19,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource", typeof(object), typeof(Carousel), new PropertyMetadata(null));
-
-        #endregion ItemsSource
+        #endregion
 
         #region SelectedIndex
-
         public int SelectedIndex
         {
             get { return (int)GetValue(SelectedIndexProperty); }
@@ -56,11 +54,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty SelectedIndexProperty = DependencyProperty.Register("SelectedIndex", typeof(int), typeof(Carousel), new PropertyMetadata(-1, SelectedIndexChanged));
-
-        #endregion SelectedIndex
+        #endregion
 
         #region Index
-
         public int Index
         {
             get { return (int)GetValue(IndexProperty); }
@@ -80,11 +76,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty IndexProperty = DependencyProperty.Register("Index", typeof(int), typeof(Carousel), new PropertyMetadata(0, IndexChanged));
-
-        #endregion Index
+        #endregion
 
         #region ContentTemplate
-
         public DataTemplate ContentTemplate
         {
             get { return (DataTemplate)GetValue(ContentTemplateProperty); }
@@ -92,11 +86,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty ContentTemplateProperty = DependencyProperty.Register("ContentTemplate", typeof(DataTemplate), typeof(Carousel), new PropertyMetadata(null));
-
-        #endregion ContentTemplate
+        #endregion
 
         #region MaxItems
-
         public int MaxItems
         {
             get { return (int)GetValue(MaxItemsProperty); }
@@ -110,11 +102,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty MaxItemsProperty = DependencyProperty.Register("MaxItems", typeof(int), typeof(Carousel), new PropertyMetadata(3, MaxItemsChanged));
-
-        #endregion MaxItems
+        #endregion
 
         #region AspectRatio
-
         public double AspectRatio
         {
             get { return (double)GetValue(AspectRatioProperty); }
@@ -128,11 +118,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty AspectRatioProperty = DependencyProperty.Register("AspectRatio", typeof(double), typeof(Carousel), new PropertyMetadata(1.6, AspectRatioChanged));
-
-        #endregion AspectRatio
+        #endregion
 
         #region GradientOpacity
-
         public double GradientOpacity
         {
             get { return (double)GetValue(GradientOpacityProperty); }
@@ -140,11 +128,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty GradientOpacityProperty = DependencyProperty.Register("GradientOpacity", typeof(double), typeof(Carousel), new PropertyMetadata(0.0));
-
-        #endregion GradientOpacity
+        #endregion
 
         #region ArrowsVisibility
-
         public Visibility ArrowsVisibility
         {
             get { return (Visibility)GetValue(ArrowsVisibilityProperty); }
@@ -152,11 +138,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty ArrowsVisibilityProperty = DependencyProperty.Register("ArrowsVisibility", typeof(Visibility), typeof(Carousel), new PropertyMetadata(Visibility.Visible));
-
-        #endregion ArrowsVisibility
+        #endregion
 
         #region ItemClickCommand
-
         public ICommand ItemClickCommand
         {
             get { return (ICommand)GetValue(ItemClickCommandProperty); }
@@ -164,11 +148,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty ItemClickCommandProperty = DependencyProperty.Register("ItemClickCommand", typeof(ICommand), typeof(Carousel), new PropertyMetadata(null));
-
-        #endregion ItemClickCommand
+        #endregion
 
         #region SlideInterval
-
         public double SlideInterval
         {
             get { return (double)GetValue(SlideIntervalProperty); }
@@ -182,8 +164,7 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty SlideIntervalProperty = DependencyProperty.Register("SlideInterval", typeof(double), typeof(Carousel), new PropertyMetadata(0.0, SlideIntervalChanged));
-
-        #endregion SlideInterval
+        #endregion
 
         private void SetSlideInterval(double milliseconds)
         {
@@ -220,9 +201,7 @@ namespace BiliLite.Controls
         }
 
         // Obsolete
-
         #region AlignmentX
-
         [Deprecated("AligmentX property will be removed in future versions.", DeprecationType.Deprecate, 65536)]
         public AlignmentX AlignmentX
         {
@@ -231,7 +210,6 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty AlignmentXProperty = DependencyProperty.Register("AlignmentX", typeof(AlignmentX), typeof(Carousel), new PropertyMetadata(AlignmentX.Left));
-
-        #endregion AlignmentX
+        #endregion
     }
 }

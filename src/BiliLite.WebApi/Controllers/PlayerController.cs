@@ -7,12 +7,12 @@ namespace BiliLite.WebApi.Controllers
     [ApiController]
     public class PlayerController : Controller
     {
-        private const string TEMPLATE = @"<MPD xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance""
-xmlns=""urn:mpeg:dash:schema:mpd:2011""
-xsi:schemaLocation=""urn:mpeg:dash:schema:mpd:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd""
-type=""static""
-mediaPresentationDuration=""$Duration""
-timeShiftBufferDepth=""PT1S"" minimumUpdatePeriod=""PT1H"" maxSegmentDuration=""PT3S"" minBufferTime=""PT1S""
+        const string TEMPLATE = @"<MPD xmlns:xsi=""http://www.w3.org/2001/XMLSchema-instance"" 
+xmlns=""urn:mpeg:dash:schema:mpd:2011"" 
+xsi:schemaLocation=""urn:mpeg:dash:schema:mpd:2011 http://standards.iso.org/ittf/PubliclyAvailableStandards/MPEG-DASH_schema_files/DASH-MPD.xsd"" 
+type=""static"" 
+mediaPresentationDuration=""$Duration"" 
+timeShiftBufferDepth=""PT1S"" minimumUpdatePeriod=""PT1H"" maxSegmentDuration=""PT3S"" minBufferTime=""PT1S"" 
 profiles=""urn:mpeg:dash:profile:isoff-live:2011,urn:com:dashif:dash264"">
   <Period id=""1"" start=""PT0S"">
     <AdaptationSet group=""1"" mimeType=""audio/mp4"" segmentAlignment=""true"">
@@ -27,13 +27,12 @@ profiles=""urn:mpeg:dash:profile:isoff-live:2011,urn:com:dashif:dash264"">
     </AdaptationSet>
   </Period>
 </MPD>";
-
         [HttpGet]
         [Route("GenerateMPD")]
         public IActionResult GenerateMPD(string par)
         {
-            var dash = Newtonsoft.Json.JsonConvert.DeserializeObject<DashModel>(par);
-            dash.AudioUrl = System.Web.HttpUtility.HtmlEncode(dash.AudioUrl);
+            var dash=Newtonsoft.Json.JsonConvert.DeserializeObject<DashModel>(par);
+            dash.AudioUrl=System.Web.HttpUtility.HtmlEncode(dash.AudioUrl);
             dash.VideoUrl = System.Web.HttpUtility.HtmlEncode(dash.VideoUrl);
             var ts = "PT" + TimeSpan.FromMilliseconds(dash.DurationMS).ToString(@"hh\Hmm\Mss\S");
             var content = TEMPLATE
@@ -58,7 +57,6 @@ profiles=""urn:mpeg:dash:profile:isoff-live:2011,urn:com:dashif:dash264"">
             };
         }
     }
-
     public class DashModel
     {
         public long Duration { get; set; }

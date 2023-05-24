@@ -8,17 +8,16 @@ namespace BiliLite.Controls
     public sealed partial class DynamicRepostControl : UserControl
     {
         public readonly DynamicRepostVM dynamicRepostVM;
-
         public DynamicRepostControl()
         {
-            this.InitializeComponent();
+            this.InitializeComponent(); 
             dynamicRepostVM = new DynamicRepostVM();
         }
-
         public async void LoadData(string id)
         {
             dynamicRepostVM.ID = id;
             await dynamicRepostVM.GetDynamicItems();
         }
+        
     }
 }

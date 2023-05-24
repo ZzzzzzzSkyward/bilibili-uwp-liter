@@ -16,13 +16,11 @@ namespace BiliLite.Helpers
             opencc_inited = true;
             ZhConverter.Initialize();
         }
-
         public static string SimplifiedToTraditional(string input)
         {
             Opencc_Init();
             return OpenCCNET.ZhConverter.HansToHant(input);
         }
-
         public static string TraditionalToSimplified(string input)
         {
             Opencc_Init();

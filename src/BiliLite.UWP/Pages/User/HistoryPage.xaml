@@ -15,7 +15,7 @@
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
         <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"></SolidColorBrush>
-        <convert:DatetimeConvert x:Key="datetime" />
+        <convert:DatetimeConvert x:Key="datetime"/>
         <Style x:Key="ItemStyle" TargetType="GridViewItem">
             <Setter Property="Margin" Value="8"></Setter>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
@@ -24,8 +24,8 @@
         <DataTemplate x:Key="VideoDataTemplate" x:DataType="model:HistoryItemModel">
             <Grid Background="#00FFFFFF">
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
                 <Grid.ContextFlyout>
                     <MenuFlyout>
@@ -37,14 +37,14 @@
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=owner.name}" /></TextBlock>
+                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" >UP:<Run Text="{x:Bind Path=owner.name}"/></TextBlock>
                     <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=view_at,Converter={StaticResource datetime},ConverterParameter='ts'}"></TextBlock>
                 </StackPanel>
             </Grid>
         </DataTemplate>
     </Page.Resources>
     <Grid>
-        <Pivot>
+        <Pivot >
             <!--<Pivot.RightHeader>
                 <Grid Background="{ThemeResource TopPaneBackground}">
                     <Button Margin="8 0">清空记录</Button>
@@ -55,7 +55,7 @@
                     <TextBlock FontSize="15">视频</TextBlock>
                 </PivotItem.Header>
                 <Grid>
-                    <toolkit:AdaptiveGridView SelectionMode="None"
+                    <toolkit:AdaptiveGridView SelectionMode="None" 
                                           IsItemClickEnabled="True"
                                           DesiredWidth="600"
                                           ItemClick="Video_ItemClick"

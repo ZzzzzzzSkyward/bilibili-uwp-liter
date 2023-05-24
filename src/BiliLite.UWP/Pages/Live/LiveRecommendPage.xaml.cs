@@ -12,8 +12,7 @@ namespace BiliLite.Pages.Live
     /// </summary>
     public sealed partial class LiveRecommendPage : BasePage
     {
-        private readonly LiveRecommendVM liveRecommendVM;
-
+        readonly LiveRecommendVM liveRecommendVM;
         public LiveRecommendPage()
         {
             this.InitializeComponent();
@@ -21,32 +20,31 @@ namespace BiliLite.Pages.Live
             this.NavigationCacheMode = NavigationCacheMode.Enabled;
             liveRecommendVM = new LiveRecommendVM();
         }
-
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
         }
-
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
-            if (e.NavigationMode == NavigationMode.Back)
+            if(e.NavigationMode== NavigationMode.Back)
             {
                 this.NavigationCacheMode = NavigationCacheMode.Disabled;
             }
             base.OnNavigatingFrom(e);
         }
-
         private async void pivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (pivot.SelectedItem == null)
+            if (pivot.SelectedItem==null)
             {
                 return;
             }
-            var item = pivot.SelectedItem as LiveRecommendItem;
-            if (item.Items.Count == 0 && !item.Loading)
+           var item= pivot.SelectedItem as LiveRecommendItem;
+            if (item.Items.Count==0&&!item.Loading)
             {
                 await item.GetItems();
             }
+
+
         }
 
         private void AdaptiveGridView_ItemClick(object sender, ItemClickEventArgs e)

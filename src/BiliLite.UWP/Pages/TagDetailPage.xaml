@@ -9,5 +9,6 @@
     Background="{ThemeResource TransparentBackground}">
 
     <Grid>
+
     </Grid>
 </local:BasePage>

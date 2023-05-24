@@ -16,13 +16,16 @@ namespace BiliLite.Helpers
             if (syncContext == null)
                 throw new InvalidOperationException("Ensure a synchronization context exists before calling this method.");
 
+
             var customSynchronizationContext = syncContext as ExceptionHandlingSynchronizationContext;
+
 
             if (customSynchronizationContext == null)
             {
                 customSynchronizationContext = new ExceptionHandlingSynchronizationContext(syncContext);
                 SetSynchronizationContext(customSynchronizationContext);
             }
+
 
             return customSynchronizationContext;
         }
@@ -51,37 +54,45 @@ namespace BiliLite.Helpers
                 SetSynchronizationContext(context);
         }
 
+
         private readonly SynchronizationContext _syncContext;
+
 
         public ExceptionHandlingSynchronizationContext(SynchronizationContext syncContext)
         {
             _syncContext = syncContext;
         }
 
+
         public override SynchronizationContext CreateCopy()
         {
             return new ExceptionHandlingSynchronizationContext(_syncContext.CreateCopy());
         }
+
 
         public override void OperationCompleted()
         {
             _syncContext.OperationCompleted();
         }
 
+
         public override void OperationStarted()
         {
             _syncContext.OperationStarted();
         }
+
 
         public override void Post(SendOrPostCallback d, object state)
         {
             _syncContext.Post(WrapCallback(d), state);
         }
 
+
         public override void Send(SendOrPostCallback d, object state)
         {
             _syncContext.Send(d, state);
         }
+
 
         private SendOrPostCallback WrapCallback(SendOrPostCallback sendOrPostCallback)
         {

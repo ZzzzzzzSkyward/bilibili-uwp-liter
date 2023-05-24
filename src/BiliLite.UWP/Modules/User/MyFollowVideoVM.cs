@@ -12,27 +12,22 @@ namespace BiliLite.Modules
 {
     public class MyFollowVideoVM : IModules
     {
-        private readonly Api.User.FavoriteApi favoriteAPI;
-
+        readonly Api.User.FavoriteApi  favoriteAPI;
         public MyFollowVideoVM()
         {
             favoriteAPI = new Api.User.FavoriteApi();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
-
         private bool _loading = false;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
         private ObservableCollection<FavoriteItemModel> _myFavorite;
-
         public ObservableCollection<FavoriteItemModel> MyFavorite
         {
             get { return _myFavorite; }
@@ -40,23 +35,18 @@ namespace BiliLite.Modules
         }
 
         private ObservableCollection<FavoriteItemModel> _collectFavorite;
-
         public ObservableCollection<FavoriteItemModel> CollectFavorite
         {
             get { return _collectFavorite; }
             set { _collectFavorite = value; DoPropertyChanged("CollectFavorite"); }
         }
-
         private bool _hasMore = false;
-
         public bool HasMore
         {
             get { return _hasMore; }
             set { _hasMore = value; DoPropertyChanged("HasMore"); }
         }
-
         private int Page = 1;
-
         public async Task LoadFavorite()
         {
             try
@@ -70,18 +60,18 @@ namespace BiliLite.Modules
                     var data = await results.GetJson<ApiDataModel<JObject>>();
                     if (data.success)
                     {
-                        if (data.data["space_infos"][0]["mediaListResponse"] != null)
+                        if (data.data["space_infos"][0]["mediaListResponse"]!=null)
                         {
-                            MyFavorite = await data.data["space_infos"][0]["mediaListResponse"]["list"].ToString().DeserializeJson<ObservableCollection<FavoriteItemModel>>();
+                            MyFavorite =await data.data["space_infos"][0]["mediaListResponse"]["list"].ToString().DeserializeJson<ObservableCollection<FavoriteItemModel>>();
                             if (MyFavorite == null)
                             {
                                 MyFavorite = new ObservableCollection<FavoriteItemModel>();
                             }
-                            MyFavorite.Insert(0, await data.data["default_folder"]["folder_detail"].ToString().DeserializeJson<FavoriteItemModel>());
+                            MyFavorite.Insert(0,await data.data["default_folder"]["folder_detail"].ToString().DeserializeJson<FavoriteItemModel>());
                             HasMore = (bool)data.data["space_infos"][0]["mediaListResponse"]["has_more"];
-                            Page++;
+                            Page ++;
                         }
-                        if (data.data["space_infos"][1]["mediaListResponse"] != null)
+                        if (data.data["space_infos"][1]["mediaListResponse"]!=null)
                         {
                             CollectFavorite = await data.data["space_infos"][1]["mediaListResponse"]["list"].ToString().DeserializeJson<ObservableCollection<FavoriteItemModel>>();
                         }
@@ -106,12 +96,11 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-
         public async void LoadMore()
         {
-            await LoadCreateList();
+           await LoadCreateList();
         }
-
+        
         public async Task LoadCreateList()
         {
             try
@@ -123,7 +112,7 @@ namespace BiliLite.Modules
                     var data = await results.GetJson<ApiDataModel<JObject>>();
                     if (data.success)
                     {
-                        var ls = await data.data["list"].ToString().DeserializeJson<List<FavoriteItemModel>>();
+                        var ls  = await data.data["list"].ToString().DeserializeJson<List<FavoriteItemModel>>();
                         foreach (var item in ls)
                         {
                             MyFavorite.Add(item);
@@ -147,6 +136,7 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(handel.message);
             }
         }
+
 
         public async Task<bool> DelFavorite(string id)
         {
@@ -177,7 +167,6 @@ namespace BiliLite.Modules
             }
             return false;
         }
-
         public async void Refresh()
         {
             if (Loading)
@@ -194,35 +183,31 @@ namespace BiliLite.Modules
     {
         public string cover { get; set; }
         public int attr { get; set; }
-
         public bool privacy
         {
             get
             {
                 //attr单数为私密，双数为公开
-                return attr % 2 != 0;
+                return attr %2!=0;
             }
         }
-
         public string intro { get; set; }
         public string fid { get; set; }
         public string id { get; set; }
         public int like_state { get; set; }
-
+       
         public string mid { get; set; }
         public string title { get; set; }
         public int type { get; set; }
 
-        private int _media_count;
 
+        private int _media_count;
         public int media_count
         {
             get { return _media_count; }
             set { _media_count = value; PropertyChanged?.Invoke(this, new PropertyChangedEventArgs("media_count")); }
         }
-
         public int fav_state { get; set; }
-
         public bool is_fav
         {
             get
@@ -231,8 +216,7 @@ namespace BiliLite.Modules
             }
             set
             {
-                if (value)
-                {
+                if (value) {
                     fav_state = 1;
                 }
                 else
@@ -246,4 +230,5 @@ namespace BiliLite.Modules
 
         public event PropertyChangedEventHandler PropertyChanged;
     }
+
 }

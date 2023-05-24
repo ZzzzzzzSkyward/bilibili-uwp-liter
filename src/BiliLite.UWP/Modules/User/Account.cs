@@ -18,15 +18,13 @@ namespace BiliLite.Modules
     {
         private SettingVM settingVM;
         public AccountApi accountApi;
-        private string guid = "";
-
+        string guid = "";
         public Account()
         {
             accountApi = new AccountApi();
             settingVM = new SettingVM();
             guid = Guid.NewGuid().ToString();
         }
-
         public async Task<string> EncryptedPassword(string passWord)
         {
             string base64String;
@@ -61,6 +59,7 @@ namespace BiliLite.Modules
         {
             try
             {
+
                 var results = await accountApi.LoginV2(username, await EncryptedPassword(password), captcha).Request();
                 var m = await results.GetJson<LoginV2Model>();
                 if (m.code == 0)
@@ -131,6 +130,7 @@ namespace BiliLite.Modules
         {
             try
             {
+
                 var results = await accountApi.LoginV3(username, await EncryptedPassword(password), seccode, validate, challenge, recaptcha_token).Request();
                 if (results.status)
                 {
@@ -139,7 +139,7 @@ namespace BiliLite.Modules
                     {
                         if (m.data.status == 0)
                         {
-                            await SaveLogin(m.data.token_info.access_token, m.data.token_info.refresh_token, m.data.token_info.expires_in, m.data.token_info.mid, m.data.sso, m.data.cookie_info);
+                            await SaveLogin(m.data.token_info.access_token, m.data.token_info.refresh_token, m.data.token_info.expires_in, m.data.token_info.mid, m.data.sso,m.data.cookie_info);
                             return new LoginCallbackModel()
                             {
                                 status = LoginStatus.Success,
@@ -188,6 +188,7 @@ namespace BiliLite.Modules
                         message = results.message
                     };
                 }
+
             }
             catch (Exception ex)
             {
@@ -199,7 +200,7 @@ namespace BiliLite.Modules
                 };
             }
         }
-
+        
         /// <summary>
         /// 登录V3 2023
         /// </summary>
@@ -208,6 +209,7 @@ namespace BiliLite.Modules
         {
             try
             {
+
                 var results = await accountApi.LoginV3(username, await EncryptedPassword(password)).Request();
                 if (results.status)
                 {
@@ -216,7 +218,7 @@ namespace BiliLite.Modules
                     {
                         if (m.data.status == 0)
                         {
-                            await SaveLogin(m.data.token_info.access_token, m.data.token_info.refresh_token, m.data.token_info.expires_in, m.data.token_info.mid, m.data.sso, m.data.cookie_info);
+                            await SaveLogin(m.data.token_info.access_token, m.data.token_info.refresh_token, m.data.token_info.expires_in, m.data.token_info.mid, m.data.sso,m.data.cookie_info);
                             return new LoginCallbackModel()
                             {
                                 status = LoginStatus.Success,
@@ -265,6 +267,7 @@ namespace BiliLite.Modules
                         message = results.message
                     };
                 }
+
             }
             catch (Exception ex)
             {
@@ -277,6 +280,7 @@ namespace BiliLite.Modules
             }
         }
 
+
         /// <summary>
         /// 安全验证后保存状态
         /// </summary>
@@ -285,7 +289,7 @@ namespace BiliLite.Modules
         /// <param name="expires"></param>
         /// <param name="userid"></param>
         /// <returns></returns>
-        public async Task<bool> SaveLogin(string access_key, string refresh_token, int expires, long userid, List<string> sso, LoginCookieInfo cookie)
+        public async Task<bool> SaveLogin(string access_key, string refresh_token, int expires, long userid, List<string> sso,LoginCookieInfo cookie)
         {
             try
             {
@@ -315,19 +319,19 @@ namespace BiliLite.Modules
                 try
                 {
                     //设置Cookie
-                    if (cookie != null)
+                    if (cookie!=null)
                     {
                         HttpBaseProtocolFilter filter = new HttpBaseProtocolFilter();
                         foreach (var item in cookie.domains)
                         {
                             foreach (var cookieItem in cookie.cookies)
                             {
-                                filter.CookieManager.SetCookie(new Windows.Web.Http.HttpCookie(cookieItem.name, item, "/")
+                                filter.CookieManager.SetCookie(new Windows.Web.Http.HttpCookie(cookieItem.name, item,"/")
                                 {
-                                    HttpOnly = cookieItem.http_only == 1,
-                                    Secure = cookieItem.secure == 1,
-                                    Expires = Utils.TimestampToDatetime(cookieItem.expires),
-                                    Value = cookieItem.value,
+                                    HttpOnly=cookieItem.http_only==1,
+                                    Secure=cookieItem.secure==1,
+                                    Expires=Utils.TimestampToDatetime(cookieItem.expires),
+                                    Value=cookieItem.value,
                                 });
                             }
                         }
@@ -344,6 +348,7 @@ namespace BiliLite.Modules
                 await GetProfile();
                 MessageCenter.SendLogined();
                 return true;
+
             }
             catch (Exception ex)
             {
@@ -378,6 +383,7 @@ namespace BiliLite.Modules
 
         public async Task<HomeUserCardModel> GetHomeUserCard()
         {
+
             try
             {
                 var mine_api = accountApi.MineProfile();
@@ -419,6 +425,7 @@ namespace BiliLite.Modules
                 }
                 data.vip_type = mine_obj["data"]["vip_type"].ToInt32();
                 return data;
+
             }
             catch (Exception)
             {
@@ -453,6 +460,7 @@ namespace BiliLite.Modules
                             success = false,
                             message = data.message
                         };
+
                     }
                 }
                 else
@@ -473,7 +481,6 @@ namespace BiliLite.Modules
                 };
             }
         }
-
         /// <summary>
         /// 轮询二维码扫描信息
         /// </summary>
@@ -488,7 +495,8 @@ namespace BiliLite.Modules
                     var data = await result.GetData<LoginDataV3Model>();
                     if (data.success)
                     {
-                        await SaveLogin(data.data.token_info.access_token, data.data.token_info.refresh_token, data.data.token_info.expires_in, data.data.token_info.mid, data.data.sso, data.data.cookie_info);
+                        
+                        await SaveLogin(data.data.token_info.access_token, data.data.token_info.refresh_token, data.data.token_info.expires_in, data.data.token_info.mid, data.data.sso,data.data.cookie_info);
                         return new LoginCallbackModel()
                         {
                             status = LoginStatus.Success,
@@ -502,6 +510,7 @@ namespace BiliLite.Modules
                             status = LoginStatus.Fail,
                             message = data.message
                         };
+
                     }
                 }
                 else
@@ -550,7 +559,6 @@ namespace BiliLite.Modules
                 //return LogHelper.IsNetworkError(ex);
             }
         }
-
         /// <summary>
         /// 刷新Token
         /// </summary>
@@ -567,7 +575,7 @@ namespace BiliLite.Modules
                     if (obj["code"].ToInt32() == 0)
                     {
                         var data = JsonConvert.DeserializeObject<LoginTokenInfo>(obj["data"].ToString());
-                        await SaveLogin(data.access_token, data.refresh_token, data.expires_in, data.mid, null, null);
+                        await SaveLogin(data.access_token, data.refresh_token, data.expires_in, data.mid, null,null);
                         return true;
                     }
                     else
@@ -617,6 +625,7 @@ namespace BiliLite.Modules
         {
             get
             {
+
                 return vip_type == 2 ? "年度大会员" : "月度大会员";
             }
         }
@@ -627,4 +636,5 @@ namespace BiliLite.Modules
         public string url { get; set; }
         public string auth_code { get; set; }
     }
+
 }

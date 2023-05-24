@@ -13,10 +13,9 @@ namespace BiliLite.Modules
 {
     public class PlayerVM : IModules
     {
-        private readonly gRPC.Api.PlayURL playUrlApi;
-        private readonly PlayerAPI PlayerAPI;
-        private readonly BiliPlayUrl biliPlayUrl;
-
+        readonly gRPC.Api.PlayURL playUrlApi;
+        readonly PlayerAPI PlayerAPI;
+        readonly BiliPlayUrl biliPlayUrl;
         public PlayerVM()
         {
             playUrlApi = new gRPC.Api.PlayURL();
@@ -39,7 +38,6 @@ namespace BiliLite.Modules
                 "#FFFFFF"
             };
         }
-
         public PlayerVM(bool isDownload)
         {
             playUrlApi = new gRPC.Api.PlayURL();
@@ -47,7 +45,6 @@ namespace BiliLite.Modules
             biliPlayUrl = new BiliPlayUrl(isDownload);
             IsDownload = isDownload;
         }
-
         private readonly bool IsDownload;
         public List<string> DefaultDanmakuColors { get; set; }
 
@@ -71,7 +68,6 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(handel.message);
             }
         }
-
         public async Task<PlayerInfo> GetPlayInfo(string aid, string cid)
         {
             var playerInfo = new PlayerInfo();
@@ -87,6 +83,7 @@ namespace BiliLite.Modules
                         playerInfo = data.data;
                     }
                     return playerInfo;
+
                 }
                 else
                 {
@@ -99,7 +96,6 @@ namespace BiliLite.Modules
                 return playerInfo;
             }
         }
-
         public async Task<SubtitleModel> GetSubtitle(string url)
         {
             try
@@ -212,10 +208,12 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(result.message);
                 return false;
             }
+
         }
 
         public async Task<string> GetOnline(string aid, string cid)
         {
+
             try
             {
                 var api = PlayerAPI.GetPlayerOnline(aid: aid, cid: cid, "");
@@ -237,25 +235,23 @@ namespace BiliLite.Modules
         }
     }
 
+   
     public class PlayerInfo
     {
         /// <summary>
         /// 字幕信息
         /// </summary>
         public HasSubtitleModel subtitle { get; set; }
-
         /// <summary>
         /// 互动视频信息
         /// </summary>
         public InteractionModel interaction { get; set; }
     }
-
     public class PlayerOnlineInfo
     {
         public string total { get; set; }
         public string count { get; set; }
     }
-
     public class InteractionHistoryNodeModel
     {
         public int node_id { get; set; }
@@ -273,6 +269,9 @@ namespace BiliLite.Modules
         public int need_reload { get; set; }
     }
 
+   
+
+
     public class HasSubtitleModel
     {
         public bool allow_submit { get; set; }
@@ -286,7 +285,6 @@ namespace BiliLite.Modules
         public string lan_doc { get; set; }
         public string subtitle_url { get; set; }
     }
-
     public class SubtitleModel
     {
         public double font_size { get; set; }
@@ -297,7 +295,6 @@ namespace BiliLite.Modules
 
         public List<SubtitleItemModel> body { get; set; }
     }
-
     public class SubtitleItemModel
     {
         public double from { get; set; }
@@ -305,4 +302,7 @@ namespace BiliLite.Modules
         public int location { get; set; }
         public string content { get; set; }
     }
+
+
+
 }

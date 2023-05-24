@@ -20,13 +20,12 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://app.bilibili.com{ApiHelper.api2}/region/dynamic",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, false) + $"&rid={rid}"
+                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, false)+ $"&rid={rid}"
             };
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
-        public ApiModel RegionDynamic(long rid, string next_aid)
+        public ApiModel RegionDynamic(long rid,string next_aid)
         {
             ApiModel api = new ApiModel()
             {
@@ -38,7 +37,8 @@
             return api;
         }
 
-        public ApiModel RegionChildDynamic(long rid, long tag_id = 0)
+
+        public ApiModel RegionChildDynamic(long rid, long tag_id=0)
         {
             ApiModel api = new ApiModel()
             {
@@ -50,7 +50,7 @@
             return api;
         }
 
-        public ApiModel RegionChildDynamic(long rid, string next, int tag_id = 0)
+        public ApiModel RegionChildDynamic(long rid,string next, int tag_id = 0)
         {
             ApiModel api = new ApiModel()
             {
@@ -61,8 +61,7 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
-        public ApiModel RegionChildList(long rid, string order, int page, int tag_id = 0)
+        public ApiModel RegionChildList(long rid,string order, int page , int tag_id = 0)
         {
             ApiModel api = new ApiModel()
             {
@@ -73,5 +72,6 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
+
     }
 }

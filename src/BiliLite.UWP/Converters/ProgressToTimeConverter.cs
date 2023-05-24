@@ -14,17 +14,18 @@ namespace BiliLite.Converters
             if (value is double)
             {
                 TimeSpan ts = TimeSpan.FromSeconds((double)value);
-
-                return ts.ToString(ts.TotalHours >= 1 ? @"hh\:mm\:ss" : @"mm\:ss");
+                
+                return ts.ToString(ts.TotalHours>=1? @"hh\:mm\:ss" : @"mm\:ss");
             }
             if (value is int)
             {
+               
                 TimeSpan ts = TimeSpan.FromSeconds(System.Convert.ToDouble(value));
                 return ts.ToString(ts.TotalHours >= 1 ? @"hh\:mm\:ss" : @"mm\:ss");
             }
             if (value is TimeSpan)
             {
-                var ts = (TimeSpan)value;
+                var ts= (TimeSpan)value;
                 return ts.ToString(ts.TotalHours >= 1 ? @"hh\:mm\:ss" : @"mm\:ss");
             }
             return value.ToString();

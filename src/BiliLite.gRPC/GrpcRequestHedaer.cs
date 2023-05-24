@@ -1,6 +1,6 @@
-﻿using Google.Protobuf;
+﻿using System;
+using Google.Protobuf;
 using Proto.Header;
-using System;
 
 namespace BiliLite.gRPC
 {
@@ -10,7 +10,6 @@ namespace BiliLite.gRPC
         {
             AccessKey = accessKey;
         }
-
         public string AccessKey { get; set; }
 
         public static string dalvik_ver = "2.1.0";
@@ -33,6 +32,7 @@ namespace BiliLite.gRPC
         public static string region = "CN";
         public static string language = "zh";
 
+
         public string GetFawkesreqBin()
         {
             var msg = new FawkesReq();
@@ -40,7 +40,6 @@ namespace BiliLite.gRPC
             msg.Env = env;
             return ToBase64(msg.ToByteArray());
         }
-
         public string GetMetadataBin()
         {
             var msg = new Metadata();
@@ -53,7 +52,6 @@ namespace BiliLite.gRPC
             msg.Platform = platform;
             return ToBase64(msg.ToByteArray());
         }
-
         public string GetDeviceBin()
         {
             var msg = new Device();
@@ -78,14 +76,12 @@ namespace BiliLite.gRPC
             msg.Oid = network_oid;
             return ToBase64(msg.ToByteArray());
         }
-
         public string GetRestrictionBin()
         {
             var msg = new Restriction();
 
             return ToBase64(msg.ToByteArray());
         }
-
         public string GetLocaleBin()
         {
             var msg = new Locale();
@@ -97,7 +93,6 @@ namespace BiliLite.gRPC
             msg.SLocale.Region = region;
             return ToBase64(msg.ToByteArray());
         }
-
         public string ToBase64(byte[] data)
         {
             return Convert.ToBase64String(data).TrimEnd('=');

@@ -7,23 +7,23 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-     xmlns:model="using:BiliLite.Modules"
-      xmlns:controls="using:BiliLite.Controls"
-      xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
-      xmlns:winui="using:Microsoft.UI.Xaml.Controls"
-      xmlns:fa="using:FontAwesome5"
+     xmlns:model="using:BiliLite.Modules" 
+      xmlns:controls="using:BiliLite.Controls" 
+      xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls" 
+      xmlns:winui="using:Microsoft.UI.Xaml.Controls" 
+      xmlns:fa="using:FontAwesome5" 
     Background="{ThemeResource TransparentBackground}">
 
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto"/>
             <RowDefinition />
         </Grid.RowDefinitions>
         <Grid Background="{ThemeResource TopPaneBackground}">
             <ItemsControl ItemsSource="{x:Bind Path=seasonIndexVM.Conditions,Mode=OneWay}">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <toolkit:WrapPanel Orientation="Horizontal" />
+                        <toolkit:WrapPanel Orientation="Horizontal"/>
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
@@ -36,7 +36,7 @@
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
         </Grid>
-        <controls:MyAdaptiveGridView
+        <controls:MyAdaptiveGridView 
             ItemClick="ListResult_ItemClick"
             LoadMoreCommand="{x:Bind Path=seasonIndexVM.LoadMoreCommand,Mode=OneWay}"
             CanLoadMore="True"
@@ -46,8 +46,8 @@
             DesiredWidth="180"
             StretchContentForSingleRow="False"
             ItemHeight="288"
-            Grid.Row="1"
-            SelectionMode="None"
+            Grid.Row="1" 
+            SelectionMode="None" 
             IsItemClickEnabled="True">
             <GridView.ItemTemplate>
                 <DataTemplate  x:DataType="model:SeasonIndexResultItemModel">

@@ -13,13 +13,12 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/acc/info",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, needAccesskey: true) + $"&mid={mid}",
-                need_cookie = true,
+                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,needAccesskey:true)+$"&mid={mid}",
+                need_cookie=true,
             };
 
             return api;
         }
-
         /// <summary>
         /// 用户信息v2
         /// </summary>
@@ -31,13 +30,12 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/acc/info",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, needAccesskey: true) + $"&mid={mid}",
+                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,needAccesskey:true)+$"&mid={mid}",
                 need_cookie = true,
             };
 
             return api;
         }
-
         /// <summary>
         /// 个人空间
         /// </summary>
@@ -49,12 +47,11 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://app.bilibili.com{ApiHelper.api2}/space",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, needAccesskey: true) + $"&vmid={mid}",
+                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,needAccesskey:true) + $"&vmid={mid}",
             };
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
         /// <summary>
         /// 数据
         /// </summary>
@@ -66,9 +63,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/relation/stat",
-                parameter = $"vmid={mid}",
+                parameter =  $"vmid={mid}",
             };
-
+         
             return api;
         }
 
@@ -79,18 +76,17 @@
         /// <param name="page">页数</param>
         /// <param name="pagesize">每页数量</param>
         /// <returns></returns>
-        public ApiModel SubmitVideos(string mid, int page = 1, int pagesize = 30, string keyword = "", int tid = 0, SubmitVideoOrder order = SubmitVideoOrder.pubdate)
+        public ApiModel SubmitVideos(string mid, int page = 1, int pagesize = 30,string keyword="",int tid=0, SubmitVideoOrder order= SubmitVideoOrder.pubdate)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/arc/search",
                 parameter = $"mid={mid}&ps={pagesize}&tid={tid}&pn={page}&keyword={keyword}&order={order.ToString()}",
-                need_cookie = true,
+                need_cookie=true,
             };
             return api;
         }
-
         /// <summary>
         /// 用户视频投稿v2
         /// </summary>
@@ -98,18 +94,17 @@
         /// <param name="page">页数</param>
         /// <param name="pagesize">每页数量</param>
         /// <returns></returns>
-        public ApiModel SubmitVideosv2(string mid, int page = 1, int pagesize = 30, string keyword = "", int tid = 0, SubmitVideoOrder order = SubmitVideoOrder.pubdate)
+        public ApiModel SubmitVideosv2(string mid, int page = 1, int pagesize = 30,string keyword="",int tid=0, SubmitVideoOrder order= SubmitVideoOrder.pubdate)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/arc/search",
                 parameter = $"mid={mid}&ps={pagesize}&tid={tid}&pn={page}&keyword={keyword}&order={order}",
-                need_cookie = true,
+                need_cookie=true,
             };
             return api;
         }
-
         /// <summary>
         /// 用户专栏投稿
         /// </summary>
@@ -127,7 +122,6 @@
             };
             return api;
         }
-
         /// <summary>
         /// 关注的分组
         /// </summary>
@@ -143,7 +137,6 @@
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-
         /// <summary>
         /// 关注的人
         /// </summary>
@@ -151,15 +144,15 @@
         /// <param name="page">页数</param>
         /// <param name="pagesize">每页数量</param>
         /// <returns></returns>
-        public ApiModel Followings(string mid, int page = 1, int pagesize = 30, int tid = 0, string keyword = "", FollowingsOrder order = FollowingsOrder.attention)
+        public ApiModel Followings(string mid, int page = 1, int pagesize = 30,int tid=0,string keyword="",FollowingsOrder order= FollowingsOrder.attention)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/relation/followings",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&vmid={mid}&ps={pagesize}&pn={page}&order=desc&order_type={(order == FollowingsOrder.attention ? "attention" : "")}",
+                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,true) + $"&vmid={mid}&ps={pagesize}&pn={page}&order=desc&order_type={(order== FollowingsOrder.attention? "attention":"")}",
             };
-            if (tid == -1 && keyword != "")
+            if (tid==-1&& keyword != "")
             {
                 api.baseUrl = $"{ApiHelper.API_BASE_URL}/x/relation/followings/search";
                 api.parameter += $"&name={keyword}";
@@ -214,21 +207,18 @@
         click,
         stow
     }
-
     public enum SubmitArticleOrder
     {
         publish_time,
         view,
         fav
     }
-
     public enum FollowingsOrder
     {
         /// <summary>
         /// 关注时间
         /// </summary>
         addtime,
-
         /// <summary>
         /// 最常访问
         /// </summary>

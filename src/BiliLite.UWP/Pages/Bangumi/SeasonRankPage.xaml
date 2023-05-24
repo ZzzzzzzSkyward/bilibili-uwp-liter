@@ -7,18 +7,18 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    xmlns:convert="using:BiliLite.Converters"
+    xmlns:convert="using:BiliLite.Converters" 
     xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
     xmlns:modules="using:BiliLite.Modules.Season"
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
         <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"></SolidColorBrush>
         <SolidColorBrush x:Key="SystemControlHighlightAltAccentBrush" Color="White"></SolidColorBrush>
-        <convert:RankColorConvert x:Key="RankConvert" />
+        <convert:RankColorConvert x:Key="RankConvert"/>
     </Page.Resources>
     <Grid>
         <Pivot ItemsSource="{x:Bind Path=seasonRankVM.RegionItems,Mode=OneWay}" SelectedItem="{x:Bind Path=seasonRankVM.Current,Mode=TwoWay}" x:Name="pivot" SelectionChanged="pivot_SelectionChanged">
-
+          
             <Pivot.HeaderTemplate>
                 <DataTemplate x:DataType="modules:SeasonRankModel">
                     <TextBlock FontSize="15" Text="{x:Bind Path=name}"></TextBlock>
@@ -31,12 +31,12 @@
             </Pivot.ItemContainerStyle>
             <Pivot.ItemTemplate>
                 <DataTemplate x:DataType="modules:SeasonRankModel">
-                    <toolkit:AdaptiveGridView
+                    <toolkit:AdaptiveGridView 
                     OneRowModeEnabled="False"
                         ItemClick="AdaptiveGridView_ItemClick"
                     StretchContentForSingleRow="False"
                     ItemsSource="{x:Bind Path=Items,Mode=OneWay}"
-                    ItemHeight="100" DesiredWidth="600"
+                    ItemHeight="100" DesiredWidth="600" 
                     Padding="8"
                     SelectionMode="None" IsItemClickEnabled="True">
                         <toolkit:AdaptiveGridView.ItemContainerStyle>
@@ -48,11 +48,11 @@
                             <DataTemplate x:DataType="modules:SeasonRankItemModel">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="160" />
+                                        <ColumnDefinition Width="160"/>
                                         <ColumnDefinition />
                                     </Grid.ColumnDefinitions>
                                     <Border Margin="4" CornerRadius="{StaticResource ImageCornerRadius}">
-                                        <Grid>
+                                        <Grid >
                                             <toolkit:ImageEx IsCacheEnabled="True" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=new_ep.cover,Converter={StaticResource imageConvert},ConverterParameter='120h'}"></toolkit:ImageEx>
                                             <Border Visibility="{Binding show_badge}" VerticalAlignment="Top" Background="#FFFB9E60" HorizontalAlignment="Right" Margin="4" Padding="8 4" CornerRadius="2">
                                                 <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="#FFFFFFFF" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=badge}"></TextBlock>
@@ -62,11 +62,11 @@
                                             </Border>
                                         </Grid>
                                     </Border>
-                                    <StackPanel Grid.Column="1" Margin="4 0 0 0">
+                                    <StackPanel Grid.Column="1" Margin="4 0 0 0" >
                                         <TextBlock FontSize="20" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=title}"></TextBlock>
-                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0"><Run Text="{x:Bind Path=new_ep.index_show}" /></TextBlock>
-                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0" Visibility="{x:Bind Path=show_danmaku}">追番 <Run Text="{x:Bind Path=stat.follow,Converter={StaticResource numberToStringConvert}}" /></TextBlock>
-                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">观看 <Run Text="{x:Bind Path=stat.view,Converter={StaticResource numberToStringConvert}}" /></TextBlock>
+                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0"><Run Text="{x:Bind Path=new_ep.index_show}"/></TextBlock>
+                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0" Visibility="{x:Bind Path=show_danmaku}">追番 <Run Text="{x:Bind Path=stat.follow,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                                        <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">观看 <Run Text="{x:Bind Path=stat.view,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
                                     </StackPanel>
                                 </Grid>
                             </DataTemplate>

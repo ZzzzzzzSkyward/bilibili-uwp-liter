@@ -14,34 +14,31 @@ namespace BiliLite.Controls.Dynamic
         public DataTemplate Photo1x1Template { get; set; }
         public DataTemplate OneRowTemplate { get; set; }
         public DataTemplate OtherTemplate { get; set; }
-
         protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
         {
-            var model = item as DynamicItemDisplayModel;
+            
+           var model = item as DynamicItemDisplayModel;
             switch (model.Type)
             {
                 case Dynamic.DynamicDisplayType.Repost:
                     return RepostTemplate;
-
                 case Dynamic.DynamicDisplayType.Text:
                     return TextTemplate;
-
                 case Dynamic.DynamicDisplayType.Photo:
                     {
                         if (model.ImagesInfo.Count <= 1)
                         {
                             return Photo1x1Template;
                         }
-                        if (model.ImagesInfo.Count == 4)
+                        if (model.ImagesInfo.Count ==4)
                         {
                             return Photo2x2Template;
                         }
                         return Photo3x3Template;
                     }
-
+                   
                 case Dynamic.DynamicDisplayType.ShortVideo:
                     return ShortVideoTemplate;
-
                 case Dynamic.DynamicDisplayType.Video:
                 case Dynamic.DynamicDisplayType.Season:
                 case Dynamic.DynamicDisplayType.Music:
@@ -52,10 +49,8 @@ namespace BiliLite.Controls.Dynamic
                 case Dynamic.DynamicDisplayType.MediaList:
                 case Dynamic.DynamicDisplayType.Cheese:
                     return OneRowTemplate;
-
                 case DynamicDisplayType.Miss:
                     return MissTemplate;
-
                 default:
                     return OtherTemplate;
             }

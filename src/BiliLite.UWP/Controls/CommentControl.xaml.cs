@@ -1,24 +1,24 @@
-﻿using BiliLite.Api;
-using BiliLite.Dialogs;
-using BiliLite.Helpers;
-using BiliLite.Models.Common;
-using BiliLite.Modules;
-using BiliLite.Pages;
-using Microsoft.Toolkit.Uwp.UI.Controls;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.Linq;
-using System.Threading.Tasks;
-using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Media;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System.Collections.ObjectModel;
+using Windows.UI;
+using System.ComponentModel;
+using System.Threading.Tasks;
+using BiliLite.Helpers;
+using BiliLite.Pages;
+using BiliLite.Api;
 using static BiliLite.Api.CommentApi;
+using BiliLite.Modules;
+using BiliLite.Dialogs;
+using Microsoft.Toolkit.Uwp.UI.Controls;
+using BiliLite.Models.Common;
 
 //https://go.microsoft.com/fwlink/?LinkId=234236 上介绍了“用户控件”项模板
 
@@ -26,9 +26,8 @@ namespace BiliLite.Controls
 {
     public sealed partial class CommentControl : UserControl
     {
-        private readonly CommentApi commentApi;
-        private EmoteVM emoteVM;
-
+        readonly CommentApi commentApi;
+        EmoteVM emoteVM;
         public CommentControl()
         {
             this.InitializeComponent();
@@ -37,14 +36,17 @@ namespace BiliLite.Controls
             this.SizeChanged += CommentControl_SizeChanged;
         }
 
+
+
         public bool IsWide
         {
             get { return (bool)GetValue(IsWideProperty); }
             set { SetValue(IsWideProperty, value); }
         }
-
         public static readonly DependencyProperty IsWideProperty =
             DependencyProperty.Register("IsWide", typeof(bool), typeof(CommentControl), new PropertyMetadata(false));
+
+
 
         private void CommentControl_SizeChanged(object sender, SizeChangedEventArgs e)
         {
@@ -69,7 +71,6 @@ namespace BiliLite.Controls
             _page = 1;
             hot.Visibility = Visibility.Collapsed;
         }
-
         public int CommentCount
         {
             get
@@ -106,9 +107,10 @@ namespace BiliLite.Controls
             LoadComment(_loadCommentInfo);
         }
 
-        private int _page = 1;
+
+        int _page = 1;
         public bool _loading = false;
-        private LoadCommentInfo _loadCommentInfo;
+        LoadCommentInfo _loadCommentInfo;
 
         /// <summary>
         /// 初始化并加载评论
@@ -116,6 +118,7 @@ namespace BiliLite.Controls
         /// <param name="loadCommentInfo"></param>
         public async void LoadComment(LoadCommentInfo loadCommentInfo)
         {
+
             if (loadCommentInfo.CommentSort == CommentSort.Hot)
             {
                 hot.Visibility = Visibility.Visible;
@@ -151,10 +154,12 @@ namespace BiliLite.Controls
             }
             try
             {
+
                 btn_LoadMore.Visibility = Visibility.Collapsed;
                 _loading = true;
                 pr_load.Visibility = Visibility.Visible;
                 ObservableCollection<CommentModel> ls = new ObservableCollection<CommentModel>();
+
 
                 var re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page, _loadCommentInfo.CommentMode).Request();
                 if (re.status)
@@ -164,15 +169,17 @@ namespace BiliLite.Controls
                     {
                         m = JsonConvert.DeserializeObject<dataCommentModel>(re.results);
                     }
-                    catch (Exception e)
+                    catch(Exception e)
                     {
-                        Utils.ShowMessageToast("解析评论失败", e.ToString());
+                        Utils.ShowMessageToast("解析评论失败",e.ToString());
                         return;
                     }
                     if (m.code == 0)
                     {
+
                         if (m.data.replies != null && m.data.replies.Count != 0)
                         {
+
                             if (_page == 1)
                             {
                                 if (m.data.upper.top != null)
@@ -219,24 +226,26 @@ namespace BiliLite.Controls
                         }
                         else
                         {
-                            Utils.ShowMessageToast(m.message, "");
+                            Utils.ShowMessageToast(m.message,"");
                         }
                     }
                 }
                 else
                 {
-                    Utils.ShowMessageToast("加载评论失败", re.results.ToString());
+                    Utils.ShowMessageToast("加载评论失败" , re.results.ToString());
                 }
+
             }
             catch (Exception ex)
             {
                 string exception_string = ex.ToString();
-                Utils.ShowMessageToast("加载评论失败", exception_string);
+                Utils.ShowMessageToast("加载评论失败" , exception_string);
             }
             finally
             {
                 _loading = false;
                 pr_load.Visibility = Visibility.Collapsed;
+
             }
         }
 
@@ -286,7 +295,7 @@ namespace BiliLite.Controls
             }
             catch (Exception e)
             {
-                Utils.ShowMessageToast("加载评论失败", e.ToString());
+                Utils.ShowMessageToast("加载评论失败",e.ToString());
                 //throw;
             }
             finally
@@ -335,12 +344,16 @@ namespace BiliLite.Controls
                 {
                     Utils.ShowMessageToast(re.message);
                 }
+
             }
             catch (Exception e)
             {
-                Utils.ShowMessageToast("操作失败", e.ToString());
+                Utils.ShowMessageToast("操作失败",e.ToString());
                 // throw;
             }
+
+
+
         }
 
         private void btn_Like_Click(object sender, RoutedEventArgs e)
@@ -384,10 +397,12 @@ namespace BiliLite.Controls
             {
                 m.showReplyBox = Visibility.Visible;
             }
+
         }
 
         private void btn_DonotLike_Click(object sender, RoutedEventArgs e)
         {
+
         }
 
         private async void btn_LoadMoreReply_Click(object sender, RoutedEventArgs e)
@@ -402,6 +417,7 @@ namespace BiliLite.Controls
             {
                 await GetComment();
             }
+
         }
 
         private void btn_HotSort_Click(object sender, RoutedEventArgs e)
@@ -416,6 +432,10 @@ namespace BiliLite.Controls
             LoadComment(_loadCommentInfo);
         }
 
+
+
+
+
         private void Button_Click_1(object sender, RoutedEventArgs e)
         {
             var m = (sender as Button).DataContext as CommentModel;
@@ -425,6 +445,9 @@ namespace BiliLite.Controls
                 m.replyText += (sender as Button).Content.ToString();
             }
         }
+
+
+
 
         private void btn_SendReply_Click(object sender, RoutedEventArgs e)
         {
@@ -467,20 +490,20 @@ namespace BiliLite.Controls
                 {
                     Utils.ShowMessageToast(re.message);
                 }
+
             }
             catch (Exception e)
             {
-                Utils.ShowMessageToast("发送评论失败", e.ToString());
+                Utils.ShowMessageToast("发送评论失败",e.ToString());
                 // throw;
             }
-        }
 
+        }
         private void btn_ReplyAt_Click(object sender, RoutedEventArgs e)
         {
             var m = (sender as Button).DataContext as CommentModel;
             ReplyAt(m);
         }
-
         private async void ReplyAt(CommentModel m)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -524,12 +547,19 @@ namespace BiliLite.Controls
                 {
                     Utils.ShowMessageToast(re.message);
                 }
+
             }
             catch (Exception e)
             {
-                Utils.ShowMessageToast("发送评论失败", e.ToString());
+                Utils.ShowMessageToast("发送评论失败",e.ToString());
                 // throw;
             }
+
+
+
+
+
+
         }
 
         private void btn_DeleteComment_Click(object sender, RoutedEventArgs e)
@@ -589,19 +619,18 @@ namespace BiliLite.Controls
             }
             catch (Exception e)
             {
-                Utils.ShowMessageToast("删除评论失败", e.ToString());
+                Utils.ShowMessageToast("删除评论失败",e.ToString());
                 // throw;
             }
+
+
         }
-
-        private CommentModel selectComment;
-
+        CommentModel selectComment;
         private void btnFace_Click(object sender, RoutedEventArgs e)
         {
             selectComment = (sender as Button).DataContext as CommentModel;
             FaceFlyout.ShowAt(sender as Button);
         }
-
         private void NotePicturesView_ItemClick(object sender, ItemClickEventArgs e)
         {
             var notePicture = e.ClickedItem as NotePicture;
@@ -614,7 +643,6 @@ namespace BiliLite.Controls
             var pictures = notePictures.Select(x => x.ImgSrc).ToList();
             MessageCenter.OpenImageViewer(pictures, index);
         }
-
         private void GridView_ItemClick(object sender, ItemClickEventArgs e)
         {
             selectComment.replyText += (e.ClickedItem as EmotePackageItemModel).text.ToString();
@@ -649,6 +677,7 @@ namespace BiliLite.Controls
 
     public class dataCommentModel
     {
+
         public int code { get; set; }
         public string message { get; set; }
 
@@ -665,17 +694,17 @@ namespace BiliLite.Controls
 
         public dataCommentModel upper { get; set; }
         public CommentModel top { get; set; }
-    }
 
+    }
     public class CommentModel : INotifyPropertyChanged
     {
+
         public CommentModel()
         {
             LaunchUrlCommand = new RelayCommand<object>(ButtonClick);
         }
 
         private int _action;//0未点赞,1已经点赞
-
         public int action
         {
             get { return _action; }
@@ -697,6 +726,7 @@ namespace BiliLite.Controls
             }
         }
 
+
         public long rpid { get; set; }
         public long oid { get; set; }
         public int type { get; set; }
@@ -706,20 +736,18 @@ namespace BiliLite.Controls
 
         public int count { get; set; }
         private int _rcount;
-
         public int rcount
         {
             get { return _rcount; }
             set { _rcount = value; thisPropertyChanged("rcount"); }
         }
-
         public int _like { get; set; }
-
         public int like
         {
             get { return _like; }
             set { _like = value; thisPropertyChanged("like"); thisPropertyChanged("like_str"); }
         }
+
 
         public string rcount_str
         {
@@ -734,8 +762,8 @@ namespace BiliLite.Controls
                     return rcount.ToString();
                 }
             }
-        }
 
+        }
         public string like_str
         {
             get
@@ -749,12 +777,13 @@ namespace BiliLite.Controls
                     return like.ToString();
                 }
             }
+
         }
+
 
         public int floor { get; set; }
         public int state { get; set; }
         public long ctime { get; set; }
-
         public string time
         {
             get
@@ -799,6 +828,8 @@ namespace BiliLite.Controls
                 {
                     return "1秒前";
                 }
+
+
             }
         }
 
@@ -810,13 +841,11 @@ namespace BiliLite.Controls
         public CommentReplyControlModel reply_control { get; set; }
 
         private ObservableCollection<CommentModel> _replies = new ObservableCollection<CommentModel>();
-
         public ObservableCollection<CommentModel> replies
         {
             get { return _replies; }
             set { _replies = value; thisPropertyChanged("replies"); }
         }
-
         //public ObservableCollection<CommentModel> replies { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -829,8 +858,8 @@ namespace BiliLite.Controls
             }
         }
 
-        private Visibility _showReplies = Visibility.Collapsed;
 
+        private Visibility _showReplies = Visibility.Collapsed;
         public Visibility showReplies
         {
             get { return _showReplies; }
@@ -838,7 +867,6 @@ namespace BiliLite.Controls
         }
 
         private Visibility _showReplyBtn = Visibility.Collapsed;
-
         public Visibility showReplyBtn
         {
             get { return _showReplyBtn; }
@@ -846,15 +874,14 @@ namespace BiliLite.Controls
         }
 
         private Visibility _showReplyBox = Visibility.Collapsed;
-
         public Visibility showReplyBox
         {
             get { return _showReplyBox; }
             set { _showReplyBox = value; thisPropertyChanged("showReplyBox"); }
         }
 
-        private Visibility _showReplyMore = Visibility.Collapsed;
 
+        private Visibility _showReplyMore = Visibility.Collapsed;
         public Visibility showReplyMore
         {
             get { return _showReplyMore; }
@@ -862,12 +889,12 @@ namespace BiliLite.Controls
         }
 
         private Visibility _showLoading = Visibility.Collapsed;
-
         public Visibility showLoading
         {
             get { return _showLoading; }
             set { _showLoading = value; thisPropertyChanged("showLoading"); }
         }
+
 
         public Visibility showDelete
         {
@@ -884,13 +911,16 @@ namespace BiliLite.Controls
             }
         }
 
-        private int _loadpage = 1;
 
+
+        private int _loadpage = 1;
         public int loadpage
         {
             get { return _loadpage; }
             set { _loadpage = value; thisPropertyChanged("loadpage"); }
         }
+
+
 
         public string replyAt
         {
@@ -900,21 +930,23 @@ namespace BiliLite.Controls
             }
         }
 
-        private string _replyText;
 
+        private string _replyText;
         public string replyText
         {
             get { return _replyText; }
             set { _replyText = value; thisPropertyChanged("replyText"); }
         }
 
-        private Visibility _showTop = Visibility.Collapsed;
 
+        private Visibility _showTop = Visibility.Collapsed;
         public Visibility showTop
         {
             get { return _showTop; }
             set { _showTop = value; thisPropertyChanged("showTop"); }
         }
+
+
 
         public RelayCommand<object> LaunchUrlCommand { get; private set; }
 
@@ -922,30 +954,28 @@ namespace BiliLite.Controls
         {
             await MessageCenter.HandleUrl(paramenter.ToString());
             return;
-        }
-    }
 
+
+        }
+
+
+
+    }
     public class CommentReplyControlModel
     {
         public string time_desc { get; set; }
         public string location { get; set; }
     }
-
     public class CommentContentModel
     {
         public List<NotePicture> pictures { get; set; }
-
-        public Visibility haspictures
-        {
-            get
-            {
+        public Visibility haspictures { 
+            get {
                 return (pictures != null && pictures.Count > 0) ? Visibility.Visible : Visibility.Collapsed;
-            }
+            } 
         }
-
         public string message { get; set; }
         public int plat { get; set; }
-
         public string plat_str
         {
             get
@@ -954,24 +984,18 @@ namespace BiliLite.Controls
                 {
                     case 2:
                         return "来自 Android";
-
                     case 3:
                         return "来自 IOS";
-
                     case 4:
                         return "来自 WindowsPhone";
-
                     case 6:
                         return "来自 Windows";
-
                     default:
                         return "";
                 }
             }
         }
-
         public string device { get; set; }
-
         public RichTextBlock text
         {
             get
@@ -985,6 +1009,7 @@ namespace BiliLite.Controls
 
                 return ControlHelper.StringToRichText(message, emote);
             }
+
         }
 
         public JObject emote { get; set; }
@@ -995,7 +1020,6 @@ namespace BiliLite.Controls
         public bool like { get; set; } = false;
         public bool reply { get; set; }
     }
-
     public class CommentMemberModel
     {
         public string mid { get; set; }
@@ -1003,16 +1027,15 @@ namespace BiliLite.Controls
         public string sex { get; set; }
         public string sign { get; set; }
 
+
         //public string avatar { get; set; }
         private string _avatar;
+        public string avatar { get { return _avatar; } set { _avatar = value + "@64w_64h.jpg"; } }
 
-        public string avatar
-        { get { return _avatar; } set { _avatar = value + "@64w_64h.jpg"; } }
 
         public CommentMemberModel level_info { get; set; }
         public CommentMemberFansDetailModel fans_detail { get; set; }
         public CommentMemberUserSailingModel user_sailing { get; set; }
-
         public bool ShowFansDetail
         {
             get
@@ -1030,7 +1053,6 @@ namespace BiliLite.Controls
         }
 
         public int current_level { get; set; }
-
         public string LV
         {
             get
@@ -1039,30 +1061,24 @@ namespace BiliLite.Controls
                 {
                     case 0:
                         return "ms-appx:///Assets/Icon/lv0.png";
-
                     case 1:
                         return "ms-appx:///Assets/Icon/lv1.png";
-
                     case 2:
                         return "ms-appx:///Assets/Icon/lv2.png";
-
                     case 3:
                         return "ms-appx:///Assets/Icon/lv3.png";
-
                     case 4:
                         return "ms-appx:///Assets/Icon/lv4.png";
-
                     case 5:
                         return "ms-appx:///Assets/Icon/lv5.png";
-
                     case 6:
                         return "ms-appx:///Assets/Icon/lv6.png";
-
                     default:
                         return AppHelper.TRANSPARENT_IMAGE;
                 }
             }
         }
+
 
         public string pendant_str
         {
@@ -1082,7 +1098,6 @@ namespace BiliLite.Controls
                 }
             }
         }
-
         public CommentMemberModel pendant { get; set; }
         public int pid { get; set; }
         public string name { get; set; }
@@ -1104,10 +1119,8 @@ namespace BiliLite.Controls
                 {
                     case 0:
                         return AppHelper.VERIFY_PERSONAL_IMAGE;
-
                     case 1:
                         return AppHelper.VERIFY_OGANIZATION_IMAGE;
-
                     default:
                         return AppHelper.TRANSPARENT_IMAGE;
                 }
@@ -1116,7 +1129,6 @@ namespace BiliLite.Controls
 
         public CommentMemberModel vip { get; set; }
         public int vipType { get; set; }
-
         public SolidColorBrush vip_co
         {
             get
@@ -1131,8 +1143,10 @@ namespace BiliLite.Controls
                 }
             }
         }
-    }
 
+
+
+    }
     public class CommentMemberFansDetailModel
     {
         public long uid { get; set; }
@@ -1145,31 +1159,26 @@ namespace BiliLite.Controls
         public long medal_color_name { get; set; }
         public long medal_color_level { get; set; }
     }
-
     public class CommentMemberUserSailingModel
     {
         public CommentMemberUserSailingPendantModel pendant { get; set; }
         public CommentMemberUserSailingCardbgModel cardbg { get; set; }
     }
-
     public class CommentMemberUserSailingPendantModel
     {
         public long id { get; set; }
         public string name { get; set; }
         public string image { get; set; }
     }
-
     public class CommentMemberUserSailingCardbgModel
     {
         public long id { get; set; }
         public string name { get; set; }
         public string image { get; set; }
         public string jump_url { get; set; }
-        public bool show
-        { get { return fan != null && fan.num_desc != null && fan.num_desc != ""; } }
+        public bool show { get { return fan != null && fan.num_desc != null && fan.num_desc != ""; } }
         public CommentMemberUserSailingCardbgFanModel fan { get; set; }
     }
-
     public class CommentMemberUserSailingCardbgFanModel
     {
         public int is_fan { get; set; }
@@ -1178,7 +1187,6 @@ namespace BiliLite.Controls
         public string name { get; set; }
         public string num_desc { get; set; }
     }
-
     public class CountToVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)

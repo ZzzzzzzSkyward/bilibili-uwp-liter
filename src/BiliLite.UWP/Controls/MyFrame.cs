@@ -3,13 +3,13 @@ using Windows.UI.Xaml.Controls;
 
 namespace BiliLite.Controls
 {
-    public class MyFrame : Frame
+    public class MyFrame:Frame
     {
         public event EventHandler ClosedPage;
-
         public void Close()
         {
-            ClosedPage?.Invoke(this, null);
+            ClosedPage?.Invoke(this,null);
         }
+
     }
 }

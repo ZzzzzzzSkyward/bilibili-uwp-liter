@@ -14,30 +14,25 @@ namespace BiliLite.Modules.User
     {
         public string mid { get; set; }
         private readonly UserDetailAPI userDetailAPI;
-        private readonly FollowAPI followAPI;
-
+        private readonly FollowAPI  followAPI;
         public UserDetailVM()
         {
             userDetailAPI = new UserDetailAPI();
             followAPI = new FollowAPI();
             AttentionCommand = new RelayCommand(DoAttentionUP);
         }
-
         private UserCenterInfoModel _userInfo;
-
         public UserCenterInfoModel UserInfo
         {
             get { return _userInfo; }
             set { _userInfo = value; DoPropertyChanged("UserInfo"); }
         }
-
+      
         public ICommand AttentionCommand { get; private set; }
-
         public async void GetUserInfo()
         {
             GetUserInfo(false);
         }
-
         public async void GetUserInfo(bool usev2)
         {
             try
@@ -85,7 +80,6 @@ namespace BiliLite.Modules.User
                     GetUserInfo(true);
             }
         }
-
         public async Task<UserCenterInfoStatModel> GetStat()
         {
             try
@@ -103,6 +97,7 @@ namespace BiliLite.Modules.User
                     {
                         return null;
                     }
+
                 }
                 else
                 {
@@ -128,9 +123,9 @@ namespace BiliLite.Modules.User
                     if (data.success)
                     {
                         UserCenterSpaceStatModel stat = new UserCenterSpaceStatModel();
-                        stat.article_count = (data.data["article"]?["count"] ?? 0).ToInt32();
-                        stat.video_count = (data.data["archive"]?["count"] ?? 0).ToInt32();
-                        stat.favourite_count = (data.data["favourite2"]?["count"] ?? 0).ToInt32();
+                        stat.article_count = (data.data["article"]?["count"]??0).ToInt32();
+                        stat.video_count = (data.data["archive"]?["count"]??0).ToInt32();
+                        stat.favourite_count = (data.data["favourite2"]?["count"]??0).ToInt32();
                         stat.follower = data.data["card"]["fans"].ToInt32();
                         stat.following = data.data["card"]["attention"].ToInt32();
                         return stat;
@@ -139,6 +134,7 @@ namespace BiliLite.Modules.User
                     {
                         return null;
                     }
+
                 }
                 else
                 {
@@ -151,16 +147,14 @@ namespace BiliLite.Modules.User
                 return null;
             }
         }
-
         public async void DoAttentionUP()
         {
-            var result = await AttentionUP(UserInfo.mid.ToString(), UserInfo.is_followed ? 2 : 1);
+            var result = await AttentionUP(UserInfo.mid.ToString(), UserInfo.is_followed? 2 : 1);
             if (result)
             {
                 UserInfo.is_followed = !UserInfo.is_followed;
             }
         }
-
         public async Task<bool> AttentionUP(string mid, int mode)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -198,13 +192,19 @@ namespace BiliLite.Modules.User
                 Utils.ShowMessageToast(handel.message);
                 return false;
             }
-        }
 
+
+
+        }
         public async void Refresh()
         {
             GetUserInfo();
         }
+
+
     }
+   
+
 
     public class UserCenterInfoOfficialModel
     {
@@ -212,8 +212,7 @@ namespace BiliLite.Modules.User
         public string title { get; set; }
         public string desc { get; set; }
         public int type { get; set; }
-        public bool showOfficial
-        { get { return type != -1; } }
+        public bool showOfficial { get { return type != -1; } }
     }
 
     public class UserCenterInfoVipLabelModel
@@ -252,6 +251,8 @@ namespace BiliLite.Modules.User
         public string condition { get; set; }
     }
 
+
+
     public class UserCenterInfoLiveRoomModel
     {
         public int roomStatus { get; set; }
@@ -264,7 +265,6 @@ namespace BiliLite.Modules.User
         public int roundStatus { get; set; }
         public int broadcast_type { get; set; }
     }
-
     public class UserCenterInfoStatModel
     {
         public long mid { get; set; }
@@ -273,11 +273,9 @@ namespace BiliLite.Modules.User
         public int black { get; set; }
         public int follower { get; set; }
     }
-
     public class UserCenterSpaceStatModel
     {
         public int following { get; set; }
-
         public string attention
         {
             get
@@ -285,9 +283,7 @@ namespace BiliLite.Modules.User
                 return following > 0 ? " " + Utils.ToCountString(following) : "";
             }
         }
-
         public int follower { get; set; }
-
         public string fans
         {
             get
@@ -295,9 +291,7 @@ namespace BiliLite.Modules.User
                 return follower > 0 ? " " + Utils.ToCountString(follower) : "";
             }
         }
-
         public int video_count { get; set; }
-
         public string video
         {
             get
@@ -305,9 +299,7 @@ namespace BiliLite.Modules.User
                 return video_count > 0 ? " " + Utils.ToCountString(video_count) : "";
             }
         }
-
         public int article_count { get; set; }
-
         public string article
         {
             get
@@ -315,9 +307,7 @@ namespace BiliLite.Modules.User
                 return article_count > 0 ? " " + Utils.ToCountString(article_count) : "";
             }
         }
-
         public int favourite_count { get; set; }
-
         public string favourite
         {
             get
@@ -325,9 +315,9 @@ namespace BiliLite.Modules.User
                 return favourite_count > 0 ? " " + Utils.ToCountString(favourite_count) : "";
             }
         }
-    }
 
-    public class UserCenterInfoModel : IModules
+    }
+    public class UserCenterInfoModel:IModules
     {
         public long mid { get; set; }
         public string name { get; set; }
@@ -336,40 +326,32 @@ namespace BiliLite.Modules.User
         public string sign { get; set; }
         public int rank { get; set; }
         public int level { get; set; }
-
         public SolidColorBrush level_color
         {
             get
             {
                 switch (level)
                 {
+                   
                     case 2:
                         return new SolidColorBrush(Colors.LightGreen);
-
                     case 3:
                         return new SolidColorBrush(Colors.LightBlue);
-
                     case 4:
                         return new SolidColorBrush(Colors.Yellow);
-
                     case 5:
                         return new SolidColorBrush(Colors.Orange);
-
                     case 6:
                         return new SolidColorBrush(Colors.Red);
-
                     case 7:
                         return new SolidColorBrush(Colors.HotPink);
-
                     case 8:
                         return new SolidColorBrush(Colors.Purple);
-
                     default:
                         return new SolidColorBrush(Colors.Gray);
                 }
             }
         }
-
         public int jointime { get; set; }
         public int moral { get; set; }
         public int silence { get; set; }
@@ -392,7 +374,6 @@ namespace BiliLite.Modules.User
 
         public UserCenterInfoLiveRoomModel live_room { get; set; }
         public UserCenterSpaceStatModel stat { get; set; }
-
         public string pendant_str
         {
             get
@@ -411,7 +392,6 @@ namespace BiliLite.Modules.User
                 }
             }
         }
-
         public string Verify
         {
             get
@@ -424,14 +404,13 @@ namespace BiliLite.Modules.User
                 {
                     case 0:
                         return AppHelper.VERIFY_PERSONAL_IMAGE;
-
                     case 1:
                         return AppHelper.VERIFY_OGANIZATION_IMAGE;
-
                     default:
                         return AppHelper.TRANSPARENT_IMAGE;
                 }
             }
         }
+
     }
 }

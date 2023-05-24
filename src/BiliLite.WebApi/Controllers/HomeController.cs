@@ -9,11 +9,12 @@ namespace BiliLite.WebApi.Controllers
         [HttpGet]
         public JsonResult Get()
         {
-            return new JsonResult(new
-            {
-                code = 0,
-                message = "Hello,World!"
+            return new JsonResult(new { 
+                code=0,
+                message="Hello,World!"
             });
         }
+
     }
+
 }

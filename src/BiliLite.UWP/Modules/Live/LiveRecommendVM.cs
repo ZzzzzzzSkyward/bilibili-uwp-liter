@@ -16,13 +16,11 @@ namespace BiliLite.Modules.Live
     {
         public List<LiveRecommendItem> Items { get; set; }
         private LiveRecommendItem _current;
-
         public LiveRecommendItem Current
         {
             get { return _current; }
             set { _current = value; DoPropertyChanged("Current"); }
         }
-
         public LiveRecommendVM()
         {
             Items = new List<LiveRecommendItem>() {
@@ -38,7 +36,7 @@ namespace BiliLite.Modules.Live
     {
         public string Title { get; set; }
         public string SortType { get; set; }
-        private readonly Api.Live.LiveRecommendAPI recommendAPI;
+        readonly Api.Live.LiveRecommendAPI recommendAPI;
 
         //private IncrementalLoadingCollection<LiveRecommendItemSource, LiveRecommendItemModel> _items;
         //public IncrementalLoadingCollection<LiveRecommendItemSource, LiveRecommendItemModel> Items
@@ -50,7 +48,6 @@ namespace BiliLite.Modules.Live
 
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
-
         public LiveRecommendItem(string title, string sort)
         {
             Title = title;
@@ -60,9 +57,7 @@ namespace BiliLite.Modules.Live
             LoadMoreCommand = new RelayCommand(LoadMore);
             Items = new ObservableCollection<LiveRecommendItemModel>();
         }
-
         private bool _loading = false;
-
         public bool Loading
         {
             get { return _loading; }
@@ -70,7 +65,6 @@ namespace BiliLite.Modules.Live
         }
 
         private bool _CanLoadMore = false;
-
         public bool CanLoadMore
         {
             get { return _CanLoadMore; }
@@ -78,7 +72,6 @@ namespace BiliLite.Modules.Live
         }
 
         public int Page { get; set; } = 1;
-
         public async Task GetItems()
         {
             try
@@ -99,7 +92,7 @@ namespace BiliLite.Modules.Live
                                 Items.Add(item);
                             }
                             //Items = new IncrementalLoadingCollection<LiveRecommendItemSource, LiveRecommendItemModel>(new LiveRecommendItemSource(items, SortType), 30);
-                            if (Items.Count < data["data"]["count"].ToInt32())
+                            if (Items.Count<data["data"]["count"].ToInt32())
                             {
                                 Page++;
                                 CanLoadMore = true;
@@ -114,6 +107,7 @@ namespace BiliLite.Modules.Live
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -137,7 +131,6 @@ namespace BiliLite.Modules.Live
             Page = 1;
             await GetItems();
         }
-
         public async void LoadMore()
         {
             if (Loading)
@@ -146,22 +139,20 @@ namespace BiliLite.Modules.Live
             }
             await GetItems();
         }
+
     }
 
     public class LiveRecommendItemSource : IIncrementalSource<LiveRecommendItemModel>
     {
-        private readonly Api.Live.LiveRecommendAPI recommendAPI;
-
+        readonly Api.Live.LiveRecommendAPI recommendAPI;
         public LiveRecommendItemSource(List<LiveRecommendItemModel> items, string sort)
         {
             recommendAPI = new Api.Live.LiveRecommendAPI();
             sort_type = sort;
             recommends = items;
         }
-
-        private string sort_type = "";
-        private List<LiveRecommendItemModel> recommends;
-
+        string sort_type = "";
+        List<LiveRecommendItemModel> recommends;
         public async Task<List<LiveRecommendItemModel>> GetRecommend(int page)
         {
             try
@@ -195,14 +186,13 @@ namespace BiliLite.Modules.Live
                 return new List<LiveRecommendItemModel>();
             }
         }
-
         public async Task<IEnumerable<LiveRecommendItemModel>> GetPagedItemsAsync(int pageIndex, int pageSize, CancellationToken cancellationToken = default)
         {
             if (pageIndex == 0)
             {
                 return recommends;
             }
-
+            
             return await GetRecommend(pageIndex + 1);
         }
     }
@@ -221,11 +211,10 @@ namespace BiliLite.Modules.Live
         public string uname { get; set; }
         public string face { get; set; }
         public string uid { get; set; }
-
+      
         public string pendent_ru { get; set; }
         public string pendent_ru_color { get; set; }
         public string pendent_ru_pic { get; set; }
-
         public BitmapImage pendent_pic
         {
             get
@@ -240,7 +229,6 @@ namespace BiliLite.Modules.Live
                 }
             }
         }
-
         public bool show_pendent
         {
             get
@@ -248,5 +236,6 @@ namespace BiliLite.Modules.Live
                 return !string.IsNullOrEmpty(pendent_ru);
             }
         }
+
     }
 }

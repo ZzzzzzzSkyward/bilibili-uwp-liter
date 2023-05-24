@@ -9,10 +9,9 @@ using System.Threading.Tasks;
 
 namespace BiliLite.Modules
 {
-    public class EmoteVM : IModules
+    public class EmoteVM:IModules
     {
-        private readonly EmoteApi emoteApi;
-
+        readonly EmoteApi emoteApi;
         public EmoteVM()
         {
             emoteApi = new EmoteApi();
@@ -27,7 +26,6 @@ namespace BiliLite.Modules
         }
 
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
@@ -57,6 +55,7 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -71,17 +70,17 @@ namespace BiliLite.Modules
         }
     }
 
+
     public class EmotePackageModel
     {
         public long id { get; set; }
         public string text { get; set; }
         public string url { get; set; }
         public int type { get; set; }
-
+      
         public int attr { get; set; }
         public List<EmotePackageItemModel> emote { get; set; }
     }
-
     public class EmotePackageItemModel
     {
         public long id { get; set; }
@@ -89,7 +88,6 @@ namespace BiliLite.Modules
         public string url { get; set; }
         public int package_id { get; set; }
         public int type { get; set; }
-        public bool showImage
-        { get { return type != 4; } }
+        public bool showImage { get { return type != 4; } }
     }
 }

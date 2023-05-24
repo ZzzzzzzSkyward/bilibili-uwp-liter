@@ -10,28 +10,24 @@ namespace BiliLite.Modules.User
 {
     public class HistoryVM : IModules
     {
-        private Api.AccountApi accountApi;
-
+        Api.AccountApi accountApi;
         public HistoryVM()
         {
             accountApi = new Api.AccountApi();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
-
         public int Page { get; set; } = 1;
         private bool _loading = false;
-
+       
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         public ICommand LoadMoreCommand { get; private set; }
         public ICommand RefreshCommand { get; private set; }
         private bool _Nothing = false;
-
         public bool Nothing
         {
             get { return _Nothing; }
@@ -39,15 +35,12 @@ namespace BiliLite.Modules.User
         }
 
         private bool _ShowLoadMore = false;
-
         public bool ShowLoadMore
         {
             get { return _ShowLoadMore; }
             set { _ShowLoadMore = value; DoPropertyChanged("ShowLoadMore"); }
         }
-
         private ObservableCollection<HistoryItemModel> _videos;
-
         public ObservableCollection<HistoryItemModel> Videos
         {
             get { return _videos; }
@@ -61,7 +54,7 @@ namespace BiliLite.Modules.User
                 ShowLoadMore = false;
                 Loading = true;
                 Nothing = false;
-                var results = await accountApi.History(Page, 24).Request();
+                var results = await accountApi.History(Page,24).Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<ObservableCollection<HistoryItemModel>>>();
@@ -75,6 +68,7 @@ namespace BiliLite.Modules.User
                                 return;
                             }
                             Videos = data.data;
+
                         }
                         else
                         {
@@ -86,7 +80,7 @@ namespace BiliLite.Modules.User
                                 }
                             }
                         }
-                        if (data.data != null && data.data.Count != 0)
+                        if (data.data != null&& data.data.Count!=0)
                         {
                             ShowLoadMore = true;
                             Page++;
@@ -112,7 +106,6 @@ namespace BiliLite.Modules.User
                 Loading = false;
             }
         }
-
         public async void Refresh()
         {
             if (Loading)
@@ -123,7 +116,6 @@ namespace BiliLite.Modules.User
             Videos = null;
             await LoadHistory();
         }
-
         public async void LoadMore()
         {
             if (Loading)
@@ -136,12 +128,12 @@ namespace BiliLite.Modules.User
             }
             await LoadHistory();
         }
-
         public async void Del(HistoryItemModel item)
         {
             try
             {
-                var results = await accountApi.DelHistory(item.business + "_" + item.kid).Request();
+
+                var results = await accountApi.DelHistory(item.business+"_" +item.kid).Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<JObject>>();
@@ -166,7 +158,6 @@ namespace BiliLite.Modules.User
             }
         }
     }
-
     public class HistoryItemModel
     {
         public string aid { get; set; }

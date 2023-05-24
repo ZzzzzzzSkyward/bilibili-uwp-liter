@@ -11,7 +11,7 @@
     xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
     xmlns:convert="using:BiliLite.Converters"
     xmlns:model="using:BiliLite.Modules"
-    xmlns:controls="using:BiliLite.Controls"
+    xmlns:controls="using:BiliLite.Controls" 
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
         <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"></SolidColorBrush>
@@ -25,8 +25,8 @@
         <DataTemplate x:Key="SeasonDataTemplate" x:DataType="model:FollowSeasonModel">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
                 <Grid.ContextFlyout>
                     <MenuFlyout>
@@ -60,8 +60,8 @@
         <DataTemplate x:Name="VideoDataTemplate" x:DataType="model:FavoriteItemModel">
             <Grid>
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition />
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
                 <Grid.ContextFlyout>
                     <MenuFlyout>
@@ -71,10 +71,11 @@
                 </Grid.ContextFlyout>
                 <Border CornerRadius="{StaticResource ImageCornerRadius}">
                     <toolkit:ImageEx IsCacheEnabled="True" Height="80" Width="120" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde1x1.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}"></toolkit:ImageEx>
+
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                     <TextBlock MaxLines="2" Margin="0 0 0 4" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"></TextBlock>
-                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">共<Run Text="{x:Bind Path=media_count}" />个视频</TextBlock>
+                    <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}">共<Run Text="{x:Bind Path=media_count}"/>个视频</TextBlock>
                     <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Visibility="{x:Bind Path=privacy,Converter={StaticResource display}}">公开</TextBlock>
                     <TextBlock Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" Visibility="{x:Bind Path=privacy}">私密</TextBlock>
                 </StackPanel>
@@ -95,7 +96,7 @@
                 <Grid>
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <toolkit:AdaptiveGridView SelectionMode="None"
+                            <toolkit:AdaptiveGridView SelectionMode="None" 
                                           IsItemClickEnabled="True"
                                           DesiredWidth="500"
                                           StretchContentForSingleRow="False"
@@ -116,13 +117,13 @@
                                 </toolkit:AdaptiveGridView.Header>
                                 <toolkit:AdaptiveGridView.Footer>
                                     <Grid>
-                                        <HyperlinkButton Command="{x:Bind Path=videoVM.LoadMoreCommand}" Visibility="{x:Bind Path=videoVM.HasMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center">
+                                        <HyperlinkButton Command="{x:Bind Path=videoVM.LoadMoreCommand}" Visibility="{x:Bind Path=videoVM.HasMore,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" >
                                             <TextBlock>加载更多</TextBlock>
                                         </HyperlinkButton>
                                     </Grid>
                                 </toolkit:AdaptiveGridView.Footer>
                             </toolkit:AdaptiveGridView>
-                            <toolkit:AdaptiveGridView SelectionMode="None"
+                            <toolkit:AdaptiveGridView SelectionMode="None" 
                                           IsItemClickEnabled="True"
                                           DesiredWidth="500"
                                           StretchContentForSingleRow="False"
@@ -138,10 +139,11 @@
                                         <TextBlock FontSize="18" FontWeight="Bold">我的收藏与订阅</TextBlock>
                                     </Grid>
                                 </toolkit:AdaptiveGridView.Header>
+
                             </toolkit:AdaptiveGridView>
                         </StackPanel>
                     </ScrollViewer>
-
+                   
                     <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=videoVM.Loading,Mode=OneWay}"></ProgressRing>
                     <controls:RoundButton  Command="{x:Bind Path=videoVM.RefreshCommand}" Visibility="{x:Bind Path=videoVM.Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                         <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>
@@ -153,7 +155,7 @@
                     <TextBlock FontSize="15">追番</TextBlock>
                 </PivotItem.Header>
                 <Grid>
-                    <controls:MyAdaptiveGridView SelectionMode="None"
+                    <controls:MyAdaptiveGridView SelectionMode="None" 
                                           IsItemClickEnabled="True"
                                           DesiredWidth="500"
                                           x:Name="BangumiSeason"
@@ -168,27 +170,27 @@
                         <GridView.Header>
                             <Grid Padding="12 4" Background="{ThemeResource TopPaneBackground}">
                                 <StackPanel Orientation="Horizontal">
-                                    <ToggleButton FontSize="12"
-                                              Command="{x:Bind Path=animeVM.StatusCommand}"
+                                    <ToggleButton FontSize="12" 
+                                              Command="{x:Bind Path=animeVM.StatusCommand}" 
                                               CommandParameter="2"
-                                              IsChecked="{x:Bind Path=animeVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=2}"
-                                              Background="Transparent"
+                                              IsChecked="{x:Bind Path=animeVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=2}" 
+                                              Background="Transparent" 
                                               Margin="0 0 8 0">在看</ToggleButton>
                                     <ToggleButton FontSize="12"
-                                              Command="{x:Bind Path=animeVM.StatusCommand}"
+                                              Command="{x:Bind Path=animeVM.StatusCommand}" 
                                               CommandParameter="1"
-                                              IsChecked="{x:Bind Path=animeVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=1}"
-                                              Background="Transparent"
+                                              IsChecked="{x:Bind Path=animeVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=1}" 
+                                              Background="Transparent" 
                                               Margin="0 0 8 0">想看</ToggleButton>
                                     <ToggleButton FontSize="12"
-                                              Command="{x:Bind Path=animeVM.StatusCommand}"
+                                              Command="{x:Bind Path=animeVM.StatusCommand}" 
                                               CommandParameter="3"
-                                              IsChecked="{x:Bind Path=animeVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=3}"
-                                              Background="Transparent"
+                                              IsChecked="{x:Bind Path=animeVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=3}" 
+                                              Background="Transparent" 
                                               Margin="0 0 8 0">看过</ToggleButton>
                                 </StackPanel>
                                 <!--<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="8 0">
-                                    <HyperlinkButton Margin="8 0 0 0">
+                                    <HyperlinkButton Margin="8 0 0 0" >
                                         <TextBlock>管理</TextBlock>
                                     </HyperlinkButton>
                                 </StackPanel>-->
@@ -226,7 +228,7 @@
                     <TextBlock FontSize="15">追剧</TextBlock>
                 </PivotItem.Header>
                 <Grid>
-                    <controls:MyAdaptiveGridView SelectionMode="None"
+                    <controls:MyAdaptiveGridView SelectionMode="None" 
                                           IsItemClickEnabled="True"
                                           DesiredWidth="500"
                                           ItemClick="BangumiSeason_ItemClick"
@@ -240,27 +242,27 @@
                         <GridView.Header>
                             <Grid Padding="12 4" Background="{ThemeResource TopPaneBackground}">
                                 <StackPanel Orientation="Horizontal">
-                                    <ToggleButton FontSize="12"
-                                              Command="{x:Bind Path=cinemaVM.StatusCommand}"
+                                    <ToggleButton FontSize="12" 
+                                              Command="{x:Bind Path=cinemaVM.StatusCommand}" 
                                               CommandParameter="2"
-                                              IsChecked="{x:Bind Path=cinemaVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=2}"
-                                              Background="Transparent"
+                                              IsChecked="{x:Bind Path=cinemaVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=2}" 
+                                              Background="Transparent" 
                                               Margin="0 0 8 0">在看</ToggleButton>
                                     <ToggleButton FontSize="12"
-                                              Command="{x:Bind Path=cinemaVM.StatusCommand}"
+                                              Command="{x:Bind Path=cinemaVM.StatusCommand}" 
                                               CommandParameter="1"
-                                              IsChecked="{x:Bind Path=cinemaVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=1}"
-                                              Background="Transparent"
+                                              IsChecked="{x:Bind Path=cinemaVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=1}" 
+                                              Background="Transparent" 
                                               Margin="0 0 8 0">想看</ToggleButton>
                                     <ToggleButton FontSize="12"
-                                              Command="{x:Bind Path=cinemaVM.StatusCommand}"
+                                              Command="{x:Bind Path=cinemaVM.StatusCommand}" 
                                               CommandParameter="3"
-                                              IsChecked="{x:Bind Path=cinemaVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=3}"
-                                              Background="Transparent"
+                                              IsChecked="{x:Bind Path=cinemaVM.Status,Mode=OneWay,Converter={StaticResource boolConvert},ConverterParameter=3}" 
+                                              Background="Transparent" 
                                               Margin="0 0 8 0">看过</ToggleButton>
                                 </StackPanel>
                                 <!--<StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="8 0">
-                                    <HyperlinkButton Margin="8 0 0 0">
+                                    <HyperlinkButton Margin="8 0 0 0" >
                                         <TextBlock>管理</TextBlock>
                                     </HyperlinkButton>
                                 </StackPanel>-->

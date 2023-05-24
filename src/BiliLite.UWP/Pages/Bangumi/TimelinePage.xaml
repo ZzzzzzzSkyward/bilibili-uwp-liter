@@ -11,7 +11,7 @@
     xmlns:modules="using:BiliLite.Modules"
     xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
     xmlns:fa="using:FontAwesome5"
-
+    
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
         <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"></SolidColorBrush>
@@ -25,12 +25,14 @@
                         <TextBlock FontSize="12" TextAlignment="Center" Text="{Binding date}"></TextBlock>
                         <TextBlock FontSize="16"  Text="{Binding week}"></TextBlock>
                     </StackPanel>
+                   
                 </DataTemplate>
             </Pivot.HeaderTemplate>
             <Pivot.RightHeader>
-                <Grid Background="{ThemeResource PivotHeaderBackground}">
+                <Grid Background="{ThemeResource PivotHeaderBackground}" >
                     <ComboBox x:Name="cbType" Margin="8" ItemsSource="{x:Bind Path=timelineVM.AnimeTypeItems}" SelectedItem="{x:Bind Path=timelineVM.SelectAnimeType}" SelectionChanged="cbType_SelectionChanged" DisplayMemberPath="Name"></ComboBox>
                 </Grid>
+               
             </Pivot.RightHeader>
             <Pivot.ItemContainerStyle>
                 <Style TargetType="PivotItem">
@@ -59,14 +61,14 @@
                                 <Setter Property="Width" Value="180"></Setter>
                             </Style>
                         </GridView.ItemContainerStyle>
-
+                      
                         <GridView.ItemTemplate>
                             <DataTemplate x:DataType="modules:AnimeTimelineItemModel">
                                 <Grid>
                                     <Grid.RowDefinitions>
-                                        <RowDefinition />
-                                        <RowDefinition Height="24" />
-                                        <RowDefinition Height="24" />
+                                        <RowDefinition/>
+                                        <RowDefinition Height="24"/>
+                                        <RowDefinition Height="24"/>
                                     </Grid.RowDefinitions>
                                     <Border  CornerRadius="{StaticResource ImageCornerRadius}">
                                         <Grid>
@@ -74,12 +76,12 @@
                                             <Grid VerticalAlignment="Bottom" Padding="8">
                                                 <Grid.Background>
                                                     <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
-                                                        <GradientStop Color="#CC000005" Offset="0.993" />
-                                                        <GradientStop Color="#00000000" Offset="0" />
+                                                        <GradientStop Color="#CC000005" Offset="0.993"/>
+                                                        <GradientStop Color="#00000000" Offset="0"/>
                                                     </LinearGradientBrush>
                                                 </Grid.Background>
                                                 <StackPanel Orientation="Horizontal">
-                                                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE121;" FontSize="12" Foreground="White" />
+                                                    <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE121;" FontSize="12" Foreground="White"/>
                                                     <TextBlock  FontSize="12" Foreground="White" Margin="8 0 0 0" Text="{x:Bind pub_time}"></TextBlock>
                                                 </StackPanel>
                                             </Grid>
@@ -90,7 +92,9 @@
                                 </Grid>
                             </DataTemplate>
                         </GridView.ItemTemplate>
+
                     </toolkit:AdaptiveGridView>
+
                 </DataTemplate>
             </Pivot.ItemTemplate>
         </Pivot>

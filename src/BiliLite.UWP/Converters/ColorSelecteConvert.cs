@@ -3,18 +3,17 @@ using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Media;
-
 namespace BiliLite.Converters
 {
     public class ColorSelecteConvert : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-            if (value == null)
+            if (value==null)
             {
                 return new SolidColorBrush((Color)App.Current.Resources["TextColor"]);
             }
-            if (value.ToString() == parameter.ToString())
+            if (value.ToString()== parameter.ToString())
             {
                 var themeDictionaries = App.Current.Resources.ThemeDictionaries;
                 var requestedTheme = ((FrameworkElement)Window.Current.Content).RequestedTheme;

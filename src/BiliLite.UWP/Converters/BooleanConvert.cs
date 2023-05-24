@@ -7,7 +7,7 @@ namespace BiliLite.Converters
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {
-            if (value == null || parameter == null)
+            if (value==null|| parameter==null)
             {
                 return false;
             }

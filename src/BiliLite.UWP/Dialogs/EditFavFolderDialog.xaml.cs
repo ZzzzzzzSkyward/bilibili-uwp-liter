@@ -9,10 +9,9 @@ namespace BiliLite.Dialogs
 {
     public sealed partial class EditFavFolderDialog : ContentDialog
     {
-        private readonly FavoriteApi favoriteApi;
-        private readonly string id;
-
-        public EditFavFolderDialog(string id, string title, string desc, bool isOpen)
+        readonly FavoriteApi favoriteApi;
+        readonly string id;
+        public EditFavFolderDialog(string id,string title,string desc,bool isOpen)
         {
             this.InitializeComponent();
             favoriteApi = new FavoriteApi();
@@ -21,9 +20,7 @@ namespace BiliLite.Dialogs
             txtDesc.Text = desc;
             checkPrivacy.IsChecked = isOpen;
         }
-
         public bool Success { get; set; } = false;
-
         private async void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
             if (string.IsNullOrEmpty(txtTitle.Text))
@@ -34,7 +31,7 @@ namespace BiliLite.Dialogs
             try
             {
                 IsPrimaryButtonEnabled = false;
-                var result = await favoriteApi.EditFavorite(txtTitle.Text, txtDesc.Text, checkPrivacy.IsChecked.Value, id).Request();
+                var result = await favoriteApi.EditFavorite(txtTitle.Text, txtDesc.Text, checkPrivacy.IsChecked.Value,id).Request();
                 if (result.status)
                 {
                     var data = await result.GetData<object>();
@@ -48,11 +45,14 @@ namespace BiliLite.Dialogs
                     {
                         Utils.ShowMessageToast(data.message);
                     }
+
                 }
                 else
                 {
                     Utils.ShowMessageToast(result.message);
                 }
+               
+
             }
             catch (Exception ex)
             {
@@ -68,5 +68,6 @@ namespace BiliLite.Dialogs
         {
             this.Hide();
         }
+
     }
 }

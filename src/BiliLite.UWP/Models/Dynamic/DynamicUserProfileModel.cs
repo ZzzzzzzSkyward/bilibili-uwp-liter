@@ -1,5 +1,6 @@
 ﻿namespace BiliLite.Models.Dynamic
 {
+
     public class DynamicCardDescUserProfileInfoModel
     {
         public long uid { get; set; }
@@ -18,6 +19,7 @@
         public DynamicCardDescUserProfileOfficialVerifyModel official_verify { get; set; }
     }
 
+
     public class DynamicCardDescUserProfileVipModel
     {
         public int vipType { get; set; }
@@ -27,6 +29,7 @@
         public int vipStatus { get; set; }
         public string vipStatusWarn { get; set; }
         public int themeType { get; set; }
+       
     }
 
     public class DynamicCardDescUserProfilePendantModel
@@ -45,7 +48,6 @@
         public int current_exp { get; set; }
         public string next_exp { get; set; }
     }
-
     public class DynamicCardDescUserProfileDecorateCardModel
     {
         public long id { get; set; }
@@ -56,15 +58,14 @@
         public int card_type { get; set; }
         public DynamicCardDescUserProfileDecorateCardFanModel fan { get; set; }
     }
-
     public class DynamicCardDescUserProfileDecorateCardFanModel
     {
         public int is_fan { get; set; }
         public int number { get; set; }
         public string color { get; set; }
         public string num_desc { get; set; }
+      
     }
-
     public class DynamicCardDescUserProfileModel
     {
         public DynamicCardDescUserProfileDecorateCardModel decorate_card { get; set; }
@@ -76,4 +77,6 @@
         public string sign { get; set; }
         public DynamicCardDescUserProfileLevelInfoModel level_info { get; set; }
     }
+
+
 }

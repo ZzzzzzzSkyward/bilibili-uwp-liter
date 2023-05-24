@@ -6,12 +6,11 @@ using Windows.UI.Xaml;
 
 namespace BiliLite.Controls
 {
-    internal partial class CarouselPanel
+    partial class CarouselPanel
     {
         private List<object> _items = new List<object>();
 
         #region Index
-
         public int Index
         {
             get { return (int)GetValue(IndexProperty); }
@@ -25,11 +24,9 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty IndexProperty = DependencyProperty.Register("Index", typeof(int), typeof(CarouselPanel), new PropertyMetadata(0, IndexChanged));
-
-        #endregion Index
+        #endregion
 
         #region ItemsSource
-
         public object ItemsSource
         {
             get { return (object)GetValue(ItemsSourceProperty); }
@@ -68,8 +65,7 @@ namespace BiliLite.Controls
         }
 
         public static readonly DependencyProperty ItemsSourceProperty = DependencyProperty.Register("ItemsSource", typeof(object), typeof(CarouselPanel), new PropertyMetadata(null, ItemsSourceChanged));
-
-        #endregion ItemsSource
+        #endregion
 
         internal List<object> Items
         {
@@ -104,7 +100,6 @@ namespace BiliLite.Controls
                 case NotifyCollectionChangedAction.Reset:
                     ClearChildren();
                     break;
-
                 case NotifyCollectionChangedAction.Add:
                     int index = e.NewStartingIndex;
                     foreach (var item in e.NewItems)
@@ -112,14 +107,12 @@ namespace BiliLite.Controls
                         AddItem(item, index++);
                     }
                     break;
-
                 case NotifyCollectionChangedAction.Remove:
                     foreach (var item in e.OldItems)
                     {
                         RemoveItem(item);
                     }
                     break;
-
                 case NotifyCollectionChangedAction.Replace:
                 case NotifyCollectionChangedAction.Move:
                 default:

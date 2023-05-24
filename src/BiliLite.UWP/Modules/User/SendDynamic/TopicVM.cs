@@ -11,14 +11,13 @@ namespace BiliLite.Modules.User.SendDynamic
 {
     public class TopicVM : IModules
     {
-        private readonly DynamicAPI dynamicAPI;
-
+        readonly DynamicAPI  dynamicAPI;
         public TopicVM()
         {
             dynamicAPI = new DynamicAPI();
             Items = new ObservableCollection<RcmdTopicModel>();
         }
-
+        
         private ObservableCollection<RcmdTopicModel> _items;
 
         public ObservableCollection<RcmdTopicModel> Items
@@ -28,7 +27,6 @@ namespace BiliLite.Modules.User.SendDynamic
         }
 
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
@@ -41,7 +39,7 @@ namespace BiliLite.Modules.User.SendDynamic
             {
                 Loading = true;
                 var api = dynamicAPI.RecommendTopic();
-
+              
                 var results = await api.Request();
                 if (results.status)
                 {
@@ -49,6 +47,7 @@ namespace BiliLite.Modules.User.SendDynamic
                     if (data.success)
                     {
                         Items = JsonConvert.DeserializeObject<ObservableCollection<RcmdTopicModel>>(data.data["rcmds"].ToString());
+                        
                     }
                     else
                     {
@@ -58,6 +57,7 @@ namespace BiliLite.Modules.User.SendDynamic
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -70,6 +70,8 @@ namespace BiliLite.Modules.User.SendDynamic
                 Loading = false;
             }
         }
+
+        
     }
 
     public class RcmdTopicModel
@@ -77,10 +79,9 @@ namespace BiliLite.Modules.User.SendDynamic
         public int topic_id { get; set; }
         public string topic_name { get; set; }
         public int is_activity { get; set; }
-
-        public string display
-        {
+        public string display {
             get { return "#" + topic_name + "#"; }
         }
+
     }
 }

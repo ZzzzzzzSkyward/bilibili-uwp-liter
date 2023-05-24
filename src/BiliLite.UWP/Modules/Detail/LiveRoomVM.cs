@@ -1,5 +1,6 @@
 ﻿using BiliLite.Api;
 using BiliLite.Api.Live;
+using BiliLite.Converters;
 using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Modules.Live;
@@ -22,21 +23,17 @@ namespace BiliLite.Modules
     public class LiveRoomVM : IModules, IDisposable
     {
         public LiveRoomAnchorLotteryVM anchorLotteryVM;
-        private readonly LiveRoomAPI liveRoomAPI;
-        private readonly PlayerAPI PlayerAPI;
-        private System.Threading.CancellationTokenSource cancelSource;
-        private Live.LiveMessage liveMessage;
-
+        readonly LiveRoomAPI liveRoomAPI;
+        readonly PlayerAPI PlayerAPI;
+        System.Threading.CancellationTokenSource cancelSource;
+        Live.LiveMessage liveMessage;
         public event EventHandler<LiveRoomPlayUrlModel> ChangedPlayUrl;
-
         public event EventHandler<LiveRoomEndAnchorLotteryInfoModel> LotteryEnd;
-
         public event EventHandler<string> AddNewDanmu;
 
-        private readonly Timer timer;
-        private readonly Timer timer_box;
-        private readonly Timer timer_auto_hide_gift;
-
+        readonly Timer timer;
+        readonly Timer timer_box;
+        readonly Timer timer_auto_hide_gift;
         public LiveRoomVM()
         {
             liveRoomAPI = new LiveRoomAPI();
@@ -57,7 +54,7 @@ namespace BiliLite.Modules
             timer.Elapsed += Timer_Elapsed;
             timer_box.Elapsed += Timer_box_Elapsed;
             timer_auto_hide_gift.Elapsed += Timer_auto_hide_gift_Elapsed;
-
+          
             LoadMoreGuardCommand = new RelayCommand(LoadMoreGuardList);
             ShowBagCommand = new RelayCommand(SetShowBag);
             RefreshBagCommand = new RelayCommand(RefreshBag);
@@ -75,16 +72,14 @@ namespace BiliLite.Modules
                         uname_color = new SolidColorBrush((Color)App.Current.Resources["TextColor"])
                     });
                     break;
-
                 case MessageType.Online:
                     Online = (int)message;
                     break;
-
                 case MessageType.Danmu:
                     {
                         var m = message as DanmuMsgModel;
                         m.uname_color = new SolidColorBrush((Color)App.Current.Resources["TextColor"]);
-                        if (m.medalColor != null && m.medalColor != "")
+                    if (m.medalColor != null && m.medalColor != "")
                         {
                             m.ul_color = new SolidColorBrush(Utils.ToColor(m.ulColor));
                         }
@@ -105,7 +100,6 @@ namespace BiliLite.Modules
                         AddNewDanmu?.Invoke(this, m.text);
                     }
                     break;
-
                 case MessageType.Gift:
                     {
                         if (!ReceiveGiftMsg)
@@ -128,7 +122,6 @@ namespace BiliLite.Modules
                     }
 
                     break;
-
                 case MessageType.Welcome:
                     {
                         var info = message as WelcomeMsgModel;
@@ -146,7 +139,6 @@ namespace BiliLite.Modules
                         }
                     }
                     break;
-
                 case MessageType.WelcomeGuard:
                     {
                         var info = message as WelcomeMsgModel;
@@ -164,15 +156,12 @@ namespace BiliLite.Modules
                         }
                     }
                     break;
-
                 case MessageType.SystemMsg:
                     break;
-
                 case MessageType.SuperChat:
                 case MessageType.SuperChatJpn:
                     SuperChats.Add(message as SuperChatMsgModel);
                     break;
-
                 case MessageType.AnchorLotteryStart:
                     if (ReceiveLotteryMsg)
                     {
@@ -180,10 +169,8 @@ namespace BiliLite.Modules
                         anchorLotteryVM.SetLotteryInfo(JsonConvert.DeserializeObject<LiveRoomAnchorLotteryInfoModel>(info));
                     }
                     break;
-
                 case MessageType.AnchorLotteryEnd:
                     break;
-
                 case MessageType.AnchorLotteryAward:
                     if (ReceiveLotteryMsg)
                     {
@@ -191,22 +178,20 @@ namespace BiliLite.Modules
                         LotteryEnd?.Invoke(this, info);
                     }
                     break;
-
+               
                 case MessageType.GuardBuy:
                     break;
-
                 default:
                     break;
             }
         }
-
+       
         public ICommand LoadMoreGuardCommand { get; private set; }
         public ICommand ShowBagCommand { get; private set; }
         public ICommand RefreshBagCommand { get; private set; }
-
         private async void Timer_auto_hide_gift_Elapsed(object sender, ElapsedEventArgs e)
         {
-            await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,  () =>
             {
                 if (GiftMessage != null && GiftMessage.Count != 0)
                 {
@@ -253,13 +238,13 @@ namespace BiliLite.Modules
                 }
                 var start_time = Utils.TimestampToDatetime(LiveInfo.room_info.live_start_time);
                 var ts = DateTime.Now - start_time;
-
+               
                 await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                 {
                     for (int i = 0; i < SuperChats.Count; i++)
                     {
                         var item = SuperChats[i];
-                        if (item.time <= 0)
+                        if (item.time<=0)
                         {
                             SuperChats.Remove(item);
                         }
@@ -268,25 +253,23 @@ namespace BiliLite.Modules
                             item.time -= 1;
                         }
                     }
-
+                   
                     LiveTime = ts.ToString(@"hh\:mm\:ss");
                 });
             }
             catch (Exception)
             {
             }
-        }
 
+        }
         public static List<LiveTitleModel> Titles { get; set; }
 
         private bool _logined = false;
-
         public bool Logined
         {
             get { return _logined; }
             set { _logined = value; DoPropertyChanged("Logined"); }
         }
-
         /// <summary>
         /// 直播ID
         /// </summary>
@@ -300,15 +283,15 @@ namespace BiliLite.Modules
         public bool ReceiveGiftMsg { get; set; } = true;
         private int hide_gift_flag = 1;
         private bool _show_gift_message = false;
-
         public bool ShowGiftMessage
         {
             get { return _show_gift_message; }
             set { _show_gift_message = value; DoPropertyChanged("ShowGiftMessage"); }
         }
 
-        private int _online = 0;
 
+
+        private int _online = 0;
         /// <summary>
         /// 人气值
         /// </summary>
@@ -319,7 +302,6 @@ namespace BiliLite.Modules
         }
 
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
@@ -327,7 +309,6 @@ namespace BiliLite.Modules
         }
 
         private bool _attention = false;
-
         public bool Attention
         {
             get { return _attention; }
@@ -335,15 +316,14 @@ namespace BiliLite.Modules
         }
 
         private bool _ShowBag = false;
-
         public bool ShowBag
         {
             get { return _ShowBag; }
             set { _ShowBag = value; DoPropertyChanged("ShowBag"); }
         }
 
-        private List<LiveRoomRankVM> ranks;
 
+        private List<LiveRoomRankVM> ranks;
         public List<LiveRoomRankVM> Ranks
         {
             get { return ranks; }
@@ -351,7 +331,6 @@ namespace BiliLite.Modules
         }
 
         private LiveRoomRankVM _selectRank;
-
         public LiveRoomRankVM SelectRank
         {
             get { return _selectRank; }
@@ -362,7 +341,6 @@ namespace BiliLite.Modules
         public ObservableCollection<SuperChatMsgModel> SuperChats { get; set; }
 
         private LiveRoomWebUrlQualityDescriptionItemModel _current_qn;
-
         public LiveRoomWebUrlQualityDescriptionItemModel current_qn
         {
             get { return _current_qn; }
@@ -370,7 +348,6 @@ namespace BiliLite.Modules
         }
 
         private List<LiveRoomWebUrlQualityDescriptionItemModel> _qualites;
-
         public List<LiveRoomWebUrlQualityDescriptionItemModel> qualites
         {
             get { return _qualites; }
@@ -380,7 +357,6 @@ namespace BiliLite.Modules
         private List<LiveGiftItem> _allGifts = new List<LiveGiftItem>();
 
         private List<LiveGiftItem> _gifts;
-
         public List<LiveGiftItem> Gifts
         {
             get { return _gifts; }
@@ -388,7 +364,6 @@ namespace BiliLite.Modules
         }
 
         private List<LiveBagGiftItem> _bag;
-
         public List<LiveBagGiftItem> Bag
         {
             get { return _bag; }
@@ -404,16 +379,14 @@ namespace BiliLite.Modules
             set { _wallet = value; DoPropertyChanged("WalletInfo"); }
         }
 
-        private LiveInfoModel _LiveInfo;
 
+        private LiveInfoModel _LiveInfo;
         public LiveInfoModel LiveInfo
         {
             get { return _LiveInfo; }
             set { _LiveInfo = value; DoPropertyChanged("LiveInfo"); }
         }
-
         private LiveAnchorProfile _profile;
-
         public LiveAnchorProfile Profile
         {
             get { return _profile; }
@@ -421,7 +394,6 @@ namespace BiliLite.Modules
         }
 
         private bool _liveing = true;
-
         public bool Liveing
         {
             get { return _liveing; }
@@ -429,15 +401,12 @@ namespace BiliLite.Modules
         }
 
         private string _live_time = "";
-
         public string LiveTime
         {
             get { return _live_time; }
             set { _live_time = value; DoPropertyChanged("LiveTime"); }
         }
-
         public int CleanCount { get; set; } = 200;
-
         /// <summary>
         /// 读取直播头衔
         /// </summary>
@@ -465,7 +434,6 @@ namespace BiliLite.Modules
                 LogHelper.Log("读取直播头衔失败", LogType.FATAL, ex);
             }
         }
-
         /// <summary>
         /// 读取直播播放地址
         /// </summary>
@@ -505,6 +473,7 @@ namespace BiliLite.Modules
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception)
@@ -516,7 +485,6 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-
         /// <summary>
         /// 读取直播间详细信息
         /// </summary>
@@ -535,11 +503,12 @@ namespace BiliLite.Modules
                 {
                     liveMessage.NewMessage -= LiveMessage_NewMessage;
                     liveMessage = null;
+                   
                 }
                 liveMessage = new LiveMessage();
                 liveMessage.NewMessage += LiveMessage_NewMessage;
                 cancelSource = new System.Threading.CancellationTokenSource();
-
+                
                 Loading = true;
                 var result = await liveRoomAPI.LiveRoomInfo(id).Request();
                 if (result.status)
@@ -563,12 +532,13 @@ namespace BiliLite.Modules
                             DoPropertyChanged("SelectRank");
                         }
 
+
                         await LoadAnchorProfile();
                         if (Liveing)
                         {
                             timer.Start();
-                            await GetPlayUrl(RoomID, SettingHelper.GetValue(SettingHelper.Live.DEFAULT_QUALITY, 10000));
-                            //GetFreeSilverTime();
+                            await GetPlayUrl(RoomID, SettingHelper.GetValue(SettingHelper.Live.DEFAULT_QUALITY,10000));
+                            //GetFreeSilverTime(); 
                             await LoadSuperChat();
                             if (ReceiveLotteryMsg)
                             {
@@ -605,7 +575,7 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
-
+        
         private async void ReceiveMessage(int roomId)
         {
             try
@@ -635,6 +605,7 @@ namespace BiliLite.Modules
                     username = "连接失败:" + ex.Message
                 });
             }
+
         }
 
         /// <summary>
@@ -645,6 +616,7 @@ namespace BiliLite.Modules
         {
             try
             {
+               
                 var result = await liveRoomAPI.RoomSuperChat(RoomID).Request();
                 if (result.status)
                 {
@@ -652,24 +624,23 @@ namespace BiliLite.Modules
                     if (data.success)
                     {
                         SuperChats.Clear();
-                        var ls = JsonConvert.DeserializeObject<List<LiveRoomSuperChatModel>>(data.data["list"]?.ToString() ?? "[]");
+                        var ls = JsonConvert.DeserializeObject<List<LiveRoomSuperChatModel>>(data.data["list"]?.ToString()??"[]");
                         foreach (var item in ls)
                         {
-                            SuperChats.Add(new SuperChatMsgModel()
-                            {
-                                background_bottom_color = item.background_bottom_color,
-                                background_color = item.background_color,
-                                background_image = item.background_image,
-                                end_time = item.end_time,
-                                face = item.user_info.face,
-                                face_frame = item.user_info.face_frame,
-                                font_color = string.IsNullOrEmpty(item.font_color) ? "#FFFFFF" : item.font_color,
-                                max_time = item.end_time - item.start_time,
-                                message = item.message,
-                                price = item.price,
-                                start_time = item.start_time,
-                                time = item.time,
-                                username = item.user_info.uname
+                            SuperChats.Add(new SuperChatMsgModel() { 
+                                background_bottom_color=item.background_bottom_color,
+                                background_color=item.background_color,
+                                background_image=item.background_image,
+                                end_time=item.end_time,
+                                face=item.user_info.face,
+                                face_frame=item.user_info.face_frame,
+                                font_color= string.IsNullOrEmpty(item.font_color)?"#FFFFFF": item.font_color,
+                                max_time=item.end_time-item.start_time,
+                                message=item.message,
+                                price=item.price,
+                                start_time=item.start_time,
+                                time=item.time,
+                                username=item.user_info.uname
                             });
                         }
                     }
@@ -689,7 +660,6 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(ex.Message);
             }
         }
-
         /// <summary>
         /// 进入房间
         /// </summary>
@@ -705,8 +675,8 @@ namespace BiliLite.Modules
             catch (Exception)
             {
             }
+          
         }
-
         /// <summary>
         /// 读取钱包信息
         /// </summary>
@@ -743,7 +713,6 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(ex.Message);
             }
         }
-
         /// <summary>
         /// 读取背包礼物
         /// </summary>
@@ -771,17 +740,17 @@ namespace BiliLite.Modules
                             if (bag_data.success)
                             {
                                 BagGifts.Clear();
-                                var ls = JsonConvert.DeserializeObject<List<LiveBagGiftItem>>(bag_data.data["list"]?.ToString() ?? "[]");
-                                if (ls != null)
-                                    foreach (var item in ls)
-                                    {
-                                        var _gift = list.FirstOrDefault(x => x.id == item.gift_id);
-                                        var gift = _gift.ObjectClone();
-                                        gift.gift_num = item.gift_num;
-                                        gift.corner_mark = item.corner_mark;
-                                        gift.bag_id = item.bag_id;
-                                        BagGifts.Add(gift);
-                                    }
+                                var ls = JsonConvert.DeserializeObject<List<LiveBagGiftItem>>(bag_data.data["list"]?.ToString()??"[]");
+                                if(ls!=null)
+                                foreach (var item in ls)
+                                {
+                                    var _gift = list.FirstOrDefault(x => x.id == item.gift_id);
+                                    var gift = _gift.ObjectClone();
+                                    gift.gift_num = item.gift_num;
+                                    gift.corner_mark = item.corner_mark;
+                                    gift.bag_id = item.bag_id;
+                                    BagGifts.Add(gift);
+                                }
                                 //WalletInfo = data.data;
                             }
                             else
@@ -794,6 +763,7 @@ namespace BiliLite.Modules
                             Utils.ShowMessageToast(bag_result.message);
                         }
                     }
+
                 }
             }
             catch (Exception ex)
@@ -802,7 +772,6 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(ex.Message);
             }
         }
-
         /// <summary>
         /// 读取主播资料
         /// </summary>
@@ -818,7 +787,7 @@ namespace BiliLite.Modules
                     if (data.success)
                     {
                         Profile = data.data;
-                        Attention = Profile.relation_status > 1;
+                        Attention = Profile.relation_status >1;
                     }
                     else
                     {
@@ -836,7 +805,6 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(ex.Message);
             }
         }
-
         /// <summary>
         /// 读取直播间可用礼物列表
         /// </summary>
@@ -869,7 +837,10 @@ namespace BiliLite.Modules
                             Gifts = ls;
                         }
                     }
+
                 }
+
+
             }
             catch (Exception ex)
             {
@@ -880,21 +851,17 @@ namespace BiliLite.Modules
 
         public int GuardPage { get; set; } = 1;
         private bool _loadingGuard = true;
-
         public bool LoadingGuard
         {
             get { return _loadingGuard; }
             set { _loadingGuard = value; DoPropertyChanged("LoadingGuard"); }
         }
-
         private bool _moreGuard = false;
-
         public bool LoadMoreGuard
         {
             get { return _moreGuard; }
             set { _moreGuard = value; DoPropertyChanged("LoadMoreGuard"); }
         }
-
         /// <summary>
         /// 读取舰队信息
         /// </summary>
@@ -937,7 +904,10 @@ namespace BiliLite.Modules
                             GuardPage++;
                         }
                     }
+
                 }
+
+
             }
             catch (Exception ex)
             {
@@ -949,7 +919,6 @@ namespace BiliLite.Modules
                 LoadingGuard = false;
             }
         }
-
         /// <summary>
         /// 加载更多舰队信息
         /// </summary>
@@ -962,16 +931,14 @@ namespace BiliLite.Modules
             await GetGuardList();
         }
 
-        private bool _showbox = false;
 
+        private bool _showbox = false;
         public bool ShowBox
         {
             get { return _showbox; }
             set { _showbox = value; DoPropertyChanged("ShowBox"); }
         }
-
         private bool _box_is_open = false;
-
         public bool OpenBox
         {
             get { return _box_is_open; }
@@ -979,7 +946,6 @@ namespace BiliLite.Modules
         }
 
         private string _box_time = "--:--";
-
         public string BoxTime
         {
             get { return _box_time; }
@@ -988,6 +954,7 @@ namespace BiliLite.Modules
 
         public DateTime freeSilverTime { get; set; }
         public bool AutoReceiveFreeSilver { get; set; }
+
 
         public async Task GetFreeSilverTime()
         {
@@ -1071,7 +1038,6 @@ namespace BiliLite.Modules
                  }
              });
         }
-
         public async Task SendGift(LiveGiftItem liveGiftItem)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -1104,8 +1070,8 @@ namespace BiliLite.Modules
                 LogHelper.Log("赠送礼物出现错误", LogType.ERROR, ex);
                 Utils.ShowMessageToast("赠送礼物出现错误");
             }
-        }
 
+        }
         public async Task SendBagGift(LiveGiftItem liveGiftItem)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -1138,6 +1104,7 @@ namespace BiliLite.Modules
                 LogHelper.Log("赠送礼物出现错误", LogType.ERROR, ex);
                 Utils.ShowMessageToast("赠送礼物出现错误");
             }
+
         }
 
         private void SetShowBag()
@@ -1149,7 +1116,6 @@ namespace BiliLite.Modules
             }
             ShowBag = !ShowBag;
         }
-
         private async void RefreshBag()
         {
             if (!SettingHelper.Account.Logined)
@@ -1159,7 +1125,6 @@ namespace BiliLite.Modules
             }
             await LoadBag();
         }
-
         public async Task<bool> SendDanmu(string text)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -1195,6 +1160,7 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast("发送弹幕出现错误");
                 return false;
             }
+
         }
 
         public void Dispose()
@@ -1245,8 +1211,7 @@ namespace BiliLite.Modules
 
     public class LiveRoomRankVM : IModules
     {
-        private readonly LiveRoomAPI liveRoomAPI;
-
+        readonly LiveRoomAPI liveRoomAPI;
         public LiveRoomRankVM(int roomid, long uid, string title, string type)
         {
             liveRoomAPI = new LiveRoomAPI();
@@ -1257,14 +1222,12 @@ namespace BiliLite.Modules
             LoadMoreCommand = new RelayCommand(LaodMore);
             Items = new ObservableCollection<LiveRoomRankItemModel>();
         }
-
         public ICommand LoadMoreCommand { get; private set; }
         public int RoomID { get; set; }
         public long Uid { get; set; }
         public string Title { get; set; }
         public string RankType { get; set; }
         private bool _loading = false;
-
         public bool Loading
         {
             get { return _loading; }
@@ -1281,7 +1244,6 @@ namespace BiliLite.Modules
             get { return _canLoadMore; }
             set { _canLoadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
-
         public int Next { get; set; } = 0;
 
         public async Task LoadData()
@@ -1337,14 +1299,15 @@ namespace BiliLite.Modules
             }
             catch (Exception ex)
             {
-                Utils.ShowMessageToast("读取直播排行榜失败：" + RankType);
-                LogHelper.Log("读取直播排行榜失败" + RankType, LogType.ERROR, ex);
+                Utils.ShowMessageToast("读取直播排行榜失败："+ RankType);
+                LogHelper.Log("读取直播排行榜失败"+ RankType, LogType.ERROR, ex);
             }
             finally
             {
                 Loading = false;
             }
         }
+
 
         public async void LaodMore()
         {
@@ -1358,8 +1321,7 @@ namespace BiliLite.Modules
 
     public class LiveRoomAnchorLotteryVM : IModules
     {
-        private readonly Api.Live.LiveRoomAPI liveRoomAPI;
-
+        readonly Api.Live.LiveRoomAPI liveRoomAPI;
         public LiveRoomAnchorLotteryVM()
         {
             liveRoomAPI = new LiveRoomAPI();
@@ -1369,7 +1331,7 @@ namespace BiliLite.Modules
 
         private async void Timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+            await Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,  () =>
             {
                 if (LotteryInfo != null)
                 {
@@ -1389,17 +1351,19 @@ namespace BiliLite.Modules
             });
         }
 
+
+
         public Timer timer;
         private LiveRoomAnchorLotteryInfoModel _LotteryInfo;
-
         public LiveRoomAnchorLotteryInfoModel LotteryInfo
         {
             get { return _LotteryInfo; }
             set { _LotteryInfo = value; DoPropertyChanged("LotteryInfo"); }
         }
 
-        private string _downTime = "--:--";
 
+
+        private string _downTime = "--:--";
         public string DownTime
         {
             get { return _downTime; }
@@ -1407,7 +1371,6 @@ namespace BiliLite.Modules
         }
 
         private bool _end = false;
-
         public bool End
         {
             get { return _end; }
@@ -1415,7 +1378,6 @@ namespace BiliLite.Modules
         }
 
         private bool _show = false;
-
         public bool Show
         {
             get { return _show; }
@@ -1454,7 +1416,10 @@ namespace BiliLite.Modules
             Show = true;
             timer.Start();
         }
+
+
     }
+
 
     public class LiveRoomPlayUrlModel
     {
@@ -1462,13 +1427,11 @@ namespace BiliLite.Modules
         public List<LiveRoomWebUrlQualityDescriptionItemModel> quality_description { get; set; }
         public List<LiveRoomWebUrlDurlItemModel> durl { get; set; }
     }
-
     public class LiveRoomWebUrlQualityDescriptionItemModel
     {
         public int qn { get; set; }
         public string desc { get; set; }
     }
-
     public class LiveRoomWebUrlDurlItemModel
     {
         public string name { get; set; }
@@ -1494,13 +1457,11 @@ namespace BiliLite.Modules
             public LiveRoomGuardInfoModel guard_info { get; set; }
             public LiveAnchorInfoModel anchor_info { get; set; }
         }
-
         public class LiveRoomGuardInfoModel
         {
             public int count { get; set; }
             public int achievement_level { get; set; }
         }
-
         public class LiveRoomInfoPendantsFrameModel
         {
             public string name { get; set; }
@@ -1546,6 +1507,8 @@ namespace BiliLite.Modules
             public int tv_screen_on { get; set; }
         }
 
+
+
         public class LiveAnchorInfoOfficialInfoModel
         {
             public int role { get; set; }
@@ -1579,13 +1542,13 @@ namespace BiliLite.Modules
             public LiveAnchorInfoRelationInfoModel relation_info { get; set; }
         }
 
+
         [Serializable]
         public class LiveGiftItemCountMap
         {
             public int num { get; set; }
             public string text { get; set; }
         }
-
         [Serializable]
         public class LiveGiftItem
         {
@@ -1595,7 +1558,6 @@ namespace BiliLite.Modules
             public int price { get; set; }
             public int type { get; set; }
             public string coin_type { get; set; }
-
             public bool is_gold
             {
                 get
@@ -1603,12 +1565,10 @@ namespace BiliLite.Modules
                     return coin_type == "gold";
                 }
             }
-
             public int bag_gift { get; set; }
             public int effect { get; set; }
             public string corner_mark { get; set; }
-            public bool show_corner_mark
-            { get { return !string.IsNullOrEmpty(corner_mark); } }
+            public bool show_corner_mark { get { return !string.IsNullOrEmpty(corner_mark); } }
             public string corner_background { get; set; }
             public int broadcast { get; set; }
             public int draw { get; set; }
@@ -1646,7 +1606,6 @@ namespace BiliLite.Modules
 
             public int num { get; set; } = 1;
         }
-
         public class LiveBagGiftItem
         {
             public int bag_id { get; set; }
@@ -1660,7 +1619,6 @@ namespace BiliLite.Modules
             public long expire_at { get; set; }
             public string img { get; set; }
         }
-
         public class LiveRoomGiftItem
         {
             public int position { get; set; }
@@ -1668,7 +1626,6 @@ namespace BiliLite.Modules
             public long id { get; set; }
             public int plan_id { get; set; }
         }
-
         public class LiveWalletInfo
         {
             public int gold { get; set; }
@@ -1704,7 +1661,6 @@ namespace BiliLite.Modules
             public string uname { get; set; }
             public string face { get; set; }
             public int verify_type { get; set; }
-
             public string verify
             {
                 get
@@ -1713,16 +1669,13 @@ namespace BiliLite.Modules
                     {
                         case 0:
                             return AppHelper.VERIFY_PERSONAL_IMAGE;
-
                         case 1:
                             return AppHelper.VERIFY_OGANIZATION_IMAGE;
-
                         default:
                             return AppHelper.TRANSPARENT_IMAGE;
                     }
                 }
             }
-
             public string desc { get; set; }
             public int level { get; set; }
             public int level_color { get; set; }
@@ -1747,7 +1700,6 @@ namespace BiliLite.Modules
             public int ruid { get; set; }
             public string face { get; set; }
             public int guard_level { get; set; }
-
             public string rank_img
             {
                 get
@@ -1757,6 +1709,7 @@ namespace BiliLite.Modules
             }
         }
 
+
         public class LiveRoomRankItemModel
         {
             public int rank { get; set; }
@@ -1765,7 +1718,6 @@ namespace BiliLite.Modules
             public string face { get; set; }
             public int score { get; set; }
             public string icon { get; set; } = AppHelper.TRANSPARENT_IMAGE;
-
             public bool show_right
             {
                 get
@@ -1773,6 +1725,7 @@ namespace BiliLite.Modules
                     return score != 0;
                 }
             }
+
 
             public string medal_name { get; set; }
             public string level { get; set; }
@@ -1786,6 +1739,7 @@ namespace BiliLite.Modules
                 }
             }
         }
+
 
         public class LiveRoomAnchorLotteryInfoModel
         {
@@ -1837,14 +1791,15 @@ namespace BiliLite.Modules
             public string web_url { get; set; }
             public List<LiveRoomEndAnchorLotteryInfoUserModel> award_users { get; set; }
         }
-
         public class LiveRoomEndAnchorLotteryInfoUserModel
         {
             public long uid { get; set; }
             public int level { get; set; }
             public string uname { get; set; }
             public string face { get; set; }
+
         }
+
 
         public class LiveRoomSuperChatUserInfoModel
         {
@@ -1881,4 +1836,5 @@ namespace BiliLite.Modules
             public LiveRoomSuperChatUserInfoModel user_info { get; set; }
         }
     }
+
 }

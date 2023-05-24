@@ -14,10 +14,9 @@ using Windows.UI.Xaml.Controls;
 
 namespace BiliLite.Modules.User
 {
-    public class DynamicRepostVM : IModules
+    public class DynamicRepostVM:IModules
     {
-        private readonly Api.User.DynamicAPI dynamicAPI;
-
+        readonly Api.User.DynamicAPI dynamicAPI;
         public DynamicRepostVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
@@ -25,45 +24,37 @@ namespace BiliLite.Modules.User
             LoadMoreCommand = new RelayCommand(LoadMore);
             UserCommand = new RelayCommand<object>(OpenUser);
         }
-
         public string ID { get; set; }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
         public ICommand UserCommand { get; set; }
         private bool _loading = false;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         private bool _loadMore = false;
-
         public bool CanLoadMore
         {
             get { return _loadMore; }
             set { _loadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
-
         private ObservableCollection<DynamicItemDisplayModel> _Items;
-
         public ObservableCollection<DynamicItemDisplayModel> Items
         {
             get { return _Items; }
             set { _Items = value; DoPropertyChanged("Items"); }
         }
-
-        private string next = "";
-
+        string next = "";
         public async Task GetDynamicItems()
         {
             try
             {
                 CanLoadMore = false;
                 Loading = true;
-                var api = dynamicAPI.DynamicRepost(ID, next);
-
+                var api = dynamicAPI.DynamicRepost(ID,next);
+              
                 var results = await api.Request();
                 if (results.status)
                 {
@@ -71,7 +62,7 @@ namespace BiliLite.Modules.User
                     if (data["code"].ToInt32() == 0)
                     {
                         var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["items"]?.ToString() ?? "[]");
-
+                        
                         ObservableCollection<DynamicItemDisplayModel> _ls = new ObservableCollection<DynamicItemDisplayModel>();
                         foreach (var item in items)
                         {
@@ -79,6 +70,7 @@ namespace BiliLite.Modules.User
                         }
                         if (Items == null)
                         {
+
                             Items = _ls;
                         }
                         else
@@ -88,8 +80,8 @@ namespace BiliLite.Modules.User
                                 Items.Add(item);
                             }
                         }
-                        CanLoadMore = (data["data"]?["has_more"]?.ToInt32() ?? 0) == 1;
-                        next = data["data"]?["has_more"]?.ToString() ?? "";
+                        CanLoadMore = (data["data"]?["has_more"]?.ToInt32()??0) == 1;
+                        next = data["data"]?["has_more"]?.ToString()??"";
                     }
                     else
                     {
@@ -99,6 +91,7 @@ namespace BiliLite.Modules.User
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -109,9 +102,9 @@ namespace BiliLite.Modules.User
             finally
             {
                 Loading = false;
+
             }
         }
-
         public async void Refresh()
         {
             if (Loading)
@@ -122,7 +115,6 @@ namespace BiliLite.Modules.User
             Items = null;
             await GetDynamicItems();
         }
-
         public async void LoadMore()
         {
             if (Loading)
@@ -136,7 +128,6 @@ namespace BiliLite.Modules.User
             var last = Items.LastOrDefault();
             await GetDynamicItems();
         }
-
         private DynamicItemDisplayModel ConvertToDisplayRepost(DynamicCardModel item)
         {
             var card = JObject.Parse(item.card);
@@ -146,7 +137,7 @@ namespace BiliLite.Modules.User
                 DynamicID = item.desc.dynamic_id,
                 Mid = item.desc.uid,
                 Time = Utils.HandelTimestamp(item.desc.timestamp.ToString()),
-                UserCommand = UserCommand
+                UserCommand=UserCommand
             };
             var content = "";
             //内容
@@ -162,18 +153,16 @@ namespace BiliLite.Modules.User
                 data.Photo = item.desc.user_profile.info.face;
                 if (item.desc.user_profile.vip != null)
                 {
-                    data.IsYearVip = item.desc.user_profile.vip.vipStatus == 1 && item.desc.user_profile.vip.vipType == 2;
+                    data.IsYearVip = item.desc.user_profile.vip.vipStatus==1&&item.desc.user_profile.vip.vipType == 2;
                 }
                 switch (item.desc.user_profile.card?.official_verify?.type ?? 3)
                 {
                     case 0:
                         data.Verify = AppHelper.VERIFY_PERSONAL_IMAGE;
                         break;
-
                     case 1:
                         data.Verify = AppHelper.VERIFY_OGANIZATION_IMAGE;
                         break;
-
                     default:
                         data.Verify = AppHelper.TRANSPARENT_IMAGE;
                         break;
@@ -185,7 +174,6 @@ namespace BiliLite.Modules.User
             }
             return data;
         }
-
         public void OpenUser(object id)
         {
             MessageCenter.NavigateToPage(this, new NavigationInfo()
@@ -197,10 +185,12 @@ namespace BiliLite.Modules.User
             });
         }
 
+
         public void Clear()
         {
             next = "";
             Items = null;
+
         }
     }
 }

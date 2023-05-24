@@ -1,11 +1,12 @@
+using System.Net;
+using System.Net.Http;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using System.Net;
-using System.Net.Http;
+
 
 namespace BiliLite.WebApi
 {
@@ -47,8 +48,7 @@ namespace BiliLite.WebApi
 
             app.UseAuthorization();
             //Í³Ò»·µ»ØJSON
-            app.UseStatusCodePages(async context =>
-            {
+            app.UseStatusCodePages(async context => {
                 context.HttpContext.Response.ContentType = "application/json;charset=utf-8";
                 var code = context.HttpContext.Response.StatusCode;
                 context.HttpContext.Response.StatusCode = 200;

@@ -9,10 +9,9 @@ using System.Windows.Input;
 
 namespace BiliLite.Modules.User
 {
-    public class AtVM : IModules
+    public class AtVM:IModules
     {
-        private readonly AtApi atApi;
-
+        readonly AtApi atApi;
         public AtVM()
         {
             atApi = new AtApi();
@@ -20,9 +19,9 @@ namespace BiliLite.Modules.User
             LoadMoreCommand = new RelayCommand(LoadMore);
             Users = new ObservableCollection<AtUserModel>();
         }
-
         public ICommand LoadMoreCommand { get; private set; }
         public ICommand SearchCommand { get; private set; }
+
 
         private ObservableCollection<AtUserModel> _user;
 
@@ -33,16 +32,13 @@ namespace BiliLite.Modules.User
         }
 
         private bool _loading = true;
-
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
         }
-
         public int Page { get; set; } = 1;
         public string Keyword { get; set; }
-
         public async Task GetUser()
         {
             try
@@ -51,7 +47,7 @@ namespace BiliLite.Modules.User
                 var api = atApi.RecommendAt(Page);
                 if (!string.IsNullOrEmpty(Keyword))
                 {
-                    api = atApi.SearchUser(Keyword, Page);
+                    api = atApi.SearchUser(Keyword,Page);
                 }
                 if (Page == 1)
                 {
@@ -77,6 +73,7 @@ namespace BiliLite.Modules.User
                                     });
                                 }
                             }
+                           
                         }
                         else
                         {
@@ -100,6 +97,7 @@ namespace BiliLite.Modules.User
                 else
                 {
                     Utils.ShowMessageToast(results.message);
+
                 }
             }
             catch (Exception ex)
@@ -119,12 +117,12 @@ namespace BiliLite.Modules.User
             {
                 return;
             }
-
+           
             await GetUser();
         }
-
         public async void Search(string keyword)
         {
+           
             if (Loading)
             {
                 return;
@@ -135,12 +133,10 @@ namespace BiliLite.Modules.User
         }
     }
 }
-
 public class AtUserModel
 {
     public long ID { get; set; }
     public string UserName { get; set; }
     public string Face { get; set; }
-    public string Display
-    { get { return "@" + UserName; } }
+    public string Display { get { return "@" + UserName; } }
 }

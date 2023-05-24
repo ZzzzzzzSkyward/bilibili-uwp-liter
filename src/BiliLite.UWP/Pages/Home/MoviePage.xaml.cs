@@ -16,8 +16,7 @@ namespace BiliLite.Pages.Home
     /// </summary>
     public sealed partial class MoviePage : Page
     {
-        private readonly Modules.CinemaVM cinemaVM;
-
+        readonly Modules.CinemaVM cinemaVM;
         public MoviePage()
         {
             this.InitializeComponent();
@@ -33,7 +32,6 @@ namespace BiliLite.Pages.Home
             MessageCenter.LoginedEvent += MessageCenter_LoginedEvent;
             MessageCenter.LogoutedEvent += MessageCenter_LogoutedEvent;
         }
-
         private void MessageCenter_LogoutedEvent(object sender, EventArgs e)
         {
             cinemaVM.ShowFollows = false;
@@ -44,16 +42,15 @@ namespace BiliLite.Pages.Home
             cinemaVM.ShowFollows = true;
             await cinemaVM.GetFollows();
         }
-
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            if (e.NavigationMode == NavigationMode.New && cinemaVM.HomeData == null)
+            if (e.NavigationMode == NavigationMode.New&& cinemaVM.HomeData==null)
             {
                 await LoadData();
             }
-        }
 
+        }
         private async Task LoadData()
         {
             await cinemaVM.GetCinemaHome();
@@ -63,13 +60,13 @@ namespace BiliLite.Pages.Home
                 await cinemaVM.GetFollows();
             }
         }
-
         private async void btnLoadMoreFall_Click(object sender, RoutedEventArgs e)
         {
             var element = (sender as HyperlinkButton);
             var data = element.DataContext as CinemaHomeFallModel;
             await cinemaVM.GetFallMore(element.DataContext as CinemaHomeFallModel);
         }
+
 
         private async void btnRefresh_Click(object sender, RoutedEventArgs e)
         {
@@ -84,7 +81,6 @@ namespace BiliLite.Pages.Home
                 Utils.ShowMessageToast("不支持打开的链接");
             }
         }
-
         private async void RefreshContainer_RefreshRequested(Microsoft.UI.Xaml.Controls.RefreshContainer sender, Microsoft.UI.Xaml.Controls.RefreshRequestedEventArgs args)
         {
             await LoadData();

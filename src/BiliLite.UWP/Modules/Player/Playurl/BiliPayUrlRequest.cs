@@ -1,36 +1,33 @@
 ﻿using BiliLite.Api;
 using BiliLite.Controls;
-using BiliLite.gRPC.Api;
 using BiliLite.Helpers;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Proto.Reply;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Net.Http;
+using BiliLite.gRPC.Api;
+using Proto.Reply;
 
 namespace BiliLite.Modules.Player.Playurl
 {
-    internal enum PlayUrlCodecMode
+    enum PlayUrlCodecMode
     {
         // int flv=0, dash=1,dash_hevc=2
         FLV = 0,
-
         DASH_H264 = 1,
         DASH_H265 = 2,
         DASH_AV1 = 3
     }
-
-    internal class BiliPlayUrlRequest
+    class BiliPlayUrlRequest
     {
         protected bool IsDownload { get; set; } = false;
         protected readonly PlayerAPI playerAPI = new PlayerAPI();
         protected readonly gRPC.Api.PlayURL playUrlApi = new PlayURL();
-
         /// <summary>
         /// 是否开启替换CDN选项
         /// </summary>
@@ -40,12 +37,10 @@ namespace BiliLite.Modules.Player.Playurl
         /// 替换的CDN
         /// </summary>
         protected string CDN { get; }
-
         /// <summary>
         /// 是否大会员，非大会员最高只能看1080P
         /// </summary>
         protected bool IsVIP { get; }
-
         /// <summary>
         /// 选择的编码模式
         /// </summary>
@@ -60,6 +55,7 @@ namespace BiliLite.Modules.Player.Playurl
         public const string WebReferer = "https://www.bilibili.com";
         public const string AndroidUserAgent = "Bilibili Freedoooooom/MarkII";
 
+
         public BiliPlayUrlRequest(bool isDownload)
         {
             IsDownload = isDownload;
@@ -69,12 +65,10 @@ namespace BiliLite.Modules.Player.Playurl
             IsVIP = (SettingHelper.Account.Logined && SettingHelper.Account.Profile?.vip != null && SettingHelper.Account.Profile?.vip.status != 0);
             CodecMode = (PlayUrlCodecMode)SettingHelper.GetValue<int>(IsDownload ? SettingHelper.Download.DEFAULT_VIDEO_TYPE : SettingHelper.Player.DEFAULT_VIDEO_TYPE, 1);
         }
-
         protected void AddMessage(string type, string msg)
         {
             Message += $"{type}：{msg}\r\n";
         }
-
         protected async Task<bool> CheckUrlAvailable(string url, string userAgent, string referer)
         {
             using (HttpClient client = new HttpClient() { Timeout = TimeSpan.FromSeconds(2) })
@@ -101,9 +95,9 @@ namespace BiliLite.Modules.Player.Playurl
                 }
             }
         }
-
         protected async Task<string> ReplaceCDN(string url, string userAgent, string referer)
         {
+
             Regex regex = new Regex(@"http://|https://?([^/]*)");
             var host = regex.Match(url).Groups[1].Value;
             var replaceUrl = url.Replace(host, CDN);
@@ -177,6 +171,7 @@ namespace BiliLite.Modules.Player.Playurl
                             //部分清晰度可能没有av1编码，切换至hevc
                             if (av1_video != null)
                             {
+
                                 video = av1_video;
                             }
                             else if (h265_video != null)
@@ -253,6 +248,7 @@ namespace BiliLite.Modules.Player.Playurl
                     info.Qualites[index].FlvInfo = durl.Select(x => x.ToBiliFlvItem()).ToList();
                     info.Qualites[index].HasPlayUrl = true;
 
+
                     info.CurrentQuality = info.Qualites[index];
                     return info;
                 }
@@ -265,8 +261,8 @@ namespace BiliLite.Modules.Player.Playurl
             {
                 return BiliPlayUrlQualitesInfo.Failure(ex.Message);
             }
-        }
 
+        }
         protected async Task<BiliPlayUrlQualitesInfo> ParseGrpc(int quality, PlayViewReply obj, string userAgent, string referer)
         {
             try
@@ -337,6 +333,7 @@ namespace BiliLite.Modules.Player.Playurl
                     }
                     foreach (var item in obj.VideoInfo.DashAudio)
                     {
+
                         audios.Add(new DashItemModel()
                         {
                             backupUrl = item.BackupUrl.ToList(),
@@ -355,11 +352,13 @@ namespace BiliLite.Modules.Player.Playurl
                         });
                     }
 
+
                     var h264Videos = videos.Where(x => x.codecid == (int)BiliPlayUrlVideoCodec.AVC);
                     var h265Videos = videos.Where(x => x.codecid == (int)BiliPlayUrlVideoCodec.HEVC);
                     var av01Videos = videos.Where(x => x.codecid == (int)BiliPlayUrlVideoCodec.AV1);
 
                     var duration = (timeLength / 1000).ToInt32();
+
 
                     var qn = quality;
                     if (qn > qualites.Max())
@@ -388,6 +387,7 @@ namespace BiliLite.Modules.Player.Playurl
                             //部分清晰度可能没有av1编码，切换至hevc
                             if (av1_video != null)
                             {
+
                                 video = av1_video;
                             }
                             else if (h265_video != null)
@@ -398,6 +398,7 @@ namespace BiliLite.Modules.Player.Playurl
                         //没有视频，跳过此清晰度
                         if (video == null)
                         {
+
                             //info.Qualites.Remove(item);
                             continue;
                         }
@@ -459,6 +460,7 @@ namespace BiliLite.Modules.Player.Playurl
                             size = item.Size,
                             url = item.Url
                         });
+
                     }
                     //替换链接
                     foreach (var item in durl)
@@ -476,6 +478,7 @@ namespace BiliLite.Modules.Player.Playurl
                     info.Qualites[index].FlvInfo = durl.Select(x => x.ToBiliFlvItem()).ToList();
                     info.Qualites[index].HasPlayUrl = true;
 
+
                     info.CurrentQuality = info.Qualites[index];
                     return info;
                 }
@@ -488,8 +491,8 @@ namespace BiliLite.Modules.Player.Playurl
             {
                 return BiliPlayUrlQualitesInfo.Failure(ex.Message);
             }
-        }
 
+        }
         public virtual Task<BiliPlayUrlQualitesInfo> GetPlayUrlInfo(PlayInfo playInfo, int qualityID)
         {
             throw new NotImplementedException();
@@ -542,8 +545,7 @@ namespace BiliLite.Modules.Player.Playurl
             return optimizationUrl;
         }
     }
-
-    internal class BiliVideoPlayUrlRequest : BiliPlayUrlRequest
+    class BiliVideoPlayUrlRequest : BiliPlayUrlRequest
     {
         public BiliVideoPlayUrlRequest(bool isDownload) : base(isDownload)
         {
@@ -589,8 +591,8 @@ namespace BiliLite.Modules.Player.Playurl
             {
                 return BiliPlayUrlQualitesInfo.Failure(ex.ToString());
             }
-        }
 
+        }
         private async Task<BiliPlayUrlQualitesInfo> GetPlayUrlUseGrpc(PlayInfo playInfo, int qualityID)
         {
             try
@@ -606,10 +608,10 @@ namespace BiliLite.Modules.Player.Playurl
             {
                 return BiliPlayUrlQualitesInfo.Failure(ex.ToString());
             }
+
         }
     }
-
-    internal class BiliSeasonPlayUrlRequest : BiliPlayUrlRequest
+    class BiliSeasonPlayUrlRequest : BiliPlayUrlRequest
     {
         public BiliSeasonPlayUrlRequest(bool isDownload) : base(isDownload)
         {
@@ -641,20 +643,18 @@ namespace BiliLite.Modules.Player.Playurl
                     case "hk":
                         areaName = "香港代理";
                         break;
-
                     case "cn":
                         areaName = "大陆代理";
                         break;
-
                     case "tw":
                         areaName = "台湾代理";
                         break;
-
                     default:
                         break;
                 }
                 AddMessage($"WebAPI-{areaName}", webResult.Message);
             }
+
 
             //尝试GRPC API读取地址
             var grpcResult = await GetPlayUrlUseGrpc(playInfo, qualityID);
@@ -664,6 +664,7 @@ namespace BiliLite.Modules.Player.Playurl
             }
             AddMessage("[/v1.PlayURL/PlayView]", grpcResult.Message);
             return BiliPlayUrlQualitesInfo.Failure(Message);
+
         }
 
         private async Task<BiliPlayUrlQualitesInfo> GetPlayUrlUseWebApi(PlayInfo playInfo, int qualityID, string area = "")
@@ -685,14 +686,16 @@ namespace BiliLite.Modules.Player.Playurl
             }
             catch (Exception ex)
             {
+
                 return BiliPlayUrlQualitesInfo.Failure(ex.Message);
             }
-        }
 
+        }
         private async Task<BiliPlayUrlQualitesInfo> GetPlayUrlUseGrpc(PlayInfo playInfo, int qualityID)
         {
             try
             {
+
                 Proto.Request.CodeType codec = CodecMode == PlayUrlCodecMode.DASH_H265 ? Proto.Request.CodeType.Code265 : Proto.Request.CodeType.Code264;
 
                 var playViewReply = await playUrlApi.BangumiPlayView(Convert.ToInt64(playInfo.ep_id), Convert.ToInt64(playInfo.cid), qualityID, 0, codec, SettingHelper.Account.AccessKey);
@@ -702,6 +705,7 @@ namespace BiliLite.Modules.Player.Playurl
             }
             catch (Exception ex)
             {
+
                 return BiliPlayUrlQualitesInfo.Failure(ex.Message);
             }
         }
@@ -721,7 +725,6 @@ namespace BiliLite.Modules.Player.Playurl
         public string frameRate { get; set; }
         public int startWithSap { get; set; }
         public string sar { get; set; }
-
         /// <summary>
         /// 计算平均帧数
         /// </summary>
@@ -751,10 +754,12 @@ namespace BiliLite.Modules.Player.Playurl
                 {
                     return frameRate;
                 }
+
             }
         }
 
         public SegmentBase SegmentBase { get; set; }
+
 
         public BiliDashItem ToBiliDashItem()
         {
@@ -782,6 +787,7 @@ namespace BiliLite.Modules.Player.Playurl
     {
         public string initialization { get; set; }
         public string indexRange { get; set; }
+
     }
 
     public class FlvDurlModel
@@ -791,7 +797,6 @@ namespace BiliLite.Modules.Player.Playurl
         public int order { get; set; }
         public long size { get; set; }
         public long length { get; set; }
-
         public BiliFlvPlayUrlInfo ToBiliFlvItem()
         {
             return new BiliFlvPlayUrlInfo()

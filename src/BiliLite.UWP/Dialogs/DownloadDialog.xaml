@@ -14,9 +14,10 @@
 
     <Grid Width="360">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+          
         </Grid.RowDefinitions>
         <StackPanel>
             <TextBlock>优先下载格式</TextBlock>
@@ -38,28 +39,32 @@
                         <TextBlock VerticalAlignment="Center" HorizontalAlignment="Left">M4S/AV1</TextBlock>
                     </ComboBoxItem>
                 </ComboBox.Items>
+                
             </ComboBox>
+         
         </StackPanel>
         <StackPanel  Grid.Row="1" Margin="0 8 0 0">
             <TextBlock>优先清晰度</TextBlock>
-            <ComboBox x:Name="cbQuality" Margin="0 4 0 0" DisplayMemberPath="QualityName" HorizontalAlignment="Stretch">
+            <ComboBox x:Name="cbQuality" Margin="0 4 0 0" DisplayMemberPath="QualityName" HorizontalAlignment="Stretch" >
+              
             </ComboBox>
-        </StackPanel>
 
+        </StackPanel>
+       
         <StackPanel Grid.Row="2" Margin="0 8 0 0">
             <TextBlock>选集</TextBlock>
-            <Border BorderBrush="{ThemeResource ComboBoxBorderBrush}"
+            <Border BorderBrush="{ThemeResource ComboBoxBorderBrush}" 
                     CornerRadius="2"
                     Margin="0 4"
                     BorderThickness="{ThemeResource ComboBoxBorderThemeThickness}">
                 <ListView x:Name="listView" ItemsSource="{x:Bind Path=downloadItem.Episodes,Mode=OneWay}"  SelectionMode="Multiple" Height="200">
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="local:DownloadEpisodeItem">
-                            <Grid>
+                            <Grid >
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition />
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition/>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
                                 </Grid.ColumnDefinitions>
                                 <TextBlock TextTrimming="CharacterEllipsis" VerticalAlignment="Center" HorizontalAlignment="Left" Text="{x:Bind Path=Title}" ToolTipService.ToolTip="{x:Bind Path=Title}"></TextBlock>
                                 <Border Grid.Column="1" Visibility="{x:Bind Path=ShowBadge,Mode=OneWay}" HorizontalAlignment="Right" Background="HotPink" CornerRadius="4">
@@ -69,7 +74,7 @@
                                 <ProgressRing Grid.Column="2" Visibility="{x:Bind Path=State,Mode=OneWay,Converter={StaticResource display},ConverterParameter=1}" HorizontalAlignment="Right" IsActive="True"></ProgressRing>
 
                                 <TextBlock Grid.Column="2"  Visibility="{x:Bind Path=State,Mode=OneWay,Converter={StaticResource display},ConverterParameter=2}" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Margin="4">下载中</TextBlock>
-
+                            
                                 <Border Grid.Column="2"  Visibility="{x:Bind Path=State,Mode=OneWay,Converter={StaticResource display},ConverterParameter=3}" HorizontalAlignment="Right" Background="{ThemeResource ForegroundTextColor}" CornerRadius="4">
                                     <TextBlock FontSize="12" Foreground="White" Margin="4">已下载</TextBlock>
                                 </Border>
@@ -81,12 +86,14 @@
                             <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                         </Style>
                     </ListView.ItemContainerStyle>
+                   
                 </ListView>
             </Border>
             <StackPanel Orientation="Horizontal">
                 <CheckBox x:Name="checkAll" Checked="checkAll_Checked" Unchecked="checkAll_Unchecked">全选/取消全选</CheckBox>
                 <CheckBox x:Name="checkHidePreview" Visibility="Collapsed" Margin="8 0" Checked="checkHidePreview_Checked" Unchecked="checkHidePreview_Unchecked">隐藏预告/PV/花絮</CheckBox>
             </StackPanel>
+          
         </StackPanel>
     </Grid>
 </ContentDialog>

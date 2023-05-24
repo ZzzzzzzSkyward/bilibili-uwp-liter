@@ -10,13 +10,14 @@ namespace BiliLite.Helpers
 {
     public static class ControlHelper
     {
-        public static RichTextBlock StringToRichText(string txt, JObject emote)
+        public static RichTextBlock StringToRichText(string txt,JObject emote)
         {
             string input = txt;
             try
             {
                 if (txt != null)
                 {
+
                     //处理特殊字符
                     input = input.Replace("&", "&amp;");
                     input = input.Replace("<", "&lt;");
@@ -31,6 +32,8 @@ namespace BiliLite.Helpers
 
                     //处理av号
                     input = HandelVideoID(input);
+
+                   
 
                     //生成xaml
                     var xaml = string.Format(@"<RichTextBlock HorizontalAlignment=""Stretch"" TextWrapping=""Wrap""  xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation""
@@ -59,9 +62,10 @@ namespace BiliLite.Helpers
                 paragraph.Inlines.Add(run);
                 tx.Blocks.Add(paragraph);
                 return tx;
-            }
-        }
 
+            }
+
+        }
         /// <summary>
         /// 处理表情
         /// </summary>
@@ -80,7 +84,6 @@ namespace BiliLite.Helpers
             }
             return input;
         }
-
         /// <summary>
         /// 处理视频AVID,BVID,CVID
         /// </summary>
@@ -137,7 +140,7 @@ namespace BiliLite.Helpers
             keyword = null;
             return input;
         }
-
+       
         /// <summary>
         /// 处理URL链接
         /// </summary>
@@ -160,6 +163,7 @@ namespace BiliLite.Helpers
                 input = input.Replace(item.Groups[0].Value, data);
             }
 
+
             return input;
 
             //MatchCollection url = Regex.Matches(input, @"(https?|ftp|file)://[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]");
@@ -169,6 +173,7 @@ namespace BiliLite.Helpers
             //    input = input.Replace(item.Groups[0].Value, data);
             //}
 
+          
             //return input;
         }
     }

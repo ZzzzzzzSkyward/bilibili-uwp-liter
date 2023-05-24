@@ -16,10 +16,10 @@ namespace BiliLite.Helpers
         /// <param name="json">CC字幕</param>
         /// <param name="toSimplified">转为简体</param>
         /// <returns></returns>
-        public string ConvertToSrt(string json, bool toSimplified = false)
+        public string ConvertToSrt(string json,bool toSimplified=false)
         {
-            SubtitleModel subtitle = JsonConvert.DeserializeObject<SubtitleModel>(json);
-            StringBuilder stringBuilder = new StringBuilder();
+            SubtitleModel subtitle=JsonConvert.DeserializeObject<SubtitleModel>(json);
+            StringBuilder stringBuilder=new StringBuilder();
             int i = 1;
             foreach (var item in subtitle.body)
             {
@@ -39,6 +39,9 @@ namespace BiliLite.Helpers
             return stringBuilder.ToString();
         }
 
+
+
+
         public class SubtitleModel
         {
             public double font_size { get; set; }
@@ -48,7 +51,6 @@ namespace BiliLite.Helpers
             public string Stroke { get; set; }
             public List<SubtitleItemModel> body { get; set; }
         }
-
         public class SubtitleItemModel
         {
             public double from { get; set; }

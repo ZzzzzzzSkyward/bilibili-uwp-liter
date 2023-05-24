@@ -19,28 +19,25 @@ namespace BiliLite.Pages
         Attention = 4,
         Fans = 5,
     }
-
     public class UserInfoParameter
     {
         public string Mid { get; set; }
         public UserTab Tab { get; set; } = UserTab.SubmitVideo;
     }
-
     /// <summary>
     /// 可用于自身或导航至 Frame 内部的空白页。
     /// </summary>
     public sealed partial class UserInfoPage : BasePage
     {
-        private readonly DynamicVM dynamicVM;
-        private UserDetailVM userDetailVM;
-        private UserSubmitVideoVM userSubmitVideoVM;
-        private UserSubmitArticleVM userSubmitArticleVM;
-        private UserFavlistVM userFavlistVM;
-        private UserFollowVM fansVM;
-        private UserFollowVM followVM;
+        readonly DynamicVM dynamicVM;
+        UserDetailVM userDetailVM;
+        UserSubmitVideoVM userSubmitVideoVM;
+        UserSubmitArticleVM userSubmitArticleVM;
+        UserFavlistVM userFavlistVM;
+        UserFollowVM fansVM;
+        UserFollowVM followVM;
         private bool IsStaggered { get; set; } = false;
-        private bool isSelf = false;
-
+        bool isSelf = false;
         public UserInfoPage()
         {
             this.InitializeComponent();
@@ -55,15 +52,12 @@ namespace BiliLite.Pages
             dynamicVM.OpenCommentEvent += DynamicVM_OpenCommentEvent;
             splitView.PaneClosed += SplitView_PaneClosed;
         }
-
         private void SplitView_PaneClosed(SplitView sender, object args)
         {
             comment.ClearComment();
             repost.dynamicRepostVM.Clear();
         }
-
-        private string dynamic_id;
-
+        string dynamic_id;
         private void DynamicVM_OpenCommentEvent(object sender, Controls.Dynamic.DynamicItemDisplayModel e)
         {
             //splitView.IsPaneOpen = true;
@@ -75,37 +69,31 @@ namespace BiliLite.Pages
             var id = e.ReplyID;
             switch (e.Type)
             {
+
                 case Controls.Dynamic.DynamicDisplayType.Photo:
                     commentType = Api.CommentApi.CommentType.Photo;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.Video:
 
                     commentType = Api.CommentApi.CommentType.Video;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.Season:
                     id = e.OneRowInfo.AID;
                     commentType = Api.CommentApi.CommentType.Video;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.ShortVideo:
                     commentType = Api.CommentApi.CommentType.MiniVideo;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.Music:
                     commentType = Api.CommentApi.CommentType.Song;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.Article:
                     commentType = Api.CommentApi.CommentType.Article;
                     break;
-
                 case Controls.Dynamic.DynamicDisplayType.MediaList:
                     if (e.OneRowInfo.Tag != "收藏夹")
                         commentType = Api.CommentApi.CommentType.Video;
                     break;
-
                 default:
                     id = e.DynamicID;
                     break;
@@ -118,7 +106,6 @@ namespace BiliLite.Pages
             //    Oid = id
             //});
         }
-
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -162,6 +149,7 @@ namespace BiliLite.Pages
                 {
                     pivot.SelectedIndex = tabIndex;
                 }
+
             }
         }
 
@@ -214,8 +202,10 @@ namespace BiliLite.Pages
         {
             if (userSubmitVideoVM != null && userSubmitVideoVM.CurrentTid != userSubmitVideoVM.SelectTid.tid)
             {
+
                 userSubmitVideoVM?.Refresh();
             }
+
         }
 
         private void pivotRight_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -226,7 +216,7 @@ namespace BiliLite.Pages
             }
         }
 
-        private void SetStaggered()
+        void SetStaggered()
         {
             var staggered = SettingHelper.GetValue<int>(SettingHelper.UI.DYNAMIC_DISPLAY_MODE, 0) == 1;
             if (staggered != IsStaggered)
@@ -372,6 +362,7 @@ namespace BiliLite.Pages
                 }
                 followVM.Refresh();
             }
+
         }
 
         private void searchFollow_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)

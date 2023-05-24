@@ -9,8 +9,7 @@ namespace BiliLite.Dialogs
 {
     public sealed partial class SendDanmakuDialog : ContentDialog
     {
-        private PlayerAPI playerAPI;
-
+        PlayerAPI playerAPI;
         public SendDanmakuDialog(string _aid, string _cid, double _position)
         {
             this.InitializeComponent();
@@ -18,13 +17,13 @@ namespace BiliLite.Dialogs
             cid = _cid;
             aid = _aid;
             position = Convert.ToInt32(_position);
-        }
 
+        }
         public event EventHandler<SendDanmakuModel> DanmakuSended;
 
-        private string cid, aid;
-        private int position;
 
+        private string cid,aid;
+        private int position;
         private void ContentDialog_PrimaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
             this.Hide();
@@ -44,6 +43,9 @@ namespace BiliLite.Dialogs
             }
             try
             {
+                
+
+               
                 int modeInt = 1;
                 if (Send_cb_Mode.SelectedIndex == 2)
                 {
@@ -53,14 +55,14 @@ namespace BiliLite.Dialogs
                 {
                     modeInt = 5;
                 }
-                var result = await playerAPI.SendDanmu(aid, cid, ((ComboBoxItem)Send_cb_Color.SelectedItem).Tag.ToString(), Send_text_Comment.Text, position).Request();
+               var result=await playerAPI.SendDanmu(aid,cid, ((ComboBoxItem)Send_cb_Color.SelectedItem).Tag.ToString(), Send_text_Comment.Text,position).Request();
                 if (!result.status)
                 {
-                    Utils.ShowMessageToast("弹幕发送失败" + result.message);
+                    Utils.ShowMessageToast("弹幕发送失败"+result.message);
                     return;
                 }
                 var obj = result.GetJObject();
-                if (obj["code"].ToInt32() == 0)
+                if (obj["code"].ToInt32()==0)
                 {
                     if (DanmakuSended != null)
                     {
@@ -82,11 +84,13 @@ namespace BiliLite.Dialogs
             }
             catch (Exception ex)
             {
+
                 Utils.ShowMessageToast("发送弹幕发生错误！\r\n" + ex.HResult);
             }
+
+
         }
     }
-
     public class SendDanmakuModel
     {
         public string text { get; set; }

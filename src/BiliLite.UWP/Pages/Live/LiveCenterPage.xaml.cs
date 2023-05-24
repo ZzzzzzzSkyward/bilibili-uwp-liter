@@ -12,11 +12,10 @@ namespace BiliLite.Pages.Live
     /// </summary>
     public sealed partial class LiveCenterPage : BasePage
     {
-        private readonly LiveAttentionVM liveAttentionVM;
-        private readonly LiveAttentionUnLiveVM liveAttentionUnLiveVM;
-        private readonly LiveCenterHistoryVM liveCenterHistoryVM;
-        private readonly LiveCenterVM liveCenterVM;
-
+        readonly LiveAttentionVM liveAttentionVM;
+        readonly LiveAttentionUnLiveVM liveAttentionUnLiveVM;
+        readonly LiveCenterHistoryVM  liveCenterHistoryVM;
+        readonly LiveCenterVM liveCenterVM;
         public LiveCenterPage()
         {
             this.InitializeComponent();
@@ -28,10 +27,10 @@ namespace BiliLite.Pages.Live
             liveCenterVM = new LiveCenterVM();
         }
 
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            if (e.NavigationMode == NavigationMode.New)
+            if(e.NavigationMode== NavigationMode.New)
             {
                 liveCenterVM.GetUserInfo();
                 await liveAttentionVM.GetFollows();
@@ -71,12 +70,12 @@ namespace BiliLite.Pages.Live
                 page = typeof(LiveDetailPage),
                 title = data.name + "的直播间",
                 parameters = data.history.oid
-            });
+            }) ;
         }
 
         private async void pivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (pivot.SelectedIndex == 1 && liveAttentionUnLiveVM.Items == null)
+            if(pivot.SelectedIndex==1&& liveAttentionUnLiveVM.Items == null)
             {
                 await liveAttentionUnLiveVM.Get();
             }

@@ -1,7 +1,7 @@
-﻿using Proto.Reply;
-using Proto.Request;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Proto.Reply;
+using Proto.Request;
 
 namespace BiliLite.gRPC.Api
 {
@@ -17,18 +17,17 @@ namespace BiliLite.gRPC.Api
         /// <param name="codeType">编码，支持h264及h265</param>
         /// <param name="access_key">登录后access_key</param>
         /// <returns></returns>
-        public async Task<PlayViewReply> VideoPlayView(long aid, long cid, int qn, int fnval, CodeType codeType, string access_key = "")
+        public async Task<PlayViewReply> VideoPlayView(long aid, long cid,int qn,int fnval , CodeType codeType, string access_key="")
         {
-            var message = new PlayViewReq()
-            {
-                EpId = aid,
-                Cid = cid,
-                Qn = qn,
-                Fnval = fnval,
-                Fourk = 1,
-                PreferCodecType = codeType
+            var message = new PlayViewReq() { 
+                EpId=aid,
+                Cid=cid,
+                Qn=qn,
+                Fnval= fnval,
+                Fourk=1,
+                PreferCodecType= codeType
             };
-            var result = await GrpcRequest.Instance.SendMessage("https://app.bilibili.com/bilibili.app.playurl.v1.PlayURL/PlayView", message, access_key);
+            var result=await  GrpcRequest.Instance.SendMessage("https://app.bilibili.com/bilibili.app.playurl.v1.PlayURL/PlayView", message, access_key);
             if (result.status)
             {
                 return PlayViewReply.Parser.ParseFrom(result.results);
@@ -38,7 +37,6 @@ namespace BiliLite.gRPC.Api
                 throw new Exception(result.message);
             }
         }
-
         /// <summary>
         /// 番剧播放地址
         /// </summary>
