@@ -286,16 +286,16 @@ namespace BiliLite.Pages
                     SettingHelper.SetValue(SettingHelper.Player.DEFAULT_VIDEO_SPEED, SettingHelper.Player.VideoSpeed[cbVideoSpeed.SelectedIndex]);
                 });
             });
-
-            //硬解视频
-            swHardwareDecode.IsOn = SettingHelper.GetValue<bool>(SettingHelper.Player.HARDWARE_DECODING, true);
-            swHardwareDecode.Loaded += new RoutedEventHandler((sender, e) =>
+            //播放器
+            swPriorityPlayer.SelectedIndex = SettingHelper.GetValue<int>("playertype", 0);
+            swPriorityPlayer.Loaded += new RoutedEventHandler((sender, e) =>
             {
-                swHardwareDecode.Toggled += new RoutedEventHandler((obj, args) =>
+                swPriorityPlayer.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
                 {
-                    SettingHelper.SetValue(SettingHelper.Player.HARDWARE_DECODING, swHardwareDecode.IsOn);
+                    SettingHelper.SetValue("playertype", swPriorityPlayer.SelectedIndex);
                 });
             });
+
             //自动播放
             swAutoPlay.IsOn = SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_PLAY, false);
             swAutoPlay.Loaded += new RoutedEventHandler((sender, e) =>

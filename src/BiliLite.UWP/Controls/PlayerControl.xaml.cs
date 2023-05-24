@@ -2271,7 +2271,7 @@ namespace BiliLite.Controls
                 InteractionChoices.Visibility = Visibility.Visible;
                 return;
             }
-            await playerHelper.ReportHistory(CurrentPlayItem, Player.Duration);
+            //await playerHelper.ReportHistory(CurrentPlayItem, Player.Duration);
             //列表顺序播放
             if (PlayerSettingPlayMode.SelectedIndex == 0)
             {

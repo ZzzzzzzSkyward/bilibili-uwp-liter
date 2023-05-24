@@ -244,11 +244,15 @@
 								<Run>,部分清晰度可能也需要HEVC扩展</Run>
 							</Paragraph>
 						</RichTextBlock>
-						<TextBlock  Margin="0 16 0 8" FontSize="16" Visibility="Collapsed">优先使用FFmpeg播放器</TextBlock>
-						<ToggleSwitch x:Name="swPriorityFFmpeg" Visibility="Collapsed"></ToggleSwitch>
+						<TextBlock  Margin="0 16 0 8" FontSize="16" >播放器</TextBlock>
+						<ComboBox x:Name="swPriorityPlayer" SelectedIndex="0" MinWidth="200">
+							<ComboBox.Items>
+								<ComboBoxItem Content="系统原生播放器" ></ComboBoxItem>
+								<ComboBoxItem Content="FFMpeg软解" ></ComboBoxItem>
+								<ComboBoxItem Content="FFMpeg硬解" ></ComboBoxItem>
+							</ComboBox.Items>
+						</ComboBox>
 
-						<TextBlock  Margin="0 16 0 8" FontSize="16" Visibility="Collapsed">使用FFmpeg播放时硬解视频</TextBlock>
-						<ToggleSwitch x:Name="swHardwareDecode" Visibility="Collapsed"></ToggleSwitch>
 						<TextBlock  Margin="0 16 0 8"  FontSize="16">视频默认倍速</TextBlock>
 						<ComboBox x:Name="cbVideoSpeed" SelectedIndex="0" MinWidth="200">
 							<ComboBox.Items>

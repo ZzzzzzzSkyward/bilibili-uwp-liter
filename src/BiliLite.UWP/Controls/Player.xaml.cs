@@ -1718,7 +1718,7 @@ namespace BiliLite.Controls
         private MediaSourceConfig CreateFFmpegInteropConfig(string userAgent, string referer)
         {
 
-            var passthrough = SettingHelper.GetValue<bool>(SettingHelper.Player.HARDWARE_DECODING, true);
+            var passthrough = SettingHelper.GetValue<int>("playertype", 0)==2;
             var _ffmpegConfig = new MediaSourceConfig();
             if (userAgent != null && userAgent.Length > 0)
             {
