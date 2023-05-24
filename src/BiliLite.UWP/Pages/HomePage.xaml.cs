@@ -53,7 +53,7 @@ namespace BiliLite.Pages
         {
             if (!NetworkHelper.Instance.ConnectionInformation.IsInternetAvailable)
             {
-               // return;
+                // return;
             }
 
             if (SettingHelper.Account.Logined)
@@ -220,7 +220,7 @@ namespace BiliLite.Pages
 
         private void MenuUserCenter_Click(object sender, RoutedEventArgs e)
         {
-            if(SettingHelper.Account.Profile is null)
+            if (SettingHelper.Account.Profile is null)
             {
                 Utils.ShowMessageToast("无法获取用户名");
                 return;
@@ -324,16 +324,16 @@ namespace BiliLite.Pages
             }
             set
             {
-                homeVM.ThemeIcon = value == ElementTheme.Dark ? EFontAwesomeIcon.Regular_Sun : EFontAwesomeIcon.Regular_Moon;
+                homeVM.ThemeIcon = value == ElementTheme.Dark ? EFontAwesomeIcon.Regular_Moon : EFontAwesomeIcon.Regular_Sun;
             }
         }
 
         private void Theme_Click(object sender, RoutedEventArgs e)
         {
             Frame rootFrame = Window.Current.Content as Frame;
-            var theme = rootFrame.RequestedTheme;
+            var _theme = rootFrame.RequestedTheme;
             var savedtheme = ElementTheme.Dark;
-            if (theme == ElementTheme.Light)
+            if (_theme == ElementTheme.Light)
             {
                 savedtheme = ElementTheme.Dark;
             }

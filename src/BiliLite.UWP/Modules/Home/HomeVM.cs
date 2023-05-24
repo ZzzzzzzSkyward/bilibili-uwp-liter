@@ -4,13 +4,27 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace BiliLite.Modules
 {
     public class HomeVM : IModules
     {
         Account account;
-        public EFontAwesomeIcon ThemeIcon { get; set; } 
+        private bool _ThemeIcon;
+        public EFontAwesomeIcon ThemeIcon
+        {
+            get
+            {
+                return _ThemeIcon? EFontAwesomeIcon.Regular_Moon : EFontAwesomeIcon.Regular_Sun;
+            }
+            set
+            {
+                _ThemeIcon = value == EFontAwesomeIcon.Regular_Moon;
+                DoPropertyChanged(nameof(ThemeIcon));
+            }
+        }
+
         public HomeVM()
         {
             ThemeIcon = SettingHelper.GetValue(SettingHelper.UI.THEME, 0) == 2 ? EFontAwesomeIcon.Regular_Moon : EFontAwesomeIcon.Regular_Sun;
@@ -22,7 +36,7 @@ namespace BiliLite.Modules
             //    chanel = GetAllNavItems().FirstOrDefault(x => x.Icon == EFontAwesomeIcon.Solid_Shapes);
             //    SettingHelper.SetValue(SettingHelper.UI.HOEM_ORDER, HomeNavItems);
             //}
-         
+
             SelectItem = HomeNavItems.FirstOrDefault();
             if (SettingHelper.Account.Logined)
             {
