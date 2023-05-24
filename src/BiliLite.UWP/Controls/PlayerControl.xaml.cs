@@ -1018,13 +1018,13 @@ namespace BiliLite.Controls
             //}
             if (SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_TO_POSITION, true))
             {
-                _postion = SettingHelper.GetValue<double>(CurrentPlayItem.season_id != 0 ? "ep" + CurrentPlayItem.ep_id : CurrentPlayItem.cid, 0);
+                _position = SettingHelper.GetValue<double>(CurrentPlayItem.season_id != 0 ? "ep" + CurrentPlayItem.ep_id : CurrentPlayItem.cid, 0);
                 //减去两秒防止视频直接结束了
-                if (_postion >= 2) _postion -= 2;
+                if (_position >= 2) _position -= 2;
             }
             else
             {
-                _postion = 0;
+                _position = 0;
             }
             await playerHelper.ReportHistory(CurrentPlayItem, 0);
             await SetDanmaku();
@@ -1283,7 +1283,7 @@ namespace BiliLite.Controls
             //    Utils.ShowMessageToast("播放完毕，请点击右下角节点，重新开始");
             //    return;
             //}
-            _postion = 0;
+            _position = 0;
             _autoPlay = true;
             DanmuControl.ClearAll();
             await SetDanmaku();
@@ -1292,7 +1292,7 @@ namespace BiliLite.Controls
         }
 
 
-        double _postion = 0;
+        double _position = 0;
         bool _autoPlay = false;
         private async Task SetDanmaku(bool update = false)
         {
@@ -1426,16 +1426,23 @@ namespace BiliLite.Controls
             var info = CurrentPlayItem.LocalPlayInfo.Info;
             if (info.PlayUrlType ==  BiliPlayUrlType.DASH)
             {
-                result = await Player.PlayDashUseFFmpegInterop(info.DashInfo, "","", positon: _postion, isLocal: true);
+                //如果设置是系统播放器则优先系统
+                var priority = SettingHelper.GetValue<int>("playertype", 0) == 0;
+                if (priority)
+                {
+                    result = await Player.PlayDashUseNative(info.DashInfo, "", "", position: _position, isLocal : true);
+                }
+                if(!result.result)
+                result = await Player.PlayDashUseFFmpegInterop(info.DashInfo, "","", positon: _position, isLocal: true);
             }
             else if (CurrentPlayItem.LocalPlayInfo.Info.PlayUrlType == BiliPlayUrlType.SingleFLV)
             {
-                result = await Player.PlayerSingleMp4UseNativeAsync(info.FlvInfo.First().Url, positon: _postion, isLocal: true);
+                result = await Player.PlayerSingleMp4UseNativeAsync(info.FlvInfo.First().Url, positon: _position, isLocal: true);
             }
             else if (CurrentPlayItem.LocalPlayInfo.Info.PlayUrlType == BiliPlayUrlType.MultiFLV)
             {
                 //TODO 本地播放
-               result = await Player.PlayVideoUseSYEngine(info.FlvInfo, "","", positon: _postion, epId: CurrentPlayItem.ep_id, isLocal: true);
+               result = await Player.PlayVideoUseSYEngine(info.FlvInfo, "","", positon: _position, epId: CurrentPlayItem.ep_id, isLocal: true);
             }
             if (result.result)
             {
@@ -1585,7 +1592,7 @@ namespace BiliLite.Controls
                 var audio = quality.DashInfo.Audio;
                 var video = quality.DashInfo.Video;
 
-                result = await Player.PlayerDashUseNative(quality.DashInfo, quality.UserAgent,quality.Referer, positon: _postion);
+                result = await Player.PlayDashUseNative(quality.DashInfo, quality.UserAgent,quality.Referer, position: _position,isLocal:false);
 
                 if (!result.result)
                 {
@@ -1605,7 +1612,7 @@ namespace BiliLite.Controls
                         VideoWidth = video.Width,
                         VideoUrl = video.Url,
                     });
-                    result = await Player.PlayDashUrlUseFFmpegInterop(mpd_url, quality.UserAgent,quality.Referer, positon: _postion);
+                    result = await Player.PlayDashUrlUseFFmpegInterop(mpd_url, quality.UserAgent,quality.Referer, positon: _position);
                     //result = await Player.PlayDashUseFFmpegInterop(quality.playUrlInfo.dash_video_url, quality.playUrlInfo.dash_audio_url, quality.HttpHeader, positon: _postion);
                     //if (!result.result)
                     //{
@@ -1615,10 +1622,10 @@ namespace BiliLite.Controls
             }
             else if (quality.PlayUrlType ==  BiliPlayUrlType.SingleFLV)
             {
-                result = await Player.PlaySingleFlvUseSYEngine(quality.FlvInfo.First().Url, quality.UserAgent,quality.Referer, positon: _postion, epId: CurrentPlayItem.ep_id);
+                result = await Player.PlaySingleFlvUseSYEngine(quality.FlvInfo.First().Url, quality.UserAgent,quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id);
                 if (!result.result)
                 {
-                    result = await Player.PlaySingleFlvUseFFmpegInterop(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _postion);
+                    result = await Player.PlaySingleFlvUseFFmpegInterop(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _position);
                 }
             }
             //else if (quality.PlayUrlType == VideoPlayMode.SingleMp4)
@@ -1631,7 +1638,7 @@ namespace BiliLite.Controls
             //}
             else if (quality.PlayUrlType == BiliPlayUrlType.MultiFLV)
             {
-                result = await Player.PlayVideoUseSYEngine(quality.FlvInfo, quality.UserAgent, quality.Referer, positon: _postion, epId: CurrentPlayItem.ep_id);
+                result = await Player.PlayVideoUseSYEngine(quality.FlvInfo, quality.UserAgent, quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id);
             }
             if (result.result)
             {
@@ -2139,7 +2146,7 @@ namespace BiliLite.Controls
                 return;
             }
 
-            _postion = Player.Position;
+            _position = Player.Position;
             var data = BottomCBQuality.SelectedItem as BiliPlayUrlInfo;
             SettingHelper.SetValue<int>(SettingHelper.Player.DEFAULT_QUALITY, data.QualityID);
             _autoPlay = Player.PlayState == PlayState.Playing;
@@ -2401,11 +2408,11 @@ namespace BiliLite.Controls
             };
             if (e.play_type == PlayMediaType.Dash && e.change_engine == PlayEngine.FFmpegInteropMSS)
             {
-                result = await Player.PlayDashUseFFmpegInterop(current_quality_info.DashInfo, current_quality_info.UserAgent, current_quality_info.Referer, positon: _postion);
+                result = await Player.PlayDashUseFFmpegInterop(current_quality_info.DashInfo, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position);
             }
             if (e.play_type == PlayMediaType.Single && e.change_engine == PlayEngine.SYEngine)
             {
-                result = await Player.PlaySingleFlvUseSYEngine(current_quality_info.FlvInfo.First().Url, current_quality_info.UserAgent, current_quality_info.Referer, positon: _postion);
+                result = await Player.PlaySingleFlvUseSYEngine(current_quality_info.FlvInfo.First().Url, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position);
             }
             if (!result.result)
             {
@@ -2419,9 +2426,9 @@ namespace BiliLite.Controls
         {
             txtInfo.Text = Player.GetMediaInfo();
             VideoLoading.Visibility = Visibility.Collapsed;
-            if (_postion != 0)
+            if (_position != 0)
             {
-                Player.SetPosition(_postion);
+                Player.SetPosition(_position);
             }
             if (_autoPlay)
             {

@@ -222,7 +222,7 @@
 				</PivotItem.Header>
 				<ScrollViewer Padding="12 0" VerticalScrollBarVisibility="Auto">
 					<StackPanel>
-						<TextBlock  Margin="0 16 0 8"  FontSize="16">优先视频编码</TextBlock>
+						<TextBlock  Margin="0 16 0 8"  FontSize="16">首选编码</TextBlock>
 						<ComboBox x:Name="cbVideoType" SelectedIndex="0" MinWidth="200">
 							<ComboBox.Items>
 								<ComboBoxItem>FLV/H.264</ComboBoxItem>
@@ -244,7 +244,7 @@
 								<Run>,部分清晰度可能也需要HEVC扩展</Run>
 							</Paragraph>
 						</RichTextBlock>
-						<TextBlock  Margin="0 16 0 8" FontSize="16" >播放器</TextBlock>
+						<TextBlock  Margin="0 16 0 8" FontSize="16" >首选播放器</TextBlock>
 						<ComboBox x:Name="swPriorityPlayer" SelectedIndex="0" MinWidth="200">
 							<ComboBox.Items>
 								<ComboBoxItem Content="系统原生播放器" ></ComboBoxItem>
@@ -253,7 +253,7 @@
 							</ComboBox.Items>
 						</ComboBox>
 
-						<TextBlock  Margin="0 16 0 8"  FontSize="16">视频默认倍速</TextBlock>
+						<TextBlock  Margin="0 16 0 8"  FontSize="16">默认倍速</TextBlock>
 						<ComboBox x:Name="cbVideoSpeed" SelectedIndex="0" MinWidth="200">
 							<ComboBox.Items>
 								<ComboBoxItem Content="3.0x" ></ComboBoxItem>
@@ -265,21 +265,21 @@
 								<ComboBoxItem Content="0.5x" ></ComboBoxItem>
 							</ComboBox.Items>
 						</ComboBox>
-						<TextBlock  Margin="0 16 0 8" FontSize="16">视频自动播放</TextBlock>
+						<TextBlock  Margin="0 16 0 8" FontSize="16">自动开播</TextBlock>
 						<ToggleSwitch  x:Name="swAutoPlay"></ToggleSwitch>
-						<TextBlock  Margin="0 16 0 8" FontSize="16">播放完成自动切换下一P</TextBlock>
+						<TextBlock  Margin="0 16 0 8" FontSize="16">继续播放下一P</TextBlock>
 						<ToggleSwitch  x:Name="swAutoNext"></ToggleSwitch>
 						<!--<TextBlock  Margin="0 16 0 8" FontSize="16">使用外站视频替换无法播放的视频</TextBlock>
                         <ToggleSwitch x:Name="swPlayerSettingUseOtherSite" ToolTipService.ToolTip="打开后支持观看部分大陆无版权番剧"></ToggleSwitch>-->
-						<TextBlock  Margin="0 16 0 8" FontSize="16">自动跳转至上次观看进度</TextBlock>
+						<TextBlock  Margin="0 16 0 8" FontSize="16">记忆进度</TextBlock>
 						<ToggleSwitch x:Name="swPlayerSettingAutoToPosition" ></ToggleSwitch>
-						<TextBlock  Margin="0 16 0 8" FontSize="16">进入播放自动全屏</TextBlock>
+						<TextBlock  Margin="0 16 0 8" FontSize="16">自动全屏</TextBlock>
 						<ToggleSwitch x:Name="swPlayerSettingAutoFullScreen" ></ToggleSwitch>
-						<TextBlock  Margin="0 16 0 8" FontSize="16">进入播放自动铺满窗口</TextBlock>
+						<TextBlock  Margin="0 16 0 8" FontSize="16">自动铺满窗口</TextBlock>
 						<ToggleSwitch x:Name="swPlayerSettingAutoFullWindows" ></ToggleSwitch>
-						<TextBlock  Margin="0 16 0 8" FontSize="16">双击播放器全屏(默认双击暂停)</TextBlock>
+						<TextBlock  Margin="0 16 0 8" FontSize="16">双击全屏(默认双击暂停)</TextBlock>
 						<ToggleSwitch x:Name="swPlayerSettingDoubleClickFullScreen" ></ToggleSwitch>
-						<TextBlock  Margin="0 16 0 8" FontSize="16">自动打开AI字幕</TextBlock>
+						<TextBlock  Margin="0 16 0 8" FontSize="16">默认打开AI字幕</TextBlock>
 						<ToggleSwitch  x:Name="swPlayerSettingAutoOpenAISubtitle"></ToggleSwitch>
 						<TextBlock>部分自动生成的AI字幕会与视频自带字幕冲突</TextBlock>
 						<TextBlock Margin="0 0 0 16">建议关闭，有需要时再手动打开字幕</TextBlock>
@@ -297,7 +297,7 @@
 						<TextBlock >开启替换后读取播放地址可能需要更长时间</TextBlock>
 
 
-						<TextBlock  Margin="0 16 0 8"  FontSize="16">替换CDN服务器选择</TextBlock>
+						<TextBlock  Margin="0 16 0 8"  FontSize="16">服务器</TextBlock>
 
 						<Button x:Name="RoamingSettingTestCDN"  Click="RoamingSettingTestCDN_Click">测试服务器延迟</Button>
 						<ComboBox x:Name="RoamingSettingCDNServer"

@@ -12,14 +12,14 @@
     <Grid>
      
         <Grid>
-            <ScrollViewer  x:Name="scrollViewer" Tapped="Grid_Tapped" ZoomMode="Enabled" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+            <ScrollViewer  x:Name="scrollViewer" Tapped="Grid_Tapped" ZoomMode="Enabled" VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Auto">
                 <Image x:Name="image" Stretch="None" ></Image>
             </ScrollViewer>
             <StackPanel  Orientation="Horizontal" Margin="12" VerticalAlignment="Bottom" HorizontalAlignment="Center">
                 <Border CornerRadius="8"  Background="#7F000000" >
                     <StackPanel Orientation="Horizontal">
-                        <AppBarButton x:Name="btnSave" VerticalContentAlignment="Center" Margin="0 -5 0 0" VerticalAlignment="Center" Click="btnSave_Click" ToolTipService.ToolTip="保存" Width="40" Height="40" Icon="Save" Foreground="White"></AppBarButton>
-                        <AppBarButton x:Name="btnCopy" Click="btnCopy_Click" ToolTipService.ToolTip="复制" Width="40" Height="40" Icon="Copy" Foreground="White"></AppBarButton>
+                        <AppBarButton x:Name="btnSave" VerticalContentAlignment="Center" Margin="0 -6 0 0" VerticalAlignment="Center" Click="btnSave_Click" ToolTipService.ToolTip="保存" Width="40" Height="40" Icon="Save" Foreground="White"></AppBarButton>
+                        <AppBarButton x:Name="btnCopy" Click="btnCopy_Click" ToolTipService.ToolTip="复制" Width="40" Height="40" Icon="Copy" Foreground="White" Margin="0 -5 0 0"></AppBarButton>
                     </StackPanel>
                 </Border>
                 <Border Margin="12 0 0 0" CornerRadius="8"  Background="#7F000000" >

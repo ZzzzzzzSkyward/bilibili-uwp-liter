@@ -185,12 +185,13 @@
                     Visibility="{x:Bind Path=content.haspictures}"
                     ScrollViewer.HorizontalScrollBarVisibility="Auto"
                     ScrollViewer.HorizontalScrollMode="Auto"
-                    ScrollViewer.VerticalScrollBarVisibility="Auto"
+                    ScrollViewer.VerticalScrollBarVisibility="Hidden"
                     Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
                     x:Name="NotePicturesView"
                     StretchContentForSingleRow="False"
                     OneRowModeEnabled="True"
                     ItemHeight="80"
+                    MaxHeight="80"
                     ItemsSource="{x:Bind Path=content.pictures}"
                     SelectionMode="None"
                     ItemClick="NotePicturesView_ItemClick"
@@ -381,9 +382,8 @@
                 </HyperlinkButton>
             </StackPanel>
             <StackPanel Padding="0 0 0 8" Orientation="Horizontal" x:Name="_new">
-                <TextBlock Margin="12 8 0 0" FontSize="20" VerticalAlignment="Center" >最新评论</TextBlock>
                 <HyperlinkButton x:Name="btn_HotSort"  Margin="8 0 0 0" Padding="0" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Click="btn_HotSort_Click" >
-                    <TextBlock>按热门排序</TextBlock>
+                    <TextBlock Margin="12 8 0 0" FontSize="20" VerticalAlignment="Center" >最新评论</TextBlock>
                 </HyperlinkButton>
             </StackPanel>
             <AppBarButton x:Name="btn_Refresh" Click="btn_Refresh_Click" Margin="0 0 40 0" Width="40" Height="40" Icon="Refresh" HorizontalAlignment="Right"></AppBarButton>

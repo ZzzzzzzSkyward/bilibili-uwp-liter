@@ -31,13 +31,13 @@
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
-                <Border CornerRadius="{StaticResource ImageCornerRadius}">
-                    <toolkit:ImageEx IsCacheEnabled="True" Height="80" Width="120" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}">
 							<ToolTipService.ToolTip>
 								<ToolTip>
 									<TextBlock Text="{x:Bind Path=intro}" TextWrapping="Wrap" FontSize="14" />
 								</ToolTip>
 							</ToolTipService.ToolTip>
+                <Border CornerRadius="{StaticResource ImageCornerRadius}">
+                    <toolkit:ImageEx IsCacheEnabled="True" Height="80" Width="120" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='160w'}">
 					</toolkit:ImageEx>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">

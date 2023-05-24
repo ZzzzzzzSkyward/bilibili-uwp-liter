@@ -458,6 +458,26 @@ namespace BiliLite.Helpers
             }
             return proxyUrl;
         }
+        public static string ProcessURL(string u, int maxLength=40)
+        {
+            // Remove http:// or https:// from the beginning of the URL
+            if (u.StartsWith("http://"))
+            {
+                u = u.Substring(7);
+            }
+            else if (u.StartsWith("https://"))
+            {
+                u = u.Substring(8);
+            }
+
+            // Truncate the URL if it is too long and add ellipses
+            if (u.Length > maxLength)
+            {
+                u = u.Substring(0, maxLength - 3) + "...";
+            }
+
+            return u;
+        }
     }
     public class NewVersion
     {

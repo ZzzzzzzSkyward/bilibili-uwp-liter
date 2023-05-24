@@ -7,6 +7,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Foundation;
@@ -238,12 +239,13 @@ namespace BiliLite.Controls
         /// <summary>
         /// 使用AdaptiveMediaSource播放视频
         /// </summary>
-        /// <param name="videoUrl"></param>
-        /// <param name="audioUrl"></param>
-        /// <param name="positon"></param>
-        /// <param name="needConfig"></param>
+        /// <param name="dashInfo"></param>
+        /// <param name="userAgent"></param>
+        /// <param name="referer"></param>
+        /// <param name="position"></param>
+        /// <param name="isLocal"></param>
         /// <returns></returns>
-        public async Task<PlayerOpenResult> PlayerDashUseNative(BiliDashPlayUrlInfo dashInfo, string userAgent, string referer, double positon = 0)
+        public async Task<PlayerOpenResult> PlayDashUseNative(BiliDashPlayUrlInfo dashInfo, string userAgent, string referer, double position = 0,bool isLocal=false)
         {
             try
             {
@@ -263,8 +265,18 @@ namespace BiliLite.Controls
                 //设置播放器
                 _playerVideo = new MediaPlayer();
                 //_playerVideo.Source = MediaSource.CreateFromUri(new Uri(videoUrl.baseUrl));
-                var mediaSource = await CreateAdaptiveMediaSource(dashInfo, userAgent, referer);
-                if (mediaSource == null)
+                AdaptiveMediaSource mediaSource=null;
+                MediaSource mediaSource2=null;
+                if (isLocal)
+                {
+                    mediaSource2= MediaSource.CreateFromStorageFile(await StorageFile.GetFileFromPathAsync(dashInfo.Video.Url));
+                }
+                else
+                {
+                mediaSource = await CreateAdaptiveMediaSource(dashInfo, userAgent, referer);
+
+                }
+                if (mediaSource == null&&mediaSource2==null)
                 {
                     return new PlayerOpenResult()
                     {
@@ -272,8 +284,10 @@ namespace BiliLite.Controls
                         message = "创建MediaSource失败"
                     };
                 }
-
+                if(mediaSource!=null)
                 _playerVideo.Source = MediaSource.CreateFromAdaptiveMediaSource(mediaSource);
+                else
+                _playerVideo.Source = mediaSource2;
                 Buffering = true;
               
                 //设置时长

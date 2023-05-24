@@ -35,6 +35,10 @@ namespace BiliLite.Modules.User
         }
         public async void GetUserInfo(bool usev2)
         {
+            if (usev2)
+            {
+                return;
+            }
             try
             {
                 var api = usev2 ? userDetailAPI.UserInfov2(mid) : userDetailAPI.UserInfo(mid);

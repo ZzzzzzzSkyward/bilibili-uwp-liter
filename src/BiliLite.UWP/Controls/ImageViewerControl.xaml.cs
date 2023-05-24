@@ -10,6 +10,8 @@ using Windows.Storage;
 using Windows.Storage.Pickers;
 using Windows.Storage.Provider;
 using Windows.Storage.Streams;
+using Windows.System;
+using Windows.UI.Core;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -30,8 +32,65 @@ namespace BiliLite.Controls
         public ImageViewerControl()
         {
             this.InitializeComponent();
+            scrollViewer.PointerWheelChanged += ScrollViewer_PointerWheelChanged;
+            scrollViewer.KeyDown += ScrollViewer_KeyDown;
+        }
+        private bool IsDown(Windows.System.VirtualKey key)
+        {
+            return Window.Current.CoreWindow.GetKeyState(key).HasFlag(CoreVirtualKeyStates.Down);
+        }
+        private bool NoMod()
+        {
+            return !IsDown(VirtualKey.Shift) &&
+                !IsDown(VirtualKey.Control) &&
+                !IsDown(VirtualKey.Menu) &&
+                !IsDown(VirtualKey.LeftWindows) &&
+                !IsDown(VirtualKey.RightWindows);
+        }
+        private void ScrollViewer_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            // Check which key was pressed
+            if (e.Key == VirtualKey.Escape)
+            {
+                CloseEvent?.Invoke(sender, new EventArgs());
+            }
+            else if (e.Key == VirtualKey.C && IsDown(VirtualKey.Control))
+            {
+                btnCopy_Click(sender, e);
+            }
+            else if (e.Key == VirtualKey.S && IsDown(VirtualKey.Control))
+            {
+                btnSave_Click(sender, e);
+            }
+            else if (e.Key == VirtualKey.F5)
+            {
+                btnRefresh_Click(sender, e);
+            }
+            else if(e.Key== VirtualKey.Add)
+            {
+                btnZoomIn_Click(sender, e);
+            }
+            else if(e.Key == VirtualKey.Subtract){
+                btnZoomOut_Click(sender, e);
+            }
         }
 
+        private void ScrollViewer_PointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            if (imgs == null) return;
+            // Check if the Ctrl key is pressed
+            if (IsDown(VirtualKey.Control))
+            {
+                // Ctrl key is pressed, do not handle the event
+                return;
+            }
+            var delta = e.GetCurrentPoint(scrollViewer).Properties.MouseWheelDelta;
+            int nextimg = delta > 0 ? index - 1 : index+ 1;
+            if (nextimg >= imgs.Count) return;
+            if (nextimg < 0) return;
+            ChangedImage( nextimg);
+            e.Handled = true;
+        }
         public List<ImageInfo> imgs;
 
         int index = 0;
