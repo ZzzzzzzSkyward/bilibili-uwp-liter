@@ -233,13 +233,13 @@
 						</ComboBox>
 						<RichTextBlock Margin="0 12 0 0">
 							<Paragraph>
-								<Run>视频编码为HEVC时系统需要</Run>
+								<Run>⚠视频编码为HEVC时系统需要</Run>
 								<Hyperlink NavigateUri="ms-windows-store://pdp/?productid=9n4wgh0z6vhq">安装HEVC扩展</Hyperlink>
 							</Paragraph>
 						</RichTextBlock>
 						<RichTextBlock>
 							<Paragraph>
-								<Run>视频编码为AV1时系统需要</Run>
+								<Run>⚠视频编码为AV1时系统需要</Run>
 								<Hyperlink NavigateUri="ms-windows-store://pdp/?productid=9MVZQVXJBQ9V">安装AV1扩展</Hyperlink>
 								<Run>,部分清晰度可能也需要HEVC扩展</Run>
 							</Paragraph>
@@ -252,6 +252,7 @@
 								<ComboBoxItem Content="FFMpeg硬解" ></ComboBoxItem>
 							</ComboBox.Items>
 						</ComboBox>
+						<TextBlock>⚠硬解可能导致本地视频播放异常</TextBlock>
 
 						<TextBlock  Margin="0 16 0 8"  FontSize="16">默认倍速</TextBlock>
 						<ComboBox x:Name="cbVideoSpeed" SelectedIndex="0" MinWidth="200">
@@ -281,7 +282,7 @@
 						<ToggleSwitch x:Name="swPlayerSettingDoubleClickFullScreen" ></ToggleSwitch>
 						<TextBlock  Margin="0 16 0 8" FontSize="16">默认打开AI字幕</TextBlock>
 						<ToggleSwitch  x:Name="swPlayerSettingAutoOpenAISubtitle"></ToggleSwitch>
-						<TextBlock>部分自动生成的AI字幕会与视频自带字幕冲突</TextBlock>
+						<TextBlock>⚠部分自动生成的AI字幕会与视频自带字幕冲突</TextBlock>
 						<TextBlock Margin="0 0 0 16">建议关闭，有需要时再手动打开字幕</TextBlock>
 						<TextBlock  Margin="0 16 0 8" FontSize="16">替换CDN链接</TextBlock>
 

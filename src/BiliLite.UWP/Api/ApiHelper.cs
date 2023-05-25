@@ -3,6 +3,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
+using System.Web;
 using Windows.Web.Http.Filters;
 
 namespace BiliLite.Api
@@ -15,9 +17,9 @@ namespace BiliLite.Api
             bool single = false;
             foreach (var i in settingsname)
             {
-                single=!single;
+                single = !single;
                 sets.Add(
-                SettingHelper.GetValue(i, single?DefaultKey.Appkey:DefaultKey.Secret));
+                SettingHelper.GetValue(i, single ? DefaultKey.Appkey : DefaultKey.Secret));
             }
             Init(sets);
         }
@@ -75,7 +77,7 @@ namespace BiliLite.Api
                 else return _csrf;
             }
             var fiter = new HttpBaseProtocolFilter();
-            var cookies =  fiter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
+            var cookies = fiter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
             var csrf = "";
             //没有Cookie
             if (cookies == null || cookies.Count == 0)
@@ -85,7 +87,7 @@ namespace BiliLite.Api
             else
             {
                 csrf = cookies.FirstOrDefault(x => x.Name == "bili_jct")?.Value;
-                if (csrf!=null&&csrf!="")
+                if (csrf != null && csrf != "")
                 {
                     _csrf = csrf;
                     if (isparam)
@@ -115,7 +117,7 @@ namespace BiliLite.Api
                 stringBuilder.Append((stringBuilder.Length > 0 ? "&" : string.Empty));
                 stringBuilder.Append(str1);
             }
-            stringBuilder.Append(string.IsNullOrEmpty(apiKeyInfo.Secret)?DefaultKey.Secret:apiKeyInfo.Secret);
+            stringBuilder.Append(string.IsNullOrEmpty(apiKeyInfo.Secret) ? DefaultKey.Secret : apiKeyInfo.Secret);
             result = Utils.ToMD5(stringBuilder.ToString()).ToLower();
             return par + result;
         }
@@ -155,7 +157,7 @@ namespace BiliLite.Api
             else
             {
                 AndroidTVKey = DefaultKey;
-            }   
+            }
             if (keys.Count >= 10 && !string.IsNullOrEmpty(keys[8]) && !string.IsNullOrEmpty(keys[9]))
             {
                 WebVideoKey = new ApiKeyInfo(keys[8], keys[9]);
@@ -189,6 +191,80 @@ namespace BiliLite.Api
             var results = sb.ToString().TrimEnd('&');
             results = results + apiKeyInfo.Secret;
             return "&sign=" + Utils.ToMD5(results).ToLower();
+        }
+        private static int[] mixinKeyEncTab = new int[] {
+            46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35, 27, 43, 5, 49,
+            33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13, 37, 48, 7, 16, 24, 55, 40,
+            61, 26, 17, 0, 1, 60, 51, 30, 4, 22, 25, 54, 21, 56, 59, 6, 63, 57, 62, 11,
+            36, 20, 34, 44, 52
+        };
+        public static int wbitoken_expire = 0;
+        public class wbiimg
+        {
+            public string img_url;
+            public string sub_url;
+        }
+        public class wbitoken
+        {
+            public wbiimg wbi_img { get; set; }
+        }
+        public static wbiimg wbitoken_current = new wbiimg();
+        // 获取最新的 img_key 和 sub_key
+        private static async Task<(string, string)> GetWbiKeys()
+        {
+            var response = await new AccountApi().WbiToken().Request();
+            var result = await response.GetData<wbitoken>();
+            var imgUrl = result.data.wbi_img.img_url;
+            var subUrl = result.data.wbi_img.sub_url;
+            var imgKey = imgUrl.Substring(imgUrl.LastIndexOf('/') + 1).Split('.')[0];
+            var subKey = subUrl.Substring(subUrl.LastIndexOf('/') + 1).Split('.')[0];
+            wbitoken_current.img_url = imgKey;
+            wbitoken_current.sub_url = subKey;
+            return (imgKey, subKey);
+        }
+
+        private static string GetMixinKey(string origin)
+        {
+            // 对 imgKey 和 subKey 进行字符顺序打乱编码
+            return mixinKeyEncTab.Aggregate("", (s, i) => s + origin[i]).Substring(0, 32);
+        }
+
+        public static string GetWbiSign(string url)
+        {
+            var imgKey = "";
+            var subKey = "";
+            if (wbitoken_current.img_url != null)
+            {
+                imgKey = wbitoken_current.img_url;
+                subKey = wbitoken_current.sub_url;
+            }
+            else
+            {
+                GetWbiKeys();
+                return "";
+            }
+
+            // 为请求参数进行 wbi 签名
+            string mixinKey = GetMixinKey(imgKey + subKey);
+            long currentTime = (long)Math.Round(DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds);
+
+            var queryString = HttpUtility.ParseQueryString(url);
+
+            var queryParams = queryString.Cast<string>().ToDictionary(k => k, v => queryString[v]);
+            queryParams["wts"] = currentTime + ""; // 添加 wts 字段
+            queryParams = queryParams.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value); // 按照 key 重排参数
+                                                                                                  // 过滤 value 中的 "!'()*" 字符
+            queryParams = queryParams.ToDictionary(x => x.Key, x => string.Join("", x.Value.ToString().Where(c => "!'()*".Contains(c) == false)));
+            queryString = HttpUtility.ParseQueryString(String.Empty);
+            foreach (var key in queryParams.Keys)
+            {
+                queryString.Add(key, queryParams[key]);
+            }
+            var query = queryString.ToString();
+
+            var wbi_sign = Utils.ToMD5($"{query}{mixinKey}").ToLower();
+
+            return $"&wts={currentTime}&w_rid={wbi_sign}";
         }
 
         /// <summary>

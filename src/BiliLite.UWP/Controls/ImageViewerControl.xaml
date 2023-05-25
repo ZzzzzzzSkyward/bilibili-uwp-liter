@@ -12,7 +12,7 @@
     <Grid>
      
         <Grid>
-            <ScrollViewer  x:Name="scrollViewer" Tapped="Grid_Tapped" ZoomMode="Enabled" VerticalScrollBarVisibility="Auto"  HorizontalScrollBarVisibility="Auto">
+            <ScrollViewer  x:Name="scrollViewer" Tapped="Grid_Tapped" ZoomMode="Enabled" VerticalScrollBarVisibility="Auto" AllowFocusOnInteraction="True"  HorizontalScrollBarVisibility="Auto">
                 <Image x:Name="image" Stretch="None" ></Image>
             </ScrollViewer>
             <StackPanel  Orientation="Horizontal" Margin="12" VerticalAlignment="Bottom" HorizontalAlignment="Center">

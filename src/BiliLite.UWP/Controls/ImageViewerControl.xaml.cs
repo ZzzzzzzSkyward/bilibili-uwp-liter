@@ -49,7 +49,6 @@ namespace BiliLite.Controls
         }
         private void ScrollViewer_KeyDown(object sender, KeyRoutedEventArgs e)
         {
-            // Check which key was pressed
             if (e.Key == VirtualKey.Escape)
             {
                 CloseEvent?.Invoke(sender, new EventArgs());

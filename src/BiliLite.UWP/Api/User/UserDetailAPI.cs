@@ -24,15 +24,15 @@
         /// </summary>
         /// <param name="mid"></param>
         /// <returns></returns>
-        public ApiModel UserInfov2(string mid)
+        public ApiModel UserInfoWbi(string mid)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/acc/info",
                 parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,needAccesskey:true)+$"&mid={mid}",
-                need_cookie = true,
             };
+            api.parameter += ApiHelper.GetWbiSign(api.parameter);
 
             return api;
         }
@@ -94,7 +94,7 @@
         /// <param name="page">页数</param>
         /// <param name="pagesize">每页数量</param>
         /// <returns></returns>
-        public ApiModel SubmitVideosv2(string mid, int page = 1, int pagesize = 30,string keyword="",int tid=0, SubmitVideoOrder order= SubmitVideoOrder.pubdate)
+        public ApiModel SubmitVideosWbi(string mid, int page = 1, int pagesize = 30,string keyword="",int tid=0, SubmitVideoOrder order= SubmitVideoOrder.pubdate)
         {
             ApiModel api = new ApiModel()
             {
@@ -103,6 +103,7 @@
                 parameter = $"mid={mid}&ps={pagesize}&tid={tid}&pn={page}&keyword={keyword}&order={order}",
                 need_cookie=true,
             };
+            api.parameter += ApiHelper.GetWbiSign(api.parameter);
             return api;
         }
         /// <summary>

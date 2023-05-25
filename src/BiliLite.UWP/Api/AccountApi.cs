@@ -359,5 +359,20 @@ namespace BiliLite.Api
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
+
+        
+        /// <summary>
+        /// wbi鉴权获取token
+        /// </summary>
+        /// <returns></returns>
+        public ApiModel WbiToken()
+        {
+            ApiModel api = new ApiModel()
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = "https://api.bilibili.com/x/web-interface/nav"
+            };
+            return api;
+        }
     }
 }

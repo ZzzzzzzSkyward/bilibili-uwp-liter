@@ -372,8 +372,10 @@ namespace BiliLite.Pages
 
         private async void RefreshUserDetail(object sender, RoutedEventArgs e)
         {
-            if (userDetailVM.UserInfo == null) { }
-            userDetailVM?.Refresh();
+            if (userDetailVM.UserInfo == null)
+            {
+                userDetailVM?.Refresh();
+            }
         }
     }
 }
