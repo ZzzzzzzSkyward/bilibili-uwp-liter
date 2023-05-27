@@ -510,7 +510,7 @@ namespace BiliLite.Pages
                 {
                     state = 2;
                 }
-                if (DownloadVM.Instance.Downloadeds.FirstOrDefault(x => x.Epsidoes.FirstOrDefault(y => y.EpisodeID == item.id.ToString()) != null) != null)
+                if (DownloadVM.Instance.Downloadeds.FirstOrDefault(x => x.Episodes.FirstOrDefault(y => y.EpisodeID == item.id.ToString()) != null) != null)
                 {
                     state = 3;
                 }

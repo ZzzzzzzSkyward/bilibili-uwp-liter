@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using Windows.Storage;
 
 namespace BiliLite.Modules.Player.Playurl
 {
@@ -137,6 +138,7 @@ namespace BiliLite.Modules.Player.Playurl
         public long ID { get; set; }
         public int CodecID { get; set; }
         public string Url { get; set; }
+        public StorageFile file { get; set; }
 
         public string Host
         {

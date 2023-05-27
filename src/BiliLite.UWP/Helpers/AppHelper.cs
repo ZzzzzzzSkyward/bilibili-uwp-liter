@@ -84,7 +84,7 @@ namespace BiliLite.Helpers
                 await Windows.ApplicationModel.FullTrustProcessLauncher.LaunchFullTrustProcessForCurrentAppAsync();
             }
             catch {
-                Utils.ShowMessageToast("没有权限");
+                Utils.ShowMessageToast("由于升级包，导出视频功能不可用");
             }
         }
 

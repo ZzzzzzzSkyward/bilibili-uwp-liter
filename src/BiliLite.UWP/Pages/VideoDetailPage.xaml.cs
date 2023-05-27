@@ -588,7 +588,7 @@ namespace BiliLite.Pages
                 {
                     state = 2;
                 }
-                if (DownloadVM.Instance.Downloadeds.FirstOrDefault(x => x.Epsidoes.FirstOrDefault(y=>y.CID==item.cid)!=null) != null)
+                if (DownloadVM.Instance.Downloadeds.FirstOrDefault(x => x.Episodes.FirstOrDefault(y=>y.CID==item.cid)!=null) != null)
                 {
                     state = 3;
                 }

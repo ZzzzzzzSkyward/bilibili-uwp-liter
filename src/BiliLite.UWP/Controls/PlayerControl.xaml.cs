@@ -1026,7 +1026,7 @@ namespace BiliLite.Controls
             {
                 _position = 0;
             }
-            await playerHelper.ReportHistory(CurrentPlayItem, 0);
+            //await playerHelper.ReportHistory(CurrentPlayItem, 0);
             await SetDanmaku();
             await SetQuality();
             await GetPlayerInfo();

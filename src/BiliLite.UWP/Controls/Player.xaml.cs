@@ -269,7 +269,7 @@ namespace BiliLite.Controls
                 MediaSource mediaSource2=null;
                 if (isLocal)
                 {
-                    mediaSource2= MediaSource.CreateFromStorageFile(await StorageFile.GetFileFromPathAsync(dashInfo.Video.Url));
+                    mediaSource2 = MediaSource.CreateFromStorageFile(dashInfo.Video.file ?? await StorageFile.GetFileFromPathAsync(dashInfo.Video.Url));
                 }
                 else
                 {
@@ -1588,19 +1588,19 @@ namespace BiliLite.Controls
                 info += $"Engine: {current_engine.ToString()}\r\n";
                 if (_ffmpegMSSVideo != null)
                 {
-                    info += $"Resolution: {_ffmpegMSSVideo.CurrentVideoStream.PixelHeight} x {_ffmpegMSSVideo.CurrentVideoStream.PixelWidth}\r\n";
-                    info += $"Video Codec: {_ffmpegMSSVideo.CurrentVideoStream.CodecName}\r\n";
-                    info += $"Video Bitrate: {_ffmpegMSSVideo.CurrentVideoStream.Bitrate}\r\n";
-                    info += $"Average Frame: {((double)_ffmpegMSSVideo.CurrentVideoStream.FramesPerSecond).ToString("0.0")}\r\n";
+                    info += $"Resolution: {_ffmpegMSSVideo.CurrentVideoStream?.PixelHeight} x {_ffmpegMSSVideo.CurrentVideoStream?.PixelWidth}\r\n";
+                    info += $"Video Codec: {_ffmpegMSSVideo.CurrentVideoStream?.CodecName}\r\n";
+                    info += $"Video Bitrate: {_ffmpegMSSVideo.CurrentVideoStream?.Bitrate}\r\n";
+                    info += $"Average Frame: {((double)_ffmpegMSSVideo.CurrentVideoStream?.FramesPerSecond).ToString("0.0")}\r\n";
                     if (PlayMediaType == PlayMediaType.Dash)
                     {
-                        info += $"Audio Codec: {_ffmpegMSSAudio.AudioStreams[0].CodecName}\r\n";
-                        info += $"Audio Bitrate: {_ffmpegMSSAudio.AudioStreams[0].Bitrate}";
+                        info += $"Audio Codec: {_ffmpegMSSAudio.AudioStreams[0]?.CodecName}\r\n";
+                        info += $"Audio Bitrate: {_ffmpegMSSAudio.AudioStreams[0]?.Bitrate}";
                     }
                     else
                     {
-                        info += $"Audio Codec: {_ffmpegMSSVideo.AudioStreams[0].CodecName}\r\n";
-                        info += $"Audio Bitrate: {_ffmpegMSSVideo.AudioStreams[0].Bitrate}";
+                        info += $"Audio Codec: {_ffmpegMSSVideo.AudioStreams[0]?.CodecName}\r\n";
+                        info += $"Audio Bitrate: {_ffmpegMSSVideo.AudioStreams[0]?.Bitrate}";
                     }
                 }
                 else

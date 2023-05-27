@@ -65,7 +65,7 @@
 							</ComboBox>
 						</StackPanel>
 						<StackPanel x:Name="DisplayMode" Margin="0 0 0 8">
-							<TextBlock  Margin="0 8"  FontSize="16">显示模式(重启生效)</TextBlock>
+							<TextBlock  Margin="0 8"  FontSize="16">显示模式(🔄重启生效)</TextBlock>
 							<ComboBox x:Name="cbDisplayMode"  MinWidth="200">
 								<ComboBox.Items>
 									<ComboBoxItem>标签页</ComboBoxItem>
@@ -117,8 +117,8 @@
 												</MenuFlyout>
 											</Grid.ContextFlyout>
 											<StackPanel Orientation="Horizontal"  VerticalAlignment="Center" HorizontalAlignment="Center">
-												<font:FontAwesome FontSize="14" VerticalAlignment="Bottom" Icon="{x:Bind Path=Icon}"></font:FontAwesome>
-												<TextBlock Margin="8 0 0 0" Text="{x:Bind Title}"></TextBlock>
+												<font:FontAwesome FontSize="14" VerticalAlignment="Bottom" Icon="{x:Bind Path=Icon}" Foreground="{ThemeResource ForegroundTextColor}"></font:FontAwesome>
+												<TextBlock Margin="8 0 0 0" Text="{x:Bind Title}" Foreground="{ThemeResource ForegroundTextColor}"></TextBlock>
 											</StackPanel>
 										</Grid>
 
@@ -151,11 +151,12 @@
 							</GridView>
 							<TextBlock  Margin="0 16 0 8" FontSize="16">右侧视频详情宽度(下次打开视频生效)</TextBlock>
 							<controls:NumberBox x:Name="numRightWidth" Minimum="40" Margin="0 0 0 8" Width="200" HorizontalAlignment="Left" Value="320" SpinButtonPlacementMode="Compact" SmallChange="20" ></controls:NumberBox>
-							<TextBlock  Margin="0 0 0 8" FontSize="16">图片圆角半径(重启生效)</TextBlock>
+							<TextBlock  Margin="0 0 0 8" FontSize="16">图片圆角半径(🔄重启生效)</TextBlock>
 							<controls:NumberBox x:Name="numImageCornerRadius" Minimum="0" Margin="0 0 0 8" Width="200" HorizontalAlignment="Left" Value="0" SpinButtonPlacementMode="Compact" SmallChange="2" ></controls:NumberBox>
+							<TextBlock  Margin="0 0 0 8" FontSize="16">背景图</TextBlock>
 							<Border x:Name="ImageCornerRadiusExample" Width="120" Height="120" HorizontalAlignment="Left" Background="#99808080">
 								<Button  Click="BGImage_Click" Background="Transparent" Width="120" Height="120">
-									<Image Source="/Assets/Image/background.jpg" x:Name="BGImage" Stretch="UniformToFill"></Image>
+									<Image Source="/Assets/Image/background.jpg" x:Name="BGImage" Stretch="Uniform"></Image>
 								</Button>
 							</Border>
 							<StackPanel  Margin="0 0 0 8">
@@ -176,7 +177,7 @@
 								<ToggleSwitch x:Name="swPreviewImageNavigateToPage" ></ToggleSwitch>
 							</StackPanel>
 							<StackPanel Margin="0 0 0 8">
-								<TextBlock  Margin="0 8" FontSize="16">推荐页显示方式(重启应用生效)</TextBlock>
+								<TextBlock  Margin="0 8" FontSize="16">推荐页显示方式(🔄重启生效)</TextBlock>
 								<ComboBox x:Name="cbRecommendDisplayMode" SelectedIndex="0" MinWidth="200">
 									<ComboBox.Items>
 										<ComboBoxItem>网格</ComboBoxItem>
@@ -185,7 +186,7 @@
 								</ComboBox>
 							</StackPanel>
 							<StackPanel Margin="0 0 0 8">
-								<TextBlock  Margin="0 8"  FontSize="16">关注动态显示方式(重启应用生效)</TextBlock>
+								<TextBlock  Margin="0 8"  FontSize="16">关注动态显示方式(🔄重启生效)</TextBlock>
 								<ComboBox x:Name="cbDynamicDisplayMode" SelectedIndex="0" MinWidth="200">
 									<ComboBox.Items>
 										<ComboBoxItem>列表</ComboBoxItem>
@@ -581,50 +582,45 @@
 				</PivotItem.Header>
 				<ScrollViewer Padding="12 0" VerticalScrollBarVisibility="Auto">
 					<StackPanel>
-						<TextBlock  Margin="0 16 0 8"  FontSize="16">下载存放目录</TextBlock>
-						<Button x:Name="DownloadOpenPath" Padding="4" Background="Transparent">
-							<Grid>
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="Auto"/>
-									<ColumnDefinition />
-								</Grid.ColumnDefinitions>
-								<SymbolIcon Symbol="Folder" Foreground="Orange" Margin="0 0 8 0"></SymbolIcon>
-								<TextBlock Grid.Column="1" x:Name="txtDownloadPath" ></TextBlock>
-							</Grid>
-						</Button>
-						<Button x:Name="DownloadChangePath" Margin="0 8">修改存放目录</Button>
+						<TextBlock  Margin="0 16 0 8"  FontSize="16">下载目录</TextBlock>
+						<StackPanel Orientation="Horizontal">
+							<Button x:Name="DownloadOpenPath" Padding="4" Background="Transparent">
+								<StackPanel Orientation="Horizontal">
+									<SymbolIcon Symbol="Folder" Foreground="Orange" Margin="0 0 8 0"></SymbolIcon>
+									<TextBlock Grid.Column="1" x:Name="txtDownloadPath" ></TextBlock>
+								</StackPanel>
+							</Button>
+							<Button x:Name="DownloadChangePath" Margin="0 8">修改</Button>
+						</StackPanel>
 						<TextBlock  Margin="0 8 0 4"  FontSize="16">旧版下载目录</TextBlock>
-						<Button x:Name="DownloadOpenOldPath"  Padding="4" Background="Transparent">
-							<Grid>
-								<Grid.ColumnDefinitions>
-									<ColumnDefinition Width="Auto"/>
-									<ColumnDefinition />
-								</Grid.ColumnDefinitions>
-								<SymbolIcon Symbol="Folder" Foreground="Orange" Margin="0 0 8 0"></SymbolIcon>
-								<TextBlock x:Name="txtDownloadOldPath" Grid.Column="1" ></TextBlock>
-							</Grid>
-						</Button>
-						<Button x:Name="DownloadChangeOldPath" Margin="0 8">导入旧版目录</Button>
-						<TextBlock  Margin="0 8 0 0"  FontSize="16">加载旧版下载的视频</TextBlock>
-						<ToggleSwitch x:Name="swDownloadLoadOld"></ToggleSwitch>
+							<ToggleSwitch x:Name="swDownloadLoadOld" OnContent="加载" OffContent="不加载"></ToggleSwitch>
+						<StackPanel Orientation="Horizontal">
+							<Button x:Name="DownloadOpenOldPath"  Padding="4" Background="Transparent">
 
-						<TextBlock  Margin="0 8 0 4"  FontSize="16">优先下载视频类型</TextBlock>
-						<TextBlock>当选择FLV时不支持4K视频下载，部分视频不支持M4S</TextBlock>
-						<ComboBox x:Name="cbDownloadVideoType" Margin="0 8"  MinWidth="200">
-							<ComboBox.Items>
-								<ComboBoxItem>FLV格式(H264)</ComboBoxItem>
-								<ComboBoxItem>M4S格式(H264)</ComboBoxItem>
-								<ComboBoxItem>M4S格式(HEVC)</ComboBoxItem>
-								<ComboBoxItem>M4S格式(AV1)</ComboBoxItem>
-							</ComboBox.Items>
-						</ComboBox>
-						<TextBlock  Margin="0 8 0 0"  FontSize="16">同时下载多个任务</TextBlock>
-						<ToggleSwitch x:Name="swDownloadParallelDownload"></ToggleSwitch>
-						<TextBlock  Margin="0 8 0 0"  FontSize="16">允许使用流量下载</TextBlock>
-						<ToggleSwitch  x:Name="swDownloadAllowCostNetwork"></ToggleSwitch>
-						<TextBlock  Margin="0 8 0 0"  FontSize="16">下载完成发送通知</TextBlock>
-						<ToggleSwitch  x:Name="swDownloadSendToast"></ToggleSwitch>
-					</StackPanel>
+								<StackPanel Orientation="Horizontal">
+									<SymbolIcon Symbol="Folder" Foreground="Orange" Margin="0 0 8 0"></SymbolIcon>
+									<TextBlock x:Name="txtDownloadOldPath" Grid.Column="1" ></TextBlock>
+								</StackPanel>
+							</Button>
+							<Button x:Name="DownloadChangeOldPath" Margin="0 8">修改</Button>
+							</StackPanel>
+							<TextBlock  Margin="0 8 0 4"  FontSize="16">优先下载视频类型</TextBlock>
+							<TextBlock>当选择FLV时不支持4K视频下载，部分视频不支持M4S</TextBlock>
+							<ComboBox x:Name="cbDownloadVideoType" Margin="0 8"  MinWidth="200">
+								<ComboBox.Items>
+									<ComboBoxItem>FLV格式(H264)</ComboBoxItem>
+									<ComboBoxItem>M4S格式(H264)</ComboBoxItem>
+									<ComboBoxItem>M4S格式(HEVC)</ComboBoxItem>
+									<ComboBoxItem>M4S格式(AV1)</ComboBoxItem>
+								</ComboBox.Items>
+							</ComboBox>
+							<TextBlock  Margin="0 8 0 0"  FontSize="16">同时下载多个任务</TextBlock>
+							<ToggleSwitch x:Name="swDownloadParallelDownload"></ToggleSwitch>
+							<TextBlock  Margin="0 8 0 0"  FontSize="16">允许使用流量下载</TextBlock>
+							<ToggleSwitch  x:Name="swDownloadAllowCostNetwork"></ToggleSwitch>
+							<TextBlock  Margin="0 8 0 0"  FontSize="16">下载完成发送通知</TextBlock>
+							<ToggleSwitch  x:Name="swDownloadSendToast"></ToggleSwitch>
+						</StackPanel>
 				</ScrollViewer>
 			</PivotItem>
 			<PivotItem Margin="0">

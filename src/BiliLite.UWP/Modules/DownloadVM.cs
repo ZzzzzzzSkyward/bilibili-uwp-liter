@@ -133,7 +133,7 @@ namespace BiliLite.Modules
                     DownloadedItem downloadedItem = new DownloadedItem()
                     {
                         CoverPath = Path.Combine(item.Path, "cover.jpg"),
-                        Epsidoes = new ObservableCollection<DownloadedSubItem>(),
+                        Episodes = new ObservableCollection<DownloadedSubItem>(),
                         ID = info.ID,
                         Title = info.Title,
                         UpdateTime = infoFile.DateCreated.LocalDateTime,
@@ -224,7 +224,7 @@ namespace BiliLite.Modules
                     //排序
                     foreach (var episode in lsEpisodes.OrderBy(x => x.Index))
                     {
-                        downloadedItem.Epsidoes.Add(episode);
+                        downloadedItem.Episodes.Add(episode);
                     }
 
                     Downloadeds.Add(downloadedItem);
@@ -282,7 +282,7 @@ namespace BiliLite.Modules
                     DownloadedItem downloadedItem = new DownloadedItem()
                     {
                         CoverPath = Path.Combine(item.Path, "thumb.jpg"),
-                        Epsidoes = new ObservableCollection<DownloadedSubItem>(),
+                        Episodes = new ObservableCollection<DownloadedSubItem>(),
                         ID = info["id"].ToString(),
                         Title = info["title"].ToString(),
                         UpdateTime = infoFile.DateCreated.LocalDateTime,
@@ -354,7 +354,7 @@ namespace BiliLite.Modules
                     //排序
                     foreach (var episode in lsEpisodes.OrderBy(x => x.Index))
                     {
-                        downloadedItem.Epsidoes.Add(episode);
+                        downloadedItem.Episodes.Add(episode);
                     }
 
                     Downloadeds.Add(downloadedItem);
@@ -826,7 +826,7 @@ namespace BiliLite.Modules
 
         public string Title { get; set; }
         public DateTime UpdateTime { get; set; }
-        public ObservableCollection<DownloadedSubItem> Epsidoes { get; set; }
+        public ObservableCollection<DownloadedSubItem> Episodes { get; set; }
         public string Path { get; set; }
     }
     public class DownloadedSubItem

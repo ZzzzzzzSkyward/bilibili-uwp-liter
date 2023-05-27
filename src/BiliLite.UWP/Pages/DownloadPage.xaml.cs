@@ -1,4 +1,5 @@
-﻿using BiliLite.Helpers;
+﻿using BiliLite.Controls;
+using BiliLite.Helpers;
 using BiliLite.Modules;
 using BiliLite.Modules.Player.Playurl;
 using System;
@@ -20,13 +21,15 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class DownloadPage : BasePage
     {
-        DownloadVM downloadVM;
+        private DownloadVM downloadVM;
+
         public DownloadPage()
         {
             downloadVM = DownloadVM.Instance;
             this.InitializeComponent();
             Title = "下载";
         }
+
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -35,15 +38,16 @@ namespace BiliLite.Pages
                 downloadVM.RefreshDownloaded();
             }
         }
+
         private void listDowned_ItemClick(object sender, ItemClickEventArgs e)
         {
             var data = e.ClickedItem as DownloadedItem;
-            if (data.Epsidoes == null || data.Epsidoes.Count == 0)
+            if (data.Episodes == null || data.Episodes.Count == 0)
             {
                 Utils.ShowMessageToast("没有可以播放的视频");
                 return;
             }
-            if (data.Epsidoes.Count > 1)
+            if (data.Episodes.Count > 1)
             {
                 Pane.DataContext = data;
                 splitView.IsPaneOpen = true;
@@ -58,7 +62,7 @@ namespace BiliLite.Pages
             LocalPlayInfo localPlayInfo = new LocalPlayInfo();
             localPlayInfo.Index = index;
             localPlayInfo.PlayInfos = new List<Controls.PlayInfo>();
-            foreach (var item in data.Epsidoes)
+            foreach (var item in data.Episodes)
             {
                 IDictionary<string, string> subtitles = new Dictionary<string, string>();
                 foreach (var subtitle in item.SubtitlePath)
@@ -137,14 +141,14 @@ namespace BiliLite.Pages
         {
             var data = Pane.DataContext as DownloadedItem;
             var item = e.ClickedItem as DownloadedSubItem;
-            OpenPlayer(data, data.Epsidoes.IndexOf(item));
+            OpenPlayer(data, data.Episodes.IndexOf(item));
         }
 
         private void btnEpisodesPlay_Click(object sender, RoutedEventArgs e)
         {
             var data = Pane.DataContext as DownloadedItem;
             var item = (sender as AppBarButton).DataContext as DownloadedSubItem;
-            OpenPlayer(data, data.Epsidoes.IndexOf(item));
+            OpenPlayer(data, data.Episodes.IndexOf(item));
         }
 
         private async void btnEpisodesDelete_Click(object sender, RoutedEventArgs e)
@@ -160,7 +164,7 @@ namespace BiliLite.Pages
             {
                 var folder = await StorageFolder.GetFolderFromPathAsync(item.Path);
                 await folder.DeleteAsync(StorageDeleteOption.PermanentDelete);
-                data.Epsidoes.Remove(item);
+                data.Episodes.Remove(item);
             }
             catch (Exception ex)
             {
@@ -178,7 +182,7 @@ namespace BiliLite.Pages
         private void btnMenuPlay_Click(object sender, RoutedEventArgs e)
         {
             var data = (sender as MenuFlyoutItem).DataContext as DownloadedItem;
-            if (data.Epsidoes == null || data.Epsidoes.Count == 0)
+            if (data.Episodes == null || data.Episodes.Count == 0)
             {
                 Utils.ShowMessageToast("没有可以播放的视频");
                 return;
@@ -210,7 +214,7 @@ namespace BiliLite.Pages
         private async void btnMenuDetele_Click(object sender, RoutedEventArgs e)
         {
             var data = (sender as MenuFlyoutItem).DataContext as DownloadedItem;
-            var result = await Utils.ShowDialog("删除下载", $"确定要删除《{data.Title}》吗?\r\n目录下共有{data.Epsidoes.Count}个视频,将会被永久删除。");
+            var result = await Utils.ShowDialog("删除下载", $"确定要删除《{data.Title}》吗?\r\n目录下共有{data.Episodes.Count}个视频,将会被永久删除。");
             if (!result)
             {
                 return;
@@ -226,8 +230,6 @@ namespace BiliLite.Pages
                 Utils.ShowMessageToast("目录删除失败，请检查是否文件是否被占用");
                 LogHelper.Log("删除下载视频失败", LogType.FATAL, ex);
             }
-
-
         }
 
         private async void btnMerge_Click(object sender, RoutedEventArgs e)
@@ -245,19 +247,19 @@ namespace BiliLite.Pages
         private void btnMenuOutputFile_Click(object sender, RoutedEventArgs e)
         {
             var data = (sender as MenuFlyoutItem).DataContext as DownloadedItem;
-            if (data.Epsidoes == null || data.Epsidoes.Count == 0)
+            if (data.Episodes == null || data.Episodes.Count == 0)
             {
                 Utils.ShowMessageToast("没有可以导出的视频");
                 return;
             }
-            if (data.Epsidoes.Count > 1)
+            if (data.Episodes.Count > 1)
             {
                 Utils.ShowMessageToast("多集视频，请选择指定集数导出");
                 Pane.DataContext = data;
                 splitView.IsPaneOpen = true;
                 return;
             }
-            OutputFile(data, data.Epsidoes.First());
+            OutputFile(data, data.Episodes.First());
         }
 
         private async void OutputFile(DownloadedItem data, DownloadedSubItem item)
@@ -286,7 +288,6 @@ namespace BiliLite.Pages
                     Utils.ShowMessageToast("转换SRT字幕失败");
                     LogHelper.Log("转换字幕失败", LogType.ERROR, ex);
                 }
-
             }
 
             var savePicker = new Windows.Storage.Pickers.FileSavePicker();
@@ -300,6 +301,151 @@ namespace BiliLite.Pages
             await AppHelper.LaunchConverter(data.Title + "-" + item.Title, item.Paths, file.Path, subtitles, item.IsDash);
         }
 
+        private async void SelectFileButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Create a new FileOpenPicker
+            var picker = new Windows.Storage.Pickers.FileOpenPicker();
+            picker.FileTypeFilter.Add("*");
 
+            // Show the FileOpenPicker dialog
+            var file = await picker.PickSingleFileAsync();
+
+            // If a file was selected, update the UI
+            if (file != null)
+            {
+                // Update the UI with the selected file name
+                AddVideo(file.Name);
+            }
+        }
+
+        private async void GenerateButton_Click(object sender, RoutedEventArgs e)
+        {
+            var title = TitleTextBox.Text;
+            var link = LinkTextBox.Text;
+            var image = ImageTextBox.Text;
+            var video = videos;
+            var subtitle = SubtitleTextBox.Text;
+            var result = new DownloadedItem();
+            result.IsSeason = false;
+            result.Title = title;
+            result.ID = "-1";
+            result.CoverPath = image;
+            result.UpdateTime = DateTime.Now;
+            result.Path = "path";
+            foreach (var v in video)
+            {
+                var subitem = new DownloadedSubItem();
+                subitem.AVID = "-2";
+                subitem.CID = "-3";
+                subitem.Title = v;
+                subitem.IsDash = false;
+                subitem.QualityID = 1024;
+                subitem.QualityName = "普通";
+                subitem.SubtitlePath = new List<DownloadSubtitleInfo>
+                {
+                    new DownloadSubtitleInfo() { Name = subtitle, Url = subtitle }
+                };
+                result.Episodes.Add(subitem);
+            }
+        }
+
+        public List<string> videos = new List<string>();
+
+        private async void AddVideo(string videoPath)
+        {
+            // Add the video to the list
+            videos.Add(videoPath);
+
+            // Refresh the ListView
+            VideosListView.ItemsSource = null;
+            VideosListView.ItemsSource = videos;
+        }
+
+        private void DeleteButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Get the index of the selected item
+            var button = sender as Button;
+            var item = button.DataContext;
+            var index = VideosListView.Items.IndexOf(item);
+
+            // Remove the video from the list
+            videos.RemoveAt(index);
+
+            // Refresh the ListView
+            VideosListView.ItemsSource = null;
+            VideosListView.ItemsSource = videos;
+        }
+
+        private void DeleteSubtitleButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Get the index of the selected item
+            var button = sender as Button;
+            var item = button.DataContext;
+            var index = VideosListView.Items.IndexOf(item);
+
+            // Remove the video from the list
+            videos.RemoveAt(index);
+
+            // Refresh the ListView
+            VideosListView.ItemsSource = null;
+            VideosListView.ItemsSource = videos;
+        }
+
+
+    private async void SelectSubtitleButton_Click(object sender, RoutedEventArgs e) { }
+        private async void btnOpen_Click(object sender, RoutedEventArgs e)
+        {
+            // Create a new FileOpenPicker
+            var picker = new Windows.Storage.Pickers.FileOpenPicker();
+
+            // Add common video file types to the file picker
+            picker.FileTypeFilter.Add("*");
+
+            // Show the FileOpenPicker dialog
+            var file = await picker.PickSingleFileAsync();
+
+            // If a file was selected, play it in the MediaPlayer
+            if (file != null)
+            {
+                PlaySingleFile(file);
+            }
+        }
+
+        private void PlaySingleFile(StorageFile file)
+        {
+            var localPlayInfo = new LocalPlayInfo();
+            localPlayInfo.PlayInfos = new List<Controls.PlayInfo>();
+            var info = new BiliPlayUrlInfo();
+            var newinfo = new Controls.LocalPlayInfo();
+            var playinfo = new PlayInfo();
+            playinfo.play_mode = VideoPlayType.Download;
+            playinfo.ep_id = file.Name;
+            playinfo.cid = file.Name.GetHashCode().ToString();
+            playinfo.LocalPlayInfo = newinfo;
+            playinfo.title = file.Name;
+            playinfo.is_interaction = false;
+            newinfo.Info = info;
+            newinfo.DanmakuPath = "";
+            newinfo.Subtitles = new Dictionary<string, string>();
+            newinfo.Quality = "?";
+            info.QualityName = "?";
+            info.QualityID = -1;
+            localPlayInfo.PlayInfos.Add(playinfo);
+            info.PlayUrlType = BiliPlayUrlType.DASH;
+            info.DashInfo = new BiliDashPlayUrlInfo();
+            info.DashInfo.Video = new BiliDashItem()
+            {
+                Url = file.Path,
+                file = file
+            };
+
+            MessageCenter.NavigateToPage(this, new NavigationInfo()
+            {
+                icon = Symbol.Play,
+                page = typeof(LocalPlayerPage),
+                parameters = localPlayInfo,
+                title = file.Name
+            });
+        }
     }
 }
