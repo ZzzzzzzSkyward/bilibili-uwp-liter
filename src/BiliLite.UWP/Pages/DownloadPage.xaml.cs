@@ -320,6 +320,8 @@ namespace BiliLite.Pages
 
         private async void GenerateButton_Click(object sender, RoutedEventArgs e)
         {
+            Utils.ShowMessageToast("该功能尚未开发");
+            return;
             var title = TitleTextBox.Text;
             var link = LinkTextBox.Text;
             var image = ImageTextBox.Text;

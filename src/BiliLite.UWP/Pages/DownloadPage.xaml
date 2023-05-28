@@ -26,7 +26,7 @@
             <Pivot.RightHeader>
                 <Grid Background="{StaticResource PivotHeaderBackground}">
                     <Button x:Name="btnMerge" Click="btnMerge_Click" Margin="8 0" FontSize="12" Visibility="Collapsed">合并视频</Button>
-                    <Button x:Name="btnOpen" Click="btnOpen_Click" Margin="8 0" FontSize="12" >打开视频</Button>
+                    <Button x:Name="btnOpen" Click="btnOpen_Click" Margin="8 0" FontSize="12" ToolTipService.ToolTip="字幕和弹幕需要手动加载">播放本地视频</Button>
                 </Grid>
             </Pivot.RightHeader>
             <PivotItem Margin="0">

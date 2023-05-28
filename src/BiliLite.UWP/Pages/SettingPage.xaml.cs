@@ -250,7 +250,7 @@ namespace BiliLite.Pages
                 });
             }); 
             //背景动态
-            swShowBGOnDynamic.IsOn = SettingHelper.GetValue<bool>("dontloadbanner", false);
+            swShowBGOnDynamic.IsOn = SettingHelper.GetValue<bool>("showbgondynamic", false);
             swShowBGOnDynamic.Loaded += new RoutedEventHandler((sender, e) =>
             {
                 swShowBGOnDynamic.Toggled += new RoutedEventHandler((obj, args) =>

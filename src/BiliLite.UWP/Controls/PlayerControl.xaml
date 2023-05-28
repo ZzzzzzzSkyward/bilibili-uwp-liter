@@ -333,6 +333,7 @@
                                         <Button x:Name="DanmuSettingUpdateDanmaku" Click="DanmuSettingUpdateDanmaku_Click" Grid.Column="1" Foreground="White" >更新弹幕</Button>
                                         <TextBlock VerticalAlignment="Center" Margin="8 0 0 0">弹幕数量:<Run x:Name="TxtDanmuCount"/></TextBlock>
                                     </StackPanel>
+                                    <Button x:Name="ImportDanmaku" Click="ImportDanmaku_Click" Foreground="White" Margin="0 8 0 0">导入弹幕</Button>
                                     <Grid Margin="0 8 0 0">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition/>
@@ -512,6 +513,7 @@
                             </PivotItem.Header>
                             <ScrollViewer VerticalScrollBarVisibility="Auto">
                                 <StackPanel>
+                                    <Button x:Name="ImportSubtitle" Click="ImportSubtitle_Click" Margin="0 0 8 0">导入字幕</Button>
                                     <TextBlock Margin="0 8">字幕加粗</TextBlock>
                                     <ToggleSwitch x:Name="SubtitleSettingBold" OnContent="开启" OffContent="关闭"></ToggleSwitch>
                                     <TextBlock Margin="0 8">字幕颜色</TextBlock>
