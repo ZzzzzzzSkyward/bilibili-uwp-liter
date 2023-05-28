@@ -2182,10 +2182,38 @@ namespace BiliLite.Controls
         {
             EpisodeList.SelectedIndex = EpisodeList.SelectedIndex + 1;
         }
-
+        private void KeepScreenOn(bool value = true)
+        {
+            try
+            {
+                if (dispRequest != null)
+                {
+                    if (value)
+                    {
+                        dispRequest.RequestActive();
+                    }
+                    else
+                    {
+                        dispRequest.RequestRelease();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+            }
+        }
         private void Player_PlayStateChanged(object sender, PlayState e)
         {
             BottomImageBtnPlay.Visibility = Visibility.Collapsed;
+            switch (e)
+            {
+                case PlayState.Playing:
+                    KeepScreenOn(true);
+                    break;
+                default:
+                    KeepScreenOn(false);
+                    break;
+            }
             switch (e)
             {
                 case PlayState.Loading:
