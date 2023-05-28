@@ -1,4 +1,4 @@
-﻿# 原版说明
+# 原版说明
 
 此页面可能更新不及时，请到[https://b.nsapps.cn/#/docs/help](https://b.nsapps.cn/#/docs/help)查阅最新内容
 
@@ -7,7 +7,6 @@
 此应用是哔哩哔哩第三方UWP客户端！第三方客户端！第三方客户端！第三方客户端！
 
 使用遇到问题，请先阅读以下内容，如果以下内容无法解决你的问题，请发送邮件至biliuwp@iill.moe
-
 
 ### 权限说明
 
@@ -42,7 +41,6 @@
 * 如果你的视频编码选择了HEVC，请检查是否安装了 [HEVC扩展](ms-windows-store://pdp/?productid=9n4wgh0z6vhq)
 
 * 如果你的视频编码选择了AV1，请检查是否安装了[AV1扩展](ms-windows-store://pdp/?productid=9MVZQVXJBQ9V)，同时部分清晰度可能需要HEVC扩展
-
 
 ### 播放视频掉帧或卡死
 
@@ -142,32 +140,4 @@ Webp图片扩展安装地址:[ms-windows-store://pdp/?productid=9PG2DK419DRG](ms
 
 [点击打开日志存放目录](OpenLog)
 
-## 更新说明
-
-使用VS2022，Win10 x64 21H2版本升级了所有依赖。最低版本18362，但是17763可能也行。
-
-启用亚克力背景。
-
-签名换了一个，到2024年过期。
-
-包名换了一个，版本号改了。
-
-## 已知bug
-
-- 无法使用密码、手机登录。所以只能二维码登录或者手动在浏览器里登录。
-
-- 无法合并视频，因为没访问权限
-
-## 下载
-
-看release
-
-## 其他fork
-
-https://github.com/ywmoyue/biliuwp-lite
-
-提供17763版本 https://github.com/ZzzzzzzSkyward/biliuwp-lite-fix
-
-## 功能建议
-
-去[ywmoyue](https://github.com/ywmoyue/biliuwp-lite)那边提交
+# 
