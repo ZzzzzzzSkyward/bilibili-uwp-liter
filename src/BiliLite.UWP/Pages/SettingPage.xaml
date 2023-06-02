@@ -37,11 +37,11 @@
 								<ComboBox.Items>
 									<ComboBoxItem>跟随系统</ComboBoxItem>
 									<ComboBoxItem>浅色</ComboBoxItem>
-									<ComboBoxItem>深色</ComboBoxItem>
-									<ComboBoxItem>透明深色</ComboBoxItem>
-									<ComboBoxItem>透明浅色</ComboBoxItem>
-								</ComboBox.Items>
+                                    <ComboBoxItem>深色</ComboBoxItem>
+                                </ComboBox.Items>
 							</ComboBox>
+                            <HyperlinkButton Content="请自行修改DefaultTheme.xaml" Click="OpenTheme_Click"></HyperlinkButton>
+                            <controls:Expander Header="示例主题" Content="" x:Name="DefaultThemeText"></controls:Expander>
 						</StackPanel>
 						<StackPanel x:Name="Color" Margin="0 0 0 8" Visibility="Collapsed">
 							<TextBlock  Margin="0 8"  FontSize="16">颜色</TextBlock>
@@ -334,13 +334,16 @@
 							<ToggleSwitch Margin="8 8 0 8"  x:Name="EnableLog" OnContent="打开" OffContent="关闭" VerticalAlignment="Center"></ToggleSwitch>
 						</StackPanel>
 						<TextBox Visibility="{x:Bind EnableLog.IsOn}" x:Name="logTextBox" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" />
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="显示accesskey" Click="ShowTokenButton_Click"/>
+                        <TextBox Text="***********" x:Name="TokenTextBox"/>
+                            <TextBlock>⚠用于b站登录，请勿泄露给他人</TextBlock>
+                        </StackPanel>
 						<StackPanel Orientation="Horizontal">
 							<TextBlock Margin="0 16 0 8" FontSize="16">参数</TextBlock>
 							<Button Margin="8 8 0 0" x:Name="ApplyAPI" Click="ApplyAPI_Click" VerticalAlignment="Center">修改</Button>
 						</StackPanel>
-						<TextBlock Margin="0 16 0 8" FontSize="16">SESSDATA</TextBlock>
-						<TextBox Margin="0 0 0 8" MinWidth="200" PlaceholderText="请输入SESSDATA"></TextBox>
-						<TextBlock Margin="0 16 0 8" FontSize="16">APPKEY</TextBlock>
+                        <TextBlock Margin="0 16 0 8" FontSize="16">APPKEY</TextBlock>
 						<controls1:MarkdownTextBlock x:Name="dbginfo" Background="{ThemeResource TransparentBackground}" Padding="16" LinkClicked="txtHelp_LinkClicked" IsTextSelectionEnabled="True" ></controls1:MarkdownTextBlock>
 						<StackPanel Margin="0 0 8 0">
 							<TextBlock FontWeight="Bold">android:</TextBlock>

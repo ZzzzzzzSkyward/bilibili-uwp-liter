@@ -848,10 +848,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <Page Include="Themes\Pink.xaml">
-      <SubType>Designer</SubType>
+    <Content Include="Themes\DefaultTheme.xaml">
       <Generator>MSBuild:Compile</Generator>
-    </Page>
+      <SubType>Designer</SubType>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX">

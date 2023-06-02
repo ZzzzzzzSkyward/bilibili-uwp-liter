@@ -26,6 +26,7 @@
                     <SolidColorBrush x:Key="CardStrokeColorDefaultBrush" Color="Transparent" />
                     <SolidColorBrush x:Key="TabViewBorderBrush" Color="Transparent"/>
                 </ResourceDictionary>
+                <ResourceDictionary Source="ms-appx:///Themes/DefaultTheme.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
@@ -71,56 +72,6 @@
             TintOpacity="0.5"
             TintLuminosityOpacity="0.7"
             FallbackColor="#000000"/>
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="Dark2">
-                    <Color x:Key="TopPaneBackground">#003B3B3B</Color>
-                    <Color x:Key="HighLightTextColor">#fff47bcf</Color>
-                    <Color x:Key="HighLightColor">#ffa47bcf</Color>
-                    <Color x:Key="TextColor">#ffFFFFFF</Color>
-                    <Color x:Key="SystemColorHighlightColor">#5000407a</Color>
-                    <Color x:Key="CardColor">#00000000</Color>
-                    <Color x:Key="ForegroundTextColor">#dddddd</Color>
-                    <Color x:Key="ForegroundGridColor">#dddddd</Color>
-                    <Color x:Key="ForegroundBackColor">#555555</Color>
-                    <AcrylicBrush x:Key="TransparentBackground"
-            BackgroundSource="HostBackdrop"
-            TintColor="#000000"
-            TintOpacity="0.5"
-            TintLuminosityOpacity="0.7"
-            FallbackColor="#000000"/>
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="TransparentDark">
-                    <Color x:Key="TopPaneBackground">#003B3B3B</Color>
-                    <Color x:Key="HighLightTextColor">#fff47bcf</Color>
-                    <Color x:Key="HighLightColor">#ffa47bcf</Color>
-                    <Color x:Key="TextColor">#ffFFFFFF</Color>
-                    <Color x:Key="SystemColorHighlightColor">#5000407a</Color>
-                    <Color x:Key="CardColor">#00000000</Color>
-                    <Color x:Key="ForegroundTextColor">#dddddd</Color>
-                    <Color x:Key="ForegroundGridColor">#dddddd</Color>
-                    <Color x:Key="ForegroundBackColor">#555555</Color>
-                    <AcrylicBrush x:Key="TransparentBackground"
-            BackgroundSource="HostBackdrop"
-            TintColor="#000000"
-            TintOpacity="1"
-            TintLuminosityOpacity="1"
-            FallbackColor="#000000"/>
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="TransparentLight">
-                    <Color x:Key="TopPaneBackground">#003B3B3B</Color>
-                    <Color x:Key="HighLightTextColor">#fff47bcf</Color>
-                    <Color x:Key="HighLightColor">#ffa47bcf</Color>
-                    <Color x:Key="TextColor">#ffFFFFFF</Color>
-                    <Color x:Key="SystemColorHighlightColor">#5000407a</Color>
-                    <Color x:Key="CardColor">#00000000</Color>
-                    <Color x:Key="ForegroundTextColor">#dddddd</Color>
-                    <Color x:Key="ForegroundGridColor">#dddddd</Color>
-                    <Color x:Key="ForegroundBackColor">#555555</Color>
-                    <AcrylicBrush x:Key="TransparentBackground"
-            BackgroundSource="HostBackdrop"
-            TintColor="#ffffff"
-            TintOpacity="0"
-            FallbackColor="#ffffff"/>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
            

@@ -149,6 +149,8 @@ namespace BiliLite.Modules
             }
            
         }
+        //TODO防止页面无限调用此方法
+
         public async void LoadMore()
         {
             if (Items == null || Items.Count == 0)

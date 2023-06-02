@@ -4,6 +4,7 @@ using BiliLite.Modules;
 using FFmpegInteropX;
 using Microsoft.Toolkit.Uwp.Helpers;
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
@@ -91,7 +92,7 @@ namespace BiliLite
         /// <param name="e">有关启动请求和过程的详细信息。</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
-          
+            LoadTheme();
             Navigation(e.Arguments,e.PrelaunchActivated);
             
         }
@@ -293,6 +294,20 @@ namespace BiliLite
             }
             catch (Exception ex) { }
             deferral.Complete();
+        }
+        public string ThemeXamlPath { get; set; } = "DefaultTheme.xaml";
+        private void LoadTheme()
+        {
+            var themeUri = new Uri($"ms-appx:///Themes/{ThemeXamlPath}", UriKind.Absolute);
+            var themeDict = new ResourceDictionary();
+            themeDict.Source = themeUri;
+            if (themeDict.ContainsKey("Light"))
+            {
+                var themeDictionaries = Resources.ThemeDictionaries;
+                themeDictionaries.Clear();
+                themeDictionaries.Add("Light", themeDict["Light"]);
+                themeDictionaries.Add("Dark", themeDict["Dark"]);
+            }
         }
     }
 }
