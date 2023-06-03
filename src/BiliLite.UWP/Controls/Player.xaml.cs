@@ -1743,7 +1743,7 @@ namespace BiliLite.Controls
                 _ffmpegConfig.FFmpegOptions.Add("referer", referer);
             }
 
-            _ffmpegConfig.VideoDecoderMode = passthrough ? VideoDecoderMode.ForceSystemDecoder : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+            _ffmpegConfig.VideoDecoderMode = passthrough ? VideoDecoderMode.Automatic : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
             return _ffmpegConfig;
         }
 
