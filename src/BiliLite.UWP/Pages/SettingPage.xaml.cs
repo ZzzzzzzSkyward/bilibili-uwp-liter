@@ -270,10 +270,11 @@ namespace BiliLite.Pages
         }
         private void LoadDefaultThemeText()
         {
-            DefaultThemeText.Content = @"<Color x:Key=""HighLightTextColor"">#d0318c</Color>
+            DefaultThemeText.Content = @" <Color x:Key=""HighLightTextColor"">#d0318c</Color>
 <Color x:Key=""TopPaneBackground"">#00F7F7F7</Color>
 <Color x:Key=""HighLightColor"">#ec407a</Color>
 <Color x:Key=""TextColor"">#CC000000</Color>
+<Color x:Key=""DefaultTextColor"">#CC000000</Color>
 <Color x:Key=""SystemColorHighLightColor"">#ec407a</Color>
 <Color x:Key=""CardColor"">#00FFFFFF</Color>
 <Color x:Key=""ForegroundGridColor"">#aaaaaa</Color>
@@ -284,7 +285,13 @@ namespace BiliLite.Pages
 <Color x:Key=""SolidTransparentBackground"">#00ffffff</Color>
 <Color x:Key=""SolidHalfTransparentBackground"">#a0ffffff</Color>
 <AcrylicBrush x:Key=""TransparentLayer"" TintColor=""White"" TintOpacity=""0.1"" TintLuminosityOpacity=""0.5"" FallbackColor=""#a0ffffff"" BackgroundSource=""Backdrop""></AcrylicBrush>
-<AcrylicBrush x:Key=""TransparentBackground"" BackgroundSource=""HostBackdrop"" TintColor=""#ffffff"" TintOpacity=""0.5"" TintLuminosityOpacity=""0.5"" FallbackColor=""#ffffff"" />";
+<AcrylicBrush x:Key=""TransparentBackground""
+BackgroundSource=""HostBackdrop""
+TintColor=""#ffffff""
+TintOpacity=""0.5""
+TintLuminosityOpacity=""0.5""
+FallbackColor=""#ffffff"" />
+";
         }
         private void LoadPlayer()
         {

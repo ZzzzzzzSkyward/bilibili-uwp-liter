@@ -279,8 +279,8 @@
 						<ToggleSwitch x:Name="swPlayerSettingAutoFullScreen" ></ToggleSwitch>
 						<TextBlock  Margin="0 16 0 8" FontSize="16">自动铺满窗口</TextBlock>
 						<ToggleSwitch x:Name="swPlayerSettingAutoFullWindows" ></ToggleSwitch>
-						<TextBlock  Margin="0 16 0 8" FontSize="16">双击全屏(默认双击暂停)</TextBlock>
-						<ToggleSwitch x:Name="swPlayerSettingDoubleClickFullScreen" ></ToggleSwitch>
+						<TextBlock  Margin="0 16 0 8" FontSize="16">双击动作</TextBlock>
+						<ToggleSwitch x:Name="swPlayerSettingDoubleClickFullScreen" OnContent="全屏" OffContent="暂停"></ToggleSwitch>
 						<TextBlock  Margin="0 16 0 8" FontSize="16">默认打开AI字幕</TextBlock>
 						<ToggleSwitch  x:Name="swPlayerSettingAutoOpenAISubtitle"></ToggleSwitch>
 						<TextBlock>⚠部分自动生成的AI字幕会与视频自带字幕冲突</TextBlock>

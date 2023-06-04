@@ -443,7 +443,7 @@ namespace BiliLite.Modules
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<JObject>>();
-                    if (data.success)
+                    if (data!=null&&data.success)
                     {
 
                         var result = JsonConvert.DeserializeObject<ObservableCollection<SearchAnimeItem>>(data.data["result"]?.ToString() ?? "[]");

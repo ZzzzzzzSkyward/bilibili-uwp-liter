@@ -492,7 +492,7 @@ namespace BiliLite.Helpers
                     var highLightColor = (Color)t[name];
                     return new SolidColorBrush(highLightColor);
                 }
-                return new SolidColorBrush(Colors.Transparent);
+                return GetBrush("TextColor");
             }
             else
             {
