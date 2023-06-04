@@ -9,7 +9,7 @@
     xmlns:danmaku="using:NSDanmaku.Controls"
     xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls"
     mc:Ignorable="d"
-    xmlns:fa="using:FontAwesome5" xmlns:player="using:BiliLite.Modules.Player"
+    xmlns:fa="using:FontAwesome5" xmlns:player="using:BiliLite.Modules.Player" xmlns:ani="using:Microsoft.Toolkit.Uwp.UI.Animations"
     d:DesignHeight="800"
     d:DesignWidth="1000">
     <UserControl.Resources>
@@ -558,6 +558,33 @@
                                 </StackPanel>
                             </ScrollViewer>
                         </PivotItem>
+                        <PivotItem Foreground="White">
+                            <PivotItem.Header>
+                                <TextBlock Foreground="White" FontSize="18">快捷键</TextBlock>
+                            </PivotItem.Header>
+                            <RichTextBlock TextWrapping="Wrap" TextIndent="1" FontSize="20">
+                                <Paragraph TextAlignment="Left">
+                                    按键      操作</Paragraph>
+                                <Paragraph>space     播放/暂停</Paragraph>
+                                <Paragraph>left/right进度，ctrl=0.5,none=3,shift=30
+                                </Paragraph>
+                                <Paragraph>up/down   音量</Paragraph>
+                                <Paragraph>esc       退出全屏                 </Paragraph>
+<Paragraph>f8/t      小窗                     </Paragraph>
+<Paragraph>f12/w/f11/f/enter     全屏         </Paragraph>
+<Paragraph>f10       录制                     </Paragraph>
+<Paragraph>o/p  跳过op=90秒                   </Paragraph>
+<Paragraph>f9/d      开关弹幕                 </Paragraph>
+<Paragraph>z/n       上一p                    </Paragraph>
+<Paragraph>x/m       下一p                    </Paragraph>
+<Paragraph>f1/f2     速度                     </Paragraph>
+<Paragraph>f3/v      静音/100音量             </Paragraph>
+<Paragraph>f4/ctrl+s        下载              </Paragraph>
+<Paragraph>f5        刷新                     </Paragraph>
+<Paragraph>f7        [系统使用]               </Paragraph>
+                                <Paragraph>长按鼠标左键      快进3倍</Paragraph>
+                            </RichTextBlock>
+                        </PivotItem>
                     </Pivot>
                 </Grid>
             </SplitView.Pane>
@@ -584,6 +611,15 @@
                 <Grid x:Name="BrightnessShield" Tapped="Grid_Tapped" Background="#99000000" Opacity="0"></Grid>
                 <Border x:Name="ToolTip" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="8" Padding="16" Background="#CCFFFFFF">
                     <TextBlock x:Name="TxtToolTip" Foreground="Black" FontSize="20" Text=""></TextBlock>
+                    <ani:Implicit.ShowAnimations>
+                        <ani:OpacityAnimation Duration="0:0:0.5" From="0.0" To="1.0" EasingMode="EaseOut">
+                        </ani:OpacityAnimation>
+                    </ani:Implicit.ShowAnimations>
+                    <ani:Implicit.HideAnimations>
+                        <ani:OpacityAnimation Duration="0:0:0.5"  To="0" EasingMode="EaseOut"></ani:OpacityAnimation>
+                    </ani:Implicit.HideAnimations>
+                    <ani:Implicit.Animations>
+                    </ani:Implicit.Animations>
                 </Border>
                 <Grid>
                     <StackPanel VerticalAlignment="Center" Visibility="{Binding ElementName=Player,Path=Buffering,Mode=OneWay}" x:Name="GridBuffering">

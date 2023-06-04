@@ -333,18 +333,22 @@ namespace BiliLite.Pages
             Frame rootFrame = Window.Current.Content as Frame;
             var _theme = rootFrame.RequestedTheme;
             var savedtheme = ElementTheme.Dark;
+            var apptheme=ApplicationTheme.Dark;
             if (_theme == ElementTheme.Light)
             {
                 savedtheme = ElementTheme.Dark;
+                apptheme = ApplicationTheme.Dark;
             }
             else
             {
                 savedtheme = ElementTheme.Light;
+                apptheme=ApplicationTheme.Light;
             }
             theme = savedtheme;
             SettingHelper.SetValue(SettingHelper.UI.THEME, savedtheme == ElementTheme.Light ? 1 : 2);
             rootFrame.RequestedTheme = savedtheme;
-            App.ExtendAcrylicIntoTitleBar();
+            //App.Current.RequestedTheme = apptheme;//报错
+            //App.ExtendAcrylicIntoTitleBar();
         }
     }
 

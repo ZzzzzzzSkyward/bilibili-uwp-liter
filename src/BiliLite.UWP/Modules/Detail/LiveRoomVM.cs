@@ -69,7 +69,7 @@ namespace BiliLite.Modules
                     Messages.Add(new DanmuMsgModel()
                     {
                         username = message.ToString(),
-                        uname_color = new SolidColorBrush((Color)App.Current.Resources["TextColor"])
+                        uname_color = Utils.GetBrush("TextColor")
                     });
                     break;
                 case MessageType.Online:
@@ -78,14 +78,14 @@ namespace BiliLite.Modules
                 case MessageType.Danmu:
                     {
                         var m = message as DanmuMsgModel;
-                        m.uname_color = new SolidColorBrush((Color)App.Current.Resources["TextColor"]);
+                        m.uname_color = Utils.GetBrush("TextColor");
                     if (m.medalColor != null && m.medalColor != "")
                         {
                             m.ul_color = new SolidColorBrush(Utils.ToColor(m.ulColor));
                         }
                         else
                         {
-                            m.ul_color = new SolidColorBrush((Color)App.Current.Resources["TextColor"]);
+                            m.ul_color = Utils.GetBrush("TextColor");
                         }
                         if (m.medalColor != null && m.medalColor != "")
                         {

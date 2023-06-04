@@ -22,6 +22,7 @@ using System.Runtime.Serialization.Formatters.Binary;
 using System.Runtime.Serialization;
 using Newtonsoft.Json.Linq;
 using System.Net.Http;
+using Windows.UI.Xaml;
 
 namespace BiliLite.Helpers
 {
@@ -477,6 +478,27 @@ namespace BiliLite.Helpers
             }
 
             return u;
+        }
+        public static SolidColorBrush GetBrush(string name)
+        {
+            var themeDictionaries = App.Current.Resources.ThemeDictionaries;
+            var requestedTheme = ((FrameworkElement)Window.Current.Content).RequestedTheme;
+            var themeKey = requestedTheme == ElementTheme.Light ? "Light" : "Dark";
+            if (themeDictionaries.TryGetValue(themeKey, out object theme))
+            {
+                var t =  (ResourceDictionary)theme;
+                if (t.ContainsKey(name))
+                {
+                    var highLightColor = (Color)t[name];
+                    return new SolidColorBrush(highLightColor);
+                }
+                return new SolidColorBrush(Colors.Transparent);
+            }
+            else
+            {
+                // 处理主题字典中未找到指定的键的情况
+                return new SolidColorBrush(Colors.Transparent);
+            }
         }
     }
     public class NewVersion

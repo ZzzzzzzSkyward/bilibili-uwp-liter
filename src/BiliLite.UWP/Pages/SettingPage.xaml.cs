@@ -274,7 +274,7 @@ namespace BiliLite.Pages
 <Color x:Key=""TopPaneBackground"">#00F7F7F7</Color>
 <Color x:Key=""HighLightColor"">#ec407a</Color>
 <Color x:Key=""TextColor"">#CC000000</Color>
-<Color x:Key=""SystemColorHighlightColor"">#ec407a</Color>
+<Color x:Key=""SystemColorHighLightColor"">#ec407a</Color>
 <Color x:Key=""CardColor"">#00FFFFFF</Color>
 <Color x:Key=""ForegroundGridColor"">#aaaaaa</Color>
 <Color x:Key=""ForegroundBorderColor"">#111111</Color>

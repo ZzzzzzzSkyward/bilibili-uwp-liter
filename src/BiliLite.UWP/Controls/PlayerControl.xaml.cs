@@ -374,8 +374,8 @@ namespace BiliLite.Controls
 
         private async void PlayerControl_KeyDown(CoreWindow sender, KeyEventArgs args)
         {
-            var elent = FocusManager.GetFocusedElement();
-            if (elent is TextBox || elent is AutoSuggestBox)
+            var ele = FocusManager.GetFocusedElement();
+            if (ele is TextBox || ele is AutoSuggestBox)
             {
                 args.Handled = false;
                 return;
@@ -384,7 +384,7 @@ namespace BiliLite.Controls
             /*
              * 按键       操作
              * space     播放/暂停
-             * left/right进度，ctrl=0.5,3,shift=30
+             * left/right进度，ctrl=0.5,none=3,shift=30
              * up/down   音量
              * esc       退出全屏
              * f8/t      小窗
@@ -2054,7 +2054,7 @@ namespace BiliLite.Controls
             gestureRecognizer.ManipulationCompleted += OnManipulationCompleted;
         }
 
-        private void OnHolding(GestureRecognizer sender, HoldingEventArgs args)
+        private async void OnHolding(GestureRecognizer sender, HoldingEventArgs args)
         {
             if (Player.PlayState != PlayState.Playing)
                 return;
@@ -2066,15 +2066,15 @@ namespace BiliLite.Controls
                         HandlingHolding = true;
                         TxtToolTip.Text = "3x";
                         ToolTip.Visibility = Visibility.Visible;
-                        ToolTip.Opacity = 0.5;
                         Player.SetRate(3.0d);
+                        await Task.Delay(3000);
+                        ToolTip.Visibility = Visibility.Collapsed;
                         break;
                     }
                 case HoldingState.Completed:
                     {
                         HandlingHolding = false;
                         ToolTip.Visibility = Visibility.Collapsed;
-                        ToolTip.Opacity = 1;
                         Player.SetRate(SettingHelper.GetValue<double>(SettingHelper.Player.DEFAULT_VIDEO_SPEED, 1.0d));
                         break;
                     }
@@ -2082,7 +2082,6 @@ namespace BiliLite.Controls
                     {
                         HandlingHolding = false;
                         ToolTip.Visibility = Visibility.Collapsed;
-                        ToolTip.Opacity = 1;
                         Player.SetRate(SettingHelper.GetValue<double>(SettingHelper.Player.DEFAULT_VIDEO_SPEED, 1.0d));
                         break;
                     }
@@ -2161,8 +2160,11 @@ namespace BiliLite.Controls
             var ps = e.GetIntermediatePoints(null);
             if (ps != null && ps.Count > 0 && HandlingGesture != true)
             {
+                try
+                {
                 gestureRecognizer.ProcessDownEvent(ps[0]);
                 e.Handled = true;
+                }catch(Exception ex) { }
             }
         }
 

@@ -717,11 +717,11 @@ namespace BiliLite.Controls
             {
                 if (action == 0)
                 {
-                    return new SolidColorBrush((Color)Application.Current.Resources["ForegroundTextColor"]);
+                    return Utils.GetBrush("ForegroundTextColor");
                 }
                 else
                 {
-                    return new SolidColorBrush((Color)Application.Current.Resources["HighLightColor"]);
+                    return Utils.GetBrush("HighLightColor");
                 }
             }
         }

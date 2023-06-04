@@ -249,11 +249,11 @@
 						<ComboBox x:Name="swPriorityPlayer" SelectedIndex="0" MinWidth="200">
 							<ComboBox.Items>
 								<ComboBoxItem Content="系统原生播放器" ></ComboBoxItem>
-								<ComboBoxItem Content="FFMpeg软解" ></ComboBoxItem>
-								<ComboBoxItem Content="FFMpeg硬解" ></ComboBoxItem>
+								<ComboBoxItem Content="FFMpeg强制软解" ></ComboBoxItem>
+								<ComboBoxItem Content="FFMpeg自动选择" ></ComboBoxItem>
 							</ComboBox.Items>
 						</ComboBox>
-						<TextBlock>⚠硬解可能导致本地视频播放异常</TextBlock>
+						<TextBlock>⚠如果某个播放器有问题可以换一个试试</TextBlock>
 
 						<TextBlock  Margin="0 16 0 8"  FontSize="16">默认倍速</TextBlock>
 						<ComboBox x:Name="cbVideoSpeed" SelectedIndex="0" MinWidth="200">

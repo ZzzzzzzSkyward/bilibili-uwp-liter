@@ -142,11 +142,12 @@
                             <TextBlock  FontSize="10" VerticalAlignment="Center" HorizontalAlignment="Center" Foreground="White" Text="{x:Bind Path=downloadVM.Downloadings.Count,Mode=OneWay}"></TextBlock>
                         </Border>
                     </Grid>
-                    <AppBarButton x:Name="MenuWatchlater2" Height="48" Width="48" Click="MenuWatchlater_Click" Icon="Play"/>
-                    <AppBarButton x:Name="btnHistory" Height="48" Width="48" Click="MenuHistory_Click" Icon="Clock"/>
-                    <AppBarButton x:Name="btnFavorite" Height="48" Width="48" Click="MenuMyFollow_Click" Icon="OutlineStar"/>
+                    <AppBarButton x:Name="MenuWatchlater2" Height="48" Width="48" Click="MenuWatchlater_Click" Icon="Play" ToolTipService.ToolTip="稍后再看"/>
+                    <AppBarButton x:Name="btnHistory" Height="48" Width="48" Click="MenuHistory_Click" Icon="Clock" ToolTipService.ToolTip="历史"/>
+                    <AppBarButton x:Name="btnFavorite" Height="48" Width="48" Click="MenuMyFollow_Click" Icon="OutlineStar" ToolTipService.ToolTip="收藏"/>
                     <AppBarButton x:Name="btnTheme" Height="48" Width="48" Click="Theme_Click">
                         <fa:FontAwesome Icon="{Binding ThemeIcon, Mode=OneWay}" FontSize="14"></fa:FontAwesome>
+                        <ToolTipService.ToolTip>主题</ToolTipService.ToolTip>
                     </AppBarButton>
                     <AppBarButton x:Name="btnSetting" Height="48" Click="btnSetting_Click" Width="48" Icon="Setting" ></AppBarButton>
                 </StackPanel>
