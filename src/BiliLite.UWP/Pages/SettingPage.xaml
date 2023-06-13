@@ -248,6 +248,7 @@
 						<TextBlock  Margin="0 16 0 8" FontSize="16" >首选播放器</TextBlock>
 						<ComboBox x:Name="swPriorityPlayer" SelectedIndex="0" MinWidth="200">
 							<ComboBox.Items>
+								<ComboBoxItem Content="灵活选择" ></ComboBoxItem>
 								<ComboBoxItem Content="系统原生播放器" ></ComboBoxItem>
 								<ComboBoxItem Content="FFMpeg强制软解" ></ComboBoxItem>
 								<ComboBoxItem Content="FFMpeg自动选择" ></ComboBoxItem>

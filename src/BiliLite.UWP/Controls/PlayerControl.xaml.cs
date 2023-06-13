@@ -1473,7 +1473,7 @@ namespace BiliLite.Controls
             if (info.PlayUrlType == BiliPlayUrlType.DASH)
             {
                 //如果设置是系统播放器则优先系统
-                var priority = SettingHelper.GetValue<int>("playertype", 0) == 0;
+                var priority = SettingHelper.GetValue<int>("playertype", 0) == 1;
                 if (priority)
                 {
                     result = await Player.PlayDashUseNative(info.DashInfo, "", "", position: _position, isLocal: true);
