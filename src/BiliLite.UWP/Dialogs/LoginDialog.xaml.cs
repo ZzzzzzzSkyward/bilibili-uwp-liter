@@ -138,7 +138,7 @@ namespace BiliLite.Dialogs
             {
                 var access = Regex.Match(args.Uri.AbsoluteUri, "access_key=(.*?)&").Groups[1].Value;
                 var mid = Regex.Match(args.Uri.AbsoluteUri, "mid=(.*?)&").Groups[1].Value;
-                await loginVM.account.SaveLogin(access, "", 0, long.Parse(mid),null,null);
+                await loginVM.account.SaveLogin(access, "", 1000000, long.Parse(mid),null,null);
                 this.Hide();
                 return;
             }
@@ -206,7 +206,7 @@ namespace BiliLite.Dialogs
         {
             var accesskey = ManualResult.Text;
             var mid = long.Parse(UID.Text);
-            loginVM.account.SaveLogin(accesskey, "", 0, mid, null, null);
+            loginVM.account.SaveLogin(accesskey, "", 1000000, mid, null, null);
         }
         static string thirdurl = "https://passport.bilibili.com/login/app/third";
         static string targeturl = "https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png";
