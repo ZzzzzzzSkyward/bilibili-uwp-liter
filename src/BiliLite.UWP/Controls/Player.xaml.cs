@@ -1592,7 +1592,7 @@ namespace BiliLite.Controls
                     info += $"Video Codec: {_ffmpegMSSVideo.CurrentVideoStream?.CodecName}\r\n";
                     info += $"Video Bitrate: {_ffmpegMSSVideo.CurrentVideoStream?.Bitrate}\r\n";
                     info += $"Average Frame: {((double)_ffmpegMSSVideo.CurrentVideoStream?.FramesPerSecond).ToString("0.0")}\r\n";
-                    if (PlayMediaType == PlayMediaType.Dash)
+                    if (PlayMediaType == PlayMediaType.Dash&&_ffmpegMSSAudio!=null)
                     {
                         info += $"Audio Codec: {_ffmpegMSSAudio.AudioStreams[0]?.CodecName}\r\n";
                         info += $"Audio Bitrate: {_ffmpegMSSAudio.AudioStreams[0]?.Bitrate}";

@@ -222,6 +222,15 @@ namespace BiliLite.Api
             wbitoken_current.sub_url = subKey;
             return (imgKey, subKey);
         }
+        public static async  Task<bool> LoadWbiKey()
+        {
+            if (wbitoken_current.img_url == null)
+            {
+            await GetWbiKeys();
+                return true;
+            }
+            return false;
+        }
 
         private static string GetMixinKey(string origin)
         {

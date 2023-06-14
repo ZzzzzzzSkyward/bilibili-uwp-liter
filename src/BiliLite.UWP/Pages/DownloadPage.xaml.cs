@@ -449,5 +449,10 @@ namespace BiliLite.Pages
                 title = file.Name
             });
         }
+
+        private void ImageFileButton_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

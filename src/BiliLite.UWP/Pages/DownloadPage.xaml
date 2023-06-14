@@ -83,7 +83,7 @@
                                                         <ColumnDefinition Width="Auto"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock VerticalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding Title}"></TextBlock>
-                                                    <AppBarButton ToolTipService.ToolTip="导出视频"  Click="btnEpisodesOutput_Click" Width="40" Height="40" Grid.Column="1" Icon="Save"></AppBarButton>
+                                                    <!--AppBarButton ToolTipService.ToolTip="导出视频"  Click="btnEpisodesOutput_Click" Width="40" Height="40" Grid.Column="1" Icon="Save"></AppBarButton-->
                                                     <AppBarButton Visibility="Collapsed" Click="btnEpisodesPlay_Click" Width="40" Height="40" Grid.Column="2" Icon="Play"></AppBarButton>
                                                     <AppBarButton ToolTipService.ToolTip="打开目录" Click="btnEpisodesFolder_Click" Width="40" Height="40" Grid.Column="3" >
                                                         <AppBarButton.Icon>
@@ -123,7 +123,7 @@
                                             <Grid.ContextFlyout>
                                                 <MenuFlyout>
                                                     <MenuFlyoutItem x:Name="btnMenuPlay" Click="btnMenuPlay_Click" Icon="Play" Text="播放"></MenuFlyoutItem>
-                                                    <MenuFlyoutItem x:Name="btnMenuOutputFile" Click="btnMenuOutputFile_Click" Icon="Save" Text="导出视频"></MenuFlyoutItem>
+                                                    <!--MenuFlyoutItem x:Name="btnMenuOutputFile" Click="btnMenuOutputFile_Click" Icon="Save" Text="导出视频"></MenuFlyoutItem-->
                                                     <MenuFlyoutItem x:Name="btnMenuDetail" Click="btnMenuDetail_Click" Icon="NewWindow" Text="打开详情"></MenuFlyoutItem>
                                                     <MenuFlyoutItem x:Name="btnMenuFolder" Click="btnMenuFolder_Click" Text="打开目录">
                                                         <MenuFlyoutItem.Icon>
@@ -269,13 +269,15 @@
 				</PivotItem.Header>
 				<StackPanel>
 
-					<TextBlock Text="视频标题" />
-					<TextBox  x:Name="TitleTextBox" />
-					<TextBlock Text="视频链接" />
-					<TextBox  x:Name="LinkTextBox" />
-					<TextBlock  Text="预览图链接" />
-					<TextBox  x:Name="ImageTextBox" />
-					<TextBlock  Text="视频文件" />
+					<TextBlock FontSize="15" Margin="0 8 0 0" Text="视频标题" />
+					<TextBox  FontSize="15" Margin="0 8 0 0" x:Name="TitleTextBox" />
+					<TextBlock FontSize="15" Margin="0 8 0 0" Text="视频链接（b站网址）" />
+					<TextBox  FontSize="15" Margin="0 8 0 0" x:Name="LinkTextBox" />
+					<TextBlock  FontSize="15" Margin="0 8 0 0" Text="预览图链接" />
+					<TextBox  FontSize="15" Margin="0 8 0 0" x:Name="ImageTextBox" />
+					<TextBlock  FontSize="15" Margin="0 8 0 0" Text="预览图文件" />
+					<Button  FontSize="15" Margin="0 8 0 0" x:Name="ImageFileButton" Click="ImageFileButton_Click"/>
+                    <TextBlock  FontSize="15" Margin="0 8 0 0" Text="视频文件" />
 					<Button  Content="选择视频文件" x:Name="SelectFileButton" Click="SelectFileButton_Click" />
 					<ListView x:Name="VideosListView">
 						<ListView.ItemTemplate>
@@ -287,11 +289,11 @@
 							</DataTemplate>
 						</ListView.ItemTemplate>
 					</ListView>
-					<TextBlock  Text="字幕文件" />
-					<Button  Content="选择字幕文件" x:Name="SelectSubtitleButton" Click="SelectSubtitleButton_Click" />
-					<TextBlock x:Name="SubtitleTextBox"/>
-					<Button Content="生成" x:Name="GenerateButton" Click="GenerateButton_Click" />
-					<TextBlock x:Name="GenerateResult"></TextBlock>
+                    <TextBlock FontSize="15" Margin="0 8 0 0" Text="字幕文件" />
+                    <TextBox IsEnabled="False" FontSize="15" Margin="0 8 0 0" Text="将自动读取【视频文件名.xml】或【danmaku.xml】"/>
+                    <TextBlock FontSize="15" Margin="0 8 0 0" x:Name="SubtitleTextBox"/>
+                    <Button FontSize="15" Margin="0 8 0 0"  Content="生成" x:Name="GenerateButton" Click="GenerateButton_Click" />
+                    <TextBlock FontSize="15" Margin="0 8 0 0" x:Name="GenerateResult"></TextBlock>
 				</StackPanel>
 			</PivotItem>
 			</Pivot>
