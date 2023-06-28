@@ -30,13 +30,13 @@ namespace BiliLite.Api
         /// <returns></returns>
         public ApiModel Comment(string oid, CommentSort sort,int pn, int type, int ps = 30)
         {
-            //string csrf = ApiHelper.GetCSRF(true);
+            string csrf = ApiHelper.GetCSRF(true);
+            var mode = sort == CommentSort.Hot ? 3 : 2;
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}{ApiHelper.readcomment}",
-                parameter =  $"oid={oid}&plat=2&pn={pn}&ps={ps}&sort={(int)sort}&type={type}"
-                //{csrf}",不需要
+                parameter = $"oid={oid}&next={pn}&ps={ps}&mode={mode}&type={type}&csrf={csrf}",
             };
             //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;

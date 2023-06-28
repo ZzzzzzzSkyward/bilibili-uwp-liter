@@ -63,7 +63,7 @@ namespace BiliLite.Api
         public static string default_api2 = "/x/v2";
         public static string api2 = "/x/v2";
         //api
-        public static string readcomment = "/reply";
+        public static string readcomment = "/reply/main";
         public static string comment = "/reply/add";
         public static string replycomment = "/reply/add";
         public static string replyreply = "/reply/reply";
