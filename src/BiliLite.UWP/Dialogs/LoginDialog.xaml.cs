@@ -109,7 +109,7 @@ namespace BiliLite.Dialogs
         private void TryRelogin(string uri)
         {
             //手动
-            if(loginVM.LoginType == 2)
+            if(loginVM.LoginType == 3)
             {
                 Utils.ShowMessageToast(uri);
                 ManualLogin();
@@ -202,11 +202,12 @@ namespace BiliLite.Dialogs
             Utils.ShowMessageToast(errorMessage);
         }
 
-        private void ManualLogin()
+        private async void ManualLogin()
         {
             var accesskey = ManualResult.Text;
             var mid = long.Parse(UID.Text);
-            loginVM.account.SaveLogin(accesskey, "", 1000000, mid, null, null);
+            await loginVM.account.SaveLogin(accesskey, "", 1000000, mid, null, null);
+            MessageCenter.SendLogined();
         }
         static string thirdurl = "https://passport.bilibili.com/login/app/third";
         static string targeturl = "https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png";
