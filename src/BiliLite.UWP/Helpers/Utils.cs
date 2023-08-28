@@ -329,7 +329,7 @@ namespace BiliLite.Helpers
                     };
                     markdownText.LinkClicked += new EventHandler<LinkClickedEventArgs>(async (sender, args) =>
                     {
-                        await Launcher.LaunchUriAsync(new Uri(args.Link));
+                        await Utils.LaunchUri(new Uri(args.Link));
                     });
                     dialog.Content = markdownText;
                     dialog.PrimaryButtonText = "查看详情";
@@ -337,7 +337,7 @@ namespace BiliLite.Helpers
 
                     dialog.PrimaryButtonClick += new Windows.Foundation.TypedEventHandler<ContentDialog, ContentDialogButtonClickEventArgs>(async (sender, e) =>
                     {
-                        await Windows.System.Launcher.LaunchUriAsync(new Uri(ver.url));
+                        await LaunchUri(ver.url);
                     });
                     await dialog.ShowAsync();
                 }
@@ -345,6 +345,24 @@ namespace BiliLite.Helpers
             catch (Exception)
             {
             }
+        }
+        public static async Task<bool> LaunchUri(Uri uri)
+        {
+            var result = await Launcher.LaunchUriAsync(uri);
+            if (!result)
+            {
+                Utils.ShowMessageToast("打开" + uri + "失败");
+            }
+            return result;
+        }
+        public static async Task<bool> LaunchUri(string uri)
+        {
+            var result = await Launcher.LaunchUriAsync(new Uri(uri));
+            if (!result)
+            {
+                Utils.ShowMessageToast("打开" + uri + "失败");
+            }
+            return result;
         }
 
         public static Color ToColor(this string obj)
@@ -499,6 +517,37 @@ namespace BiliLite.Helpers
                 // 处理主题字典中未找到指定的键的情况
                 return new SolidColorBrush(Colors.Transparent);
             }
+        }
+        /*
+         * video123
+         * aid=123
+         * avid=123
+         * video/123
+         * av123
+         * story/123
+         */
+        public static long ExtractVideoId(string url)
+        {
+            url = url.Replace("aid","av").Replace("bid","bv").Replace("avid","av");
+            string pattern = @"(video|av|story)([/=]?)(\d+)";
+            long id = 0;
+            var match = Regex.Matches(url, pattern);
+
+            for(var i=0;i<match.Count;i++){
+                var m = match[i];
+                string videoId = m.Groups[3].Value;
+                long vid;
+                // 判断视频ID是否较大
+                if (long.TryParse(videoId, out vid))
+                {
+                    if (vid >id &&vid> 10)  // 假设10为较大的ID阈值
+                    {
+                        id = vid ;
+                    }
+                }
+            }
+
+            return id;
         }
     }
     public class NewVersion

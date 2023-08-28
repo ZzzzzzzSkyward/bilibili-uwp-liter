@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 namespace BiliLite.Api
 {
     public class CommentApi
@@ -28,15 +29,20 @@ namespace BiliLite.Api
         /// <param name="type">类型，1=视频，17=动态，11=图片，5=小视频，19=歌单，14=歌曲</param>
         /// <param name="ps">每页数量</param>
         /// <returns></returns>
-        public ApiModel Comment(string oid, CommentSort sort,int pn, int type, int ps = 30)
+        public ApiModel Comment(string oid, CommentSort sort,int pn, int type, int ps = 30,string offsetStr=null)
         {
             string csrf = ApiHelper.GetCSRF(true);
-            //var mode = sort == CommentSort.Hot ? 3 : 2;
+            var mode = sort == CommentSort.Hot ? 3 : 2;
+            var pagination = new
+            {
+                offset = offsetStr
+            };
+            var paginationStr = JsonConvert.SerializeObject(pagination);
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}{ApiHelper.readcomment}",
-                parameter = $"oid={oid}&plat=2&pn={pn}&ps={ps}&sort={(int)sort}&type={type}{csrf}",
+                parameter = $"oid={oid}&ps={ps}&mode={mode}&type={type}&csrf={csrf}&pagination_str={paginationStr}",
                 need_cookie = true
             };
             //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);

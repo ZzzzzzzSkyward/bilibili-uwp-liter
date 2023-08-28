@@ -507,7 +507,13 @@ namespace BiliLite.Pages
 
         private async void btnOpenWeb_Click(object sender, RoutedEventArgs e)
         {
-            await Launcher.LaunchUriAsync(new Uri(videoDetailVM.VideoInfo.short_link));
+            var url = videoDetailVM.VideoInfo.short_link;
+            var result =await Utils.LaunchUri(url);
+            if (!result)
+            {
+                Utils.ShowMessageToast("打开" + url + "失败");
+            }
+
         }
 
         private void ImageEx_Tapped(object sender, TappedRoutedEventArgs e)

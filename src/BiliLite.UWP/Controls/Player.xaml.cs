@@ -297,6 +297,7 @@ namespace BiliLite.Controls
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
                         Buffering = false;
+                        if(_playerVideo!=null)
                         Duration = _playerVideo.PlaybackSession.NaturalDuration.TotalSeconds;
                         PlayMediaOpened?.Invoke(this, new EventArgs());
 
@@ -1405,7 +1406,7 @@ namespace BiliLite.Controls
             {
                 _mediaTimelineController.Position = TimeSpan.FromSeconds(position);
             }
-            else
+            else if(_playerVideo!=null)
             {
                 _playerVideo.PlaybackSession.Position = TimeSpan.FromSeconds(position);
             }

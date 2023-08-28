@@ -43,7 +43,7 @@ namespace BiliLite.Pages.Other
             }
             else if(item.type == 1)
             {
-                await Launcher.LaunchUriAsync(new Uri(item.link));
+                await Utils.LaunchUri(new Uri(item.link));
             }
            
         }

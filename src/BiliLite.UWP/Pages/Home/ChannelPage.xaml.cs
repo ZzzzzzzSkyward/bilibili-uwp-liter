@@ -43,7 +43,7 @@ namespace BiliLite.Pages.Home
             if (!re)
             {
                 var md = new MessageDialog("是否使用外部浏览器打开此链接？");
-                md.Commands.Add(new UICommand("确定", new UICommandInvokedHandler(async (e) => { await Windows.System.Launcher.LaunchUriAsync(args.Uri); })));
+                md.Commands.Add(new UICommand("确定", new UICommandInvokedHandler(async (e) => { await Utils.LaunchUri(args.Uri); })));
                 md.Commands.Add(new UICommand("取消", new UICommandInvokedHandler((e) => { })));
                 await md.ShowAsync();
             }

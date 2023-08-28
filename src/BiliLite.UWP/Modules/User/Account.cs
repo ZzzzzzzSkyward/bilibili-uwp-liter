@@ -371,6 +371,10 @@ namespace BiliLite.Modules
                 }
                 else
                 {
+                    if (obj != null)
+                    {
+                        LogHelper.Log((string)obj["message"], LogType.INFO);
+                    }
                     return null;
                 }
             }

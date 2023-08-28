@@ -95,14 +95,14 @@
                         <HyperlinkButton.CommandParameter>
                             <x:Int32>0</x:Int32>
                         </HyperlinkButton.CommandParameter>
-                        <TextBlock>密码登录</TextBlock>
+                        <TextBlock TextDecorations="Strikethrough">密码登录</TextBlock>
                     </HyperlinkButton>
                     <TextBlock Margin="4 0" VerticalAlignment="Center">/</TextBlock>
                     <HyperlinkButton  Command="{x:Bind Path=loginVM.LoginTypeCommand}"  >
                         <HyperlinkButton.CommandParameter>
                             <x:Int32>3</x:Int32>
                         </HyperlinkButton.CommandParameter>
-                        <TextBlock>手动登录</TextBlock>
+                        <TextBlock TextDecorations="Strikethrough">手动登录</TextBlock>
                     </HyperlinkButton>
                 </StackPanel>
             </StackPanel>

@@ -172,7 +172,7 @@ $('.author-container').css('margin','12px 0px -12px 0px');"
             if (!re)
             {
                 var md = new MessageDialog("是否使用外部浏览器打开此链接？");
-                md.Commands.Add(new UICommand("确定", new UICommandInvokedHandler(async (e) => { await Windows.System.Launcher.LaunchUriAsync(args.Uri); })));
+                md.Commands.Add(new UICommand("确定", new UICommandInvokedHandler(async (e) => { await Utils.LaunchUri(args.Uri); })));
                 md.Commands.Add(new UICommand("取消", new UICommandInvokedHandler((e) => { })));
                 await md.ShowAsync();
             }
@@ -180,7 +180,7 @@ $('.author-container').css('margin','12px 0px -12px 0px');"
 
         private async void btnOpenBrowser_Click(object sender, RoutedEventArgs e)
         {
-            await Windows.System.Launcher.LaunchUriAsync(webView.Source);
+            await Utils.LaunchUri(webView.Source);
         }
 
         private void webView_NavigationStarting(WebView sender, WebViewNavigationStartingEventArgs args)

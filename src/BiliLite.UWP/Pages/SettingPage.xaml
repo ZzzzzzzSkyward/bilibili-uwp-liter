@@ -340,6 +340,9 @@
                         <TextBox Text="***********" x:Name="TokenTextBox"/>
                             <TextBlock>⚠用于b站登录，请勿泄露给他人</TextBlock>
                         </StackPanel>
+                        <StackPanel Visibility="Collapsed">
+                            <Button Content="注销accesskey" Click="BurnTokenButton_Click"/>
+                        </StackPanel>
 						<StackPanel Orientation="Horizontal">
 							<TextBlock Margin="0 16 0 8" FontSize="16">参数</TextBlock>
 							<Button Margin="8 8 0 0" x:Name="ApplyAPI" Click="ApplyAPI_Click" VerticalAlignment="Center">修改</Button>

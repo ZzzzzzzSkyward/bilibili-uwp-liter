@@ -234,7 +234,7 @@ namespace BiliLite.Pages
 
         private async void btnMerge_Click(object sender, RoutedEventArgs e)
         {
-            await Launcher.LaunchUriAsync(new Uri("https://iliili.cn/index.php/bili-merge.html"));
+            await Utils.LaunchUri(new Uri("https://iliili.cn/index.php/bili-merge.html"));
         }
 
         private void btnEpisodesOutput_Click(object sender, RoutedEventArgs e)

@@ -34,6 +34,26 @@ namespace BiliLite
             MessageCenter.ViewImageEvent += MessageCenter_ViewImageEvent;
             MessageCenter.MiniWindowEvent += MessageCenter_MiniWindowEvent;
            // Window.Current.Content.PointerPressed += Content_PointerPressed;
+
+            App.Current.Suspending += Current_Suspending;
+           // Window.Current.Content.PointerPressed += Content_PointerPressed;
+        }
+        private async void Current_Suspending(object sender, Windows.ApplicationModel.SuspendingEventArgs e)
+        {
+            var tabs = tabView.TabItems;
+            foreach (var tab in tabs)
+            {
+                if (!(tab is TabViewItem tabItem)) continue;
+                if (!(tabItem.Content is MyFrame frame)) continue;
+                var page = frame.Content;
+                if (!(page is PlayPage playPage)) continue;
+                //TODO await playPage.ReportHistory();
+            }
+        }
+
+        private void MessageCenter_GoBackEvent(object sender, EventArgs e)
+        {
+            //TODO GoBack();
         }
 
         private void MessageCenter_MiniWindowEvent(object sender, bool e)
@@ -72,7 +92,24 @@ namespace BiliLite
         }
         private void MessageCenter_ChangeTitleEvent(object sender, string e)
         {
+            if (sender == null)
+            {
             (tabView.SelectedItem as TabViewItem).Header = e;
+                return;
+            }
+
+            foreach (var item in tabView.TabItems)
+            {
+                var tabViewItem = item as TabViewItem;
+                if (tabViewItem == null) continue;
+                var frame = tabViewItem.Content as MyFrame;
+                if (frame == null) continue;
+                if (sender == frame.Content)
+                {
+                    tabViewItem.Header = e;
+                    break;
+                }
+            }
         }
 
         private void NavigationHelper_NavigateToPageEvent(object sender, NavigationInfo e)
@@ -90,6 +127,7 @@ namespace BiliLite
             item.Content = frame;
            
             tabView.TabItems.Add(item);
+            if (!e.dontGoTo)
             tabView.SelectedItem = item;
             item.UpdateLayout();
         }

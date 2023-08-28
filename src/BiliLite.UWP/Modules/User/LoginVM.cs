@@ -75,7 +75,7 @@ namespace BiliLite.Modules.User
         public void OpenManualPage()
         {
             var url= "https://l78z.nsapps.cn/bili_gt.html";
-            Launcher.LaunchUriAsync(new Uri(url));
+            Utils.LaunchUri(url);
         }
 
         public void ChangeLoginType(int type)
@@ -289,7 +289,7 @@ namespace BiliLite.Modules.User
                             SetWebViewVisibility?.Invoke(this, true);
                             var newuri = new Uri("ms-appx-web:///Asset/JiYan/%E6%9E%81%E9%AA%8C.htm" + uri.Query + "&app=uwp");
                             if(Manual)
-                            Launcher.LaunchUriAsync(newuri);
+                            Utils.LaunchUri(newuri);
                             else
                             OpenWebView?.Invoke(this, newuri);
                         }
@@ -337,7 +337,7 @@ namespace BiliLite.Modules.User
                             SetWebViewVisibility?.Invoke(this, true);
                             var newuri = new Uri("https://l78z.nsapps.cn/bili_gt.html" + uri.Query + "&app=uwp");
                             if (Manual)
-                                Launcher.LaunchUriAsync(newuri);
+                                Utils.LaunchUri(newuri);
                             else
                                 OpenWebView?.Invoke(this, newuri);
 
@@ -634,7 +634,7 @@ namespace BiliLite.Modules.User
                     var newuri = new Uri("https://l78z.nsapps.cn/bili_gt.html" + uri.Query + "&app=uwp");
                     if (Manual)
                     {
-                        Launcher.LaunchUriAsync(newuri);
+                        Utils.LaunchUri(newuri);
                         string gt = Regex.Match(uri.Query, "gt=(.*)&").Groups[1].Value;
                         string cha= Regex.Match(uri.Query, "challenge=(.*)&").Groups[1].Value;
                         Utils.SetClipboard(gt + " " + cha);
@@ -645,7 +645,7 @@ namespace BiliLite.Modules.User
                 case LoginStatus.NeedValidate:
                     SetWebViewVisibility?.Invoke(this, true);
                     if (Manual)
-                        Launcher.LaunchUriAsync(uri);
+                        Utils.LaunchUri(uri);
                     else
                         OpenWebView?.Invoke(this, uri);
                     break;

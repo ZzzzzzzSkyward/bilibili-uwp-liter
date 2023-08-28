@@ -86,7 +86,7 @@ namespace BiliLite.Modules.User.UserDetail
         {
             try
             {
-               await Api.ApiHelper.LoadWbiKey();
+                await Api.ApiHelper.LoadWbiKey();
                 Nothing = false;
                 SubmitVideoCanLoadMore = false;
                 LoadingSubmitVideo = true;

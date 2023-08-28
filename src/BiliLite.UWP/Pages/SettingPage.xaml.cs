@@ -943,7 +943,7 @@ FallbackColor=""#ffffff"" />
             }
             else
             {
-                await Launcher.LaunchUriAsync(new Uri(e.Link));
+                await Utils.LaunchUri(new Uri(e.Link));
             }
 
         }
@@ -1188,6 +1188,11 @@ FallbackColor=""#ffffff"" />
             {
                 Utils.ShowMessageToast("找不到Themes文件夹");
             }
+        }
+
+        private async void BurnTokenButton_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

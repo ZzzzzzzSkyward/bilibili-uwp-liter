@@ -376,14 +376,13 @@
         </Grid.RowDefinitions>
         <Grid  BorderThickness="0 0 0 1" BorderBrush="#33808080">
             <StackPanel Padding="0 0 0 8" Orientation="Horizontal" x:Name="hot" >
-                <TextBlock Margin="12 8 0 0" VerticalAlignment="Center"  FontSize="20" >热门评论</TextBlock>
                 <HyperlinkButton x:Name="btn_NewSort" Margin="8 0 0 0" Padding="0" VerticalAlignment="Bottom"  Click="btn_NewSort_Click"  HorizontalAlignment="Right">
-                    <TextBlock>按最新排序</TextBlock>
+                    <TextBlock Margin="2 2 2 2" FontSize="20" VerticalAlignment="Center" >热门评论</TextBlock>
                 </HyperlinkButton>
             </StackPanel>
             <StackPanel Padding="0 0 0 8" Orientation="Horizontal" x:Name="_new">
                 <HyperlinkButton x:Name="btn_HotSort"  Margin="8 0 0 0" Padding="0" VerticalAlignment="Bottom" HorizontalAlignment="Right"  Click="btn_HotSort_Click" >
-                    <TextBlock Margin="12 8 0 0" FontSize="20" VerticalAlignment="Center" >最新评论</TextBlock>
+                    <TextBlock Margin="2 2 2 2" FontSize="20" VerticalAlignment="Center" >最新评论</TextBlock>
                 </HyperlinkButton>
             </StackPanel>
             <AppBarButton x:Name="btn_Refresh" Click="btn_Refresh_Click" Margin="0 0 40 0" Width="40" Height="40" Icon="Refresh" HorizontalAlignment="Right"></AppBarButton>

@@ -147,7 +147,7 @@ namespace BiliLite.Pages.Home
             }
             if (threePoint.type == "browser")
             {
-                await Launcher.LaunchUriAsync(new Uri(threePoint.url));
+                await Utils.LaunchUri(new Uri(threePoint.url));
                 return;
             }
 

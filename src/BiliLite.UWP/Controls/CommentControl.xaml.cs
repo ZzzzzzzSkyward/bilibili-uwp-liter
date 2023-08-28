@@ -143,6 +143,8 @@ namespace BiliLite.Controls
             await emoteVM.GetEmote(EmoteBusiness.reply);
         }
 
+        private CommentCursor cursor;
+
         private async Task GetComment()
         {
             if (_page == 1)
@@ -161,7 +163,7 @@ namespace BiliLite.Controls
                 ObservableCollection<CommentModel> ls = new ObservableCollection<CommentModel>();
 
 
-                var re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page, _loadCommentInfo.CommentMode).Request();
+                var re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page, _loadCommentInfo.CommentMode, offsetStr: cursor?.PaginationReply?.NextOffset).Request();
                 if (re.status)
                 {
                     dataCommentModel m;
@@ -187,6 +189,17 @@ namespace BiliLite.Controls
                                     m.data.upper.top.showTop = Visibility.Visible;
                                     m.data.replies.Insert(0, m.data.upper.top);
                                 }
+                                if (m.data.topReplies != null)
+                                {
+                                    foreach(var t in m.data.topReplies)
+                                    {
+                                        t.showTop = true;
+                                        var c = t.ToCommentModel();
+
+
+                                        m.data.replies.Insert(0, c);
+                                    }
+                                }
                                 //ls_hot.ItemsSource = m.data.hots;
                                 ls_new.ItemsSource = m.data.replies;
                             }
@@ -199,10 +212,11 @@ namespace BiliLite.Controls
                             }
                             _page++;
 
-                            if (m.data.replies.Count >= 20)
+                            if (m.data.replies.Count >= 10)
                             {
                                 btn_LoadMore.Visibility = Visibility.Visible;
                             }
+                            cursor=m.data.cursor;
                         }
                         else
                         {
@@ -423,12 +437,14 @@ namespace BiliLite.Controls
         private void btn_HotSort_Click(object sender, RoutedEventArgs e)
         {
             _loadCommentInfo.CommentSort = CommentSort.Hot;
+            cursor = null;
             LoadComment(_loadCommentInfo);
         }
 
         private void btn_NewSort_Click(object sender, RoutedEventArgs e)
         {
             _loadCommentInfo.CommentSort = CommentSort.New;
+            cursor = null;
             LoadComment(_loadCommentInfo);
         }
 
@@ -674,6 +690,16 @@ namespace BiliLite.Controls
         public string Oid { get; set; }
         public bool IsDialog { get; set; } = false;
     }
+    public class CommentPagination
+    {
+        [JsonProperty("next_offset")]
+        public string NextOffset { get; set; }
+    }
+    public class CommentCursor
+    {
+        [JsonProperty("pagination_reply")]
+        public CommentPagination PaginationReply { get; set; }
+    }
 
     public class dataCommentModel
     {
@@ -688,12 +714,16 @@ namespace BiliLite.Controls
         public int count { get; set; }
         public int num { get; set; }
         public int size { get; set; }
+        public CommentCursor cursor { get; set; }
 
         public ObservableCollection<CommentModel> hots { get; set; }
         public ObservableCollection<CommentModel> replies { get; set; }
 
         public dataCommentModel upper { get; set; }
         public CommentModel top { get; set; }
+
+        [JsonProperty("top_replies")]
+        public List<CommentItem> topReplies { get; set; }
 
     }
     public class CommentModel : INotifyPropertyChanged
@@ -960,6 +990,81 @@ namespace BiliLite.Controls
 
 
 
+    }
+    public class CommentItem
+    {
+        public int Action { get; set; }
+
+        [JsonProperty("rpid")]
+        public long RpId { get; set; }
+
+        public long Oid { get; set; }
+
+        public int Type { get; set; }
+
+        public long Mid { get; set; }
+
+        public long Root { get; set; }
+
+        public long Parent { get; set; }
+
+        public int Count { get; set; }
+
+        public int Rcount { get; set; }
+
+        public int Like { get; set; }
+
+        public int Floor { get; set; }
+
+        public int State { get; set; }
+
+        public long Ctime { get; set; }
+
+        [JsonProperty("rpid_str")]
+        public string RpidStr { get; set; }
+
+        public CommentMemberModel Member { get; set; }
+
+        public CommentContentModel Content { get; set; }
+
+        [JsonProperty("up_action")]
+        public CommentUPActionModel UpAction { get; set; }
+
+        [JsonProperty("reply_control")]
+        public CommentReplyControlModel ReplyControl { get; set; }
+
+        public List<CommentItem> Replies { get; set; }
+        public bool showTop { get; internal set; }
+
+        public CommentModel ToCommentModel()
+        {
+            CommentModel c = new CommentModel();
+            var t = this;
+            c.rpid = t.RpId;
+            c.rpid_str = t.RpidStr;
+            c.content = t.Content;
+            c.like = t.Like;
+            c.mid = t.Mid;
+            c.oid = t.Oid;
+            c.rcount = t.Rcount;
+            c.state = t.State;
+            c.action = t.Action;
+            c.type = t.Type;
+            c.root = t.Root;
+            c.parent = t.Parent;
+            c.count = t.Count;
+            c.floor = t.Floor;
+            c.ctime = t.Ctime;
+            c.replies =new ObservableCollection<CommentModel>();
+            if (t.Replies != null && t.Replies.Count > 0)
+            {
+                foreach (var i in t.Replies)
+                {
+                    c.replies.Append(i.ToCommentModel());
+                }
+            }
+            return c;
+        }
     }
     public class CommentReplyControlModel
     {
