@@ -13,7 +13,7 @@
   <Identity
     Name="BilibiliUWPLiter"
     Publisher="CN=Zhu"
-    Version="1.0.5.0" />
+    Version="1.0.6.0" />
 
   <mp:PhoneIdentity PhoneProductId="8bceed6a-7e89-4141-a693-923401d5b2ac" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 

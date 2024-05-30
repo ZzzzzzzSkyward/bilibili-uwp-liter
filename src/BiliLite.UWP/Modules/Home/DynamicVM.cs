@@ -113,7 +113,7 @@ namespace BiliLite.Modules
 
 
 
-      
+
     }
     public class DynamicItemModel
     {
@@ -919,4 +919,5 @@ namespace BiliLite.Modules
             }
             return str;
         }
+    }
 }

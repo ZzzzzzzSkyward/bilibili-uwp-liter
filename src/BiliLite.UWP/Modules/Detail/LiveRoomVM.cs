@@ -535,18 +535,19 @@ namespace BiliLite.Modules
                 if (result1)
                 {
                     ChangedPlayUrl?.Invoke(this, current_data);
-                    }
+                }
                 else
                 {
                     var result2 = await GetLiveRoomInfo(roomid.ToString(), qn);
                     if (result2)
                     {
                         ChangedPlayUrl?.Invoke(this, current_data);
-                }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
+                    }
+                    else
+                    {
+                        Utils.ShowMessageToast("获取直播间信息失败");
 
+                    }
                 }
             }
             catch (Exception)
