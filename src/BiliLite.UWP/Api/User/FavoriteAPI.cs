@@ -266,5 +266,40 @@ namespace BiliLite.Api.User
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
         }
+        /// <summary>
+        /// 排序
+        /// </summary>
+        /// <returns></returns>
+        public ApiModel Sort(List<string> favIdList)
+        {
+            var sort = string.Join(',', favIdList);
+            var api = new ApiModel()
+            {
+                method = RestSharp.Method.Post,
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/v3/fav/folder/sort",
+                body = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&sort={sort}"
+            };
+            api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
+            return api;
+        }
+        /// <summary>
+        /// 排序收藏夹内容
+        /// </summary>
+        /// <returns></returns>
+        public ApiModel SortResource(string mediaId, string sourceId, string targetId)
+        {
+            // 0:0:{sourceId}:2 将sourceId的视频移动到第一位
+            // {targetId}:2:{sourceId}:2 将sourceId的视频移动到targetId的视频之后
+            var sort = "";
+            sort = string.IsNullOrEmpty(targetId) ? $"0:0:{sourceId}:2" : $"{targetId}:2:{sourceId}:2";
+            var api = new ApiModel()
+            {
+                method = RestSharp.Method.Post,
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/v3/fav/resource/sort",
+                body = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&media_id={mediaId}&sort={sort}"
+            };
+            api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
+            return api;
+        }
     }
 }

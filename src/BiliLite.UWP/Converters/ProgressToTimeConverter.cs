@@ -17,7 +17,7 @@ namespace BiliLite.Converters
                 
                 return ts.ToString(ts.TotalHours>=1? @"hh\:mm\:ss" : @"mm\:ss");
             }
-            if (value is int)
+            if ((value is int)||(value is long))
             {
                
                 TimeSpan ts = TimeSpan.FromSeconds(System.Convert.ToDouble(value));

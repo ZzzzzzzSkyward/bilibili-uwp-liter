@@ -4,6 +4,7 @@ using BiliLite.Modules;
 using System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Navigation;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -136,6 +137,29 @@ namespace BiliLite.Pages.User
             var data = (sender as MenuFlyoutItem).DataContext as FavoriteItemModel;
             await videoVM.DelFavorite(data.id);
             videoVM.Refresh();
+        }
+        private async void VideoFavGridView_OnDragItemsCompleted(object sender, DragItemsCompletedEventArgs args)
+        {
+            await videoVM.SortMyFavorite();
+            return;
+            // 临时将绑定模式更改为 TwoWay
+            (sender as Microsoft.Toolkit.Uwp.UI.Controls.AdaptiveGridView).ItemsSource = new Binding()
+            {
+                Path = new PropertyPath("MyFavorite"),
+                Mode = BindingMode.OneWay,
+                Source = this.videoVM
+            };
+        }
+
+        private async void VideoFavGridView_DragItemsStarting(object sender, DragItemsStartingEventArgs e)
+        {
+            return;
+            // 临时将绑定模式更改为 TwoWay
+            (sender as Microsoft.Toolkit.Uwp.UI.Controls.AdaptiveGridView).ItemsSource = new Binding() { 
+            Path=new PropertyPath("MyFavorite"),
+            Mode=BindingMode.TwoWay,
+            Source=this.videoVM
+            };
         }
     }
 }

@@ -1,11 +1,16 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Models;
+using BiliLite.Modules.Player.Playurl;
 using System;
+using System.Collections.Generic;
 
 namespace BiliLite.Api
 {
     public class PlayerAPI
     {
+        public static Dictionary<string, string> VideoHeader = new Dictionary<string, string>{
+            {"Referer","https://www.bilibili.com/" }
+        };
         public ApiModel VideoPlayUrl(string aid, string cid, int qn,bool dash,bool proxy=false,string area="")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
@@ -17,18 +22,39 @@ namespace BiliLite.Api
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{baseUrl}/x/player/playurl",
-                parameter = ApiHelper.MustParameter(ApiHelper.WebVideoKey, true) + $"&avid={aid}&cid={cid}&qn={qn}&type=&otype=json&mid={(SettingHelper.Account.Logined? SettingHelper.Account.Profile.mid.ToString():"")}"
+                baseUrl = $"{baseUrl}/x/player/wbi/playurl",
+                parameter = $"avid={aid}&cid={cid}&qn={qn}&type=&otype=json",
+                need_cookie = !ApiHelper.need_refresh_cookie,
+                headers = VideoHeader,
             };
+            var fnval = 0;
             if (dash)
             {
-                api.parameter += "&fourk=1&fnver=0&fnval=4048";
+                fnval += 16;//dash
+                fnval += 128;//4k as fourk
+                var CodecMode = (PlayUrlCodecMode)SettingHelper.GetValue<int>(SettingHelper.Player.DEFAULT_VIDEO_TYPE, 1);
+                if (CodecMode == PlayUrlCodecMode.DASH_AV1)
+                {
+                    fnval += 2048;//av1
+                }
             }
-           
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.WebVideoKey);
+            else
+            {
+                fnval += 1;//mp4
+            }
+            api.parameter += $"&fourk=1&fnver=0&fnval={fnval}";
+            if (SettingHelper.Account.Logined)
+            {
+                api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile.mid}";
+            }
             if (proxy)
             {
                 api.parameter += $"&area={area}";
+            }
+            else
+            {
+                //api.parameter += ApiHelper.GetSign(api.parameter,ApiHelper.AndroidKey);
+                api.parameter += ApiHelper.GetWbiSign(api.parameter);
             }
             return api;
         }
@@ -93,6 +119,57 @@ namespace BiliLite.Api
                 parameter =$"cid={cid}&qn={qn}&platform=web"
             };
             //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidVideoKey);
+            return api;
+        }
+        public class LiveInfo {
+            public const int flv = 0;
+            public const int ts = 1;
+            public const int mp4 = 2;
+        }
+        public class ProtocolInfo {
+            public const int http_stream = 0;
+            public const int http_hls = 1;
+        }
+        public class CodecInfo {
+            public const int AVC = 0;
+            public const int HEVC = 1;
+        }
+        public List<int> videofmt = new List<int> { LiveInfo.flv, LiveInfo.mp4 };//flv and ts/m3u8 is not supported by ffmpeg 
+        public List<int> codecfmt = new List<int> { CodecInfo.AVC, CodecInfo.HEVC };
+        public List<int> protocolfmt = new List<int> { ProtocolInfo.http_stream, ProtocolInfo.http_hls };
+        public string JoinFmt(List<int> fmts)
+        {
+            return string.Join(",", fmts);
+        }
+        public string protocolstr
+        {
+            get
+            {
+                return JoinFmt(protocolfmt);
+            }
+        }
+        public string videostr
+        {
+            get
+            {
+                return JoinFmt(videofmt);
+            }
+        } 
+        public string codecstr
+        {
+            get
+            {
+                return JoinFmt(codecfmt);
+            }
+        }
+        public ApiModel LivePlayUrlv2(string room_id, int qn = 0)
+        {
+            ApiModel api = new ApiModel()
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = $"https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo",
+                parameter = $"room_id={room_id}&qn={qn}&protocol={protocolstr}&format={videostr}&codec={codecstr}"
+            };
             return api;
         }
 

@@ -14,6 +14,7 @@
     xmlns:controls="using:BiliLite.Controls" 
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
+        <convert:CountGreaterThanOneConverter x:Key="CountGreaterThanOneConverter"></convert:CountGreaterThanOneConverter>
         <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"></SolidColorBrush>
         <SolidColorBrush x:Key="SystemControlHighlightAltAccentBrush" Color="White"></SolidColorBrush>
         <convert:BooleanConvert x:Name="boolConvert" />
@@ -97,11 +98,18 @@
                     <ScrollViewer VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <toolkit:AdaptiveGridView SelectionMode="None" 
+                                          Name="FavoriteCollection_Video"
                                           IsItemClickEnabled="True"
                                           DesiredWidth="500"
                                           StretchContentForSingleRow="False"
                                           ItemContainerStyle="{StaticResource SeasonItemStyle}"
-                                          ItemsSource="{x:Bind Path=videoVM.MyFavorite,Mode=OneWay}"
+                                          ItemsSource="{x:Bind Path=videoVM.MyFavorite,Mode=TwoWay}"
+                                          AllowDrop="{x:Bind videoVM.MyFavorite.Count, Converter={StaticResource CountGreaterThanOneConverter}, Mode=OneWay}"
+                                          CanReorderItems="{x:Bind videoVM.MyFavorite.Count, Converter={StaticResource CountGreaterThanOneConverter}, Mode=OneWay}"
+                                          CanDragItems="{x:Bind videoVM.MyFavorite.Count, Converter={StaticResource CountGreaterThanOneConverter}, Mode=OneWay}"
+                                
+                                          DragItemsStarting="VideoFavGridView_DragItemsStarting"
+                                          DragItemsCompleted="VideoFavGridView_OnDragItemsCompleted"
                                           ItemTemplate="{StaticResource VideoDataTemplate}"
                                           ScrollViewer.VerticalScrollBarVisibility="Disabled"
                                           ItemClick="VideoFavorite_ItemClick"
@@ -143,7 +151,7 @@
                             </toolkit:AdaptiveGridView>
                         </StackPanel>
                     </ScrollViewer>
-                   
+
                     <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=videoVM.Loading,Mode=OneWay}"></ProgressRing>
                     <controls:RoundButton  Command="{x:Bind Path=videoVM.RefreshCommand}" Visibility="{x:Bind Path=videoVM.Loading,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                         <SymbolIcon Symbol="Refresh" Foreground="White"></SymbolIcon>

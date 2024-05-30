@@ -39,10 +39,26 @@ namespace BiliLite.Modules
             set { _FavoriteInfo = value; DoPropertyChanged("FavoriteInfo"); }
         }
         private ObservableCollection<FavoriteInfoVideoItemModel> _videos;
+        private bool stack_will_overflow = false;
+        private bool inited_favorite = false;
         public ObservableCollection<FavoriteInfoVideoItemModel> Videos
         {
-            get { return _videos; }
-            set { _videos = value; DoPropertyChanged("Videos"); }
+            get
+            {
+                stack_will_overflow = false;
+                return _videos;
+            }
+            set
+            {
+                _videos = value;
+                if (stack_will_overflow && inited_favorite) return;
+                if (_videos != value || !inited_favorite)
+                {
+                    inited_favorite = true;
+                    DoPropertyChanged("Videos");
+                }
+                stack_will_overflow = true;
+            }
         }
 
         private ListViewSelectionMode _selectionMode= ListViewSelectionMode.None;
@@ -359,8 +375,23 @@ namespace BiliLite.Modules
                 var handel = HandelError<object>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
+        }
+        public async Task Sort(string sourceId, string targetId)
+        {
+            var result = await favoriteApi.SortResource(Id, sourceId, targetId).Request();
+            if (!result.status)
+            {
+                Utils.ShowMessageToast("排序失败" + result.message);
+                return;
+            }
 
-
+            var data = await result.GetData<object>();
+            if (data.success)
+            {
+                Utils.ShowMessageToast("排序成功");
+                return;
+            }
+            Utils.ShowMessageToast("排序失败" + data.message);
         }
     }
     public class FavoriteDetailModel

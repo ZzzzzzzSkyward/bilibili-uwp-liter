@@ -49,11 +49,27 @@ namespace BiliLite.Api.User
                     //typeList = "268435455";
                     break;
             }
+            var typeName = "all";
+            switch (type)
+            {
+                case UserDynamicType.Video:
+                    typeName = "video";
+                    break;
+                case UserDynamicType.Season:
+                    typeName = "pgc";
+                    break;
+                case UserDynamicType.Article:
+                    typeName = "article";
+                    break;
+                default:
+                    break;
+            }
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/dynamic_new",
-                parameter = $"type_list={Uri.EscapeDataString(typeList)}&uid={SettingHelper.Account.UserID}",
+                baseUrl = "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all",
+                parameter = $"type={typeName}",
+                need_cookie=true
             };
             //ApiModel api = new ApiModel()
             //{
@@ -75,15 +91,17 @@ namespace BiliLite.Api.User
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/get_dynamic_detail",
-                parameter = $"dynamic_id={id}",
+                //baseUrl = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/get_dynamic_detail",
+                //2024
+                baseUrl = "https://api.bilibili.com/x/polymer/web-dynamic/v1/detail",
+                parameter = $"id={id}&timezone_offset=-480&platform=web&gaia_source=main_web",
             };
             //使用Web的API
             if (SettingHelper.Account.Logined)
             {
                 api.parameter += $"&access_key={SettingHelper.Account.AccessKey}";
             }
-       
+            api.parameter += ApiHelper.GetWbiSign(api.parameter);       
             return api;
         }
         public ApiModel DynamicRepost(string id,string offset="")
@@ -122,12 +140,28 @@ namespace BiliLite.Api.User
                     //typeList = "268435455";
                     break;
             }
+            var typeString = "all";
+            switch (type)
+            {
+                case UserDynamicType.Video:
+                    typeString = "video";
+                    break;
+                case UserDynamicType.Season:
+                    typeString = "pgc";
+                    break;
+                case UserDynamicType.Article:
+                    typeString = "article";
+                    break;
+                default:
+                    break;
+            }
             
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/dynamic_history",
-                parameter = $"offset_dynamic_id={dynamic_id}&type_list={Uri.EscapeDataString(typeList)}&uid={SettingHelper.Account.UserID}"
+                baseUrl = $"https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all",
+                parameter = $"offset={dynamic_id}&type={typeString}",//&uid={SettingHelper.Account.UserID
+                need_cookie =true,
             };//使用Web的API
             if (SettingHelper.Account.Logined)
             {
@@ -142,8 +176,8 @@ namespace BiliLite.Api.User
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/space_history",
-                parameter = $"offset_dynamic_id={dynamic_id}&visitor_uid={SettingHelper.Account.UserID}&host_uid={mid}&need_top=1"
+                baseUrl = $"https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space",
+                parameter = $"offset={dynamic_id}&host_mid={mid}"
             };
             if (SettingHelper.Account.Logined)
             {

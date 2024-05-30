@@ -1469,7 +1469,10 @@ namespace BiliLite.Controls
                 _playerVideo.Play();
                 PlayState = PlayState.Playing;
             }
-
+            if (PlayState == PlayState.Playing)
+            {
+                Buffering = false;
+            }
             PlayStateChanged?.Invoke(this, PlayState);
         }
         /// <summary>
@@ -1744,7 +1747,7 @@ namespace BiliLite.Controls
                 _ffmpegConfig.FFmpegOptions.Add("referer", referer);
             }
 
-            _ffmpegConfig.VideoDecoderMode = FFmpegType ? VideoDecoderMode.Automatic : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+            _ffmpegConfig.Video.VideoDecoderMode = FFmpegType ? VideoDecoderMode.Automatic : VideoDecoderMode.ForceFFmpegSoftwareDecoder;
             return _ffmpegConfig;
         }
 

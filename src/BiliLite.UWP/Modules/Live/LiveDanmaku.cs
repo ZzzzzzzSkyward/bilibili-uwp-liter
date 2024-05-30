@@ -68,14 +68,14 @@ namespace BiliLite.Modules.Live
         private StreamSocket _clientSocket;
         private DispatcherTimer _timer;
         public int delay = 20;
-        private int _roomId;
+        private long _roomId;
         public LiveDanmaku()
         {
 
         }
 
         //开始
-        public async void Start(int roomid, long userId)
+        public async void Start(long roomid, long userId)
         {
             try
             {
@@ -420,7 +420,7 @@ namespace BiliLite.Modules.Live
             SendSocketData(2);
         }
 
-        private bool SendJoinChannel(int channelId, long userId)
+        private bool SendJoinChannel(long channelId, long userId)
         {
             var r = new Random();
 

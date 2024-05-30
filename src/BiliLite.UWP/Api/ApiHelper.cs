@@ -25,7 +25,7 @@ namespace BiliLite.Api
         }
         // BiliLite.WebApi 项目部署的服务器
         //public static string baseUrl = "http://localhost:5000";
-        public const string IL_BASE_URL = "https://biliapi.iliili.cn";
+        public const string IL_BASE_URL = "https://biliapi.iliili.cn";//已失效
 
         // GIT RAW路径
         public const string GIT_RAW_URL = "https://git.nsapps.cn/xiaoyaocz/BiliLite/raw/master/";
@@ -255,7 +255,7 @@ namespace BiliLite.Api
 
             // 为请求参数进行 wbi 签名
             string mixinKey = GetMixinKey(imgKey + subKey);
-            long currentTime = (long)Math.Round(DateTime.Now.Subtract(new DateTime(1970, 1, 1)).TotalSeconds);
+            long currentTime = (long)Math.Round(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds);
 
             var queryString = HttpUtility.ParseQueryString(url);
 
@@ -301,7 +301,41 @@ namespace BiliLite.Api
             headers.Add("Referer", "https://www.bilibili.com/");
             return headers;
         }
-
+        private static bool has_inited_cookie = false;
+        private static bool _need_refresh_cookie;
+        public static bool need_refresh_cookie
+        {
+            get
+            {
+                if (!has_inited_cookie)
+                {
+                    NeedRefreshCookie();
+                    return false;
+                }
+                return _need_refresh_cookie;
+            }
+        }
+        public async static Task<bool> NeedRefreshCookie()
+        {
+            if (has_inited_cookie) return _need_refresh_cookie;
+            var url = "https://passport.bilibili.com/x/passport-login/web/cookie/info";
+            var api = new ApiModel() {
+                need_cookie = true,
+                method = RestSharp.Method.Get,
+                baseUrl = url,
+            };
+            var result = await api.Request();
+            if (result.code==200)
+            {
+                var j = result.GetJObject();
+                has_inited_cookie = true;
+                if (j["data"] != null)
+                    _need_refresh_cookie = (bool)(j["data"]["refresh"] ?? false);
+                else
+                    _need_refresh_cookie = true;
+            }
+            return _need_refresh_cookie;
+        }
     }
     public class ApiKeyInfo
     {

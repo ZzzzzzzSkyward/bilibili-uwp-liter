@@ -256,7 +256,16 @@
 						</ComboBox>
 						<TextBlock>⚠如果某个播放器有问题可以换一个试试</TextBlock>
 
-						<TextBlock  Margin="0 16 0 8"  FontSize="16">默认倍速</TextBlock>
+                        <TextBlock Margin="0 16 0 8" FontSize="16">直播视频格式（目前UI不会刷新，请关闭重进设置页）</TextBlock>
+                        <TextBlock FontSize="16" x:Name="LiveVideoText" Text="{x:Bind videotext}"></TextBlock>
+                        <ListView x:Name="swLiveVideoFormat"  MinWidth="200" SelectionChanged="swLiveVideoFormat_SelectionChanged"
+          SelectionMode="Multiple" MaxWidth="400" HorizontalAlignment="Left">
+                            <ListViewItem AccessKey="0">FLV</ListViewItem>
+                            <ListViewItem AccessKey="1">TS（目前不支持）</ListViewItem>
+                            <ListViewItem AccessKey="2">MP4</ListViewItem>
+                        </ListView>
+
+                        <TextBlock  Margin="0 16 0 8"  FontSize="16">默认倍速</TextBlock>
 						<ComboBox x:Name="cbVideoSpeed" SelectedIndex="0" MinWidth="200">
 							<ComboBox.Items>
 								<ComboBoxItem Content="3.0x" ></ComboBoxItem>

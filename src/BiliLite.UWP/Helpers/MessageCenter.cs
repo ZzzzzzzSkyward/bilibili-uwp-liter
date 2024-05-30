@@ -312,15 +312,23 @@ namespace BiliLite.Helpers
              * https://t.bilibili.com/84935538081511530
              * bilibili://following/detail/314560419758546547
              */
-            var album = Utils.RegexMatch(url.Replace("bilibili://following/detail/", "album").Replace("h.bilibili.com/ywh/h5/", "album").Replace("h.bilibili.com", "album").Replace("t.bilibili.com", "album").Replace("/", ""), @"album(\d+)");
-            if (album != "")
+            var album = url
+                    .Replace("bilibili://opus/detail/", "album")
+                    .Replace("bilibili://following/detail/", "album")
+                    .Replace("h.bilibili.com/ywh/h5/", "album")
+                    .Replace("h.bilibili.com", "album")
+                    .Replace("t.bilibili.com", "album")
+                    .Replace("/", "");
+            var m = System.Text.RegularExpressions.Regex.Match(album, "album(\\d+)");
+            var m1 = m.Groups?[0]?.Value;
+            if (!string.IsNullOrEmpty(m1))
             {
                 NavigateToPage(null, new NavigationInfo()
                 {
                     icon = Symbol.Comment,
                     page = typeof(DynamicDetailPage),
                     title = "动态",
-                    parameters = album
+                    parameters = m1
                 });
                 //InfoNavigateToEvent(typeof(DynamicInfoPage), album);
                 return true;

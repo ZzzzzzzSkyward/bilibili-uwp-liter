@@ -296,6 +296,7 @@ namespace BiliLite.Controls
             Window.Current.CoreWindow.KeyDown += PlayerControl_KeyDown;
             BtnFoucs.Focus(FocusState.Programmatic);
             _systemMediaTransportControls = SystemMediaTransportControls.GetForCurrentView();
+            _systemMediaTransportControls.IsEnabled = true;
             _systemMediaTransportControls.IsPlayEnabled = true;
             _systemMediaTransportControls.IsPauseEnabled = true;
             if (CurrentPlayItem != null)

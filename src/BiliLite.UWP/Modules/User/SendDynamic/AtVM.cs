@@ -69,7 +69,7 @@ namespace BiliLite.Modules.User
                                     {
                                         Face = item["face"].ToString(),
                                         UserName = item["name"].ToString(),
-                                        ID = item["mid"].ToInt32(),
+                                        ID = item["mid"].ToInt64(),
                                     });
                                 }
                             }

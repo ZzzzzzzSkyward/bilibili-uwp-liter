@@ -178,7 +178,7 @@ namespace BiliLite.Pages
             _id = id;
             if (flag) return;
             flag = true;
-            if (int.TryParse(id, out var aid))
+            if (long.TryParse(id, out var aid))
             {
                 avid = id;
                 is_bvid = false;
@@ -583,7 +583,7 @@ namespace BiliLite.Pages
                 Subtitle= videoDetailVM.VideoInfo.bvid,
                 Title=videoDetailVM.VideoInfo.title,
                 Type= DownloadType.Video,
-                UpMid = videoDetailVM.VideoInfo.owner.mid.ToInt32(),
+                UpMid = videoDetailVM.VideoInfo.owner.mid.ToInt64(),
             };
             int i = 0;
             foreach (var item in videoDetailVM.VideoInfo.pages)

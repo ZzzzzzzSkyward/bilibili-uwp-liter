@@ -90,15 +90,14 @@ namespace BiliLite.Modules
                         if (Items == null)
                         {
                             Items = items;
+                            canloadmore = true;
                             //await GetRecommend(items.LastOrDefault().idx);
                         }
                         else
                         {
-                            foreach (var item in items)
-                            {
-                                Items.Add(item);
+                            foreach(var i in items)
+                            Items.Add(i);
                             }
-                        }
 
                     }
                     else
@@ -150,9 +149,23 @@ namespace BiliLite.Modules
            
         }
         //TODO防止页面无限调用此方法
+        private bool canloadmore = true;
+        private string last_index = "xxx";
 
         public async void LoadMore()
         {
+            if (!canloadmore) return;
+            string idx = Items.LastOrDefault().idx;
+            bool issame = last_index == idx;
+            if (issame)
+            {
+                canloadmore = false;
+                await Task.Delay(1000);
+                //清除之前的
+                canloadmore = true;
+                return;
+            }
+            last_index = idx;
             if (Items == null || Items.Count == 0)
             {
                 return;
@@ -161,7 +174,7 @@ namespace BiliLite.Modules
             {
                 return;
             }
-            await GetRecommend(Items.LastOrDefault().idx);
+            await GetRecommend(idx);
         }
         public async void Refresh()
         {
@@ -172,6 +185,7 @@ namespace BiliLite.Modules
             }
             Banner = null;
             Items = null;
+            canloadmore = true;
             await GetRecommend();
         }
 
@@ -439,11 +453,11 @@ namespace BiliLite.Modules
     {
         public string up_id { get; set; }
         public string up_name { get; set; }
-        public int rid { get; set; }
-        public int tid { get; set; }
+        public long rid { get; set; }
+        public long tid { get; set; }
         public string tname { get; set; }
         public string rname { get; set; }
-        public int aid { get; set; }
+        public long aid { get; set; }
 
     }
     public class RecommendRcmdReasonStyleModel

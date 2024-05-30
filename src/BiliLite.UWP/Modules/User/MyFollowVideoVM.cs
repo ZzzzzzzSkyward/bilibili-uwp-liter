@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
@@ -27,11 +28,27 @@ namespace BiliLite.Modules
         }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
+        private bool stack_will_overflow = false;
+        private bool inited_favorite = false;
         private ObservableCollection<FavoriteItemModel> _myFavorite;
         public ObservableCollection<FavoriteItemModel> MyFavorite
         {
-            get { return _myFavorite; }
-            set { _myFavorite = value; DoPropertyChanged("MyFavorite"); }
+            get
+            {
+                stack_will_overflow = false;
+                return _myFavorite;
+            }
+            set
+            {
+                _myFavorite = value;
+                if (stack_will_overflow && inited_favorite) return;
+                if (_myFavorite != value || !inited_favorite)
+                {
+                    inited_favorite = true;
+                    DoPropertyChanged("MyFavorite");
+                }
+                stack_will_overflow = true;
+            }
         }
 
         private ObservableCollection<FavoriteItemModel> _collectFavorite;
@@ -176,6 +193,25 @@ namespace BiliLite.Modules
             MyFavorite = null;
             CollectFavorite = null;
             await LoadFavorite();
+        }
+        public async Task SortMyFavorite()
+        {
+            var favIds = MyFavorite.Select(x => x.id).ToList();
+            if (favIds.Count < 2) { return; }
+            var result = await favoriteAPI.Sort(favIds).Request();
+            if (!result.status)
+            {
+                Utils.ShowMessageToast("排序失败" + result.message);
+                return;
+            }
+
+            var data = await result.GetData<object>();
+            if (data.success)
+            {
+                Utils.ShowMessageToast("排序成功");
+                return;
+            }
+            Utils.ShowMessageToast("排序失败" + data.message);
         }
     }
 

@@ -3,6 +3,7 @@ using BiliLite.Helpers;
 using BiliLite.Modules;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
@@ -179,6 +180,19 @@ namespace BiliLite.Pages.User
                     Playlist = items
                 }
             });
+        }
+        private async void FavItemGridView_OnDragItemsCompleted(ListViewBase sender, DragItemsCompletedEventArgs args)
+        {
+            var item = args.Items.FirstOrDefault();
+            if (!(item is FavoriteInfoVideoItemModel favVideo)) return;
+            var endIndex = favoriteDetailVM.Videos.IndexOf(favVideo);
+            var targetId = "";
+            if (endIndex != 0)
+            {
+                var target = favoriteDetailVM.Videos[endIndex - 1];
+                targetId = target.id;
+            }
+            await favoriteDetailVM.Sort(favVideo.id, targetId);
         }
     }
 }

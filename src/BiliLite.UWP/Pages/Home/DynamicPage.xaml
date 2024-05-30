@@ -38,14 +38,14 @@
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                     <TextBlock FontSize="20" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=video.title}"></TextBlock>
-                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">观看:<Run Text="{x:Bind Path=video.stat.view,Converter={StaticResource numberToStringConvert}}"/> 弹幕:<Run Text="{x:Bind Path=video.stat.danmaku,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                    <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">观看:<Run Text="{x:Bind Path=video.viewtext}"/> 弹幕:<Run Text="{x:Bind Path=video.danmakutext}"/></TextBlock>
                     <StackPanel Orientation="Horizontal">
                         <Ellipse Width="24" Height="24">
                             <Ellipse.Fill>
-                                <ImageBrush ImageSource="{x:Bind Path=video.owner.face,Converter={StaticResource imageConvert2},ConverterParameter='36h'}"></ImageBrush>
+                                <ImageBrush ImageSource="{x:Bind Path=video.face,Converter={StaticResource imageConvert2},ConverterParameter='36h'}"></ImageBrush>
                             </Ellipse.Fill>
                         </Ellipse>
-                        <TextBlock Margin="8 0 0 0" Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" Text="{x:Bind Path=video.owner.name}"></TextBlock>
+                        <TextBlock Margin="8 0 0 0" Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" Text="{x:Bind Path=video.owner}"></TextBlock>
                     </StackPanel>
                     <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">发表于 <Run Text="{x:Bind Path=video.pubdate,Converter={StaticResource time},ConverterParameter='ts'}"/></TextBlock>
                 </StackPanel>

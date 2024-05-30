@@ -14,12 +14,15 @@ namespace BiliLite.Controls.Dynamic
         public DataTemplate Photo1x1Template { get; set; }
         public DataTemplate OneRowTemplate { get; set; }
         public DataTemplate OtherTemplate { get; set; }
+        public DataTemplate ReserveTemplate { get; set; }
         protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
         {
             
            var model = item as DynamicItemDisplayModel;
             switch (model.Type)
             {
+                case Dynamic.DynamicDisplayType.Reserve:
+                    return ReserveTemplate;
                 case Dynamic.DynamicDisplayType.Repost:
                     return RepostTemplate;
                 case Dynamic.DynamicDisplayType.Text:

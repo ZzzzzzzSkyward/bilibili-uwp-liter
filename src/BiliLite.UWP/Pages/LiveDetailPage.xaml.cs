@@ -547,22 +547,22 @@ namespace BiliLite.Pages
             LiveSettingHardwareDecode.IsOn = SettingHelper.GetValue<bool>(SettingHelper.Live.HARDWARE_DECODING, true);
             if (LiveSettingHardwareDecode.IsOn)
             {
-                _config.VideoDecoderMode = VideoDecoderMode.ForceSystemDecoder;
+                _config.Video.VideoDecoderMode = VideoDecoderMode.ForceSystemDecoder;
             }
             else
             {
-                _config.VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+                _config.Video.VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder;
             }
             LiveSettingHardwareDecode.Toggled += new RoutedEventHandler((e, args) =>
             {
                 SettingHelper.SetValue<bool>(SettingHelper.Live.HARDWARE_DECODING, LiveSettingHardwareDecode.IsOn);
                 if (LiveSettingHardwareDecode.IsOn)
                 {
-                    _config.VideoDecoderMode = VideoDecoderMode.ForceSystemDecoder;
+                    _config.Video.VideoDecoderMode = VideoDecoderMode.ForceSystemDecoder;
                 }
                 else
                 {
-                    _config.VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder;
+                    _config.Video.VideoDecoderMode = VideoDecoderMode.ForceFFmpegSoftwareDecoder;
                 }
                 Utils.ShowMessageToast("刷新后生效");
             });

@@ -208,6 +208,8 @@ namespace BiliLite
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
             var deferral = e.SuspendingOperation.GetDeferral();
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
             deferral.Complete();
         }
 
@@ -261,7 +263,7 @@ namespace BiliLite
             {
                 var rootFrame = Window.Current.Content as Frame;
                 var mainPage = rootFrame.Content as MainPage;
-                if (mainPage.IsViewing())
+                if (mainPage!=null&&mainPage.IsViewing())
                 {
                     mainPage.CloseView();
                     e.Handled = true;

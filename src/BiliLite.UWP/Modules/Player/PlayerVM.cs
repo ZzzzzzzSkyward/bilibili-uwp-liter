@@ -256,7 +256,7 @@ namespace BiliLite.Modules
     {
         public int node_id { get; set; }
         public string title { get; set; }
-        public int cid { get; set; }
+        public long cid { get; set; }
     }
 
     public class InteractionModel

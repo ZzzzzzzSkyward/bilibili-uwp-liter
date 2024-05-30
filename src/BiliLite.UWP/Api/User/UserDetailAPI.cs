@@ -1,4 +1,6 @@
-﻿namespace BiliLite.Api.User
+﻿using System.Collections.Generic;
+
+namespace BiliLite.Api.User
 {
     public class UserDetailAPI
     {
@@ -76,6 +78,10 @@
         /// <param name="page">页数</param>
         /// <param name="pagesize">每页数量</param>
         /// <returns></returns>
+        private Dictionary<string, string> VideoHeader = new Dictionary<string, string>
+        {
+            { "referer","https://space.bilibili.com" }
+        };
         public ApiModel SubmitVideos(string mid, int page = 1, int pagesize = 30,string keyword="",int tid=0, SubmitVideoOrder order= SubmitVideoOrder.pubdate)
         {
             ApiModel api = new ApiModel()
@@ -84,6 +90,7 @@
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/arc/search",
                 parameter = $"mid={mid}&ps={pagesize}&tid={tid}&pn={page}&keyword={keyword}&order={order.ToString()}",
                 need_cookie=true,
+                headers = VideoHeader
             };
             return api;
         }
@@ -101,7 +108,8 @@
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/arc/search",
                 parameter = $"mid={mid}&ps={pagesize}&tid={tid}&pn={page}&keyword={keyword}&order={order}",
-                need_cookie=true,
+                need_cookie=false,
+                headers = VideoHeader
             };
             api.parameter += ApiHelper.GetWbiSign(api.parameter);
             return api;
@@ -118,7 +126,7 @@
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/article",
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/article",
                 parameter = $"mid={mid}&ps={pagesize}&pn={page}&sort={order.ToString()}",
             };
             return api;

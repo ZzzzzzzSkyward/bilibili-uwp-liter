@@ -208,6 +208,7 @@ namespace BiliLite.Dialogs
             var mid = long.Parse(UID.Text);
             await loginVM.account.SaveLogin(accesskey, "", 1000000, mid, null, null);
             MessageCenter.SendLogined();
+            this.Hide();
         }
         static string thirdurl = "https://passport.bilibili.com/login/app/third";
         static string targeturl = "https://www.mcbbs.net/template/mcbbs/image/special_photo_bg.png";

@@ -437,19 +437,71 @@ namespace BiliLite.Modules
         /// <summary>
         /// 读取直播播放地址
         /// </summary>
-        /// <param name="roomid"></param>
-        /// <param name="qn"></param>
-        /// <returns></returns>
-        public async Task GetPlayUrl(int roomid, int qn = 0)
+        public async Task<bool> GetLiveRoomInfov2(string roomid, int qn)
         {
-            try
+            var results = await PlayerAPI.LivePlayUrlv2(roomid, qn).Request();
+            if (results.status)
             {
-                Loading = true;
+                var data = await results.GetJson<ApiDataModel<LiveRoomPlayUrlModelv2>>();
+                if (data.success)
+                {
+                    LiveRoomWebUrlStreamItemModel stream = null;
+                    if (data.data.playurl_info?.playurl?.stream?.Count>0)
+                    {
+                        stream = data.data.playurl_info.playurl.stream[0];
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                    List<LiveRoomWebUrlCodecItemModel> codec_list = stream.format[0].codec;
+
+                    int i = 1;
+                    foreach (var codec_item in codec_list)
+                    {
+                        foreach (var item in codec_item.url_info)
+                        {
+                            item.name = "线路" + i;
+                            i++;
+                        }
+                    }
+
+                    var codec = codec_list[0];
+
+                    var accept_qn_list = codec.accept_qn;
+                    qualites = data.data.playurl_info.playurl.g_qn_desc.Where(item => accept_qn_list.Contains(item.qn)).ToList();
+                    current_qn = data.data.playurl_info.playurl.g_qn_desc.FirstOrDefault(x => x.qn == codec.current_qn);
+
+                    i = 0;
+                    var url_list = new List<LiveRoomWebUrlDurlItemModel>();
+                    foreach (var item in codec.url_info)
+                    {
+                        var url_item = new LiveRoomWebUrlDurlItemModel
+                        {
+                            url= codec.url_info[i].host + codec.base_url + codec.url_info[i].extra ,
+                            name = codec.url_info[i].name
+                        };
+                        url_list.Add(url_item);
+                        i++;
+                    }
+                    urls = url_list;
+                    current_data = null;
+                    return true;
+                }
+            }
+            return false;
+        }
+        /// <summary>
+        /// 旧版直播间接口
+        /// </summary>
+        private LiveRoomPlayUrlModel current_data;
+        public async Task<bool> GetLiveRoomInfo(string roomid, int qn)
+            {
                 var results = await PlayerAPI.LivePlayUrl(roomid.ToString(), qn).Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<LiveRoomPlayUrlModel>>();
-                    if (data.success)
+                if (data.success&&data.data.durl!=null)
                     {
                         int i = 1;
                         foreach (var item in data.data.durl)
@@ -463,12 +515,33 @@ namespace BiliLite.Modules
                         }
                         current_qn = data.data.quality_description.FirstOrDefault(x => x.qn == data.data.current_qn);
                         urls = data.data.durl;
-                        ChangedPlayUrl?.Invoke(this, data.data);
+                    current_data = data.data;
+                    return true;
                     }
-                    else
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// <param name="roomid"></param>
+        /// <param name="qn"></param>
+        /// <returns></returns>
+        public async Task GetPlayUrl(int roomid, int qn = 0)
                     {
-                        Utils.ShowMessageToast(data.message);
+            try
+            {
+                Loading = true;
+                var result1 = await GetLiveRoomInfov2(roomid.ToString(), qn);
+                if (result1)
+                {
+                    ChangedPlayUrl?.Invoke(this, current_data);
                     }
+                else
+                {
+                    var result2 = await GetLiveRoomInfo(roomid.ToString(), qn);
+                    if (result2)
+                    {
+                        ChangedPlayUrl?.Invoke(this, current_data);
                 }
                 else
                 {
@@ -580,7 +653,7 @@ namespace BiliLite.Modules
         {
             try
             {
-                var uid = 0;
+                long uid = 0;
                 if (SettingHelper.Account.Logined)
                 {
                     uid = SettingHelper.Account.UserID;
@@ -1427,6 +1500,20 @@ namespace BiliLite.Modules
         public List<LiveRoomWebUrlQualityDescriptionItemModel> quality_description { get; set; }
         public List<LiveRoomWebUrlDurlItemModel> durl { get; set; }
     }
+    //直播间接口v2
+    public class LiveRoomPlayUrlModelv2
+    {
+        public LiveRoomWebUrlPlayurlInfoItemModel playurl_info { get; set; }
+    }
+    public class LiveRoomWebUrlPlayurlInfoItemModel
+    {
+        public LiveRoomWebUrlPlayurlItemModel playurl { get; set; }
+    }
+    public class LiveRoomWebUrlPlayurlItemModel
+    {
+        public List<LiveRoomWebUrlQualityDescriptionItemModel> g_qn_desc { get; set; }
+        public List<LiveRoomWebUrlStreamItemModel> stream { get; set; }
+    }
     public class LiveRoomWebUrlQualityDescriptionItemModel
     {
         public int qn { get; set; }
@@ -1442,6 +1529,38 @@ namespace BiliLite.Modules
         public int ptag { get; set; }
     }
 
+    public class LiveRoomWebUrlStreamItemModel
+    {
+        public List<LiveRoomWebUrlFormatItemModel> format { get; set; }
+        public string protocol_name { get; set; }
+    }
+    public class LiveRoomWebUrlFormatItemModel
+    {
+        public List<LiveRoomWebUrlCodecItemModel> codec { get; set; }
+    }
+    public class LiveRoomWebUrlCodecItemModel
+    {
+        public int current_qn { get; set; }
+        public string base_url { get; set; }
+        public string codec_name { get; set; }
+        public List<int> accept_qn { get; set; }
+        public List<LiveRoomWebUrlUrlinfoItemModel> url_info { get; set; }
+    }
+    public class LiveRoomWebUrlUrlinfoItemModel
+    {
+        public string name { get; set; }
+        public string host { get; set; }
+        public string extra { get; set; }
+    }
+    public class LiveRoomRealPlayUrlsModel
+    {
+        public string name { get; set; }
+        public string url { get; set; }
+        public int length { get; set; }
+        public int order { get; set; }
+        public int stream_type { get; set; }
+        public int ptag { get; set; }
+    }
     namespace LiveRoomDetailModels
     {
         public class LiveTitleModel
@@ -1592,7 +1711,7 @@ namespace BiliLite.Modules
             public string bullet_head { get; set; }
             public string bullet_tail { get; set; }
             public int limit_interval { get; set; }
-            public int bind_ruid { get; set; }
+            public long bind_ruid { get; set; }
             public int bind_roomid { get; set; }
             public int bag_coin_type { get; set; }
             public int broadcast_id { get; set; }
@@ -1697,7 +1816,7 @@ namespace BiliLite.Modules
         {
             public string username { get; set; }
             public long uid { get; set; }
-            public int ruid { get; set; }
+            public long ruid { get; set; }
             public string face { get; set; }
             public int guard_level { get; set; }
             public string rank_img

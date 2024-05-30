@@ -161,7 +161,7 @@ namespace BiliLite.Helpers
                     return GetValue(ACCESS_KEY, "");
                 }
             }
-            public static int UserID
+            public static long UserID
             {
                 get
                 {

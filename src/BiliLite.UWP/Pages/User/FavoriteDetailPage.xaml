@@ -14,6 +14,7 @@
     xmlns:model="using:BiliLite.Modules"
     Background="{ThemeResource TransparentBackground}">
     <Page.Resources>
+        <convert:CountGreaterThanOneConverter x:Key="CountGreaterThanOneConverter"></convert:CountGreaterThanOneConverter>
         <Style x:Key="ItemStyle" TargetType="GridViewItem">
             <Setter Property="Margin" Value="8"></Setter>
             <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
@@ -101,7 +102,11 @@
                                           StretchContentForSingleRow="False"
                                           ItemContainerStyle="{StaticResource ItemStyle}"
                                           ItemTemplate="{StaticResource VideoDataTemplate}"
-                                          ItemsSource="{x:Bind Path=favoriteDetailVM.Videos,Mode=OneWay}"
+                                          ItemsSource="{x:Bind Path=favoriteDetailVM.Videos,Mode=TwoWay}"
+                                          AllowDrop="{x:Bind favoriteDetailVM.Videos.Count, Converter={StaticResource CountGreaterThanOneConverter}, Mode=OneWay}"
+                                          CanReorderItems="{x:Bind favoriteDetailVM.Videos.Count, Converter={StaticResource CountGreaterThanOneConverter}, Mode=OneWay}"
+                                          CanDragItems="{x:Bind favoriteDetailVM.Videos.Count, Converter={StaticResource CountGreaterThanOneConverter}, Mode=OneWay}"
+                                          DragItemsCompleted="FavItemGridView_OnDragItemsCompleted"
                                           ItemHeight="80" Grid.ColumnSpan="2">
 
                 <toolkit:AdaptiveGridView.Footer>

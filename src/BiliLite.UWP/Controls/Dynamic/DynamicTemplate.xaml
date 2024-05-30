@@ -14,9 +14,29 @@
         Photo3x3Template="{StaticResource Photo3x3}"
         ShortVideoTemplate="{StaticResource ShortVideo}"
         OneRowTemplate="{StaticResource OneRow}"
+        ReserveTemplate="{StaticResource Reserve}"
         OtherTemplate="{StaticResource Other}">
     </local:DynamicItemDataTemplateSelector>
-    
+
+    <DataTemplate x:Key="Reserve" >
+        <local:DynamicItemControl Model="{Binding}">
+            <local:DynamicItemControl.CardContent>
+                <StackPanel>
+                    <local:RichTextControl Text="{Binding Path=OneRowInfo.Subtitle}" Content="{Binding Path=Content}"></local:RichTextControl>
+                    <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="{ThemeResource ForegroundTextColor}" CornerRadius="4">
+                        <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="4 4 4 4">
+                            <TextBlock Margin="0 0 0 0" Text="{Binding Path=OneRowInfo.Title}" FontSize="20" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap"></TextBlock>
+                            <TextBlock Margin="0 8 0 0" Text="{Binding Path=OneRowInfo.Desc}" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" TextWrapping="Wrap"></TextBlock>
+                        </StackPanel>
+                        <!--HyperlinkButton Command="{Binding Path=LaunchUrlCommand}" CommandParameter="{Binding Path=OneRowInfo.Url}" Background="#dd00a9" CornerRadius="2" HorizontalAlignment="Right" Margin="0 0 8 0" Height="40">
+                            //实际上根本没有办法点击这个按钮
+                                <TextBlock FontSize="14" Text="{Binding Path=OneRowInfo.CoverText}" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"></TextBlock>
+                            </HyperlinkButton-->
+                    </Border>
+                </StackPanel>
+            </local:DynamicItemControl.CardContent>
+        </local:DynamicItemControl>
+    </DataTemplate>
     <DataTemplate x:Key="OneRow" >
         <local:DynamicItemControl Model="{Binding}">
             <local:DynamicItemControl.CardContent>
@@ -41,7 +61,7 @@
                                     <TextBlock Margin="4 2" Foreground="White" FontSize="12" Text="{Binding Path=OneRowInfo.Tag}"></TextBlock>
                                 </Border>
                                 <Border Visibility="{Binding Path=OneRowInfo.ShowCoverText}" Background="#C8000000" CornerRadius="2" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="4">
-                                    <TextBlock Margin="4 2" Foreground="White" FontSize="12" Text="{Binding Path=OneRowInfo.CoverText}"></TextBlock>
+                                    <TextBlock Margin="4 2" Foreground="White" FontSize="12" Text="{Binding Path=OneRowInfo.CoverText}"  TextTrimming="CharacterEllipsis" TextWrapping="Wrap"></TextBlock>
                                 </Border>
                             </Grid>
 
@@ -53,9 +73,6 @@
                         </Grid>
                     </HyperlinkButton>
                 </Border>
-
-
-
             </local:DynamicItemControl.CardContent>
         </local:DynamicItemControl>
     </DataTemplate>
@@ -70,90 +87,101 @@
                     </MediaElement>
                 </Grid>
             </local:DynamicItemControl.CardContent>
-           
+
         </local:DynamicItemControl>
     </DataTemplate>
     <DataTemplate x:Key="Text">
         <local:DynamicItemControl Model="{Binding}">
-           
+            <local:DynamicItemControl.CardContent>
+                <local:RichTextControl Content="{Binding Content}" Text="{Binding OneRowInfo.Desc}"/>
+            </local:DynamicItemControl.CardContent>
         </local:DynamicItemControl>
     </DataTemplate>
     <DataTemplate x:Key="Photo1x1">
         <local:DynamicItemControl Model="{Binding}">
             <local:DynamicItemControl.CardContent>
-                <Border HorizontalAlignment="Left" CornerRadius="4" MaxHeight="500" MaxWidth="400">
-                    <Grid>
-                        <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding Path=ImagesInfo[0]}">
-                            <HyperlinkButton.ContextFlyout>
-                                <MenuFlyout>
-                                    <MenuFlyoutItem Text="保存" Command="{Binding Path=SaveImageCommand}" CommandParameter="{Binding Path=ImagesInfo[0].ImageUrl}">
-                                        <MenuFlyoutItem.Icon>
-                                            <SymbolIcon Symbol="Save"></SymbolIcon>
-                                        </MenuFlyoutItem.Icon>
-                                    </MenuFlyoutItem>
-                                </MenuFlyout>
-                            </HyperlinkButton.ContextFlyout>
-                            <controls:ImageEx  
-                        IsCacheEnabled="True" 
-                       
-                        PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png"
-                        Source="{Binding Path=ImagesInfo[0].ImageUrlWithPar}" ></controls:ImageEx>
-                        </HyperlinkButton>
-                        <Border Visibility="{Binding Path=ImagesInfo[0].LongImage}" CornerRadius="2" Margin="8" VerticalAlignment="Bottom" HorizontalAlignment="Right" Background="#66000000">
-                            <TextBlock Margin="4" FontSize="12" Foreground="White">长图</TextBlock>
-                        </Border>
-                    </Grid>
-                </Border>
-            </local:DynamicItemControl.CardContent>
-        </local:DynamicItemControl>
-    </DataTemplate>
-    <DataTemplate x:Key="Photo3x3">
-        <local:DynamicItemControl Model="{Binding}">
-            <local:DynamicItemControl.CardContent>
-                <GridView MaxWidth="400" SelectionMode="None"
-                          HorizontalAlignment="Left" ItemsSource="{Binding Path=ImagesInfo}" >
-                  
-                    <GridView.ItemTemplate>
-                        <DataTemplate>
-                            <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding}">
+                <StackPanel Orientation="Vertical">
+                    <local:RichTextControl Content="{Binding Path=Content}" Text="{Binding Path=OneRowInfo.Desc}"></local:RichTextControl>
+                    <Border HorizontalAlignment="Left" CornerRadius="4" MaxHeight="500" MaxWidth="400">
+                        <Grid>
+                            <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding Path=ImagesInfo[0]}">
                                 <HyperlinkButton.ContextFlyout>
                                     <MenuFlyout>
-                                        <MenuFlyoutItem Text="保存" Command="{Binding Path=SaveImageCommand}" CommandParameter="{Binding Path=ImageUrl}">
+                                        <MenuFlyoutItem Text="保存" Command="{Binding Path=SaveImageCommand}" CommandParameter="{Binding Path=ImagesInfo[0].ImageUrl}">
                                             <MenuFlyoutItem.Icon>
                                                 <SymbolIcon Symbol="Save"></SymbolIcon>
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
                                     </MenuFlyout>
                                 </HyperlinkButton.ContextFlyout>
-                                <Border  CornerRadius="4" >
-                                    <controls:ImageEx  
+                                <controls:ImageEx  
+                        IsCacheEnabled="True" 
+                       
+                        PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png"
+                        Source="{Binding Path=ImagesInfo[0].ImageUrlWithPar}" ></controls:ImageEx>
+                            </HyperlinkButton>
+                            <Border Visibility="{Binding Path=ImagesInfo[0].LongImage}" CornerRadius="2" Margin="8" VerticalAlignment="Bottom" HorizontalAlignment="Right" Background="#66000000">
+                                <TextBlock Margin="4" FontSize="12" Foreground="White">长图</TextBlock>
+                            </Border>
+                        </Grid>
+                    </Border>
+                </StackPanel>
+            </local:DynamicItemControl.CardContent>
+        </local:DynamicItemControl>
+    </DataTemplate>
+    <DataTemplate x:Key="Photo3x3">
+        <local:DynamicItemControl Model="{Binding}">
+            <local:DynamicItemControl.CardContent>
+                <StackPanel Orientation="Vertical">
+                    <local:RichTextControl Text="{Binding Path=OneRowInfo.Desc}"></local:RichTextControl>
+                    <GridView MaxWidth="400" SelectionMode="None"
+                          HorizontalAlignment="Left" ItemsSource="{Binding Path=ImagesInfo}" >
+
+                        <GridView.ItemTemplate>
+                            <DataTemplate>
+                                <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding}">
+                                    <HyperlinkButton.ContextFlyout>
+                                        <MenuFlyout>
+                                            <MenuFlyoutItem Text="保存" Command="{Binding Path=SaveImageCommand}" CommandParameter="{Binding Path=ImageUrl}">
+                                                <MenuFlyoutItem.Icon>
+                                                    <SymbolIcon Symbol="Save"></SymbolIcon>
+                                                </MenuFlyoutItem.Icon>
+                                            </MenuFlyoutItem>
+                                        </MenuFlyout>
+                                    </HyperlinkButton.ContextFlyout>
+                                    <Border  CornerRadius="4" >
+                                        <controls:ImageEx  
                         IsCacheEnabled="True" 
                         PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde1x1.png" Source="{Binding Path=ImageUrl,Converter={StaticResource imageConvert},ConverterParameter='200w_200h_1c'}" Width="100" Height="100"></controls:ImageEx >
-                                </Border>
-                            </HyperlinkButton>
-                        </DataTemplate>
-                    </GridView.ItemTemplate>
-                </GridView>
+                                    </Border>
+                                </HyperlinkButton>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+                </StackPanel>
             </local:DynamicItemControl.CardContent>
         </local:DynamicItemControl>
     </DataTemplate>
     <DataTemplate x:Key="Photo2x2">
         <local:DynamicItemControl Model="{Binding}">
             <local:DynamicItemControl.CardContent>
-                <GridView MaxWidth="300" SelectionMode="None"
+                <StackPanel Orientation="Vertical">
+                    <local:RichTextControl Text="{Binding Path=OneRowInfo.Subtitle}" Content="{Binding Path=Content}"></local:RichTextControl>
+                    <GridView MaxWidth="300" SelectionMode="None"
                           HorizontalAlignment="Left" ItemsSource="{Binding Path=ImagesInfo}">
-                    <GridView.ItemTemplate>
-                        <DataTemplate>
-                            <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding}">
-                                <Border  CornerRadius="4" >
-                                    <controls:ImageEx  
+                        <GridView.ItemTemplate>
+                            <DataTemplate>
+                                <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding}">
+                                    <Border  CornerRadius="4" >
+                                        <controls:ImageEx  
                         IsCacheEnabled="True" 
                         PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde1x1.png" Source="{Binding Path=ImageUrl,Converter={StaticResource imageConvert},ConverterParameter='200w_200h_1c'}" Width="120" Height="120"></controls:ImageEx>
-                                </Border>
-                            </HyperlinkButton>
-                        </DataTemplate>
-                    </GridView.ItemTemplate>
-                </GridView>
+                                    </Border>
+                                </HyperlinkButton>
+                            </DataTemplate>
+                        </GridView.ItemTemplate>
+                    </GridView>
+                </StackPanel>
             </local:DynamicItemControl.CardContent>
         </local:DynamicItemControl>
     </DataTemplate>
@@ -168,7 +196,7 @@
     <DataTemplate x:Key="Other">
         <Border BorderThickness="1" HorizontalAlignment="Stretch"  BorderBrush="{ThemeResource ForegroundBorderColor}" CornerRadius="4">
             <StackPanel Margin="12">
-                <TextBlock TextWrapping="Wrap">无法显示此动态,请将以下内容复制给开发者适配</TextBlock>
+                <TextBlock TextWrapping="Wrap">无法显示此动态,有待修复</TextBlock>
                 <TextBlock Margin="0 0 8 0" Text="{Binding Path=ContentStr}" TextWrapping="Wrap" IsTextSelectionEnabled="True"></TextBlock>
             </StackPanel>
         </Border>
@@ -176,24 +204,27 @@
     <DataTemplate x:Key="Repost">
         <local:DynamicItemControl Model="{Binding}">
             <local:DynamicItemControl.CardContent>
-                <Border BorderThickness="1"  BorderBrush="{ThemeResource ForegroundBorderColor}"  CornerRadius="4" Background="{ThemeResource TopPaneBackground}">
-                    <ListView 
+                <StackPanel HorizontalAlignment="Stretch" Grid.Column="1" Margin="8 4 8 0">
+                    <local:RichTextControl Text="{Binding Path=OneRowInfo.Subtitle}" Content="{Binding Path=Content}"></local:RichTextControl>
+                    <Border BorderThickness="1"  BorderBrush="{ThemeResource ForegroundBorderColor}"  CornerRadius="4" Background="{ThemeResource TopPaneBackground}">
+                        <ListView 
                         SelectionMode="None" 
                         IsItemClickEnabled="false" 
                         ItemsSource="{Binding Path=OriginInfo}" 
                         
                         ItemTemplateSelector="{StaticResource select}"
                         ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden">
-                        <ListView.ItemContainerStyle>
-                            <Style TargetType="ListViewItem">
-                                <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
-                                <Setter Property="MaxWidth" Value="800"></Setter>
-                                <Setter Property="Margin" Value="0"></Setter>
-                                <Setter Property="Padding" Value="-4 0"></Setter>
-                            </Style>
-                        </ListView.ItemContainerStyle>
-                    </ListView>
-                </Border>
+                            <ListView.ItemContainerStyle>
+                                <Style TargetType="ListViewItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch"></Setter>
+                                    <Setter Property="MaxWidth" Value="800"></Setter>
+                                    <Setter Property="Margin" Value="0"></Setter>
+                                    <Setter Property="Padding" Value="-4 0"></Setter>
+                                </Style>
+                            </ListView.ItemContainerStyle>
+                        </ListView>
+                    </Border>
+                </StackPanel>
             </local:DynamicItemControl.CardContent>
         </local:DynamicItemControl>
     </DataTemplate>

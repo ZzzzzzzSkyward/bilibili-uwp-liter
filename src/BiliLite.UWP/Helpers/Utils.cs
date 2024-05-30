@@ -151,6 +151,18 @@ namespace BiliLite.Helpers
                 return 0;
             }
         }
+        public static long ToInt64(this object obj)
+        {
+
+            if (long.TryParse(obj.ToString(), out var value))
+            {
+                return value;
+            }
+            else
+            {
+                return 0;
+            }
+        }
         public static string ToCountString(this object obj)
         {
             if (obj == null) return "0";
@@ -455,7 +467,7 @@ namespace BiliLite.Helpers
         }
         public static string ParseArea(string title, string mid)
         {
-            return ParseArea(title, mid.ToInt32());
+            return ParseArea(title, mid.ToInt64());
         }
         public static string ChooseProxyServer(string area)
         {
