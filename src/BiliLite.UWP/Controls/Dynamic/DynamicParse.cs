@@ -420,7 +420,7 @@ namespace BiliLite.Controls.Dynamic
             }
             return info;
         }
-       
+
         public static DynamicItemDisplayOneRowInfo ParseOneRowInfo(DynamicDisplayType type, JObject obj)
         {
             DynamicItemDisplayOneRowInfo info = null;
@@ -436,16 +436,16 @@ namespace BiliLite.Controls.Dynamic
                         }
                         info = new DynamicItemDisplayOneRowInfo()
                         {
-                            Cover = obj["pic"].ToString()+ "@412w_232h_1c.jpg",
+                            Cover = obj["pic"].ToString() + "@412w_232h_1c.jpg",
                             CoverText = coverText,
                             Subtitle = "播放:" + obj["stat"]["view"].ToCountString() + " 弹幕:" + obj["stat"]["danmaku"].ToCountString(),
                             Tag = "视频",
                             ID = obj["aid"].ToString(),
                             Desc = obj["desc"].ToString(),
                             Title = obj["title"].ToString(),
-                            
+
                         };
-                        info.Url = "http://b23.tv/av"+info.ID;
+                        info.Url = "http://b23.tv/av" + info.ID;
                     }
                     return info;
                 case DynamicDisplayType.Season:
@@ -488,13 +488,13 @@ namespace BiliLite.Controls.Dynamic
                         var cover = obj["sketch"]["cover_url"]?.ToString() ?? "";
                         info = new DynamicItemDisplayOneRowInfo()
                         {
-                            Cover = cover==""?"": cover + "@200w.jpg",
-                            Subtitle = obj["sketch"]["desc_text"]?.ToString()??"",
-                            ID = obj["sketch"]["target_url"]?.ToString()??"",
-                            Title = obj["sketch"]["title"]?.ToString()??"",
+                            Cover = cover == "" ? "" : cover + "@200w.jpg",
+                            Subtitle = obj["sketch"]["desc_text"]?.ToString() ?? "",
+                            ID = obj["sketch"]["target_url"]?.ToString() ?? "",
+                            Title = obj["sketch"]["title"]?.ToString() ?? "",
                             CoverWidth = 80,
                         };
-                        info.Url =  info.ID.ToString();
+                        info.Url = info.ID.ToString();
                     }
                     return info;
                 case DynamicDisplayType.Article:
@@ -509,7 +509,7 @@ namespace BiliLite.Controls.Dynamic
                             Title = obj["title"].ToString(),
                             Desc = obj["summary"].ToString(),
                             Tag = "专栏",
-                            
+
                         };
                         info.Url = "https://www.bilibili.com/read/cv" + info.ID.ToString();
                     }
@@ -518,7 +518,7 @@ namespace BiliLite.Controls.Dynamic
                     {
                         info = new DynamicItemDisplayOneRowInfo()
                         {
-                            Cover = obj["live_play_info"]["cover"].ToString()+ "@412w_232h_1c.jpg",
+                            Cover = obj["live_play_info"]["cover"].ToString() + "@412w_232h_1c.jpg",
                             CoverText = "",
                             Subtitle = obj["live_play_info"]["parent_area_name"].ToString() + " · 人气:" + obj["live_play_info"]["online"].ToCountString(),
                             Tag = "直播",
@@ -534,8 +534,8 @@ namespace BiliLite.Controls.Dynamic
                         {
                             Cover = obj["cover"].ToString() + "@412w_232h_1c.jpg",
                             CoverText = obj["live_status"].ToInt32() == 0 ? "直播已结束" : "",
-                            Subtitle = obj["area_v2_name"].ToString() ,
-                            Tag="直播",
+                            Subtitle = obj["area_v2_name"].ToString(),
+                            Tag = "直播",
                             ID = obj["roomid"].ToString(),
                             Title = obj["title"].ToString(),
                         };
@@ -546,14 +546,14 @@ namespace BiliLite.Controls.Dynamic
                     {
                         //TODO 合集这部分需要重写
                         //https://t.bilibili.com/625835271145782341
-                        if (obj["videos"].ToInt32()==1)
+                        if (obj["videos"].ToInt32() == 1)
                         {
-                            return ParseOneRowInfo( DynamicDisplayType.Video,obj);
+                            return ParseOneRowInfo(DynamicDisplayType.Video, obj);
                         }
                         info = new DynamicItemDisplayOneRowInfo()
                         {
                             Cover = obj["cover"].ToString() + "@412w_232h_1c.jpg",
-                            Subtitle = obj["media_count"].ToString()+"个内容",
+                            Subtitle = obj["media_count"].ToString() + "个内容",
                             Tag = "收藏夹",
                             ID = obj["id"].ToString(),
                             Title = obj["title"].ToString(),
@@ -596,7 +596,7 @@ namespace BiliLite.Controls.Dynamic
 
                 return null;
             }
-           
+
         }
         /**
          * Command
@@ -608,7 +608,7 @@ namespace BiliLite.Controls.Dynamic
 
 
         /// <summary>
-        /// 文本转为RichText
+        /// 评论文本转为RichText
         /// </summary>
         /// <param name="id">动态id</param>
         /// <param name="txt"></param>
@@ -634,7 +634,7 @@ namespace BiliLite.Controls.Dynamic
                 input = HandleAtAndVote(input, txt, extend_json);
                 //处理网页🔗
                 input = HandleUrl(input);
-               
+
                 //处理表情
                 input = HandleEmoji(input, emote);
                 //处理话题
@@ -650,10 +650,9 @@ namespace BiliLite.Controls.Dynamic
                                             xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"" xmlns:d=""http://schemas.microsoft.com/expression/blend/2008""
     xmlns:mc = ""http://schemas.openxmlformats.org/markup-compatibility/2006"" LineHeight=""20"">
                                           <Paragraph>{0}</Paragraph>
-                ",input);
-                                      //</RichTextBlock>", input);
+                ", input);
                 //处理直播
-                var more = HandleCard(input, extend_json["直播"] as JArray  );
+                var more = HandleCard(input, extend_json["直播"] as JArray);
                 xaml += more;
                 xaml += "</RichTextBlock>";
                 var p = (RichTextBlock)XamlReader.Load(xaml);
@@ -692,7 +691,7 @@ namespace BiliLite.Controls.Dynamic
                         input = input.Replace(item.Groups[0].Value, string.Format(@"<InlineUIContainer><Border Margin=""0 -4 4 -4""><Image Source=""{0}"" Width=""{1}"" Height=""{1}""/></Border></InlineUIContainer>",
                        emoji.url, 24));
                     }
-                   
+
                 }
             }
             return input;
@@ -743,7 +742,7 @@ namespace BiliLite.Controls.Dynamic
                 var u = item.Groups[0].Value;
                 var display = Utils.ProcessURL(u);
                 var data = @"<InlineUIContainer><HyperlinkButton x:Name=""btn"" Command=""{Binding LaunchUrlCommand}""  IsEnabled=""True"" Margin=""0 -4 0 -4"" Padding=""0"" " +
-                    string.Format(@" CommandParameter=""{0}"" ><TextBlock>🔗{1}</TextBlock></HyperlinkButton></InlineUIContainer>", u,display);
+                    string.Format(@" CommandParameter=""{0}"" ><TextBlock>🔗{1}</TextBlock></HyperlinkButton></InlineUIContainer>", u, display);
                 input = input.Replace(item.Groups[0].Value, data);
             }
 
@@ -780,28 +779,30 @@ namespace BiliLite.Controls.Dynamic
                         var d = content.Substring(item.location, item.length);
                         var index = input.IndexOf(d);
                         input = input.Remove(index, item.length);
-                        var run = @"<InlineUIContainer><HyperlinkButton Command=""{Binding UserCommand}""  IsEnabled=""True"" Margin=""0 -4 4 -4"" Padding=""0"" " + string.Format(@" Tag=""{1}""  CommandParameter=""{1}"" ><TextBlock>{0}</TextBlock></HyperlinkButton></InlineUIContainer>", d.Replace("@", "^x$%^"), item.data);
+                        var run = @"<InlineUIContainer>\
+<HyperlinkButton Command=""{Binding UserCommand}""  IsEnabled=""True"" Margin=""0 -4 4 -4"" Padding=""0"" " + string.Format(@" Tag=""{1}""  CommandParameter=""{1}"" >\
+<TextBlock>{0}</TextBlock></HyperlinkButton></InlineUIContainer>", d.Replace("@", "^x$%^"), item.data);
                         input = input.Insert(index, run);
                     }
                     catch (Exception)
                     {
                     }
-                   
+
                 }
                 //投票
                 if (item.type == 3)
                 {
-                    var d = content.Substring(item.location, content.Length- item.location);
+                    var d = content.Substring(item.location, content.Length - item.location);
                     var index = input.IndexOf(d);
                     input = input.Remove(index, content.Length - item.location);
                     var run = @"<InlineUIContainer><HyperlinkButton Command=""{Binding VoteCommand}""  IsEnabled=""True"" Margin=""0 -4 4 -4"" Padding=""0"" " + string.Format(@" Tag=""{1}""  CommandParameter=""{1}"" ><TextBlock>{0}</TextBlock></HyperlinkButton></InlineUIContainer>",
-                        "📊" + d, extendJson["vote"]?["vote_id"]?.ToInt32()??0);
+                        "📊" + d, extendJson["vote"]?["vote_id"]?.ToInt32() ?? 0);
                     input = input.Insert(index, run);
                 }
             }
             return input;
         }
-       
+
 
 
         /// <summary>
@@ -813,10 +814,10 @@ namespace BiliLite.Controls.Dynamic
         private static string HandleLottery(string input, string id, JObject extendJson)
         {
             if (!extendJson.ContainsKey("lott")) return input;
-           
-            if (input.IndexOf("互动抽奖")==1)
+
+            if (input.IndexOf("互动抽奖") == 1)
             {
-                input= input.Remove(1, 4);
+                input = input.Remove(1, 4);
             }
             input = input.Insert(0, $@"<InlineUIContainer><HyperlinkButton Command=""{{Binding LotteryCommand}}""  CommandParameter=""{id}"" IsEnabled=""True"" Margin=""0 -4 4 -4"" Padding=""0"" ><TextBlock>🎁互动抽奖</TextBlock></HyperlinkButton></InlineUIContainer>");
             return input;
@@ -888,12 +889,12 @@ namespace BiliLite.Controls.Dynamic
                     var data = @"<InlineUIContainer><HyperlinkButton Command=""{Binding LaunchUrlCommand}""  IsEnabled=""True"" Margin=""0 -4 0 -4"" Padding=""0"" " + string.Format(@" CommandParameter=""{1}"" ><TextBlock>{0}</TextBlock></HyperlinkButton></InlineUIContainer>", item.Groups[0].Value, "bilibili://video/" + item.Groups[0].Value);
                     input = input.Replace(item.Groups[0].Value, data);
                 }
-           
 
 
 
-            //处理AV号
-            
+
+                //处理AV号
+
                 MatchCollection bv = Regex.Matches(input, @"[bB][vV]([a-zA-Z0-9]{8,})");
                 foreach (Match item in bv)
                 {
@@ -905,9 +906,9 @@ namespace BiliLite.Controls.Dynamic
                     var data = @"<InlineUIContainer><HyperlinkButton Command=""{Binding LaunchUrlCommand}""  IsEnabled=""True"" Margin=""0 -4 0 -4"" Padding=""0"" " + string.Format(@" CommandParameter=""{1}"" ><TextBlock>{0}</TextBlock></HyperlinkButton></InlineUIContainer>", item.Groups[0].Value, "bilibili://video/" + item.Groups[0].Value);
                     input = input.Replace(item.Groups[0].Value, data);
                 }
-            
-            //处理CV号
-           
+
+                //处理CV号
+
                 MatchCollection cv = Regex.Matches(input, @"[cC][vV](\d+)");
                 foreach (Match item in cv)
                 {

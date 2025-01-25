@@ -406,7 +406,6 @@ namespace BiliLite.Modules.User
                     default:
                         break;
                 }
-
                 var results = await api.Request();
                 if (results.status)
                 {

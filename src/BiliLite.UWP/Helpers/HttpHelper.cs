@@ -29,18 +29,18 @@ namespace BiliLite.Helpers
         /// <param name="headers"></param>
         /// <param name="cookie"></param>
         /// <returns></returns>
-        public static DateTime lasttime=System.DateTime.Now;
+        public static DateTime lasttime = System.DateTime.Now;
         public static TimeSpan min_dt = new TimeSpan(1);
         public static int concurrent_get_count = 1;
         public static TimeSpan delay = new TimeSpan(0, 0, 0, 0, 1);
-        public async static Task<HttpResults> Get( string url)
+        public async static Task<HttpResults> Get(string url)
         {
             return await Get(url, null);
         }
-        public async static Task<HttpResults> Get( string url, IDictionary<string, string> headers)
+        public async static Task<HttpResults> Get(string url, IDictionary<string, string> headers)
         {
             //wait 
-            var t=DateTime.Now;
+            var t = DateTime.Now;
             if (t - lasttime < min_dt)
             {
                 concurrent_get_count++;
@@ -66,7 +66,7 @@ namespace BiliLite.Helpers
                     if (url.Contains("bilibili.com") || url.Contains("pgc/player/") || url.Contains("x/web-interface"))
                     {
                         if(!client.DefaultRequestHeaders.Keys.Contains("User-Agent"))
-                        client.DefaultRequestHeaders.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0");
+                            client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0");
                     }
                     Console.WriteLine(url);
                     var response = await client.GetAsync(new Uri(url));
@@ -92,9 +92,6 @@ namespace BiliLite.Helpers
                     };
                     return httpResults;
                 }
-
-
-
             }
             catch (Exception ex)
             {
@@ -126,19 +123,19 @@ namespace BiliLite.Helpers
                 if (!headers.Keys.Contains("Cookie"))
                 {
                     var cookies = fiter.CookieManager.GetCookies(new Uri("https://www.bilibili.com"));
-                //没有Cookie
-                if(cookies==null|| cookies.Count == 0)
-                {
-                    //访问一遍bilibili.com
-                    await Get("https://www.bilibili.com");
+                    //没有Cookie
+                    if (cookies == null || cookies.Count == 0)
+                    {
+                        //访问一遍bilibili.com
+                        await Get("https://www.bilibili.com");
                         cookies = fiter.CookieManager.GetCookies(new Uri("https://www.bilibili.com"));
-                }
-                string cookie = "";
-                foreach (var item in cookies)
-                {
-                    cookie += $"{item.Name}={item.Value};";
-                }
-                headers.Add("Cookie", cookie);
+                    }
+                    string cookie = "";
+                    foreach (var item in cookies)
+                    {
+                        cookie += $"{item.Name}={item.Value};";
+                    }
+                    headers.Add("Cookie", cookie);
                 }
                 return await Get(url, headers);
             }
@@ -304,7 +301,7 @@ namespace BiliLite.Helpers
                     var response = await client.PostAsync(new Uri(url), new HttpStringContent(body, Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/x-www-form-urlencoded"));
                     if (!response.IsSuccessStatusCode)
                     {
-                        Utils.AddALog("[POST][FAIL]"+url+response.StatusCode.ToString());
+                        Utils.AddALog("[POST][FAIL]" + url + response.StatusCode.ToString());
                         return new HttpResults()
                         {
                             code = (int)response.StatusCode,
@@ -324,9 +321,6 @@ namespace BiliLite.Helpers
                     };
                     return httpResults;
                 }
-
-
-
             }
             catch (Exception ex)
             {
@@ -339,9 +333,6 @@ namespace BiliLite.Helpers
                 };
             }
         }
-
-
-
 
         private static string StatusCodeToMessage(int code)
         {
@@ -380,18 +371,16 @@ namespace BiliLite.Helpers
         }
     }
 
-
     public class HttpResults
     {
         public int code { get; set; }
         public string message { get; set; }
         public string results { get; set; }
         public bool status { get; set; }
-
         //处理两个json的情况
         public JObject FindLongestValidJsonString(string input)
         {
-            JObject obj=null;
+            JObject obj = null;
             int start = 0;
             int end = 0;
             int maxLength = 0;
@@ -431,34 +420,32 @@ namespace BiliLite.Helpers
                     }
                 }
             }
-
             return obj;
         }
-    public async Task<T> GetJson<T>()
+        public async Task<T> GetJson<T>()
         {
-                 try
-                 {
-                     return JsonConvert.DeserializeObject<T>(results);
-                 }
-                 catch
-                 {
+            try
+            {
+                return JsonConvert.DeserializeObject<T>(results);
+            }
+            catch
+            {
 
-                 }
-                 try
-                 {
-                     return FindLongestValidJsonString(results).ToObject<T>();
-                 }
-                 catch(Exception e)
-                 {
-                     Console.WriteLine("解析json失败", e.ToString());
-                     Utils.AddALog("[JSON][FAIL]" + results.ToString().Substring(0,100));
-                 }
-                 return default(T);
-
+            }
+            try
+            {
+                return FindLongestValidJsonString(results).ToObject<T>();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("解析json失败", e.ToString());
+                Utils.AddALog("[JSON][FAIL]" + results.ToString().Substring(0, 100));
+            }
+            return default(T);
         }
         public JObject GetJObject()
         {
-            JObject obj=JObject.Parse("{}");
+            JObject obj = JObject.Parse("{}");
             try
             {
                 obj = JObject.Parse(results);
@@ -474,7 +461,7 @@ namespace BiliLite.Helpers
                 var serialized = obj.ToString();
                 return obj;
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Utils.ShowMessageToast("解析json对象失败", e.ToString());
                 Console.WriteLine(obj.ToString());
@@ -486,8 +473,8 @@ namespace BiliLite.Helpers
         {
             try
             {
-                return await GetJson<ApiDataModel<T>>();
-            }
+            return await GetJson<ApiDataModel<T>>();
+        }
             catch (Exception)
             {
                 return null;
@@ -498,7 +485,7 @@ namespace BiliLite.Helpers
         {
             try
             {
-                return await GetJson<ApiResultModel<T>>();
+            return await GetJson<ApiResultModel<T>>();
             }
             catch (Exception)
             {

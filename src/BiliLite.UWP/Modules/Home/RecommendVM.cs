@@ -97,7 +97,7 @@ namespace BiliLite.Modules
                         {
                             foreach(var i in items)
                             Items.Add(i);
-                            }
+                        }
 
                     }
                     else
@@ -248,7 +248,7 @@ namespace BiliLite.Modules
                     }
                     else
                     {
-                        return ad_info.creative_content.title;
+                        return ad_info.creative_content?.title ?? "";
                     }
                 }
                 return _title;

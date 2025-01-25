@@ -13,7 +13,22 @@ namespace BiliLite.Dialogs
 {
     public sealed partial class CommentDialog : UserControl
     {
-        public bool isvisible;
+        public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
+
+        public void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
+        }
+        private bool _isvisible;
+        public bool isvisible
+        {
+            get { return _isvisible; }
+            set
+            {
+                _isvisible = value;
+                OnPropertyChanged(nameof(isvisible));
+            }
+        }
         private Popup popup;
         public CommentDialog()
         {

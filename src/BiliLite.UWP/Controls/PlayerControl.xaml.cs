@@ -77,7 +77,7 @@ namespace BiliLite.Controls
         /// <summary>
         /// 专题ID
         /// </summary>
-        public int season_id { get; set; }
+        public long season_id { get; set; }
 
         /// <summary>
         /// 专题类型

@@ -11,7 +11,7 @@ namespace BiliLite.Api
         public static Dictionary<string, string> VideoHeader = new Dictionary<string, string>{
             {"Referer","https://www.bilibili.com/" }
         };
-        public ApiModel VideoPlayUrl(string aid, string cid, int qn,bool dash,bool proxy=false,string area="")
+        public ApiModel VideoPlayUrl(string aid, string cid, int qn, bool dash, bool proxy = false, string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
 
@@ -24,7 +24,7 @@ namespace BiliLite.Api
                 method = RestSharp.Method.Get,
                 baseUrl = $"{baseUrl}/x/player/wbi/playurl",
                 parameter = $"avid={aid}&cid={cid}&qn={qn}&type=&otype=json",
-                need_cookie = !ApiHelper.need_refresh_cookie,
+                need_cookie = true,
                 headers = VideoHeader,
             };
             var fnval = 0;
@@ -45,7 +45,7 @@ namespace BiliLite.Api
             api.parameter += $"&fourk=1&fnver=0&fnval={fnval}";
             if (SettingHelper.Account.Logined)
             {
-                api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile.mid}";
+                //api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile.mid}";
             }
             if (proxy)
             {
@@ -59,9 +59,9 @@ namespace BiliLite.Api
             return api;
         }
 
-       
 
-        public ApiModel SeasonPlayUrl(string aid, string cid, string ep_id, int qn,int season_type, bool dash, bool proxy = false, string area = "")
+
+        public ApiModel SeasonPlayUrl(string aid, string cid, string ep_id, int qn, int season_type, bool dash, bool proxy = false, string area = "")
         {
             var baseUrl = ApiHelper.API_BASE_URL;
             if (proxy)
@@ -82,7 +82,7 @@ namespace BiliLite.Api
             {
                 api.parameter += "&fourk=1&fnver=0&fnval=4048";
             }
-            
+
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.WebVideoKey);
             if (proxy)
             {
@@ -110,13 +110,13 @@ namespace BiliLite.Api
             return api;
         }
 
-        public ApiModel LivePlayUrl(string cid, int qn=0)
+        public ApiModel LivePlayUrl(string cid, int qn = 0)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://api.live.bilibili.com/room/v1/Room/playUrl",
-                parameter =$"cid={cid}&qn={qn}&platform=web"
+                parameter = $"cid={cid}&qn={qn}&platform=web"
             };
             //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidVideoKey);
             return api;
@@ -202,7 +202,7 @@ namespace BiliLite.Api
         /// <param name="type">类型 3=视频，4=番剧</param>
         /// <param name="progress">进度/秒</param>
         /// <returns></returns>
-        public ApiModel SeasonHistoryReport(string aid,string cid, int progress, int sid=0,string epid="0",int type=3)
+        public ApiModel SeasonHistoryReport(string aid,string cid, int progress, long sid=0,string epid="0",int type=3)
         {
             ApiModel api = new ApiModel()
             {
@@ -247,9 +247,11 @@ namespace BiliLite.Api
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}/x/player/v2",
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/player/wbi/v2",
                 parameter = $"cid={cid}&aid={aid}&bvid={bvid}",
+                need_cookie=true,
             };
+            api.parameter += ApiHelper.GetWbiSign(api.parameter);
             return api;
         }
         /// <summary>

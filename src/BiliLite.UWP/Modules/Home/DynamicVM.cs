@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
-
 namespace BiliLite.Modules
 {
     public class DynamicVM : IModules
@@ -496,8 +495,8 @@ namespace BiliLite.Modules
         public string image { get; set; }
         public string image_enhance { get; set; }
         public int expire { get; set; }
-        public int pid { get; set; }
-        public int n_pid { get; set; }
+        public long pid { get; set; }
+        public long n_pid { get; set; }
         public string name { get; set; }
     }
     public class DynamicCardModel2024_decorate

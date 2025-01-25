@@ -479,7 +479,8 @@ namespace BiliLite.Helpers
                 if (SettingHelper.GetValue<bool>(SettingHelper.UI.OPEN_URL_BROWSER, false))
                 {
                     var result = await Utils.LaunchUri(url);
-                    
+                   
+
                     return true;
                 }
                 NavigateToPage(null, new NavigationInfo()

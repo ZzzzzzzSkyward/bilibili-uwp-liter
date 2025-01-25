@@ -41,6 +41,7 @@ namespace BiliLite.Modules
         private ObservableCollection<FavoriteInfoVideoItemModel> _videos;
         private bool stack_will_overflow = false;
         private bool inited_favorite = false;
+
         public ObservableCollection<FavoriteInfoVideoItemModel> Videos
         {
             get

@@ -1247,5 +1247,83 @@ FallbackColor=""#ffffff"" />
         {
             PropertyChanged?.Invoke(this, new System.ComponentModel.PropertyChangedEventArgs(propertyName));
         }
+        public string Cookie
+        {
+            get
+            {
+                return ApiHelper.GetCSRF();
+            }
+            set
+            {
+                if (String.IsNullOrEmpty(value)) return;
+                SettingHelper.SetValue<string>("CookieCSRF",value);
+                var filter = new HttpBaseProtocolFilter();
+                var cookies = filter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
+                try
+                {
+                    var one = cookies.First(x => x.Name == "bili_jct");
+                    one.Value = value;
+                }
+                catch
+                {
+                    var c = new Windows.Web.Http.HttpCookie("bili_jct", "bilibili.com", "/");
+                    c.Value = value;
+                    filter.CookieManager.SetCookie(c);
+                }
+                OnPropertyChanged(nameof(Cookie));
+            }
+        }
+        public string CookieSESSDATA
+        {
+            get
+            {
+
+                var filter = new HttpBaseProtocolFilter();
+                var cookies = filter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
+                try
+                {
+                    var one = cookies.First(x => x.Name == "SESSDATA");
+                    return one.Value;
+                }
+                catch
+                {
+                    return SettingHelper.GetValue<string>("CookieSESSDATA", "");
+                }
+            }
+            set
+            {
+                if (String.IsNullOrEmpty(value)) return;
+                var filter = new HttpBaseProtocolFilter();
+                var cookies = filter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
+                SettingHelper.SetValue<string>("CookieSESSDATA", value);
+                try
+                {
+                    var one = cookies.First(x => x.Name == "SESSDATA");
+                    one.Value = value;
+                }
+                catch
+                {
+                    var c = new Windows.Web.Http.HttpCookie("SESSDATA", "bilibili.com", "/");
+                    c.Value = value;
+                    filter.CookieManager.SetCookie(c);
+                    OnPropertyChanged(nameof(CookieSESSDATA));
+                }
+            }
+        }
+
+        public string CookieRefreshToken
+        {
+            get
+            {
+                var cookie = SettingHelper.GetValue<string>("CookieRefreshToken", "");
+                return cookie;
+            }
+            set
+            {
+                if (String.IsNullOrEmpty(value)) return;
+                SettingHelper.SetValue<string>("CookieRefreshToken", value);
+                OnPropertyChanged(nameof(CookieRefreshToken));
+            }
+        }
     }
 }

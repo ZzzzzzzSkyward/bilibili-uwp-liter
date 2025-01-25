@@ -233,7 +233,7 @@ namespace BiliLite.Helpers
     {
         public DownloadType Type { get; set; }
         public string AVID { get; set; }
-        public int SeasonID { get; set; }
+        public long SeasonID { get; set; }
         public int SeasonType { get; set; }
         public string EpisodeID { get; set; }
         public string CID { get; set; }

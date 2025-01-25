@@ -496,38 +496,40 @@ namespace BiliLite.Modules
         /// </summary>
         private LiveRoomPlayUrlModel current_data;
         public async Task<bool> GetLiveRoomInfo(string roomid, int qn)
+        {
+            var results = await PlayerAPI.LivePlayUrl(roomid.ToString(), qn).Request();
+            if (results.status)
             {
-                var results = await PlayerAPI.LivePlayUrl(roomid.ToString(), qn).Request();
-                if (results.status)
-                {
-                    var data = await results.GetJson<ApiDataModel<LiveRoomPlayUrlModel>>();
+                var data = await results.GetJson<ApiDataModel<LiveRoomPlayUrlModel>>();
                 if (data.success&&data.data.durl!=null)
+                {
+                    int i = 1;
+                    foreach (var item in data.data.durl)
                     {
-                        int i = 1;
-                        foreach (var item in data.data.durl)
-                        {
-                            item.name = "线路" + i;
-                            i++;
-                        }
-                        if (qualites == null)
-                        {
-                            qualites = data.data.quality_description;
-                        }
-                        current_qn = data.data.quality_description.FirstOrDefault(x => x.qn == data.data.current_qn);
-                        urls = data.data.durl;
+                        item.name = "线路" + i;
+                        i++;
+                    }
+                    if (qualites == null)
+                    {
+                        qualites = data.data.quality_description;
+                    }
+                    current_qn = data.data.quality_description.FirstOrDefault(x => x.qn == data.data.current_qn);
+                    urls = data.data.durl;
                     current_data = data.data;
                     return true;
-                    }
+                }
             }
             return false;
         }
 
         /// <summary>
+        /// 读取直播播放地址
+        /// </summary>
         /// <param name="roomid"></param>
         /// <param name="qn"></param>
         /// <returns></returns>
         public async Task GetPlayUrl(int roomid, int qn = 0)
-                    {
+        {
             try
             {
                 Loading = true;
@@ -546,7 +548,6 @@ namespace BiliLite.Modules
                     else
                     {
                         Utils.ShowMessageToast("获取直播间信息失败");
-
                     }
                 }
             }
@@ -1562,6 +1563,7 @@ namespace BiliLite.Modules
         public int stream_type { get; set; }
         public int ptag { get; set; }
     }
+
     namespace LiveRoomDetailModels
     {
         public class LiveTitleModel

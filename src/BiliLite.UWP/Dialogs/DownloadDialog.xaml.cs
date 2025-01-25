@@ -265,7 +265,7 @@ namespace BiliLite.Dialogs
         /// </summary>
         public string ID { get; set; }
 
-        public int SeasonID { get; set; }
+        public long SeasonID { get; set; }
         public int SeasonType { get; set; }
         public string Title { get; set; }
         public string Subtitle { get; set; }

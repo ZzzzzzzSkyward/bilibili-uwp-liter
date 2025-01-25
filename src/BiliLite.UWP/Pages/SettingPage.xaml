@@ -349,6 +349,22 @@
                         <TextBox Text="***********" x:Name="TokenTextBox"/>
                             <TextBlock>⚠用于b站登录，请勿泄露给他人</TextBlock>
                         </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0 16 0 8">
+                            <TextBlock Margin="0 0 8 0" VerticalAlignment="Center">bili_jct:</TextBlock>
+                            <TextBox x:Name="CookieTextBox" Text="{x:Bind Cookie, Mode=TwoWay}" Width="200"/>
+                            <TextBlock Margin="8 0 0 0">，请打开浏览器，按F12打开控制台，点击存储，找到Cookie，搜索bili_jct字段复制过来</TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0 16 0 8">
+                            <TextBlock Margin="0 0 8 0" VerticalAlignment="Center">ac_time_value:</TextBlock>
+                            <TextBox x:Name="CookieRefreshTokenTextBox" Text="{x:Bind CookieRefreshToken, Mode=TwoWay}" Width="200"/>
+                            <TextBlock Margin="8 0 0 0">该令牌用于刷新cookie，请打开浏览器，按F12打开控制台，点击存储，找到本地存储LocalStorage，搜索ac_time_value字段复制过来</TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Margin="0 16 0 8">
+                            <TextBlock Margin="0 0 8 0" VerticalAlignment="Center">SESSDATA:</TextBlock>
+                            <TextBox x:Name="SESSDATATextBox" Text="{x:Bind CookieSESSDATA, Mode=TwoWay}" Width="200"/>
+                            <TextBlock Margin="8 0 0 0">请打开浏览器，按F12打开控制台，点击存储，找到Cookie，搜索SESSDATA字段复制过来</TextBlock>
+                            <TextBlock>⚠用于b站登录，请勿泄露给他人</TextBlock>
+                        </StackPanel>
                         <StackPanel Visibility="Collapsed">
                             <Button Content="注销accesskey" Click="BurnTokenButton_Click"/>
                         </StackPanel>
@@ -405,7 +421,7 @@
 						<TextBox Margin="0 0 0 8" MinWidth="200" PlaceholderText="https://api.bilibili.com" x:Name="api_web_top"></TextBox>
 						<TextBlock Margin="0 16 0 8" FontSize="16">APIv2</TextBlock>
 						<TextBox Margin="0 0 0 8" MinWidth="200" PlaceholderText="/x/v2" x:Name="api_web_secondary"></TextBox>
-						<StackPanel>
+						<StackPanel Visibility="Collapsed">
 							<StackPanel Orientation="Horizontal" VerticalAlignment="Center">
 							<TextBlock FontSize="16">极验登录测试</TextBlock>
 							<Button Click="DoLogin">登录</Button>

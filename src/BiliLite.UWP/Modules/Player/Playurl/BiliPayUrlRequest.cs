@@ -562,6 +562,13 @@ namespace BiliLite.Modules.Player.Playurl
             AddMessage("[/x/player/playurl]", webResult.Message);
             //尝试GRPC API读取地址
             var grpcResult = await GetPlayUrlUseGrpc(playInfo, qualityID);
+            if (false)
+            {
+                if (grpcResult.Qualites.Count> webResult.Qualites.Count)
+                {
+                    return grpcResult;
+                }
+            }
             if (grpcResult.Success)
             {
                 return grpcResult;
@@ -574,7 +581,11 @@ namespace BiliLite.Modules.Player.Playurl
         {
             try
             {
-                await ApiHelper.NeedRefreshCookie();
+                var refresh=await ApiHelper.NeedRefreshCookie();
+                if (refresh)
+                {
+                    ApiHelper.RefreshCookie();
+                }
                 var webApiResult = await (playerAPI.VideoPlayUrl(aid: playInfo.avid, cid: playInfo.cid, qn: qualityID, dash: CodecMode != PlayUrlCodecMode.FLV, false, playInfo.area)).Request();
                 if (!webApiResult.status)
                 {
