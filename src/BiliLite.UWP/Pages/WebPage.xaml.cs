@@ -1,6 +1,7 @@
 ﻿using BiliLite.Controls;
 using BiliLite.Helpers;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.Web.WebView2.Core;
 using System;
 using System.Collections.Generic;
 using Windows.UI.Popups;
@@ -23,13 +24,23 @@ namespace BiliLite.Pages
             Title = "网页浏览";
             this.Loaded += WebPage_Loaded;
         }
-        private void WebPage_Loaded(object sender, RoutedEventArgs e)
+        private async void WebPage_Loaded(object sender, RoutedEventArgs e)
         {
             if (this.Parent is MyFrame)
             {
                 (this.Parent as MyFrame).ClosedPage -= WebPage_ClosedPage;
                 (this.Parent as MyFrame).ClosedPage += WebPage_ClosedPage;
             }
+            await webView.EnsureCoreWebView2Async();
+            webView.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
+            webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
+            webView.CoreWebView2.Settings.IsGeneralAutofillEnabled = true;
+            webView.CoreWebView2.Settings.IsStatusBarEnabled = true;
+            webView.CoreWebView2.Settings.AreHostObjectsAllowed = true;
+            webView.CoreWebView2.Settings.IsZoomControlEnabled = true;
+            webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
+            webView.CoreWebView2.Settings.IsBuiltInErrorPageEnabled = true;
+            webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
         }
 
         private void WebPage_ClosedPage(object sender, EventArgs e)
@@ -40,7 +51,7 @@ namespace BiliLite.Pages
             GC.Collect();
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             if (e.NavigationMode == NavigationMode.New)
@@ -56,7 +67,8 @@ namespace BiliLite.Pages
                     //如果是专栏，内容加载完成再显示
                     webView.Visibility = Visibility.Collapsed;
                 }
-                webView.Navigate(new Uri(uri));
+                await webView.EnsureCoreWebView2Async();
+                webView.CoreWebView2.Navigate(uri);
                 UrlBox.Text = uri;
 
             }
@@ -86,7 +98,7 @@ namespace BiliLite.Pages
 
         private void btnRefresh_Click(object sender, RoutedEventArgs e)
         {
-            webView.Refresh();
+            webView.CoreWebView2.Reload();
         }
 
         private void btnBack_Click(object sender, RoutedEventArgs e)
@@ -97,30 +109,30 @@ namespace BiliLite.Pages
             }
         }
 
-        private async void webView_NavigationCompleted(WebView sender, WebViewNavigationCompletedEventArgs args)
+        private async void webView_NavigationCompleted(WebView2 sender,CoreWebView2NavigationCompletedEventArgs args)
         {
             if (this.Parent != null)
             {
                 if ((this.Parent as Frame).Parent is TabViewItem)
                 {
-                    if (!string.IsNullOrEmpty(webView.DocumentTitle))
+                    if (!string.IsNullOrEmpty(webView.CoreWebView2?.DocumentTitle))
                     {
-                        ((this.Parent as Frame).Parent as TabViewItem).Header = webView.DocumentTitle;
+                        ((this.Parent as Frame).Parent as TabViewItem).Header = webView.CoreWebView2.DocumentTitle;
                         UrlBox.Text = webView.Source.AbsoluteUri;
                     }
                 }
                 else
                 {
-                    MessageCenter.ChangeTitle(webView.DocumentTitle);
+                    MessageCenter.ChangeTitle(webView.CoreWebView2?.DocumentTitle??"");
                 }
             }
             try
             {
 
                 //专栏阅读设置
-                if (args.Uri != null && args.Uri.AbsoluteUri.Contains("read/cv"))
+                if (webView.Source != null && webView.Source.AbsolutePath.Contains("read/cv"))
                 {
-                    await webView?.InvokeScriptAsync("eval", new List<string>() {
+                    await webView?.CoreWebView2.ExecuteScriptWithResultAsync(
                     @"$('#internationalHeader').hide();
 $('.unlogin-popover').hide();
 $('.up-info-holder').hide();
@@ -130,25 +142,17 @@ $('.page-container').css('padding-right','0');
 $('.no-login').hide();
 $('.author-container').show();
 $('.author-container').css('margin','12px 0px -12px 0px');"
-                });
+                );
                     //将专栏图片替换成jpg
-                    await webView?.InvokeScriptAsync("eval", new List<string>() {
+                    await webView?.CoreWebView2.ExecuteScriptWithResultAsync(
                         @"document.getElementsByClassName('img-box').forEach(element => {
                 element.getElementsByTagName('img').forEach(image => {
                     image.src=image.getAttribute('data-src')+'@progressive.jpg';
                });
             });"
-                    });
+                   );
                 }
-
-
-
-                await webView?.InvokeScriptAsync("eval", new List<string>() {
-                    "$('.h5-download-bar').hide()"
-                });
-
-
-
+                await webView?.CoreWebView2.ExecuteScriptWithResultAsync("$('.h5-download-bar').hide()");
             }
             catch (Exception)
             {
@@ -183,9 +187,9 @@ $('.author-container').css('margin','12px 0px -12px 0px');"
             await Utils.LaunchUri(webView.Source);
         }
 
-        private void webView_NavigationStarting(WebView sender, WebViewNavigationStartingEventArgs args)
+        private void webView_NavigationStarting(WebView2 sender, CoreWebView2NavigationStartingEventArgs args)
         {
-            if (args.Uri != null && args.Uri.AbsoluteUri.Contains("read/cv"))
+            if (args.Uri != null && args.Uri.Contains("read/cv"))
             {
                 // args.Cancel = true;
                 // return;
