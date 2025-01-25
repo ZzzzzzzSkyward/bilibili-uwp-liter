@@ -862,13 +862,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX">
-      <Version>2.0.0-pre3</Version>
+      <Version>2.0.0-pre7</Version>
     </PackageReference>
     <PackageReference Include="FFmpegInteropX.FFmpegUWP">
       <Version>5.1.100</Version>
     </PackageReference>
     <PackageReference Include="Google.Protobuf">
-      <Version>3.27.0</Version>
+      <Version>3.29.3</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
@@ -895,13 +895,13 @@
       <Version>2.8.4</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.2584-prerelease</Version>
+      <Version>1.0.3079-prerelease</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>13.0.3</Version>
     </PackageReference>
     <PackageReference Include="NLog">
-      <Version>5.1.4</Version>
+      <Version>5.3.4</Version>
     </PackageReference>
     <PackageReference Include="NLog.Config">
       <Version>4.7.15</Version>
@@ -913,7 +913,7 @@
       <Version>1.0.2</Version>
     </PackageReference>
     <PackageReference Include="RestSharp">
-      <Version>111.1.1-alpha.0.3</Version>
+      <Version>112.1.1-alpha.0.4</Version>
     </PackageReference>
     <PackageReference Include="SYEngine.uwp">
       <Version>1.0.7</Version>

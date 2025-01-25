@@ -187,9 +187,10 @@ namespace BiliLite.Controls
                                 if (m.data.upper.top != null)
                                 {
                                     m.data.upper.top.showTop = Visibility.Visible;
+                                    m.data.replies.RemoveAt(0);
                                     m.data.replies.Insert(0, m.data.upper.top);
                                 }
-                                if (m.data.topReplies != null)
+                                /*if (m.data.topReplies != null)
                                 {
                                     foreach(var t in m.data.topReplies)
                                     {
@@ -199,7 +200,7 @@ namespace BiliLite.Controls
 
                                         m.data.replies.Insert(0, c);
                                     }
-                                }
+                                }*/
                                 //ls_hot.ItemsSource = m.data.hots;
                                 ls_new.ItemsSource = m.data.replies;
                             }
@@ -274,11 +275,11 @@ namespace BiliLite.Controls
                 }
                 data.showReplyMore = Visibility.Collapsed;
                 data.showLoading = Visibility.Visible;
-                ObservableCollection<CommentModel> ls = new ObservableCollection<CommentModel>();
+                var ls = new ObservableCollection<CommentModel>();
                 var re = await commentApi.Reply(_loadCommentInfo.Oid, data.rpid.ToString(), data.loadpage, _loadCommentInfo.CommentMode).Request();
                 if (re.status)
                 {
-                    dataCommentModel m = JsonConvert.DeserializeObject<dataCommentModel>(re.results);
+                    var m = JsonConvert.DeserializeObject<dataCommentModel>(re.results);
                     if (m.code == 0)
                     {
                         if (m.data.replies != null && m.data.replies.Count != 0)
@@ -725,8 +726,8 @@ namespace BiliLite.Controls
         public dataCommentModel upper { get; set; }
         public CommentModel top { get; set; }
 
-        [JsonProperty("top_replies")]
-        public List<CommentItem> topReplies { get; set; }
+        //[JsonProperty("top_replies")]
+        //public List<CommentItem> topReplies { get; set; }
 
     }
     public class CommentModel : INotifyPropertyChanged

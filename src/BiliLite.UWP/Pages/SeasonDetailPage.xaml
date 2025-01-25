@@ -295,7 +295,7 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                             <TextBlock Margin="0 8" FontSize="18" FontWeight="Bold">标签</TextBlock>
-                            <ItemsControl ItemsSource="{x:Bind Path=seasonDetailVM.Detail.styles,Mode=OneWay}">
+                            <!--<ItemsControl ItemsSource="{x:Bind Path=seasonDetailVM.Detail.styles,Mode=OneWay}">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
                                         <toolkit:WrapPanel VerticalSpacing="4" />
@@ -310,12 +310,12 @@
                                         </HyperlinkButton>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                            <TextBlock Margin="0 8" FontSize="18" FontWeight="Bold" Text="{x:Bind Path=seasonDetailVM.Detail.actor.title,Mode=OneWay}"></TextBlock>
+                            </ItemsControl>-->
+                            <!--<TextBlock Margin="0 8" FontSize="18" FontWeight="Bold" Text="{x:Bind Path=seasonDetailVM.Detail.actor.title,Mode=OneWay}"></TextBlock>
                             <TextBlock Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Text="{x:Bind Path=seasonDetailVM.Detail.actor.info,Mode=OneWay}"></TextBlock>
                             <TextBlock Margin="0 8" FontSize="18" FontWeight="Bold" Text="{x:Bind Path=seasonDetailVM.Detail.staff.title,Mode=OneWay}"></TextBlock>
                             <TextBlock Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" IsTextSelectionEnabled="True" Text="{x:Bind Path=seasonDetailVM.Detail.staff.info,Mode=OneWay}"></TextBlock>
-                            
+                            -->
                         </StackPanel>
                     </ScrollViewer>
                 </PivotItem>

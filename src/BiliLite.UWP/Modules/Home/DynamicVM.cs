@@ -330,7 +330,8 @@ namespace BiliLite.Modules
             {
                 return
                   modules?.module_dynamic?.major?.archive?.aid ??
-                  modules?.module_dynamic?.major?.live?.id?.ToString() ??
+                  modules?.module_dynamic?.major?.pgc?.season_id_string ??
+                  modules?.module_dynamic?.major?.live?.id ??
                   basic.rid_str ??
                   "0";
             }
@@ -737,6 +738,13 @@ namespace BiliLite.Modules
         public string cover { get; set; }
         public int epid { get; set; }
         public int season_id { get; set; }
+        public string season_id_string
+        {
+            get
+            {
+                return season_id!=0 ? season_id.ToString() : null;
+            }
+        }
         public DynamicCardModel2024_astat stat { get; set; }
         /*1：番剧
 2：电影

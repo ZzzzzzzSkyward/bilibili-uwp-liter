@@ -73,14 +73,15 @@ namespace BiliLite.Api
             //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
-        public ApiModel Reply(string oid,string root, int pn, int type, int ps = 30)
+        //<param>ps:1-20</param>
+        public ApiModel Reply(string oid,string root, int pn, int type, int ps = 20)
         {
-            string csrf = ApiHelper.GetCSRF(true);
+            //string csrf = ApiHelper.GetCSRF(true);
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}{ApiHelper.replyreply}",
-                parameter = $"oid={oid}&plat=2&pn={pn}&ps={ps}&root={root}&type={type}{csrf}",
+                parameter = $"oid={oid}&plat=2&pn={pn}&ps={ps}&root={root}&type={type}",
                 need_cookie=true
             };
             //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);

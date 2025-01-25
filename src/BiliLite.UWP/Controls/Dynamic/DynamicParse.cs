@@ -274,7 +274,7 @@ namespace BiliLite.Controls.Dynamic
                         {
                             info.Title = item.title;
                         }
-                        info.Url = "http://b23.tv/ss" + info.ID;
+                        info.Url = item.jumpurl;
                     }
                     break;
                 case DynamicDisplayType.Music:
@@ -893,7 +893,7 @@ namespace BiliLite.Controls.Dynamic
 
 
 
-                //处理AV号
+                //处理BV号
 
                 MatchCollection bv = Regex.Matches(input, @"[bB][vV]([a-zA-Z0-9]{8,})");
                 foreach (Match item in bv)

@@ -581,7 +581,7 @@ namespace BiliLite.Modules.Player.Playurl
         {
             try
             {
-                var refresh=await ApiHelper.NeedRefreshCookie();
+                var refresh = await ApiHelper.NeedRefreshCookie();
                 if (refresh)
                 {
                     ApiHelper.RefreshCookie();
@@ -603,7 +603,6 @@ namespace BiliLite.Modules.Player.Playurl
             {
                 return BiliPlayUrlQualitesInfo.Failure(ex.ToString());
             }
-
         }
         private async Task<BiliPlayUrlQualitesInfo> GetPlayUrlUseGrpc(PlayInfo playInfo, int qualityID)
         {

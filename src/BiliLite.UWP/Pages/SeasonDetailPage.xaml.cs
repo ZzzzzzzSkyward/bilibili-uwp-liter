@@ -114,7 +114,7 @@ namespace BiliLite.Pages
 
         private async Task InitSeasonDetail()
         {
-            await seasonDetailVM.LoadSeasonDetail(season_id);
+            await seasonDetailVM.LoadSeasonDetail(ep_id);
 
             if (seasonDetailVM.Detail != null)
             {
@@ -135,11 +135,12 @@ namespace BiliLite.Pages
             selectPreview = !seasonDetailVM.ShowEpisodes;
 
             var index = 0;
+            /*
             if (string.IsNullOrEmpty(ep_id) && seasonDetailVM.Detail.user_status?.progress != null)
             {
                 ep_id = seasonDetailVM.Detail.user_status.progress.last_ep_id.ToString();
                 SettingHelper.SetValue<double>("ep" + ep_id, Convert.ToDouble(seasonDetailVM.Detail.user_status.progress.last_time));
-            }
+            }**/
             var selectItem = (selectPreview?seasonDetailVM.Previews: seasonDetailVM.Episodes).FirstOrDefault(x => x.id.ToString() == ep_id);
             if (selectItem != null)
             {

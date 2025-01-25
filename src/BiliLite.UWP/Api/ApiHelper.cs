@@ -8,11 +8,44 @@ using System.Web;
 using Windows.Web.Http.Filters;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using Windows.Web.Http;
+public interface ICookieService
+{
+    void WriteCookie(string name, string value);
+    string ReadCookie(string name, string defaultValue);
+}
 
+public class CookieService : ICookieService
+{
+    private readonly HttpBaseProtocolFilter _filter;
+
+    public CookieService()
+    {
+        _filter = new HttpBaseProtocolFilter();
+    }
+
+    public void WriteCookie(string name, string value)
+    {
+        var cookie = new HttpCookie(name, "bilibili.com", "/")
+        {
+            Value = value
+        };
+        _filter.CookieManager.SetCookie(cookie);
+    }
+
+    public string ReadCookie(string name, string defaultValue)
+    {
+        var cookies = _filter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
+        if (cookies.Count == 0) return defaultValue;
+        var cookie = cookies.FirstOrDefault(x => x.Name == name);
+        return cookie?.Value ?? defaultValue;
+    }
+}
 namespace BiliLite.Api
 {
     public static class ApiHelper
     {
+        public static CookieService Cookie = new CookieService();
         static ApiHelper()
         {
             var sets = new List<string>();
@@ -70,36 +103,28 @@ namespace BiliLite.Api
         public static string replycomment = "/reply/add";
         public static string replyreply = "/reply/reply";
         public static string readcomment_old = "/reply";//2025仍然有效
+        //sync
+        public static string SyncCookie(string cookie_name, string setting_name)
+        {
+            var cookie_value = Cookie.ReadCookie(cookie_name, "");
+            var setting_value = SettingHelper.GetValue<string>(setting_name, "");
+            //sync
+            if (String.IsNullOrEmpty(cookie_value) && !String.IsNullOrEmpty(setting_value))
+            {
+                Cookie.WriteCookie(cookie_name, setting_value);
+                cookie_value = setting_value;
+            }
+            else if (!String.IsNullOrEmpty(cookie_value) && String.IsNullOrEmpty(setting_value))
+            {
+                setting_value = cookie_value;
+                SettingHelper.SetValue(setting_name, setting_value);
+            }
+            return cookie_value;
+        }
         //csrf
-        public static string _csrf = "";
         public static string GetCSRF(bool isparam = false)
         {
-            if (_csrf != "")
-            {
-                if (isparam) return "&csrf=" + _csrf;
-                else return _csrf;
-            }
-            var fiter = new HttpBaseProtocolFilter();
-            var cookies = fiter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
-            var csrf = SettingHelper.GetValue<string>("CookieCSRF", "");
-            //没有Cookie
-            if (cookies == null || cookies.Count == 0)
-            {
-                return csrf;
-            }
-            else
-            {
-                csrf = cookies.FirstOrDefault(x => x.Name == "bili_jct")?.Value;
-                if (csrf != null && csrf != "")
-                {
-                    _csrf = csrf;
-                    if (isparam)
-                    {
-                        csrf = "&csrf=" + csrf;
-                    }
-                }
-            }
-            return csrf;
+            return SyncCookie("bili_jct", "CookieCSRF");
         }
 
         public static string GetSign(string url)
@@ -180,6 +205,7 @@ namespace BiliLite.Api
                 API_BASE_URL = Default_API_BASE_URL;
                 api2 = default_api2;
             }
+            LoadCookieFromSetting();
         }
         public static string GetSign(IDictionary<string, string> pars, ApiKeyInfo apiKeyInfo)
         {
@@ -320,35 +346,28 @@ namespace BiliLite.Api
                 return _need_refresh_cookie;
             }
         }
-        private static void LoadSESSDATA()
+        private static void LoadCookieFromSetting()
         {
-            var f = new HttpBaseProtocolFilter();
-            var x = SettingHelper.GetValue<string>("CookieSESSDATA", "");
-            if (!String.IsNullOrEmpty(x) && !f.CookieManager.GetCookies(new Uri("https://bilibili.com")).Any(r => r.Name == "SESSDATA"))
-            {
-                var c = new Windows.Web.Http.HttpCookie("SESSDATA", "bilibili.com", "/");
-                c.Value = x;
-                f.CookieManager.SetCookie(c);
-            }
-            x = SettingHelper.GetValue<string>("CookieCSRF", "");
-            if (!String.IsNullOrEmpty(x) && !f.CookieManager.GetCookies(new Uri("https://bilibili.com")).Any(r => r.Name == "bili_jct"))
-            {
-                var c = new Windows.Web.Http.HttpCookie("bili_jct", "bilibili.com", "/");
-                c.Value = x;
-                f.CookieManager.SetCookie(c);
-            }
+            SyncCookie("SESSDATA", "CookieSESSDATA");
+            SyncCookie("bili_jct", "CookieCSRF");
         }
         public static long cookie_timestamp = 0;
         public async static Task<bool> NeedRefreshCookie()
         {
             if (has_inited_cookie) return _need_refresh_cookie;
+            if (!SettingHelper.Account.Logined)
+            {
+                has_inited_cookie = true;
+                _need_refresh_cookie = false;
+                return _need_refresh_cookie;
+            }
             var url = "https://passport.bilibili.com/x/passport-login/web/cookie/info";
             var api = new ApiModel() {
                 need_cookie = true,
                 method = RestSharp.Method.Get,
                 baseUrl = url,
             };
-            LoadSESSDATA();
+            LoadCookieFromSetting();
             var result = await api.Request();
             if (result.code==200)
             {
@@ -397,11 +416,17 @@ namespace BiliLite.Api
             // 将加密后的字节数组转换为小写的 Base16 字符串
             return BitConverter.ToString(encryptedBytes).Replace("-", "").ToLower();
         }
+        private static bool need_refresh_cookie_notified = false;
         public static async void RefreshCookie()
         {
             if (cookie_timestamp == 0)
             {
                 LogHelper.Log("No cookie timestamp provided to refresh cookie", LogType.INFO);
+                if (!need_refresh_cookie_notified)
+                {
+                    need_refresh_cookie_notified = true;
+                    Utils.ShowMessageToast("啊哦，cookie过气了，\n而且没有刷新令牌，\n需要重新登录了呢");
+                }
                 return;
             }
             var correspondPath = GetCorrespondPath(cookie_timestamp);
@@ -464,9 +489,10 @@ namespace BiliLite.Api
                 LogHelper.Log("刷新cookie时出现csrf校验失败", LogType.INFO);
             }
             if (String.IsNullOrEmpty(new_token)) return;
+            //设置新的cookie
+            SettingHelper.SetValue("CookieRefreshToken", new_token);
             //注销
             var url3 = "https://passport.bilibili.com/x/passport-login/web/confirm/refresh";
-            _csrf = "";//强制刷新
             var api3 = new ApiModel()
             {
                 need_cookie = true,

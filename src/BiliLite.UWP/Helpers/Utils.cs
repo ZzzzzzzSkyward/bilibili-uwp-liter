@@ -189,9 +189,26 @@ namespace BiliLite.Helpers
         {
             try
             {
-                var re = await HttpHelper.GetString($"https://bangumi.bilibili.com/view/web_api/season?ep_id={epid}");
+                var re = await HttpHelper.GetString($"https://api.bilibili.com/pgc/view/web/season?ep_id={epid}");
                 var obj = JObject.Parse(re);
                 return obj["result"]["season_id"].ToString();
+            }
+            catch (Exception)
+            {
+                return "";
+            }
+        }
+        /// <summary>
+        /// 根据番剧ID获取SSid
+        /// </summary>
+        /// <returns></returns>
+        public async static Task<string> BangumiSidToEpid(string season_id)
+        {
+            try
+            {
+                var re = await HttpHelper.GetString($"https://api.bilibili.com/pgc/view/web/season?season_id={season_id}");
+                var obj = JObject.Parse(re);
+                return obj["result"]["ep_id"].ToString();
             }
             catch (Exception)
             {

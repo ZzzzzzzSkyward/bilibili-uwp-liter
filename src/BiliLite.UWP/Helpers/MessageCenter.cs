@@ -168,7 +168,7 @@ namespace BiliLite.Helpers
                     icon = Symbol.Play,
                     page = typeof(SeasonDetailPage),
                     title = "剧集加载中...",
-                    parameters = bangumi
+                    parameters = new object[] { bangumi, await Utils.BangumiSidToEpid(bangumi) }
                 });
                 return true;
             }

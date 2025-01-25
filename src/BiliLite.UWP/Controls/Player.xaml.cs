@@ -1738,6 +1738,10 @@ namespace BiliLite.Controls
 
             var FFmpegType = SettingHelper.GetValue<int>("playertype", 0)==3;
             var _ffmpegConfig = new MediaSourceConfig();
+            _ffmpegConfig.FFmpegOptions.Add("allowed_extensions", "ALL");
+            _ffmpegConfig.FFmpegOptions.Add("reconnect", "1");
+            _ffmpegConfig.FFmpegOptions.Add("reconnect_streamed", "1");
+            _ffmpegConfig.FFmpegOptions.Add("reconnect_on_network_error", "1");
             if (userAgent != null && userAgent.Length > 0)
             {
                 _ffmpegConfig.FFmpegOptions.Add("user_agent", userAgent);

@@ -21,7 +21,7 @@ namespace BiliLite.Api
        
         }
         
-        public ApiModel Detail_Web(string season_id,bool proxy=false)
+        public ApiModel Detail_Web(string ep_id,bool proxy=false)
         {
             var baseUrl = ApiHelper.API_BASE_URL;
 
@@ -29,9 +29,9 @@ namespace BiliLite.Api
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{baseUrl}/pgc/view/web/season",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&season_id={season_id}"
+                parameter = $"ep_id={ep_id}"
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
         public ApiModel DetailWeb(string season_id)
