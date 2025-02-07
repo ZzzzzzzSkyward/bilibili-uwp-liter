@@ -867,6 +867,9 @@
     <PackageReference Include="FFmpegInteropX.FFmpegUWP">
       <Version>5.1.100</Version>
     </PackageReference>
+    <PackageReference Include="gfoidl.Base64">
+      <Version>1.1.2</Version>
+    </PackageReference>
     <PackageReference Include="Google.Protobuf">
       <Version>3.29.3</Version>
     </PackageReference>

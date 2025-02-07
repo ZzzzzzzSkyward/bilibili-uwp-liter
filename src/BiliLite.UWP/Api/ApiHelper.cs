@@ -9,6 +9,9 @@ using Windows.Web.Http.Filters;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using Windows.Web.Http;
+using gfoidl.Base64;
+using System.Timers;
+
 public interface ICookieService
 {
     void WriteCookie(string name, string value);
@@ -105,7 +108,7 @@ namespace BiliLite.Api
         public static string readcomment_old = "/reply";//2025仍然有效
         //sync
         public static string SyncCookie(string cookie_name, string setting_name)
-        {
+            {
             var cookie_value = Cookie.ReadCookie(cookie_name, "");
             var setting_value = SettingHelper.GetValue<string>(setting_name, "");
             //sync
@@ -115,12 +118,12 @@ namespace BiliLite.Api
                 cookie_value = setting_value;
             }
             else if (!String.IsNullOrEmpty(cookie_value) && String.IsNullOrEmpty(setting_value))
-            {
+                {
                 setting_value = cookie_value;
                 SettingHelper.SetValue(setting_name, setting_value);
-            }
+                    }
             return cookie_value;
-        }
+                }
         //csrf
         public static string GetCSRF(bool isparam = false)
         {
@@ -206,6 +209,7 @@ namespace BiliLite.Api
                 api2 = default_api2;
             }
             LoadCookieFromSetting();
+            AutoRefreshCookie();
         }
         public static string GetSign(IDictionary<string, string> pars, ApiKeyInfo apiKeyInfo)
         {
@@ -404,10 +408,12 @@ namespace BiliLite.Api
 
             // 导入公钥
             RSA rsa = RSA.Create();
+            string m = "y4HdjgJHBlbaBN04VERG4qNBIFHP6a3GozCl75AihQloSWCXC5HDNgyinEnhaQ_4-gaMud_GF50elYXLlCToR9se9Z8z433U3KjM-3Yx7ptKkmQNAMggQwAVKgq3zYAoidNEWuxpkY_mAitTSRLnsJW-NCTa0bqBFF6Wm1MxgfE";
+            string e = "AQAB";
             rsa.ImportParameters(new RSAParameters()
             {
-                Modulus = Convert.FromBase64String("y4HdjgJHBlbaBN04VERG4qNBIFHP6a3GozCl75AihQloSWCXC5HDNgyinEnhaQ_4-gaMud_GF50elYXLlCToR9se9Z8z433U3KjM-3Yx7ptKkmQNAMggQwAVKgq3zYAoidNEWuxpkY_mAitTSRLnsJW-NCTa0bqBFF6Wm1MxgfE"),
-                Exponent = Convert.FromBase64String("AQAB")
+                Modulus = Base64.Url.Decode(m.ToCharArray()),
+                Exponent = Base64.Url.Decode(e.ToCharArray())
             });
 
             // 使用 RSA-OAEP 加密
@@ -439,8 +445,8 @@ namespace BiliLite.Api
                 need_cookie = true,
             };
             var result = await api.Request();
-            long csrf = 0;
-            if (result.code == 0)
+            string csrf = "";
+            if (result.code == 200)
             {
                 var text = result.results;
                 string pattern = @"<div id=""1-name"">([^<]+)</div>";
@@ -448,15 +454,14 @@ namespace BiliLite.Api
 
                 if (match.Success)
                 {
-                    string tok = match.Groups[1].Value;
-                    csrf = long.Parse(tok);
+                    csrf = match.Groups[1].Value;
                 }
                 else
                 {
                     LogHelper.Log("刷新cookie时发生正则表达式没匹配", LogType.INFO);
                 }
             }
-            if (csrf == 0)
+            if (String.IsNullOrEmpty(csrf))
             {
                 return;
             }
@@ -472,7 +477,7 @@ namespace BiliLite.Api
             };
             var result2 = await api2.Request();
             var new_token = "";
-            if (result2.code == 0)
+            if (result2.code == 200)
             {
                 var d = result2.GetJObject();
                 var obj = d["data"];
@@ -507,6 +512,46 @@ namespace BiliLite.Api
         {
             var token = SettingHelper.GetValue<string>("CookieRefreshToken", "");
             return token;
+        }
+        // 定时器
+        private static Timer _timer;
+
+        // 上一次执行的时间戳
+        private static DateTime _lastExecutionTime;
+        private static void AutoRefreshCookie()
+        {
+            // 程序启动时立即执行一次任务
+            ExecuteTask(DateTime.Now);
+
+            // 初始化定时器，设置为1天执行一次
+            InitializeTimer(TimeSpan.FromDays(1));
+        }
+        private static void InitializeTimer(TimeSpan interval)
+        {
+            // 创建定时器
+            _timer = new Timer(interval.TotalMilliseconds);
+            _timer.Elapsed += TimerElapsed;
+            _timer.AutoReset = true; // 自动重新触发
+            _timer.Start();
+
+            Console.WriteLine($"定时器已启动，间隔时间为 {interval}...");
+        }
+
+        private static void TimerElapsed(object sender, ElapsedEventArgs e)
+        {
+            // 获取当前时间
+            DateTime now = DateTime.Now;
+
+            // 执行任务
+            ExecuteTask(now);
+
+            // 更新上一次执行的时间戳
+            _lastExecutionTime = now;
+        }
+
+        private static void ExecuteTask(DateTime currentTimestamp)
+        {
+            has_inited_cookie = false;
         }
     }
     public class ApiKeyInfo

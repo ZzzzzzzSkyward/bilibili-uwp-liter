@@ -346,12 +346,12 @@
 						<TextBox Visibility="{x:Bind EnableLog.IsOn}" x:Name="logTextBox" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True" />
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Margin="0 16 0 8" FontSize="16">登录</TextBlock>
-                            <TextBlock TextWrapping="Wrap">
-由于目前APP使用网页端的接口，所以还得再确保有网页端令牌（一共三个核心字段）。然而我技术力不足，无法在没有浏览器的环境下获取其中的一个刷新用令牌，故需手动填写。
-你可以在浏览器里新建一个无痕窗口来登录B站，然后打开控制台。无痕窗口（隐私模式）能确保新令牌只被这个APP使用，不会因为在其他设备风控而失效。
-如果你嫌麻烦，也可以在APP内置的webview里打开B站。
-控制台的快捷键是F12或ctrl+shift+I
-                            </TextBlock>
+                            <RichTextBlock TextWrapping="Wrap">
+<Paragraph>由于目前APP使用网页端的接口，所以还得再确保有网页端令牌（一共三个核心字段）。然而我技术力不足，无法在没有浏览器的环境下获取其中的一个刷新用令牌，故需手动填写。</Paragraph>
+<Paragraph>你可以在浏览器里新建一个无痕窗口来登录B站，然后打开控制台。无痕窗口（隐私模式）能确保新令牌只被这个APP使用，不会因为在其他设备风控而失效。</Paragraph>
+<Paragraph>如果你嫌麻烦，也可以在APP内置的webview里打开B站。</Paragraph>
+<Paragraph>控制台的快捷键是F12或ctrl+shift+I</Paragraph>
+                            </RichTextBlock>
                         </StackPanel>
                         <StackPanel Orientation="Horizontal">
                             <Button Content="显示accesskey" Click="ShowTokenButton_Click"/>
