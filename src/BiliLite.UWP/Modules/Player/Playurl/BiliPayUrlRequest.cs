@@ -27,7 +27,7 @@ namespace BiliLite.Modules.Player.Playurl
     class BiliPlayUrlRequest
     {
         private static int _requestCounter;
-        private static string NewRequestId()
+        protected static string NewRequestId()
         {
             return "playurl-" + Interlocked.Increment(ref _requestCounter).ToString("D6");
         }
@@ -40,7 +40,7 @@ namespace BiliLite.Modules.Player.Playurl
             return "stream-url";
         }
 
-        private void LogPlayurl(PlayInfo playInfo, string requestId, string stage, int quality, string detail, Exception ex = null)
+        protected void LogPlayurl(PlayInfo playInfo, string requestId, string stage, int quality, string detail, Exception ex = null)
         {
             var message = "Playurl requestId=" + requestId + " stage=" + stage
                 + " aid=" + playInfo?.avid + " cid=" + playInfo?.cid + " epId=" + playInfo?.ep_id
