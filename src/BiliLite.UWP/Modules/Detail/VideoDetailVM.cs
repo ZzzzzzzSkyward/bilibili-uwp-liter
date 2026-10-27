@@ -202,6 +202,7 @@ namespace BiliLite.Modules
 
                 if (data != null && data.success)
                 {
+                    data.data.req_user = data.data.req_user ?? new VideoDetailReqUserModel { attention = -999 };
                     VideoInfo = data.data;
                     Loaded = true;
                     if (needGetUserReq)
