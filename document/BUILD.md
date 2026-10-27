@@ -13,6 +13,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1
 - Commit the bumped manifests together with the change that triggered the build. `-NoVersionBump` is an escape hatch for a throwaway rebuild at the current version (for example, re-running a failed build while diagnosing); it must not be the default in a release or verification run.
 - A full run takes about two minutes. Let it finish and read the result once, rather than polling.
 
+## Watch for a new push
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\watch-remote.ps1 -Fetch
+```
+
+`watch-remote.ps1` blocks until the watched remote branch moves, then exits, which makes it usable as a "wake me on the next push" gate. It polls `git ls-remote`, so it never touches local refs or the working tree; `-Fetch` downloads just that ref into `FETCH_HEAD` to print the incoming commits, still without changing the checked-out branch.
+
+- Defaults: remote `origin`, the current branch, a 15 s interval, and no timeout. `-IntervalSeconds`, `-TimeoutSeconds`, `-Remote` and `-Branch` override them.
+- Exit codes: `0` a new commit appeared, `2` the timeout expired with no change, `3` the branch was deleted.
+- Output: the baseline SHA in the first line, then silence until the SHA changes. Unreachable remotes retry instead of exiting and warn at most once a minute.
+- Pull and rebuild only after it reports a change; the script does not pull on its own.
+
 ## Read the errors
 
 - `error CS####` lines are real compiler errors. Fix those first.
