@@ -124,3 +124,7 @@ Current state: logging/export, video-Dynamics mapping, primary-Dynamics initiali
 - Rebased implementation commits: `d3766fd` record the crash evidence; `d0c63b0` initialize primary Dynamics before XAML and add lifecycle breadcrumbs; `fdf85fb` record the source diagnosis; `6620e66` stop video-history pagination after a failed request; `1ca07b6` add the Dynamic v2 protocol/service bridge; `96fb4c7` integrate the sibling video feed; `48f75f2` integrate primary All, Video, and Season feeds and map them to target cards.
 - Source implementation is complete and awaiting user build/reproduction. After the branch is pushed, pull `work`, reproduce opening primary `动态` and browsing `视频动态`, and export Settings → Debug logs after relaunch if needed. Include the build version, occurrence time, and steps. The home-feed request excerpt by itself did not prove a crash cause.
 - No build, test, protocol generation, restore, app run, runtime request, or API call was performed for this implementation. Only `git diff --check` is permitted.
+
+## Upstream issue collection
+
+The new oldest-to-newest catalog of likely upstream bugs, including open and closed reports, is tracked in [UPSTREAM_BUG_PROGRESS.md](UPSTREAM_BUG_PROGRESS.md). Collection and target-source triage are in progress; no candidates are recorded yet.
