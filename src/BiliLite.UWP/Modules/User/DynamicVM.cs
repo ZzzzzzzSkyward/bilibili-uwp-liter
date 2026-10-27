@@ -412,7 +412,7 @@ namespace BiliLite.Modules.User
                     var data = results.GetJObject();
                     if (data != null && (data["code"].ToInt32() == 0))
                     {
-                        var items = JsonConvert.DeserializeObject<List<DynamicCardModel2024>>(data["data"]?["items"]?.ToString() ?? "[]",jsonSerializerSettings);
+                        var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["cards"]?.ToString() ?? "[]", jsonSerializerSettings);
                         if (items.Count > 0)
                         {
                             CanLoadMore = true;
@@ -420,7 +420,7 @@ namespace BiliLite.Modules.User
                         ObservableCollection<DynamicItemDisplayModel> _ls = new ObservableCollection<DynamicItemDisplayModel>();
                         foreach (var item in items)
                         {
-                            _ls.Add(ConvertToDisplay2024(item));
+                            _ls.Add(ConvertToDisplay(item));
                         }
                         if (Items == null)
                         {
@@ -471,9 +471,9 @@ namespace BiliLite.Modules.User
                     var data = results.GetJObject();
                     if (data["code"].ToInt32() == 0)
                     {
-                        var item = JsonConvert.DeserializeObject<DynamicCardModel2024>(data["data"]?["item"]?.ToString() ?? "[]", jsonSerializerSettings);
+                        var item = JsonConvert.DeserializeObject<DynamicCardModel>(data["data"]?.ToString() ?? "{}", jsonSerializerSettings);
                         ObservableCollection<DynamicItemDisplayModel> _ls = new ObservableCollection<DynamicItemDisplayModel>();
-                        _ls.Add(ConvertToDisplay2024(item));
+                        _ls.Add(ConvertToDisplay(item));
                         Items = _ls;
                     }
                     else

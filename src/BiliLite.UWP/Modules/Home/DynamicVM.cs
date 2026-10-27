@@ -53,7 +53,7 @@ namespace BiliLite.Modules
                     var data = results.GetJObject();
                     if (data["code"].ToInt32() == 0)
                     {
-                        var items = JsonConvert.DeserializeObject<ObservableCollection<DynamicItemModel>>(data["data"]["items"].ToString());
+                        var items = JsonConvert.DeserializeObject<ObservableCollection<DynamicItemModel>>(data["data"]["cards"].ToString());
                         if (Items == null)
                         {
                             Items = items;
