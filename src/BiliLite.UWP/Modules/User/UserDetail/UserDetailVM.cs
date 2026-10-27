@@ -29,52 +29,58 @@ namespace BiliLite.Modules.User
         }
 
         public ICommand AttentionCommand { get; private set; }
-        public async void GetUserInfo(bool usev2 = false)
+        public async void GetUserInfo()
         {
             try
             {
-                await Api.ApiHelper.LoadWbiKey();
-                var api = usev2 ? await userDetailAPI.UserInfoWbi(mid) : await userDetailAPI.UserInfo(mid);
-                var result = await api.Request();
-                if (result.status)
+                var result = await userDetailAPI.Space(mid).Request();
+                if (!result.status)
                 {
-                    var data = await result.GetData<UserCenterInfoModel>();
-                    if (data.success)
-                    {
-                        data.data.stat = await GetSpeceStat();
-                        UserInfo = data.data;
-                    }
-                    else
-                    {
-                        if (usev2)
-                            Utils.ShowMessageToast(data.message);
-                        else
-                        {
-                            await Task.Delay(100);
-                            GetUserInfo(true);
-                        }
-                    }
+                    LogHelper.Log($"读取个人资料失败 stage=space-request mid={mid} message={result.message}", LogType.ERROR);
+                    Utils.ShowMessageToast("读取个人资料失败");
+                    return;
                 }
-                else
+
+                var response = await result.GetData<JObject>();
+                if (response == null || !response.success || response.data == null)
                 {
-                    if (usev2)
-                        Utils.ShowMessageToast(result.message);
-                    else
-                    {
-                        await Task.Delay(100);
-                        GetUserInfo(true);
-                    }
+                    var code = response?.code.ToString() ?? "unavailable";
+                    var message = response?.message ?? "response data unavailable";
+                    LogHelper.Log($"读取个人资料失败 stage=space-response mid={mid} code={code} message={message}", LogType.ERROR);
+                    Utils.ShowMessageToast("读取个人资料失败");
+                    return;
                 }
+
+                var data = response.data;
+                var card = data["card"];
+                var profile = new UserCenterInfoModel
+                {
+                    mid = mid.ToInt64(),
+                    name = (card["name"] ?? "").ToString(),
+                    face = (card["face"] ?? "").ToString(),
+                    sign = (card["sign"] ?? "").ToString(),
+                    level = (card["level_info"]?["current_level"] ?? 0).ToInt32(),
+                    vip = card["vip"]?.ToObject<UserCenterInfoVipModel>(),
+                    pendant = card["pendant"]?.ToObject<UserCenterInfoPendantModel>(),
+                    official = card["official_verify"]?.ToObject<UserCenterInfoOfficialModel>(),
+                    live_room = data["live"]?.ToObject<UserCenterInfoLiveRoomModel>(),
+                    top_photo = (data["images"]?["imgUrl"] ?? "").ToString(),
+                    is_followed = (card["relation"]?["is_follow"] ?? 0).ToInt32() == 1,
+                    stat = new UserCenterSpaceStatModel
+                    {
+                        article_count = (data["article"]?["count"] ?? 0).ToInt32(),
+                        video_count = (data["archive"]?["count"] ?? 0).ToInt32(),
+                        favourite_count = (data["favourite2"]?["count"] ?? 0).ToInt32(),
+                        follower = card["fans"].ToInt32(),
+                        following = card["attention"].ToInt32()
+                    }
+                };
+                UserInfo = profile;
             }
             catch (Exception ex)
             {
-                if (usev2)
-                {
-                    LogHelper.Log("读取个人资料失败", LogType.ERROR, ex);
-                    Utils.ShowMessageToast("读取个人资料失败");
-                }
-                else
-                    GetUserInfo(true);
+                LogHelper.Log($"读取个人资料失败 stage=space-mapping mid={mid}", LogType.ERROR, ex);
+                Utils.ShowMessageToast("读取个人资料失败");
             }
         }
         public async Task<UserCenterInfoStatModel> GetStat()
@@ -108,42 +114,6 @@ namespace BiliLite.Modules.User
             }
         }
 
-        public async Task<UserCenterSpaceStatModel> GetSpeceStat()
-        {
-            try
-            {
-                var result = await userDetailAPI.Space(mid).Request();
-
-                if (result.status)
-                {
-                    var data = await result.GetData<JObject>();
-                    if (data.success)
-                    {
-                        UserCenterSpaceStatModel stat = new UserCenterSpaceStatModel();
-                        stat.article_count = (data.data["article"]?["count"] ?? 0).ToInt32();
-                        stat.video_count = (data.data["archive"]?["count"] ?? 0).ToInt32();
-                        stat.favourite_count = (data.data["favourite2"]?["count"] ?? 0).ToInt32();
-                        stat.follower = data.data["card"]["fans"].ToInt32();
-                        stat.following = data.data["card"]["attention"].ToInt32();
-                        return stat;
-                    }
-                    else
-                    {
-                        return null;
-                    }
-
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                LogHelper.Log("读取个人资料失败", LogType.ERROR, ex);
-                return null;
-            }
-        }
         public async void DoAttentionUP()
         {
             var result = await AttentionUP(UserInfo.mid.ToString(), UserInfo.is_followed ? 2 : 1);
