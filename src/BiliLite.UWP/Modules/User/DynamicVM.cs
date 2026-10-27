@@ -384,10 +384,12 @@ namespace BiliLite.Modules.User
         };
         public async Task GetDynamicItems(string idx = "")
         {
+            var stage = "request-start";
             try
             {
                 CanLoadMore = false;
                 Loading = true;
+                LogHelper.Log("User dynamic VM stage=request-start dynamicType=" + DynamicType + " itemType=" + UserDynamicType + " history=" + (idx != ""), LogType.DEBUG);
 
                 var api = dynamicAPI.DyanmicNew(UserDynamicType);
                 switch (DynamicType)
@@ -407,21 +409,38 @@ namespace BiliLite.Modules.User
                         break;
                 }
                 var results = await api.Request();
+                stage = "response-received";
+                LogHelper.Log("User dynamic VM stage=response-received status=" + results.status, LogType.DEBUG);
                 if (results.status)
                 {
                     var data = results.GetJObject();
-                    if (data != null && (data["code"].ToInt32() == 0))
+                    var responseCode = data == null ? -1 : data["code"].ToInt32();
+                    LogHelper.Log("User dynamic VM stage=response-parsed code=" + responseCode, LogType.DEBUG);
+                    if (data != null && responseCode == 0)
                     {
+                        stage = "cards-deserialize";
                         var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["cards"]?.ToString() ?? "[]", jsonSerializerSettings);
+                        var itemTypes = string.Join(",", items.Select(item => item.desc == null ? "null" : item.desc.type.ToString()).Distinct());
+                        LogHelper.Log("User dynamic VM stage=cards-deserialized count=" + items.Count + " types=" + itemTypes, LogType.DEBUG);
                         if (items.Count > 0)
                         {
                             CanLoadMore = true;
                         }
                         ObservableCollection<DynamicItemDisplayModel> _ls = new ObservableCollection<DynamicItemDisplayModel>();
+                        stage = "card-convert";
                         foreach (var item in items)
                         {
-                            _ls.Add(ConvertToDisplay(item));
+                            try
+                            {
+                                _ls.Add(ConvertToDisplay(item));
+                            }
+                            catch (Exception ex)
+                            {
+                                LogHelper.Log("User dynamic VM stage=card-convert-failed type=" + (item?.desc == null ? "null" : item.desc.type.ToString()) + " dynamicId=" + (item?.desc?.dynamic_id ?? ""), LogType.ERROR, ex);
+                                throw;
+                            }
                         }
+                        stage = "items-publish";
                         if (Items == null)
                         {
 
@@ -434,6 +453,7 @@ namespace BiliLite.Modules.User
                                 Items.Add(item);
                             }
                         }
+                        LogHelper.Log("User dynamic VM stage=items-published count=" + Items.Count, LogType.DEBUG);
                     }
                     else
                     {
@@ -448,6 +468,7 @@ namespace BiliLite.Modules.User
             }
             catch (Exception ex)
             {
+                LogHelper.Log("User dynamic VM stage=" + stage + " failed", LogType.ERROR, ex);
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
