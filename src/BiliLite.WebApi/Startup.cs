@@ -47,8 +47,9 @@ namespace BiliLite.WebApi
             app.UseRouting();
 
             app.UseAuthorization();
-            //统一返回JSON
-            app.UseStatusCodePages(async context => {
+            //统一锟斤拷锟斤拷JSON
+            app.UseStatusCodePages(async context =>
+            {
                 context.HttpContext.Response.ContentType = "application/json;charset=utf-8";
                 var code = context.HttpContext.Response.StatusCode;
                 context.HttpContext.Response.StatusCode = 200;

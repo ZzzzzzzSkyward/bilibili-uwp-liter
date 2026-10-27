@@ -49,11 +49,11 @@ namespace BiliLite.WebApi.Controllers
                         items=await GetFalls(117)
                     },
                 },
-                update=await GetTime(),
+                update = await GetTime(),
                 movie = await GetHot(2),
-                documentary =await GetHot(3),
+                documentary = await GetHot(3),
                 tv = await GetHot(5),
-                variety= await GetHot(7)
+                variety = await GetHot(7)
             };
             distributedCache.SetString("CinemaHome", JsonConvert.SerializeObject(datas), new DistributedCacheEntryOptions()
             {
@@ -115,7 +115,7 @@ namespace BiliLite.WebApi.Controllers
                     return JsonConvert.DeserializeObject<List<FallItemModel>>(value);
                 }
                 var http = client.CreateClient("http");
-                var results = await http.GetStringAsync($"https://bangumi.bilibili.com/api/fall?appkey=1d8b6e7d45233436&build=5442100&cursor={ cursor}&mobi_app=android&pagesize=4&platform=android&ts={ Utils.GetTimestampS()}&wid={wid}");
+                var results = await http.GetStringAsync($"https://bangumi.bilibili.com/api/fall?appkey=1d8b6e7d45233436&build=5442100&cursor={cursor}&mobi_app=android&pagesize=4&platform=android&ts={Utils.GetTimestampS()}&wid={wid}");
                 var obj = JObject.Parse(results);
                 List<FallItemModel> list = new List<FallItemModel>();
                 foreach (var item in obj["result"])
@@ -163,7 +163,7 @@ namespace BiliLite.WebApi.Controllers
                     return JsonConvert.DeserializeObject<List<CinemaSeasonItem>>(value);
                 }
                 var http = client.CreateClient("http");
-                var results = await http.GetStringAsync( $"https://api.bilibili.com/pgc/season/rank/web/list?day=3&season_type={oid}");
+                var results = await http.GetStringAsync($"https://api.bilibili.com/pgc/season/rank/web/list?day=3&season_type={oid}");
                 var obj = JObject.Parse(results);
                 List<CinemaSeasonItem> list = JsonConvert.DeserializeObject<List<CinemaSeasonItem>>(obj["data"]["list"].ToString());
                 list = list.Take(36).ToList();
@@ -177,7 +177,7 @@ namespace BiliLite.WebApi.Controllers
                     {
                         item.desc = item.new_ep.index_show;
                     }
-                    item.stat.follow_view = item.stat.follow.NumberToString()+"人追剧";
+                    item.stat.follow_view = item.stat.follow.NumberToString() + "人追剧";
                 }
                 if (list != null && list.Count != 0)
                 {
@@ -220,7 +220,7 @@ namespace BiliLite.WebApi.Controllers
                 foreach (var item in list)
                 {
                     item.hat = item.desc;
-                    item.stat.follow_view = item.stat.follow.NumberToString()+ "人追剧";
+                    item.stat.follow_view = item.stat.follow.NumberToString() + "人追剧";
                 }
                 if (list != null && list.Count != 0)
                 {

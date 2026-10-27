@@ -23,9 +23,9 @@ namespace BiliLite.WebApi.Controllers
         {
             return new JsonResult(new ApiModel<List<RankRegionModel>>()
             {
-                code=0,
-                message="",
-                data=new List<RankRegionModel>()
+                code = 0,
+                message = "",
+                data = new List<RankRegionModel>()
                 {
                     new RankRegionModel(0,"全站"),
                     new RankRegionModel(1,"动画"),
@@ -44,14 +44,14 @@ namespace BiliLite.WebApi.Controllers
                 }
             });
         }
-       
-       
+
+
 
 
     }
     public class RankRegionModel
     {
-        public RankRegionModel(int id,string rname)
+        public RankRegionModel(int id, string rname)
         {
             rid = id;
             name = rname;
@@ -60,5 +60,5 @@ namespace BiliLite.WebApi.Controllers
         public int rid { get; set; }
     }
 
-  
+
 }

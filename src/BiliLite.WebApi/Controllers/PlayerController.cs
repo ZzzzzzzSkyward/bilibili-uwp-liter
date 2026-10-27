@@ -31,8 +31,8 @@ profiles=""urn:mpeg:dash:profile:isoff-live:2011,urn:com:dashif:dash264"">
         [Route("GenerateMPD")]
         public IActionResult GenerateMPD(string par)
         {
-            var dash=Newtonsoft.Json.JsonConvert.DeserializeObject<DashModel>(par);
-            dash.AudioUrl=System.Web.HttpUtility.HtmlEncode(dash.AudioUrl);
+            var dash = Newtonsoft.Json.JsonConvert.DeserializeObject<DashModel>(par);
+            dash.AudioUrl = System.Web.HttpUtility.HtmlEncode(dash.AudioUrl);
             dash.VideoUrl = System.Web.HttpUtility.HtmlEncode(dash.VideoUrl);
             var ts = "PT" + TimeSpan.FromMilliseconds(dash.DurationMS).ToString(@"hh\Hmm\Mss\S");
             var content = TEMPLATE
