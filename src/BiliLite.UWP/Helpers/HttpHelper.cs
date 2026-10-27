@@ -105,22 +105,35 @@ namespace BiliLite.Helpers
             }
         }
 
-        public async static Task<HttpResults> GetWithWebCookie(string url, IDictionary<string, string> headers = null)
+        public async static Task<HttpResults> GetWithWebCookie(string url, IDictionary<string, string> headers = null, IDictionary<string, string> extraCookies = null)
         {
             Debug.WriteLine("GET:" + url);
             Utils.AddALog("[GET]" + url);
             try
             {
-                if (headers == null)
-                {
-                    headers = new Dictionary<string, string>();
-                }
+                headers = headers == null
+                    ? new Dictionary<string, string>()
+                    : new Dictionary<string, string>(headers);
                 HttpBaseProtocolFilter fiter = new HttpBaseProtocolFilter();
                 if (!headers.Keys.Contains("User-Agent"))
                 {
                     //headers.Add("User-Agent", "Mozilla/5.0 BiliDroid/4.4.4 (bbcallen@gmail.com)");
                 }
-                if (!headers.Keys.Contains("Cookie"))
+
+                var cookieHeaderKey = headers.Keys.FirstOrDefault(x => string.Equals(x, "Cookie", StringComparison.OrdinalIgnoreCase));
+                var cookieValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                if (cookieHeaderKey != null)
+                {
+                    foreach (var pair in headers[cookieHeaderKey].Split(';'))
+                    {
+                        var separator = pair.IndexOf('=');
+                        if (separator > 0)
+                        {
+                            cookieValues[pair.Substring(0, separator).Trim()] = pair.Substring(separator + 1).Trim();
+                        }
+                    }
+                }
+                else
                 {
                     var cookies = fiter.CookieManager.GetCookies(new Uri("https://www.bilibili.com"));
                     //没有Cookie
@@ -130,12 +143,35 @@ namespace BiliLite.Helpers
                         await Get("https://www.bilibili.com");
                         cookies = fiter.CookieManager.GetCookies(new Uri("https://www.bilibili.com"));
                     }
-                    string cookie = "";
-                    foreach (var item in cookies)
+
+                    if (cookies != null)
                     {
-                        cookie += $"{item.Name}={item.Value};";
+                        foreach (var item in cookies)
+                        {
+                            cookieValues[item.Name] = item.Value;
+                        }
                     }
-                    headers.Add("Cookie", cookie);
+                }
+
+                if (extraCookies != null)
+                {
+                    foreach (var item in extraCookies)
+                    {
+                        cookieValues[item.Key] = item.Value;
+                    }
+                }
+
+                if (cookieHeaderKey != null || extraCookies != null || cookieValues.Count > 0)
+                {
+                    var cookie = string.Join(";", cookieValues.Select(x => $"{x.Key}={x.Value}"));
+                    if (cookieHeaderKey == null)
+                    {
+                        headers.Add("Cookie", cookie);
+                    }
+                    else
+                    {
+                        headers[cookieHeaderKey] = cookie;
+                    }
                 }
                 return await Get(url, headers);
             }

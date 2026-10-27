@@ -271,20 +271,9 @@ namespace BiliLite.Api
             return mixinKeyEncTab.Aggregate("", (s, i) => s + origin[i]).Substring(0, 32);
         }
 
-        public static string GetWbiSign(string url)
+        public static async Task<string> GetWbiSign(string url)
         {
-            var imgKey = "";
-            var subKey = "";
-            if (wbitoken_current.img_url != null)
-            {
-                imgKey = wbitoken_current.img_url;
-                subKey = wbitoken_current.sub_url;
-            }
-            else
-            {
-                GetWbiKeys();
-                return "";
-            }
+            var (imgKey, subKey) = await GetWbiKeys();
 
             // 为请求参数进行 wbi 签名
             string mixinKey = GetMixinKey(imgKey + subKey);
@@ -297,16 +286,11 @@ namespace BiliLite.Api
             queryParams = queryParams.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value); // 按照 key 重排参数
                                                                                                   // 过滤 value 中的 "!'()*" 字符
             queryParams = queryParams.ToDictionary(x => x.Key, x => string.Join("", x.Value.ToString().Where(c => "!'()*".Contains(c) == false)));
-            queryString = HttpUtility.ParseQueryString(String.Empty);
-            foreach (var key in queryParams.Keys)
-            {
-                queryString.Add(key, queryParams[key]);
-            }
-            var query = queryString.ToString();
+            var query = string.Join("&", queryParams.Select(x => $"{x.Key}={Uri.EscapeDataString(x.Value)}"));
 
             var wbi_sign = Utils.ToMD5($"{query}{mixinKey}").ToLower();
 
-            return $"&wts={currentTime}&w_rid={wbi_sign}";
+            return $"{query}&w_rid={wbi_sign}";
         }
 
         /// <summary>
@@ -333,6 +317,15 @@ namespace BiliLite.Api
             headers.Add("user-agent", "Mozilla/5.0 BiliDroid/5.44.2 (bbcallen@gmail.com)");
             headers.Add("Referer", "https://www.bilibili.com/");
             return headers;
+        }
+
+        public static IDictionary<string, string> GetAuroraHeaders()
+        {
+            return new Dictionary<string, string>()
+            {
+                { "x-bili-aurora-zone", "sh001" },
+                { "x-bili-aurora-eid", "UlMFQVcABlAH" },
+            };
         }
         private static bool has_inited_cookie = false;
         private static short init_cookie_try_count = 0;
@@ -590,6 +583,11 @@ namespace BiliLite.Api
         /// 需要Cookie
         /// </summary>
         public bool need_cookie { get; set; } = false;
+
+        /// <summary>
+        /// Additional cookies to send with the request.
+        /// </summary>
+        public IDictionary<string, string> ExtraCookies { get; set; }
 
         /// <summary>
         /// 请求地址
