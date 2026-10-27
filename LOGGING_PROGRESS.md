@@ -66,7 +66,7 @@ Use only `/workspace/biliuwp-lite` at pinned commit `ca2caddc597b3faf05b4dac6dcb
 | `b1ca1b2` | Add persistent session logging and app-level diagnostics. |
 | `22edc2f` | Add request, gRPC, and player diagnostics. |
 | `271ee12` | Add Settings log export, problem marker, and user instructions. |
-| pending | Record Dynamics tab crash report and source-level candidates after refreshing `work` to `be01cbb`. |
-| pending | Restore legacy home video-card mapping and add focused Dynamics diagnostics. |
+| `29e0e1c` | Record the Dynamics tab crash report and source-level candidates after refreshing `work` to `be01cbb`. |
+| `c4e6909` | Restore legacy home video-card mapping and add focused Dynamics diagnostics. |
 
-Current state: the logging and export work is committed on `work`; the Dynamics mapping and focused breadcrumbs are being committed as a follow-up. The export includes a session ID, app version, and recent log files with filename headers. Review the text before sharing because logs can include request details. Native process termination may prevent managed exception handlers from recording a complete stack trace.
+Current state: the logging, export, and Dynamics mapping work are committed on `work`. The export includes a session ID, app version, and recent log files with filename headers. Review the text before sharing because logs can include request details. Native process termination may prevent managed exception handlers from recording a complete stack trace. For a Dynamics repro, open that tab on the updated app, then use Settings → Debug to export the recent logs (after relaunch if the process closes) and return them with the occurrence time.
