@@ -46,6 +46,18 @@ Use only `/workspace/biliuwp-lite` at pinned commit `ca2caddc597b3faf05b4dac6dcb
 - [x] Inventory existing logger, crash hooks, request breadcrumbs, and settings UI.
 - [x] Step 2: improve `LogHelper` session and exception persistence; capture app crash, lifecycle, navigation, and FFmpeg diagnostics in `App.xaml.cs`; persist the existing `Utils.AddALog` trace. Keep all diagnostics additive.
 - [x] Step 3: add request IDs, duration, status, and API error breadcrumbs to HTTP/gRPC and high-value player/load failure paths. HTTP results carry a local request ID into JSON parse errors; gRPC diagnostics use an optional callback because the transport is a separate netstandard project; playurl logs include aid/cid/episode/quality, and player logs capture open, opened, failed, and exception stages. No request bodies, headers, cookies, or signed stream query strings are logged. No request contract, status handling, framing, retry, or recovery behavior changed.
-- [ ] Step 4: add a simple Settings export/report marker and clear user feedback instructions for sharing the exported logs. The Settings and `document/DIAGNOSTICS.md` changes are prepared in the shared tree and await the step 3 commit before their separate commit.
-- [ ] At each step, update this progress file and commit the bounded implementation. Run only `git diff --check`; do not build, restore, run, test, validate, or issue API requests here.
-- [ ] Hand the user the resulting commit and instructions for building/running the app and returning exported logs; leave build and runtime checks to the user.
+- [x] Step 4: add Settings actions to export the latest seven persistent daily log files as a text file and record a timestamped problem marker with an optional note. Keep the existing log-folder action. Add user instructions in `document/DIAGNOSTICS.md`.
+- [x] Update this progress record and commit the bounded implementation. Run only `git diff --check`; do not build, restore, run, test, validate, or issue API requests here.
+- [ ] User loop: build and run the app, reproduce an issue, optionally mark it in Settings → Debug, relaunch after a crash, export diagnostic logs, then return the file with app/build version, occurrence time, steps, and visible error. No app build, runtime, test, restore, validation, or API request has been performed in this workspace.
+
+## Completed steps and commits
+
+| Commit | Work |
+| --- | --- |
+| `ad75ed3` | Document setup and inventory existing diagnostics. |
+| `3c27b23` | Record the staged logging implementation plan. |
+| `b1ca1b2` | Add persistent session logging and app-level diagnostics. |
+| `22edc2f` | Add request, gRPC, and player diagnostics. |
+| This commit | Add Settings log export, problem marker, and user instructions. |
+
+Current state: implementation is committed and waiting for the user to build, reproduce, and return exported logs. The export includes a session ID, app version, and recent log files with filename headers. Review the text before sharing because logs can include request details. Native process termination may prevent managed exception handlers from recording a complete stack trace.
