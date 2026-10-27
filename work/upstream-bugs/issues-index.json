@@ -10,7 +10,8 @@
       "created_at": "2022-12-11T13:07:05Z",
       "updated_at": "2025-01-18T10:28:45Z",
       "labels": [],
-      "comments_count": 9
+      "comments_count": 9,
+      "closed_at": "2025-01-18T10:28:44Z"
     },
     {
       "number": 5,
@@ -20,7 +21,8 @@
       "created_at": "2023-01-18T14:09:44Z",
       "updated_at": "2023-01-19T13:47:11Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-01-19T13:47:11Z"
     },
     {
       "number": 9,
@@ -30,7 +32,8 @@
       "created_at": "2023-01-29T08:07:03Z",
       "updated_at": "2023-02-03T13:41:47Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-02-03T13:41:47Z"
     },
     {
       "number": 12,
@@ -40,7 +43,8 @@
       "created_at": "2023-02-05T03:38:06Z",
       "updated_at": "2023-04-30T14:45:40Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-04-30T14:45:40Z"
     },
     {
       "number": 14,
@@ -50,7 +54,8 @@
       "created_at": "2023-02-08T01:44:50Z",
       "updated_at": "2023-02-14T09:25:16Z",
       "labels": [],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-02-09T15:21:55Z"
     },
     {
       "number": 17,
@@ -64,7 +69,8 @@
         "需求",
         "特殊处理"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-05-07T04:09:46Z"
     },
     {
       "number": 18,
@@ -74,7 +80,8 @@
       "created_at": "2023-02-10T15:30:00Z",
       "updated_at": "2023-02-15T13:17:25Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-02-15T13:17:24Z"
     },
     {
       "number": 21,
@@ -84,7 +91,8 @@
       "created_at": "2023-02-19T00:19:14Z",
       "updated_at": "2023-02-20T12:43:48Z",
       "labels": [],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-02-20T12:43:48Z"
     },
     {
       "number": 22,
@@ -94,7 +102,8 @@
       "created_at": "2023-02-20T11:28:06Z",
       "updated_at": "2023-02-20T12:44:03Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-02-20T12:44:03Z"
     },
     {
       "number": 24,
@@ -104,7 +113,8 @@
       "created_at": "2023-03-05T12:26:34Z",
       "updated_at": "2023-03-05T12:28:32Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-03-05T12:28:32Z"
     },
     {
       "number": 26,
@@ -117,7 +127,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-04-06T14:56:53Z"
     },
     {
       "number": 27,
@@ -127,7 +138,8 @@
       "created_at": "2023-03-16T07:34:36Z",
       "updated_at": "2023-07-11T06:08:30Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-11T06:08:29Z"
     },
     {
       "number": 28,
@@ -137,7 +149,8 @@
       "created_at": "2023-03-16T08:34:47Z",
       "updated_at": "2023-04-29T03:46:31Z",
       "labels": [],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-04-29T03:46:31Z"
     },
     {
       "number": 29,
@@ -149,7 +162,8 @@
       "labels": [
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 31,
@@ -161,7 +175,8 @@
       "labels": [
         "bug"
       ],
-      "comments_count": 12
+      "comments_count": 12,
+      "closed_at": "2023-07-20T08:35:25Z"
     },
     {
       "number": 33,
@@ -174,7 +189,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-23T14:07:09Z"
     },
     {
       "number": 35,
@@ -187,7 +203,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-04-06T14:58:27Z"
     },
     {
       "number": 36,
@@ -199,7 +216,8 @@
       "labels": [
         "bug"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-08-11T12:34:53Z"
     },
     {
       "number": 38,
@@ -211,7 +229,8 @@
       "labels": [
         "bug"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-01-09T07:12:24Z"
     },
     {
       "number": 42,
@@ -224,7 +243,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-04-15T00:06:12Z"
     },
     {
       "number": 43,
@@ -237,7 +257,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2023-06-25T15:53:05Z"
     },
     {
       "number": 46,
@@ -250,7 +271,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-04-15T00:06:04Z"
     },
     {
       "number": 47,
@@ -260,7 +282,8 @@
       "created_at": "2023-04-12T13:06:36Z",
       "updated_at": "2023-04-12T15:11:04Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-04-12T15:11:04Z"
     },
     {
       "number": 49,
@@ -273,7 +296,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-04-15T01:07:05Z"
     },
     {
       "number": 51,
@@ -285,7 +309,8 @@
       "labels": [
         "bug"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-06-03T09:07:28Z"
     },
     {
       "number": 53,
@@ -295,7 +320,8 @@
       "created_at": "2023-04-18T03:13:22Z",
       "updated_at": "2023-04-18T11:27:48Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-04-18T11:27:48Z"
     },
     {
       "number": 55,
@@ -305,7 +331,8 @@
       "created_at": "2023-04-18T11:29:23Z",
       "updated_at": "2023-04-18T11:34:17Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-04-18T11:34:17Z"
     },
     {
       "number": 56,
@@ -318,7 +345,8 @@
         "已完成",
         "优化建议"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-04-27T12:05:22Z"
     },
     {
       "number": 57,
@@ -331,7 +359,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-23T14:07:10Z"
     },
     {
       "number": 59,
@@ -344,7 +373,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-04-29T04:09:08Z"
     },
     {
       "number": 61,
@@ -356,7 +386,8 @@
       "labels": [
         "bug"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-05-02T12:50:20Z"
     },
     {
       "number": 62,
@@ -368,7 +399,8 @@
       "labels": [
         "bug"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2023-06-03T09:12:37Z"
     },
     {
       "number": 64,
@@ -382,7 +414,8 @@
         "需求",
         "优化建议"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-23T14:07:10Z"
     },
     {
       "number": 65,
@@ -395,7 +428,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-02T12:50:00Z"
     },
     {
       "number": 66,
@@ -408,7 +442,8 @@
         "已完成",
         "优化建议"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-04T11:35:51Z"
     },
     {
       "number": 67,
@@ -421,7 +456,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-02T12:49:49Z"
     },
     {
       "number": 69,
@@ -434,7 +470,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-04-29T00:20:26Z"
     },
     {
       "number": 70,
@@ -447,7 +484,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-06-10T13:35:12Z"
     },
     {
       "number": 71,
@@ -457,7 +495,8 @@
       "created_at": "2023-05-04T10:56:56Z",
       "updated_at": "2023-05-04T14:54:57Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-04T14:54:57Z"
     },
     {
       "number": 74,
@@ -470,7 +509,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-05-05T06:11:47Z"
     },
     {
       "number": 75,
@@ -482,7 +522,8 @@
       "labels": [
         "优化建议"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-26T09:28:52Z"
     },
     {
       "number": 76,
@@ -495,7 +536,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-06T11:25:40Z"
     },
     {
       "number": 77,
@@ -508,7 +550,8 @@
         "已完成",
         "优化建议"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-11T06:08:30Z"
     },
     {
       "number": 81,
@@ -521,7 +564,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-06-10T13:35:12Z"
     },
     {
       "number": 82,
@@ -534,7 +578,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-07-11T06:08:31Z"
     },
     {
       "number": 83,
@@ -547,7 +592,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-08-11T04:09:56Z"
     },
     {
       "number": 84,
@@ -560,7 +606,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-04T11:35:52Z"
     },
     {
       "number": 85,
@@ -572,7 +619,8 @@
       "labels": [
         "优化建议"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-08-04T23:35:02Z"
     },
     {
       "number": 86,
@@ -585,7 +633,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-07T13:09:24Z"
     },
     {
       "number": 87,
@@ -598,7 +647,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2023-08-11T04:09:56Z"
     },
     {
       "number": 88,
@@ -611,7 +661,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-11T04:09:56Z"
     },
     {
       "number": 89,
@@ -624,7 +675,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-04T11:35:53Z"
     },
     {
       "number": 90,
@@ -637,7 +689,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-08T11:23:21Z"
     },
     {
       "number": 91,
@@ -647,7 +700,8 @@
       "created_at": "2023-05-09T10:51:34Z",
       "updated_at": "2023-05-10T06:49:07Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-10T06:49:07Z"
     },
     {
       "number": 92,
@@ -660,7 +714,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-07-04T11:35:53Z"
     },
     {
       "number": 94,
@@ -672,7 +727,8 @@
       "labels": [
         "优化建议"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-08-04T23:35:08Z"
     },
     {
       "number": 95,
@@ -682,7 +738,8 @@
       "created_at": "2023-05-10T11:49:20Z",
       "updated_at": "2023-05-16T02:41:39Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-16T02:41:39Z"
     },
     {
       "number": 96,
@@ -695,7 +752,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-10-25T10:32:41Z"
     },
     {
       "number": 100,
@@ -708,7 +766,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2023-07-11T06:08:32Z"
     },
     {
       "number": 102,
@@ -721,7 +780,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-07-11T06:08:32Z"
     },
     {
       "number": 103,
@@ -733,7 +793,8 @@
       "labels": [
         "需求"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2023-08-26T04:02:01Z"
     },
     {
       "number": 104,
@@ -745,7 +806,8 @@
       "labels": [
         "bug"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-11-04T03:01:33Z"
     },
     {
       "number": 105,
@@ -757,7 +819,8 @@
       "labels": [
         "bug"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": null
     },
     {
       "number": 114,
@@ -770,7 +833,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-05-23T14:07:11Z"
     },
     {
       "number": 115,
@@ -780,7 +844,8 @@
       "created_at": "2023-05-22T12:51:48Z",
       "updated_at": "2023-05-22T12:52:23Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-22T12:52:23Z"
     },
     {
       "number": 119,
@@ -793,7 +858,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-05-23T14:41:53Z"
     },
     {
       "number": 121,
@@ -806,7 +872,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-05-27T04:23:08Z"
     },
     {
       "number": 122,
@@ -819,7 +886,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-27T04:23:09Z"
     },
     {
       "number": 124,
@@ -829,7 +897,8 @@
       "created_at": "2023-05-24T05:14:20Z",
       "updated_at": "2023-05-24T12:08:04Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-24T12:08:04Z"
     },
     {
       "number": 129,
@@ -842,7 +911,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-27T04:23:09Z"
     },
     {
       "number": 130,
@@ -855,7 +925,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2023-07-15T03:24:18Z"
     },
     {
       "number": 131,
@@ -868,7 +939,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:35Z"
     },
     {
       "number": 132,
@@ -881,7 +953,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 133,
@@ -891,7 +964,8 @@
       "created_at": "2023-05-26T11:34:46Z",
       "updated_at": "2023-05-26T11:49:35Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-05-26T11:49:35Z"
     },
     {
       "number": 135,
@@ -904,7 +978,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-05-27T04:23:10Z"
     },
     {
       "number": 138,
@@ -917,7 +992,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 139,
@@ -930,7 +1006,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-07-04T11:35:54Z"
     },
     {
       "number": 140,
@@ -940,7 +1017,8 @@
       "created_at": "2023-05-29T11:04:40Z",
       "updated_at": "2023-06-03T09:35:40Z",
       "labels": [],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-06-03T09:35:26Z"
     },
     {
       "number": 143,
@@ -953,7 +1031,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-07-03T09:05:08Z"
     },
     {
       "number": 144,
@@ -966,7 +1045,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:35Z"
     },
     {
       "number": 145,
@@ -980,7 +1060,8 @@
         "需求",
         "特殊处理"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-06-10T13:35:13Z"
     },
     {
       "number": 146,
@@ -993,7 +1074,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-06-10T13:35:14Z"
     },
     {
       "number": 150,
@@ -1006,7 +1088,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-26T15:15:28Z"
     },
     {
       "number": 151,
@@ -1019,7 +1102,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-06-10T13:35:15Z"
     },
     {
       "number": 152,
@@ -1032,7 +1116,8 @@
         "已完成",
         "CI"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-06-10T13:35:15Z"
     },
     {
       "number": 153,
@@ -1045,7 +1130,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-02-26T03:04:08Z"
     },
     {
       "number": 154,
@@ -1058,7 +1144,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-06-11T12:00:00Z"
     },
     {
       "number": 158,
@@ -1071,7 +1158,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-09-02T03:03:39Z"
     },
     {
       "number": 159,
@@ -1084,7 +1172,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2023-08-26T04:04:53Z"
     },
     {
       "number": 160,
@@ -1097,7 +1186,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 9
+      "comments_count": 9,
+      "closed_at": "2024-05-19T06:41:15Z"
     },
     {
       "number": 161,
@@ -1110,7 +1200,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-06-25T15:53:05Z"
     },
     {
       "number": 162,
@@ -1123,7 +1214,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2023-09-16T07:50:32Z"
     },
     {
       "number": 164,
@@ -1136,7 +1228,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-07T13:09:24Z"
     },
     {
       "number": 165,
@@ -1149,7 +1242,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2026-09-28T03:19:26Z"
     },
     {
       "number": 166,
@@ -1162,7 +1256,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 8
+      "comments_count": 8,
+      "closed_at": "2023-06-25T15:53:06Z"
     },
     {
       "number": 171,
@@ -1175,7 +1270,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-02T14:12:34Z"
     },
     {
       "number": 172,
@@ -1188,7 +1284,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-02T14:12:35Z"
     },
     {
       "number": 173,
@@ -1201,7 +1298,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-02T14:12:36Z"
     },
     {
       "number": 174,
@@ -1211,7 +1309,8 @@
       "created_at": "2023-07-01T01:19:32Z",
       "updated_at": "2023-07-01T01:46:29Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-01T01:46:29Z"
     },
     {
       "number": 176,
@@ -1224,7 +1323,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-04T11:35:55Z"
     },
     {
       "number": 182,
@@ -1237,7 +1337,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-04T11:35:55Z"
     },
     {
       "number": 183,
@@ -1250,7 +1351,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-04T11:35:56Z"
     },
     {
       "number": 188,
@@ -1260,7 +1362,8 @@
       "created_at": "2023-07-04T13:30:10Z",
       "updated_at": "2023-07-05T11:30:23Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-05T11:30:23Z"
     },
     {
       "number": 189,
@@ -1273,7 +1376,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2023-07-11T06:08:33Z"
     },
     {
       "number": 190,
@@ -1287,7 +1391,8 @@
         "需求",
         "特殊处理"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-07-11T06:08:34Z"
     },
     {
       "number": 191,
@@ -1300,7 +1405,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-11T06:08:35Z"
     },
     {
       "number": 192,
@@ -1313,7 +1419,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-11T06:08:35Z"
     },
     {
       "number": 193,
@@ -1326,7 +1433,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 8
+      "comments_count": 8,
+      "closed_at": "2023-07-26T15:15:28Z"
     },
     {
       "number": 195,
@@ -1339,7 +1447,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-11T06:08:36Z"
     },
     {
       "number": 199,
@@ -1352,7 +1461,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:36Z"
     },
     {
       "number": 200,
@@ -1365,7 +1475,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2023-07-15T03:24:19Z"
     },
     {
       "number": 201,
@@ -1378,7 +1489,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-06-22T04:29:36Z"
     },
     {
       "number": 202,
@@ -1391,7 +1503,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2023-07-15T03:24:19Z"
     },
     {
       "number": 203,
@@ -1404,7 +1517,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-09-01T09:14:07Z"
     },
     {
       "number": 204,
@@ -1417,7 +1531,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-07-15T03:24:20Z"
     },
     {
       "number": 207,
@@ -1431,7 +1546,8 @@
         "需求",
         "特殊处理"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-26T15:15:29Z"
     },
     {
       "number": 212,
@@ -1441,7 +1557,8 @@
       "created_at": "2023-07-15T03:35:11Z",
       "updated_at": "2023-07-15T04:18:22Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-15T04:18:22Z"
     },
     {
       "number": 216,
@@ -1454,7 +1571,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2023-07-29T06:14:43Z"
     },
     {
       "number": 218,
@@ -1464,7 +1582,8 @@
       "created_at": "2023-07-20T19:08:10Z",
       "updated_at": "2023-07-21T01:31:41Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-21T01:31:41Z"
     },
     {
       "number": 221,
@@ -1477,7 +1596,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2023-08-05T05:09:00Z"
     },
     {
       "number": 222,
@@ -1490,7 +1610,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-07-26T15:15:30Z"
     },
     {
       "number": 223,
@@ -1500,7 +1621,8 @@
       "created_at": "2023-07-24T05:06:59Z",
       "updated_at": "2023-07-24T10:16:22Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-24T10:16:22Z"
     },
     {
       "number": 225,
@@ -1513,7 +1635,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-26T15:15:31Z"
     },
     {
       "number": 227,
@@ -1526,7 +1649,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-26T15:15:31Z"
     },
     {
       "number": 228,
@@ -1539,7 +1663,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-26T15:15:32Z"
     },
     {
       "number": 233,
@@ -1552,7 +1677,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-07-29T06:14:44Z"
     },
     {
       "number": 235,
@@ -1565,7 +1691,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-29T06:14:44Z"
     },
     {
       "number": 236,
@@ -1578,7 +1705,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-07-29T06:14:45Z"
     },
     {
       "number": 240,
@@ -1588,7 +1716,8 @@
       "created_at": "2023-07-29T09:35:13Z",
       "updated_at": "2023-07-30T02:34:18Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-07-30T02:34:18Z"
     },
     {
       "number": 242,
@@ -1598,7 +1727,8 @@
       "created_at": "2023-07-31T10:54:36Z",
       "updated_at": "2023-08-01T11:45:30Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-08-01T11:45:30Z"
     },
     {
       "number": 243,
@@ -1608,7 +1738,8 @@
       "created_at": "2023-08-03T03:57:10Z",
       "updated_at": "2023-08-03T07:33:40Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-03T07:33:40Z"
     },
     {
       "number": 245,
@@ -1621,7 +1752,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-11T04:09:57Z"
     },
     {
       "number": 246,
@@ -1631,7 +1763,8 @@
       "created_at": "2023-08-04T18:21:05Z",
       "updated_at": "2023-08-11T12:32:48Z",
       "labels": [],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2023-08-11T12:32:48Z"
     },
     {
       "number": 247,
@@ -1644,7 +1777,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-11T04:09:57Z"
     },
     {
       "number": 248,
@@ -1657,7 +1791,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-09-05T12:53:56Z"
     },
     {
       "number": 250,
@@ -1667,7 +1802,8 @@
       "created_at": "2023-08-08T15:37:13Z",
       "updated_at": "2023-08-09T13:18:38Z",
       "labels": [],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-08-09T13:18:38Z"
     },
     {
       "number": 251,
@@ -1680,7 +1816,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2023-09-01T11:04:44Z"
     },
     {
       "number": 253,
@@ -1690,7 +1827,8 @@
       "created_at": "2023-08-10T06:06:51Z",
       "updated_at": "2023-08-10T10:18:38Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-08-10T10:18:38Z"
     },
     {
       "number": 255,
@@ -1703,7 +1841,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-11T04:09:58Z"
     },
     {
       "number": 261,
@@ -1713,7 +1852,8 @@
       "created_at": "2023-08-12T03:49:46Z",
       "updated_at": "2023-08-13T10:10:04Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-13T10:10:04Z"
     },
     {
       "number": 263,
@@ -1723,7 +1863,8 @@
       "created_at": "2023-08-13T07:16:13Z",
       "updated_at": "2023-08-13T10:10:34Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-13T10:10:33Z"
     },
     {
       "number": 266,
@@ -1736,7 +1877,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-27T15:20:51Z"
     },
     {
       "number": 267,
@@ -1749,7 +1891,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-09-01T11:47:40Z"
     },
     {
       "number": 268,
@@ -1762,7 +1905,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-08-27T15:20:52Z"
     },
     {
       "number": 269,
@@ -1775,7 +1919,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-10-04T06:05:45Z"
     },
     {
       "number": 270,
@@ -1788,7 +1933,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-27T15:20:53Z"
     },
     {
       "number": 271,
@@ -1801,7 +1947,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-27T15:20:53Z"
     },
     {
       "number": 275,
@@ -1814,7 +1961,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-27T15:20:54Z"
     },
     {
       "number": 281,
@@ -1827,7 +1975,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-09-01T11:47:41Z"
     },
     {
       "number": 283,
@@ -1840,7 +1989,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-09-01T11:47:41Z"
     },
     {
       "number": 284,
@@ -1850,7 +2000,8 @@
       "created_at": "2023-08-29T12:26:49Z",
       "updated_at": "2023-08-29T14:09:09Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-29T14:09:09Z"
     },
     {
       "number": 286,
@@ -1860,7 +2011,8 @@
       "created_at": "2023-08-30T11:55:50Z",
       "updated_at": "2023-08-30T12:59:31Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-08-30T12:59:31Z"
     },
     {
       "number": 287,
@@ -1870,7 +2022,8 @@
       "created_at": "2023-08-30T11:55:57Z",
       "updated_at": "2023-08-30T11:56:35Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-08-30T11:56:35Z"
     },
     {
       "number": 289,
@@ -1883,7 +2036,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-09-01T11:47:42Z"
     },
     {
       "number": 290,
@@ -1896,7 +2050,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-09-01T09:11:03Z"
     },
     {
       "number": 294,
@@ -1909,7 +2064,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-09-01T11:47:43Z"
     },
     {
       "number": 299,
@@ -1922,7 +2078,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 300,
@@ -1935,7 +2092,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2023-09-16T07:49:54Z"
     },
     {
       "number": 302,
@@ -1948,7 +2106,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2023-09-16T07:46:29Z"
     },
     {
       "number": 304,
@@ -1961,7 +2120,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 8
+      "comments_count": 8,
+      "closed_at": "2025-01-09T07:14:07Z"
     },
     {
       "number": 305,
@@ -1971,7 +2131,8 @@
       "created_at": "2023-09-09T02:20:28Z",
       "updated_at": "2023-09-09T04:45:16Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-09-09T04:45:16Z"
     },
     {
       "number": 307,
@@ -1984,7 +2145,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-09-16T07:46:29Z"
     },
     {
       "number": 314,
@@ -1998,7 +2160,8 @@
         "已完成",
         "严重"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-09-16T12:25:36Z"
     },
     {
       "number": 319,
@@ -2011,7 +2174,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-09-18T06:01:14Z"
     },
     {
       "number": 320,
@@ -2024,7 +2188,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-10-04T06:05:46Z"
     },
     {
       "number": 321,
@@ -2036,7 +2201,8 @@
       "labels": [
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-10-02T10:52:27Z"
     },
     {
       "number": 324,
@@ -2046,7 +2212,8 @@
       "created_at": "2023-09-18T06:18:12Z",
       "updated_at": "2023-09-18T06:23:30Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-09-18T06:23:30Z"
     },
     {
       "number": 326,
@@ -2059,7 +2226,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-10-04T06:05:47Z"
     },
     {
       "number": 327,
@@ -2072,7 +2240,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 330,
@@ -2085,7 +2254,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-10-04T06:05:47Z"
     },
     {
       "number": 331,
@@ -2099,7 +2269,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-10-04T06:05:48Z"
     },
     {
       "number": 335,
@@ -2112,7 +2283,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-10-26T15:12:25Z"
     },
     {
       "number": 336,
@@ -2125,7 +2297,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-10-26T15:12:26Z"
     },
     {
       "number": 341,
@@ -2138,7 +2311,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-12-11T03:07:11Z"
     },
     {
       "number": 343,
@@ -2151,7 +2325,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-10-13T01:58:07Z"
     },
     {
       "number": 345,
@@ -2164,7 +2339,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-10-13T01:56:16Z"
     },
     {
       "number": 350,
@@ -2177,7 +2353,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-10-19T06:47:31Z"
     },
     {
       "number": 352,
@@ -2190,7 +2367,8 @@
         "bug",
         "开发中"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-08-12T16:08:55Z"
     },
     {
       "number": 353,
@@ -2203,7 +2381,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-06-10T04:09:20Z"
     },
     {
       "number": 354,
@@ -2216,7 +2395,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2023-10-29T12:38:11Z"
     },
     {
       "number": 357,
@@ -2229,7 +2409,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-10-25T15:31:46Z"
     },
     {
       "number": 358,
@@ -2242,7 +2423,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-10-26T15:12:26Z"
     },
     {
       "number": 362,
@@ -2254,7 +2436,8 @@
       "labels": [
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-10-27T15:04:32Z"
     },
     {
       "number": 363,
@@ -2268,7 +2451,8 @@
         "待规划",
         "严重"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": null
     },
     {
       "number": 366,
@@ -2283,7 +2467,8 @@
         "讨论",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": null
     },
     {
       "number": 368,
@@ -2296,7 +2481,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-02-25T09:06:16Z"
     },
     {
       "number": 372,
@@ -2309,7 +2495,8 @@
         "需求",
         "开发中"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": null
     },
     {
       "number": 375,
@@ -2322,7 +2509,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-10-29T15:26:44Z"
     },
     {
       "number": 376,
@@ -2336,7 +2524,8 @@
         "已完成",
         "严重"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-10-29T15:26:44Z"
     },
     {
       "number": 378,
@@ -2349,7 +2538,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2023-11-14T10:29:16Z"
     },
     {
       "number": 381,
@@ -2362,7 +2552,8 @@
         "讨论",
         "文档"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-10-29T23:46:13Z"
     },
     {
       "number": 389,
@@ -2375,7 +2566,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-11-03T09:11:36Z"
     },
     {
       "number": 391,
@@ -2388,7 +2580,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 395,
@@ -2401,7 +2594,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-11-07T09:29:30Z"
     },
     {
       "number": 397,
@@ -2414,7 +2608,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-11-14T10:29:16Z"
     },
     {
       "number": 398,
@@ -2427,7 +2622,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 399,
@@ -2440,7 +2636,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 19
+      "comments_count": 19,
+      "closed_at": "2025-05-07T06:23:23Z"
     },
     {
       "number": 400,
@@ -2453,7 +2650,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": null
     },
     {
       "number": 404,
@@ -2466,7 +2664,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 8
+      "comments_count": 8,
+      "closed_at": "2023-11-26T11:27:55Z"
     },
     {
       "number": 406,
@@ -2479,7 +2678,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-11-26T11:27:56Z"
     },
     {
       "number": 409,
@@ -2492,7 +2692,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-11-26T09:30:46Z"
     },
     {
       "number": 415,
@@ -2505,7 +2706,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-11-29T15:43:39Z"
     },
     {
       "number": 418,
@@ -2518,7 +2720,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-06-12T10:01:18Z"
     },
     {
       "number": 419,
@@ -2531,7 +2734,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-12-02T09:06:53Z"
     },
     {
       "number": 421,
@@ -2544,7 +2748,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-12-10T04:38:46Z"
     },
     {
       "number": 425,
@@ -2557,7 +2762,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-12-10T04:38:46Z"
     },
     {
       "number": 426,
@@ -2570,7 +2776,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 10
+      "comments_count": 10,
+      "closed_at": "2024-01-01T02:32:13Z"
     },
     {
       "number": 434,
@@ -2583,7 +2790,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-12-18T02:20:57Z"
     },
     {
       "number": 436,
@@ -2596,7 +2804,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-01-06T04:48:13Z"
     },
     {
       "number": 439,
@@ -2609,7 +2818,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2023-12-21T14:31:52Z"
     },
     {
       "number": 440,
@@ -2622,7 +2832,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2023-12-21T14:31:51Z"
     },
     {
       "number": 442,
@@ -2635,7 +2846,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2023-12-24T09:03:53Z"
     },
     {
       "number": 443,
@@ -2648,7 +2860,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2023-12-24T09:03:54Z"
     },
     {
       "number": 444,
@@ -2661,7 +2874,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 446,
@@ -2674,7 +2888,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2023-12-23T10:58:18Z"
     },
     {
       "number": 452,
@@ -2687,7 +2902,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-01-03T12:25:53Z"
     },
     {
       "number": 456,
@@ -2700,7 +2916,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 458,
@@ -2713,7 +2930,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-01-01T03:44:58Z"
     },
     {
       "number": 460,
@@ -2726,7 +2944,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-01-01T03:44:58Z"
     },
     {
       "number": 468,
@@ -2739,7 +2958,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-09T12:09:00Z"
     },
     {
       "number": 469,
@@ -2752,7 +2972,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-01-01T13:22:02Z"
     },
     {
       "number": 473,
@@ -2765,7 +2986,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-06-22T04:29:37Z"
     },
     {
       "number": 474,
@@ -2778,7 +3000,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-01-05T13:44:11Z"
     },
     {
       "number": 476,
@@ -2791,7 +3014,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-01-20T02:11:05Z"
     },
     {
       "number": 477,
@@ -2804,7 +3028,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-01-20T01:41:35Z"
     },
     {
       "number": 478,
@@ -2817,7 +3042,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-01-10T14:01:26Z"
     },
     {
       "number": 483,
@@ -2830,7 +3056,8 @@
         "需求",
         "开发中"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 485,
@@ -2843,7 +3070,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-02-24T11:47:34Z"
     },
     {
       "number": 489,
@@ -2856,7 +3084,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2024-02-03T02:22:10Z"
     },
     {
       "number": 490,
@@ -2869,7 +3098,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-02-05T11:21:43Z"
     },
     {
       "number": 492,
@@ -2882,7 +3112,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 25
+      "comments_count": 25,
+      "closed_at": "2024-02-22T09:59:59Z"
     },
     {
       "number": 493,
@@ -2895,7 +3126,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-02-24T11:47:35Z"
     },
     {
       "number": 494,
@@ -2908,7 +3140,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-02-12T11:55:50Z"
     },
     {
       "number": 496,
@@ -2921,7 +3154,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-03-12T12:05:55Z"
     },
     {
       "number": 497,
@@ -2934,7 +3168,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-02-24T11:47:35Z"
     },
     {
       "number": 498,
@@ -2947,7 +3182,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-02-24T11:47:36Z"
     },
     {
       "number": 499,
@@ -2960,7 +3196,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-02-24T11:47:36Z"
     },
     {
       "number": 500,
@@ -2973,7 +3210,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-02-24T11:47:37Z"
     },
     {
       "number": 501,
@@ -2986,7 +3224,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-02-24T11:47:37Z"
     },
     {
       "number": 506,
@@ -2999,7 +3238,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-05-19T06:41:16Z"
     },
     {
       "number": 508,
@@ -3012,7 +3252,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-03-12T12:05:56Z"
     },
     {
       "number": 509,
@@ -3025,7 +3266,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-03-12T12:05:57Z"
     },
     {
       "number": 511,
@@ -3038,7 +3280,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-08-29T14:12:43Z"
     },
     {
       "number": 512,
@@ -3051,7 +3294,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2024-03-01T15:12:31Z"
     },
     {
       "number": 513,
@@ -3064,7 +3308,8 @@
         "需求",
         "暂不处理"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": null
     },
     {
       "number": 514,
@@ -3078,7 +3323,8 @@
         "待规划",
         "播放器相关"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": null
     },
     {
       "number": 515,
@@ -3091,7 +3337,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2024-03-12T12:05:57Z"
     },
     {
       "number": 517,
@@ -3104,7 +3351,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-03-12T12:05:58Z"
     },
     {
       "number": 518,
@@ -3117,7 +3365,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-03-12T12:05:59Z"
     },
     {
       "number": 519,
@@ -3130,7 +3379,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2024-05-19T06:41:16Z"
     },
     {
       "number": 521,
@@ -3143,7 +3393,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-03-23T04:27:26Z"
     },
     {
       "number": 525,
@@ -3156,7 +3407,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-08T04:22:26Z"
     },
     {
       "number": 526,
@@ -3169,7 +3421,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-03-23T04:27:27Z"
     },
     {
       "number": 527,
@@ -3182,7 +3435,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-03-23T04:27:27Z"
     },
     {
       "number": 528,
@@ -3195,7 +3449,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-03-23T04:27:28Z"
     },
     {
       "number": 529,
@@ -3209,7 +3464,8 @@
         "待规划",
         "播放器相关"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 530,
@@ -3222,7 +3478,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-03-23T04:27:28Z"
     },
     {
       "number": 531,
@@ -3235,7 +3492,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-03-23T04:27:29Z"
     },
     {
       "number": 533,
@@ -3248,7 +3506,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2024-04-09T12:09:00Z"
     },
     {
       "number": 538,
@@ -3261,7 +3520,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-09T12:09:01Z"
     },
     {
       "number": 539,
@@ -3274,7 +3534,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:27Z"
     },
     {
       "number": 540,
@@ -3287,7 +3548,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:27Z"
     },
     {
       "number": 542,
@@ -3300,7 +3562,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 9
+      "comments_count": 9,
+      "closed_at": "2024-04-09T12:09:01Z"
     },
     {
       "number": 544,
@@ -3313,7 +3576,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-04-09T12:09:02Z"
     },
     {
       "number": 545,
@@ -3326,7 +3590,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-08T04:22:26Z"
     },
     {
       "number": 547,
@@ -3339,7 +3604,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-09T12:09:02Z"
     },
     {
       "number": 548,
@@ -3353,7 +3619,8 @@
         "待规划",
         "暂不处理"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 549,
@@ -3365,7 +3632,8 @@
       "labels": [
         "讨论"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-04-23T10:15:42Z"
     },
     {
       "number": 550,
@@ -3378,7 +3646,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-05-19T06:41:17Z"
     },
     {
       "number": 551,
@@ -3391,7 +3660,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:28Z"
     },
     {
       "number": 552,
@@ -3404,7 +3674,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-10-25T10:30:30Z"
     },
     {
       "number": 555,
@@ -3417,7 +3688,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-04-09T12:09:03Z"
     },
     {
       "number": 558,
@@ -3430,7 +3702,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-04-09T12:09:03Z"
     },
     {
       "number": 559,
@@ -3443,7 +3716,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:28Z"
     },
     {
       "number": 560,
@@ -3456,7 +3730,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-09T12:09:04Z"
     },
     {
       "number": 562,
@@ -3469,7 +3744,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-04-09T12:09:04Z"
     },
     {
       "number": 566,
@@ -3482,7 +3758,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-01T02:26:22Z"
     },
     {
       "number": 570,
@@ -3495,7 +3772,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-04-10T14:09:27Z"
     },
     {
       "number": 571,
@@ -3508,7 +3786,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:29Z"
     },
     {
       "number": 573,
@@ -3521,7 +3800,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-03-07T08:48:25Z"
     },
     {
       "number": 574,
@@ -3534,7 +3814,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-04-29T00:20:29Z"
     },
     {
       "number": 576,
@@ -3547,7 +3828,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-05-19T06:41:17Z"
     },
     {
       "number": 577,
@@ -3560,7 +3842,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:30Z"
     },
     {
       "number": 580,
@@ -3573,7 +3856,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:30Z"
     },
     {
       "number": 581,
@@ -3586,7 +3870,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-04-29T00:20:31Z"
     },
     {
       "number": 582,
@@ -3599,7 +3884,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:31Z"
     },
     {
       "number": 583,
@@ -3612,7 +3898,8 @@
         "bug",
         "暂不处理"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-10-20T20:31:57Z"
     },
     {
       "number": 584,
@@ -3625,7 +3912,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-04-20T07:23:31Z"
     },
     {
       "number": 585,
@@ -3638,7 +3926,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:27:16Z"
     },
     {
       "number": 587,
@@ -3652,7 +3941,8 @@
         "已完成",
         "播放器相关"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-09-30T06:06:09Z"
     },
     {
       "number": 588,
@@ -3665,7 +3955,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-04-29T01:52:12Z"
     },
     {
       "number": 589,
@@ -3678,7 +3969,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-04-29T00:20:31Z"
     },
     {
       "number": 590,
@@ -3691,7 +3983,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-04-29T00:20:32Z"
     },
     {
       "number": 592,
@@ -3704,7 +3997,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:32Z"
     },
     {
       "number": 594,
@@ -3717,7 +4011,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:33Z"
     },
     {
       "number": 596,
@@ -3730,7 +4025,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:33Z"
     },
     {
       "number": 597,
@@ -3743,7 +4039,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:34Z"
     },
     {
       "number": 598,
@@ -3756,7 +4053,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:34Z"
     },
     {
       "number": 599,
@@ -3769,7 +4067,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-04-29T00:20:35Z"
     },
     {
       "number": 604,
@@ -3782,7 +4081,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 605,
@@ -3795,7 +4095,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-05-19T06:41:18Z"
     },
     {
       "number": 607,
@@ -3808,7 +4109,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-05-19T06:41:18Z"
     },
     {
       "number": 608,
@@ -3821,7 +4123,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2024-05-19T06:41:19Z"
     },
     {
       "number": 609,
@@ -3834,7 +4137,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 17
+      "comments_count": 17,
+      "closed_at": "2024-05-19T06:41:19Z"
     },
     {
       "number": 610,
@@ -3847,7 +4151,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2024-05-19T06:41:20Z"
     },
     {
       "number": 611,
@@ -3860,7 +4165,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 17
+      "comments_count": 17,
+      "closed_at": "2024-06-08T04:22:27Z"
     },
     {
       "number": 612,
@@ -3873,7 +4179,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-05-19T06:41:20Z"
     },
     {
       "number": 613,
@@ -3886,7 +4193,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-05-13T12:31:03Z"
     },
     {
       "number": 614,
@@ -3899,7 +4207,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2024-05-19T06:41:21Z"
     },
     {
       "number": 615,
@@ -3912,7 +4221,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-05-19T06:41:21Z"
     },
     {
       "number": 617,
@@ -3925,7 +4235,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-05-19T06:41:22Z"
     },
     {
       "number": 618,
@@ -3938,7 +4249,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-05-19T06:41:22Z"
     },
     {
       "number": 623,
@@ -3951,7 +4263,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-05-19T06:41:23Z"
     },
     {
       "number": 625,
@@ -3964,7 +4277,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-06-08T04:22:27Z"
     },
     {
       "number": 627,
@@ -3977,7 +4291,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-05-12T08:51:18Z"
     },
     {
       "number": 631,
@@ -3990,7 +4305,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-05-17T02:41:33Z"
     },
     {
       "number": 636,
@@ -4003,7 +4319,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-08T04:22:28Z"
     },
     {
       "number": 638,
@@ -4016,7 +4333,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-05-21T12:29:41Z"
     },
     {
       "number": 640,
@@ -4029,7 +4347,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-06-08T04:22:28Z"
     },
     {
       "number": 644,
@@ -4042,7 +4361,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-08T04:22:29Z"
     },
     {
       "number": 645,
@@ -4055,7 +4375,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-06-08T04:22:29Z"
     },
     {
       "number": 646,
@@ -4068,7 +4389,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": null
     },
     {
       "number": 647,
@@ -4081,7 +4403,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-01T02:26:22Z"
     },
     {
       "number": 648,
@@ -4094,7 +4417,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-05-23T14:28:03Z"
     },
     {
       "number": 650,
@@ -4107,7 +4431,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2024-06-10T03:06:03Z"
     },
     {
       "number": 654,
@@ -4120,7 +4445,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-06-08T04:22:29Z"
     },
     {
       "number": 655,
@@ -4133,7 +4459,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-06-08T04:22:30Z"
     },
     {
       "number": 656,
@@ -4146,7 +4473,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-06-05T13:59:34Z"
     },
     {
       "number": 658,
@@ -4159,7 +4487,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:37Z"
     },
     {
       "number": 661,
@@ -4172,7 +4501,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-06-22T04:29:38Z"
     },
     {
       "number": 662,
@@ -4185,7 +4515,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-08T07:12:58Z"
     },
     {
       "number": 664,
@@ -4198,7 +4529,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:38Z"
     },
     {
       "number": 665,
@@ -4211,7 +4543,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 666,
@@ -4224,7 +4557,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-10-19T04:03:40Z"
     },
     {
       "number": 667,
@@ -4238,7 +4572,8 @@
         "待规划",
         "播放器相关"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-05-09T06:32:06Z"
     },
     {
       "number": 668,
@@ -4251,7 +4586,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:38Z"
     },
     {
       "number": 669,
@@ -4264,7 +4600,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 8
+      "comments_count": 8,
+      "closed_at": "2024-06-19T06:43:32Z"
     },
     {
       "number": 671,
@@ -4277,7 +4614,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:39Z"
     },
     {
       "number": 673,
@@ -4290,7 +4628,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:39Z"
     },
     {
       "number": 674,
@@ -4303,7 +4642,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:40Z"
     },
     {
       "number": 675,
@@ -4316,7 +4656,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-06-22T04:29:40Z"
     },
     {
       "number": 678,
@@ -4329,7 +4670,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-07-20T02:31:10Z"
     },
     {
       "number": 682,
@@ -4342,7 +4684,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-07-20T02:31:11Z"
     },
     {
       "number": 686,
@@ -4355,7 +4698,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-07-20T02:31:11Z"
     },
     {
       "number": 687,
@@ -4368,7 +4712,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-07-20T02:31:12Z"
     },
     {
       "number": 689,
@@ -4381,7 +4726,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-07-20T02:31:12Z"
     },
     {
       "number": 691,
@@ -4394,7 +4740,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-07-02T04:07:38Z"
     },
     {
       "number": 694,
@@ -4407,7 +4754,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-07-20T02:31:13Z"
     },
     {
       "number": 695,
@@ -4420,7 +4768,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2024-07-21T13:37:00Z"
     },
     {
       "number": 696,
@@ -4433,7 +4782,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 698,
@@ -4446,7 +4796,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-07-20T02:31:13Z"
     },
     {
       "number": 702,
@@ -4459,7 +4810,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-07-20T02:31:14Z"
     },
     {
       "number": 705,
@@ -4472,7 +4824,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-07-20T02:31:14Z"
     },
     {
       "number": 711,
@@ -4485,7 +4838,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": null
     },
     {
       "number": 712,
@@ -4498,7 +4852,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 13
+      "comments_count": 13,
+      "closed_at": "2024-07-20T04:16:54Z"
     },
     {
       "number": 713,
@@ -4511,7 +4866,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-08-05T05:51:56Z"
     },
     {
       "number": 715,
@@ -4524,7 +4880,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-21T13:54:36Z"
     },
     {
       "number": 716,
@@ -4537,7 +4894,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-07T12:04:57Z"
     },
     {
       "number": 717,
@@ -4552,7 +4910,8 @@
         "严重",
         "需要更多信息"
       ],
-      "comments_count": 29
+      "comments_count": 29,
+      "closed_at": null
     },
     {
       "number": 718,
@@ -4565,7 +4924,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-08-07T12:04:58Z"
     },
     {
       "number": 719,
@@ -4578,7 +4938,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-07-21T02:27:48Z"
     },
     {
       "number": 720,
@@ -4591,7 +4952,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-07T12:04:58Z"
     },
     {
       "number": 721,
@@ -4604,7 +4966,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-08-21T13:54:36Z"
     },
     {
       "number": 722,
@@ -4617,7 +4980,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-07T12:04:59Z"
     },
     {
       "number": 723,
@@ -4631,7 +4995,8 @@
         "已完成",
         "播放器相关"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-09-30T06:06:17Z"
     },
     {
       "number": 725,
@@ -4645,7 +5010,8 @@
         "已完成",
         "播放器相关"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2025-11-30T08:33:11Z"
     },
     {
       "number": 728,
@@ -4658,7 +5024,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-07T12:04:59Z"
     },
     {
       "number": 729,
@@ -4671,7 +5038,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-10-19T04:03:41Z"
     },
     {
       "number": 730,
@@ -4684,7 +5052,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-08-07T12:04:59Z"
     },
     {
       "number": 735,
@@ -4697,7 +5066,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-02-06T03:55:31Z"
     },
     {
       "number": 736,
@@ -4710,7 +5080,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-07T12:05:00Z"
     },
     {
       "number": 737,
@@ -4723,7 +5094,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-07T12:05:00Z"
     },
     {
       "number": 739,
@@ -4736,7 +5108,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-08-23T08:12:53Z"
     },
     {
       "number": 740,
@@ -4749,7 +5122,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-08-07T12:05:01Z"
     },
     {
       "number": 741,
@@ -4762,7 +5136,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-01-18T03:24:17Z"
     },
     {
       "number": 742,
@@ -4776,7 +5151,8 @@
         "待规划",
         "播放器相关"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 743,
@@ -4789,7 +5165,8 @@
         "需求",
         "待测试"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-09-29T09:58:31Z"
     },
     {
       "number": 744,
@@ -4802,7 +5179,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-08-06T12:28:31Z"
     },
     {
       "number": 746,
@@ -4815,7 +5193,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-21T13:54:37Z"
     },
     {
       "number": 747,
@@ -4828,7 +5207,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-07T12:05:01Z"
     },
     {
       "number": 754,
@@ -4841,7 +5221,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-08-21T13:54:38Z"
     },
     {
       "number": 756,
@@ -4855,7 +5236,8 @@
         "待规划",
         "需要更多信息"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2024-08-13T09:04:05Z"
     },
     {
       "number": 759,
@@ -4868,7 +5250,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 760,
@@ -4881,7 +5264,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 761,
@@ -4894,7 +5278,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-03-10T04:27:55Z"
     },
     {
       "number": 762,
@@ -4907,7 +5292,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2024-08-18T02:14:40Z"
     },
     {
       "number": 763,
@@ -4920,7 +5306,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-09-16T12:05:46Z"
     },
     {
       "number": 767,
@@ -4934,7 +5321,8 @@
         "已完成",
         "播放器相关"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2024-09-30T06:05:19Z"
     },
     {
       "number": 768,
@@ -4948,7 +5336,8 @@
         "待规划",
         "播放器相关"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-02-06T03:55:07Z"
     },
     {
       "number": 769,
@@ -4961,7 +5350,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 770,
@@ -4974,7 +5364,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-21T13:54:38Z"
     },
     {
       "number": 771,
@@ -4987,7 +5378,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-08-21T13:54:38Z"
     },
     {
       "number": 772,
@@ -5000,7 +5392,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2024-08-20T13:17:23Z"
     },
     {
       "number": 773,
@@ -5014,7 +5407,8 @@
         "待规划",
         "暂不处理"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": null
     },
     {
       "number": 776,
@@ -5028,7 +5422,8 @@
         "待规划",
         "播放器相关"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 778,
@@ -5041,7 +5436,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-02-06T03:54:46Z"
     },
     {
       "number": 779,
@@ -5054,7 +5450,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 780,
@@ -5067,7 +5464,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-08-21T13:54:39Z"
     },
     {
       "number": 781,
@@ -5080,7 +5478,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-09-16T12:05:47Z"
     },
     {
       "number": 785,
@@ -5093,7 +5492,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2024-08-26T01:41:02Z"
     },
     {
       "number": 786,
@@ -5106,7 +5506,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 788,
@@ -5119,7 +5520,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-16T12:05:47Z"
     },
     {
       "number": 792,
@@ -5132,7 +5534,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-09-16T12:05:48Z"
     },
     {
       "number": 793,
@@ -5145,7 +5548,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-16T12:05:48Z"
     },
     {
       "number": 794,
@@ -5158,7 +5562,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-16T12:05:49Z"
     },
     {
       "number": 795,
@@ -5171,7 +5576,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-16T12:05:49Z"
     },
     {
       "number": 796,
@@ -5183,7 +5589,8 @@
       "labels": [
         "需要更多信息"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-09-16T09:50:00Z"
     },
     {
       "number": 797,
@@ -5196,7 +5603,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 798,
@@ -5209,7 +5617,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-02-06T03:59:50Z"
     },
     {
       "number": 799,
@@ -5222,7 +5631,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-16T12:05:50Z"
     },
     {
       "number": 800,
@@ -5235,7 +5645,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 802,
@@ -5248,7 +5659,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-16T12:05:50Z"
     },
     {
       "number": 803,
@@ -5261,7 +5673,8 @@
         "bug",
         "待测试"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-02-06T03:51:46Z"
     },
     {
       "number": 804,
@@ -5274,7 +5687,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-09-30T05:46:44Z"
     },
     {
       "number": 805,
@@ -5287,7 +5701,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-03T07:06:16Z"
     },
     {
       "number": 806,
@@ -5300,7 +5715,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-12T05:59:58Z"
     },
     {
       "number": 808,
@@ -5313,7 +5729,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-09-30T05:46:44Z"
     },
     {
       "number": 809,
@@ -5325,7 +5742,8 @@
       "labels": [
         "讨论"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-09-15T07:47:59Z"
     },
     {
       "number": 812,
@@ -5338,7 +5756,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-16T12:05:51Z"
     },
     {
       "number": 816,
@@ -5351,7 +5770,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-09-30T05:46:45Z"
     },
     {
       "number": 817,
@@ -5364,7 +5784,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-03-07T08:14:43Z"
     },
     {
       "number": 818,
@@ -5377,7 +5798,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-02-06T03:49:14Z"
     },
     {
       "number": 819,
@@ -5390,7 +5812,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-09-30T05:46:45Z"
     },
     {
       "number": 821,
@@ -5403,7 +5826,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-30T05:46:46Z"
     },
     {
       "number": 822,
@@ -5416,7 +5840,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-09-30T05:46:46Z"
     },
     {
       "number": 825,
@@ -5428,7 +5853,8 @@
       "labels": [
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-30T05:46:46Z"
     },
     {
       "number": 827,
@@ -5441,7 +5867,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-10-25T04:27:49Z"
     },
     {
       "number": 829,
@@ -5454,7 +5881,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-30T05:46:47Z"
     },
     {
       "number": 830,
@@ -5467,7 +5895,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-09-30T05:46:47Z"
     },
     {
       "number": 831,
@@ -5481,7 +5910,8 @@
         "需求",
         "播放器相关"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2024-10-01T14:18:16Z"
     },
     {
       "number": 832,
@@ -5495,7 +5925,8 @@
         "待规划",
         "需要更多信息"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 837,
@@ -5508,7 +5939,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-03-10T04:27:24Z"
     },
     {
       "number": 838,
@@ -5521,7 +5953,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-10-01T08:04:43Z"
     },
     {
       "number": 841,
@@ -5534,7 +5967,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:52Z"
     },
     {
       "number": 842,
@@ -5547,7 +5981,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": null
     },
     {
       "number": 843,
@@ -5560,7 +5995,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-10-02T10:06:03Z"
     },
     {
       "number": 844,
@@ -5573,7 +6009,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-10-02T12:49:23Z"
     },
     {
       "number": 851,
@@ -5586,7 +6023,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:53Z"
     },
     {
       "number": 852,
@@ -5599,7 +6037,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:53Z"
     },
     {
       "number": 853,
@@ -5612,7 +6051,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:54Z"
     },
     {
       "number": 854,
@@ -5625,7 +6065,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-08T13:05:52Z"
     },
     {
       "number": 856,
@@ -5638,7 +6079,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-10-08T13:10:13Z"
     },
     {
       "number": 857,
@@ -5651,7 +6093,8 @@
         "已完成",
         "文档"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:55Z"
     },
     {
       "number": 859,
@@ -5664,7 +6107,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:55Z"
     },
     {
       "number": 860,
@@ -5677,7 +6121,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2024-10-25T10:28:55Z"
     },
     {
       "number": 862,
@@ -5690,7 +6135,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-10-11T16:02:44Z"
     },
     {
       "number": 863,
@@ -5703,7 +6149,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:56Z"
     },
     {
       "number": 865,
@@ -5716,7 +6163,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-10-14T01:58:22Z"
     },
     {
       "number": 866,
@@ -5729,7 +6177,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 869,
@@ -5742,7 +6191,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:56Z"
     },
     {
       "number": 870,
@@ -5755,7 +6205,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:57Z"
     },
     {
       "number": 872,
@@ -5768,7 +6219,8 @@
         "已完成",
         "文档"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-10-25T10:28:57Z"
     },
     {
       "number": 873,
@@ -5782,7 +6234,8 @@
         "待规划",
         "播放器相关"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 874,
@@ -5795,7 +6248,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 8
+      "comments_count": 8,
+      "closed_at": "2025-07-18T12:05:41Z"
     },
     {
       "number": 875,
@@ -5808,7 +6262,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-10-25T10:28:58Z"
     },
     {
       "number": 876,
@@ -5821,7 +6276,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 878,
@@ -5834,7 +6290,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-10-22T01:29:40Z"
     },
     {
       "number": 884,
@@ -5847,7 +6304,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-10-26T03:48:52Z"
     },
     {
       "number": 888,
@@ -5860,7 +6318,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2024-11-20T13:00:39Z"
     },
     {
       "number": 890,
@@ -5873,7 +6332,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-11-03T02:43:30Z"
     },
     {
       "number": 891,
@@ -5886,7 +6346,8 @@
         "需求",
         "开发中"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 893,
@@ -5899,7 +6360,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-10-28T02:42:31Z"
     },
     {
       "number": 896,
@@ -5912,7 +6374,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-11-20T13:00:40Z"
     },
     {
       "number": 897,
@@ -5925,7 +6388,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-11-20T13:00:40Z"
     },
     {
       "number": 899,
@@ -5939,7 +6403,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 11
+      "comments_count": 11,
+      "closed_at": "2025-02-16T03:13:15Z"
     },
     {
       "number": 900,
@@ -5952,7 +6417,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-11-20T13:00:41Z"
     },
     {
       "number": 903,
@@ -5965,7 +6431,8 @@
         "需求",
         "开发中"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-11-24T02:48:49Z"
     },
     {
       "number": 910,
@@ -5978,7 +6445,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-11-20T13:00:41Z"
     },
     {
       "number": 911,
@@ -5991,7 +6459,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2024-11-20T13:00:42Z"
     },
     {
       "number": 912,
@@ -6004,7 +6473,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-11-20T13:00:43Z"
     },
     {
       "number": 914,
@@ -6017,7 +6487,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-11-20T11:45:58Z"
     },
     {
       "number": 918,
@@ -6030,7 +6501,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2024-11-26T08:42:44Z"
     },
     {
       "number": 922,
@@ -6043,7 +6515,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-12-21T10:36:11Z"
     },
     {
       "number": 923,
@@ -6056,7 +6529,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-12-21T10:36:12Z"
     },
     {
       "number": 924,
@@ -6069,7 +6543,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-12-23T17:17:02Z"
     },
     {
       "number": 925,
@@ -6082,7 +6557,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-12-21T10:36:12Z"
     },
     {
       "number": 926,
@@ -6095,7 +6571,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 929,
@@ -6108,7 +6585,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-07T13:09:25Z"
     },
     {
       "number": 930,
@@ -6121,7 +6599,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 933,
@@ -6134,7 +6613,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-12-21T10:36:13Z"
     },
     {
       "number": 934,
@@ -6147,7 +6627,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 938,
@@ -6160,7 +6641,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-12-21T10:36:13Z"
     },
     {
       "number": 939,
@@ -6173,7 +6655,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-12-21T10:36:14Z"
     },
     {
       "number": 940,
@@ -6186,7 +6669,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-12-21T10:36:14Z"
     },
     {
       "number": 942,
@@ -6199,7 +6683,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-01-13T04:45:54Z"
     },
     {
       "number": 943,
@@ -6212,7 +6697,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-12-17T15:16:45Z"
     },
     {
       "number": 945,
@@ -6225,7 +6711,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-03-08T12:25:30Z"
     },
     {
       "number": 947,
@@ -6238,7 +6725,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 949,
@@ -6251,7 +6739,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-12-26T02:11:29Z"
     },
     {
       "number": 953,
@@ -6264,7 +6753,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2024-12-21T10:36:14Z"
     },
     {
       "number": 957,
@@ -6277,7 +6767,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-07T13:09:25Z"
     },
     {
       "number": 962,
@@ -6290,7 +6781,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2024-12-31T06:08:00Z"
     },
     {
       "number": 963,
@@ -6303,7 +6795,8 @@
         "bug",
         "待测试"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": null
     },
     {
       "number": 964,
@@ -6316,7 +6809,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-01-07T13:09:26Z"
     },
     {
       "number": 965,
@@ -6329,7 +6823,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-11-08T11:13:42Z"
     },
     {
       "number": 967,
@@ -6342,7 +6837,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-01-03T05:02:15Z"
     },
     {
       "number": 970,
@@ -6355,7 +6851,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-07T01:53:07Z"
     },
     {
       "number": 975,
@@ -6369,7 +6866,8 @@
         "已完成",
         "严重"
       ],
-      "comments_count": 15
+      "comments_count": 15,
+      "closed_at": "2025-01-08T13:34:50Z"
     },
     {
       "number": 979,
@@ -6382,7 +6880,8 @@
         "已完成",
         "文档"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-13T05:36:55Z"
     },
     {
       "number": 981,
@@ -6395,7 +6894,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2025-01-18T10:33:17Z"
     },
     {
       "number": 982,
@@ -6408,7 +6908,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-01-11T01:45:40Z"
     },
     {
       "number": 983,
@@ -6421,7 +6922,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-01-13T04:45:55Z"
     },
     {
       "number": 986,
@@ -6434,7 +6936,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-01-13T04:45:55Z"
     },
     {
       "number": 989,
@@ -6447,7 +6950,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-01-18T10:33:18Z"
     },
     {
       "number": 990,
@@ -6460,7 +6964,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-01-15T08:31:16Z"
     },
     {
       "number": 993,
@@ -6473,7 +6978,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-18T10:33:18Z"
     },
     {
       "number": 994,
@@ -6486,7 +6992,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-18T10:33:18Z"
     },
     {
       "number": 996,
@@ -6496,7 +7003,8 @@
       "created_at": "2025-01-18T10:27:50Z",
       "updated_at": "2025-05-15T07:31:46Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-15T07:31:46Z"
     },
     {
       "number": 1001,
@@ -6509,7 +7017,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-29T06:15:04Z"
     },
     {
       "number": 1002,
@@ -6522,7 +7031,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-29T06:15:05Z"
     },
     {
       "number": 1003,
@@ -6535,7 +7045,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-29T06:15:06Z"
     },
     {
       "number": 1004,
@@ -6548,7 +7059,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-08-20T16:53:33Z"
     },
     {
       "number": 1005,
@@ -6561,7 +7073,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-21T01:39:18Z"
     },
     {
       "number": 1008,
@@ -6574,7 +7087,8 @@
         "需求",
         "待测试"
       ],
-      "comments_count": 18
+      "comments_count": 18,
+      "closed_at": null
     },
     {
       "number": 1012,
@@ -6587,7 +7101,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-01-29T06:15:06Z"
     },
     {
       "number": 1014,
@@ -6600,7 +7115,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2025-02-09T07:22:19Z"
     },
     {
       "number": 1018,
@@ -6613,7 +7129,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2025-02-26T07:43:30Z"
     },
     {
       "number": 1019,
@@ -6626,7 +7143,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1021,
@@ -6639,7 +7157,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1023,
@@ -6652,7 +7171,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-16T13:01:37Z"
     },
     {
       "number": 1024,
@@ -6665,7 +7185,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-02-09T07:22:20Z"
     },
     {
       "number": 1025,
@@ -6678,7 +7199,8 @@
         "已完成",
         "优化建议"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-09T04:27:47Z"
     },
     {
       "number": 1026,
@@ -6691,7 +7213,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1027,
@@ -6704,7 +7227,8 @@
         "bug",
         "待测试"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2025-12-03T11:38:43Z"
     },
     {
       "number": 1028,
@@ -6717,7 +7241,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2025-05-16T01:35:39Z"
     },
     {
       "number": 1029,
@@ -6730,7 +7255,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-09T07:22:20Z"
     },
     {
       "number": 1030,
@@ -6743,7 +7269,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-07-10T23:50:37Z"
     },
     {
       "number": 1031,
@@ -6756,7 +7283,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-16T01:35:40Z"
     },
     {
       "number": 1032,
@@ -6769,7 +7297,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-02-07T01:45:04Z"
     },
     {
       "number": 1034,
@@ -6782,7 +7311,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-09T07:22:21Z"
     },
     {
       "number": 1039,
@@ -6795,7 +7325,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-09T07:22:21Z"
     },
     {
       "number": 1044,
@@ -6808,7 +7339,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-10T12:55:24Z"
     },
     {
       "number": 1047,
@@ -6821,7 +7353,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-16T13:01:38Z"
     },
     {
       "number": 1050,
@@ -6834,7 +7367,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-16T13:01:38Z"
     },
     {
       "number": 1051,
@@ -6847,7 +7381,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1052,
@@ -6860,7 +7395,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-16T13:01:38Z"
     },
     {
       "number": 1055,
@@ -6873,7 +7409,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-16T13:01:39Z"
     },
     {
       "number": 1057,
@@ -6886,7 +7423,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2025-02-26T07:43:31Z"
     },
     {
       "number": 1060,
@@ -6899,7 +7437,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-02-26T07:43:31Z"
     },
     {
       "number": 1062,
@@ -6912,7 +7451,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-26T07:43:32Z"
     },
     {
       "number": 1064,
@@ -6925,7 +7465,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-26T07:43:32Z"
     },
     {
       "number": 1065,
@@ -6938,7 +7479,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-02-26T07:44:38Z"
     },
     {
       "number": 1066,
@@ -6951,7 +7493,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-02-19T06:29:28Z"
     },
     {
       "number": 1068,
@@ -6964,7 +7507,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": "2025-02-26T07:43:33Z"
     },
     {
       "number": 1070,
@@ -6978,7 +7522,8 @@
         "已完成",
         "播放器相关"
       ],
-      "comments_count": 14
+      "comments_count": 14,
+      "closed_at": "2025-03-22T12:50:18Z"
     },
     {
       "number": 1073,
@@ -6991,7 +7536,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-26T07:43:33Z"
     },
     {
       "number": 1075,
@@ -7004,7 +7550,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-03-08T12:25:30Z"
     },
     {
       "number": 1077,
@@ -7017,7 +7564,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-03-03T09:10:03Z"
     },
     {
       "number": 1078,
@@ -7030,7 +7578,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 7
+      "comments_count": 7,
+      "closed_at": null
     },
     {
       "number": 1079,
@@ -7040,7 +7589,8 @@
       "created_at": "2025-02-26T18:06:56Z",
       "updated_at": "2025-02-27T00:04:43Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-02-27T00:04:43Z"
     },
     {
       "number": 1081,
@@ -7053,7 +7603,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-03-08T12:25:31Z"
     },
     {
       "number": 1083,
@@ -7066,7 +7617,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-03-03T19:17:57Z"
     },
     {
       "number": 1084,
@@ -7079,7 +7631,8 @@
         "优化建议",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": null
     },
     {
       "number": 1087,
@@ -7092,7 +7645,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-03-03T08:40:11Z"
     },
     {
       "number": 1088,
@@ -7105,7 +7659,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-03-08T12:25:31Z"
     },
     {
       "number": 1089,
@@ -7119,7 +7674,8 @@
         "待测试",
         "播放器相关"
       ],
-      "comments_count": 9
+      "comments_count": 9,
+      "closed_at": "2025-05-13T14:49:24Z"
     },
     {
       "number": 1090,
@@ -7132,7 +7688,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-03-04T06:01:24Z"
     },
     {
       "number": 1092,
@@ -7145,7 +7702,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-03-08T12:25:32Z"
     },
     {
       "number": 1093,
@@ -7158,7 +7716,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-05-16T01:35:40Z"
     },
     {
       "number": 1094,
@@ -7171,7 +7730,8 @@
         "bug",
         "待测试"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1096,
@@ -7184,7 +7744,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-03-08T12:25:32Z"
     },
     {
       "number": 1098,
@@ -7197,7 +7758,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1099,
@@ -7210,7 +7772,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-03-08T12:25:33Z"
     },
     {
       "number": 1100,
@@ -7223,7 +7786,8 @@
         "bug",
         "待测试"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-03-22T12:50:18Z"
     },
     {
       "number": 1101,
@@ -7236,7 +7800,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-03-08T12:25:33Z"
     },
     {
       "number": 1102,
@@ -7249,7 +7814,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-03-08T12:25:34Z"
     },
     {
       "number": 1107,
@@ -7262,7 +7828,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2025-03-10T12:27:57Z"
     },
     {
       "number": 1108,
@@ -7275,7 +7842,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-03-09T14:22:17Z"
     },
     {
       "number": 1110,
@@ -7288,7 +7856,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-03-22T12:50:19Z"
     },
     {
       "number": 1111,
@@ -7301,7 +7870,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-03-22T12:50:19Z"
     },
     {
       "number": 1112,
@@ -7314,7 +7884,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-03-22T12:50:20Z"
     },
     {
       "number": 1113,
@@ -7327,7 +7898,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": null
     },
     {
       "number": 1115,
@@ -7340,7 +7912,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-03-22T12:50:20Z"
     },
     {
       "number": 1116,
@@ -7353,7 +7926,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-16T01:35:41Z"
     },
     {
       "number": 1117,
@@ -7367,7 +7941,8 @@
         "待测试",
         "播放器相关"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1118,
@@ -7381,7 +7956,8 @@
         "待规划",
         "需要更多信息"
       ],
-      "comments_count": 14
+      "comments_count": 14,
+      "closed_at": null
     },
     {
       "number": 1119,
@@ -7394,7 +7970,8 @@
         "bug",
         "待测试"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-03-22T12:50:20Z"
     },
     {
       "number": 1120,
@@ -7407,7 +7984,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1121,
@@ -7420,7 +7998,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1126,
@@ -7433,7 +8012,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-01T09:50:46Z"
     },
     {
       "number": 1127,
@@ -7446,7 +8026,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-01T09:50:46Z"
     },
     {
       "number": 1129,
@@ -7459,7 +8040,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-01T09:50:47Z"
     },
     {
       "number": 1132,
@@ -7473,7 +8055,8 @@
         "待规划",
         "播放器相关"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-05-01T10:00:25Z"
     },
     {
       "number": 1133,
@@ -7486,7 +8069,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2025-05-01T09:50:48Z"
     },
     {
       "number": 1136,
@@ -7499,7 +8083,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1137,
@@ -7513,7 +8098,8 @@
         "已完成",
         "播放器相关"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-05-16T07:07:19Z"
     },
     {
       "number": 1139,
@@ -7526,7 +8112,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-16T01:35:41Z"
     },
     {
       "number": 1140,
@@ -7539,7 +8126,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-04-19T02:41:19Z"
     },
     {
       "number": 1141,
@@ -7552,7 +8140,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-05-11T03:52:58Z"
     },
     {
       "number": 1142,
@@ -7565,7 +8154,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2025-04-30T05:46:55Z"
     },
     {
       "number": 1145,
@@ -7575,7 +8165,8 @@
       "created_at": "2025-04-29T15:06:33Z",
       "updated_at": "2025-04-29T15:41:17Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-04-29T15:40:58Z"
     },
     {
       "number": 1146,
@@ -7588,7 +8179,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-04-30T05:46:21Z"
     },
     {
       "number": 1152,
@@ -7601,7 +8193,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1153,
@@ -7614,7 +8207,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2025-05-11T03:53:23Z"
     },
     {
       "number": 1154,
@@ -7627,7 +8221,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-05-11T03:53:23Z"
     },
     {
       "number": 1155,
@@ -7640,7 +8235,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-11T03:53:23Z"
     },
     {
       "number": 1159,
@@ -7653,7 +8249,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-22T10:29:36Z"
     },
     {
       "number": 1161,
@@ -7666,7 +8263,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-05-11T03:53:24Z"
     },
     {
       "number": 1163,
@@ -7679,7 +8277,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-11T03:53:24Z"
     },
     {
       "number": 1164,
@@ -7692,7 +8291,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-05-11T03:53:25Z"
     },
     {
       "number": 1165,
@@ -7705,7 +8305,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-11T03:53:25Z"
     },
     {
       "number": 1170,
@@ -7718,7 +8319,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1171,
@@ -7731,7 +8333,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-02T04:36:02Z"
     },
     {
       "number": 1173,
@@ -7741,7 +8344,8 @@
       "created_at": "2025-05-15T07:31:41Z",
       "updated_at": "2026-05-08T06:16:02Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1175,
@@ -7754,7 +8358,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-06-02T04:36:02Z"
     },
     {
       "number": 1177,
@@ -7767,7 +8372,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1180,
@@ -7781,7 +8387,8 @@
         "已完成",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-09-28T03:19:27Z"
     },
     {
       "number": 1182,
@@ -7794,7 +8401,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-06-22T10:29:37Z"
     },
     {
       "number": 1184,
@@ -7807,7 +8415,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-02T04:36:03Z"
     },
     {
       "number": 1185,
@@ -7820,7 +8429,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-06-02T04:36:03Z"
     },
     {
       "number": 1186,
@@ -7833,7 +8443,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-06-02T04:36:04Z"
     },
     {
       "number": 1188,
@@ -7846,7 +8457,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-05-25T01:52:03Z"
     },
     {
       "number": 1191,
@@ -7859,7 +8471,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-05-28T04:29:29Z"
     },
     {
       "number": 1193,
@@ -7872,7 +8485,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-05-28T01:48:16Z"
     },
     {
       "number": 1195,
@@ -7885,7 +8499,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-02T04:36:04Z"
     },
     {
       "number": 1196,
@@ -7898,7 +8513,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1198,
@@ -7911,7 +8527,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 8
+      "comments_count": 8,
+      "closed_at": "2025-11-30T08:32:43Z"
     },
     {
       "number": 1199,
@@ -7924,7 +8541,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-05-31T13:01:36Z"
     },
     {
       "number": 1203,
@@ -7937,7 +8555,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-02T04:36:04Z"
     },
     {
       "number": 1208,
@@ -7950,7 +8569,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-22T10:29:37Z"
     },
     {
       "number": 1210,
@@ -7963,7 +8583,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-22T10:29:37Z"
     },
     {
       "number": 1211,
@@ -7976,7 +8597,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-06T13:14:14Z"
     },
     {
       "number": 1213,
@@ -7989,7 +8611,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2025-06-28T06:21:59Z"
     },
     {
       "number": 1216,
@@ -8002,7 +8625,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-06-22T10:29:38Z"
     },
     {
       "number": 1217,
@@ -8015,7 +8639,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-06-11T09:33:21Z"
     },
     {
       "number": 1219,
@@ -8028,7 +8653,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-06-24T06:42:43Z"
     },
     {
       "number": 1220,
@@ -8041,7 +8667,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-12T12:18:57Z"
     },
     {
       "number": 1222,
@@ -8054,7 +8681,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-06-13T14:24:50Z"
     },
     {
       "number": 1224,
@@ -8067,7 +8695,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-06-22T10:29:38Z"
     },
     {
       "number": 1227,
@@ -8080,7 +8709,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-22T10:29:38Z"
     },
     {
       "number": 1228,
@@ -8093,7 +8723,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-22T10:29:39Z"
     },
     {
       "number": 1229,
@@ -8106,7 +8737,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-28T03:22:39Z"
     },
     {
       "number": 1231,
@@ -8119,7 +8751,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-06-28T03:22:39Z"
     },
     {
       "number": 1235,
@@ -8132,7 +8765,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-09-28T03:19:27Z"
     },
     {
       "number": 1239,
@@ -8145,7 +8779,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-28T03:22:40Z"
     },
     {
       "number": 1240,
@@ -8158,7 +8793,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-28T03:22:40Z"
     },
     {
       "number": 1241,
@@ -8171,7 +8807,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-28T03:22:40Z"
     },
     {
       "number": 1242,
@@ -8184,7 +8821,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-06-25T06:21:39Z"
     },
     {
       "number": 1243,
@@ -8197,7 +8835,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-06-28T03:22:41Z"
     },
     {
       "number": 1244,
@@ -8210,7 +8849,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-06-28T03:22:41Z"
     },
     {
       "number": 1251,
@@ -8223,7 +8863,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-07-10T23:50:38Z"
     },
     {
       "number": 1252,
@@ -8236,7 +8877,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-07-10T23:50:38Z"
     },
     {
       "number": 1253,
@@ -8249,7 +8891,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-07-10T23:50:38Z"
     },
     {
       "number": 1254,
@@ -8262,7 +8905,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1256,
@@ -8275,7 +8919,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 8
+      "comments_count": 8,
+      "closed_at": null
     },
     {
       "number": 1257,
@@ -8288,7 +8933,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-08-26T02:09:15Z"
     },
     {
       "number": 1258,
@@ -8301,7 +8947,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-07-10T23:50:39Z"
     },
     {
       "number": 1259,
@@ -8314,7 +8961,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-09-28T03:19:28Z"
     },
     {
       "number": 1261,
@@ -8327,7 +8975,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-07-04T10:49:09Z"
     },
     {
       "number": 1263,
@@ -8340,7 +8989,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-07-05T01:36:22Z"
     },
     {
       "number": 1265,
@@ -8353,7 +9003,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-07-10T23:50:39Z"
     },
     {
       "number": 1266,
@@ -8366,7 +9017,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-07-07T10:21:14Z"
     },
     {
       "number": 1271,
@@ -8379,7 +9031,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1272,
@@ -8392,7 +9045,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-03-08T10:02:32Z"
     },
     {
       "number": 1274,
@@ -8405,7 +9059,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-08-26T02:09:15Z"
     },
     {
       "number": 1275,
@@ -8418,7 +9073,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2025-07-14T10:08:31Z"
     },
     {
       "number": 1277,
@@ -8431,7 +9087,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2025-08-26T02:09:16Z"
     },
     {
       "number": 1280,
@@ -8444,7 +9101,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-07-25T06:14:50Z"
     },
     {
       "number": 1282,
@@ -8457,7 +9115,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-09-18T11:14:30Z"
     },
     {
       "number": 1284,
@@ -8470,7 +9129,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-08-26T02:09:17Z"
     },
     {
       "number": 1285,
@@ -8483,7 +9143,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1286,
@@ -8496,7 +9157,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-11-08T11:13:43Z"
     },
     {
       "number": 1287,
@@ -8509,7 +9171,8 @@
         "已完成",
         "优化建议"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-08-26T02:09:17Z"
     },
     {
       "number": 1288,
@@ -8522,7 +9185,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-08-26T02:09:18Z"
     },
     {
       "number": 1291,
@@ -8532,7 +9196,8 @@
       "created_at": "2025-08-21T03:15:58Z",
       "updated_at": "2025-08-21T03:15:58Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1297,
@@ -8545,7 +9210,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-09-14T05:48:32Z"
     },
     {
       "number": 1299,
@@ -8558,7 +9224,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-09-14T05:48:32Z"
     },
     {
       "number": 1301,
@@ -8571,7 +9238,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2025-10-13T09:23:51Z"
     },
     {
       "number": 1302,
@@ -8584,7 +9252,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2025-09-14T05:48:32Z"
     },
     {
       "number": 1303,
@@ -8597,7 +9266,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 4
+      "comments_count": 4,
+      "closed_at": "2025-09-14T05:48:33Z"
     },
     {
       "number": 1304,
@@ -8607,7 +9277,8 @@
       "created_at": "2025-09-09T14:58:05Z",
       "updated_at": "2025-09-10T06:05:21Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-09-10T06:05:21Z"
     },
     {
       "number": 1305,
@@ -8621,7 +9292,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-09-29T14:33:11Z"
     },
     {
       "number": 1307,
@@ -8634,7 +9306,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-09-14T05:48:33Z"
     },
     {
       "number": 1310,
@@ -8647,7 +9320,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-10-19T04:03:42Z"
     },
     {
       "number": 1311,
@@ -8660,7 +9334,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-09-29T14:33:12Z"
     },
     {
       "number": 1313,
@@ -8673,7 +9348,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-10-09T04:21:44Z"
     },
     {
       "number": 1314,
@@ -8686,7 +9362,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2025-09-19T03:52:19Z"
     },
     {
       "number": 1319,
@@ -8699,7 +9376,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-09-24T04:48:37Z"
     },
     {
       "number": 1323,
@@ -8711,7 +9389,8 @@
       "labels": [
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-09-29T14:33:13Z"
     },
     {
       "number": 1324,
@@ -8725,7 +9404,8 @@
         "待规划",
         "需要更多信息"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1325,
@@ -8738,7 +9418,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-09-29T14:33:13Z"
     },
     {
       "number": 1328,
@@ -8751,7 +9432,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 18
+      "comments_count": 18,
+      "closed_at": "2025-12-25T04:39:21Z"
     },
     {
       "number": 1329,
@@ -8764,7 +9446,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-10-12T05:52:13Z"
     },
     {
       "number": 1330,
@@ -8777,7 +9460,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1331,
@@ -8790,7 +9474,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-10-19T04:03:43Z"
     },
     {
       "number": 1332,
@@ -8803,7 +9488,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-10-19T04:03:43Z"
     },
     {
       "number": 1333,
@@ -8816,7 +9502,8 @@
         "需求",
         "开发中"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1335,
@@ -8829,7 +9516,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-10-19T04:03:44Z"
     },
     {
       "number": 1341,
@@ -8843,7 +9531,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2025-11-08T11:13:43Z"
     },
     {
       "number": 1343,
@@ -8856,7 +9545,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-10-31T08:27:34Z"
     },
     {
       "number": 1345,
@@ -8869,7 +9559,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-11-08T11:13:44Z"
     },
     {
       "number": 1349,
@@ -8882,7 +9573,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-11-29T08:32:51Z"
     },
     {
       "number": 1350,
@@ -8895,7 +9587,8 @@
         "bug",
         "开发中"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1351,
@@ -8908,7 +9601,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2025-11-29T08:32:52Z"
     },
     {
       "number": 1352,
@@ -8921,7 +9615,8 @@
         "已完成",
         "优化建议"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-09-28T03:19:28Z"
     },
     {
       "number": 1354,
@@ -8934,7 +9629,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-11-29T08:32:52Z"
     },
     {
       "number": 1355,
@@ -8947,7 +9643,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-11-29T08:32:53Z"
     },
     {
       "number": 1357,
@@ -8960,7 +9657,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2025-12-23T12:08:19Z"
     },
     {
       "number": 1360,
@@ -8973,7 +9671,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-12-23T12:08:20Z"
     },
     {
       "number": 1361,
@@ -8986,7 +9685,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1362,
@@ -8999,7 +9699,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-12-01T08:16:10Z"
     },
     {
       "number": 1363,
@@ -9012,7 +9713,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1364,
@@ -9025,7 +9727,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-12-23T12:08:20Z"
     },
     {
       "number": 1365,
@@ -9038,7 +9741,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-12-23T12:08:21Z"
     },
     {
       "number": 1366,
@@ -9051,7 +9755,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 9
+      "comments_count": 9,
+      "closed_at": null
     },
     {
       "number": 1367,
@@ -9064,7 +9769,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2025-12-23T12:08:21Z"
     },
     {
       "number": 1371,
@@ -9077,7 +9783,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-01-18T12:49:58Z"
     },
     {
       "number": 1372,
@@ -9090,7 +9797,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-01-18T12:49:59Z"
     },
     {
       "number": 1373,
@@ -9103,7 +9811,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2026-01-18T12:49:59Z"
     },
     {
       "number": 1376,
@@ -9116,7 +9825,8 @@
         "已完成",
         "优化建议"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-01-18T12:50:00Z"
     },
     {
       "number": 1378,
@@ -9129,7 +9839,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-01-18T12:50:00Z"
     },
     {
       "number": 1381,
@@ -9139,7 +9850,8 @@
       "created_at": "2026-01-18T07:25:59Z",
       "updated_at": "2026-01-18T12:50:50Z",
       "labels": [],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2026-01-18T12:50:50Z"
     },
     {
       "number": 1386,
@@ -9152,7 +9864,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-01-22T15:36:20Z"
     },
     {
       "number": 1389,
@@ -9165,7 +9878,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-02-01T10:46:48Z"
     },
     {
       "number": 1391,
@@ -9178,7 +9892,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1392,
@@ -9191,7 +9906,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": null
     },
     {
       "number": 1393,
@@ -9204,7 +9920,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-02-07T08:53:03Z"
     },
     {
       "number": 1394,
@@ -9217,7 +9934,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-02-07T08:53:03Z"
     },
     {
       "number": 1398,
@@ -9230,7 +9948,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-03-08T10:02:33Z"
     },
     {
       "number": 1399,
@@ -9243,7 +9962,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2026-02-10T06:25:07Z"
     },
     {
       "number": 1400,
@@ -9256,7 +9976,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-03-08T10:02:33Z"
     },
     {
       "number": 1401,
@@ -9269,7 +9990,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1402,
@@ -9282,7 +10004,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 5
+      "comments_count": 5,
+      "closed_at": "2026-03-08T10:02:33Z"
     },
     {
       "number": 1404,
@@ -9295,7 +10018,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-03-08T10:02:34Z"
     },
     {
       "number": 1410,
@@ -9308,7 +10032,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-03-03T01:35:52Z"
     },
     {
       "number": 1415,
@@ -9318,7 +10043,8 @@
       "created_at": "2026-03-03T10:17:53Z",
       "updated_at": "2026-03-06T07:32:10Z",
       "labels": [],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-03-06T07:32:10Z"
     },
     {
       "number": 1423,
@@ -9331,7 +10057,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2026-09-04T06:30:20Z"
     },
     {
       "number": 1426,
@@ -9344,7 +10071,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1428,
@@ -9357,7 +10085,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1430,
@@ -9370,7 +10099,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1431,
@@ -9383,7 +10113,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1432,
@@ -9396,7 +10127,8 @@
         "bug",
         "待测试"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1434,
@@ -9409,7 +10141,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-04-26T06:03:34Z"
     },
     {
       "number": 1437,
@@ -9419,7 +10152,8 @@
       "created_at": "2026-04-27T11:40:32Z",
       "updated_at": "2026-04-27T11:40:32Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1440,
@@ -9433,7 +10167,8 @@
         "已完成",
         "严重"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": "2026-05-29T06:28:47Z"
     },
     {
       "number": 1444,
@@ -9446,7 +10181,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": null
     },
     {
       "number": 1446,
@@ -9459,7 +10195,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 12
+      "comments_count": 12,
+      "closed_at": "2026-09-01T15:32:05Z"
     },
     {
       "number": 1447,
@@ -9472,7 +10209,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-05-20T00:17:58Z"
     },
     {
       "number": 1451,
@@ -9485,7 +10223,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-05-29T06:28:47Z"
     },
     {
       "number": 1454,
@@ -9498,7 +10237,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-05-29T06:28:48Z"
     },
     {
       "number": 1455,
@@ -9511,7 +10251,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-05-29T06:28:48Z"
     },
     {
       "number": 1459,
@@ -9524,7 +10265,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-09-01T15:37:22Z"
     },
     {
       "number": 1464,
@@ -9537,7 +10279,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 3
+      "comments_count": 3,
+      "closed_at": "2026-09-01T15:37:22Z"
     },
     {
       "number": 1467,
@@ -9550,7 +10293,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": null
     },
     {
       "number": 1469,
@@ -9563,7 +10307,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 6
+      "comments_count": 6,
+      "closed_at": null
     },
     {
       "number": 1471,
@@ -9576,7 +10321,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-08-17T09:16:53Z"
     },
     {
       "number": 1475,
@@ -9589,7 +10335,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-08-22T04:34:54Z"
     },
     {
       "number": 1478,
@@ -9603,7 +10350,8 @@
         "已完成",
         "严重"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-09-01T15:37:23Z"
     },
     {
       "number": 1480,
@@ -9616,7 +10364,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-09-03T11:57:01Z"
     },
     {
       "number": 1485,
@@ -9629,7 +10378,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-09-28T03:19:29Z"
     },
     {
       "number": 1488,
@@ -9642,7 +10392,8 @@
         "bug",
         "已完成"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-10-01T07:44:51Z"
     },
     {
       "number": 1489,
@@ -9652,7 +10403,8 @@
       "created_at": "2026-09-11T01:32:44Z",
       "updated_at": "2026-09-11T08:52:24Z",
       "labels": [],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": "2026-09-11T08:52:24Z"
     },
     {
       "number": 1492,
@@ -9665,7 +10417,8 @@
         "已完成",
         "需求"
       ],
-      "comments_count": 1
+      "comments_count": 1,
+      "closed_at": "2026-09-28T03:19:29Z"
     },
     {
       "number": 1495,
@@ -9678,7 +10431,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1497,
@@ -9691,7 +10445,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 0
+      "comments_count": 0,
+      "closed_at": null
     },
     {
       "number": 1498,
@@ -9704,7 +10459,8 @@
         "bug",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": null
     },
     {
       "number": 1499,
@@ -9717,7 +10473,8 @@
         "需求",
         "待规划"
       ],
-      "comments_count": 2
+      "comments_count": 2,
+      "closed_at": "2026-10-21T08:31:17Z"
     }
   ]
 }

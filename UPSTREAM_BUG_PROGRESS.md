@@ -22,10 +22,9 @@ This task is issue collection and source triage only. It authorizes reading the 
 ## Collection status
 
 - Complete snapshot as of 2026-10-27 23:12:11 UTC from the GitHub REST issues collection sorted by `created` ascending, `state=all`, 100 per page.
-- Fetched pages 1–11: the first 10 pages returned 100 objects each and page 11 returned 50, for 1,050 API objects total. Excluded 293 PR objects using the `pull_request` field; indexed all 757 actual issues, open and closed.
-- Issue creation range: #1 at 2022-12-11T13:07:05Z through #1499 at 2026-10-21T08:15:39Z. Full inventory is `work/upstream-bugs/issues-index.json`; collection and pagination details are in `work/upstream-bugs/collection.md`.
-- Classification is complete in three temporary worker outputs covering 757 issues (`classification-old.json`, `classification-middle.json`, `classification-new.json`). Candidate queue and final batches are pending aggregation and parent review.
-- First source assessment exists at `work/upstream-bugs/batches/001.md` for issues #5, #9, #14, #21, and #22; it is pending review/commit.
-- Raw issue bodies and API metadata remain in the local cache `/workspace/work/upstream-bugs/`; do not commit raw pages or body chunks.
-
-Add accepted candidates below in creation-date order, retaining open and closed reports and grouping each sequential set into batches of at most five.
+- Fetched pages 1–11: pages 1–10 returned 100 objects each and page 11 returned 50, for 1,050 API objects. Excluded 293 pull request objects and indexed all 757 issues, open and closed. Creation range: #1 at 2022-12-11T13:07:05Z through #1499 at 2026-10-21T08:15:39Z.
+- Classification retains all 757 audit rows: 477 clear bug candidates, 215 feature requests, 20 administrative/documentation, 15 support-only, and 30 ambiguous/deferred. No issue rows were deduplicated.
+- `work/upstream-bugs/issues-index.json` is the portable metadata inventory. `collection.md` records the source and pagination. `classification-merged.json` contains metadata plus classification for all 757 issues; `candidate-queue.json` contains the 477 oldest-first candidates; `exclusions-deferred.json` records the remaining 280 reports and reasons.
+- `batch-index.md` lists 96 chronological batches of up to five candidates. Batch 001 source assessment for #5, #9, #14, #21, and #22 is drafted in `work/upstream-bugs/batches/001.md` and pending its separate review/commit. Batch 002 is next: #24, #27, #28, #31, and #36.
+- Candidate target status is pending source assessment except the five entries covered in Batch 001. Issue #14 remains unproven and is not counted as a confirmed target defect.
+- Raw issue bodies and API responses are stored outside the repository in `/workspace/work/upstream-bugs/`. No application source files were changed. No build, test, restore, run, app API, or runtime validation was performed.
