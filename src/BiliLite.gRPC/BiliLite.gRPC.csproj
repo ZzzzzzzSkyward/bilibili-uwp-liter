@@ -43,6 +43,8 @@
     <Protobuf Include="Proto\Reply\PlayViewReply.proto" GrpcServices="Client" />
     <Protobuf Include="Proto\Request\PlayViewReq.proto" GrpcServices="Client" />
     <Protobuf Include="Proto\Reply\DanmakuReply.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\app\playurl\v1\playurl.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\tv\interfaces\dm\v1\dm.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

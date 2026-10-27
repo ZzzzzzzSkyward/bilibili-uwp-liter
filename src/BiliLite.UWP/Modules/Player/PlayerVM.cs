@@ -128,7 +128,7 @@ namespace BiliLite.Modules
                 sw.Start();
 
                 var data = await HttpHelper.GetStream(PlayerAPI.SegDanmaku(cid, segment_index).url);
-                var result = Proto.Reply.DmSegMobileReply.Parser.ParseFrom(data);
+                var result = Bilibili.Tv.Interfaces.Dm.V1.DmSegMobileReply.Parser.ParseFrom(data);
                 foreach (var item in result.Elems)
                 {
                     NSDanmaku.Model.DanmakuLocation location = NSDanmaku.Model.DanmakuLocation.Scroll;

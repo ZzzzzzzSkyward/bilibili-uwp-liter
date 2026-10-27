@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
+using BiliLite.gRPC.Api;
 
 namespace BiliLite.gRPC
 {
@@ -102,6 +103,11 @@ namespace BiliLite.gRPC
                     message = "发送gRPC请求失败" + ex.Message
                 };
             }
+        }
+
+        public Task<GrpcResult> SendMessage(string url, IMessage message, GrpcBiliUserInfo userInfo)
+        {
+            return SendMessage(url, message, userInfo.AccessKey);
         }
 
         public async Task<GrpcResult> Get(string url)

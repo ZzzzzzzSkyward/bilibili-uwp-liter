@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Net.Http;
 using BiliLite.gRPC.Api;
-using Proto.Reply;
+using Bilibili.App.Playurl.V1;
 
 namespace BiliLite.Modules.Player.Playurl
 {
@@ -270,7 +270,7 @@ namespace BiliLite.Modules.Player.Playurl
                 BiliPlayUrlQualitesInfo info = new BiliPlayUrlQualitesInfo();
                 info.Qualites = new List<BiliPlayUrlInfo>();
 
-                var timeLength = obj.VideoInfo.Timelength;
+                var timeLength = (long)obj.VideoInfo.Timelength;
 
                 foreach (var item in obj.VideoInfo.StreamList)
                 {
@@ -278,7 +278,7 @@ namespace BiliLite.Modules.Player.Playurl
                     {
                         UserAgent = userAgent,
                         Referer = referer,
-                        QualityID = item.StreamInfo.Quality,
+                        QualityID = (int)item.StreamInfo.Quality,
                         QualityName = item.StreamInfo.NewDescription,
                         Timelength = timeLength,
                         HasPlayUrl = false,
@@ -316,10 +316,10 @@ namespace BiliLite.Modules.Player.Playurl
                         {
                             backupUrl = item.DashVideo.BackupUrl.ToList(),
                             baseUrl = item.DashVideo.BaseUrl,
-                            bandwidth = item.DashVideo.Bandwidth,
-                            codecid = item.DashVideo.Codecid,
+                            bandwidth = (int)item.DashVideo.Bandwidth,
+                            codecid = (int)item.DashVideo.Codecid,
                             mimeType = "video/mp4",
-                            id = item.StreamInfo.Quality,
+                            id = (int)item.StreamInfo.Quality,
                             startWithSap = 1,
                             sar = "",
                             codecs = codecs,
@@ -338,10 +338,10 @@ namespace BiliLite.Modules.Player.Playurl
                         {
                             backupUrl = item.BackupUrl.ToList(),
                             baseUrl = item.BaseUrl,
-                            bandwidth = item.Bandwidth,
-                            codecid = item.Codecid,
+                            bandwidth = (int)item.Bandwidth,
+                            codecid = (int)item.Codecid,
                             mimeType = "audio/mp4",
-                            id = item.Id,
+                            id = (int)item.Id,
                             codecs = "mp4a.40.2",
                             startWithSap = 0,
                             SegmentBase = new SegmentBase()
@@ -455,9 +455,9 @@ namespace BiliLite.Modules.Player.Playurl
                         durl.Add(new FlvDurlModel()
                         {
                             backup_url = item.BackupUrl.ToList(),
-                            length = item.Length,
-                            order = item.Order,
-                            size = item.Size,
+                            length = (int)item.Length,
+                            order = (int)item.Order,
+                            size = (int)item.Size,
                             url = item.Url
                         });
 
@@ -608,9 +608,10 @@ namespace BiliLite.Modules.Player.Playurl
         {
             try
             {
-                Proto.Request.CodeType codec = CodecMode == PlayUrlCodecMode.DASH_H265 ? Proto.Request.CodeType.Code265 : Proto.Request.CodeType.Code264;
+                CodeType codec = CodecMode == PlayUrlCodecMode.DASH_H265 ? CodeType.Code265 : CodeType.Code264;
 
-                var playViewReply = await playUrlApi.VideoPlayView(Convert.ToInt64(playInfo.avid), Convert.ToInt64(playInfo.cid), qualityID, 16, codec, SettingHelper.Account.AccessKey);
+                var userInfo = new GrpcBiliUserInfo(SettingHelper.Account.AccessKey, SettingHelper.Account.UserID, ApiHelper.LoginKey.Appkey);
+                var playViewReply = await playUrlApi.VideoPlayView(Convert.ToInt64(playInfo.avid), Convert.ToInt64(playInfo.cid), qualityID, 16, codec, userInfo);
 
                 var grpcResult = await ParseGrpc(qualityID, playViewReply, AndroidUserAgent, "");
                 return grpcResult;
@@ -707,9 +708,10 @@ namespace BiliLite.Modules.Player.Playurl
             try
             {
 
-                Proto.Request.CodeType codec = CodecMode == PlayUrlCodecMode.DASH_H265 ? Proto.Request.CodeType.Code265 : Proto.Request.CodeType.Code264;
+                CodeType codec = CodecMode == PlayUrlCodecMode.DASH_H265 ? CodeType.Code265 : CodeType.Code264;
 
-                var playViewReply = await playUrlApi.BangumiPlayView(Convert.ToInt64(playInfo.ep_id), Convert.ToInt64(playInfo.cid), qualityID, 0, codec, SettingHelper.Account.AccessKey);
+                var userInfo = new GrpcBiliUserInfo(SettingHelper.Account.AccessKey, SettingHelper.Account.UserID, ApiHelper.LoginKey.Appkey);
+                var playViewReply = await playUrlApi.BangumiPlayView(Convert.ToInt64(playInfo.ep_id), Convert.ToInt64(playInfo.cid), qualityID, 0, codec, userInfo);
 
                 var grpcResult = await ParseGrpc(qualityID, playViewReply, AndroidUserAgent, "");
                 return grpcResult;

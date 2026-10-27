@@ -30,3 +30,18 @@ Changes in target `src/BiliLite.UWP/Modules/Detail/VideoDetailVM.cs`, `src/BiliL
 Format check: `git diff --check` passed.
 
 Resumable status: detail/player metadata integration is complete. Next: commit this step after parent grants the shared-index slot; then migrate gRPC playback and danmaku protocols.
+
+## Step 3: gRPC playback and danmaku protocols
+
+Reference: `/workspace/biliuwp-lite/src/BiliLite.gRPC/Api/PlayURL.cs`, `/workspace/biliuwp-lite/src/BiliLite.gRPC/bilibili/app/playurl/v1/playurl.proto`, `/workspace/biliuwp-lite/src/BiliLite.gRPC/bilibili/tv/interfaces/dm/v1/dm.proto`, and `/workspace/biliuwp-lite/src/BiliLite.UWP/Modules/Player/Playurl/BiliPlayUrlRequest.cs` symbol `ParseGrpc`.
+
+Changes in target `src/BiliLite.gRPC/Api/PlayURL.cs`, `src/BiliLite.gRPC/GrpcRequest.cs`, `src/BiliLite.gRPC/Api/GrpcBiliUserInfo.cs`, `src/BiliLite.gRPC/BiliLite.gRPC.csproj`, the two copied protocol files, `src/BiliLite.UWP/Modules/Player/Playurl/BiliPayUrlRequest.cs`, and `src/BiliLite.UWP/Modules/Player/PlayerVM.cs`:
+
+- Added the sibling's current PlayURL request/reply proto and TV danmaku reply proto, with project entries. Both source protos are self-contained.
+- Switched playback gRPC request construction and parsing to `Bilibili.App.Playurl.V1`, including its `Aid` field, boolean `Fourk`, and unsigned/64-bit field conversions. The target's existing string access-key transport remains available; the new user-info overload supplies access key while retaining compatibility.
+- Player playback gRPC requests now pass the target's configured `LoginKey`, access key, and user ID. Danmaku segment parsing now uses the new TV interface reply type.
+- The target control already routes danmaku reads through the same `PlayerVM.GetDanmaku` method, so no further control read-path change was needed. The sibling's FrostMaster-specific reader is not used by this target.
+
+Format check: `git diff --check` passed.
+
+Resumable status: protocol and parser migration is complete. Next: commit this step after parent grants the shared-index slot. No proto generation, builds, tests, restores, or API requests were run.
