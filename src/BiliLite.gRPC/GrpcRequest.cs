@@ -5,11 +5,41 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using BiliLite.gRPC.Api;
+using System.Diagnostics;
+using System.Threading;
 
 namespace BiliLite.gRPC
 {
     public class GrpcRequest
     {
+        public static Action<string, Exception> DiagnosticLogger { get; set; }
+        private static int _requestCounter;
+
+        private static void LogDiagnostic(string message, Exception ex = null)
+        {
+            try
+            {
+                DiagnosticLogger?.Invoke(message, ex);
+            }
+            catch (Exception loggingException)
+            {
+                Debug.WriteLine("gRPC diagnostic logging failed: " + loggingException.Message);
+            }
+        }
+
+        private static string NewRequestId()
+        {
+            return "grpc-" + Interlocked.Increment(ref _requestCounter).ToString("D6");
+        }
+
+        private static string DescribeEndpoint(string url)
+        {
+            Uri uri;
+            if (Uri.TryCreate(url, UriKind.Absolute, out uri))
+                return uri.GetLeftPart(UriPartial.Path);
+            return "unparsed-endpoint";
+        }
+
         private static GrpcRequest _instance;
         public static GrpcRequest Instance
         {
@@ -33,6 +63,10 @@ namespace BiliLite.gRPC
         /// <returns>处理后的byte[]</returns>
         public async Task<GrpcResult> SendMessage(string url, IMessage message, string access_key = "")
         {
+            var requestId = NewRequestId();
+            var endpoint = DescribeEndpoint(url);
+            var stopwatch = Stopwatch.StartNew();
+            LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " started");
             try
             {
                 HttpClient httpClient = new HttpClient();
@@ -72,6 +106,7 @@ namespace BiliLite.gRPC
                 byteArrayContent.Headers.ContentType = new MediaTypeHeaderValue("application/grpc");
                 byteArrayContent.Headers.ContentLength = bodyBytes.Length;
                 var response = await httpClient.PostAsync(url, byteArrayContent);
+                LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 var data = await response.Content.ReadAsByteArrayAsync();
                 if (data.Length > 5)
                 {
@@ -85,6 +120,7 @@ namespace BiliLite.gRPC
                 }
                 else
                 {
+                    LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length);
                     return new GrpcResult()
                     {
                         code = -102,
@@ -96,6 +132,7 @@ namespace BiliLite.gRPC
 
             catch (Exception ex)
             {
+                LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return new GrpcResult()
                 {
                     code = ex.HResult,
@@ -112,11 +149,16 @@ namespace BiliLite.gRPC
 
         public async Task<GrpcResult> Get(string url)
         {
+            var requestId = NewRequestId();
+            var endpoint = DescribeEndpoint(url);
+            var stopwatch = Stopwatch.StartNew();
+            LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " started");
             try
             {
                 using (HttpClient httpClient = new HttpClient())
                 {
                     var data = await httpClient.GetByteArrayAsync(url);
+                    LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " durationMs=" + stopwatch.ElapsedMilliseconds + " responseBytes=" + data.Length);
                     // var data = await response.Content.ReadAsByteArrayAsync();
                     if (data.Length > 5)
                     {
@@ -130,6 +172,7 @@ namespace BiliLite.gRPC
                     }
                     else
                     {
+                        LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length);
                         return new GrpcResult()
                         {
                             code = -102,
@@ -141,6 +184,7 @@ namespace BiliLite.gRPC
             }
             catch (Exception ex)
             {
+                LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return new GrpcResult()
                 {
                     code = ex.HResult,

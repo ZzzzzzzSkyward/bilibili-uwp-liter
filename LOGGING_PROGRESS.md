@@ -27,7 +27,7 @@ Use only `/workspace/biliuwp-lite` at pinned commit `ca2caddc597b3faf05b4dac6dcb
 - `src/BiliLite.UWP/Helpers/ExceptionHandler.cs` wraps posted synchronization-context callbacks and raises an event when their callback throws. It is currently disconnected from app startup.
 - The app implements the FFmpeg `ILogProvider`, but `Log` only calls `Debug.WriteLine`.
 - `src/BiliLite.UWP/Helpers/Utils.cs` has a static `StringBuilder` and `AddALog`, which append request/debug text to the current Settings page's textbox if present. This buffer is trimmed to roughly 10,000 characters by `SettingPage.Log`; it is not persisted independently.
-- `src/BiliLite.UWP/Helpers/HttpHelper.cs` adds GET/POST breadcrumbs through `Utils.AddALog` and logs caught request failures through `LogHelper`. POST breadcrumbs include the request body, so future export should consider accidental credentials or personal data in request traces.
+- `src/BiliLite.UWP/Helpers/HttpHelper.cs` centralizes ordinary GET/POST API calls and also provides stream, buffer, and string helpers. POST request bodies are excluded from diagnostics; request endpoints are recorded without query strings.
 - `src/BiliLite.UWP/Pages/SettingPage.xaml` and `.xaml.cs` expose the debug text buffer behind the `EnableLog` setting toggle. Its `OpenLog` help link launches the existing local log folder. There is no log bundle or feedback export flow in the inspected code.
 - `src/BiliLite.UWP/Modules/IModules.cs` logs unhandled module exceptions and maps network exceptions to a user-facing network error.
 - NLog and NLog.Config are already package references in `src/BiliLite.UWP/BiliLite.UWP.csproj`.
@@ -45,7 +45,7 @@ Use only `/workspace/biliuwp-lite` at pinned commit `ca2caddc597b3faf05b4dac6dcb
 - [x] Clone and pin the sole behavioral reference locally.
 - [x] Inventory existing logger, crash hooks, request breadcrumbs, and settings UI.
 - [x] Step 2: improve `LogHelper` session and exception persistence; capture app crash, lifecycle, navigation, and FFmpeg diagnostics in `App.xaml.cs`; persist the existing `Utils.AddALog` trace. Keep all diagnostics additive.
-- [ ] Step 3: add request IDs, duration, status, and API error breadcrumbs to HTTP/gRPC and high-value player/load failure paths. Use the pinned sibling only for any API behavior context; diagnostics must not change API behavior.
-- [ ] Step 4: add a simple Settings export/report marker and clear user feedback instructions for sharing the exported logs. Review the export for sensitive request data.
+- [x] Step 3: add request IDs, duration, status, and API error breadcrumbs to HTTP/gRPC and high-value player/load failure paths. HTTP results carry a local request ID into JSON parse errors; gRPC diagnostics use an optional callback because the transport is a separate netstandard project; playurl logs include aid/cid/episode/quality, and player logs capture open, opened, failed, and exception stages. No request bodies, headers, cookies, or signed stream query strings are logged. No request contract, status handling, framing, retry, or recovery behavior changed.
+- [ ] Step 4: add a simple Settings export/report marker and clear user feedback instructions for sharing the exported logs. The Settings and `document/DIAGNOSTICS.md` changes are prepared in the shared tree and await the step 3 commit before their separate commit.
 - [ ] At each step, update this progress file and commit the bounded implementation. Run only `git diff --check`; do not build, restore, run, test, validate, or issue API requests here.
 - [ ] Hand the user the resulting commit and instructions for building/running the app and returning exported logs; leave build and runtime checks to the user.

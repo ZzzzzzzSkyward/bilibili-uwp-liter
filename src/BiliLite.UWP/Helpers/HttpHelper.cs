@@ -13,6 +13,7 @@ using BiliLite.Models;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Diagnostics;
 using System.Timers;
+using System.Threading;
 
 namespace BiliLite.Helpers
 {
@@ -22,6 +23,45 @@ namespace BiliLite.Helpers
     /// </summary>
     public static class HttpHelper
     {
+        private static int _requestCounter;
+
+        private static string NewRequestId()
+        {
+            return "http-" + Interlocked.Increment(ref _requestCounter).ToString("D6");
+        }
+
+        private static string DescribeEndpoint(string url)
+        {
+            Uri uri;
+            if (Uri.TryCreate(url, UriKind.Absolute, out uri))
+                return uri.GetLeftPart(UriPartial.Path);
+            return "unparsed-endpoint";
+        }
+
+        private static void LogRequest(string requestId, string method, string endpoint, string detail, Exception ex = null)
+        {
+            var message = "HTTP requestId=" + requestId + " method=" + method + " endpoint=" + endpoint + " " + detail;
+            LogHelper.Log(message, ex == null ? LogType.DEBUG : LogType.ERROR, ex);
+            Utils.AddALog("[HTTP]" + message);
+        }
+
+        private static void LogApiFailure(string requestId, string method, string endpoint, string content)
+        {
+            try
+            {
+                var response = JObject.Parse(content);
+                var code = response["code"];
+                if (code != null && code.Type != JTokenType.Null && code.ToString() != "0")
+                {
+                    LogRequest(requestId, method, endpoint, "API failure code=" + code + " message=" + (response["message"] ?? response["msg"]));
+                }
+            }
+            catch (Exception ex)
+            {
+                LogRequest(requestId, method, endpoint, "API response envelope parse failed", ex);
+            }
+        }
+
         /// <summary>
         /// 发送一个GET请求
         /// </summary>
@@ -39,6 +79,9 @@ namespace BiliLite.Helpers
         }
         public async static Task<HttpResults> Get(string url, IDictionary<string, string> headers)
         {
+            var requestId = NewRequestId();
+            var endpoint = DescribeEndpoint(url);
+            var stopwatch = Stopwatch.StartNew();
             //wait 
             var t = DateTime.Now;
             if (t - lasttime < min_dt)
@@ -47,8 +90,8 @@ namespace BiliLite.Helpers
                 await Task.Delay(delay * concurrent_get_count);
                 concurrent_get_count--;
             }
-            Debug.WriteLine("GET:" + url);
-            Utils.AddALog("[GET]" + url);
+            Debug.WriteLine("GET:" + endpoint);
+            Utils.AddALog("[GET]" + requestId + " " + endpoint);
             try
             {
                 HttpBaseProtocolFilter fiter = new HttpBaseProtocolFilter();
@@ -68,15 +111,20 @@ namespace BiliLite.Helpers
                         if(!client.DefaultRequestHeaders.Keys.Contains("User-Agent"))
                             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0");
                     }
-                    Console.WriteLine(url);
+                    Console.WriteLine(endpoint);
                     var response = await client.GetAsync(new Uri(url));
+                    LogRequest(requestId, "GET", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     if (!response.IsSuccessStatusCode)
                     {
+                        LogRequest(requestId, "GET", endpoint, "HTTP failure status=" + (int)response.StatusCode + " " + response.StatusCode);
                         return new HttpResults()
                         {
                             code = (int)response.StatusCode,
                             status = false,
-                            message = StatusCodeToMessage((int)response.StatusCode)
+                            message = StatusCodeToMessage((int)response.StatusCode),
+                            RequestId = requestId,
+                            Method = "GET",
+                            Endpoint = endpoint
                         };
                     }
 
@@ -85,19 +133,26 @@ namespace BiliLite.Helpers
                     var byteArray = buffer.ToArray();
                     HttpResults httpResults = new HttpResults()
                     {
+                        RequestId = requestId,
+                        Method = "GET",
+                        Endpoint = endpoint,
                         code = (int)response.StatusCode,
                         status = response.StatusCode == HttpStatusCode.Ok,
                         results = Encoding.UTF8.GetString(byteArray, 0, byteArray.Length),
                         message = "",
                     };
+                    LogApiFailure(requestId, "GET", endpoint, httpResults.results);
                     return httpResults;
                 }
             }
             catch (Exception ex)
             {
-                LogHelper.Log("GET请求失败" + url, LogType.ERROR, ex);
+                LogRequest(requestId, "GET", endpoint, "failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return new HttpResults()
                 {
+                    RequestId = requestId,
+                    Method = "GET",
+                    Endpoint = endpoint,
                     code = ex.HResult,
                     status = false,
                     message = "网络请求出现错误(GET)"
@@ -107,8 +162,9 @@ namespace BiliLite.Helpers
 
         public async static Task<HttpResults> GetWithWebCookie(string url, IDictionary<string, string> headers = null, IDictionary<string, string> extraCookies = null)
         {
-            Debug.WriteLine("GET:" + url);
-            Utils.AddALog("[GET]" + url);
+            var endpoint = DescribeEndpoint(url);
+            Debug.WriteLine("GET:" + endpoint);
+            Utils.AddALog("[GET WITH COOKIE]" + endpoint);
             try
             {
                 headers = headers == null
@@ -177,7 +233,7 @@ namespace BiliLite.Helpers
             }
             catch (Exception ex)
             {
-                LogHelper.Log("GET请求失败" + url, LogType.ERROR, ex);
+                LogHelper.Log("HTTP method=GET endpoint=" + endpoint + " stage=cookie-preparation failed", LogType.ERROR, ex);
                 return new HttpResults()
                 {
                     code = ex.HResult,
@@ -196,8 +252,11 @@ namespace BiliLite.Helpers
         /// <returns></returns>
         public async static Task<Stream> GetStream(string url, IDictionary<string, string> headers = null)
         {
-            Debug.WriteLine("GET:" + url);
-            Utils.AddALog("[GET STREAM]" + url);
+            var requestId = NewRequestId();
+            var endpoint = DescribeEndpoint(url);
+            var stopwatch = Stopwatch.StartNew();
+            Debug.WriteLine("GET:" + endpoint);
+            Utils.AddALog("[GET STREAM]" + requestId + " " + endpoint);
             try
             {
                 using (var client = new HttpClient())
@@ -211,6 +270,7 @@ namespace BiliLite.Helpers
                     }
 
                     var response = await client.GetAsync(new Uri(url));
+                    LogRequest(requestId, "GET", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     response.EnsureSuccessStatusCode();
                     return (await response.Content.ReadAsInputStreamAsync()).AsStreamForRead();
                 }
@@ -219,7 +279,7 @@ namespace BiliLite.Helpers
             }
             catch (Exception ex)
             {
-                LogHelper.Log("GET请求Stream失败" + url, LogType.ERROR, ex);
+                LogRequest(requestId, "GET", endpoint, "stream failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return null;
 
             }
@@ -236,8 +296,11 @@ namespace BiliLite.Helpers
         /// <returns></returns>
         public async static Task<IBuffer> GetBuffer(string url, IDictionary<string, string> headers = null)
         {
-            Debug.WriteLine("GET:" + url);
-            Utils.AddALog("[GET STREAM]" + url);
+            var requestId = NewRequestId();
+            var endpoint = DescribeEndpoint(url);
+            var stopwatch = Stopwatch.StartNew();
+            Debug.WriteLine("GET:" + endpoint);
+            Utils.AddALog("[GET BUFFER]" + requestId + " " + endpoint);
             try
             {
                 using (var client = new HttpClient())
@@ -251,6 +314,7 @@ namespace BiliLite.Helpers
                     }
 
                     var response = await client.GetAsync(new Uri(url));
+                    LogRequest(requestId, "GET", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     response.EnsureSuccessStatusCode();
                     return await response.Content.ReadAsBufferAsync();
                 }
@@ -259,7 +323,7 @@ namespace BiliLite.Helpers
             }
             catch (Exception ex)
             {
-                LogHelper.Log("GET请求Stream失败" + url, LogType.ERROR, ex);
+                LogRequest(requestId, "GET", endpoint, "buffer failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return null;
 
             }
@@ -276,8 +340,11 @@ namespace BiliLite.Helpers
         /// <returns></returns>
         public async static Task<String> GetString(string url, IDictionary<string, string> headers = null, IDictionary<string, string> cookie = null)
         {
-            Debug.WriteLine("GET:" + url);
-            Utils.AddALog("[GET]" + url);
+            var requestId = NewRequestId();
+            var endpoint = DescribeEndpoint(url);
+            var stopwatch = Stopwatch.StartNew();
+            Debug.WriteLine("GET:" + endpoint);
+            Utils.AddALog("[GET]" + requestId + " " + endpoint);
             try
             {
                 using (var client = new HttpClient())
@@ -291,6 +358,7 @@ namespace BiliLite.Helpers
                     }
 
                     var response = await client.GetAsync(new Uri(url));
+                    LogRequest(requestId, "GET", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     response.EnsureSuccessStatusCode();
                     var buffer = await response.Content.ReadAsBufferAsync();
                     return Encoding.UTF8.GetString(buffer.ToArray());
@@ -300,7 +368,7 @@ namespace BiliLite.Helpers
             }
             catch (Exception ex)
             {
-                LogHelper.Log("GET请求String失败" + url, LogType.ERROR, ex);
+                LogRequest(requestId, "GET", endpoint, "string failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
 
                 return null;
 
@@ -321,8 +389,11 @@ namespace BiliLite.Helpers
         /// <returns></returns>
         public async static Task<HttpResults> Post(string url, string body, IDictionary<string, string> headers = null, string contentType = "application/x-www-form-urlencoded")
         {
-            Debug.WriteLine("POST:" + url + "\r\nBODY:" + body);
-            Utils.AddALog("[POST]" + url + body);
+            var requestId = NewRequestId();
+            var endpoint = DescribeEndpoint(url);
+            var stopwatch = Stopwatch.StartNew();
+            Debug.WriteLine("POST:" + endpoint);
+            Utils.AddALog("[POST]" + requestId + " " + endpoint);
             try
             {
                 using (var client = new HttpClient())
@@ -335,14 +406,18 @@ namespace BiliLite.Helpers
                         }
                     }
                     var response = await client.PostAsync(new Uri(url), new HttpStringContent(body, Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/x-www-form-urlencoded"));
+                    LogRequest(requestId, "POST", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     if (!response.IsSuccessStatusCode)
                     {
-                        Utils.AddALog("[POST][FAIL]" + url + response.StatusCode.ToString());
+                        LogRequest(requestId, "POST", endpoint, "HTTP failure status=" + (int)response.StatusCode + " " + response.StatusCode);
                         return new HttpResults()
                         {
                             code = (int)response.StatusCode,
                             status = false,
-                            message = StatusCodeToMessage((int)response.StatusCode)
+                            message = StatusCodeToMessage((int)response.StatusCode),
+                            RequestId = requestId,
+                            Method = "POST",
+                            Endpoint = endpoint
                         };
                     }
                     var buffer = await response.Content.ReadAsBufferAsync();
@@ -350,19 +425,26 @@ namespace BiliLite.Helpers
 
                     HttpResults httpResults = new HttpResults()
                     {
+                        RequestId = requestId,
+                        Method = "POST",
+                        Endpoint = endpoint,
                         code = (int)response.StatusCode,
                         status = response.StatusCode == HttpStatusCode.Ok,
                         results = Encoding.UTF8.GetString(byteArray),
                         message = ""
                     };
+                    LogApiFailure(requestId, "POST", endpoint, httpResults.results);
                     return httpResults;
                 }
             }
             catch (Exception ex)
             {
-                LogHelper.Log("POST请求失败" + url, LogType.ERROR, ex);
+                LogRequest(requestId, "POST", endpoint, "failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return new HttpResults()
                 {
+                    RequestId = requestId,
+                    Method = "POST",
+                    Endpoint = endpoint,
                     code = ex.HResult,
                     status = false,
                     message = "网络请求出现错误(POST)"
@@ -409,6 +491,9 @@ namespace BiliLite.Helpers
 
     public class HttpResults
     {
+        public string RequestId { get; set; }
+        public string Method { get; set; }
+        public string Endpoint { get; set; }
         public int code { get; set; }
         public string message { get; set; }
         public string results { get; set; }
@@ -474,8 +559,10 @@ namespace BiliLite.Helpers
             }
             catch (Exception e)
             {
+                var message = "HTTP response parse failed requestId=" + RequestId + " method=" + Method + " endpoint=" + Endpoint;
+                LogHelper.Log(message, LogType.ERROR, e);
+                Utils.AddALog("[JSON][FAIL]" + message);
                 Console.WriteLine("解析json失败", e.ToString());
-                Utils.AddALog("[JSON][FAIL]" + results.ToString().Substring(0, 100));
             }
             return default(T);
         }
