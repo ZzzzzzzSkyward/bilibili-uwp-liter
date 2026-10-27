@@ -1521,7 +1521,8 @@ namespace BiliLite.Controls
                     noneItem.Click += Menuitem_Click;
                     menu.Items.Add(noneItem);
                     var firstMenuItem = (menu.Items[0] as ToggleMenuFlyoutItem);
-                    if ((firstMenuItem.Text.Contains("自动") || firstMenuItem.Text.Contains("AI")) && !autoAISubtitle)
+                    var selectNone = (firstMenuItem.Text.Contains("自动") || firstMenuItem.Text.Contains("AI") || firstMenuItem.Text.Contains("ai")) && !autoAISubtitle;
+                    if (selectNone)
                     {
                         noneItem.IsChecked = true;
                         CurrentSubtitleName = noneItem.Text;
@@ -1532,6 +1533,7 @@ namespace BiliLite.Controls
                         CurrentSubtitleName = firstMenuItem.Text;
                         SetSubTitle(firstMenuItem.Tag.ToString());
                     }
+                    LogHelper.Log($"Subtitle initial selection source=download aiAutoOpen={autoAISubtitle} candidate=\"{firstMenuItem.Text}\" selected=\"{(selectNone ? "none" : firstMenuItem.Text)}\"", LogType.INFO);
                     BottomBtnSelctSubtitle.Flyout = menu;
                     BottomBtnSelctSubtitle.Visibility = Visibility.Visible;
                     BorderSubtitle.Visibility = Visibility.Collapsed;
@@ -1561,7 +1563,8 @@ namespace BiliLite.Controls
                 noneItem.Click += Menuitem_Click;
                 menu.Items.Add(noneItem);
                 var firstMenuItem = (menu.Items[0] as ToggleMenuFlyoutItem);
-                if ((firstMenuItem.Text.Contains("自动") || firstMenuItem.Text.Contains("AI")) && !autoAISubtitle)
+                var selectNone = (firstMenuItem.Text.Contains("自动") || firstMenuItem.Text.Contains("AI") || firstMenuItem.Text.Contains("ai")) && !autoAISubtitle;
+                if (selectNone)
                 {
                     noneItem.IsChecked = true;
                     CurrentSubtitleName = noneItem.Text;
@@ -1572,6 +1575,7 @@ namespace BiliLite.Controls
                     CurrentSubtitleName = firstMenuItem.Text;
                     SetSubTitle(firstMenuItem.Tag.ToString());
                 }
+                LogHelper.Log($"Subtitle initial selection source=api aiAutoOpen={autoAISubtitle} candidate=\"{firstMenuItem.Text}\" selected=\"{(selectNone ? "none" : firstMenuItem.Text)}\"", LogType.INFO);
 
                 BottomBtnSelctSubtitle.Flyout = menu;
                 BottomBtnSelctSubtitle.Visibility = Visibility.Visible;
