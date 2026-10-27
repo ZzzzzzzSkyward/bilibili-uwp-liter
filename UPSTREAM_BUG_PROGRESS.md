@@ -21,4 +21,11 @@ This task is issue collection and source triage only. It authorizes reading the 
 
 ## Collection status
 
-Issue inventory and candidate comparison are pending. Add accepted candidates below in creation-date order, retaining open and closed reports and grouping each sequential set into batches of at most five.
+- Complete snapshot as of 2026-10-27 23:12:11 UTC from the GitHub REST issues collection sorted by `created` ascending, `state=all`, 100 per page.
+- Fetched pages 1–11: the first 10 pages returned 100 objects each and page 11 returned 50, for 1,050 API objects total. Excluded 293 PR objects using the `pull_request` field; indexed all 757 actual issues, open and closed.
+- Issue creation range: #1 at 2022-12-11T13:07:05Z through #1499 at 2026-10-21T08:15:39Z. Full inventory is `work/upstream-bugs/issues-index.json`; collection and pagination details are in `work/upstream-bugs/collection.md`.
+- Classification is complete in three temporary worker outputs covering 757 issues (`classification-old.json`, `classification-middle.json`, `classification-new.json`). Candidate queue and final batches are pending aggregation and parent review.
+- First source assessment exists at `work/upstream-bugs/batches/001.md` for issues #5, #9, #14, #21, and #22; it is pending review/commit.
+- Raw issue bodies and API metadata remain in the local cache `/workspace/work/upstream-bugs/`; do not commit raw pages or body chunks.
+
+Add accepted candidates below in creation-date order, retaining open and closed reports and grouping each sequential set into batches of at most five.
