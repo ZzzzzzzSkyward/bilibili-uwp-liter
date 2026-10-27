@@ -7,10 +7,11 @@
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"https://app.bilibili.com{ApiHelper.api2}/show/popular/index",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&idx={idx}&last_param={last_param}"
+                baseUrl = "https://app.bilibili.com/x/v2/show/popular/index",
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true) + $"&idx={idx}&last_param={last_param}"
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter = api.parameter.Replace("mobi_app=iphone", "mobi_app=android");
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
 

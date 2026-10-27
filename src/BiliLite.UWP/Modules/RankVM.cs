@@ -93,7 +93,8 @@ namespace BiliLite.Modules
             try
             {
                 Loading = true;
-                var results = await rankAPI.Rank(region.rid, region.type.ToString()).Request();
+                var api = await rankAPI.Rank(region.rid, region.type.ToString());
+                var results = await api.Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<JObject>>();

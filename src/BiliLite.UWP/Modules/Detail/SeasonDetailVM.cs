@@ -97,7 +97,8 @@ namespace BiliLite.Modules
                 Loaded = false;
                 Loading = true;
                 ShowError = false;
-                var results = await seasonApi.Detail_Web(ep_id).Request();
+                var api = seasonApi.EpList(ep_id, SeasonIdType.EpId);
+                var results = await api.Request();
                 ApiResultModel<SeasonDetailModel> data = null;
                 if (results.status)
                 {

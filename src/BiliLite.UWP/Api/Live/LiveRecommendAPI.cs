@@ -14,9 +14,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://api.live.bilibili.com/room/v3/Area/getRoomList",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&actionKey=appkey&area_id=0&cate_id=0&parent_area_id=0&page={page}&page_size=36&sort_type={sort_type}"
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true) + $"&actionKey=appkey&area_id=0&cate_id=0&parent_area_id=0&page={page}&page_size=36&sort_type={sort_type}"
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
     }
