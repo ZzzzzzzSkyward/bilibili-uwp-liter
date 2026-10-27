@@ -159,6 +159,7 @@
     <Compile Include="Api\SeasonApi.cs" />
     <Compile Include="Api\SeasonIndexAPI.cs" />
     <Compile Include="Api\User\DynamicAPI.cs" />
+    <Compile Include="Services\GrpcService.cs" />
     <Compile Include="Api\User\FavoriteAPI.cs" />
     <Compile Include="Api\User\FollowAPI.cs" />
     <Compile Include="Api\User\AtAPI.cs" />
@@ -272,6 +273,7 @@
     <Compile Include="Helpers\ControlHelper.cs" />
     <Compile Include="Helpers\DownloadHelper.cs" />
     <Compile Include="Helpers\ExceptionHandler.cs" />
+    <Compile Include="Helpers\DynamicGrpcMapper.cs" />
     <Compile Include="Helpers\HttpHelper.cs" />
     <Compile Include="Helpers\LogHelper.cs" />
     <Compile Include="Helpers\MessageCenter.cs" />
