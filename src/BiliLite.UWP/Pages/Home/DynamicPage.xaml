@@ -58,7 +58,7 @@
   </Page.Resources>
   <Grid>
     <winui:RefreshContainer RefreshRequested="RefreshContainer_RefreshRequested">
-      <controls:MyAdaptiveGridView Padding="12 8" ItemHeight="100" DesiredWidth="600" StretchContentForSingleRow="False" LoadMoreCommand="{x:Bind Path=dynamicVM.LoadMoreCommand,Mode=OneWay}" CanLoadMore="True" SelectionMode="None" IsItemClickEnabled="True" ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}" ItemClick="AdaptiveGridView_ItemClick" ItemTemplateSelector="{x:Bind Path=dynamicVM.dynamicItemDataTemplateSelector,Mode=OneWay}" Loading="{x:Bind Path=dynamicVM.Loading,Mode=OneWay}" OneRowModeEnabled="False">
+      <controls:MyAdaptiveGridView Padding="12 8" ItemHeight="100" DesiredWidth="600" StretchContentForSingleRow="False" LoadMoreCommand="{x:Bind Path=dynamicVM.LoadMoreCommand,Mode=OneWay}" CanLoadMore="{x:Bind Path=dynamicVM.CanLoadMore,Mode=OneWay}" SelectionMode="None" IsItemClickEnabled="True" ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}" ItemClick="AdaptiveGridView_ItemClick" ItemTemplateSelector="{x:Bind Path=dynamicVM.dynamicItemDataTemplateSelector,Mode=OneWay}" Loading="{x:Bind Path=dynamicVM.Loading,Mode=OneWay}" OneRowModeEnabled="False">
         <controls:MyAdaptiveGridView.ItemContainerStyle>
           <Style TargetType="GridViewItem">
             <Setter Property="Margin" Value="12"/>

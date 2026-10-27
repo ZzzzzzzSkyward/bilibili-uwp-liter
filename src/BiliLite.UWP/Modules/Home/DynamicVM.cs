@@ -22,10 +22,17 @@ namespace BiliLite.Modules
         }
         public DynamicItemDataTemplateSelector dynamicItemDataTemplateSelector { get; set; }
         private bool _loading = true;
+        private bool _canLoadMore;
+        private bool _lastPageFailed;
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
+        }
+        public bool CanLoadMore
+        {
+            get { return _canLoadMore; }
+            set { _canLoadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
@@ -43,6 +50,8 @@ namespace BiliLite.Modules
             try
             {
                 Loading = true;
+                CanLoadMore = false;
+                _lastPageFailed = false;
                 LogHelper.Log("Home dynamics stage=request-start mode=" + (idx == "" ? "latest" : "history"), LogType.DEBUG);
                 var api = dynamicAPI.DyanmicNew(Api.User.DynamicAPI.UserDynamicType.Video);
                 if (idx != "")
@@ -77,20 +86,25 @@ namespace BiliLite.Modules
                             }
                         }
                         LogHelper.Log("Home dynamics stage=items-published count=" + Items.Count, LogType.DEBUG);
+                        CanLoadMore = items.Count > 0;
                     }
                     else
                     {
+                        _lastPageFailed = true;
                         Utils.ShowMessageToast(data["message"].ToString());
                     }
                 }
                 else
                 {
+                    _lastPageFailed = true;
                     Utils.ShowMessageToast(results.message);
 
                 }
             }
             catch (Exception ex)
             {
+                CanLoadMore = false;
+                _lastPageFailed = true;
                 LogHelper.Log("Home dynamics stage=" + stage + " failed", LogType.ERROR, ex);
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
@@ -107,6 +121,8 @@ namespace BiliLite.Modules
                 return;
             }
             Items = null;
+            CanLoadMore = false;
+            _lastPageFailed = false;
             await GetDynamicItems();
         }
         public async void LoadMore()
@@ -115,7 +131,7 @@ namespace BiliLite.Modules
             {
                 return;
             }
-            if (Items == null || Items.Count == 0)
+            if (Items == null || Items.Count == 0 || (!CanLoadMore && !_lastPageFailed))
             {
                 return;
             }
