@@ -32,6 +32,13 @@ Use only `/workspace/biliuwp-lite` at pinned commit `ca2caddc597b3faf05b4dac6dcb
 - `src/BiliLite.UWP/Modules/IModules.cs` logs unhandled module exceptions and maps network exceptions to a user-facing network error.
 - NLog and NLog.Config are already package references in `src/BiliLite.UWP/BiliLite.UWP.csproj`.
 
+## Dynamics tab crash report and source diagnosis
+
+- User report: clicking the Dynamics tab closes the app. The supplied log shows app version 1.0.9.3 on Windows 10 x64. The first process records a successful `dynamic_new` GET immediately before ending; a second process starts about four seconds later. The log has no managed exception or crash traceback. No raw log content or account-specific data is stored here.
+- The reviewed source at `be01cbb84625c64f433332f9720ccd28c7510a86` loads the tab through `Pages/Home/DynamicPage.xaml.cs` and `Modules/Home/DynamicVM.cs`. The successful response is deserialized into cards, then rendered through XAML bindings. The HTTP request and card extraction broadly match the pinned sibling implementation, so the log does not support changing API behavior.
+- Source-level candidate: `DynamicItemModel.video` deserializes `card` lazily, and `DynamicCardModel2024` exposes computed binding properties. Some computed getters dereference nested objects without guarding every parent (`durationtext`, `viewtext`, and `aid`). A null/missing nested member could therefore throw when XAML evaluates a binding after `GetDynamicItems` has returned, outside its exception handler. The template selector also assumes `item` and `desc` are non-null. The response body and stack are unavailable, so none of these candidates is confirmed as the crash cause.
+- Diagnosis only; wait for coordination with the crash-log worker before making Dynamics code changes. Target branch was refreshed first with `git pull --ff-only origin work`; resulting HEAD is `be01cbb84625c64f433332f9720ccd28c7510a86`.
+
 ## Suggested implementation boundaries
 
 1. Improve the existing logger's reliability and traceback capture in `Helpers/LogHelper.cs`, keeping the current NLog dependency and LocalFolder location. Add only lifecycle or metadata hooks needed for diagnosis.
@@ -59,5 +66,6 @@ Use only `/workspace/biliuwp-lite` at pinned commit `ca2caddc597b3faf05b4dac6dcb
 | `b1ca1b2` | Add persistent session logging and app-level diagnostics. |
 | `22edc2f` | Add request, gRPC, and player diagnostics. |
 | `271ee12` | Add Settings log export, problem marker, and user instructions. |
+| pending | Record Dynamics tab crash report and source-level candidates after refreshing `work` to `be01cbb`. |
 
 Current state: the completed implementation is committed on `work` and ready for the user build, reproduction, and log export loop. The export includes a session ID, app version, and recent log files with filename headers. Review the text before sharing because logs can include request details. Native process termination may prevent managed exception handlers from recording a complete stack trace.
