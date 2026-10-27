@@ -321,7 +321,8 @@ namespace BiliLite.Controls.Dynamic
                             Tag = "专栏",
 
                         };
-                        info.Url = "https://www.bilibili.com/read/cv" + info.ID;
+                        info.Url = item.modules?.module_dynamic?.major?.article?.jump_url
+                            ?? ("https://www.bilibili.com/read/cv" + info.ID);
                     }
                     break;
                 case DynamicDisplayType.Live:
@@ -382,6 +383,8 @@ namespace BiliLite.Controls.Dynamic
                 var imgs = new List<string> { };
                 var objs = new List<DyanmicItemDisplayImageInfo>() { };
                 var imgsrc = item.modules?.module_dynamic?.major?.draw?.items;
+                var allImages = imgsrc?.Select(img => img.src).Where(src => !string.IsNullOrEmpty(src)).ToList()
+                    ?? new List<string>();
                 int i = 0;
                 if (imgsrc != null)
                     foreach (var img in imgsrc)
@@ -395,8 +398,7 @@ namespace BiliLite.Controls.Dynamic
                                 Height = img.height,
                                 Width = img.width,
                                 Index = i,
-                                //偷懒方法，点击图片时可以获取全部图片信息，好孩子不要学
-                                AllImages = imgs,
+                                AllImages = allImages,
                             });
                         }
                         i++;

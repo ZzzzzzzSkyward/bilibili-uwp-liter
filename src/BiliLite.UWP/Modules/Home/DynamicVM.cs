@@ -221,6 +221,7 @@ namespace BiliLite.Modules
     public class DynamicDescModel
     {
         public string uid { get; set; }
+        public string time_text { get; set; }
         /// <summary>
         /// 8=视频，512=番剧，4310=用户投稿合集
         /// </summary>
@@ -374,7 +375,7 @@ namespace BiliLite.Modules
                 return
                   modules?.module_dynamic?.major?.archive?.cover ??
                   modules?.module_dynamic?.major?.live?.cover ??
-                  modules?.module_dynamic?.major?.article?.covers?[0] ??
+                  modules?.module_dynamic?.major?.article?.covers?.FirstOrDefault() ??
                   modules?.module_dynamic?.major?.pgc?.cover ??
                   modules?.module_dynamic?.major?.ugc_season?.cover ??
                   "";
@@ -386,6 +387,7 @@ namespace BiliLite.Modules
             {
                 return
                   modules?.module_dynamic?.major?.archive?.aid ??
+                  modules?.module_dynamic?.major?.pgc?.aid ??
                   modules?.module_dynamic?.major?.pgc?.season_id_string ??
                   modules?.module_dynamic?.major?.live?.id ??
                   basic.rid_str ??
@@ -791,6 +793,7 @@ namespace BiliLite.Modules
     public class DynamicCardModel2024_season
     {
         //public object badge{ get; set; }
+        public string aid { get; set; }
         public string cover { get; set; }
         public int epid { get; set; }
         public int season_id { get; set; }

@@ -26,6 +26,8 @@ using System.Security.Policy;
 using System.Net.Http;
 using Grpc.Core;
 using System.Net;
+using BiliLite.Modules;
+using BiliLite.Services;
 
 namespace BiliLite.Modules.User
 {
@@ -48,9 +50,16 @@ namespace BiliLite.Modules.User
     {
         readonly WatchLaterVM watchLaterVM;
         readonly Api.User.DynamicAPI dynamicAPI;
+        readonly GrpcService grpcService;
+        private int feedPage = 1;
+        private string historyOffset;
+        private string updateBaseline;
+        private string articleOffset;
+        private bool lastPageFailed;
         public DynamicVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
+            grpcService = new GrpcService();
             watchLaterVM = new WatchLaterVM();
             dynamicItemDataTemplateSelector = new DynamicItemDataTemplateSelector();
             RefreshCommand = new RelayCommand(Refresh);
@@ -126,6 +135,12 @@ namespace BiliLite.Modules.User
                 return;
             }
             Items = null;
+            CanLoadMore = false;
+            lastPageFailed = false;
+            feedPage = 1;
+            historyOffset = null;
+            updateBaseline = null;
+            articleOffset = null;
             await GetDynamicItems();
         }
         public async void LoadMore()
@@ -134,12 +149,12 @@ namespace BiliLite.Modules.User
             {
                 return;
             }
-            if (Items == null || Items.Count == 0)
+            if (!CanLoadMore || lastPageFailed)
             {
                 return;
             }
-            var last = Items.LastOrDefault();
-            await GetDynamicItems(last.DynamicID);
+            var last = Items?.LastOrDefault();
+            await GetDynamicItems(last?.DynamicID ?? "", true);
         }
         public void OpenUser(object id)
         {
@@ -382,14 +397,120 @@ namespace BiliLite.Modules.User
         {
             NullValueHandling = NullValueHandling.Ignore
         };
-        public async Task GetDynamicItems(string idx = "")
+        public async Task GetDynamicItems(string idx = "", bool loadMore = false)
         {
             var stage = "request-start";
             try
             {
                 CanLoadMore = false;
                 Loading = true;
+                if (!loadMore)
+                {
+                    lastPageFailed = false;
+                    feedPage = 1;
+                    historyOffset = null;
+                    updateBaseline = null;
+                    articleOffset = null;
+                }
                 LogHelper.Log("User dynamic VM stage=request-start dynamicType=" + DynamicType + " itemType=" + UserDynamicType + " history=" + (idx != ""), LogType.DEBUG);
+
+                if (DynamicType == DynamicType.UserDynamic)
+                {
+                    stage = "feed-request";
+                    var page = loadMore ? feedPage + 1 : 1;
+                    List<DynamicCardModel2024> grpcCards;
+                    bool hasMore;
+                    string nextOffset = null;
+                    string nextBaseline = null;
+
+                    if (UserDynamicType == UserDynamicType.All)
+                    {
+                        var reply = await grpcService.GetDynAll(page, loadMore ? historyOffset : null);
+                        if (reply?.DynamicList == null)
+                        {
+                            throw new InvalidOperationException("DynAll returned no dynamic list");
+                        }
+                        grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
+                        hasMore = reply.DynamicList.HasMore;
+                        nextOffset = reply.DynamicList.HistoryOffset;
+                    }
+                    else if (UserDynamicType == UserDynamicType.Article)
+                    {
+                        var api = dynamicAPI.ArticleV2(page, loadMore ? articleOffset : null);
+                        var response = await api.Request();
+                        if (!response.status)
+                        {
+                            throw new InvalidOperationException(response.message);
+                        }
+                        var data = await response.GetData<JObject>();
+                        if (data == null || !data.success || data.data == null)
+                        {
+                            throw new InvalidOperationException(data?.message ?? "Article feed returned no data");
+                        }
+
+                        var articleItems = data.data["items"] as JArray;
+                        grpcCards = DynamicGrpcMapper.MapToUserArticleCards(articleItems);
+                        hasMore = data.data["has_more"]?.Value<bool>() ?? false;
+                        nextOffset = data.data["offset"]?.ToString();
+                    }
+                    else
+                    {
+                        var reply = await grpcService.GetDynVideo(page, loadMore ? historyOffset : null, loadMore ? updateBaseline : null);
+                        if (reply == null)
+                        {
+                            throw new InvalidOperationException("DynVideo returned no reply");
+                        }
+                        if (UserDynamicType == UserDynamicType.Season)
+                        {
+                            grpcCards = DynamicGrpcMapper.MapToUserSeasonCards(reply.VideoFollowList?.List);
+                            hasMore = false;
+                        }
+                        else
+                        {
+                            if (reply.DynamicList == null)
+                            {
+                                throw new InvalidOperationException("DynVideo returned no dynamic list");
+                            }
+                            grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
+                            hasMore = reply.DynamicList.HasMore;
+                            nextOffset = reply.DynamicList.HistoryOffset;
+                            nextBaseline = reply.DynamicList.UpdateBaseline;
+                        }
+                    }
+
+                    stage = "feed-card-convert";
+                    var mapped = new ObservableCollection<DynamicItemDisplayModel>();
+                    foreach (var card in grpcCards)
+                    {
+                        mapped.Add(ConvertToDisplay2024(card));
+                    }
+
+                    stage = "feed-items-publish";
+                    if (loadMore && Items != null)
+                    {
+                        foreach (var item in mapped)
+                        {
+                            Items.Add(item);
+                        }
+                    }
+                    else
+                    {
+                        Items = mapped;
+                    }
+                    feedPage = page;
+                    historyOffset = nextOffset;
+                    updateBaseline = nextBaseline;
+                    if (UserDynamicType == UserDynamicType.Article)
+                    {
+                        articleOffset = nextOffset;
+                    }
+                    CanLoadMore = hasMore;
+                    lastPageFailed = false;
+                    var itemTypes = string.Join(",", grpcCards.Select(item => item?.type ?? "null").Distinct());
+                    var firstId = grpcCards.FirstOrDefault()?.id_str ?? "";
+                    LogHelper.Log("User dynamic VM stage=feed-items-published page=" + feedPage + " count=" + grpcCards.Count + " hasMore=" + hasMore + " types=" + itemTypes + " firstDynamicId=" + firstId, LogType.INFO);
+                    return;
+                }
 
                 var api = dynamicAPI.DyanmicNew(UserDynamicType);
                 switch (DynamicType)
@@ -454,20 +575,25 @@ namespace BiliLite.Modules.User
                             }
                         }
                         LogHelper.Log("User dynamic VM stage=items-published count=" + Items.Count, LogType.DEBUG);
+                        lastPageFailed = false;
                     }
                     else
                     {
+                        lastPageFailed = true;
                         Utils.ShowMessageToast(data["message"].ToString());
                     }
                 }
                 else
                 {
+                    lastPageFailed = true;
                     Utils.ShowMessageToast(results.message);
 
                 }
             }
             catch (Exception ex)
             {
+                CanLoadMore = false;
+                lastPageFailed = true;
                 LogHelper.Log("User dynamic VM stage=" + stage + " failed", LogType.ERROR, ex);
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
@@ -798,7 +924,9 @@ namespace BiliLite.Modules.User
                     LikeCount = item.like,
                     Mid = item.mid,
                     ShareCount = item.forward,
-                    Time = Utils.HandelTimestamp(item.pubdate.ToString()),
+                    Time = string.IsNullOrEmpty(item.modules?.module_author?.pub_time)
+                        ? (item.pubdate <= 0 ? "" : Utils.HandelTimestamp(item.pubdate.ToString()))
+                        : item.modules.module_author.pub_time,
                     IntType = t.ToInt32(),// item.type,
                     ReplyID = item.basic.rid_str,
                     ReplyType = item.basic.comment_type,
@@ -838,6 +966,9 @@ namespace BiliLite.Modules.User
                     }
                 }
                 
+                data.Datetime = string.IsNullOrEmpty(item.modules?.module_author?.pub_time)
+                    ? (item.pubdate <= 0 ? "" : Utils.TimestampToDatetime(item.pubdate).ToString())
+                    : item.modules.module_author.pub_time;
                 data.ShowContent = false;
                 if ( item.owner!= null)
                 {
