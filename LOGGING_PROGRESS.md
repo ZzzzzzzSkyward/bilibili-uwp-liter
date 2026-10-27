@@ -58,6 +58,6 @@ Use only `/workspace/biliuwp-lite` at pinned commit `ca2caddc597b3faf05b4dac6dcb
 | `3c27b23` | Record the staged logging implementation plan. |
 | `b1ca1b2` | Add persistent session logging and app-level diagnostics. |
 | `22edc2f` | Add request, gRPC, and player diagnostics. |
-| This commit | Add Settings log export, problem marker, and user instructions. |
+| `271ee12` | Add Settings log export, problem marker, and user instructions. |
 
-Current state: implementation is committed and waiting for the user to build, reproduce, and return exported logs. The export includes a session ID, app version, and recent log files with filename headers. Review the text before sharing because logs can include request details. Native process termination may prevent managed exception handlers from recording a complete stack trace.
+Current state: the completed implementation is committed on `work` and ready for the user build, reproduction, and log export loop. The export includes a session ID, app version, and recent log files with filename headers. Review the text before sharing because logs can include request details. Native process termination may prevent managed exception handlers from recording a complete stack trace.
