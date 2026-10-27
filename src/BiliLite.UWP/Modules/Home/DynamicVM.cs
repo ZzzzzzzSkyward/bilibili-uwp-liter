@@ -39,21 +39,32 @@ namespace BiliLite.Modules
 
         public async Task GetDynamicItems(string idx = "")
         {
+            var stage = "request-start";
             try
             {
                 Loading = true;
+                LogHelper.Log("Home dynamics stage=request-start mode=" + (idx == "" ? "latest" : "history"), LogType.DEBUG);
                 var api = dynamicAPI.DyanmicNew(Api.User.DynamicAPI.UserDynamicType.Video);
                 if (idx != "")
                 {
                     api = dynamicAPI.HistoryDynamic(idx, Api.User.DynamicAPI.UserDynamicType.Video);
                 }
                 var results = await api.Request();
+                stage = "response-received";
+                LogHelper.Log("Home dynamics stage=response-received status=" + results.status, LogType.DEBUG);
                 if (results.status)
                 {
                     var data = results.GetJObject();
-                    if (data["code"].ToInt32() == 0)
+                    var responseCode = data["code"].ToInt32();
+                    LogHelper.Log("Home dynamics stage=response-parsed code=" + responseCode, LogType.DEBUG);
+                    if (responseCode == 0)
                     {
-                        var items = JsonConvert.DeserializeObject<ObservableCollection<DynamicItemModel>>(data["data"]["cards"].ToString());
+                        stage = "cards-deserialize";
+                        var cardsJson = data["data"]["cards"].ToString();
+                        var items = JsonConvert.DeserializeObject<ObservableCollection<DynamicItemModel>>(cardsJson);
+                        var itemTypes = string.Join(",", items.Select(item => item.desc == null ? "null" : item.desc.type.ToString()).Distinct());
+                        LogHelper.Log("Home dynamics stage=cards-deserialized count=" + items.Count + " types=" + itemTypes, LogType.DEBUG);
+                        stage = "collection-update";
                         if (Items == null)
                         {
                             Items = items;
@@ -65,6 +76,7 @@ namespace BiliLite.Modules
                                 Items.Add(item);
                             }
                         }
+                        LogHelper.Log("Home dynamics stage=items-published count=" + Items.Count, LogType.DEBUG);
                     }
                     else
                     {
@@ -79,6 +91,7 @@ namespace BiliLite.Modules
             }
             catch (Exception ex)
             {
+                LogHelper.Log("Home dynamics stage=" + stage + " failed", LogType.ERROR, ex);
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
@@ -123,15 +136,38 @@ namespace BiliLite.Modules
         /// <summary>
         /// json字符串,根据desc里的type，获得数据
         /// </summary>
-        public string card { get; set; }
+        private string _card;
+        private DynamicVideoCardModel _video;
+        public string card
+        {
+            get { return _card; }
+            set
+            {
+                _card = value;
+                _video = null;
+            }
+        }
         public DynamicDescModel desc { get; set; }
-        public DynamicCardModel2024 video
+        public DynamicVideoCardModel video
         {
             get
             {
                 if (desc != null && desc.type == 8)
                 {
-                    return Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicCardModel2024>(card);
+                    if (_video == null)
+                    {
+                        try
+                        {
+                            _video = Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicVideoCardModel>(card);
+                            LogHelper.Log("Home dynamics stage=video-card-converted type=" + desc.type + " dynamicId=" + desc.dynamic_id + " hasOwner=" + (_video?.owner != null) + " hasStats=" + (_video?.stat != null), LogType.DEBUG);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.Log("Home dynamics stage=video-card-conversion-failed type=" + desc.type + " dynamicId=" + desc.dynamic_id, LogType.ERROR, ex);
+                            throw;
+                        }
+                    }
+                    return _video;
                 }
                 return null;
             }
@@ -154,6 +190,7 @@ namespace BiliLite.Modules
         protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
         {
             var card = item as DynamicItemModel;
+            LogHelper.Log("Home dynamics stage=template-select type=" + (card?.desc == null ? "null" : card.desc.type.ToString()) + " dynamicId=" + (card?.desc?.dynamic_id ?? ""), LogType.DEBUG);
             if (card.desc.type == 8)
             {
                 return resource["DynamicVideo"] as DataTemplate;
@@ -196,6 +233,8 @@ namespace BiliLite.Modules
         public long pubdate { get; set; }
         public string title { get; set; }
         public DynamicVideoCardStatModel stat { get; set; }
+        public string viewtext { get { return stat == null ? "0" : stat.view.ToString(); } }
+        public string danmakutext { get { return stat == null ? "0" : stat.danmaku.ToString(); } }
     }
     public class DynamicVideoCardStatModel
     {

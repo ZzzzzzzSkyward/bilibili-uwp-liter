@@ -27,10 +27,10 @@
           <StackPanel Orientation="Horizontal">
             <Ellipse Width="24" Height="24">
               <Ellipse.Fill>
-                <ImageBrush ImageSource="{x:Bind Path=video.face,Converter={StaticResource imageConvert2},ConverterParameter='36h'}"/>
+                <ImageBrush ImageSource="{x:Bind Path=video.owner.face,Converter={StaticResource imageConvert2},ConverterParameter='36h'}"/>
               </Ellipse.Fill>
             </Ellipse>
-            <TextBlock Margin="8 0 0 0" Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" Text="{x:Bind Path=video.owner}"/>
+            <TextBlock Margin="8 0 0 0" Foreground="{ThemeResource ForegroundTextColor}" VerticalAlignment="Center" Text="{x:Bind Path=video.owner.name}"/>
           </StackPanel>
           <TextBlock Foreground="{ThemeResource ForegroundTextColor}" Margin="0 2 0 0">发表于 <Run Text="{x:Bind Path=video.pubdate,Converter={StaticResource time},ConverterParameter='ts'}"/></TextBlock>
         </StackPanel>
