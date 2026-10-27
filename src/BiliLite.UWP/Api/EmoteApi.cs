@@ -22,7 +22,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/emote/user/panel/web",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&business={type}"
+                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&business={type}",
+                headers = ApiHelper.GetAuroraHeaders(),
+                need_cookie = true,
             };
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;

@@ -153,6 +153,7 @@ namespace BiliLite.Controls
                 closeRepost.Visibility = Visibility.Collapsed;
                 //ls_hot.ItemsSource = null;
                 ls_new.ItemsSource = null;
+                cursor = null;
             }
             try
             {
@@ -163,7 +164,14 @@ namespace BiliLite.Controls
                 ObservableCollection<CommentModel> ls = new ObservableCollection<CommentModel>();
 
 
-                var re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page, _loadCommentInfo.CommentMode, offset: _page).Request();
+                var api = await commentApi.CommentV2(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page,
+                    _loadCommentInfo.CommentMode, offsetStr: cursor?.PaginationReply?.NextOffset);
+                var re = await api.Request();
+                var errorCheck = await re.GetData<object>();
+                if (!re.status || (errorCheck != null && errorCheck.code < 0))
+                {
+                    re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page, _loadCommentInfo.CommentMode).Request();
+                }
                 if (re.status)
                 {
                     dataCommentModel m;
