@@ -1,53 +1,59 @@
 # API migration progress
 
-## Scope and constraints
+## Scope and source of truth
 
-- Target: `/workspace/biliuwp-lite-fix`, baseline `ea47513` (`Document Luna subagent reasoning preference`), clean when work began.
-- Behavioral reference: shallow clone of `https://github.com/ywmoyue/biliuwp-lite` at `/workspace/biliuwp-lite`, HEAD `ca2caddc597b3faf05b4dac6dcb226aa0694365b` (`dev`). This checkout is the sole source of API behavior for migration decisions.
-- Use target callers for compatibility and preserve unrelated changes. Do not consult external API documentation or make API internet requests.
-- Scope is read/data retrieval APIs, especially playback, feeds, followed authors/series, and comments, plus other retrieval wrappers. Exclude publishing, posting, upload, and action/mutation endpoint changes (for example likes, follows, favorite edits, comment submission, and history deletion).
-- No API implementation has been done in this setup step. No tests, builds, restores, runtime checks, or correctness validation were run. Source reading and comparison only.
-- Keep scratch material under `work/`. Network was used only for the requested shallow Git clone. Environment notes from setup: `/etc/codex/network-policy.json` allows HTTP through the inherited proxy; VPN is disabled. Proxy and CA configuration were left unchanged.
+The target is `/workspace/biliuwp-lite-fix`, starting from clean baseline `ea47513` (`Document Luna subagent reasoning preference`). Read `AGENTS.md`; it requires high reasoning effort for any Luna subagent.
 
-## Repository and tool notes
+The sole behavioral reference is the requested shallow clone at `/workspace/biliuwp-lite`, URL `https://github.com/ywmoyue/biliuwp-lite`, commit `ca2caddc597b3faf05b4dac6dcb226aa0694365b` on `dev`. API internet requests and external documentation were out of scope and were not used. Network was used for the shallow clone only. The environment reported unrestricted HTTP through the inherited proxy and VPN disabled; proxy and CA settings were left unchanged.
 
-The target is a C# UWP solution. Its API wrappers live in `src/BiliLite.UWP/Api/`, with call sites mainly in `src/BiliLite.UWP/Modules/` and `Pages/`. The reference has moved wrappers to `src/BiliLite.UWP/Models/Requests/Api/`, API infrastructure to `Models/Requests/` and `Services/`, and shared constants to `Models/Common/ApiConstants.cs`. Preserve target public call patterns unless reference behavior requires a caller update.
+The task covers read/data retrieval APIs, with emphasis on video playback, feeds, followed authors and series, comments, and related caller integration. Publishing, posting, uploads, and action or mutation APIs are excluded. The implementation follows the sibling source where mapped while retaining target-specific callers and compatibility paths when needed. This migration does not claim to port every read API present in the reference repository.
 
-No `dotnet`, `csharpier`, or `fantomas` executable is available in this environment, and the target contains no `.editorconfig` or `global.json`. No formatter was run or installed. If a formatter becomes available, use a formatting-only command on changed C# files, for example `dotnet format whitespace BiliLite.sln --no-restore --include <changed .cs paths>`; do not run build, test, or validation commands under this task's constraints.
+The target is a C# UWP solution. Its legacy wrappers live in `src/BiliLite.UWP/Api/`; the reference moved most wrappers to `src/BiliLite.UWP/Models/Requests/Api/` and shared request infrastructure to `Services/` and `Models/Requests/`. Target callers remain primarily in `Modules/`, `Controls/`, and `Pages/`.
 
-## Retrieval API inventory
+## Completed implementation
 
-The lists below are the target's existing retrieval surface and retrieval additions visible in the reference. Mutating members in mixed-purpose files are intentionally excluded from migration. Confirm each change against the named reference source; endpoint details in the reference take precedence over target assumptions.
+| Commit | Work |
+|---|---|
+| `a977277cfccf77f26fbf63978ce498d334420fd6` | Recorded setup, pinned reference, and inventoried the target retrieval API surface. |
+| `dff9b93f9e926e13ae44ba2bf298e80f0cd1c47e` | Migrated playback URL, player info, danmaku segment and video detail read wrappers. |
+| `cd83cd4152d54ae60a7d2f736d9e9e809f55d57f` | Migrated cursor-based comment and reply reads and emote panel headers/cookie behavior. |
+| `dcd064463fba43638386b0203b9c13317f2f7c80` | Made WBI signing asynchronous and full-query, added Aurora headers and extra-cookie forwarding. |
+| `c23d86724f9fa10e7e56880efbbd92d6183b804f` | Migrated recommendation feed, dynamic reads and followed-series/relation reads. |
+| `882f8df1f9b26d22c935b63eef540fd4fb6c2fe9` | Migrated search, ranking, region, seasonal, home discovery and live discovery reads. |
+| `fa6fb54cf5ffd6cead5c446de391b571b560b107` | Migrated account/profile, library and live-room reads and their callers. |
+| `4e0783689542e625b0eb51f6219a49c998229ca1` | Integrated web video detail, related-video, tags and user-state reads; updated player metadata and interaction IDs. |
+| `5578ca00abc25576e157b702965138c8c363faeb` | Migrated gRPC playback and danmaku protocol/parsing reads. |
 
-| Area | Target wrapper and retrieval members | Reference source / observed retrieval surface |
-|---|---|---|
-| Video and playback | `Api/VideoAPI.cs`: `Detail`, `DetailProxy`. `Api/PlayerAPI.cs`: `VideoPlayUrl`, `SeasonPlayUrl`, `SeasonAndroidPlayUrl`, `LivePlayUrl`, `LivePlayUrlv2`, `InteractionEdgeInfo`, `GetPlayerInfo`, `GetPlayerOnline`, `GetDanmuFilterWords`, `SegDanmaku`, `GenerateMPD`. | `Models/Requests/Api/VideoAPI.cs` adds `DetailWebInterface`, `RelatesWebInterface`, `HasLike`, `HasCoin`, `HasFav`, `Tags`, `GetMediaList`, `GetMediaListNotLogin`. `PlayerAPI.cs` covers video/season/live play URLs, interaction edge, player info/online, danmaku filter retrieval, and segment danmaku. `GetDanmuFilterWords` is a read; `GenerateMPD` is local generation, not a network retrieval. `LivePlayUrlv2` exists in target but has no matching member in reference `PlayerAPI.cs`; assess caller compatibility before changing it.
-| Home, feed, dynamics, followed content | `Api/Home/RecommendAPI.cs`: `Recommend`. `Api/User/DynamicAPI.cs`: `DyanmicNew`, `DynamicDetail`, `DynamicRepost`, `HistoryDynamic`, `SpaceHistory`, `RecommendTopic`. `Api/User/FollowAPI.cs`: `MyFollowBangumi`, `MyFollowCinema`. | `Models/Requests/Api/Home/RecommendAPI.cs`, `User/DynamicAPI.cs`, `User/FollowAPI.cs` retain these retrievals. Reference adds dynamic `SpaceHistoryV2`, `Article`, `ArticleV2`, and follow-state `GetAttention`. In `DynamicAPI.cs` and `FollowAPI.cs`, leave creation, reposting, likes, deletion, and follow mutations untouched.
-| Comments | `Api/CommentApi.cs`: `Comment_New`, `Comment`, `Reply`. | `Models/Requests/Api/CommentApi.cs` includes `Comment` (older read route), async `CommentV2` (new read route), and `Reply`. Its signatures/defaults and login behavior differ from target; read the complete reference methods and their callers before migrating. Exclude `Like`, `ReplyComment`, `DeleteComment`, and `AddComment`.
-| Search and discovery | `Api/SearchAPI.cs`: `Search`, `WebSearchVideo`, `WebSearchAnime`, `WebSearchMovie`, `WebSearchUser`, `WebSearchLive`, `WebSearchArticle`, `WebSearchTopic`. `Api/RankAPI.cs`: `Rank`, `SeasonRank`. `Api/RegionAPI.cs`: `Regions`, both `RegionDynamic` overloads, both `RegionChildDynamic` overloads, `RegionChildList`. | Corresponding `SearchAPI.cs`, `RankAPI.cs`, and `RegionAPI.cs`; reference `SearchAPI.cs` adds `SearchSuggest`. Preserve target call compatibility for overloads and query options.
-| Series and cinema | `Api/SeasonApi.cs`: `Detail`, `Detail_Web`, `DetailWeb`, `ShortReview`. `Api/SeasonIndexAPI.cs`: `Condition`, `Result`. `Api/Home/AnimeAPI.cs`: `BangumiHome`, `GuochuangHome`, `Timeline`, `AnimeFallMore`. `Api/Home/CinemaAPI.cs`: `CinemaHome`, `CinemaFallMore`. `Api/Home/HotApi.cs`: `Popular`. | Corresponding `SeasonApi.cs`, `SeasonIndexAPI.cs`, and `Home/{AnimeAPI,CinemaAPI,HotApi}.cs`. Reference `SeasonApi.cs` adds `EpList`. Exclude review like/dislike and review submission.
-| User profiles and subscriptions | `Api/User/UserDetailAPI.cs`: `UserInfo`, `UserInfoWbi`, `Space`, `UserStat`, `SubmitVideos`, `SubmitVideosWbi`, `SubmitArticles`, `FollowingsTag`, `Followings`, `Followers`, `Favlist`. `Api/User/AtAPI.cs`: `RecommendAt`, `SearchUser`. | Corresponding `UserDetailAPI.cs` adds `UserCard`, `SubmitVideosCursor`, `SubmitCollections`, `FollowingTagUser`; `AtAPI.cs` retains mention suggestions and user search. `FollowAPI.cs` supplies followed anime/cinema and `GetAttention` retrievals.
-| Favorites and watch-later | `Api/User/FavoriteAPI.cs`: `MyFavorite`, `MyCreatedFavoriteList`, `MyCreatedFavorite`, `FavoriteInfo`, `FavoriteSeasonInfo`. `Api/User/WatchLaterAPI.cs`: `Watchlater`. | Corresponding `FavoriteAPI.cs` and `WatchLaterAPI.cs`; reference `FavoriteAPI.cs` adds `GetCollected`. Exclude favorite add/edit/delete/copy/move/sort operations and watch-later add/clear/delete.
-| Account, history, metadata | `Api/AccountApi.cs`: retrieval members `Country`, `Captcha`, `UserProfile`, `MineProfile`, `Space`, `History`, `QRLoginPoll`, `GetOAuth2Info`, `WbiToken`; cookie/nav helper retrieval in `ApiHelper.cs` as applicable. `Api/GitApi.cs`: `CheckUpdate`, `FindMoreEntrance`. | `Models/Requests/Api/AccountApi.cs` includes profile/space/history retrieval and adds `HistoryWbi`, `SearchHistory`, `Nav`, `Buvid`, `Buvid4`, `BNut`, and `BiliTicket`, plus cookie status/refresh support. Authentication and cookie operations have side effects or alter account state; migrate only retrieval behavior needed by scoped callers. `GitApi.cs` retains update metadata retrieval.
-| Live data | `Api/Home/LiveAPI.cs`: `LiveHome`, `LiveHomeItems`. `Api/Live/LiveAreaAPI.cs`: `LiveAreaList`, `LiveAreaRoomList`. `Api/Live/LiveRecommendAPI.cs`: `LiveRoomList`. `Api/Live/LiveCenterAPI.cs`: `FollowLive`, `FollowUnLive`, `History`, `SignInfo`. `Api/Live/LiveRoomAPI.cs`: `LiveRoomInfo`, `MyWallet`, `LiveTitles`, `GiftList`, `BagList`, `RoomGifts`, `FreeSilverTime`, `GetFreeSilver`, `AnchorProfile`, `GuardList`, `FansList`, `RoomRankList`, `RoomLotteryInfo`, `RoomSuperChat`, `RoomEntryAction`. | Corresponding `Home/LiveAPI.cs`, `Live/{LiveAreaAPI,LiveRecommendAPI,LiveCenterAPI,LiveRoomAPI}.cs`. Reference adds additional live danmaku and room metadata retrievals; inspect methods in `LiveRoomAPI.cs` as needed. Exclude signing/reward claims, gift sends, chat sends, and lottery joins.
-| Emotes and danmaku | `Api/EmoteApi.cs`: `UserEmote`; `PlayerAPI.cs`: `SegDanmaku`, `GetDanmuFilterWords`. | Corresponding `EmoteApi.cs` and `PlayerAPI.cs`; reference also has `DanmakuApi.cs`. Inspect read calls only; exclude danmaku likes and filter mutations.
+### Shared request behavior
 
-## Proposed implementation batches and ownership
+`ApiHelper.GetWbiSign(string)` now returns `Task<string>`, awaits available WBI keys, and returns the complete signed query. Existing callers were migrated to await and assign the returned string. `ApiModel.ExtraCookies` is forwarded through the target request extension and merged into outgoing web cookies, with extra values taking precedence. `GetAuroraHeaders()` supplies the two reference Aurora headers. The target's configured app keys remain in use; the target has no equivalent of the reference account-selected `BaseApi.AppKey`, so no new key-selection framework was added.
 
-These paths are disjoint by wrapper. Each worker should update only its listed target wrappers and the directly necessary callers/models, then record the files and reference members it handled here.
+### Migrated retrieval areas
 
-1. **Playback and video retrieval** — `Api/PlayerAPI.cs`, `Api/VideoAPI.cs`; callers/models under `Modules/Player/`, `Modules/Detail/`, and `Pages/VideoDetailPage.xaml.cs` only as needed. Own play URLs, video read data, player state/online data, segment danmaku, and related model compatibility.
-2. **Feed, dynamics, subscriptions** — `Api/Home/RecommendAPI.cs`, `Api/User/DynamicAPI.cs`, `Api/User/FollowAPI.cs`; callers under `Modules/Home/`, `Modules/User/DynamicVM.cs`, `Modules/User/MyFollowSeasonVM.cs`, and related home/user pages. Edit read members only in mixed-purpose API classes.
-3. **Comment retrieval** — `Api/CommentApi.cs`; `Controls/CommentControl.xaml.cs`, `Dialogs/CommentDialog.xaml.cs`, and direct read callers only. Edit only thread/reply reads.
-4. **Search, ranking, region, seasonal and media discovery** — `Api/SearchAPI.cs`, `Api/RankAPI.cs`, `Api/RegionAPI.cs`, `Api/SeasonApi.cs`, `Api/SeasonIndexAPI.cs`, `Api/Home/{AnimeAPI,CinemaAPI,ChannelAPI,HotApi,LiveAPI}.cs`, `Api/Live/{LiveAreaAPI,LiveRecommendAPI,LiveCenterAPI}.cs`; associated search/catalog/home/season/live callers as needed. Retrieval members only.
-5. **Account, profile, library, and remaining live retrieval** — `Api/User/{UserDetailAPI,FavoriteAPI,WatchLaterAPI,AtAPI}.cs`, `Api/AccountApi.cs`, `Api/Live/LiveRoomAPI.cs`, plus only necessary retrieval infrastructure/callers. Mixed-purpose members must keep mutations out of scope.
-6. **Shared API infrastructure** — `Api/ApiHelper.cs` and `Models/ApiModel.cs` are shared ownership points; coordinate with the orchestrator before touching these or centralize their edits after wrapper batches. Reference equivalents are `Services/ApiHelper.cs`, `Models/Requests/ApiModel.cs`, `Models/Requests/BiliRequest.cs`, `Models/Requests/Api/BaseApi.cs`, and `Models/Common/ApiConstants.cs`.
+- **Video and playback:** regular and season playback parameters, player information, interaction edge IDs, segment danmaku retrieval, web video detail and related-video reads, tags, and login-only uploader/like/coin/favorite state reads. Current gRPC playback and TV danmaku response protocols/parsers were updated from the sibling sources.
+- **Feeds and subscriptions:** recommendation feed, dynamic feed/history/detail/repost reads, source response handling in dynamic callers, followed bangumi/cinema, and relation lookup.
+- **Comments and emotes:** WBI-signed cursor comment reads with legacy fallback, reply reads, and Aurora/cookie configuration for user emotes.
+- **Discovery and catalog:** search and suggestions, ranking, regions, season detail/episode lists/index, anime/cinema/popular/live-home content, live areas/recommendations, and live-center read APIs. Relevant async callers were updated.
+- **Account, user and library:** WBI-backed user info/video/following reads, profile and collection reads, watch-later read behavior, and live-room metadata/rank/lottery info retrieval with BUVID3 cookie support. Existing account read endpoints that already match the reference were left as they were.
 
-## Current and resumable state
+## Preserved and excluded behavior
 
-- Setup complete in `a977277`: target baseline recorded, reference shallow clone pinned, project layout and retrieval surface inventoried, formatter availability checked.
-- **Completed:** playback/video read wrappers and callers (`dff9b93`); comment retrieval and user emote read headers (`cd83cd4`). No application tests, builds, or runtime checks were run.
-- **In progress:** feed/dynamics/subscriptions; search/catalog discovery; shared WBI signing and extra-cookie request support. WBI callers were split across workers: playback, feed/follow, account reads, plus new comment/catalog reads.
-- **Pending:** account/profile/library and remaining live retrieval batch. Shared helper changes are isolated to `Api/ApiHelper.cs`, nested `ApiModel`, `Helpers/Utils.cs`, and `Helpers/HttpHelper.cs`; await all worker call sites before finalizing their commit.
-- Worker notes: [`playback.md`](work/api-migration/playback.md), [`comments.md`](work/api-migration/comments.md), [`feed_follow.md`](work/api-migration/feed_follow.md), [`account_reads.md`](work/api-migration/account_reads.md), and expected catalog note `work/api-migration/catalog.md`.
-- Current API implementation is still incomplete. Resume with the pinned sibling source and named path owners. No C# formatter is installed; formatting-only `git diff --check` passed for the shared helper changes and this progress note. No tests/builds/runtime validation were run.
+Target-only compatibility paths remain where the reference does not supply a direct replacement, including the legacy live-play URL fallback and older season detail entry points. The target's detail/proxy fallback remains available if web detail retrieval does not provide usable data. Existing matching behavior was recorded rather than rewritten where appropriate: account profile/history routes, mention suggestions, watch-later listing, user space/stat/follower/favorite-list reads, and favorite-season retrieval.
+
+Action and mutation methods were left outside the migration, including likes, coins, follows/unfollows, favorite edits and transfers, watch-later changes, comment submission/deletion/likes, dynamic publishing/reposting/deletion/likes, live gifts/chat/rewards/lottery entry, review actions, and history deletion. The target's `FindMoreEntrance` and older season review action methods remain target-only. Some reference-only retrieval methods outside the selected migration surface remain unported; see the per-worker notes for exact ownership and choices.
+
+## Formatting and verification
+
+No `dotnet`, `csharpier`, or `fantomas` executable was available, and the target has no `.editorconfig` or `global.json`. No formatter was installed. If one becomes available, use a formatting-only command scoped to changed C# files, such as `dotnet format whitespace BiliLite.sln --no-restore --include <changed .cs paths>`.
+
+Only formatting checks were run: workers report `git diff --check` passed for their owned changes, and the central progress note passed its trailing-whitespace check. No tests, builds, package restore, protocol generation, runtime checks, API requests, or correctness validation were run.
+
+## Worker notes and resumption
+
+- [Playback, video detail, gRPC protocols and parsers](work/api-migration/playback.md)
+- [Comments and emotes](work/api-migration/comments.md)
+- [Feed and followed-author reads](work/api-migration/feed_follow.md)
+- [Search and catalog discovery](work/api-migration/catalog.md)
+- [Account, library and live-room reads](work/api-migration/account_reads.md)
+
+All implementation batches above are committed. To resume this work, start from the current target HEAD, use only the pinned sibling checkout as API behavior evidence, and preserve the mutation exclusions and format-only verification limit. The worker notes identify the exact source symbols and any reference additions intentionally left outside scope.
