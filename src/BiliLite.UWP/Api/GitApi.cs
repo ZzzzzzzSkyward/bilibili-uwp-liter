@@ -10,10 +10,12 @@ namespace BiliLite.Api
         /// <returns></returns>
         public ApiModel CheckUpdate()
         {
+            var updateJsonAddress = SettingHelper.GetValue("RawRepositoryAddress", ApiHelper.GIT_RAW_URL);
+            updateJsonAddress = updateJsonAddress.Replace("\"", "");
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.GIT_RAW_URL}/document/new_version.json",
+                baseUrl = $"{updateJsonAddress.TrimEnd('/')}/document/new_version.json",
                 parameter = $"ts={Utils.GetTimestampS()}"
             };
             return api;

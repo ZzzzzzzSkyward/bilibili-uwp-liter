@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BiliLite.Api.User
 {
@@ -9,16 +10,16 @@ namespace BiliLite.Api.User
         /// </summary>
         /// <param name="mid"></param>
         /// <returns></returns>
-        public ApiModel UserInfo(string mid)
+        public async Task<ApiModel> UserInfo(string mid)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/acc/info",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,needAccesskey:true)+$"&mid={mid}",
-                need_cookie=true,
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/acc/info",
+                parameter = $"mid={mid}",
+                need_cookie = true,
             };
-
+            api.parameter = await ApiHelper.GetWbiSign(api.parameter);
             return api;
         }
         /// <summary>
@@ -26,18 +27,7 @@ namespace BiliLite.Api.User
         /// </summary>
         /// <param name="mid"></param>
         /// <returns></returns>
-        public ApiModel UserInfoWbi(string mid)
-        {
-            ApiModel api = new ApiModel()
-            {
-                method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/acc/info",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,needAccesskey:true)+$"&mid={mid}",
-            };
-            api.parameter += ApiHelper.GetWbiSign(api.parameter);
-
-            return api;
-        }
+        public Task<ApiModel> UserInfoWbi(string mid) => UserInfo(mid);
         /// <summary>
         /// 个人空间
         /// </summary>
@@ -82,16 +72,17 @@ namespace BiliLite.Api.User
         {
             { "referer","https://space.bilibili.com" }
         };
-        public ApiModel SubmitVideos(string mid, int page = 1, int pagesize = 30,string keyword="",int tid=0, SubmitVideoOrder order= SubmitVideoOrder.pubdate)
+        public async Task<ApiModel> SubmitVideos(string mid, int page = 1, int pagesize = 30, string keyword = "", int tid = 0, SubmitVideoOrder order = SubmitVideoOrder.pubdate)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/arc/search",
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/arc/search",
                 parameter = $"mid={mid}&ps={pagesize}&tid={tid}&pn={page}&keyword={keyword}&order={order.ToString()}",
                 need_cookie=true,
                 headers = VideoHeader
             };
+            api.parameter = await ApiHelper.GetWbiSign(api.parameter);
             return api;
         }
         /// <summary>
@@ -101,19 +92,8 @@ namespace BiliLite.Api.User
         /// <param name="page">页数</param>
         /// <param name="pagesize">每页数量</param>
         /// <returns></returns>
-        public ApiModel SubmitVideosWbi(string mid, int page = 1, int pagesize = 30,string keyword="",int tid=0, SubmitVideoOrder order= SubmitVideoOrder.pubdate)
-        {
-            ApiModel api = new ApiModel()
-            {
-                method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/arc/search",
-                parameter = $"mid={mid}&ps={pagesize}&tid={tid}&pn={page}&keyword={keyword}&order={order}",
-                need_cookie=false,
-                headers = VideoHeader
-            };
-            api.parameter += ApiHelper.GetWbiSign(api.parameter);
-            return api;
-        }
+        public Task<ApiModel> SubmitVideosWbi(string mid, int page = 1, int pagesize = 30, string keyword = "", int tid = 0, SubmitVideoOrder order = SubmitVideoOrder.pubdate) =>
+            SubmitVideos(mid, page, pagesize, keyword, tid, order);
         /// <summary>
         /// 用户专栏投稿
         /// </summary>
@@ -126,7 +106,7 @@ namespace BiliLite.Api.User
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/article",
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/article",
                 parameter = $"mid={mid}&ps={pagesize}&pn={page}&sort={order.ToString()}",
             };
             return api;
@@ -153,13 +133,14 @@ namespace BiliLite.Api.User
         /// <param name="page">页数</param>
         /// <param name="pagesize">每页数量</param>
         /// <returns></returns>
-        public ApiModel Followings(string mid, int page = 1, int pagesize = 30,int tid=0,string keyword="",FollowingsOrder order= FollowingsOrder.attention)
+        public async Task<ApiModel> Followings(string mid, int page = 1, int pagesize = 30, int tid = 0, string keyword = "", FollowingsOrder order = FollowingsOrder.attention)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/relation/followings",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey,true) + $"&vmid={mid}&ps={pagesize}&pn={page}&order=desc&order_type={(order== FollowingsOrder.attention? "attention":"")}",
+                parameter = $"vmid={mid}&ps={pagesize}&pn={page}&order=desc&order_type={(order == FollowingsOrder.attention ? "attention" : "")}",
+                need_cookie = true,
             };
             if (tid==-1&& keyword != "")
             {
@@ -171,7 +152,7 @@ namespace BiliLite.Api.User
                 api.baseUrl = $"{ApiHelper.API_BASE_URL}/x/relation/tag";
                 api.parameter += $"&tagid={tid}&mid={mid}";
             }
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter = await ApiHelper.GetWbiSign(api.parameter);
             return api;
         }
 

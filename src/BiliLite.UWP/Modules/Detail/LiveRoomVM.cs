@@ -598,9 +598,7 @@ namespace BiliLite.Modules
                         if (Ranks == null)
                         {
                             Ranks = new List<LiveRoomRankVM>() {
-                                new LiveRoomRankVM(RoomID,data.data.room_info.uid,"金瓜子榜","gold-rank"),
-                                new LiveRoomRankVM(RoomID,data.data.room_info.uid,"今日礼物榜","today-rank"),
-                                new LiveRoomRankVM(RoomID,data.data.room_info.uid,"七日礼物榜","seven-rank"),
+                                new LiveRoomRankVM(RoomID,data.data.room_info.uid,"高能用户贡献榜","contribution-rank"),
                                 new LiveRoomRankVM(RoomID,data.data.room_info.uid,"粉丝榜","fans"),
                             };
                             SelectRank = Ranks[0];
@@ -1330,7 +1328,7 @@ namespace BiliLite.Modules
                 var api = liveRoomAPI.FansList(Uid, RoomID, Page);
                 if (RankType != "fans")
                 {
-                    api = liveRoomAPI.RoomRankList(Uid, RoomID, RankType, Next);
+                    api = liveRoomAPI.RoomRankList(Uid, RoomID, "online_rank", "contribution_rank");
                 }
                 var result = await api.Request();
                 if (result.status)
@@ -1338,7 +1336,8 @@ namespace BiliLite.Modules
                     var data = result.GetJObject();
                     if (data["code"].ToInt32() == 0)
                     {
-                        var list = JsonConvert.DeserializeObject<List<LiveRoomRankItemModel>>(data["data"]["list"].ToString());
+                        var listData = RankType == "fans" ? data["data"]["list"] : data["data"]["item"];
+                        var list = JsonConvert.DeserializeObject<List<LiveRoomRankItemModel>>(listData.ToString());
                         if (list != null)
                         {
                             foreach (var item in list)
@@ -1347,12 +1346,7 @@ namespace BiliLite.Modules
                             }
                         }
 
-                        if (RankType != "fans")
-                        {
-                            Next = data["data"]["next_offset"].ToInt32();
-                            CanLoadMore = Next != 0;
-                        }
-                        else
+                        if (RankType == "fans")
                         {
                             var total = data["data"]["total_page"].ToInt32();
                             if (Page < total)
@@ -1463,7 +1457,9 @@ namespace BiliLite.Modules
         {
             try
             {
-                var result = await liveRoomAPI.RoomLotteryInfo(roomId).Request();
+                var buvidResults = await liveRoomAPI.GetBuvid().Request();
+                var buvid3 = buvidResults.GetJObject()["data"]["b_3"].ToString();
+                var result = await liveRoomAPI.RoomLotteryInfo(roomId, buvid3).Request();
                 if (result.status)
                 {
                     var obj = await result.GetData<JObject>();

@@ -34,7 +34,7 @@ namespace BiliLite.Modules.User
             try
             {
                 await Api.ApiHelper.LoadWbiKey();
-                var api = usev2 ? userDetailAPI.UserInfoWbi(mid) : userDetailAPI.UserInfo(mid);
+                var api = usev2 ? await userDetailAPI.UserInfoWbi(mid) : await userDetailAPI.UserInfo(mid);
                 var result = await api.Request();
                 if (result.status)
                 {
