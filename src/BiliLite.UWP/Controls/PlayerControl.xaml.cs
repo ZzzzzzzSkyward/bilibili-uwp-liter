@@ -1315,7 +1315,7 @@ namespace BiliLite.Controls
             await ChangedNode(choice.id, choice.cid.ToString());
         }
 
-        private async Task ChangedNode(long node_id, string cid)
+        private async Task ChangedNode(int node_id, string cid)
         {
             InteractionChoices.Visibility = Visibility.Collapsed;
             CurrentPlayItem.cid = cid;

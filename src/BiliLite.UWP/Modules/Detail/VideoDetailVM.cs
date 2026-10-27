@@ -154,38 +154,68 @@ namespace BiliLite.Modules
                 Loaded = false;
                 Loading = true;
                 ShowError = false;
-                var results = await videoAPI.Detail(id, isbvid).Request();
-                if (results.status)
+                var needGetUserReq = false;
+                var webResult = await videoAPI.DetailWebInterface(id, isbvid).Request();
+                var webRelatesResult = await videoAPI.RelatesWebInterface(id, isbvid).Request();
+                ApiDataModel<VideoDetailModel> data = null;
+                if (webResult.status && webRelatesResult.status)
                 {
-                    var data = await results.GetJson<ApiDataModel<VideoDetailModel>>();
-                    if (!data.success)
+                    data = await webResult.GetJson<ApiDataModel<VideoDetailModel>>();
+                    if (data.success)
+                    {
+                        data.data.short_link = "https://b23.tv/" + data.data.bvid;
+                        var relatesData = await webRelatesResult.GetJson<ApiDataModel<List<VideoDetailRelatesModel>>>();
+                        if (relatesData.success)
+                        {
+                            data.data.relates = relatesData.data;
+                            needGetUserReq = true;
+                        }
+                        else
+                        {
+                            data = null;
+                        }
+                    }
+                }
+
+                // The app endpoint remains a fallback when either web read is unavailable.
+                if (data == null || !data.success)
+                {
+                    var results = await videoAPI.Detail(id, isbvid).Request();
+                    if (results.status)
+                    {
+                        data = await results.GetJson<ApiDataModel<VideoDetailModel>>();
+                    }
+                    else
                     {
                         var result_proxy = await videoAPI.DetailProxy(id, isbvid).Request();
                         if (result_proxy.status)
                         {
                             data = await result_proxy.GetJson<ApiDataModel<VideoDetailModel>>();
                         }
-                    }
-                    if (data.success)
-                    {
-                        VideoInfo = data.data;
-                        Loaded = true;
-
-                        await LoadFavorite(data.data.aid);
-                    }
-                    else
-                    {
-                        ShowError = true;
-                        ErrorMsg = data.message;
-                        //Utils.ShowMessageToast(data.message);
+                        else
+                        {
+                            ShowError = true;
+                            ErrorMsg = results.message;
+                        }
                     }
                 }
-                else
+
+                if (data != null && data.success)
+                {
+                    VideoInfo = data.data;
+                    Loaded = true;
+                    if (needGetUserReq)
+                    {
+                        await GetAttentionUp();
+                        await GetUserVideoStates();
+                    }
+                    await LoadVideoTags(data.data.aid);
+                    await LoadFavorite(data.data.aid);
+                }
+                else if (!ShowError)
                 {
                     ShowError = true;
-                    ErrorMsg = results.message;
-                    //Utils.ShowMessageToast(results.message);
-
+                    ErrorMsg = data?.message ?? "视频详情读取失败";
                 }
             }
             catch (Exception ex)
@@ -198,6 +228,105 @@ namespace BiliLite.Modules
             finally
             {
                 Loading = false;
+            }
+        }
+
+        private async Task LoadVideoTags(string aid)
+        {
+            try
+            {
+                var results = await videoAPI.Tags(aid).Request();
+                if (!results.status)
+                {
+                    return;
+                }
+                var data = await results.GetJson<ApiDataModel<List<VideoDetailTagModel>>>();
+                if (data.success && VideoInfo != null)
+                {
+                    VideoInfo.tag = data.data;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+            }
+        }
+
+        private async Task GetAttentionUp()
+        {
+            VideoInfo.req_user ??= new VideoDetailReqUserModel();
+            VideoInfo.req_user.attention = -999;
+            if (!SettingHelper.Account.Logined)
+            {
+                return;
+            }
+
+            try
+            {
+                var result = await followAPI.GetAttention(VideoInfo.owner.mid).Request();
+                if (!result.status)
+                {
+                    return;
+                }
+
+                var data = await result.GetJson<ApiDataModel<JObject>>();
+                var attribute = data.data?["attribute"]?.ToObject<int>();
+                if (attribute == 2 || attribute == 6)
+                {
+                    VideoInfo.req_user.attention = 1;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+            }
+        }
+
+        private async Task GetUserVideoStates()
+        {
+            try
+            {
+                if (!SettingHelper.Account.Logined || VideoInfo == null)
+                {
+                    return;
+                }
+
+                VideoInfo.req_user ??= new VideoDetailReqUserModel();
+                var likeTask = videoAPI.HasLike(VideoInfo.aid, VideoInfo.bvid).Request();
+                var coinTask = videoAPI.HasCoin(VideoInfo.aid, VideoInfo.bvid).Request();
+                var favoriteTask = videoAPI.HasFav(VideoInfo.aid, VideoInfo.bvid).Request();
+                await Task.WhenAll(likeTask, coinTask, favoriteTask);
+
+                if (likeTask.Result.status)
+                {
+                    var data = await likeTask.Result.GetJson<ApiDataModel<int>>();
+                    if (data.success)
+                    {
+                        VideoInfo.req_user.like = data.data == 1 ? 1 : 0;
+                    }
+                }
+
+                if (coinTask.Result.status)
+                {
+                    var data = await coinTask.Result.GetJson<ApiDataModel<JObject>>();
+                    if (data.success && data.data?["multiply"] != null)
+                    {
+                        VideoInfo.req_user.coin = data.data["multiply"].ToObject<int>() > 0 ? 1 : 0;
+                    }
+                }
+
+                if (favoriteTask.Result.status)
+                {
+                    var data = await favoriteTask.Result.GetJson<ApiDataModel<JObject>>();
+                    if (data.success && data.data?["favoured"] != null)
+                    {
+                        VideoInfo.req_user.favorite = data.data["favoured"].ToObject<bool>() ? 1 : 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
             }
         }
         public void Refresh()

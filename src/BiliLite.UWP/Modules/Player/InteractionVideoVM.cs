@@ -54,7 +54,7 @@ namespace BiliLite.Modules.Player
             set { _select = value; DoPropertyChanged("Select"); }
         }
 
-        public async Task GetNodes(long edge_id = 0)
+        public async Task GetNodes(int edge_id = 0)
         {
             try
             {
@@ -125,7 +125,7 @@ namespace BiliLite.Modules.Player
   
     public class InteractionEdgeInfoChoiceModel
     {
-        public long id { get; set; }
+        public int id { get; set; }
         public string platform_action { get; set; }
         public string native_action { get; set; }
         public string condition { get; set; }
@@ -138,7 +138,7 @@ namespace BiliLite.Modules.Player
 
     public class InteractionEdgeInfoQuestionModel
     {
-        public long id { get; set; }
+        public int id { get; set; }
         public int type { get; set; }
         public int start_time_r { get; set; }
         public int duration { get; set; }
