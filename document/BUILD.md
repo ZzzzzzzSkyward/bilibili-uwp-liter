@@ -3,13 +3,14 @@
 ## Run the script
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -NoVersionBump
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1
 ```
 
 - Use the `.ps1` directly. `build-release-x64.bat` is the double-click wrapper and ends with `pause`, so it blocks non-interactive runs.
 - The script locates MSBuild through `vswhere`, restores both `packages.config` and `PackageReference` projects, then builds `Release|x64` with `-p:AppxPackageDir=Z:\`. Do not call MSBuild yourself; the script already handles the restore and output directory.
 - The output directory must exist (`Z:\` by default, override with `-OutputDir`).
-- `-NoVersionBump` keeps the manifest version while iterating. Without it, every run raises the revision of both `Package.appxmanifest` files (for example `1.0.9.2` to `1.0.9.3`) before building, so repeated debugging runs leave version changes in the working tree.
+- Every run bumps the version on its own: before building, the script raises the revision of both `src/BiliLite.UWP/Package.appxmanifest` and `src/BiliLite.Packages/Package.appxmanifest` (for example `1.0.9.3` to `1.0.9.4`), so each build ships a higher, installable version. Do not pass a flag to get this, and do not hand-edit the manifests to bump them; a sideloaded package at an unchanged version silently replaces the installed app instead of upgrading it.
+- Commit the bumped manifests together with the change that triggered the build. `-NoVersionBump` is an escape hatch for a throwaway rebuild at the current version (for example, re-running a failed build while diagnosing); it must not be the default in a release or verification run.
 - A full run takes about two minutes. Let it finish and read the result once, rather than polling.
 
 ## Read the errors
@@ -34,10 +35,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -NoV
 ## Verify
 
 - Re-run the same command. A real verification is the full pipeline: NuGet restore, C# compile, XAML compile, PRI generation, and MSIX packaging.
-- Check the produced files on disk (`ls -l` on the two `.msix` paths) and report their sizes, not just the exit code.
+- Check the produced files on disk (`ls -l` on the two `.msix` paths) and report their sizes, not just the exit code. The filenames must carry the version the build just bumped to; a package still at the previous version means the run used `-NoVersionBump` by mistake.
 
 ## Commit and push
 
-- `git add -A`, then commit the source fix. If the build bumped the manifests, include them and say so in the commit message.
+- `git add -A`, then commit the source fix. The build's manifest bump is part of the build, so it belongs in that commit; say so in the commit message.
 - Push to `work` (`git push origin work`), which tracks `origin/work`. `master` is a separate ancestor branch; do not push build fixes there.
-- In the summary, state the exact error that was fixed, the change, the verification command, and the emitted `.msix` paths.
+- In the summary, state the exact error that was fixed, the change, the verification command, and the emitted `.msix` paths with their version.
