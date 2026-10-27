@@ -46,7 +46,7 @@ message CommandDmOtt {
     int64 oid = 2;
     // 发送者mid
     int64 mid = 3;
-    // 
+    //
     int32 type = 4;
     // 互动弹幕指令
     string command = 5;

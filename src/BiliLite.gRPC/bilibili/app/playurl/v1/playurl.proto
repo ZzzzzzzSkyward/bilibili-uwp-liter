@@ -82,7 +82,7 @@ enum CodeType {
 
 // 设置类型
 enum ConfType {
-    NoType         = 0; // 
+    NoType         = 0; //
     FLIPCONF       = 1; // 镜像反转
     CASTCONF       = 2; // 视频投屏
     FEEDBACK       = 3; // 反馈
@@ -233,10 +233,10 @@ message Glance {
     int64 times = 2;
     //
     int64 duration = 3;
-} 
+}
 
 //
-enum Group { 
+enum Group {
     UnknownGroup = 0; //
     A            = 1; //
     B            = 2; //
