@@ -254,7 +254,7 @@ namespace BiliLite.Modules
 
         private async Task GetAttentionUp()
         {
-            VideoInfo.req_user ??= new VideoDetailReqUserModel();
+            VideoInfo.req_user = VideoInfo.req_user ?? new VideoDetailReqUserModel();
             VideoInfo.req_user.attention = -999;
             if (!SettingHelper.Account.Logined)
             {
@@ -291,7 +291,7 @@ namespace BiliLite.Modules
                     return;
                 }
 
-                VideoInfo.req_user ??= new VideoDetailReqUserModel();
+                VideoInfo.req_user = VideoInfo.req_user ?? new VideoDetailReqUserModel();
                 var likeTask = videoAPI.HasLike(VideoInfo.aid, VideoInfo.bvid).Request();
                 var coinTask = videoAPI.HasCoin(VideoInfo.aid, VideoInfo.bvid).Request();
                 var favoriteTask = videoAPI.HasFav(VideoInfo.aid, VideoInfo.bvid).Request();

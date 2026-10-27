@@ -27,7 +27,7 @@ namespace BiliLite.Modules.Player.Playurl
     {
         protected bool IsDownload { get; set; } = false;
         protected readonly PlayerAPI playerAPI = new PlayerAPI();
-        protected readonly gRPC.Api.PlayURL playUrlApi = new PlayURL();
+        protected readonly gRPC.Api.PlayURL playUrlApi = new gRPC.Api.PlayURL();
         /// <summary>
         /// 是否开启替换CDN选项
         /// </summary>
