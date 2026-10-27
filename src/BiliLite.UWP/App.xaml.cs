@@ -6,6 +6,7 @@ using Microsoft.Toolkit.Uwp.Helpers;
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.ApplicationModel.Core;
@@ -43,9 +44,13 @@ namespace BiliLite
 
             this.InitializeComponent();
 
+            LogHelper.Initialize();
+            LogHelper.Log("Application constructed", LogType.INFO);
             App.Current.UnhandledException += App_UnhandledException;
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
             FFmpegInteropLogging.SetLogLevel(LogLevel.Info);
             FFmpegInteropLogging.SetLogProvider(this);
+            LogHelper.Log("FFmpeg diagnostics enabled at Info level", LogType.INFO);
             SqlHelper.InitDB();
             this.Suspending += OnSuspending;
         }
@@ -61,6 +66,7 @@ namespace BiliLite
             try
             {
                 LogHelper.Log("程序运行出现错误", LogType.ERROR, e.Exception);
+                LogHelper.Flush();
                 Utils.ShowMessageToast("程序出现一个错误，已记录",e.Exception.ToString());
             }
             catch (Exception)
@@ -73,6 +79,7 @@ namespace BiliLite
             try
             {
                 LogHelper.Log("程序运行出现错误", LogType.ERROR, e.Exception);
+                LogHelper.Flush();
                 Utils.ShowMessageToast("程序出现一个错误，已记录");
             }
             catch (Exception)
@@ -81,9 +88,15 @@ namespace BiliLite
 
         }
 
+        private void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            LogHelper.Log("Unobserved task exception", LogType.ERROR, e.Exception);
+            LogHelper.Flush();
+        }
+
         public void Log(LogLevel level, string message)
         {
-            System.Diagnostics.Debug.WriteLine("FFmpeg ({0}): {1}", level, message);
+            LogHelper.Log("FFmpeg (" + level + "): " + message, LogType.DEBUG);
         }
         /// <summary>
         /// 在应用程序由最终用户正常启动时进行调用。
@@ -92,6 +105,8 @@ namespace BiliLite
         /// <param name="e">有关启动请求和过程的详细信息。</param>
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
+            RegisterExceptionHandlingSynchronizationContext();
+            LogHelper.Log("Application launched; prelaunch=" + e.PrelaunchActivated, LogType.INFO);
             LoadTheme();
             Navigation(e.Arguments,e.PrelaunchActivated);
             
@@ -100,6 +115,7 @@ namespace BiliLite
 
         private async void Navigation(object arguments, bool prelaunch=false)
         {
+            LogHelper.Log("Navigation requested; prelaunch=" + prelaunch + "; argumentType=" + (arguments == null ? "null" : arguments.GetType().FullName), LogType.INFO);
             // We don't have ARM64 support of SYEngine.
             if (RuntimeInformation.ProcessArchitecture != Architecture.Arm64)
             {
@@ -146,10 +162,12 @@ namespace BiliLite
                     var mode = SettingHelper.GetValue<int>(SettingHelper.UI.DISPLAY_MODE, 0);
                     if (mode == 0)
                     {
+                        LogHelper.Log("Navigating to MainPage", LogType.INFO);
                         rootFrame.Navigate(typeof(MainPage), arguments);
                     }
                     else
                     {
+                        LogHelper.Log("Navigating to NoTabMainPage", LogType.INFO);
                         rootFrame.Navigate(typeof(NoTabMainPage), arguments);
                     }
                 }
@@ -163,6 +181,7 @@ namespace BiliLite
                 }
                 // 确保当前窗口处于活动状态
                 Window.Current.Activate();
+                LogHelper.Log("Main window activated", LogType.INFO);
                 SystemNavigationManagerPreview.GetForCurrentView().CloseRequested += OnExiting;
                 ExtendAcrylicIntoTitleBar();
             }
@@ -195,6 +214,7 @@ namespace BiliLite
         ///<param name="e">有关导航失败的详细信息</param>
         void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
+            LogHelper.Log("Navigation failed for page " + e.SourcePageType.FullName, LogType.ERROR);
             throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
         }
 
@@ -207,6 +227,8 @@ namespace BiliLite
         /// <param name="e">有关挂起请求的详细信息。</param>
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
+            LogHelper.Log("Application suspending", LogType.INFO);
+            LogHelper.Flush();
             var deferral = e.SuspendingOperation.GetDeferral();
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -240,10 +262,12 @@ namespace BiliLite
         protected override void OnActivated(IActivatedEventArgs args)
         {
             base.OnActivated(args);
-          
+            RegisterExceptionHandlingSynchronizationContext();
+            LogHelper.Log("Application activated; kind=" + args.Kind, LogType.INFO);
             if (args.Kind == ActivationKind.Protocol)
             {
                 ProtocolActivatedEventArgs eventArgs = args as ProtocolActivatedEventArgs;
+                LogHelper.Log("Protocol activation; scheme=" + eventArgs.Uri.Scheme + "; host=" + eventArgs.Uri.Host, LogType.INFO);
                 Navigation(eventArgs.Uri.AbsoluteUri ,false);
             }
            
@@ -258,6 +282,7 @@ namespace BiliLite
         /// <param name="e">有关挂起请求的详细信息。</param>
         private async void OnExiting(object sender, SystemNavigationCloseRequestedPreviewEventArgs e)
         {
+            LogHelper.Log("Application close requested", LogType.INFO);
             var deferral = e.GetDeferral();
             try
             {
@@ -295,6 +320,7 @@ namespace BiliLite
                 }
             }
             catch (Exception ex) { }
+            LogHelper.Flush();
             deferral.Complete();
         }
         public string ThemeXamlPath { get; set; } = "DefaultTheme.xaml";

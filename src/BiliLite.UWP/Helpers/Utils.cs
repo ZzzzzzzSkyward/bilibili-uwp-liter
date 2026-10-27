@@ -114,6 +114,7 @@ namespace BiliLite.Helpers
         {
             sb.AppendLine(message);
             sp?.Log(sb);
+            LogHelper.Log(message, LogType.DEBUG);
         }
         public static void ShowMessageToast(string message,string longmsg, int seconds = 10, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "", [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {

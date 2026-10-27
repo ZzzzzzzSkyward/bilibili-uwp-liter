@@ -44,7 +44,7 @@ Use only `/workspace/biliuwp-lite` at pinned commit `ca2caddc597b3faf05b4dac6dcb
 - [x] Fetch the configured target and fast-forward branch `work` from its tracked upstream with `--ff-only`.
 - [x] Clone and pin the sole behavioral reference locally.
 - [x] Inventory existing logger, crash hooks, request breadcrumbs, and settings UI.
-- [ ] Step 2: improve `LogHelper` session and exception persistence; capture app crash, lifecycle, navigation, and FFmpeg diagnostics in `App.xaml.cs`; persist the existing `Utils.AddALog` trace. Keep all diagnostics additive.
+- [x] Step 2: improve `LogHelper` session and exception persistence; capture app crash, lifecycle, navigation, and FFmpeg diagnostics in `App.xaml.cs`; persist the existing `Utils.AddALog` trace. Keep all diagnostics additive.
 - [ ] Step 3: add request IDs, duration, status, and API error breadcrumbs to HTTP/gRPC and high-value player/load failure paths. Use the pinned sibling only for any API behavior context; diagnostics must not change API behavior.
 - [ ] Step 4: add a simple Settings export/report marker and clear user feedback instructions for sharing the exported logs. Review the export for sensitive request data.
 - [ ] At each step, update this progress file and commit the bounded implementation. Run only `git diff --check`; do not build, restore, run, test, validate, or issue API requests here.
