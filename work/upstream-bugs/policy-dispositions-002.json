@@ -1,0 +1,114 @@
+{
+  "batch": 2,
+  "baseline": {
+    "target_commit": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
+    "sibling_path": "/workspace/biliuwp-lite",
+    "sibling_commit": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"
+  },
+  "dispositions": [
+    {
+      "issue": 24,
+      "subitem": "whole_report",
+      "disposition": "skipped_skeptical",
+      "confidence": "high",
+      "evidence": [
+        "GitHub issue #24 has no body; reporter's only comment says Bilibili seems to have removed/hidden the Hot content.",
+        "Target src/BiliLite.UWP/Modules/Home/HotVM.cs parses the response data and filters to av cards; src/BiliLite.UWP/Api/Home/HotApi.cs builds the Popular request.",
+        "Pinned sibling corresponding path: src/BiliLite.UWP/ViewModels/Home/HotViewModel.cs and src/BiliLite.UWP/Models/Requests/Api/Home/HotApi.cs have the same behavior."
+      ],
+      "reason": "No failing response or client cause; the reporter attributes missing items to service-side hiding.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 27,
+      "subitem": "whole_report",
+      "disposition": "skipped_non_logic",
+      "confidence": "high",
+      "evidence": [
+        "Issue describes a stale app-framework URL in a PDF help document and a domain suffix workaround."
+      ],
+      "reason": "Documentation/link maintenance, not an application logic behavior.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 28,
+      "subitem": "whole_report",
+      "disposition": "skipped_skeptical",
+      "confidence": "high",
+      "evidence": [
+        "Issue reports package parsing failure during installation.",
+        "Reporter confirms PowerShell Add-AppxPackage installation works; no package identity/parser details or failure after that workaround are supplied."
+      ],
+      "reason": "The confirmed installation-method workaround does not establish a defective package or target-side logic cause.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 31,
+      "subitem": "cookie_refresh_and_play_url_quality",
+      "disposition": "validated_logic_present",
+      "confidence": "medium",
+      "evidence": [
+        "Target src/BiliLite.UWP/Api/ApiHelper.cs:352-394 checks cookie state and records the refresh timestamp; src/BiliLite.UWP/Modules/Player/Playurl/BiliPayUrlRequest.cs:611-624 calls the check before requesting the play URL.",
+        "Target ApiHelper.RefreshCookie is async void (ApiHelper.cs:419), so GetPlayUrlUseWebApi does not await refresh completion before issuing the play-URL request.",
+        "Target ApiHelper.cs:493-501 constructs the confirm POST as api3 but awaits api.Request() instead, repeating the previous correspond-path GET and never sending the constructed confirm request.",
+        "Pinned sibling src/BiliLite.UWP/Modules/User/Account.cs:509-560 awaits cookie check, refresh, and confirmation in sequence; src/BiliLite.UWP/Pages/HomePage.xaml.cs:82-90 awaits that check in the logged-in startup path.",
+        "Issue comments report recurring quality drop after several days; maintainer suspects cookie refresh and later says sibling v4.6.3 adds cookie refresh handling, without a final retest result."
+      ],
+      "reason": "The target has a refresh implementation, but its playback call does not await it and its constructed confirmation request is never sent. The issue discussion connects the symptom to cookie refresh, but the missing response payload leaves the precise symptom contribution unverified.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 36,
+      "subitem": "previous_next_part_hotkeys",
+      "disposition": "skipped_skeptical",
+      "confidence": "medium",
+      "evidence": [
+        "Target src/BiliLite.UWP/Controls/PlayerControl.xaml.cs:529-558 calls SetPlayItem with the adjacent index.",
+        "Target src/BiliLite.UWP/Controls/PlayerControl.xaml.cs SetPlayItem raises ChangeEpisodeEvent; target src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs:447-462 synchronizes the selected index and suppresses recursive playback selection.",
+        "Pinned sibling src/BiliLite.UWP/Controls/PlayerControl.xaml.cs exposes GotoLastVideo/GotoNextVideo by changing the selected index, which drives selection-based playback."
+      ],
+      "reason": "The target call chain advances and synchronizes the index, and available source does not explain the reported one-press-only behavior or establish the upstream correction's applicability.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 36,
+      "subitem": "logged_in_anime_and_cinema_follow_loading",
+      "disposition": "skipped_skeptical",
+      "confidence": "high",
+      "evidence": [
+        "Issue stack identifies AnimeVM.GetFollows; target src/BiliLite.UWP/Modules/Home/AnimeVM.cs:178-205 dereferences data.result[\"follow_list\"] after data.success, and CinemaVM.GetFollows has the same shape.",
+        "Pinned sibling src/BiliLite.UWP/ViewModels/Home/AnimePageViewModel.cs:206-230 and CinemaViewModel.cs:237-260 use the same dereference pattern.",
+        "Target and sibling Modules/User/MyFollowSeasonVM check for a missing follow_list key and treat it as empty, but both access data.result before checking the key.",
+        "Issue supplies no response payload or null receiver; stack identifies the method but not which expression was null."
+      ],
+      "reason": "A null dereference is possible in the reported method, but the issue does not establish the null value or a target-specific input/logic fault; pinned sibling home paths have the same behavior.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 36,
+      "subitem": "danmaku_filter_sync_null_source",
+      "disposition": "skipped_skeptical",
+      "confidence": "medium",
+      "evidence": [
+        "Target src/BiliLite.UWP/Modules/SettingVM.cs:101-153 deserializes data.rule and immediately calls Where on the resulting list; a null list throws and is caught/logged.",
+        "Reporter says the log did not affect use; maintainer requested a script-install retest, with no result in the discussion.",
+        "Pinned sibling has analogous parse-and-iterate behavior in src/BiliLite.UWP/ViewModels/Settings/VideoDanmakuSettingsControlViewModel.cs:80 onward."
+      ],
+      "reason": "The null-input condition depends on an unprovided response/install context, and the report establishes no user-visible failure.",
+      "suggested_unit_case": null,
+      "fix": null
+    }
+  ],
+  "validation": {
+    "application_source_changed": false,
+    "unit_tests_run": false,
+    "build_restore_or_app_run": false,
+    "reason_no_unit_run": "The direct findings were established by source-path evidence; the available environment has no C# execution host, and no synthetic runtime was installed."
+  }
+}
