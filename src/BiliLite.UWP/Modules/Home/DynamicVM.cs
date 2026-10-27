@@ -8,14 +8,18 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using BiliLite.Services;
 namespace BiliLite.Modules
 {
     public class DynamicVM : IModules
     {
-        readonly Api.User.DynamicAPI dynamicAPI;
+        private readonly GrpcService _grpcService;
+        private int _page = 1;
+        private string _historyOffset;
+        private string _updateBaseline;
         public DynamicVM()
         {
-            dynamicAPI = new Api.User.DynamicAPI();
+            _grpcService = new GrpcService();
             dynamicItemDataTemplateSelector = new DynamicItemDataTemplateSelector();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
@@ -44,7 +48,7 @@ namespace BiliLite.Modules
             set { _Items = value; DoPropertyChanged("Items"); }
         }
 
-        public async Task GetDynamicItems(string idx = "")
+        public async Task GetDynamicItems(int page = 1)
         {
             var stage = "request-start";
             try
@@ -52,54 +56,40 @@ namespace BiliLite.Modules
                 Loading = true;
                 CanLoadMore = false;
                 _lastPageFailed = false;
-                LogHelper.Log("Home dynamics stage=request-start mode=" + (idx == "" ? "latest" : "history"), LogType.DEBUG);
-                var api = dynamicAPI.DyanmicNew(Api.User.DynamicAPI.UserDynamicType.Video);
-                if (idx != "")
+                if (page == 1)
                 {
-                    api = dynamicAPI.HistoryDynamic(idx, Api.User.DynamicAPI.UserDynamicType.Video);
+                    _historyOffset = null;
+                    _updateBaseline = null;
                 }
-                var results = await api.Request();
+                LogHelper.Log("Home dynamics stage=request-start rpc=Dynamic/DynVideo page=" + page
+                    + " hasHistoryOffset=" + !string.IsNullOrEmpty(_historyOffset)
+                    + " hasUpdateBaseline=" + !string.IsNullOrEmpty(_updateBaseline), LogType.DEBUG);
+                var result = await _grpcService.GetDynVideo(page, _historyOffset, _updateBaseline);
                 stage = "response-received";
-                LogHelper.Log("Home dynamics stage=response-received status=" + results.status, LogType.DEBUG);
-                if (results.status)
+                var dynamicList = result.DynamicList;
+                var mappedItems = DynamicGrpcMapper.MapToHomeItems(dynamicList.List);
+                LogHelper.Log("Home dynamics stage=response-mapped rpc=Dynamic/DynVideo page=" + page
+                    + " sourceCount=" + dynamicList.List.Count + " mappedCount=" + mappedItems.Count + " hasMore=" + dynamicList.HasMore
+                    + " hasHistoryOffset=" + !string.IsNullOrEmpty(dynamicList.HistoryOffset)
+                    + " hasUpdateBaseline=" + !string.IsNullOrEmpty(dynamicList.UpdateBaseline), LogType.DEBUG);
+
+                stage = "collection-update";
+                if (page == 1 || Items == null)
                 {
-                    var data = results.GetJObject();
-                    var responseCode = data["code"].ToInt32();
-                    LogHelper.Log("Home dynamics stage=response-parsed code=" + responseCode, LogType.DEBUG);
-                    if (responseCode == 0)
-                    {
-                        stage = "cards-deserialize";
-                        var cardsJson = data["data"]["cards"].ToString();
-                        var items = JsonConvert.DeserializeObject<ObservableCollection<DynamicItemModel>>(cardsJson);
-                        var itemTypes = string.Join(",", items.Select(item => item.desc == null ? "null" : item.desc.type.ToString()).Distinct());
-                        LogHelper.Log("Home dynamics stage=cards-deserialized count=" + items.Count + " types=" + itemTypes, LogType.DEBUG);
-                        stage = "collection-update";
-                        if (Items == null)
-                        {
-                            Items = items;
-                        }
-                        else
-                        {
-                            foreach (var item in items)
-                            {
-                                Items.Add(item);
-                            }
-                        }
-                        LogHelper.Log("Home dynamics stage=items-published count=" + Items.Count, LogType.DEBUG);
-                        CanLoadMore = items.Count > 0;
-                    }
-                    else
-                    {
-                        _lastPageFailed = true;
-                        Utils.ShowMessageToast(data["message"].ToString());
-                    }
+                    Items = new ObservableCollection<DynamicItemModel>(mappedItems);
                 }
                 else
                 {
-                    _lastPageFailed = true;
-                    Utils.ShowMessageToast(results.message);
-
+                    foreach (var item in mappedItems)
+                    {
+                        Items.Add(item);
+                    }
                 }
+                _historyOffset = dynamicList.HistoryOffset;
+                _updateBaseline = dynamicList.UpdateBaseline;
+                _page = page;
+                CanLoadMore = dynamicList.HasMore;
+                LogHelper.Log("Home dynamics stage=items-published page=" + _page + " count=" + Items.Count, LogType.DEBUG);
             }
             catch (Exception ex)
             {
@@ -123,7 +113,10 @@ namespace BiliLite.Modules
             Items = null;
             CanLoadMore = false;
             _lastPageFailed = false;
-            await GetDynamicItems();
+            _page = 1;
+            _historyOffset = null;
+            _updateBaseline = null;
+            await GetDynamicItems(1);
         }
         public async void LoadMore()
         {
@@ -135,8 +128,7 @@ namespace BiliLite.Modules
             {
                 return;
             }
-            var last = Items.LastOrDefault();
-            await GetDynamicItems(last.desc.dynamic_id);
+            await GetDynamicItems(_page + 1);
         }
 
 
@@ -154,6 +146,12 @@ namespace BiliLite.Modules
         /// </summary>
         private string _card;
         private DynamicVideoCardModel _video;
+        public DynamicVideoCardModel Video
+        {
+            get { return _video; }
+            set { _video = value; }
+        }
+        public DynamicSeasonCardModel Season { get; set; }
         public string card
         {
             get { return _card; }
@@ -161,6 +159,7 @@ namespace BiliLite.Modules
             {
                 _card = value;
                 _video = null;
+                Season = null;
             }
         }
         public DynamicDescModel desc { get; set; }
@@ -168,7 +167,7 @@ namespace BiliLite.Modules
         {
             get
             {
-                if (desc != null && desc.type == 8)
+                if (desc != null && (desc.type == 8 || desc.type == 4310))
                 {
                     if (_video == null)
                     {
@@ -187,6 +186,7 @@ namespace BiliLite.Modules
                 }
                 return null;
             }
+            set { _video = value; }
         }
         public DynamicSeasonCardModel season
         {
@@ -194,10 +194,11 @@ namespace BiliLite.Modules
             {
                 if (desc != null && desc.type == 512)
                 {
-                    return Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicSeasonCardModel>(card);
+                    return Season ?? Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicSeasonCardModel>(card);
                 }
                 return null;
             }
+            set { Season = value; }
         }
     }
     public class DynamicItemDataTemplateSelector : DataTemplateSelector
@@ -207,7 +208,7 @@ namespace BiliLite.Modules
         {
             var card = item as DynamicItemModel;
             LogHelper.Log("Home dynamics stage=template-select type=" + (card?.desc == null ? "null" : card.desc.type.ToString()) + " dynamicId=" + (card?.desc?.dynamic_id ?? ""), LogType.DEBUG);
-            if (card.desc.type == 8)
+            if (card.desc.type == 8 || card.desc.type == 4310)
             {
                 return resource["DynamicVideo"] as DataTemplate;
             }
@@ -221,7 +222,7 @@ namespace BiliLite.Modules
     {
         public string uid { get; set; }
         /// <summary>
-        /// 8=视频，512=番剧
+        /// 8=视频，512=番剧，4310=用户投稿合集
         /// </summary>
         public int type { get; set; }
         public string rid { get; set; }
