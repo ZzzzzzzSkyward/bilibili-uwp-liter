@@ -1,10 +1,10 @@
 # Upstream issue assessment progress
 
-## Current step: batch 002 complete; root review and push pending
+## Current step: batch 002 complete; awaiting user build/testing
 
 Assessment covered all 96 original batches; the original catalog retains 757 issues and 477 bug candidates. The assessment contained no application fixes; implementation is tracked separately below.
 
-The assessment handoff is [VALIDATED_LOGIC_BUGS.md](work/upstream-bugs/VALIDATED_LOGIC_BUGS.md): **15 actionable logic findings**, with **six direct isolated unit probes** and **nine source-only findings**. The machine-readable handoff is [assessment-final.json](work/upstream-bugs/assessment-final.json). The pending assessment queue is empty. The user authorized implementation fixes. Batch 001 fixed #31, #105, and #121; batch 002 fixed the next findings, #146, #275, and #358, in order. #378 is next. Root review and push are pending. Track implementation separately in [UPSTREAM_BUG_FIX_PROGRESS.md](UPSTREAM_BUG_FIX_PROGRESS.md), preserving the assessment records as historical findings.
+The assessment handoff is [VALIDATED_LOGIC_BUGS.md](work/upstream-bugs/VALIDATED_LOGIC_BUGS.md): **15 actionable logic findings**, with **six direct isolated unit probes** and **nine source-only findings**. The machine-readable handoff is [assessment-final.json](work/upstream-bugs/assessment-final.json). The pending assessment queue is empty. The user authorized implementation fixes. Batch 001 fixed #31, #105, and #121; batch 002 fixed #146, #275, and #358. The application changes through `f6c8a4f` were reviewed and pushed to `origin/work`; the pinned-comment and history probes pass. User build/testing is pending. #378 is next. Track implementation separately in [UPSTREAM_BUG_FIX_PROGRESS.md](UPSTREAM_BUG_FIX_PROGRESS.md), preserving the assessment records as historical findings.
 
 Visual review belongs to the user. The original 59 assignments remain in `work/upstream-bugs/user-visual-review.json`; 19 additions are in [USER_VISUAL_REVIEW_ADDITIONS.md](work/upstream-bugs/USER_VISUAL_REVIEW_ADDITIONS.md). The final handoff records all 78 assigned IDs.
 
