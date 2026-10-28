@@ -498,7 +498,7 @@ namespace BiliLite.Api
                 baseUrl = url3,
                 body = $"csrf={GetCSRF()}&refresh_token={token}"
             };
-            var result3 = await api.Request();
+            var result3 = await api3.Request();
             _need_refresh_cookie = false;
         }
         public static string GetRefreshToken()

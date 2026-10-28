@@ -7,7 +7,7 @@ source_file="$repo_root/src/BiliLite.UWP/Api/ApiHelper.cs"
 fragment="$script_dir/refresh-cookie-dispatch-fragment.csx"
 harness="$script_dir/refresh-cookie-dispatch-test.csx"
 sed -n '493,502p' "$source_file" > "$fragment"
-grep -Fq 'var result3 = await api.Request();' "$fragment"
+grep -Fq 'var result3 = await api3.Request();' "$fragment"
 cat > "$harness" <<'CSHARP'
 using System;
 using System.Collections.Generic;
