@@ -42,6 +42,11 @@
 
 ## Next step: AUTH-01b isolated secondary-verification integration
 
+- AUTH-01a implementation `fbcf805` was reviewed and pushed normally to `origin/work`. The root review caught and corrected an initial refresh-path length mismatch before publication; the final exact 256-character hexadecimal check matches the actual RSA helper and existing refresh-dispatch tests pass.
+- Root ran the complete LM-01–05/API/auth offline runner successfully, with 47 API/auth assertions. Project XML and all affected Compile entries were verified. Final whitespace verification includes the newly added reference files; a trailing blank line in the preserved AccountApi reference was removed in this checkpoint. Reference content is otherwise unchanged.
+- At the user's explicit request, root fetched and fast-forwarded the clean `work` branch from `e2c7958` to `6a6e8e6` before reading the restored handover. No further fetch/pull occurred. The missing standalone offline test SDK was restored to `/workspace/work/upstream-unit-tools`; no app build, restore, launch, protocol generation, or live application API test was run.
+- Resume AUTH-01b by adding isolated cookie-exchange response capture and a validated session-commit boundary, then adapt the pinned secondary-verification flow without reusing the target's manual-login type 3. Test malformed/failed/stale verification and exchange replies against an existing session before wiring UI. Real Windows cookies, login, and player behavior still require user application testing.
+
 ## Prior step: LM-02 reviewed and published; LM-03 next
 
 - LM-01 remains reviewed and published at the prior implementation commit. LM-02 starts from clean target HEAD `863cf0689796e10f6b8e329bac84316d9336c212`.

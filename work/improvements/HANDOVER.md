@@ -3,7 +3,7 @@
 ## Resume point
 
 - Repo: `/workspace/bilibili-uwp-liter`, branch `work`.
-- Prior published application baseline: `241c4e5` (API-01 reviewed). AUTH-01a reviewed; publication checkpoint follows in `IMPROVEMENT_PROGRESS.md`.
+- Published application baseline: `fbcf805` (AUTH-01a reviewed). No pending application changes.
 - Next: **AUTH-01b — isolated validated password-login secondary verification integration**.
 - Plan: `work/improvements/PLAN.md`. Detailed checkpoint: `IMPROVEMENT_PROGRESS.md`.
 
