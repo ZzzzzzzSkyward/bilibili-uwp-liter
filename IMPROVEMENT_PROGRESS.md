@@ -5,7 +5,7 @@
 - The integration baseline and preserved plan are committed in `3ede2d158d954745bf59674efc1e7992c10f9f28`.
 - `work/improvements/BASELINE.md` records the target and pinned sibling boundaries, relevant package versions, and explicit project compile inclusion constraints.
 
-## Completed step: LM-03 playback adapter
+## Current step: LM-03 reviewed and published; LM-04 next
 
 - Starting from clean target HEAD `d89722f` after setup checkpoint `e28d9d4`. LM-02 remains reviewed and published.
 - Added `LocalMediaPlaybackAdapter` to resolve manifest tracks through the saved FutureAccessList folder grant and map every item into the existing DASH player structures. Collection item selection opens `LocalPlayerPage` at the chosen playlist index. `LocalPlayInfo` keeps legacy fields and adds typed video/audio/subtitle/danmaku metadata; no track selector or subtitle/danmaku adapter is claimed.
@@ -28,7 +28,7 @@
 - `work/improvements/tests/run.sh` passes actual-source LM-01 checks and LM-02 service checks with stubs for UWP storage, persistence, and FutureAccessList boundaries. The harness covers import/reopen, invalid paths, missing assets, retained saved entries after failed reopen, and reimport deduplication. It does not prove real UWP permissions or process-restart behavior.
 - No SRT/VTT parser or runtime playback support was added; formats remain manifest declarations only until LM-05.
 
-## Next step: LM-03 playback adapter
+## Historical LM-02 handoff: LM-03 playback adapter
 
 - Map manifest items into the existing `PlayInfo` / `BiliPlayUrlInfo` path while preserving the legacy single-file and offline-download playback flows.
 - Do not add playback controls to the collection UI until those items are connected to the player.
@@ -44,7 +44,6 @@
 
 ## Remaining batches
 
-- LM-03: compatibility adapter to the existing player.
 - LM-04: video and audio track selection.
 - LM-05: subtitle and danmaku track loading, with the documented subtitle parser limits respected.
 - API/auth, gRPC, danmaku, and notification ports as scoped by `work/improvements/PLAN.md`.
@@ -64,3 +63,9 @@
 - Normal push to `origin/work` succeeded through `8be76ef`; this handoff is published separately. No pull/fetch was performed. Root `git diff 863cf06 --check` passed.
 - The agent ran the actual-source LM-01/LM-02 harness with storage/FutureAccessList stubs. Real Windows picker, persisted permission across process restart, and UI remain for user app testing. No app build, restore, launch, protocol generation or live API test was performed.
 - Resume at LM-03: use saved folder tokens to resolve `StorageFile` assets, adapt collection items to existing playlist/player models, and wire item playback. Preserve legacy single-file/download behavior and explicit subtitle defaults. Current collection controls import/reopen/view only; no collection playback or SRT/VTT rendering is claimed.
+
+## LM-03 publication checkpoint
+
+- Setup checkpoint `e28d9d4`; implementation `1bc25b6`. Root reviewed the playlist adapter, model additions, caller/index routing, engine file-handle handling, manifest-specific offline branches, and focused probe scope. Normal push to `origin/work` succeeded through `1bc25b6`; this handoff is published separately.
+- Root `git diff d89722f --check` passed. The agent ran the LM-01/02/03 actual-source harness and extracted #105 Dispose / #598 natural-end probes. Manifest history suppression is covered by those probes; decoder behavior, engine-switch event timing, and UI/storage permissions are source-reviewed only and require user app testing. No app build/restore/launch or live API test was performed. No pull/fetch was performed.
+- Resume at LM-04: add video/audio selectors using typed local track handles, preserve position and playing/paused state during switches, and retain native single-file and FFmpeg external-audio routing. LM-05 still owns subtitle parsers and manifest danmaku loading; these tracks are currently metadata only.
