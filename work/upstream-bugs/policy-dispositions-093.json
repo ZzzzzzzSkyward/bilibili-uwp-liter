@@ -1,0 +1,21 @@
+{
+  "batch": 93,
+  "issues": [
+    {
+      "issue": 1446,
+      "status": "skipped_skeptical"
+    },
+    {
+      "issue": 1447,
+      "status": "skipped_skeptical"
+    },
+    {
+      "issue": 1451,
+      "status": "user_visual"
+    },
+    {
+      "issue": 1459,
+      "status": "skipped_skeptical"
+    }
+  ]
+}
