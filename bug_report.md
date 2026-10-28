@@ -107,6 +107,33 @@ public static readonly DependencyProperty LoadMoreBottomOffsetProperty =
 
 ---
 
+## BR-08 — Opening 动态 fails outright when gRPC `DynAll` returns an empty frame
+
+**Severity:** high (the whole dynamic feed shows 0 items, reported by a user on 2026-10-28 21:17:04)
+
+Runtime log, clicking 动态:
+
+```
+ERROR User dynamic VM stage=feed-request failed | HResult=0x80131500 |
+System.Exception: 请求失败,没有数据返回    at BiliLite.Services.GrpcService.GetDynAll(Int32 page, String historyOffset)
+    at BiliLite.Modules.User.DynamicVM.GetDynamicItems(String idx, Boolean loadMore)
+INFO  Main dynamics stage=load-items-returned count=0
+```
+
+Chain, all source-verified:
+
+1. `src/BiliLite.gRPC/GrpcRequest.cs:110-130` decides success by `if (data.Length > 5)`. A gRPC response that carries only the 5-byte length-prefixed header with a **zero-length** protobuf body — which is what the server sends when it answers with no message — lands in the `else` and becomes `{ code = -102, status = false, message = "请求失败,没有数据返回" }`. The `grpc-status` trailer (requested via `TE: trailers` at `GrpcRequest.cs:94`) is never read, so an "empty but successful" reply and a real rejection are indistinguishable, and a genuinely empty feed can never be parsed into an empty `DynAllReply`.
+2. `src/BiliLite.UWP/Services/GrpcService.cs:27-37` turns that result into `throw new Exception(result.message)`.
+3. `src/BiliLite.UWP/Modules/User/DynamicVM.cs:400-512` has no catch-and-degrade around the `DynamicType.UserDynamic` branch, so the throw is the whole request: `Items` is never assigned, the legacy REST feed (`dynamicAPI.DyanmicNew`, reached only at `Modules/User/DynamicVM.cs:515`) is never attempted, and the page publishes `count=0`.
+4. Auth context: `GrpcService.GetRequestUserInfo()` (`Services/GrpcService.cs:65-72`) always sends `SettingHelper.Account.AccessKey`, which is empty when signed out, and `GrpcRequest.SendMessage` then sends `authorization: identify_v1 ` with no key (`GrpcRequest.cs:83`). `DynAll` is a logged-in endpoint, so a signed-out session is one plausible trigger for the empty frame; a temporary server-side rejection is the other. The log line alone cannot tell them apart, because nothing records the `grpc-status` value or the HTTP status of this failure path.
+
+**Decision requested** (three separable fixes; say which to take):
+1. Transport: read `grpc-status`/`grpc-message` from trailing headers, and treat `status=0` with an empty body as a successful empty message (`results = Array.Empty<byte>()`) instead of `-102`.
+2. Caller: pre-check login for `DynAll`/`DynVideo` and route to the login prompt, rather than sending `identify_v1 ` and reporting a transport error.
+3. Degradation: on gRPC feed failure, fall back to the REST feed so the user sees dynamics with a warning instead of an empty page — or surface a retry state instead of silently publishing `count=0`.
+
+My lean: 1 + 2 mandatory, 3 only if you accept that the REST feed is still a supported source.
+
 ## Process notes for the reviewer
 
 - Every approved item gets its own commit, message `Fix BR-0x …`, with the build evidence quoted.
