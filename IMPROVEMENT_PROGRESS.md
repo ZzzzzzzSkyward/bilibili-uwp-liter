@@ -5,13 +5,22 @@
 - The integration baseline and preserved plan are committed in `3ede2d158d954745bf59674efc1e7992c10f9f28`.
 - `work/improvements/BASELINE.md` records the target and pinned sibling boundaries, relevant package versions, and explicit project compile inclusion constraints.
 
-## Current step: LM-02 folder import
+## Current step: LM-02 folder import completed
 
 - LM-01 remains reviewed and published at the prior implementation commit. LM-02 starts from clean target HEAD `863cf0689796e10f6b8e329bac84316d9336c212`.
 - UI entrypoint: add a local media library pivot beside the existing offline downloads in `DownloadPage`; preserve the page's current single-file picker and downloaded-video playback handlers.
 - LM-02 service boundary: import a picked `StorageFolder`, load `bili-media.json`, resolve manifest-relative assets through UWP storage APIs, validate with the LM-01 validator, then save collection metadata and a FutureAccessList token. Saved collection rows reopen by token and are revalidated. The page exposes collection details only; item playback remains LM-03.
-- Import persistence happens only after every reference validates. Reimport should replace the saved registration for the same root/collection without leaving duplicate access-list tokens.
+- Import persistence happens only after every reference validates. Reimport replaces the saved registration for the same root/collection without leaving duplicate access-list tokens.
 - Keep failure messages useful and stage-specific while logging collection IDs only; do not log manifest contents, paths, or credentials.
+- Implemented `LocalMediaLibraryService` with folder import, storage API asset resolution, FutureAccessList token persistence, registry persistence, revalidation on reopen, and reimport deduplication. Failed imports leave prior registrations intact; failed reopen keeps the saved row available for repair/reimport.
+- Added a local media library pivot to `DownloadPage` for importing folders, listing saved collections, and viewing validated item titles. The existing single-file picker and offline download player handlers remain unchanged. Collection items do not start playback until LM-03 supplies the adapter.
+- `work/improvements/tests/run.sh` passes actual-source LM-01 checks and LM-02 service checks with stubs for UWP storage, persistence, and FutureAccessList boundaries. The harness covers import/reopen, invalid paths, missing assets, retained saved entries after failed reopen, and reimport deduplication. It does not prove real UWP permissions or process-restart behavior.
+- No SRT/VTT parser or runtime playback support was added; formats remain manifest declarations only until LM-05.
+
+## Next step: LM-03 playback adapter
+
+- Map manifest items into the existing `PlayInfo` / `BiliPlayUrlInfo` path while preserving the legacy single-file and offline-download playback flows.
+- Do not add playback controls to the collection UI until those items are connected to the player.
 
 ## Prior completed step: LM-01 reviewed and published
 

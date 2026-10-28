@@ -140,6 +140,34 @@
       </PivotItem>
       <PivotItem Margin="0">
         <PivotItem.Header>
+          <TextBlock FontSize="15">本地媒体库</TextBlock>
+        </PivotItem.Header>
+        <Grid Padding="16">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition/>
+          </Grid.RowDefinitions>
+          <StackPanel>
+            <TextBlock FontSize="20" Text="本地媒体库"/>
+            <TextBlock Margin="0 6 0 12" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap">导入包含 bili-media.json 的文件夹，并查看其中的媒体条目。</TextBlock>
+            <Button x:Name="ImportCollectionButton" Content="导入并查看媒体条目" Click="ImportCollectionButton_Click" HorizontalAlignment="Left"/>
+          </StackPanel>
+          <TextBlock Grid.Row="1" Margin="0 20 0 8" FontSize="16" Text="已保存的媒体库"/>
+          <ListView x:Name="SavedCollectionsList" Grid.Row="2" IsItemClickEnabled="True" ItemClick="SavedCollectionsList_ItemClick" SelectionMode="None">
+            <ListView.ItemTemplate>
+              <DataTemplate>
+                <StackPanel Padding="8">
+                  <TextBlock FontSize="16" Text="{Binding Title}"/>
+                  <TextBlock Margin="0 4 0 0" Foreground="{ThemeResource ForegroundTextColor}"><Run Text="{Binding ItemCount, Mode=OneWay}"/> 个条目</TextBlock>
+                </StackPanel>
+              </DataTemplate>
+            </ListView.ItemTemplate>
+          </ListView>
+        </Grid>
+      </PivotItem>
+      <PivotItem Margin="0">
+        <PivotItem.Header>
           <TextBlock FontSize="15">
                         正在下载(<Run Text="{x:Bind Path=downloadVM.Downloadings.Count,Mode=OneWay}"/>)
                     </TextBlock>

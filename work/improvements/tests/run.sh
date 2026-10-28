@@ -22,3 +22,18 @@ cat > "$scratch/LM01.runtimeconfig.json" <<'JSON'
 JSON
 export DOTNET_ROOT="$tools/dotnet" DOTNET_CLI_HOME="$tools/cache/dotnet-cli" NUGET_PACKAGES="$tools/cache/nuget" XDG_CACHE_HOME="$tools/cache/xdg" XDG_DATA_HOME="$tools/cache/xdg-data"
 "$DOTNET_ROOT/dotnet" "$scratch/LM01.dll"
+
+"$tools/dotnet/dotnet" "$sdk/Roslyn/bincore/csc.dll" -nologo -langversion:latest -target:exe -out:"$scratch/LM02.dll" "${args[@]}" \
+  "$repo/src/BiliLite.UWP/Models/LocalMedia/LocalMediaManifest.cs" \
+  "$repo/src/BiliLite.UWP/Models/LocalMedia/LocalMediaItem.cs" \
+  "$repo/src/BiliLite.UWP/Models/LocalMedia/LocalMediaTrack.cs" \
+  "$repo/src/BiliLite.UWP/Services/LocalMedia/LocalMediaValidator.cs" \
+  "$repo/src/BiliLite.UWP/Services/LocalMedia/LocalMediaManifestLoader.cs" \
+  "$repo/src/BiliLite.UWP/Services/LocalMedia/LocalMediaLibraryService.cs" \
+  "$(dirname -- "${BASH_SOURCE[0]}")/LocalMediaStorageStubs.cs" \
+  "$(dirname -- "${BASH_SOURCE[0]}")/LM02.cs"
+cp "$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll" "$scratch/Newtonsoft.Json.dll"
+cat > "$scratch/LM02.runtimeconfig.json" <<'JSON'
+{"runtimeOptions":{"tfm":"net8.0","framework":{"name":"Microsoft.NETCore.App","version":"8.0.33"}}}
+JSON
+"$DOTNET_ROOT/dotnet" "$scratch/LM02.dll"

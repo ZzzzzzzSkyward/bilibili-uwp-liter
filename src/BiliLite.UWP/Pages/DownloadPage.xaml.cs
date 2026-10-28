@@ -2,11 +2,15 @@
 using BiliLite.Helpers;
 using BiliLite.Modules;
 using BiliLite.Modules.Player.Playurl;
+using BiliLite.Services.LocalMedia;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using Windows.Storage;
+using Windows.Storage.Pickers;
 using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -22,12 +26,14 @@ namespace BiliLite.Pages
     public sealed partial class DownloadPage : BasePage
     {
         private DownloadVM downloadVM;
+        private readonly ObservableCollection<LocalMediaCollection> savedCollections = new ObservableCollection<LocalMediaCollection>();
 
         public DownloadPage()
         {
             downloadVM = DownloadVM.Instance;
             this.InitializeComponent();
             Title = "下载";
+            SavedCollectionsList.ItemsSource = savedCollections;
         }
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
@@ -36,7 +42,100 @@ namespace BiliLite.Pages
             if (e.NavigationMode == NavigationMode.New)
             {
                 downloadVM.RefreshDownloaded();
+                RefreshSavedCollectionsAsync();
             }
+        }
+
+        private async Task RefreshSavedCollectionsAsync()
+        {
+            try
+            {
+                var collections = await LocalMediaLibraryService.GetSavedCollectionsAsync();
+                savedCollections.Clear();
+                foreach (var collection in collections) savedCollections.Add(collection);
+            }
+            catch (LocalMediaLibraryException exception)
+            {
+                LogLocalMediaFailure(exception);
+                Utils.ShowMessageToast("读取本地媒体库失败", exception.Message);
+            }
+        }
+
+        private async void ImportCollectionButton_Click(object sender, RoutedEventArgs e)
+        {
+            ImportCollectionButton.IsEnabled = false;
+            var stage = "folder-picker";
+            var collectionId = "unknown";
+            try
+            {
+                var picker = new FolderPicker();
+                picker.FileTypeFilter.Add("*");
+                var folder = await picker.PickSingleFolderAsync();
+                if (folder == null) return;
+                stage = "collection-import";
+                var collection = await LocalMediaLibraryService.ImportFolderAsync(folder);
+                collectionId = collection.Id;
+                await RefreshSavedCollectionsAsync();
+                stage = "collection-details";
+                await ShowCollectionDetailsAsync(collection);
+            }
+            catch (LocalMediaLibraryException exception)
+            {
+                LogLocalMediaFailure(exception);
+                Utils.ShowMessageToast("导入媒体库失败", exception.Message);
+            }
+            catch (Exception)
+            {
+                LogHelper.Log("Local media library operation failed; stage=" + stage + "; collectionId=" + collectionId, LogType.ERROR);
+                Utils.ShowMessageToast("打开本地媒体库失败", "请重试或重新导入文件夹。");
+            }
+            finally
+            {
+                ImportCollectionButton.IsEnabled = true;
+            }
+        }
+
+        private async void SavedCollectionsList_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            var saved = e.ClickedItem as LocalMediaCollection;
+            if (saved == null) return;
+            try
+            {
+                var collection = await LocalMediaLibraryService.ReopenCollectionAsync(saved.Token);
+                await ShowCollectionDetailsAsync(collection);
+            }
+            catch (LocalMediaLibraryException exception)
+            {
+                LogLocalMediaFailure(exception);
+                Utils.ShowMessageToast("打开媒体库失败", exception.Message + " 请重新导入文件夹。");
+            }
+            catch (Exception)
+            {
+                LogHelper.Log("Local media library operation failed; stage=collection-open; collectionId=" + saved.Id, LogType.ERROR);
+                Utils.ShowMessageToast("打开媒体库失败", "请重新导入文件夹后重试。");
+            }
+        }
+
+        private async Task ShowCollectionDetailsAsync(LocalMediaCollection collection)
+        {
+            var details = string.Join(Environment.NewLine, collection.Manifest.Items.Select((item, index) => (index + 1) + ". " + item.Title));
+            var dialog = new ContentDialog
+            {
+                Title = collection.Title,
+                Content = new ScrollViewer
+                {
+                    Content = new TextBlock { Text = details, TextWrapping = TextWrapping.Wrap },
+                    MaxHeight = 420
+                },
+                CloseButtonText = "关闭"
+            };
+            await dialog.ShowAsync();
+        }
+
+        private static void LogLocalMediaFailure(LocalMediaLibraryException exception)
+        {
+            LogHelper.Log("Local media library operation failed; stage=" + exception.Stage + "; collectionId=" + exception.CollectionId,
+                LogType.ERROR);
         }
 
         private void listDowned_ItemClick(object sender, ItemClickEventArgs e)
