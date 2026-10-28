@@ -1,49 +1,67 @@
 # Bug report — current state
 
-Branch `work`, baseline `2507931` (round-2 review merged), this increment on top of it. Report is rewritten each turn; history lives in the commits.
+Branch `work`, this increment on top of the round-4 push. Rewritten each turn; history lives in the commits.
 
 ## Changed this turn
 
-Round-2 review items:
-- **BR-05 follow-up (must-fix):** a page that filters to zero visible cards left pagination stuck, because `MyListView` consumed `_itemsVersion` before firing and only item changes bumped it. A `CanLoadMore` false→true edge is now treated as a completed page (it bumps the version), so the short-viewport check re-arms even when the page added nothing. Termination comes from the VM: `CanContinuePaging` stops on `HasMore == false`, on a cursor that did not advance (gRPC needs a changed non-empty `history_offset`; Article stops only on a truly repeated `offset`), on failure, and on a 5-consecutive-empty-page cap (`stage=empty-page-cap`). `PublishFeedError` now clears `CanLoadMore`, so a failed page ends the cascade.
-- **Article login gate (scope):** the gate now applies to All/Video/Season only. Article reaches `ArticleV2` with cookies while signed out; cancel still leaves a visible login-required state and sends no request on the gRPC tabs.
-- **Repost pane:** kept as approved (no feed-page restriction).
+### BR-13 — layout crash right after the REST-fallback feed rendered (from your log)
+
+Sequence recovered from `LocalState/log/20261028.log`:
+
+```
+23:02:01.4205  User dynamic VM stage=rest-fallback reason=... grpc-status=2; bili-status-code=-663
+23:02:01.6295  HTTP ... dynamic_svr/v1/dynamic_svr/dynamic_new 200
+23:02:01.7413  User dynamic VM stage=rest-feed-items-published page=1 count=20 hasMore=False
+23:02:01.8347  ERROR ArgumentException: Value does not fall within the expected range.
+               at Windows.UI.Xaml.FrameworkElement.MeasureOverride(Size availableSize)
+```
+
+Root cause: a legacy `Text`/`Repost`/`Reserve` card gets `Model.Content` set to a `RichTextBlock` (`Modules/User/DynamicVM.cs:1158`), and **two** owners then try to parent that single element — the generic `<ContentPresenter Content="{x:Bind Model.Content}">` in `DynamicItemControl.xaml:80` and the template's `<RichTextControl Content="{Binding Content}">` (`DynamicTemplate.xaml:9,74,175`). One UIElement cannot have two parents; UWP raises `E_INVALIDARG` during the next layout pass, which is why the stack has no application frame. The gRPC path never hits it because the 2024 converter builds `ContentStr` only — the REST fallback (BR-11) exercised the legacy converter for the first time in this tab.
+
+Fix:
+- `DisplayModel.ContentPresenterVisibility` = `ShowContent && !TemplateRendersContent`; `TemplateRendersContent` is true for `Text`, `Repost`, `Reserve` — exactly the types whose templates render `Content` themselves. The generic presenter now yields to the template, so the element has one parent.
+- `Photo1x1` and `Photo2x2` no longer bind `Content` into their `RichTextControl` (they keep `Text=Desc`); the body is shown by the generic presenter above the card, matching `Photo3x3`, which is how every other card type already works.
+
+Verified by compile only. `[device]`: opening 动态 with the fallback active is what reproduces it; I cannot run the UI here.
+
+### BR-14 — PowerShell output encoding (method, not just a patch)
+
+The recurring mojibake was a producer problem, not a reader problem: `powershell.exe` writes standard output in the console code page (936/GBK here), so any UTF-8 consumer sees `鎴愬憳`. `build-release-x64.ps1` now sets `[Console]::OutputEncoding`, `[Console]::InputEncoding` and `$OutputEncoding` to a BOM-less UTF-8 **before any output** (inside `try`, because a host without a console handle throws). Verified: `... | grep 快速编译完成` matches with no decoder, `rc=0`.
+
+The method is crystallised in two places:
+- `document/BUILD.md` → "Encoding: keeping the Chinese output readable": the in-script fix, the ad-hoc `-Command` wrapper, the `iconv -f GB18030 -t UTF-8 -c` fallback (with the warning that omitting `-c` kills the producing process when a byte is invalid), the ASCII-marker rule for greps of unknown encoding, the stable-log-path rule (`H:/tmp`, because MSYS `/tmp` does not survive between calls), and the `${PIPESTATUS[0]}` rule for pipelines.
+- Managed skill `windows-powershell-mojibake`, so the recipe is available in future sessions instead of being rediscovered.
 
 ## Status
 
 | ID | State |
 |---|---|
 | BR-01 | resolved — medialist mapping, 收藏夹/合集 split, ad/banner dropped, compact placeholders |
-| BR-02 | resolved — music label mapped, no empty-card rework |
-| BR-03 | resolved — synthetic season cards marked, author/interaction chrome hidden, nav via source URL |
-| BR-04 | resolved — generation + captured tab guard, queued refresh, owner-only completion |
-| BR-05 | resolved this turn — DP owner fix + short-viewport trigger + filtered-page completion |
-| BR-06 | rejected — no code (no web-card fallback, no fabricated VIP/live values) |
-| BR-07 | deferred — label heuristic kept, unmarked AI tracks remain undetectable |
-| BR-08 | resolved — HTTP/header status preserved, login-required state with retry, no empty-success, no REST fallback *for errors* |
-| BR-09 | resolved — cursor restored on live teardown (`StopPlay`, `Unloaded`, `SetFullScreen(false)`, `ShowControl(true)`) |
-| BR-10 | resolved — `/x/relation/stat` fills `owner_ext.fans`, `HasFans` hides the label, follow toggle cannot drive a synthesized zero negative |
-| BR-11 | resolved by fallback — gRPC rejection no longer blanks the feed (see below) |
+| BR-02 | resolved — music label |
+| BR-03 | resolved — synthetic season cards without author/interaction chrome |
+| BR-04 | resolved — request generation + queued refresh + owner-only completion |
+| BR-05 | resolved — DP owner, short-viewport trigger, filtered-page completion signal, empty-page cap |
+| BR-06 | rejected — no code |
+| BR-07 | deferred — label heuristic kept |
+| BR-08 | resolved — HTTP/header status preserved, login-required state with retry |
+| BR-09 | resolved — cursor restored on live teardown |
+| BR-10 | resolved — fan count via `/x/relation/stat`, `HasFans` gating |
+| BR-11 | resolved — REST fallback when `DynAll` is rejected (`restFeedMode`, separate cursors, one gRPC retry per refresh) |
 | BR-12 | resolved — seven leak sites closed |
-
-## BR-11 in one paragraph
-
-`DynAll` is rejected with HTTP 200, an empty body and `bili-status-code: -663` (undocumented; `-352`/`-412`/`-799` are the documented risk codes). The user overrode the review's rejection of a REST fallback, so the All and Video tabs now serve `dynamicAPI.DyanmicNew` when gRPC fails: `restFeedMode` is sticky, REST keeps its own `offset`/`has_more` cursor, gRPC cursors are cleared on the switch and never sent to REST, a rejection during `LoadMore` republishes REST page 1, and `Refresh()` retries gRPC exactly once. `DynAll` also sends `LocalTime = 8` now, mirroring `DynVideo`. The transport still names `grpc-status`/`bili-status-code`, so a future report can identify the server's code.
-
-## BR-12 leak sites (all fixed)
-
-Retention edge → fix: `DataTransferManager.DataRequested` (3 pages) → subscribe/detach with navigation; `SystemMediaTransportControls.ButtonPressed` → `-=` before `+=` and on unload; `MyFrame.ClosedPage` (5 pages) → idempotent subscribe helper detached in `OnNavigatedFrom`; static `MessageCenter` events (`LiveRoomVM`, `AnimePage`, `MoviePage`) → removed in `Dispose`/`OnNavigatedFrom`; `LiveMessage.heartBeatTimer` static-per-connection → instance timer, previous `LiveMessage` disposed on reconnect; `Utils.sb` unbounded → 8 KiB tail cap under a lock; per-request `HttpClient` → shared client with access-key headers moved per request. Deliberately unchanged: `Utils.sp` (bounded), `MyListView` subscriptions (self-to-self, not a leak), `Carousel`/`LiveDanmaku`/`CookieService`/`HttpHelper` (audited clean).
+| BR-13 | resolved this turn — double-parented `RichTextBlock` that crashed layout on REST-fallback cards |
+| BR-14 | done this turn — UTF-8 output in the build script + documented/skilled method |
 
 ## Verification
 
-- `-Fast`: 0 errors, 98 s.
-- Full run produced `Z:\BiliLite.UWP_1.0.9.10_x64_Test\BiliLite.UWP_1.0.9.10_x64.msix` (69,696,220 B) and `Z:\BiliLite.Packages_1.0.9.10_x64_Test\BiliLite.Packages_1.0.9.10_x64.msix` (95,369,891 B). The first attempt hit `CS2012` locked by `csc`; the script's new detect-and-retry path killed the leftover node and rebuilt cleanly, which is why the log carries two error lines and still ends with both packages.
+- `-Fast` after the template fix: 0 errors, 98 s.
+- Packaging: `Z:\BiliLite.UWP_1.0.9.11_x64_Test\BiliLite.UWP_1.0.9.11_x64.msix` and `Z:\BiliLite.Packages_1.0.9.11_x64_Test\BiliLite.Packages_1.0.9.11_x64.msix`. The first attempt hit the known `CS2012` node lock; the script's detect-and-retry cleaned it and rebuilt, so the log carries both errors and both packages.
+- Encoding: `powershell ... -Fast -NoVersionBump | grep 快速编译完成` matched directly (no `iconv`), `rc=0`.
 
 ## Needs `[device]` confirmation
 
-Feed fallback on a rejected `DynAll`; filtered-page pagination; Article while signed out; login overlay + retry; cursor after closing a live; fan count on a web-loaded video; leak counts (open/close ~10 video and ~10 live tabs, force GC twice, count page/control/VM instances and handles).
+Dynamic feed via the REST fallback (the crash scenario), filtered-page pagination, Article signed out, login overlay + retry, cursor after closing a live, fan count on a web-loaded video, and leak counts after opening/closing ~10 video and ~10 live tabs.
 
 ## Open for the reviewer
 
-1. BR-11: accept the fallback, or ask for the real-buvid fix (`/x/frontend/finger/spi` → metadata) to replace it?
-2. Anything you want changed in the empty-page cap (currently 5) or in the cursor-progress rule for Article?
+1. BR-11: accept the fallback, or replace it with the real-buvid fix (`/x/frontend/finger/spi` → gRPC metadata)?
+2. BR-13 changed how photo cards present their body text (generic presenter above the card instead of the template). If the richer in-template rendering of `Photo1x1`/`Photo2x2` was intentional, the alternative is teaching `RichTextControl` to clone blocks instead of re-parenting the element — say which you prefer.
