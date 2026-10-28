@@ -270,16 +270,15 @@ namespace BiliLite.Api
             return api;
         }
 
-        public ApiModel History(int pn=1,int ps=24)
+        public ApiModel HistoryWbi(long max = 0, long viewAt = 0)
         {
-            ApiModel api = new ApiModel()
+            return new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}/history",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&pn={pn}&ps={ps}"
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/web-interface/history/cursor",
+                parameter = $"max={max}&view_at={viewAt}&business=",
+                need_cookie = true
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
-            return api;
         }
         public ApiModel DelHistory(string id)
         {

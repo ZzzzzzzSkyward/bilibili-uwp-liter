@@ -1,4 +1,5 @@
 ﻿using BiliLite.Helpers;
+using System;
 using BiliLite.Modules.User;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -32,20 +33,22 @@ namespace BiliLite.Pages.User
 
 
 
-        private void Video_ItemClick(object sender, ItemClickEventArgs e)
+        private async void Video_ItemClick(object sender, ItemClickEventArgs e)
         {
             var data = e.ClickedItem as HistoryItemModel;
-            if(data.business== "pgc")
+            if (data.business == "pgc")
             {
                 MessageCenter.NavigateToPage(this, new NavigationInfo()
                 {
                     icon = Symbol.Play,
                     page = typeof(SeasonDetailPage),
                     title = data.title,
-                    parameters = data.kid
+                    parameters = data.historyEpid > 0
+                        ? new object[] { data.kid, data.historyEpid.ToString() }
+                        : (object)data.kid
                 });
             }
-            else
+            else if (data.business == "archive")
             {
                 MessageCenter.NavigateToPage(this, new NavigationInfo()
                 {
@@ -55,7 +58,25 @@ namespace BiliLite.Pages.User
                     parameters = data.aid
                 });
             }
-            
+            else if (data.business == "live")
+            {
+                MessageCenter.NavigateToPage(this, new NavigationInfo()
+                {
+                    icon = Symbol.Play,
+                    page = typeof(LiveDetailPage),
+                    title = data.title,
+                    parameters = data.historyOid
+                });
+            }
+            else if (data.business == "article" || data.business == "article-list")
+            {
+                var articleId = data.business == "article-list" ? data.historyCid : data.historyOid;
+                await Utils.LaunchUri(new Uri("https://www.bilibili.com/read/cv" + articleId));
+            }
+            else
+            {
+                Utils.ShowMessageToast("无法打开此类型的历史记录");
+            }
         }
 
         private void removeVideoHistory_Click(object sender, RoutedEventArgs e)

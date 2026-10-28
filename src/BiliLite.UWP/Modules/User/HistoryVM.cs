@@ -1,7 +1,9 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Models;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -11,6 +13,7 @@ namespace BiliLite.Modules.User
     public class HistoryVM : IModules
     {
         Api.AccountApi accountApi;
+        private HistoryCursorModel cursor;
         public HistoryVM()
         {
             accountApi = new Api.AccountApi();
@@ -54,35 +57,59 @@ namespace BiliLite.Modules.User
                 ShowLoadMore = false;
                 Loading = true;
                 Nothing = false;
-                var results = await accountApi.History(Page,24).Request();
+                var results = await accountApi.HistoryWbi(cursor?.Max ?? 0, cursor?.ViewAt ?? 0).Request();
                 if (results.status)
                 {
-                    var data = await results.GetJson<ApiDataModel<ObservableCollection<HistoryItemModel>>>();
+                    var data = await results.GetJson<ApiDataModel<HistoryPageResponse>>();
                     if (data.success)
                     {
+                        var records = data.data?.list ?? new List<HistoryRecord>();
+                        LogHelper.Log("History stage=cursor-loaded page=" + Page + " count=" + records.Count +
+                            " nextMax=" + (data.data?.cursor?.Max ?? 0) + " nextViewAt=" + (data.data?.cursor?.ViewAt ?? 0), LogType.INFO);
                         if (Page == 1)
                         {
-                            if (data.data == null || data.data.Count == 0)
+                            if (records.Count == 0)
                             {
                                 Nothing = true;
                                 return;
                             }
-                            Videos = data.data;
+                            Videos = new ObservableCollection<HistoryItemModel>();
+                        }
 
-                        }
-                        else
+                        foreach (var record in records)
                         {
-                            if (data.data != null)
+                            var history = record.history;
+                            var cover = record.cover;
+                            if (string.IsNullOrEmpty(cover) && record.covers != null && record.covers.Count > 0)
                             {
-                                foreach (var item in data.data)
-                                {
-                                    Videos.Add(item);
-                                }
+                                cover = record.covers[0]?.ToString();
                             }
+                            Videos.Add(new HistoryItemModel
+                            {
+                                aid = !string.IsNullOrEmpty(history?.bvid) ? history.bvid : history?.oid.ToString(),
+                                cover = cover,
+                                pic = cover,
+                                owner = new HistoryItemOwnerModel
+                                {
+                                    mid = record.author_mid,
+                                    name = record.author_name,
+                                    face = record.author_face
+                                },
+                                name = record.title,
+                                title = record.title,
+                                view_at = record.view_at,
+                                kid = record.kid,
+                                business = history?.business,
+                                historyOid = history?.oid ?? 0,
+                                historyEpid = history?.epid ?? 0,
+                                historyCid = history?.cid ?? 0
+                            });
                         }
-                        if (data.data != null&& data.data.Count!=0)
+
+                        if (records.Count != 0)
                         {
-                            ShowLoadMore = true;
+                            cursor = data.data?.cursor;
+                            ShowLoadMore = cursor != null;
                             Page++;
                         }
                     }
@@ -113,6 +140,7 @@ namespace BiliLite.Modules.User
                 return;
             }
             Page = 1;
+            cursor = null;
             Videos = null;
             await LoadHistory();
         }
@@ -170,6 +198,9 @@ namespace BiliLite.Modules.User
         public string tname { get; set; }
         public string kid { get; set; }
         public string business { get; set; }
+        public long historyOid { get; set; }
+        public long historyEpid { get; set; }
+        public long historyCid { get; set; }
     }
 
     public class HistoryItemOwnerModel
@@ -177,5 +208,71 @@ namespace BiliLite.Modules.User
         public long mid { get; set; }
         public string name { get; set; }
         public string face { get; set; }
+    }
+
+    public class HistoryPageResponse
+    {
+        [JsonProperty("cursor")]
+        public HistoryCursorModel cursor { get; set; }
+
+        [JsonProperty("list")]
+        public List<HistoryRecord> list { get; set; }
+    }
+
+    public class HistoryCursorModel
+    {
+        [JsonProperty("max")]
+        public long Max { get; set; }
+
+        [JsonProperty("view_at")]
+        public long ViewAt { get; set; }
+    }
+
+    public class HistoryRecord
+    {
+        [JsonProperty("title")]
+        public string title { get; set; }
+
+        [JsonProperty("cover")]
+        public string cover { get; set; }
+
+        [JsonProperty("covers")]
+        public JArray covers { get; set; }
+
+        [JsonProperty("author_name")]
+        public string author_name { get; set; }
+
+        [JsonProperty("author_face")]
+        public string author_face { get; set; }
+
+        [JsonProperty("author_mid")]
+        public long author_mid { get; set; }
+
+        [JsonProperty("view_at")]
+        public long view_at { get; set; }
+
+        [JsonProperty("kid")]
+        public string kid { get; set; }
+
+        [JsonProperty("history")]
+        public HistoryRecordDetail history { get; set; }
+    }
+
+    public class HistoryRecordDetail
+    {
+        [JsonProperty("oid")]
+        public long oid { get; set; }
+
+        [JsonProperty("bvid")]
+        public string bvid { get; set; }
+
+        [JsonProperty("epid")]
+        public long epid { get; set; }
+
+        [JsonProperty("cid")]
+        public long cid { get; set; }
+
+        [JsonProperty("business")]
+        public string business { get; set; }
     }
 }
