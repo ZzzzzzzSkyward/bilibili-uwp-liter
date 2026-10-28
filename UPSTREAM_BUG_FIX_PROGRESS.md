@@ -15,7 +15,9 @@ Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed
 
 ## Batch state
 
-Batch 004 order: #611 → #625 → #1216. #611 import validation, #625 UGC collection AID exposure and comment dispatch, and #1216 terminal cursor state are in progress. No batch 004 fix commit has been made yet.
+Batch 004 order: #611 → #625 → #1216. #611 is fixed; #625 UGC collection AID exposure and comment dispatch and #1216 terminal cursor state remain in progress.
+
+| #611 | Fixed | Cloud and previously saved local regex rules are merged, validated with .NET regex parsing, and materialized before replacing persisted settings. Invalid patterns are removed; valid local/cloud expressions are retained. Actual extracted import block, validator, and render filter probe passes the malformed issue fixture plus valid-rule/comment cases. No application runtime. Commit recorded below. |
 
 | #378 | Fixed | Target model now preserves absolute URLs and maps malformed, null, and empty values to the pinned sibling fallback. Extracted actual nested class probe passes all four cases; no API/UI runtime. Commit recorded below. |
 | #404 | Fixed | Empty `area_entrance_v2` now skips area parsing while the populated first-entry path remains intact. Extracted actual block probe passes empty and populated shapes. Commit recorded below. |

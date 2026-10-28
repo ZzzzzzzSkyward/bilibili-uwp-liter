@@ -8,9 +8,31 @@ player_source="$repo_root/src/BiliLite.UWP/Controls/PlayerControl.xaml.cs"
 import_fragment="$script_dir/import-regex-rules.csx"
 render_fragment="$script_dir/render-filter-loop.csx"
 harness="$script_dir/imported-regex-filter-test.csx"
-sed -n '125,134p' "$settings_source" > "$import_fragment"
+python3 - "$settings_source" "$import_fragment" <<'PY'
+import sys
+source = open(sys.argv[1], encoding='utf-8-sig').read()
+start = source.index('                        var users = items.Where(x => x.type == 1)')
+end = source.index('                        SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_REGULAR, ShieldRegulars);', start)
+end = source.index('\n', end)
+open(sys.argv[2], 'w').write(source[start:end] + '\n')
+PY
+python3 - "$settings_source" "$script_dir/regex-validation-helper.csx" <<'PY'
+import sys
+source = open(sys.argv[1], encoding='utf-8-sig').read()
+start = source.index('        private static bool IsValidDanmuRegex(')
+brace = source.index('{', start)
+depth = 0
+for index in range(brace, len(source)):
+    if source[index] == '{': depth += 1
+    elif source[index] == '}':
+        depth -= 1
+        if depth == 0:
+            end = index + 1
+            break
+open(sys.argv[2], 'w').write(source[start:end] + '\n')
+PY
 sed -n '965,1012p' "$player_source" > "$render_fragment"
-grep -Fq 'ShieldRegulars.Union(users)' "$import_fragment"
+grep -Fq 'ShieldRegulars.Union(users).Where(IsValidDanmuRegex).ToList()' "$import_fragment"
 grep -Fq 'Regex.IsMatch(x.text, item)' "$render_fragment"
 cat > "$harness" <<'CSHARP'
 using System;
@@ -25,7 +47,7 @@ sealed class SettingVMStub
 {
     public List<string> ShieldWords = new();
     public List<string> ShieldUsers = new();
-    public List<string> ShieldRegulars = new();
+    public List<string> ShieldRegulars = new() { @"/.\1{16}/", "local-valid" };
 }
 static class SettingHelper
 {
@@ -76,11 +98,16 @@ sealed class Harness
     public DispatcherStub Dispatcher = new();
     public DanmuControlStub DanmuControl = new();
     public List<DanmuFilterItem> items;
-    public Harness(string fixtureRule)
+    public Harness(string fixtureRule, string validRule)
     {
         ShieldRegulars = settingVM.ShieldRegulars;
-        items = new List<DanmuFilterItem> { new DanmuFilterItem { type = 1, filter = fixtureRule } };
+        items = new List<DanmuFilterItem>
+        {
+            new DanmuFilterItem { type = 1, filter = fixtureRule },
+            new DanmuFilterItem { type = 1, filter = validRule }
+        };
     }
+    __ACTUAL_REGEX_VALIDATION_HELPER__
     public void Import()
     {
         var ShieldRegulars = settingVM.ShieldRegulars;
@@ -98,21 +125,31 @@ cat >> "$harness" <<'CSHARP'
 
 // Exact malformed rule quoted in issue #611's discussion; the cloud/API boundary is stubbed.
 var rule = @"/.\1{16}/";
+var validRule = "cloud-valid";
 var regexRejected = false;
 try { Regex.IsMatch("visible fixture", rule); }
 catch (ArgumentException) { regexRejected = true; }
 Console.WriteLine($"Regex parser rejects imported fixture: {regexRejected}");
-var harness = new Harness(rule);
+var harness = new Harness(rule, validRule);
 harness.Import();
-Console.WriteLine($"Imported rule persisted: {SettingHelper.PersistedRegulars.Contains(rule)}");
+Console.WriteLine($"Invalid imported rule persisted: {SettingHelper.PersistedRegulars.Contains(rule)}");
+Console.WriteLine($"Valid local/cloud rules preserved: {SettingHelper.PersistedRegulars.Contains("local-valid") && SettingHelper.PersistedRegulars.Contains(validRule)}");
 await harness.Render();
 Console.WriteLine($"Danmaku added after render pass: {harness.DanmuControl.AddCount}");
-var passed = regexRejected && SettingHelper.PersistedRegulars.Contains(rule) && harness.DanmuControl.AddCount > 0;
+var passed = regexRejected && !SettingHelper.PersistedRegulars.Contains(rule) &&
+    SettingHelper.PersistedRegulars.Contains("local-valid") && SettingHelper.PersistedRegulars.Contains(validRule) &&
+    harness.DanmuControl.AddCount > 0;
 Console.WriteLine(passed
     ? "PASS: imported rule allowed a render pass"
     : "FAIL: imported invalid rule aborted this render pass before any danmaku was added");
 Environment.ExitCode = passed ? 0 : 1;
 CSHARP
+python3 - "$harness" "$script_dir/regex-validation-helper.csx" <<'PY'
+import sys
+harness = open(sys.argv[1]).read()
+helper = open(sys.argv[2]).read().strip()
+open(sys.argv[1], 'w').write(harness.replace('__ACTUAL_REGEX_VALIDATION_HELPER__', helper))
+PY
 export DOTNET_ROOT="$tools_root/dotnet"
 export DOTNET_CLI_HOME="$tools_root/cache/dotnet-cli"
 export NUGET_PACKAGES="$tools_root/cache/nuget"

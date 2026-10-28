@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace BiliLite.Modules
 {
@@ -124,7 +125,7 @@ namespace BiliLite.Modules
                     }
                     {
                         var users = items.Where(x => x.type == 1).Select(x => x.filter).ToList();
-                        var ls = ShieldRegulars.Union(users);
+                        var ls = ShieldRegulars.Union(users).Where(IsValidDanmuRegex).ToList();
                         ShieldRegulars.Clear();
                         foreach (var item in ls)
                         {
@@ -151,6 +152,19 @@ namespace BiliLite.Modules
             catch (Exception ex)
             {
                 LogHelper.Log("读取弹幕屏蔽词失败", LogType.ERROR, ex);
+            }
+        }
+
+        private static bool IsValidDanmuRegex(string pattern)
+        {
+            try
+            {
+                Regex.IsMatch(string.Empty, pattern);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                return false;
             }
         }
 

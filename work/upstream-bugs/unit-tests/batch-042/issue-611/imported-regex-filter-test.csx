@@ -10,7 +10,7 @@ sealed class SettingVMStub
 {
     public List<string> ShieldWords = new();
     public List<string> ShieldUsers = new();
-    public List<string> ShieldRegulars = new();
+    public List<string> ShieldRegulars = new() { @"/.\1{16}/", "local-valid" };
 }
 static class SettingHelper
 {
@@ -61,24 +61,38 @@ sealed class Harness
     public DispatcherStub Dispatcher = new();
     public DanmuControlStub DanmuControl = new();
     public List<DanmuFilterItem> items;
-    public Harness(string fixtureRule)
+    public Harness(string fixtureRule, string validRule)
     {
         ShieldRegulars = settingVM.ShieldRegulars;
-        items = new List<DanmuFilterItem> { new DanmuFilterItem { type = 1, filter = fixtureRule } };
+        items = new List<DanmuFilterItem>
+        {
+            new DanmuFilterItem { type = 1, filter = fixtureRule },
+            new DanmuFilterItem { type = 1, filter = validRule }
+        };
     }
+    private static bool IsValidDanmuRegex(string pattern)
+        {
+            try
+            {
+                Regex.IsMatch(string.Empty, pattern);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                return false;
+            }
+        }
     public void Import()
     {
         var ShieldRegulars = settingVM.ShieldRegulars;
-                    {
                         var users = items.Where(x => x.type == 1).Select(x => x.filter).ToList();
-                        var ls = ShieldRegulars.Union(users);
+                        var ls = ShieldRegulars.Union(users).Where(IsValidDanmuRegex).ToList();
                         ShieldRegulars.Clear();
                         foreach (var item in ls)
                         {
                             ShieldRegulars.Add(item);
                         }
                         SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_REGULAR, ShieldRegulars);
-                    }
     }
     public async Task Render()
     {
@@ -135,16 +149,20 @@ sealed class Harness
 
 // Exact malformed rule quoted in issue #611's discussion; the cloud/API boundary is stubbed.
 var rule = @"/.\1{16}/";
+var validRule = "cloud-valid";
 var regexRejected = false;
 try { Regex.IsMatch("visible fixture", rule); }
 catch (ArgumentException) { regexRejected = true; }
 Console.WriteLine($"Regex parser rejects imported fixture: {regexRejected}");
-var harness = new Harness(rule);
+var harness = new Harness(rule, validRule);
 harness.Import();
-Console.WriteLine($"Imported rule persisted: {SettingHelper.PersistedRegulars.Contains(rule)}");
+Console.WriteLine($"Invalid imported rule persisted: {SettingHelper.PersistedRegulars.Contains(rule)}");
+Console.WriteLine($"Valid local/cloud rules preserved: {SettingHelper.PersistedRegulars.Contains("local-valid") && SettingHelper.PersistedRegulars.Contains(validRule)}");
 await harness.Render();
 Console.WriteLine($"Danmaku added after render pass: {harness.DanmuControl.AddCount}");
-var passed = regexRejected && SettingHelper.PersistedRegulars.Contains(rule) && harness.DanmuControl.AddCount > 0;
+var passed = regexRejected && !SettingHelper.PersistedRegulars.Contains(rule) &&
+    SettingHelper.PersistedRegulars.Contains("local-valid") && SettingHelper.PersistedRegulars.Contains(validRule) &&
+    harness.DanmuControl.AddCount > 0;
 Console.WriteLine(passed
     ? "PASS: imported rule allowed a render pass"
     : "FAIL: imported invalid rule aborted this render pass before any danmaku was added");
