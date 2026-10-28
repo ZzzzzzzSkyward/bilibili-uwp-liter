@@ -3,8 +3,8 @@
 ## Resume point
 
 - Repo: `/workspace/bilibili-uwp-liter`, branch `work`.
-- Published application baseline: `241c4e5` (API-01 reviewed). No pending application changes.
-- Next: **AUTH-01 — missing authentication endpoints**.
+- Prior published application baseline: `241c4e5` (API-01 reviewed). AUTH-01a reviewed; publication checkpoint follows in `IMPROVEMENT_PROGRESS.md`.
+- Next: **AUTH-01b — isolated validated password-login secondary verification integration**.
 - Plan: `work/improvements/PLAN.md`. Detailed checkpoint: `IMPROVEMENT_PROGRESS.md`.
 
 ## Completed
@@ -15,10 +15,11 @@
 - LM-04: independent video/audio selectors, embedded audio option, position/play-state preservation, one rollback reopen after immediate switch failure.
 - LM-05: saved-grant subtitle/danmaku file resolution; Bilibili JSON, SRT, and VTT cue parsing; explicit-default subtitle selection; independently toggleable XML danmaku tracks merged through the existing parser and renderer. Actual-source offline probes cover parsing, cue selection, asynchronous stale-load guards, merged tracks, and resolved file handles.
 - API-01: cookie and WBI services with `ApiHelper` compatibility wrappers, `BaseApi`, migrated Emote API shim, and Danmaku Like request construction. Actual-source offline probes cover cookie refresh dispatch/state, WBI signing/cache/retry, and endpoint compatibility.
+- AUTH-01a: missing secondary-verification and refresh endpoint builders, reuse by CookieService, and authentication logging sanitization. Full offline runner passes, including 47 API/auth assertions. Secondary-verification UI integration remains AUTH-01b.
 
 ## Next batch
 
-AUTH-01: retrieve the pinned AccountApi/login-flow source through the GitHub connector, inventory existing target endpoints, and port missing secondary-verification/refresh endpoints while preserving current login UI and credential-free logging. The API-01 change and its source/test boundaries are described in `IMPROVEMENT_PROGRESS.md`.
+AUTH-01a adds target AccountApi request builders for missing password-login secondary verification and cookie-refresh calls, and routes CookieService's existing refresh sequence through those builders. It does not add a new login UI or change authentication runtime behavior. AUTH-01b is required before wiring the secondary-login UI: the current HttpHelper POST transport has ambient Windows cookie side effects and cannot atomically capture/commit exchange cookies after validating the API envelope. See `IMPROVEMENT_PROGRESS.md` for the implementation and test boundary.
 
 Real UWP permissions/restart, UI/media-event timing, codec support and asynchronous decoder-failure recovery need user app testing; do not claim these were validated locally.
 

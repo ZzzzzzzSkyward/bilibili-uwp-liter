@@ -131,6 +131,7 @@ internal static class API01
         await TestRefreshMissingCodeDoesNotRotateToken();
         await TestApiHelperWbiWrapper();
         TestMigratedEndpointRequests();
+        TestAuthenticationEndpointRequests();
 
         Console.WriteLine("API-01 actual-source cookie/WBI/API endpoint probes passed: " + assertions);
     }
@@ -240,6 +241,67 @@ internal static class API01
         Check(migrated.baseUrl == compatibility.baseUrl && migrated.headers.ContainsKey("x-bili-aurora-zone") &&
             migrated.need_cookie && migrated.parameter.Contains("business=reply") && compatibility.parameter.Contains("business=dynamic"),
             "migrated EmoteApi and old namespace shim preserve existing endpoint construction");
+    }
+
+    private static void TestAuthenticationEndpointRequests()
+    {
+        var api = new AccountApi();
+        var captcha = api.GeetestCaptcha();
+        Check(captcha.method == RestSharp.Method.Post &&
+            captcha.baseUrl == "https://passport.bilibili.com/x/safecenter/captcha/pre",
+            "password verification captcha endpoint uses the expected POST route");
+
+        var maskedPhone = api.FetchHideTel("tmp token/&");
+        Check(maskedPhone.method == RestSharp.Method.Get &&
+            maskedPhone.url == "https://api.bilibili.com/x/safecenter/user/info?tmp_code=tmp%20token%2F%26",
+            "masked phone lookup escapes its temporary credential in the query");
+
+        var sendSms = api.SendVerifySMS("tmp&", "recap token", "challenge", "gt", "valid|x", "sec code");
+        Check(sendSms.method == RestSharp.Method.Post &&
+            sendSms.baseUrl == "https://passport.bilibili.com/x/safecenter/common/sms/send" &&
+            sendSms.body == "sms_type=loginTelCheck&tmp_code=tmp%26&recaptcha_token=recap%20token&gee_challenge=challenge&gee_gt=gt&gee_validate=valid%7Cx&gee_seccode=sec%20code",
+            "secondary verification SMS request escapes every submitted value");
+
+        var submit = api.SubmitPwdLoginSMSCheck("12&34", "tmp", "request id", "captcha");
+        Check(submit.method == RestSharp.Method.Post &&
+            submit.baseUrl == "https://passport.bilibili.com/x/safecenter/login/tel/verify" &&
+            submit.body == "type=loginTelCheck&code=12%2634&tmp_code=tmp&request_id=request%20id&captcha_key=captcha",
+            "secondary verification confirmation request has the expected body and escaping");
+
+        var exchange = api.PwdLoginExchangeCookie("one-time/code");
+        Check(exchange.method == RestSharp.Method.Post &&
+            exchange.baseUrl == "https://passport.bilibili.com/x/passport-login/web/exchange_cookie" &&
+            exchange.body == "code=one-time%2Fcode" && !exchange.need_cookie,
+            "verified cookie exchange builder does not explicitly request cookie injection");
+
+        var csrf = new string('a', 256);
+        var csrfPage = api.RefreshCsrf(csrf);
+        Check(csrfPage.method == RestSharp.Method.Get && csrfPage.need_cookie &&
+            csrfPage.baseUrl == "https://www.bilibili.com/correspond/1/" + csrf,
+            "refresh CSRF page uses a validated RSA path and the existing login cookie");
+        foreach (var unsafePath in new[] { null, "", "..", "../x", "?x", "#x", new string('a', 255), new string('a', 256) + "\n" })
+        {
+            try { api.RefreshCsrf(unsafePath); throw new Exception("expected invalid refresh path rejection"); }
+            catch (ArgumentException) { assertions++; }
+        }
+
+        var cookieInfo = api.CheckCookies("csrf value");
+        Check(cookieInfo.need_cookie && cookieInfo.url.EndsWith("?csrf=csrf%20value"),
+            "cookie refresh-state endpoint carries escaped CSRF and requests the current cookie");
+        var refresh = api.RefreshCookie("csrf", "refresh csrf", "refresh/token");
+        var confirm = api.ConfirmRefreshCookie("csrf", "refresh/token");
+        Check(refresh.need_cookie && refresh.body == "csrf=csrf&refresh_csrf=refresh%20csrf&source=main_web&refresh_token=refresh%2Ftoken" &&
+            confirm.need_cookie && confirm.body == "csrf=csrf&refresh_token=refresh%2Ftoken",
+            "cookie refresh and confirmation endpoint builders preserve authenticated request bodies with escaping");
+
+        var redactedEndpoint = BiliLite.Services.HttpLogSanitizer.DescribeEndpoint(
+            "https://www.bilibili.com/correspond/1/private-refresh-path?secret=query");
+        Check(redactedEndpoint == "https://www.bilibili.com/correspond/1/<redacted>" &&
+            !BiliLite.Services.HttpLogSanitizer.ShouldLogApiMessage("https://passport.bilibili.com/x/safecenter/login/tel/verify") &&
+            !BiliLite.Services.HttpLogSanitizer.ShouldLogApiMessage("https://passport.bilibili.com/x/passport-login/web/exchange_cookie") &&
+            !BiliLite.Services.HttpLogSanitizer.ShouldLogApiMessage("https://api.bilibili.com/x/safecenter/user/info") &&
+            BiliLite.Services.HttpLogSanitizer.ShouldLogApiMessage("https://api.bilibili.com/x/web-interface/nav"),
+            "HTTP logging redacts refresh paths and omits response messages for password and verification endpoints");
     }
 
     private static BiliLite.Services.CookieService NewCookieService(FakeCookieStore store, IDictionary<string, string> settings,

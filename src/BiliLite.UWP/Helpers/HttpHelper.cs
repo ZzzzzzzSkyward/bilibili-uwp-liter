@@ -10,6 +10,7 @@ using Windows.Web.Http;
 using Windows.Storage.Streams;
 using Windows.Web.Http.Filters;
 using BiliLite.Models;
+using BiliLite.Services;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Diagnostics;
 using System.Timers;
@@ -32,10 +33,7 @@ namespace BiliLite.Helpers
 
         private static string DescribeEndpoint(string url)
         {
-            Uri uri;
-            if (Uri.TryCreate(url, UriKind.Absolute, out uri))
-                return uri.GetLeftPart(UriPartial.Path);
-            return "unparsed-endpoint";
+            return HttpLogSanitizer.DescribeEndpoint(url);
         }
 
         private static void LogRequest(string requestId, string method, string endpoint, string detail, Exception ex = null)
@@ -53,7 +51,10 @@ namespace BiliLite.Helpers
                 var code = response["code"];
                 if (code != null && code.Type != JTokenType.Null && code.ToString() != "0")
                 {
-                    LogRequest(requestId, method, endpoint, "API failure code=" + code + " message=" + (response["message"] ?? response["msg"]));
+                    var detail = "API failure code=" + code;
+                    if (HttpLogSanitizer.ShouldLogApiMessage(endpoint))
+                        detail += " message=" + (response["message"] ?? response["msg"]);
+                    LogRequest(requestId, method, endpoint, detail);
                 }
             }
             catch (Exception ex)

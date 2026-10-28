@@ -41,6 +41,7 @@ namespace BiliLite.Services
     public class CookieService
     {
         private readonly ICookieStore cookieStore;
+        private readonly AccountApi accountApi = new AccountApi();
         private readonly Func<string, string> readSetting;
         private readonly Action<string, string> writeSetting;
         private readonly Func<bool> isLoggedIn;
@@ -147,12 +148,7 @@ namespace BiliLite.Services
                 }
 
                 LoadCookieFromSetting();
-                var response = await send(new ApiModel
-                {
-                    need_cookie = true,
-                    method = RestSharp.Method.Get,
-                    baseUrl = "https://passport.bilibili.com/x/passport-login/web/cookie/info"
-                });
+                var response = await send(accountApi.CheckCookies(GetCSRF()));
                 if (response?.code == 200)
                 {
                     var body = JObject.Parse(response.results ?? "");
@@ -247,12 +243,7 @@ namespace BiliLite.Services
 
             var correspondPath = GetCorrespondPath(timestamp);
             CookieTimestamp = 0;
-            var correspond = await send(new ApiModel
-            {
-                method = RestSharp.Method.Get,
-                baseUrl = "https://www.bilibili.com/correspond/1/" + correspondPath,
-                need_cookie = true
-            });
+            var correspond = await send(accountApi.RefreshCsrf(correspondPath));
             var csrf = "";
             if (correspond?.code == 200)
             {
@@ -264,13 +255,7 @@ namespace BiliLite.Services
 
             var token = GetRefreshToken();
             if (string.IsNullOrEmpty(token)) return;
-            var refresh = await send(new ApiModel
-            {
-                need_cookie = true,
-                method = RestSharp.Method.Post,
-                baseUrl = "https://passport.bilibili.com/x/passport-login/web/cookie/refresh",
-                body = $"csrf={GetCSRF()}&refresh_csrf={csrf}&source=main_web&refresh_token={token}"
-            });
+            var refresh = await send(accountApi.RefreshCookie(GetCSRF(), csrf, token));
             var newToken = "";
             if (refresh?.code == 200)
             {
@@ -284,13 +269,7 @@ namespace BiliLite.Services
             if (string.IsNullOrEmpty(newToken)) return;
 
             writeSetting("CookieRefreshToken", newToken);
-            var confirm = await send(new ApiModel
-            {
-                need_cookie = true,
-                method = RestSharp.Method.Post,
-                baseUrl = "https://passport.bilibili.com/x/passport-login/web/confirm/refresh",
-                body = $"csrf={GetCSRF()}&refresh_token={token}"
-            });
+            var confirm = await send(accountApi.ConfirmRefreshCookie(GetCSRF(), token));
             if (confirm?.code == 200)
             {
                 var confirmBody = JObject.Parse(confirm.results ?? "{}");
