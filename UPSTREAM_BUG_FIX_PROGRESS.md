@@ -1,14 +1,8 @@
 # Upstream logic bug fix progress
 
-## Current phase: paused by user; batch 005 incomplete
+## Current phase: batch 005 complete locally; root review/publication pending
 
-## Pause checkpoint
-
-- All agents were stopped on the user's pause request. No further fixes or tests are running.
-- Last completed local implementation/documentation HEAD before this checkpoint: `ee6ed38`; #1243 fix is committed as `d739637`. Batch 005 has not been pushed; last published HEAD is `b6d1788`.
-- #1305 changes remain uncommitted in `PlayerControl.xaml.cs` and the existing #105 probe files. The agent reported passing played/unplayed Dispose probes; final root review and the issue commit remain pending.
-- #1311 has uncommitted source-backed partial changes in `PlayerControl.xaml.cs`, `DownloadDialog.xaml.cs`, and new `unit-tests/batch-085/` artifacts. These retain `lan_doc(lan)` labels like the sibling. The agent reported its label/selection probe passing. Fully unmarked AI tracks and old downloaded labels remain unresolved; do not count #1311 as fully fixed.
-- Resume by reviewing the existing diff, completing #1305's commit, then reviewing/committing the limited #1311 changes with their stated limits. Preserve all pending source and probe files. No pull/fetch under the current user-owned HEAD instruction.
+Batch 005 is complete locally. #1243 and #1305 are fully fixed; #1311 has a source-backed partial mitigation that preserves language markers on online and newly created downloaded subtitle labels. Fully unmarked AI tracks and existing saved labels remain unresolved, so #1311 is not counted as fixed. Root reviews and handles publication. No pull/fetch was performed.
 
 The user authorized implementation fixes and commits. Batches 001–003 fixed nine findings; batch 004 fixed #611, #625, and #1216, bringing the total to 12 of 15. Root reviewed this batch and handles publication. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
 
@@ -25,7 +19,7 @@ Batch 005 starts from user-owned target branch `work` at clean HEAD `b6d17888b4a
 
 Batch 004 order: #611 → #625 → #1216. All three fixes are implemented, including #1216 compatibility with the legacy page-number fallback.
 
-Batch 005 baseline: clean HEAD `b6d17888b4a4871137a598fe240462813670a939`; no pull/fetch. Batch status: in progress. #1243 is fixed: the actual `HandleUrl` prefix returns `false` for an empty string before `First()`, matching the pinned sibling; the extracted-prefix probe passes empty, `@`, and ordinary URL cases. #1305 is under source review. #1311 is blocked pending a source-grounded AI/manual subtitle discriminator; the pinned DTO and local/download formats discard that metadata. Update this record after each issue commit; root reviews and handles publication.
+Batch 005 baseline: user-owned HEAD `b6d17888b4a4871137a598fe240462813670a939`; no pull/fetch. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`. #1243 and #1305 are fixed; #1311 has the limited mitigation described above. No application build, restore, run, protocol generation, or live API testing was performed; user build/testing remains pending.
 
 | #611 | Fixed | Cached rules are validated as `LoadShieldSetting` reads them, pruning and persisting only when invalid entries exist; cloud and cached rules are also validated and materialized when sync merges them. Empty and malformed patterns are removed; valid local/cloud expressions are retained. Actual extracted load, import, validator, and render fragments pass cached-offline pruning, malformed local/cloud and empty patterns, valid-rule preservation, and comment rendering. No application runtime. Commits recorded below. |
 | #625 | Fixed | The 2024 UGC-season display row now carries its mapped video AID, and collection comments dispatch that AID as video OID while preserving dynamic `ReplyID` and other routes. Probe executes the extracted mapper Avid→aid assignment, display AID assignment, and full actual comment handler with distinct IDs. No application runtime. Commit recorded below. |
@@ -44,12 +38,16 @@ Batch 005 baseline: clean HEAD `b6d17888b4a4871137a598fe240462813670a939`; no pu
 
 - Setup and baseline record: `9597c58`.
 - #1243 empty URL guard and actual-prefix regression probe: `d739637`.
+- #1305 actual played-item marker lifecycle and Dispose probes: pending commit hash.
+- #1311 language-label preservation and selection probe: pending commit hash.
 
 ## Batch 004 verification
 
 - #611: `work/upstream-bugs/unit-tests/batch-042/issue-611/run-imported-regex-filter.sh` passes against extracted target cache-load and cloud-import code, validator, and render loop. It verifies a cached invalid pattern is persisted-pruned before sync, invalid cloud patterns and an empty pattern are rejected, valid local/cloud rules survive, and the visible comment reaches the add boundary.
 - #625: `work/upstream-bugs/unit-tests/batch-043/issue-625/run-ugc-collection-comment-dispatch.sh` passes with extracted mapper Avid→aid, display AID, and full target comment handler; dynamic ID and video AID remain distinct.
 - #1216: `work/upstream-bugs/unit-tests/batch-079/issue-1216/run-terminal-comment-cursor.sh` passes with extracted branch assignments and cursor/load-more statements for modern terminal, modern nonterminal, and legacy fallback ten-reply/no-cursor cases.
+- #1305: `work/upstream-bugs/unit-tests/batch-084/issue-1305/run-played-item-marker.sh` extracts the actual identity-reset and Playing-state blocks. The #105 Dispose runner extracts the actual method and confirms played-item history capture before cleanup, saved resume position without reporting for a never-played restored item, and natural-end skip.
+- #1311: `work/upstream-bugs/unit-tests/batch-085/issue-1311/run-subtitle-language-label.sh` extracts the actual online/download labels and existing AI-selection condition; AI-marker, manual-language, and setting-enabled cases pass.
 - `git diff --check` passes. No application build, restore, run, protocol generation, live API call, or end-to-end claim was made.
 
 | #378 | Fixed | Target model now preserves absolute URLs and maps malformed, null, and empty values to the pinned sibling fallback. Extracted actual nested class probe passes all four cases; no API/UI runtime. Commit recorded below. |

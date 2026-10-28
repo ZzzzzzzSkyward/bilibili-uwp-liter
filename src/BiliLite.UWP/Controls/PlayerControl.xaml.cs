@@ -1032,7 +1032,13 @@ namespace BiliLite.Controls
                 index = PlayInfos.Count - 1;
             }
             CurrentPlayIndex = index;
-            CurrentPlayItem = PlayInfos[index];
+            var selectedPlayItem = PlayInfos[index];
+            if (CurrentPlayItem == null || CurrentPlayItem.season_id != selectedPlayItem.season_id ||
+                CurrentPlayItem.ep_id != selectedPlayItem.ep_id || CurrentPlayItem.cid != selectedPlayItem.cid)
+            {
+                _hasPlayedCurrentItem = false;
+            }
+            CurrentPlayItem = selectedPlayItem;
             if (CurrentPlayItem.is_interaction)
             {
                 ShowPlaylistButton = false;
@@ -1338,6 +1344,7 @@ namespace BiliLite.Controls
 
         private double _position = 0;
         private bool _autoPlay = false;
+        private bool _hasPlayedCurrentItem = false;
 
         private async Task SetDanmaku(bool update = false)
         {
@@ -2287,6 +2294,10 @@ namespace BiliLite.Controls
 
         private void Player_PlayStateChanged(object sender, PlayState e)
         {
+            if (e == PlayState.Playing)
+            {
+                _hasPlayedCurrentItem = true;
+            }
             BottomImageBtnPlay.Visibility = Visibility.Collapsed;
             switch (e)
             {
@@ -2594,7 +2605,7 @@ namespace BiliLite.Controls
         {
             var historyItem = CurrentPlayItem;
             var historyPosition = Player.Position;
-            var shouldReportHistory = historyItem != null && Player.PlayState != PlayState.End;
+            var shouldReportHistory = historyItem != null && _hasPlayedCurrentItem && Player.PlayState != PlayState.End;
             if (historyItem != null)
                 SettingHelper.SetValue<double>(historyItem.season_id != 0 ? "ep" + historyItem.ep_id : historyItem.cid, historyPosition);
 

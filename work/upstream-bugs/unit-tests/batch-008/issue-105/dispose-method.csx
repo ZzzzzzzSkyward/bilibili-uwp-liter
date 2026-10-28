@@ -2,7 +2,7 @@
         {
             var historyItem = CurrentPlayItem;
             var historyPosition = Player.Position;
-            var shouldReportHistory = historyItem != null && Player.PlayState != PlayState.End;
+            var shouldReportHistory = historyItem != null && _hasPlayedCurrentItem && Player.PlayState != PlayState.End;
             if (historyItem != null)
                 SettingHelper.SetValue<double>(historyItem.season_id != 0 ? "ep" + historyItem.ep_id : historyItem.cid, historyPosition);
 

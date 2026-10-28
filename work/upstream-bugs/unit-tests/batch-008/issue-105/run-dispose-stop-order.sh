@@ -6,13 +6,28 @@ tools_root="${UPSTREAM_UNIT_TOOLS:-/workspace/work/upstream-unit-tools}"
 source_file="$repo_root/src/BiliLite.UWP/Controls/PlayerControl.xaml.cs"
 fragment="$script_dir/dispose-method.csx"
 harness="$script_dir/dispose-stop-order-test.csx"
-sed -n '/^        public async void Dispose()/,/^        }/p' "$source_file" > "$fragment"
+python3 - "$source_file" "$fragment" <<'PY'
+import sys
+source = open(sys.argv[1], encoding='utf-8-sig').read()
+start = source.index('        public async void Dispose()')
+brace = source.index('{', start)
+depth = 0
+for end in range(brace, len(source)):
+    if source[end] == '{':
+        depth += 1
+    elif source[end] == '}':
+        depth -= 1
+        if depth == 0:
+            end += 1
+            break
+open(sys.argv[2], 'w').write(source[start:end] + '\n')
+PY
 grep -Fq 'await playerHelper.ReportHistory(historyItem, historyPosition);' "$fragment"
 cat > "$harness" <<'CSHARP'
 using System;
 using System.Threading.Tasks;
 
-enum PlayState { Playing, End }
+enum PlayState { Playing, Pause, End }
 sealed class ChangePlayerEngine { }
 sealed class PlayInfo
 {
@@ -28,8 +43,8 @@ static class SettingHelper
 }
 sealed class StubPlayer
 {
-    public double Position = 42;
-    public PlayState PlayState = PlayState.Playing;
+    public double Position = 0.5;
+    public PlayState PlayState = PlayState.Pause;
     public bool IsDisposed;
     public TaskCompletionSource<bool> DisposedSignal = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public event EventHandler<PlayState> PlayStateChanged;
@@ -65,6 +80,7 @@ sealed class PlayerControlHarness
     public StubTimer danmuTimer = new();
     public object danmakuPool = new();
     public object dispRequest = new();
+    public bool _hasPlayedCurrentItem = true;
     void Player_PlayStateChanged(object sender, PlayState e) { }
     void Player_PlayMediaEnded(object sender, EventArgs e) { }
     void Player_PlayMediaError(object sender, string e) { }
@@ -80,9 +96,9 @@ control.Dispose();
 var stoppedBeforeReportCompleted = control.Player.IsDisposed;
 Console.WriteLine($"Player disposed while report pending: {stoppedBeforeReportCompleted}");
 var historyCaptured = ReferenceEquals(control.playerHelper.ReportedItem, originalItem)
-    && control.playerHelper.ReportedPosition == 42
+    && control.playerHelper.ReportedPosition == 0.5
     && SettingHelper.SavedKey == "epfixture-episode"
-    && Equals(SettingHelper.SavedValue, 42d)
+    && Equals(SettingHelper.SavedValue, 0.5d)
     && control.danmuTimer == null;
 Console.WriteLine($"History and resume position captured before report: {historyCaptured}");
 control.playerHelper.PendingReport.TrySetResult(true);
@@ -92,6 +108,29 @@ var passed = stoppedBeforeReportCompleted && historyCaptured;
 Console.WriteLine(passed
     ? "PASS: player cleanup completed before captured history report"
     : "FAIL: player cleanup or captured history data was incorrect");
+var untouchedControl = new PlayerControlHarness();
+untouchedControl._hasPlayedCurrentItem = false;
+untouchedControl.Player.PlayState = PlayState.Pause;
+untouchedControl.Player.Position = 37;
+untouchedControl.Dispose();
+var unplayedWasNotReported = untouchedControl.playerHelper.ReportedItem == null
+    && untouchedControl.Player.IsDisposed
+    && untouchedControl.Player.Position == 0
+    && SettingHelper.SavedKey == "epfixture-episode"
+    && Equals(SettingHelper.SavedValue, 37d);
+Console.WriteLine($"Unplayed paused item with restored position was not reported and cleanup ran: {unplayedWasNotReported}");
+passed = passed && unplayedWasNotReported;
+var endedControl = new PlayerControlHarness();
+endedControl.Player.PlayState = PlayState.End;
+endedControl.Dispose();
+var naturalEndWasNotReported = endedControl.playerHelper.ReportedItem == null
+    && endedControl.Player.IsDisposed
+    && Equals(SettingHelper.SavedValue, 0.5d);
+Console.WriteLine($"Natural-end item was not reported and cleanup ran: {naturalEndWasNotReported}");
+passed = passed && naturalEndWasNotReported;
+Console.WriteLine(passed
+    ? "PASS: played history is captured before cleanup; unplayed and natural-end history are skipped"
+    : "FAIL: disposal history behavior did not match playback state");
 Environment.ExitCode = passed ? 0 : 1;
 CSHARP
 export DOTNET_ROOT="$tools_root/dotnet"
