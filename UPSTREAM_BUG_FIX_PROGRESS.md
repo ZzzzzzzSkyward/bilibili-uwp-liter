@@ -2,9 +2,9 @@
 
 ## Current phase: batch 004 complete; awaiting user build/testing
 
-The user authorized implementation fixes and commits. Batch 001 fixed #31, #105, and #121; batch 002 fixed #146, #275, and #358. Batch 003 is implementing the next three findings in order. Root reviews and pushes completed batches. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
+The user authorized implementation fixes and commits. Batches 001–003 fixed nine findings; batch 004 fixed #611, #625, and #1216, bringing the total to 12 of 15. Root reviewed this batch and handles publication. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
 
-Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed54f0b8d9` (clean). Per user instruction, no pull/fetch was performed. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`. Batch 004 is complete; its commits await root review/push. The next finding is #1243.
+Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed54f0b8d9` (clean). Per user instruction, no pull/fetch was performed. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`. Batch 004 is reviewed and complete; user build/testing is pending. The next finding is #1243.
 
 ## Constraints
 
@@ -72,4 +72,4 @@ Batch 004 order: #611 → #625 → #1216. All three fixes are implemented, inclu
 - #358: `work/upstream-bugs/unit-tests/fix-batch-002/issue-358/run.sh` — passes against the full actual `HistoryVM` and actual extracted `AccountApi.HistoryWbi`, with real Newtonsoft deserialization of fixture JSON and a recording request boundary. Confirms initial GET shape/cookie flag, cursor append, archive/PGC item mapping and `kid` deletion key apart from nested OID, empty terminal page, and refresh reset. This executes no UWP navigation, actual transport, or live API. The earlier format-only command could not start because the available .NET tool failed initialization (`/home/agent/.dotnet/8.0.427.toolpath.sentinel` was read-only, then NuGet migration mutex initialization failed with `DOTNET_CLI_HOME` redirected to `/tmp`).
 - No application build, restore, run, protocol generation, live app API call, or end-to-end behavior check was performed in batch 002.
 
-Batch 002 application changes were reviewed and pushed to `origin/work` through `f6c8a4fe19cf1b073b53c7dba200b6f6c246decf`, including the history navigation fallback follow-up. Both isolated probes passed after that commit; temporary compiler outputs are excluded from Git. Nine of the 15 assessed findings have implementation fixes, including batch 003. User build/testing is pending; next finding: #611.
+Batch 002 application changes were reviewed and pushed to `origin/work` through `f6c8a4fe19cf1b073b53c7dba200b6f6c246decf`, including the history navigation fallback follow-up. Both isolated probes passed after that commit; temporary compiler outputs are excluded from Git. Batches 001–003 completed nine fixes. Batch 004 brings the current total to 12 of 15; user build/testing is pending, and #1243 is next.
