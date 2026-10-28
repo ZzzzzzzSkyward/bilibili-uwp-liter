@@ -36,16 +36,29 @@
     },
     {
       "issue": 46,
-      "subitem": "guard_list_v2_route_and_large_ids",
-      "disposition": "validated_logic_present",
-      "confidence": "medium_high",
+      "subitem": "guard_list_large_id_overflow",
+      "disposition": "validated_logic_addressed",
+      "confidence": "high",
       "evidence": [
-        "Issue #46 reports the v1 /xlive/app-room/v1/guardTab/topList route, gives an oversized ruid parse error, and provides the v2 route and required request parameters; maintainer comment confirms the log's Int32 overflow diagnosis.",
-        "Target src/BiliLite.UWP/Pages/LiveDetailPage.xaml.cs:886 -> src/BiliLite.UWP/Modules/Detail/LiveRoomVM.cs:942-978 -> src/BiliLite.UWP/Api/Live/LiveRoomAPI.cs:211-220 is the full fetch path; the API helper still constructs the v1 URL.",
-        "Target embedded LiveGuardRankItem at src/BiliLite.UWP/Modules/Detail/LiveRoomVM.cs:1814-1828 uses long for uid and ruid, handling the old log's oversized IDs.",
-        "Pinned sibling src/BiliLite.UWP/Models/Requests/Api/Live/LiveRoomAPI.cs:255-267 also uses v1 while its LiveRoomViewModel and guard model parse long IDs."
+        "Issue #46 log shows an Int32 overflow while parsing ruid, and a maintainer comment confirms the oversized-ID diagnosis.",
+        "Target call path is src/BiliLite.UWP/Pages/LiveDetailPage.xaml.cs:886 -> src/BiliLite.UWP/Modules/Detail/LiveRoomVM.cs:942-978; its embedded LiveGuardRankItem at :1814-1828 declares uid and ruid as long.",
+        "Pinned sibling guard model also declares long IDs."
       ],
-      "reason": "The old Int32 parse failure is addressed, but the target still requests the v1 route that the report identifies as missing some rooms; the v2 route in the report is absent from the target request path. Live service behavior was not tested.",
+      "reason": "The current target model accommodates the specific identifier values that caused the historical Int32 overflow. This does not establish current service behavior.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 46,
+      "subitem": "claimed_v2_coverage_upgrade",
+      "disposition": "skipped_skeptical",
+      "confidence": "medium",
+      "evidence": [
+        "The issue says some rooms do not return a guard list and proposes /xlive/app-room/v2/guardTab/topList with sample request parameters, but has no later reproduction or fix reference establishing a target-specific route defect.",
+        "Target src/BiliLite.UWP/Api/Live/LiveRoomAPI.cs:211-220 still calls v1; pinned sibling src/BiliLite.UWP/Models/Requests/Api/Live/LiveRoomAPI.cs:255-267 also calls v1.",
+        "No live API call was made, so current v1/v2 service coverage is unknown."
+      ],
+      "reason": "The source confirms both clients use v1, but that alone does not prove the target is defective; the proposed v2 change and incomplete-room claim are not independently established by a source fix or reproduction.",
       "suggested_unit_case": null,
       "fix": null
     },
@@ -81,6 +94,6 @@
     "application_source_changed": false,
     "unit_tests_run": false,
     "build_restore_or_app_run": false,
-    "reason_no_unit_run": "The source findings are directly established by field types and request paths. A synthetic unit test would not establish remote API behavior or the unexplained player error; no C# runtime was available."
+    "reason_no_unit_run": "The source findings are directly established by field types and request paths. A synthetic unit test would not establish remote API coverage or the unexplained player error; no C# runtime was available."
   }
 }
