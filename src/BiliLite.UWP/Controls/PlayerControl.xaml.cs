@@ -2167,6 +2167,11 @@ namespace BiliLite.Controls
             {
                 try
                 {
+                var pointerUpdateKind = e.GetCurrentPoint(sender as UIElement).Properties.PointerUpdateKind;
+                if (SettingHelper.GetValue<bool>(SettingHelper.UI.MOUSE_BACK, true)
+                    && (pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.XButton1Pressed
+                        || pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.MiddleButtonPressed))
+                    return;
                 gestureRecognizer.ProcessDownEvent(ps[0]);
                 e.Handled = true;
                 }catch(Exception ex) { }
@@ -2175,6 +2180,11 @@ namespace BiliLite.Controls
 
         private void Grid_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
+            var pointerUpdateKind = e.GetCurrentPoint(sender as UIElement).Properties.PointerUpdateKind;
+            if (SettingHelper.GetValue<bool>(SettingHelper.UI.MOUSE_BACK, true)
+                && (pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.XButton1Released
+                    || pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.MiddleButtonReleased))
+                return;
             var ps = e.GetIntermediatePoints(null);
             if (ps != null && ps.Count > 0)
             {
