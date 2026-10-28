@@ -4,13 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Web;
-using Windows.Web.Http.Filters;
-using System.Security.Cryptography;
-using System.Text.RegularExpressions;
-using Windows.Web.Http;
-using gfoidl.Base64;
-using System.Timers;
+using Newtonsoft.Json.Linq;
+using BiliLite.Services;
 
 public interface ICookieService
 {
@@ -18,37 +13,20 @@ public interface ICookieService
     string ReadCookie(string name, string defaultValue);
 }
 
-public class CookieService : ICookieService
+public class CookieService : BiliLite.Services.CookieService, ICookieService
 {
-    private readonly HttpBaseProtocolFilter _filter;
-
-    public CookieService()
-    {
-        _filter = new HttpBaseProtocolFilter();
-    }
-
-    public void WriteCookie(string name, string value)
-    {
-        var cookie = new HttpCookie(name, "bilibili.com", "/")
-        {
-            Value = value
-        };
-        _filter.CookieManager.SetCookie(cookie);
-    }
-
-    public string ReadCookie(string name, string defaultValue)
-    {
-        var cookies = _filter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
-        if (cookies.Count == 0) return defaultValue;
-        var cookie = cookies.FirstOrDefault(x => x.Name == name);
-        return cookie?.Value ?? defaultValue;
-    }
+    public CookieService() : base() { }
+    public CookieService(BiliLite.Services.ICookieStore store, Func<string, string> readSetting,
+        Action<string, string> writeSetting, Func<bool> isLoggedIn,
+        Func<BiliLite.Api.ApiModel, Task<BiliLite.Helpers.HttpResults>> send = null,
+        Action<string> notify = null, Action<string, Exception> log = null)
+        : base(store, readSetting, writeSetting, isLoggedIn, send, notify, log) { }
 }
 namespace BiliLite.Api
 {
     public static class ApiHelper
     {
-        public static CookieService Cookie = new CookieService();
+        public static global::CookieService Cookie = new global::CookieService();
         static ApiHelper()
         {
             var sets = new List<string>();
@@ -107,28 +85,10 @@ namespace BiliLite.Api
         public static string replyreply = "/reply/reply";
         public static string readcomment_old = "/reply";//2025仍然有效
         //sync
-        public static string SyncCookie(string cookie_name, string setting_name)
-            {
-            var cookie_value = Cookie.ReadCookie(cookie_name, "");
-            var setting_value = SettingHelper.GetValue<string>(setting_name, "");
-            //sync
-            if (String.IsNullOrEmpty(cookie_value) && !String.IsNullOrEmpty(setting_value))
-            {
-                Cookie.WriteCookie(cookie_name, setting_value);
-                cookie_value = setting_value;
-            }
-            else if (!String.IsNullOrEmpty(cookie_value) && String.IsNullOrEmpty(setting_value))
-                {
-                setting_value = cookie_value;
-                SettingHelper.SetValue(setting_name, setting_value);
-                    }
-            return cookie_value;
-                }
+        public static string SyncCookie(string cookie_name, string setting_name) => Cookie.SyncCookie(cookie_name, setting_name);
+
         //csrf
-        public static string GetCSRF(bool isparam = false)
-        {
-            return SyncCookie("bili_jct", "CookieCSRF");
-        }
+        public static string GetCSRF(bool isparam = false) => Cookie.GetCSRF();
 
         public static string GetSign(string url)
         {
@@ -208,8 +168,8 @@ namespace BiliLite.Api
                 API_BASE_URL = Default_API_BASE_URL;
                 api2 = default_api2;
             }
-            LoadCookieFromSetting();
-            AutoRefreshCookie();
+            Cookie.LoadCookieFromSetting();
+            Cookie.StartAutoRefresh();
         }
         public static string GetSign(IDictionary<string, string> pars, ApiKeyInfo apiKeyInfo)
         {
@@ -225,15 +185,10 @@ namespace BiliLite.Api
             results = results + apiKeyInfo.Secret;
             return "&sign=" + Utils.ToMD5(results).ToLower();
         }
-        private static int[] mixinKeyEncTab = new int[] {
-            46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35, 27, 43, 5, 49,
-            33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13, 37, 48, 7, 16, 24, 55, 40,
-            61, 26, 17, 0, 1, 60, 51, 30, 4, 22, 25, 54, 21, 56, 59, 6, 63, 57, 62, 11,
-            36, 20, 34, 44, 52
-        };
-        public static int wbitoken_expire = 0;
+        public static int wbitoken_expire = 0; // Legacy compatibility field; WbiKeyService now owns its bounded cache lifetime.
         public class wbiimg
         {
+            // Compatibility mirror for old callers; WbiKeyService owns freshness and refresh.
             public string img_url;
             public string sub_url;
         }
@@ -242,55 +197,70 @@ namespace BiliLite.Api
             public wbiimg wbi_img { get; set; }
         }
         public static wbiimg wbitoken_current = new wbiimg();
-        // 获取最新的 img_key 和 sub_key
-        private static async Task<(string, string)> GetWbiKeys()
+        private static readonly WbiKeyService wbiKeyService = new WbiKeyService(FetchWbiKeysAsync,
+            TimeSpan.FromSeconds(3600), onKeysChanged: keys =>
+            {
+                if (wbitoken_current == null) wbitoken_current = new wbiimg();
+                wbitoken_current.img_url = keys.ImgKey;
+                wbitoken_current.sub_url = keys.SubKey;
+            });
+
+        private static async Task<WbiKey> FetchWbiKeysAsync()
         {
             var response = await new AccountApi().WbiToken().Request();
-            var result = await response.GetData<wbitoken>();
-            var imgUrl = result.data.wbi_img.img_url;
-            var subUrl = result.data.wbi_img.sub_url;
-            var imgKey = imgUrl.Substring(imgUrl.LastIndexOf('/') + 1).Split('.')[0];
-            var subKey = subUrl.Substring(subUrl.LastIndexOf('/') + 1).Split('.')[0];
-            wbitoken_current.img_url = imgKey;
-            wbitoken_current.sub_url = subKey;
-            return (imgKey, subKey);
-        }
-        public static async Task<bool> LoadWbiKey()
-        {
-            if (wbitoken_current.img_url == null)
-            {
-                await GetWbiKeys();
-                return true;
-            }
-            return false;
+            if (response == null || !response.status || response.code != 200)
+                throw new InvalidOperationException("WBI navigation request failed with HTTP status " + (response?.code.ToString() ?? "unknown") + ".");
+            var body = JObject.Parse(response.results ?? "");
+            var apiCode = (int?)body["code"];
+            if (apiCode != 0 && apiCode != -101)
+                throw new InvalidOperationException("WBI navigation response contained a non-success API code.");
+            var imgUrl = (string)body["data"]?["wbi_img"]?["img_url"];
+            var subUrl = (string)body["data"]?["wbi_img"]?["sub_url"];
+            var imgKey = ExtractWbiKey(imgUrl);
+            var subKey = ExtractWbiKey(subUrl);
+            var keys = new WbiKey(imgKey, subKey);
+            WbiKeyService.ValidateForApi(keys);
+            return keys;
         }
 
-        private static string GetMixinKey(string origin)
+        private static string ExtractWbiKey(string url)
         {
-            // 对 imgKey 和 subKey 进行字符顺序打乱编码
-            return mixinKeyEncTab.Aggregate("", (s, i) => s + origin[i]).Substring(0, 32);
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                throw new FormatException("WBI navigation response contained an invalid image URL.");
+            var file = uri.AbsolutePath.Substring(uri.AbsolutePath.LastIndexOf('/') + 1);
+            var extension = file.LastIndexOf('.');
+            var key = extension >= 0 ? file.Substring(0, extension) : file;
+            if (key.Length != 32 || key.Any(character => !Uri.IsHexDigit(character)))
+                throw new FormatException("WBI navigation response contained an invalid key.");
+            return key;
+        }
+
+        private static void SeedWbiKeyFromCompatibilityFields()
+        {
+            var legacyImg = wbitoken_current?.img_url;
+            var legacySub = wbitoken_current?.sub_url;
+            if (string.IsNullOrWhiteSpace(legacyImg) || string.IsNullOrWhiteSpace(legacySub)) return;
+            if (!wbiKeyService.HasCachedKeys)
+                wbiKeyService.Seed(new WbiKey(legacyImg, legacySub));
+        }
+
+        private static async Task<(string, string)> GetWbiKeys()
+        {
+            SeedWbiKeyFromCompatibilityFields();
+            var keys = await wbiKeyService.GetKeysAsync();
+            return (keys.ImgKey, keys.SubKey);
+        }
+
+        public static async Task<bool> LoadWbiKey()
+        {
+            SeedWbiKeyFromCompatibilityFields();
+            return await wbiKeyService.LoadWbiKeyAsync();
         }
 
         public static async Task<string> GetWbiSign(string url)
         {
-            var (imgKey, subKey) = await GetWbiKeys();
-
-            // 为请求参数进行 wbi 签名
-            string mixinKey = GetMixinKey(imgKey + subKey);
-            long currentTime = (long)Math.Round(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1)).TotalSeconds);
-
-            var queryString = HttpUtility.ParseQueryString(url);
-
-            var queryParams = queryString.Cast<string>().ToDictionary(k => k, v => queryString[v]);
-            queryParams["wts"] = currentTime + ""; // 添加 wts 字段
-            queryParams = queryParams.OrderBy(x => x.Key).ToDictionary(x => x.Key, x => x.Value); // 按照 key 重排参数
-                                                                                                  // 过滤 value 中的 "!'()*" 字符
-            queryParams = queryParams.ToDictionary(x => x.Key, x => string.Join("", x.Value.ToString().Where(c => "!'()*".Contains(c) == false)));
-            var query = string.Join("&", queryParams.Select(x => $"{x.Key}={Uri.EscapeDataString(x.Value)}"));
-
-            var wbi_sign = Utils.ToMD5($"{query}{mixinKey}").ToLower();
-
-            return $"{query}&w_rid={wbi_sign}";
+            await GetWbiKeys();
+            return await wbiKeyService.GetWbiSignAsync(url);
         }
 
         /// <summary>
@@ -327,225 +297,30 @@ namespace BiliLite.Api
                 { "x-bili-aurora-eid", "UlMFQVcABlAH" },
             };
         }
-        private static bool has_inited_cookie = false;
-        private static short init_cookie_try_count = 0;
-        private static short init_cookie_try_max = 5;
-        private static bool _need_refresh_cookie;
-        public static bool need_refresh_cookie
+        public static long cookie_timestamp
         {
-            get
-            {
-                if (!has_inited_cookie)
-                {
-                    NeedRefreshCookie();
-                    return false;
-                }
-                return _need_refresh_cookie;
-            }
+            get => Cookie.CookieTimestamp;
+            set => Cookie.CookieTimestamp = value;
         }
-        private static void LoadCookieFromSetting()
-        {
-            SyncCookie("SESSDATA", "CookieSESSDATA");
-            SyncCookie("bili_jct", "CookieCSRF");
-        }
-        public static long cookie_timestamp = 0;
-        public async static Task<bool> NeedRefreshCookie()
-        {
-            if (has_inited_cookie) return _need_refresh_cookie;
-            if (!SettingHelper.Account.Logined)
-            {
-                has_inited_cookie = true;
-                _need_refresh_cookie = false;
-                return _need_refresh_cookie;
-            }
-            var url = "https://passport.bilibili.com/x/passport-login/web/cookie/info";
-            var api = new ApiModel() {
-                need_cookie = true,
-                method = RestSharp.Method.Get,
-                baseUrl = url,
-            };
-            LoadCookieFromSetting();
-            var result = await api.Request();
-            if (result.code==200)
-            {
-                var j = result.GetJObject();
-                has_inited_cookie = true;
-                if (j["data"] != null)
-                {
-                    var ts = (long)(j["data"]["timestamp"]);
-                    cookie_timestamp = ts;
-                    _need_refresh_cookie = (bool)(j["data"]["refresh"] ?? false);
-                }
-                else
-                    _need_refresh_cookie = true;
-            }
-            else if (result.code == -101)
-            {
-                //未登录则不需要
-                has_inited_cookie = true;
-                _need_refresh_cookie = false;
-            }
-            init_cookie_try_count++;
-            if (init_cookie_try_count > init_cookie_try_max)
-            {
-                has_inited_cookie = true;
-                _need_refresh_cookie = false;
-            }
-            return _need_refresh_cookie;
-        }
-        static string GetCorrespondPath(long timestamp)
-        {
-            // 构造消息体
-            string message = $"refresh_{timestamp}";
-            byte[] data = Encoding.UTF8.GetBytes(message);
 
-            // 导入公钥
-            RSA rsa = RSA.Create();
-            string m = "y4HdjgJHBlbaBN04VERG4qNBIFHP6a3GozCl75AihQloSWCXC5HDNgyinEnhaQ_4-gaMud_GF50elYXLlCToR9se9Z8z433U3KjM-3Yx7ptKkmQNAMggQwAVKgq3zYAoidNEWuxpkY_mAitTSRLnsJW-NCTa0bqBFF6Wm1MxgfE";
-            string e = "AQAB";
-            rsa.ImportParameters(new RSAParameters()
-            {
-                Modulus = Base64.Url.Decode(m.ToCharArray()),
-                Exponent = Base64.Url.Decode(e.ToCharArray())
-            });
+        public static bool need_refresh_cookie => Cookie.NeedRefreshCookie;
 
-            // 使用 RSA-OAEP 加密
-            byte[] encryptedBytes = rsa.Encrypt(data, RSAEncryptionPadding.OaepSHA256);
+        public static Task<bool> NeedRefreshCookie() => Cookie.NeedRefreshCookieAsync();
 
-            // 将加密后的字节数组转换为小写的 Base16 字符串
-            return BitConverter.ToString(encryptedBytes).Replace("-", "").ToLower();
-        }
-        private static bool need_refresh_cookie_notified = false;
         public static async void RefreshCookie()
         {
-            if (cookie_timestamp == 0)
+            try
             {
-                LogHelper.Log("No cookie timestamp provided to refresh cookie", LogType.INFO);
-                if (!need_refresh_cookie_notified)
-                {
-                    need_refresh_cookie_notified = true;
-                    Utils.ShowMessageToast("啊哦，cookie过气了，\n而且没有刷新令牌，\n需要重新登录了呢");
-                }
-                return;
+                await Cookie.RefreshCookieAsync();
             }
-            var correspondPath = GetCorrespondPath(cookie_timestamp);
-            cookie_timestamp = 0;
-            var url = $"https://www.bilibili.com/correspond/1/{correspondPath}";
-            var api = new ApiModel()
+            catch (Exception exception)
             {
-                method = RestSharp.Method.Get,
-                baseUrl = url,
-                need_cookie = true,
-            };
-            var result = await api.Request();
-            string csrf = "";
-            if (result.code == 200)
-            {
-                var text = result.results;
-                string pattern = @"<div id=""1-name"">([^<]+)</div>";
-                Match match = Regex.Match(text, pattern);
-
-                if (match.Success)
-                {
-                    csrf = match.Groups[1].Value;
-                }
-                else
-                {
-                    LogHelper.Log("刷新cookie时发生正则表达式没匹配", LogType.INFO);
-                }
+                LogHelper.Log("Cookie refresh failed.", LogType.ERROR, exception);
             }
-            if (String.IsNullOrEmpty(csrf))
-            {
-                return;
-            }
-            var url2 = "https://passport.bilibili.com/x/passport-login/web/cookie/refresh";
-            var token = GetRefreshToken();
-            if (String.IsNullOrEmpty(token)) return;
-            var api2 = new ApiModel()
-            {
-                need_cookie = true,
-                method = RestSharp.Method.Post,
-                baseUrl = url2,
-                body = $"csrf={GetCSRF()}&refresh_csrf={csrf}&source=main_web&refresh_token={token}"
-            };
-            var result2 = await api2.Request();
-            var new_token = "";
-            if (result2.code == 200)
-            {
-                var d = result2.GetJObject();
-                var obj = d["data"];
-                if (obj != null)
-                {
-                    new_token = (string)(obj["refresh_token"]);
-                }
-            }
-            else if (result2.code == -101)
-            {
-                LogHelper.Log("刷新cookie时出现账号未登录", LogType.INFO);
-            } else if (result2.code == -111)
-            {
-                LogHelper.Log("刷新cookie时出现csrf校验失败", LogType.INFO);
-            }
-            if (String.IsNullOrEmpty(new_token)) return;
-            //设置新的cookie
-            SettingHelper.SetValue("CookieRefreshToken", new_token);
-            //注销
-            var url3 = "https://passport.bilibili.com/x/passport-login/web/confirm/refresh";
-            var api3 = new ApiModel()
-            {
-                need_cookie = true,
-                method = RestSharp.Method.Post,
-                baseUrl = url3,
-                body = $"csrf={GetCSRF()}&refresh_token={token}"
-            };
-            var result3 = await api3.Request();
-            _need_refresh_cookie = false;
-        }
-        public static string GetRefreshToken()
-        {
-            var token = SettingHelper.GetValue<string>("CookieRefreshToken", "");
-            return token;
-        }
-        // 定时器
-        private static Timer _timer;
-
-        // 上一次执行的时间戳
-        private static DateTime _lastExecutionTime;
-        private static void AutoRefreshCookie()
-        {
-            // 程序启动时立即执行一次任务
-            ExecuteTask(DateTime.Now);
-
-            // 初始化定时器，设置为1天执行一次
-            InitializeTimer(TimeSpan.FromDays(1));
-        }
-        private static void InitializeTimer(TimeSpan interval)
-        {
-            // 创建定时器
-            _timer = new Timer(interval.TotalMilliseconds);
-            _timer.Elapsed += TimerElapsed;
-            _timer.AutoReset = true; // 自动重新触发
-            _timer.Start();
-
-            Console.WriteLine($"定时器已启动，间隔时间为 {interval}...");
         }
 
-        private static void TimerElapsed(object sender, ElapsedEventArgs e)
-        {
-            // 获取当前时间
-            DateTime now = DateTime.Now;
+        public static string GetRefreshToken() => Cookie.GetRefreshToken();
 
-            // 执行任务
-            ExecuteTask(now);
-
-            // 更新上一次执行的时间戳
-            _lastExecutionTime = now;
-        }
-
-        private static void ExecuteTask(DateTime currentTimestamp)
-        {
-            has_inited_cookie = false;
-        }
     }
     public class ApiKeyInfo
     {

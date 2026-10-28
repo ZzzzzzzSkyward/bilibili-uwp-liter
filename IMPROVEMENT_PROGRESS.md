@@ -19,11 +19,20 @@
 - The playlist adapter resolves subtitle and danmaku `StorageFile` handles through the saved FutureAccessList folder grant. The player uses the existing cue model/timer and `DanmuControl`; it clears old visuals/pools on selection changes and uses generation/owner guards so stale reads, cue renders, XML parses, or queued renderer callbacks cannot overwrite a newer selection/item or a disposed player. Per-track failures retain stage, collection/item/track IDs, and full exception details in logs.
 - `work/improvements/tests/run.sh` passes actual-source LM-01–05 probes. LM-05 covers JSON/SRT/VTT cues and invalid inputs, VTT metadata/markup, timer cue selection boundaries, asynchronous selection/item/dispose guards, independent danmaku toggle subsets, empty selection, merged timestamp order, and full track failure context. LM-03 now also verifies saved-grant subtitle/danmaku file handles. `git diff --check` passes. These are offline source probes; they do not validate UWP media event timing or actual decoder/renderer behavior. No app build, restore, launch, protocol generation, or live API call was run.
 
+## Current step: API-01 implementation complete; root review pending
+
+- Started from target HEAD `c9f76a7`. Root supplied the pinned sibling source through the GitHub connector at `ywmoyue/biliuwp-lite`, commit [`ca2caddc597b3faf05b4dac6dcb226aa0694365b`](https://github.com/ywmoyue/biliuwp-lite/tree/ca2caddc597b3faf05b4dac6dcb226aa0694365b); inspected files: `Services/CookieService.cs`, `Services/WbiKeyService.cs`, `Services/ApiHelper.cs`, `Models/Requests/Api/BaseApi.cs`, and `Models/Requests/Api/DanmakuApi.cs`. No fetch/pull was used.
+- Added `BiliLite.Services.CookieService` around the target browser-cookie store, existing settings keys, refresh-state check, refresh-token flow, timer, and token fields. The old global `ICookieService` and `CookieService` remain source-compatible; `ApiHelper.Cookie` remains a mutable global-shim field, and its public CSRF, refresh-state, refresh-token, timestamp, and async-void refresh wrappers delegate through the current field. Target settings persistence remains in place; the sibling cookie-list schema and DI setup were not ported.
+- Added injectable `WbiKeyService` with a one-hour finite cache, concurrent fetch coalescing, strict 32-character hexadecimal key validation, and retry after malformed/API/network failures. Nav requires HTTP success and API code `0` or logged-out `-101` with valid WBI keys, since guests still receive keys for signed requests. `ApiHelper.GetWbiSign`, `LoadWbiKey`, public mirror fields/types, and legacy public names remain available. WBI keys/signatures are not logged.
+- Added target-specific `Models/Requests/Api/BaseApi`, migrated `EmoteApi` with its original namespace shim, and ported `DanmakuApi.Like`. These use the target's current API base URL, key configuration, `ApiModel` and mutable cookie service; no auth UI or API was changed.
+- `work/improvements/tests/run-api01.sh` compiles the actual target `ApiHelper.cs`, `AccountApi.cs`, global cookie shim, services, and migrated endpoints against offline boundary stubs. Its 30 assertions cover a fixed independent WBI signature vector, forbidden-character filtering/UTF-8 encoding, TTL expiry, fetch coalescing, malformed-key/transport retry, cookie sync and refresh-state retry, guest `-101` WBI keys, confirm-refresh POST dispatch/body, failed confirmation behavior, Like/unlike, and Emote compatibility. The old fixed-line refresh-dispatch test now delegates to this actual-source probe. Full LM-01–05 probes and `git diff --check` pass. No app build, restore, launch, protocol generation, or live API call was run.
+- Port differences: the target retains `SettingHelper` keys, `ApiModel`, `HttpHelper`, app-key configuration, and global cookie callers; no sibling `SettingService` cookie schema or `App.ServiceProvider` is added. Refresh/nav envelopes are validated, WBI lifetime is bounded, fetches coalesce, and cookie refresh is only marked complete after successful confirmation. AUTH-01 is next.
+
 ## Historical LM-04 setup checkpoint
 
 - Baseline is clean HEAD `a8435c1`; the LM-03 implementation and handoff are committed. LM-04 will add selectors inside the existing `PlayerControl`, reuse the manifest track handles, and preserve the current item, position, and playing state across reopen. Focused actual-source probes will exercise switch state and rollback. No app build, restore, launch, protocol generation, or live API test is in scope.
 
-## Next step: API-01 compatibility layer and API organization
+## Next step after root review: AUTH-01 missing authentication endpoints
 
 ## Prior step: LM-02 reviewed and published; LM-03 next
 
@@ -53,7 +62,7 @@
 
 ## Remaining batches
 
-- API-01: introduce the API compatibility layer and service organization. The pinned sibling `/workspace/biliuwp-lite` was absent during LM-05; source-dependent behavior ports should wait until that reference is available through the authorized workspace.
+- AUTH-01: port missing authentication endpoints per `PLAN.md` while preserving the existing login UI. Use the exact pinned sibling reference already retrieved for API-01; do not fetch/pull.
 - API/auth, gRPC, danmaku, and notification ports as scoped by `work/improvements/PLAN.md`.
 - SponsorBlock is excluded entirely. Live tiles remain optional; the player toast service is the planned first notification slice.
 

@@ -141,6 +141,11 @@
     <Compile Include="Api\ApiHelper.cs" />
     <Compile Include="Api\CommentApi.cs" />
     <Compile Include="Api\EmoteApi.cs" />
+    <Compile Include="Models\Requests\Api\BaseApi.cs" />
+    <Compile Include="Models\Requests\Api\EmoteApi.cs" />
+    <Compile Include="Models\Requests\Api\DanmakuApi.cs" />
+    <Compile Include="Services\CookieService.cs" />
+    <Compile Include="Services\WbiKeyService.cs" />
     <Compile Include="Api\GitApi.cs" />
     <Compile Include="Api\Home\AnimeAPI.cs" />
     <Compile Include="Api\Home\ChannelAPI.cs" />

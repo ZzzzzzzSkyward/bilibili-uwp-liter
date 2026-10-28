@@ -78,3 +78,5 @@ cat > "$scratch/LM05.runtimeconfig.json" <<'JSON'
 {"runtimeOptions":{"tfm":"net8.0","framework":{"name":"Microsoft.NETCore.App","version":"8.0.33"}}}
 JSON
 "$DOTNET_ROOT/dotnet" "$scratch/LM05.dll"
+
+"$(dirname -- "${BASH_SOURCE[0]}")/run-api01.sh"

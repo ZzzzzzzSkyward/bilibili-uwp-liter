@@ -3,8 +3,8 @@
 ## Resume point
 
 - Repo: `/workspace/bilibili-uwp-liter`, branch `work`.
-- Published application baseline: `8106491` (LM-05 reviewed). No pending application changes.
-- Next: **API-01 — API compatibility layer and service organization**.
+- Published application baseline: `8106491` (LM-05 reviewed); API-01 implementation is in progress for root review.
+- Next after API-01 review: **AUTH-01 — missing authentication endpoints**.
 - Plan: `work/improvements/PLAN.md`. Detailed checkpoint: `IMPROVEMENT_PROGRESS.md`.
 
 ## Completed
@@ -14,10 +14,11 @@
 - LM-03: collection items play through the existing player; resolved StorageFile video/audio handles, stable local resume IDs, manifest-specific Bilibili network/history suppression.
 - LM-04: independent video/audio selectors, embedded audio option, position/play-state preservation, one rollback reopen after immediate switch failure.
 - LM-05: saved-grant subtitle/danmaku file resolution; Bilibili JSON, SRT, and VTT cue parsing; explicit-default subtitle selection; independently toggleable XML danmaku tracks merged through the existing parser and renderer. Actual-source offline probes cover parsing, cue selection, asynchronous stale-load guards, merged tracks, and resolved file handles.
+- API-01: cookie and WBI services with `ApiHelper` compatibility wrappers, `BaseApi`, migrated Emote API shim, and Danmaku Like request construction. Actual-source offline probes cover cookie refresh dispatch/state, WBI signing/cache/retry, and endpoint compatibility.
 
 ## Next batch
 
-API-01: separate cookie handling and WBI signing into services while retaining the existing `ApiHelper` compatibility wrappers and public callers. Check the pinned sibling before porting existing behavior; the sibling was absent in this restored workspace. Inventory current implementations first to avoid duplicating endpoints already present.
+AUTH-01: port the missing authentication endpoints using the pinned sibling reference, preserving current login UI and credential-free logging. The API-01 change and its source/test boundaries are described in `IMPROVEMENT_PROGRESS.md`.
 
 Real UWP permissions/restart, UI/media-event timing, codec support and asynchronous decoder-failure recovery need user app testing; do not claim these were validated locally.
 
@@ -25,9 +26,9 @@ Real UWP permissions/restart, UI/media-event timing, codec support and asynchron
 
 - Root orchestrates/reviews; **gpt-6-luna subagents write application code**.
 - Own HEAD; **skip pull/fetch**. Commit each step and push normally; no force push.
-- Sole existing behavior reference: `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b` when available; it was absent during LM-05. New manifest requirements come from the preserved plan.
+- Sole existing behavior reference: [`ywmoyue/biliuwp-lite`](https://github.com/ywmoyue/biliuwp-lite/tree/ca2caddc597b3faf05b4dac6dcb226aa0694365b) at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`; root retrieved the API-01 source files through the GitHub connector. Do not fetch/pull. New manifest requirements come from the preserved plan.
 - No app builds, restores, launches, protocol generation or live application API tests. Focused offline unit tests of actual source pieces and format checks are allowed.
-- Existing unit runner: `work/improvements/tests/run.sh`; cached tools: `/workspace/work/upstream-unit-tools`. LM-01–05 actual-source probes passed; UWP storage/player boundaries are stubbed. Whitespace checks passed.
+- Existing unit runner: `work/improvements/tests/run.sh`; focused API-01 runner: `work/improvements/tests/run-api01.sh`; cached tools: `/workspace/work/upstream-unit-tools`. LM-01–05 and API-01 actual-source offline probes passed; UWP storage/player/network boundaries are stubbed. Whitespace checks passed.
 - Preserve full exception/result details in logs with stage and collection/item/track IDs. Keep user-facing errors concise.
 - Update `IMPROVEMENT_PROGRESS.md` at every step. Favor practical small changes.
 - SponsorBlock excluded; live tiles optional. API/auth, gRPC, danmaku improvements and player toasts follow local-media work per plan.
