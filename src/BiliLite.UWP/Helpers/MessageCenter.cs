@@ -100,6 +100,10 @@ namespace BiliLite.Helpers
         /// <param name="par"></param>
         public async static Task<bool> HandleUrl(string url)
         {
+            if (url.Length == 0)
+            {
+                return false;
+            }
             if (url.First() == '@')
             {
                 return false;

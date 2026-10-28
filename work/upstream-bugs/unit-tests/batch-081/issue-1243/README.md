@@ -1,12 +1,14 @@
 # Empty note-card URL
 
-Run `bash work/upstream-bugs/unit-tests/batch-081/issue-1243/run-empty-dynamic-url.sh` from the repository root with the existing isolated-unit tooling installed. The runner extracts the target prefix that calls `url.First()` and executes it with an empty string.
+Run `bash work/upstream-bugs/unit-tests/batch-081/issue-1243/run-empty-dynamic-url.sh` from the repository root with the existing isolated-unit tooling installed. The runner extracts the actual `HandleUrl` prefix by method and comment anchors. It checks that an empty string returns `false`, the existing `@` case still returns `false`, and an ordinary URL passes through the prefix.
 
 Recorded result:
 
 ```text
-Empty URL threw: True (InvalidOperationException)
-FAIL: empty URL guard throws before the unsupported-link fallback
+Empty URL returns false: True
+Existing @ prefix returns false: True
+Ordinary URL continues: True
+PASS: empty URL is rejected and existing prefix behavior is preserved
 ```
 
-Exit status 1 is the expected failing regression assertion on current source. The runner also emits CS1998 because the extracted async prefix has no await. This probe does not exercise the full URL handler, UI navigation, or a live service. No application build or restore is involved.
+The runner emits CS1998 because the extracted async prefix has no await. This probe executes only the extracted handler prefix; it does not exercise URL navigation, the UI, or a live service. No application build or restore is involved.

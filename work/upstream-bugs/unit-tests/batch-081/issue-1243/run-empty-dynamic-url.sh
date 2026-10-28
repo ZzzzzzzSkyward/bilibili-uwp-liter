@@ -6,7 +6,15 @@ tools_root="${UPSTREAM_UNIT_TOOLS:-/workspace/work/upstream-unit-tools}"
 source_file="$repo_root/src/BiliLite.UWP/Helpers/MessageCenter.cs"
 fragment="$script_dir/empty-url-guard.csx"
 harness="$script_dir/empty-url-guard-test.csx"
-sed -n '103,106p' "$source_file" > "$fragment"
+python3 - "$source_file" "$fragment" <<'PY'
+import sys
+source = open(sys.argv[1], encoding='utf-8-sig').read()
+start = source.index('public async static Task<bool> HandleUrl(string url)')
+start = source.index('{', start) + 1
+end = source.index('//短链接处理', start)
+open(sys.argv[2], 'w').write(source[start:end])
+PY
+grep -Fq 'if (url.Length == 0)' "$fragment"
 grep -Fq 'if (url.First() == '\''@'\'')' "$fragment"
 cat > "$harness" <<'CSHARP'
 using System;
@@ -24,22 +32,17 @@ cat >> "$harness" <<'CSHARP'
     }
 }
 
-var threw = false;
-string exceptionType = "";
-try
-{
-    await new TargetPrefix().Handle("");
-}
-catch (Exception ex)
-{
-    threw = true;
-    exceptionType = ex.GetType().Name;
-}
-Console.WriteLine($"Empty URL threw: {threw} ({exceptionType})");
-var passed = !threw;
+var handler = new TargetPrefix();
+var emptyResult = await handler.Handle("");
+var markerResult = await handler.Handle("@user");
+var ordinaryResult = await handler.Handle("https://example.invalid/video");
+Console.WriteLine($"Empty URL returns false: {!emptyResult}");
+Console.WriteLine($"Existing @ prefix returns false: {!markerResult}");
+Console.WriteLine($"Ordinary URL continues: {ordinaryResult}");
+var passed = !emptyResult && !markerResult && ordinaryResult;
 Console.WriteLine(passed
-    ? "PASS: empty URL is handled without throwing"
-    : "FAIL: empty URL guard throws before the unsupported-link fallback");
+    ? "PASS: empty URL is rejected and existing prefix behavior is preserved"
+    : "FAIL: extracted HandleUrl prefix returned an unexpected result");
 Environment.ExitCode = passed ? 0 : 1;
 CSHARP
 export DOTNET_ROOT="$tools_root/dotnet"
