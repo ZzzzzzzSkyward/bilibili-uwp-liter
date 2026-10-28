@@ -15,12 +15,12 @@
     .\watch-remote.ps1
 
 .EXAMPLE
-    .\watch-remote.ps1 -IntervalSeconds 30 -TimeoutSeconds 3600 -Fetch
+    .\watch-remote.ps1 -IntervalSeconds 60 -TimeoutSeconds 3600 -Fetch
 #>
 param(
     [string]$Remote = 'origin',
     [string]$Branch,
-    [int]$IntervalSeconds = 15,
+    [int]$IntervalSeconds = 300,
     [int]$TimeoutSeconds = 0,
     [switch]$Fetch
 )

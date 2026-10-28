@@ -13,6 +13,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1
 - Commit the bumped manifests together with the change that triggered the build. `-NoVersionBump` is an escape hatch for a throwaway rebuild at the current version (for example, re-running a failed build while diagnosing); it must not be the default in a release or verification run.
 - A full run takes about two minutes. Let it finish and read the result once, rather than polling.
 
+### Known build failure: CS2012 on `BiliLiter.exe`
+
+`error CS2012: ... intermediatexaml\BiliLiter.exe ... used by another process` followed by `MSB4181 CompileXaml returned false` means a reused MSBuild node still holds the intermediate exe from an earlier run; it is not a source error. Wait for the node to exit (or close the leftover `MSBuild.exe` with the same start time) and rerun - a plain retry at the same version has been clean. `-NoVersionBump` is correct for that retry, otherwise the failed attempt still burns a revision.
+
 ### Fast compile loop
 
 ```powershell
@@ -32,7 +36,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\watch-remote.ps1 -Fetch
 
 `watch-remote.ps1` blocks until the watched remote branch moves, then exits, which makes it usable as a "wake me on the next push" gate. It polls `git ls-remote`, so it never touches local refs or the working tree; `-Fetch` downloads just that ref into `FETCH_HEAD` to print the incoming commits, still without changing the checked-out branch.
 
-- Defaults: remote `origin`, the current branch, a 15 s interval, and no timeout. `-IntervalSeconds`, `-TimeoutSeconds`, `-Remote` and `-Branch` override them.
+- Defaults: remote `origin`, the current branch, a 5 min interval, and no timeout. `-IntervalSeconds`, `-TimeoutSeconds`, `-Remote` and `-Branch` override them. 5 min keeps a long hand-off gate cheap; lower `-IntervalSeconds` when the remote is expected to answer within seconds.
 - Exit codes: `0` a new commit appeared, `2` the timeout expired with no change, `3` the branch was deleted.
 - Output: the baseline SHA in the first line, then silence until the SHA changes. Unreachable remotes retry instead of exiting and warn at most once a minute.
 - Pull and rebuild only after it reports a change; the script does not pull on its own.
