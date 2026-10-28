@@ -1,0 +1,10 @@
+{
+  "batch": 36,
+  "processed": [
+    {"issue": 521, "status": "skipped"},
+    {"issue": 527, "status": "skipped"},
+    {"issue": 528, "status": "assigned_visual"},
+    {"issue": 529, "status": "skipped"},
+    {"issue": 530, "status": "assigned_visual"}
+  ]
+}
