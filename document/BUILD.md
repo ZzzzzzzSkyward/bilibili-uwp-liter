@@ -17,9 +17,27 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1
 
 `obj\x64\Release\intermediatexaml\BiliLiter.exe` is held open by a compiler process that is still exiting, so the next build fails with `CS2012` followed by `MSB4181 CompileXaml returned false` - a lock, not a source error. `-nodeReuse:false` and `-p:UseSharedCompilation=false` reduce it but do not remove it: the locker seen here was a spawned `csc`/`XamlCompiler`, and a fixed `Start-Sleep 3` retry was still too early, so the retry failed with the same error against a different process id.
 
-The script now extracts the locked path from the `CS2012` message, kills `MSBuild`/`VBCSCompiler`/`csc`, waits until the file can be opened with `FileShare.None` (up to 30 s, polling every 500 ms), and only then retries - at most twice. A fixed sleep is a guess; the exclusive-open probe is the actual precondition.
+The script now extracts the locked path from the `CS2012` message, kills `MSBuild`/`VBCSCompiler`/`csc`, waits until the file can be opened with `FileShare.None` (up to 30 s, polling every 500 ms), and only then retries with **`-t:Rebuild`** - at most twice. A fixed sleep is a guess; the exclusive-open probe is the actual precondition, and the rebuild is what keeps a half-written `intermediatexaml` from being packaged (a `Build` retry can produce a package that dies at the splash screen).
 
 If a run still fails, rerun with `-NoVersionBump` so the failed attempt does not burn a revision.
+
+### The MSIX layout that actually boots
+
+`BiliLiter.exe` at the package root must be the **8 KB launcher**, with the managed app at `entrypoint\BiliLiter.exe`. That is the layout the packaging project produces. The app project's own `-t:Package` writes a different layout into the **same** `Z:\BiliLite.UWP_<version>_x64_Test\BiliLite.UWP_<version>_x64.msix` path: the ~4.2 MB managed exe at the root, no `entrypoint/`. Installing that one gives an immediate exit at the splash screen with no application log at all (`LogHelper.Initialize` runs after `App.InitializeComponent`, so a failure inside XAML initialisation has nowhere to log) - it shows up only as Event 1000/1026 in the Application log with `e0434352` and an empty stack.
+
+Because both projects race for one filename, the file left in `Z:\` is not necessarily the bootable one. The script now checks after packaging:
+
+- UWP package: `entrypoint/BiliLiter.exe` present **and** root `BiliLiter.exe` under 64 KB, otherwise it re-runs the packaging project's `-t:Package` once and re-checks, then fails the build rather than handing over a package that cannot start.
+- Packages package: `entrypoint/BiliLiter.exe`, `BiliLite.Win32Tools/BiliLite.Win32Tools.exe` and `fullTrustProcess` in its manifest (that extension is what `AppHelper.LaunchConverter` needs for video export).
+
+Verify an installed package before blaming the source:
+
+```powershell
+$p = (Get-AppxPackage -Name BilibiliUWPLiter).InstallLocation
+Get-ChildItem $p -Recurse -Filter *.exe | Select-Object FullName, Length
+```
+
+`<loc>\BiliLiter.exe` = 8192 with `<loc>\entrypoint\BiliLiter.exe` = ~4.28 MB is the good shape. A 4.28 MB exe at the root with no `entrypoint/` cannot start this app.
 
 ### Fast compile loop
 

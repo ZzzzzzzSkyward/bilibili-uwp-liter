@@ -162,16 +162,22 @@ $buildOutput = @()
 & $msbuild @buildArgs | Tee-Object -Variable buildOutput
 for ($attempt = 1; $attempt -le 2; $attempt++) {
     if ($LASTEXITCODE -eq 0 -or -not ($buildOutput -match 'error CS2012')) { break }
-    # XAML 编译中间产物被残留的编译器进程占用（-nodeReuse:false 也挡不住正在退出的节点）
-    $locked = if ($buildOutput -match '[“"]([^”"]+intermediatexaml\\[^”"]+)[”"]') { $Matches[1] }
-              else { Join-Path $root 'src\BiliLite.UWP\obj\x64\Release\intermediatexaml\BiliLiter.exe' }
-    Write-Warning "检测到 CS2012（$(Split-Path -Leaf $locked) 被占用），清理编译器进程后重试（第 $attempt 次）。"
+    # XAML 编译中间产物被正在退出的编译器进程占用（-nodeReuse:false 也挡不住）。
+    # 重试用 Rebuild 而不是 Build：失败的编译会留下半新的 intermediatexaml，
+    # 增量打包会把它们原样带进 MSIX，装上去就停在启动图。
+    $locked = $null
+    $cs2012 = $buildOutput | Where-Object { $_ -match 'CS2012' } | Select-Object -First 1
+    if ($cs2012 -match '“([^”]+\.exe)”') { $locked = $Matches[1] }
+    elseif ($cs2012 -match '"([^"]+\.exe)"') { $locked = $Matches[1] }
+    if (-not $locked) { $locked = Join-Path $root 'src\BiliLite.UWP\obj\x64\Release\intermediatexaml\BiliLiter.exe' }
+    Write-Warning "检测到 CS2012（$(Split-Path -Leaf $locked) 被占用），清理编译器进程后用 Rebuild 重试（第 $attempt 次）。"
     Get-Process MSBuild, VBCSCompiler, csc -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     if (-not (Wait-FileReleased -Path $locked -TimeoutSeconds 30)) {
         Write-Warning '等不到文件释放，直接重试。'
     }
+    $retryArgs = $buildArgs | ForEach-Object { if ($_ -eq "-t:$target") { '-t:Rebuild' } else { $_ } }
     $buildOutput = @()
-    & $msbuild @buildArgs | Tee-Object -Variable buildOutput
+    & $msbuild @retryArgs | Tee-Object -Variable buildOutput
 }
 if ($LASTEXITCODE -ne 0) {
     throw "生成失败（退出码 $LASTEXITCODE）。"
@@ -190,4 +196,69 @@ if ($packages) {
     Write-Host ''
     Write-Host '生成产物：'
     $packages | ForEach-Object { Write-Host "  $_" }
+}
+
+# ---------- 打包布局校验 ----------
+# 1.0.9.12 把 4MB 的托管主程序放在包根、且没有 entrypoint/，装上去就停在启动图闪退；
+# 能正常启动的布局是「根目录 8KB 启动器 + entrypoint\BiliLiter.exe」。
+# 两个打包工程都会往同一个目录写同名 MSIX，谁后写谁赢，所以最后一个文件不能直接交付。
+Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue | Out-Null
+
+function Read-AppxPackageLayout {
+    param([string]$Path)
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($Path)
+    try {
+        $entries = @{}
+        foreach ($entry in $zip.Entries) { $entries[$entry.FullName] = $entry.Length }
+        $manifest = ''
+        $manifestEntry = $zip.GetEntry('AppxManifest.xml')
+        if ($manifestEntry) {
+            $reader = New-Object System.IO.StreamReader($manifestEntry.Open())
+            try { $manifest = $reader.ReadToEnd() } finally { $reader.Dispose() }
+        }
+        return [pscustomobject]@{ Entries = $entries; Manifest = $manifest }
+    }
+    finally {
+        $zip.Dispose()
+    }
+}
+
+function Test-UwpPackageLayout {
+    param([string]$Path)
+    $layout = Read-AppxPackageLayout -Path $Path
+    if (-not $layout.Entries.ContainsKey('entrypoint/BiliLiter.exe')) { return '缺少 entrypoint/BiliLiter.exe' }
+    if (-not $layout.Entries.ContainsKey('BiliLiter.exe')) { return '缺少根 BiliLiter.exe' }
+    if ($layout.Entries['BiliLiter.exe'] -ge 65536) { return "根 BiliLiter.exe 是 $($layout.Entries['BiliLiter.exe']) 字节的托管主程序，不是启动器" }
+    return $null
+}
+
+function Test-FullPackageLayout {
+    param([string]$Path)
+    $layout = Read-AppxPackageLayout -Path $Path
+    if (-not $layout.Entries.ContainsKey('entrypoint/BiliLiter.exe')) { return '缺少 entrypoint/BiliLiter.exe' }
+    if (-not $layout.Entries.ContainsKey('BiliLite.Win32Tools/BiliLite.Win32Tools.exe')) { return '缺少 BiliLite.Win32Tools' }
+    if ($layout.Manifest -notmatch 'fullTrustProcess') { return '清单里没有 fullTrustProcess 扩展' }
+    return $null
+}
+
+$uwpPackage = $packages | Where-Object { $_ -match 'BiliLite\.UWP_.*\.msix$' } | Select-Object -First 1
+$fullPackage = $packages | Where-Object { $_ -match 'BiliLite\.Packages_.*\.msix$' } | Select-Object -First 1
+if ($uwpPackage) {
+    $problem = Test-UwpPackageLayout -Path $uwpPackage
+    if ($problem) {
+        # 另一个打包工程会把同名文件覆盖成正确布局：重跑它一次再检查
+        Write-Warning "UWP 包布局不对（$problem），重跑 BiliLite.Packages 打包修正。"
+        $wapproj = Join-Path $root 'src\BiliLite.Packages\BiliLite.Packages.wapproj'
+        & $msbuild $wapproj -t:Package '-p:Configuration=Release' '-p:Platform=x64' '-v:m' '-nologo' '-m' '-nodeReuse:false' "-p:AppxPackageDir=$OutputDir" | Out-Null
+        $problem = Test-UwpPackageLayout -Path $uwpPackage
+        if ($problem) {
+            throw "UWP 包布局仍然不对（$problem）：$uwpPackage。这个包装上去会停在启动图，不要交付。"
+        }
+    }
+}
+if ($fullPackage) {
+    $problem = Test-FullPackageLayout -Path $fullPackage
+    if ($problem) {
+        throw "完整包布局不对（$problem）：$fullPackage。"
+    }
 }
