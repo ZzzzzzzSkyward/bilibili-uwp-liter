@@ -68,6 +68,10 @@ namespace BiliLite.Modules.User
         private bool refreshQueued;
         //真正的在途请求标记（Loading 只是界面状态）
         private bool feedRequestInFlight;
+        //连续空页上限：服务端页被过滤成 0 张卡片时游标仍在前进，只靠 has_more/游标判断会无限翻页，
+        //所以连续空页达到上限就停止，作为兜底（只在达到上限的那一页记一条日志）
+        private const int EmptyPageCap = 5;
+        private int consecutiveEmptyPages;
         public DynamicVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
@@ -167,6 +171,7 @@ namespace BiliLite.Modules.User
             updateBaseline = null;
             articleOffset = null;
             restOffset = null;
+            consecutiveEmptyPages = 0;
             //兜底开关不跨刷新继承：刷新时回到 gRPC 再试一次（每次请求最多一次尝试，失败即在同一次请求内改走 REST，不会循环）
             if (restFeedMode)
             {
@@ -463,10 +468,16 @@ namespace BiliLite.Modules.User
                     updateBaseline = null;
                     articleOffset = null;
                     restOffset = null;
+                    consecutiveEmptyPages = 0;
                 }
                 LogHelper.Log("User dynamic VM stage=request-start generation=" + generation + " dynamicType=" + requestDynamicType + " itemType=" + requestItemType + " history=" + (idx != ""), LogType.DEBUG);
 
-                if (requestDynamicType == DynamicType.UserDynamic && !SettingHelper.Account.Logined)
+                //只有 gRPC 动态流（全部/视频/番剧）需要 app access key；专栏走 ArticleV2 的 Cookie 请求，
+                //未登录也要照常尝试（与源项目一致），不能因为没登录就不发请求
+                var feedRequiresAppLogin = requestItemType == UserDynamicType.All
+                    || requestItemType == UserDynamicType.Video
+                    || requestItemType == UserDynamicType.Season;
+                if (requestDynamicType == DynamicType.UserDynamic && feedRequiresAppLogin && !SettingHelper.Account.Logined)
                 {
                     stage = "login-prompt";
                     LogHelper.Log("User dynamic VM stage=login-prompt generation=" + generation + " itemType=" + requestItemType, LogType.INFO);
@@ -493,6 +504,10 @@ namespace BiliLite.Modules.User
                 {
                     stage = "feed-request";
                     var page = loadMore ? feedPage + 1 : 1;
+                    //本页请求所用的游标：专栏用 articleOffset，其余动态流用 historyOffset；发布时与返回值比较，判断游标是否真的前进
+                    var requestCursor = loadMore
+                        ? (requestItemType == UserDynamicType.Article ? articleOffset : historyOffset)
+                        : null;
                     List<DynamicCardModel2024> grpcCards = null;
                     bool hasMore = false;
                     string nextOffset = null;
@@ -625,8 +640,9 @@ namespace BiliLite.Modules.User
                         }
                         feedPage = restPage;
                         restOffset = nextRestOffset;
-                        //游标不前进则停止翻页，避免同一页被重复追加
-                        CanLoadMore = restHasMore && !string.IsNullOrEmpty(nextRestOffset) && !string.Equals(nextRestOffset, restCursor, StringComparison.Ordinal);
+                        //停止条件统一在 CanContinuePaging 里：服务端没有更多、游标没前进、连续空页到上限都停
+                        var restCursorAdvanced = !string.IsNullOrEmpty(nextRestOffset) && !string.Equals(nextRestOffset, restCursor, StringComparison.Ordinal);
+                        CanLoadMore = CanContinuePaging(restHasMore, restCursorAdvanced, restMapped.Count, requestItemType, generation);
                         lastPageFailed = false;
                         ShowError = false;
                         ErrorMsg = "";
@@ -715,7 +731,13 @@ namespace BiliLite.Modules.User
                     {
                         articleOffset = nextOffset;
                     }
-                    CanLoadMore = hasMore;
+                    //与 REST 兜底同一套停止条件：hasMore 为 false、游标重复、连续空页到上限都会停。
+                    //gRPC 动态流只认 history_offset，缺失或重复都说明下一页拿不到（空 offset 会让下一次请求回到不带
+                    //History 的首页）；专栏还有独立的 page 参数在前进，只有返回的 offset 与本次相同才算重复。
+                    var cursorAdvanced = requestItemType == UserDynamicType.Article
+                        ? string.IsNullOrEmpty(nextOffset) || !string.Equals(nextOffset, requestCursor, StringComparison.Ordinal)
+                        : !string.IsNullOrEmpty(nextOffset) && !string.Equals(nextOffset, requestCursor, StringComparison.Ordinal);
+                    CanLoadMore = CanContinuePaging(hasMore, cursorAdvanced, mapped.Count, requestItemType, generation);
                     lastPageFailed = false;
                     ShowError = false;
                     ErrorMsg = "";
@@ -844,12 +866,43 @@ namespace BiliLite.Modules.User
         private void PublishFeedError(string message)
         {
             lastPageFailed = true;
+            //本页失败即停止翻页：不再依赖短视口检查去重试失败的页
+            CanLoadMore = false;
             if (Items == null || Items.Count == 0)
             {
                 ShowError = true;
                 ErrorMsg = message;
             }
             Utils.ShowMessageToast(message);
+        }
+        //翻页停止条件：服务端说没有更多、本页游标没前进（重复游标会把同一页无限重复），
+        //或连续空页达到上限（服务端页全被过滤成 0 张卡片时的兜底）。
+        private bool CanContinuePaging(bool serverHasMore, bool cursorAdvanced, int pageItemCount, UserDynamicType itemType, int generation)
+        {
+            if (pageItemCount == 0)
+            {
+                consecutiveEmptyPages++;
+            }
+            else
+            {
+                consecutiveEmptyPages = 0;
+            }
+            if (consecutiveEmptyPages >= EmptyPageCap)
+            {
+                //只在达到上限的那一页记一条：CanLoadMore 随后为 false，不会再有下一页请求
+                LogHelper.Log("User dynamic VM stage=empty-page-cap itemType=" + itemType + " emptyPages=" + consecutiveEmptyPages + " generation=" + generation, LogType.INFO);
+                return false;
+            }
+            if (!serverHasMore)
+            {
+                return false;
+            }
+            if (!cursorAdvanced)
+            {
+                LogHelper.Log("User dynamic VM stage=cursor-repeated itemType=" + itemType + " generation=" + generation, LogType.INFO);
+                return false;
+            }
+            return true;
         }
         //REST 动态流的 has_more 可能是 true/false，也可能是 0/1
         private static bool ReadHasMoreFlag(JToken data)

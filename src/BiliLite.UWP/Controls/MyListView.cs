@@ -36,6 +36,11 @@ namespace BiliLite.Controls
                 _CanLoadMore = value;
                 if (value)
                 {
+                    // false->true 是一个"请求页已完成"信号，必定要有新的一轮短视口检查：
+                    // 服务端页可能被映射器过滤成 0 张可见卡片（广告/横幅），此时没有任何 item 或
+                    // ItemsSource 变化，光靠 _itemsVersion 永远等不到下一次触发，分页就停在空页上。
+                    // 这里把完成的页也算作一次内容版本变化，使已消费过的版本不再挡住这次检查。
+                    _itemsVersion++;
                     QueueShortViewportCheck();
                 }
             }
@@ -55,7 +60,12 @@ namespace BiliLite.Controls
         ScrollViewer scrollViewer;
 
         // A short-viewport load-more may run once per content version. Any item or ItemsSource
-        // change bumps the version, so another trigger needs new content.
+        // change bumps the version, and so does a completed request page (CanLoadMore false->true),
+        // because a page can publish zero visible cards while still advancing the server cursor.
+        // CanLoadMore is set false synchronously at request start and only restored when a page is
+        // published, so the rising edge can never happen while a request is still in flight: the
+        // rising edge is therefore exactly one completed page, and the version bump it causes
+        // re-arms one trigger for that page without allowing a second one.
         private int _itemsVersion;
         private int _triggeredItemsVersion = -1;
         private bool _checkQueued;
@@ -119,6 +129,10 @@ namespace BiliLite.Controls
 
         // Queues one check after the current dispatcher work, so the layout pass triggered by the
         // item change has produced real ScrollViewer measurements when the check runs.
+        // The Low priority also gives the page-completion signal its required ordering: the VM
+        // publishes a page and clears Loading in the same synchronous continuation (its finally
+        // block), and a queued Low callback cannot preempt that continuation, so by the time the
+        // check executes Loading is already false and LoadMore no longer returns early.
         private void QueueShortViewportCheck()
         {
             if (_checkQueued)
@@ -145,7 +159,8 @@ namespace BiliLite.Controls
             {
                 return;
             }
-            // False while a request is in flight, after a failed page and when the server ended pagination.
+            // False while a request is in flight, after a failed page, when the server ended pagination,
+            // when the cursor stopped advancing and when the consecutive-empty-page cap was hit.
             if (!CanLoadMore)
             {
                 return;
