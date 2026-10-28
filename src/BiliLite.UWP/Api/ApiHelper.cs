@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
 using BiliLite.Services;
 
 public interface ICookieService
@@ -197,43 +196,12 @@ namespace BiliLite.Api
             public wbiimg wbi_img { get; set; }
         }
         public static wbiimg wbitoken_current = new wbiimg();
-        private static readonly WbiKeyService wbiKeyService = new WbiKeyService(FetchWbiKeysAsync,
-            TimeSpan.FromSeconds(3600), onKeysChanged: keys =>
+        private static readonly WbiKeyService wbiKeyService = new WbiKeyService(onKeysChanged: keys =>
             {
                 if (wbitoken_current == null) wbitoken_current = new wbiimg();
                 wbitoken_current.img_url = keys.ImgKey;
                 wbitoken_current.sub_url = keys.SubKey;
             });
-
-        private static async Task<WbiKey> FetchWbiKeysAsync()
-        {
-            var response = await new AccountApi().WbiToken().Request();
-            if (response == null || !response.status || response.code != 200)
-                throw new InvalidOperationException("WBI navigation request failed with HTTP status " + (response?.code.ToString() ?? "unknown") + ".");
-            var body = JObject.Parse(response.results ?? "");
-            var apiCode = (int?)body["code"];
-            if (apiCode != 0 && apiCode != -101)
-                throw new InvalidOperationException("WBI navigation response contained a non-success API code.");
-            var imgUrl = (string)body["data"]?["wbi_img"]?["img_url"];
-            var subUrl = (string)body["data"]?["wbi_img"]?["sub_url"];
-            var imgKey = ExtractWbiKey(imgUrl);
-            var subKey = ExtractWbiKey(subUrl);
-            var keys = new WbiKey(imgKey, subKey);
-            WbiKeyService.ValidateForApi(keys);
-            return keys;
-        }
-
-        private static string ExtractWbiKey(string url)
-        {
-            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
-                throw new FormatException("WBI navigation response contained an invalid image URL.");
-            var file = uri.AbsolutePath.Substring(uri.AbsolutePath.LastIndexOf('/') + 1);
-            var extension = file.LastIndexOf('.');
-            var key = extension >= 0 ? file.Substring(0, extension) : file;
-            if (key.Length != 32 || key.Any(character => !Uri.IsHexDigit(character)))
-                throw new FormatException("WBI navigation response contained an invalid key.");
-            return key;
-        }
 
         private static void SeedWbiKeyFromCompatibilityFields()
         {

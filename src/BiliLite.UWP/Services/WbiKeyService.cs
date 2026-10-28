@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
+using BiliLite.Api;
 using BiliLite.Helpers;
 
 namespace BiliLite.Services
@@ -42,6 +43,12 @@ namespace BiliLite.Services
         private DateTimeOffset cachedAt;
         private Task<WbiKey> inFlight;
 
+        /// <summary>Creates the production cache backed by the Bilibili navigation endpoint.</summary>
+        public WbiKeyService(Action<WbiKey> onKeysChanged = null)
+            : this(FetchProductionKeysAsync, TimeSpan.FromHours(1), null, onKeysChanged)
+        {
+        }
+
         public WbiKeyService(Func<Task<WbiKey>> fetch, TimeSpan? timeToLive = null,
             Func<DateTimeOffset> clock = null, Action<WbiKey> onKeysChanged = null)
         {
@@ -52,6 +59,35 @@ namespace BiliLite.Services
             this.timeToLive = ttl;
             this.clock = clock ?? (() => DateTimeOffset.UtcNow);
             this.onKeysChanged = onKeysChanged;
+        }
+
+        private static async Task<WbiKey> FetchProductionKeysAsync()
+        {
+            var response = await new AccountApi().WbiToken().Request();
+            if (response == null || !response.status || response.code != 200)
+                throw new InvalidOperationException("WBI navigation request failed with HTTP status " + (response?.code.ToString() ?? "unknown") + ".");
+
+            var body = Newtonsoft.Json.Linq.JObject.Parse(response.results ?? "");
+            var apiCode = (int?)body["code"];
+            if (apiCode != 0 && apiCode != -101)
+                throw new InvalidOperationException("WBI navigation response contained a non-success API code.");
+
+            var imgKey = ExtractWbiKey((string)body["data"]?["wbi_img"]?["img_url"]);
+            var subKey = ExtractWbiKey((string)body["data"]?["wbi_img"]?["sub_url"]);
+            var keys = new WbiKey(imgKey, subKey);
+            Validate(keys);
+            return keys;
+        }
+
+        private static string ExtractWbiKey(string url)
+        {
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var uri))
+                throw new FormatException("WBI navigation response contained an invalid image URL.");
+            var file = uri.AbsolutePath.Substring(uri.AbsolutePath.LastIndexOf('/') + 1);
+            var extension = file.LastIndexOf('.');
+            var key = extension >= 0 ? file.Substring(0, extension) : file;
+            if (!IsWbiKey(key)) throw new FormatException("WBI navigation response contained an invalid key.");
+            return key;
         }
 
         public WbiKey CachedKeys
@@ -145,8 +181,6 @@ namespace BiliLite.Services
         }
 
         private static bool IsWbiKey(string key) => key != null && key.Length == 32 && key.All(Uri.IsHexDigit);
-
-        public static void ValidateForApi(WbiKey keys) => Validate(keys);
 
         public async Task<string> GetWbiSignAsync(string query, DateTimeOffset? timestamp = null)
         {
