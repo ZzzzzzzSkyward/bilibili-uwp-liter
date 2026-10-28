@@ -26,6 +26,8 @@ using System.Security.Policy;
 using System.Net.Http;
 using Grpc.Core;
 using System.Net;
+using System.Globalization;
+using System.Text.RegularExpressions;
 using BiliLite.Modules;
 using BiliLite.Services;
 
@@ -55,6 +57,10 @@ namespace BiliLite.Modules.User
         private string historyOffset;
         private string updateBaseline;
         private string articleOffset;
+        //REST 动态流的翻页游标（data.offset），与 gRPC 的 historyOffset/updateBaseline 分属两套，互不传递
+        private string restOffset;
+        //gRPC 动态接口被拒后粘滞到实例的兜底开关：置位后同一分类的后续页都走 REST，直到 Refresh 重新试一次 gRPC
+        private bool restFeedMode;
         private bool lastPageFailed;
         //每次刷新/切分类都递增，只有持有一致代号的请求才能发布结果
         private int requestGeneration;
@@ -160,6 +166,17 @@ namespace BiliLite.Modules.User
             historyOffset = null;
             updateBaseline = null;
             articleOffset = null;
+            restOffset = null;
+            //兜底开关不跨刷新继承：刷新时回到 gRPC 再试一次（每次请求最多一次尝试，失败即在同一次请求内改走 REST，不会循环）
+            if (restFeedMode)
+            {
+                restFeedMode = false;
+                LogHelper.Log("User dynamic VM stage=refresh-source grpc-retry restFeedMode reset generation=" + requestGeneration + " itemType=" + UserDynamicType, LogType.INFO);
+            }
+            else
+            {
+                LogHelper.Log("User dynamic VM stage=refresh-source grpc generation=" + requestGeneration + " itemType=" + UserDynamicType, LogType.DEBUG);
+            }
             if (feedRequestInFlight)
             {
                 //请求进行中，由它的 finally 丢弃结果后启动本次刷新（最新分类胜出）
@@ -445,6 +462,7 @@ namespace BiliLite.Modules.User
                     historyOffset = null;
                     updateBaseline = null;
                     articleOffset = null;
+                    restOffset = null;
                 }
                 LogHelper.Log("User dynamic VM stage=request-start generation=" + generation + " dynamicType=" + requestDynamicType + " itemType=" + requestItemType + " history=" + (idx != ""), LogType.DEBUG);
 
@@ -475,28 +493,153 @@ namespace BiliLite.Modules.User
                 {
                     stage = "feed-request";
                     var page = loadMore ? feedPage + 1 : 1;
-                    List<DynamicCardModel2024> grpcCards;
-                    bool hasMore;
+                    List<DynamicCardModel2024> grpcCards = null;
+                    bool hasMore = false;
                     string nextOffset = null;
                     string nextBaseline = null;
 
-                    if (requestItemType == UserDynamicType.All)
+                    //全部/视频的动态流由 gRPC 提供；专栏/番剧的取数来源保持原样，不受兜底开关影响
+                    var usesGrpcFeed = requestItemType == UserDynamicType.All || requestItemType == UserDynamicType.Video;
+                    var serveRestFeed = usesGrpcFeed && restFeedMode;
+                    //gRPC 被拒的原因（含 bili-status-code=-663 的说明），REST 兜底页也空时作为可见错误，不让页面无声空白
+                    string restFallbackMessage = null;
+                    if (usesGrpcFeed && !restFeedMode)
                     {
-                        var reply = await grpcService.GetDynAll(page, loadMore ? historyOffset : null);
+                        try
+                        {
+                            if (requestItemType == UserDynamicType.All)
+                            {
+                                var reply = await grpcService.GetDynAll(page, loadMore ? historyOffset : null);
+                                if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                                {
+                                    LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
+                                    return;
+                                }
+                                if (reply?.DynamicList == null)
+                                {
+                                    throw new InvalidOperationException("DynAll returned no dynamic list");
+                                }
+                                grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
+                                hasMore = reply.DynamicList.HasMore;
+                                nextOffset = reply.DynamicList.HistoryOffset;
+                            }
+                            else
+                            {
+                                var reply = await grpcService.GetDynVideo(page, loadMore ? historyOffset : null, loadMore ? updateBaseline : null);
+                                if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                                {
+                                    LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
+                                    return;
+                                }
+                                if (reply == null)
+                                {
+                                    throw new InvalidOperationException("DynVideo returned no reply");
+                                }
+                                if (reply.DynamicList == null)
+                                {
+                                    throw new InvalidOperationException("DynVideo returned no dynamic list");
+                                }
+                                grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
+                                hasMore = reply.DynamicList.HasMore;
+                                nextOffset = reply.DynamicList.HistoryOffset;
+                                nextBaseline = reply.DynamicList.UpdateBaseline;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                            {
+                                LogHelper.Log("User dynamic VM stage=" + stage + " discarded generation=" + generation, LogType.DEBUG, ex);
+                                return;
+                            }
+                            //接口拒绝（200 + 空体 + bili-status-code=-663 等）：错误文本进日志，同时把它当作切到 REST 动态流的触发条件
+                            LogHelper.Log("User dynamic VM stage=rest-fallback reason=" + ex.Message + " itemType=" + requestItemType + " loadMore=" + loadMore + " generation=" + generation, LogType.INFO);
+                            restFeedMode = true;
+                            restFallbackMessage = DescribeFeedFailure("动态请求失败", ex.Message);
+                            //gRPC 游标属于另一套分页，换源前清空，绝不会把 historyOffset/update_baseline 传给 REST
+                            historyOffset = null;
+                            updateBaseline = null;
+                            //gRPC 页序号无法映射成 REST 游标：从 REST 第一页重新取游标，本页按首页发布
+                            restOffset = null;
+                            serveRestFeed = true;
+                        }
+                    }
+
+                    if (serveRestFeed)
+                    {
+                        var restLoadMore = loadMore && !string.IsNullOrEmpty(restOffset);
+                        var restPage = restLoadMore ? feedPage + 1 : 1;
+                        var restCursor = restLoadMore ? restOffset : null;
+                        stage = "rest-feed-request";
+                        LogHelper.Log("User dynamic VM stage=rest-feed-request page=" + restPage + " offset=" + (restCursor ?? "") + " generation=" + generation, LogType.DEBUG);
+                        var restApi = dynamicAPI.DyanmicNew(requestItemType, restCursor);
+                        var restResponse = await restApi.Request();
                         if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
                         {
-                            LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
+                            LogHelper.Log("User dynamic VM stage=rest-feed-request discarded generation=" + generation, LogType.DEBUG);
                             return;
                         }
-                        if (reply?.DynamicList == null)
+                        if (!restResponse.status)
                         {
-                            throw new InvalidOperationException("DynAll returned no dynamic list");
+                            throw new InvalidOperationException(restResponse.message);
                         }
-                        grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
-                        hasMore = reply.DynamicList.HasMore;
-                        nextOffset = reply.DynamicList.HistoryOffset;
+                        var restData = restResponse.GetJObject();
+                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                        {
+                            LogHelper.Log("User dynamic VM stage=rest-feed-request discarded generation=" + generation, LogType.DEBUG);
+                            return;
+                        }
+                        if (restData == null || restData["code"] == null || restData["code"].ToInt32() != 0 || restData["data"] == null)
+                        {
+                            throw new InvalidOperationException(restData?["message"]?.ToString() ?? restResponse.message);
+                        }
+                        stage = "rest-feed-card-convert";
+                        var restCards = JsonConvert.DeserializeObject<List<DynamicCardModel>>(restData["data"]["cards"]?.ToString() ?? "[]", jsonSerializerSettings) ?? new List<DynamicCardModel>();
+                        var restHasMore = ReadHasMoreFlag(restData["data"]);
+                        var nextRestOffset = restData["data"]["offset"]?.ToString();
+                        var restMapped = new ObservableCollection<DynamicItemDisplayModel>();
+                        foreach (var card in restCards)
+                        {
+                            if (card?.desc == null)
+                            {
+                                continue;
+                            }
+                            restMapped.Add(ConvertToDisplay(card));
+                        }
+                        stage = "rest-feed-items-publish";
+                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                        {
+                            LogHelper.Log("User dynamic VM stage=rest-feed-items-publish discarded generation=" + generation, LogType.DEBUG);
+                            return;
+                        }
+                        if (restLoadMore && Items != null)
+                        {
+                            foreach (var item in restMapped)
+                            {
+                                Items.Add(item);
+                            }
+                        }
+                        else
+                        {
+                            Items = restMapped;
+                        }
+                        feedPage = restPage;
+                        restOffset = nextRestOffset;
+                        //游标不前进则停止翻页，避免同一页被重复追加
+                        CanLoadMore = restHasMore && !string.IsNullOrEmpty(nextRestOffset) && !string.Equals(nextRestOffset, restCursor, StringComparison.Ordinal);
+                        lastPageFailed = false;
+                        ShowError = false;
+                        ErrorMsg = "";
+                        LogHelper.Log("User dynamic VM stage=rest-feed-items-published page=" + feedPage + " count=" + restMapped.Count + " hasMore=" + restHasMore + " offset=" + (nextRestOffset ?? "") + " generation=" + generation, LogType.INFO);
+                        if (restPage == 1 && restMapped.Count == 0)
+                        {
+                            //REST 也没有内容：保留 gRPC 的拒绝说明，而不是显示一个无解释的空列表
+                            PublishFeedError(restFallbackMessage ?? "动态请求失败");
+                        }
+                        return;
                     }
-                    else if (requestItemType == UserDynamicType.Article)
+
+                    if (requestItemType == UserDynamicType.Article)
                     {
                         var articleRequest = dynamicAPI.ArticleV2(page, loadMore ? articleOffset : null);
                         var response = await articleRequest.Request();
@@ -525,7 +668,7 @@ namespace BiliLite.Modules.User
                         hasMore = data.data["has_more"]?.Value<bool>() ?? false;
                         nextOffset = data.data["offset"]?.ToString();
                     }
-                    else
+                    else if (requestItemType == UserDynamicType.Season)
                     {
                         var reply = await grpcService.GetDynVideo(page, loadMore ? historyOffset : null, loadMore ? updateBaseline : null);
                         if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
@@ -537,22 +680,8 @@ namespace BiliLite.Modules.User
                         {
                             throw new InvalidOperationException("DynVideo returned no reply");
                         }
-                        if (requestItemType == UserDynamicType.Season)
-                        {
-                            grpcCards = DynamicGrpcMapper.MapToUserSeasonCards(reply.VideoFollowList?.List);
-                            hasMore = false;
-                        }
-                        else
-                        {
-                            if (reply.DynamicList == null)
-                            {
-                                throw new InvalidOperationException("DynVideo returned no dynamic list");
-                            }
-                            grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
-                            hasMore = reply.DynamicList.HasMore;
-                            nextOffset = reply.DynamicList.HistoryOffset;
-                            nextBaseline = reply.DynamicList.UpdateBaseline;
-                        }
+                        grpcCards = DynamicGrpcMapper.MapToUserSeasonCards(reply.VideoFollowList?.List);
+                        hasMore = false;
                     }
 
                     stage = "feed-card-convert";
@@ -599,12 +728,7 @@ namespace BiliLite.Modules.User
                 var api = dynamicAPI.DyanmicNew(requestItemType);
                 switch (requestDynamicType)
                 {
-                    case DynamicType.UserDynamic:
-                        if (idx != "")
-                        {
-                            api = dynamicAPI.HistoryDynamic(idx, requestItemType);
-                        }
-                        break;
+                    //UserDynamic 的所有分类都已在上面按来源（gRPC / REST 动态流 / 专栏 / 番剧）取数并返回
                     case DynamicType.Topic:
                         break;
                     case DynamicType.Space:
@@ -694,7 +818,7 @@ namespace BiliLite.Modules.User
                 CanLoadMore = false;
                 LogHelper.Log("User dynamic VM stage=" + stage + " failed", LogType.ERROR, ex);
                 var handel = HandelError<AnimeHomeModel>(ex);
-                PublishFeedError(handel.message);
+                PublishFeedError(DescribeFeedFailure(handel.message, ex.Message));
             }
             finally
             {
@@ -726,6 +850,37 @@ namespace BiliLite.Modules.User
                 ErrorMsg = message;
             }
             Utils.ShowMessageToast(message);
+        }
+        //REST 动态流的 has_more 可能是 true/false，也可能是 0/1
+        private static bool ReadHasMoreFlag(JToken data)
+        {
+            var token = data?["has_more"];
+            if (token == null || token.Type == JTokenType.Null)
+                return false;
+            return token.Type == JTokenType.Boolean ? token.Value<bool>() : token.ToInt32() != 0;
+        }
+        private static readonly Regex BiliStatusCodePattern = new Regex(@"bili-status-code=(-?\d+)", RegexOptions.Compiled);
+        private static readonly Regex GrpcMessageCodePattern = new Regex(@"grpc-message=(-?\d+)", RegexOptions.Compiled);
+        //传输层把服务端码写在异常文本里，取出来给用户一个能对上的说法
+        private static string DescribeFeedFailure(string fallback, string transportMessage)
+        {
+            int code;
+            if (!TryReadServerCode(transportMessage, out code))
+                return fallback;
+            if (code == -352 || code == -412 || code == -663)
+                return "服务端拒绝了动态请求（" + code + "），请稍后重试";
+            return "动态请求失败（" + code + "）";
+        }
+        private static bool TryReadServerCode(string transportMessage, out int code)
+        {
+            code = 0;
+            if (string.IsNullOrEmpty(transportMessage))
+                return false;
+            var match = BiliStatusCodePattern.Match(transportMessage);
+            if (!match.Success)
+                match = GrpcMessageCodePattern.Match(transportMessage);
+            return match.Success
+                && int.TryParse(match.Groups[1].Value, NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out code);
         }
         public async Task GetDynamicDetail(string id)
         {

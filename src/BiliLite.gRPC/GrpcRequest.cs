@@ -18,6 +18,42 @@ namespace BiliLite.gRPC
         public static Action<string, Exception> DiagnosticLogger { get; set; }
         private static int _requestCounter;
 
+        // 每次 new HttpClient() 都会自带一套连接池/句柄,不释放就只能等终结器回收,
+        // 动态流每刷新一页都会漏一份,所以进程内共用一个实例。
+        // 该实例的 DefaultRequestHeaders 只在构造时写一次,之后永不修改:
+        // 随 access_key 变化的 authorization / x-bili-metadata-bin 挂到每个 HttpRequestMessage 上,
+        // 并发请求各用各的头,不存在 DefaultRequestHeaders 竞态。
+        private static readonly HttpClient SharedHttpClient = CreateSharedHttpClient();
+
+        private static HttpClient CreateSharedHttpClient()
+        {
+            // 与原实现一致:HttpClient 默认超时 100s
+            var client = new HttpClient();
+            client.Timeout = TimeSpan.FromSeconds(100);
+            var config = new GrpcRequestHeaderConfig(string.Empty);
+            var ua = $"Dalvik/{GrpcRequestHeaderConfig.dalvik_ver} "
+                + $"(Linux; U; Android {GrpcRequestHeaderConfig.os_ver}; {GrpcRequestHeaderConfig.brand} {GrpcRequestHeaderConfig.model}) {GrpcRequestHeaderConfig.app_ver} "
+                + $"os/android model/{GrpcRequestHeaderConfig.model} mobi_app/android build/{GrpcRequestHeaderConfig.build} "
+                + $"channel/{GrpcRequestHeaderConfig.channel} innerVer/{GrpcRequestHeaderConfig.build} osVer/{GrpcRequestHeaderConfig.os_ver} "
+                + $"network/{GrpcRequestHeaderConfig.network_type}";
+            // 这些头的取值与请求无关(只读 GrpcRequestHeaderConfig 的静态字段),可以在构造时固化
+            var headers = client.DefaultRequestHeaders;
+            headers.TryAddWithoutValidation("User-Agent", ua);
+            headers.TryAddWithoutValidation("APP-KEY", "android");
+            headers.TryAddWithoutValidation("x-bili-device-bin", config.GetDeviceBin());
+            headers.TryAddWithoutValidation("x-bili-network-bin", config.GetNetworkBin());
+            headers.TryAddWithoutValidation("x-bili-restriction-bin", "");
+            headers.TryAddWithoutValidation("x-bili-locale-bin", config.GetLocaleBin());
+            headers.TryAddWithoutValidation("x-bili-fawkes-req-bin", config.GetFawkesreqBin());
+            //headers.TryAddWithoutValidation("grpc-encoding", "gzip");
+            headers.TryAddWithoutValidation("grpc-accept-encoding", "identity");
+            headers.TryAddWithoutValidation("grpc-timeout", "17985446u");
+            headers.TryAddWithoutValidation("env", "prod");
+            headers.TryAddWithoutValidation("Transfer-Encoding", "chunked");
+            headers.TryAddWithoutValidation("TE", "trailers");
+            return client;
+        }
+
         private static void LogDiagnostic(string message, Exception ex = null)
         {
             try
@@ -74,13 +110,19 @@ namespace BiliLite.gRPC
 
         private static string DescribeFailure(HttpResponseMessage response, string metadata, int responseBytes)
         {
-            var reason = string.IsNullOrEmpty(response.ReasonPhrase) ? "unknown" : response.ReasonPhrase.Trim();
             var builder = new StringBuilder();
-            builder.Append("请求失败,HTTP ").Append((int)response.StatusCode).Append(' ').Append(reason);
-            if (response.IsSuccessStatusCode)
+            builder.Append("请求失败,HTTP ").Append((int)response.StatusCode);
+            var reason = response.ReasonPhrase == null ? "" : response.ReasonPhrase.Trim();
+            if (reason.Length > 0)
+                builder.Append(' ').Append(reason);
+            // 服务端给了 grpc-status/bili-status-code 就是明确拒绝,空响应体只在读不到元数据时才提
+            if (metadata != null)
+                builder.Append(",服务端拒绝: ").Append(metadata);
+            else if (response.IsSuccessStatusCode)
                 builder.Append(",没有数据返回");
             builder.Append(",responseBytes=").Append(responseBytes);
-            builder.Append(metadata == null ? ",未返回grpc-status等服务端状态" : ",服务端状态: " + metadata);
+            if (metadata == null)
+                builder.Append(",未返回grpc-status等服务端状态");
             return builder.ToString();
         }
 
@@ -113,30 +155,7 @@ namespace BiliLite.gRPC
             LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " started");
             try
             {
-                HttpClient httpClient = new HttpClient();
                 var config = new GrpcRequestHeaderConfig(access_key);
-                //httpClient.DefaultRequestHeaders.Add("User-Agent", "Dalvik/2.1.0 (Linux; U; Android 5.1.1; ELE-AL00 Build/LMY48Z) 6.12.0 os/android model/ELE-AL00 mobi_app/android build/6120400 channel/bili innerVer/6120400 osVer/5.1.1 network/2");
-                var ua = $"Dalvik/{GrpcRequestHeaderConfig.dalvik_ver} "
-                + $"(Linux; U; Android {GrpcRequestHeaderConfig.os_ver}; {GrpcRequestHeaderConfig.brand} {GrpcRequestHeaderConfig.model}) {GrpcRequestHeaderConfig.app_ver} "
-                + $"os/android model/{GrpcRequestHeaderConfig.model} mobi_app/android build/{GrpcRequestHeaderConfig.build} "
-                + $"channel/{GrpcRequestHeaderConfig.channel} innerVer/{GrpcRequestHeaderConfig.build} osVer/{GrpcRequestHeaderConfig.os_ver} "
-                + $"network/{GrpcRequestHeaderConfig.network_type}";
-                httpClient.DefaultRequestHeaders.Add("User-Agent", ua);
-                httpClient.DefaultRequestHeaders.Add("APP-KEY", "android");
-                httpClient.DefaultRequestHeaders.Add("x-bili-metadata-bin", config.GetMetadataBin());
-                httpClient.DefaultRequestHeaders.Add("authorization", "identify_v1 " + access_key);
-                httpClient.DefaultRequestHeaders.Add("x-bili-device-bin", config.GetDeviceBin());
-                httpClient.DefaultRequestHeaders.Add("x-bili-network-bin", config.GetNetworkBin());
-                httpClient.DefaultRequestHeaders.Add("x-bili-restriction-bin", "");
-                httpClient.DefaultRequestHeaders.Add("x-bili-locale-bin", config.GetLocaleBin());
-                httpClient.DefaultRequestHeaders.Add("x-bili-fawkes-req-bin", config.GetFawkesreqBin());
-                //httpClient.DefaultRequestHeaders.Add("grpc-encoding", "gzip");
-                httpClient.DefaultRequestHeaders.Add("grpc-accept-encoding", "identity");
-                httpClient.DefaultRequestHeaders.Add("grpc-timeout", "17985446u");
-                httpClient.DefaultRequestHeaders.Add("env", "prod");
-                httpClient.DefaultRequestHeaders.Add("Transfer-Encoding", "chunked");
-                httpClient.DefaultRequestHeaders.Add("TE", "trailers");
-                //httpClient.DefaultRequestVersion = new Version(1, 1);
 
                 var messageBytes = message.ToByteArray();
                 //校验用?第五位为数组长度
@@ -149,43 +168,52 @@ namespace BiliLite.gRPC
                 ByteArrayContent byteArrayContent = new ByteArrayContent(bodyBytes);
                 byteArrayContent.Headers.ContentType = new MediaTypeHeaderValue("application/grpc");
                 byteArrayContent.Headers.ContentLength = bodyBytes.Length;
-                var response = await httpClient.PostAsync(url, byteArrayContent);
-                int? serverCode;
-                var metadata = ReadServerMetadata(response, out serverCode);
-                LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " status=" + (int)response.StatusCode
-                    + " metadata=" + (metadata ?? "none") + " durationMs=" + stopwatch.ElapsedMilliseconds);
-                var data = await response.Content.ReadAsByteArrayAsync();
-                if (!response.IsSuccessStatusCode)
+                using (var request = new HttpRequestMessage(HttpMethod.Post, url))
                 {
-                    LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " rejected httpStatus=" + (int)response.StatusCode
-                        + " metadata=" + (metadata ?? "none") + " responseBytes=" + data.Length);
-                    return new GrpcResult()
+                    // 只有这两个头跟着 access_key 变,不能写进共享 client 的 DefaultRequestHeaders
+                    request.Headers.TryAddWithoutValidation("authorization", "identify_v1 " + access_key);
+                    request.Headers.TryAddWithoutValidation("x-bili-metadata-bin", config.GetMetadataBin());
+                    request.Content = byteArrayContent;
+                    using (var response = await SharedHttpClient.SendAsync(request))
                     {
-                        code = serverCode ?? (int)response.StatusCode,
-                        status = false,
-                        message = DescribeFailure(response, metadata, data.Length),
-                    };
-                }
-                if (data.Length > 5)
-                {
-                    return new GrpcResult()
-                    {
-                        code = 0,
-                        status = true,
-                        message = "请求成功",
-                        results = data.Skip(5).ToArray()
-                    };
-                }
-                else
-                {
-                    LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length
-                        + " metadata=" + (metadata ?? "none"));
-                    return new GrpcResult()
-                    {
-                        code = serverCode ?? -102,
-                        status = false,
-                        message = DescribeFailure(response, metadata, data.Length),
-                    };
+                        int? serverCode;
+                        var metadata = ReadServerMetadata(response, out serverCode);
+                        LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " status=" + (int)response.StatusCode
+                            + " metadata=" + (metadata ?? "none") + " durationMs=" + stopwatch.ElapsedMilliseconds);
+                        var data = await response.Content.ReadAsByteArrayAsync();
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " rejected httpStatus=" + (int)response.StatusCode
+                                + " metadata=" + (metadata ?? "none") + " responseBytes=" + data.Length);
+                            return new GrpcResult()
+                            {
+                                code = serverCode ?? (int)response.StatusCode,
+                                status = false,
+                                message = DescribeFailure(response, metadata, data.Length),
+                            };
+                        }
+                        if (data.Length > 5)
+                        {
+                            return new GrpcResult()
+                            {
+                                code = 0,
+                                status = true,
+                                message = "请求成功",
+                                results = data.Skip(5).ToArray()
+                            };
+                        }
+                        else
+                        {
+                            LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length
+                                + " metadata=" + (metadata ?? "none"));
+                            return new GrpcResult()
+                            {
+                                code = serverCode ?? -102,
+                                status = false,
+                                message = DescribeFailure(response, metadata, data.Length),
+                            };
+                        }
+                    }
                 }
             }
 

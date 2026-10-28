@@ -17,6 +17,8 @@ namespace BiliLite.Services
             var request = new DynAllReq
             {
                 Page = page,
+                //与 DynVideo 一致,服务端按当地时间(东八区)分页
+                LocalTime = 8,
             };
             if (historyOffset != null)
             {

@@ -28,8 +28,9 @@ namespace BiliLite.Api.User
         /// 读取动态列表
         /// </summary>
         /// <param name="type">268435455=全部,512,4097,4098,4099,4100,4101=番剧，8=视频，64=专栏</param>
+        /// <param name="offset">翻页游标，取上一页响应的 data.offset；null/空表示第一页</param>
         /// <returns></returns>
-        public ApiModel DyanmicNew(UserDynamicType type)
+        public ApiModel DyanmicNew(UserDynamicType type, string offset = null)
         {
             var typeList = "";
             switch (type)
@@ -55,6 +56,10 @@ namespace BiliLite.Api.User
                 baseUrl = "https://api.vc.bilibili.com/dynamic_svr/v1/dynamic_svr/dynamic_new",
                 parameter = $"type_list={Uri.EscapeDataString(typeList)}&uid={SettingHelper.Account.UserID}",
             };
+            if (!string.IsNullOrEmpty(offset))
+            {
+                api.parameter += "&offset=" + Uri.EscapeDataString(offset);
+            }
             if (SettingHelper.Account.Logined)
             {
                 api.parameter += "&" + ApiHelper.MustParameter(ApiHelper.AndroidKey, true);
