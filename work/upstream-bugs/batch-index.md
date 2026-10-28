@@ -1,8 +1,8 @@
 # Original candidate inventory
 
-This table preserves candidate IDs, creation order, original classification, and batch boundaries. Its row statuses and the counts below predate the saved source assessments. Current issue dispositions are recorded in the per-batch `policy-dispositions-*.json` ledgers. The canonical queue files and current rollup remain pending aggregation after the remaining assessments and independent reviews are complete.
+This historical table preserves candidate IDs, creation order, original classification, and batch boundaries. Its row labels predate the completed assessment. Current results are in [assessment-final.json](assessment-final.json), [VALIDATED_LOGIC_BUGS.md](VALIDATED_LOGIC_BUGS.md), and the per-batch disposition ledgers.
 
-Completed source-assessment ranges: 001–028, 041–052, and 059–083. Actionable reports are retained in `batches/`; skip-only and already-addressed current-round prose was pruned while exact disposition ledgers remain. The current saved findings are listed in `UPSTREAM_BUG_PROGRESS.md`.
+All original batches 001–096 are complete. There are 15 retained actionable findings and no pending logic assessments. The expanded candidate/policy queues remain baseline snapshots; their old pending labels are historical. Visual review belongs to the user.
 
 | Batch | Candidate 1 | Candidate 2 | Candidate 3 | Candidate 4 | Candidate 5 |
 |---:|---|---|---|---|---|

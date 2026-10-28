@@ -1,6 +1,6 @@
 # User-owned visual issue review
 
-Clear visual/layout candidates: **59** (5 mixed reports also retain functional subitems for logic review).
+The original **59** visual assignments are preserved below. Current total: **78**, including [19 later assignments](USER_VISUAL_REVIEW_ADDITIONS.md). Functional portions of mixed reports have completed assessment; current results are in [assessment-final.json](assessment-final.json).
 
 These are local catalog assignments only; no upstream issue was edited. Records are sorted by creation time.
 

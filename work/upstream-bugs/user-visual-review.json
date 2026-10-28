@@ -1,4 +1,6 @@
 {
+  "record_status": "original_59_assignments",
+  "current_assessment": "assessment-final.json",
   "scope": "Clear cosmetic and visual-layout subitems from eligible issue candidates; visual items assigned to user for review. Functional subitems on mixed reports remain pending logic review.",
   "visual_issue_count": 59,
   "mixed_visual_and_logic_count": 5,

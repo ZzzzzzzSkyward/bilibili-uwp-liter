@@ -1,5 +1,6 @@
 {
-  "scope": "Current review ownership and dispositions over the unchanged 477-candidate queue. This is a local review catalog; it does not alter upstream GitHub issues.",
+  "scope": "Historical expanded baseline over the unchanged 477 candidates; current results are in assessment-final.json and the per-batch disposition ledgers. No upstream issue is altered.",
+  "current_assessment": "assessment-final.json",
   "baseline": {
     "target_source": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
     "sibling_source": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"

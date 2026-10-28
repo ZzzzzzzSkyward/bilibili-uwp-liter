@@ -127,4 +127,4 @@ Current state: logging/export, video-Dynamics mapping, primary-Dynamics initiali
 
 ## Upstream issue collection
 
-The new oldest-to-newest catalog of likely upstream bugs, including open and closed reports, is tracked in [UPSTREAM_BUG_PROGRESS.md](UPSTREAM_BUG_PROGRESS.md). Collection and target-source triage are in progress; no candidates are recorded yet.
+The oldest-to-newest upstream assessment is complete across 96 batches and 477 candidates. The handoff is in [UPSTREAM_BUG_PROGRESS.md](UPSTREAM_BUG_PROGRESS.md), with 15 retained logic findings and user-owned visual assignments. Application source was not changed during assessment.

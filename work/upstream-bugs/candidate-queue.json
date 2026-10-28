@@ -1,4 +1,6 @@
 {
+  "record_status": "historical_expanded_baseline",
+  "current_assessment": "assessment-final.json",
   "candidate_count": 477,
   "batch_count": 96,
   "ordering": "created_at ascending, then issue number",
