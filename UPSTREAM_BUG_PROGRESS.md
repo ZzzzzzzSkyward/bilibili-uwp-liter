@@ -1,41 +1,34 @@
-# Upstream bug issue collection and triage
+# Upstream issue collection and triage
 
-## Scope
+## Scope and permissions
 
-Collect issues from `ywmoyue/biliuwp-lite` that describe likely bugs rather than requested features. Include both open issues and closed issues, since a fix may have landed upstream without being present in this target repository. Exclude pull requests, feature requests, changelog or documentation reports, and support-only questions. Keep candidates in oldest-to-newest order by issue creation time and split the catalog into sequential batches of no more than five candidates.
+- Source catalog: complete GitHub REST issue snapshot for `ywmoyue/biliuwp-lite`, 757 actual issues (open and closed), after excluding 293 pull requests. Original classification retains all 757 rows; 477 eligible bug candidates remain in their original creation order and 96 batch groups.
+- Target app source snapshot remains `cfa40a8508c6d6e7401885bf6bb081bc5c90b173`; the sole behavior reference is `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
+- Do not change application code, build or restore the app/solution, generate protocol code, call live application APIs, or run the app. User direction now permits isolated unit execution for a concrete piece of source logic; it does not permit app builds or runtime validation. The one completed isolated unit probe is documented in `work/upstream-bugs/VALIDATED_LOGIC_BUGS.md` and `work/upstream-bugs/unit-tests/batch-002/README.md`. Do not run more tests or builds in this aggregation task.
+- This aggregation changes only local catalog and documentation data. Do not alter upstream issues or raw collection caches.
 
-For each candidate, record the issue number, title, URL, state, creation date, and close date when applicable. Summarize the reported behavior, the upstream evidence that it is a bug, and whether the corresponding behavior appears present in this target. Record relevant target paths, the pinned-reference evidence, classification, and any uncertainty. Do not label a report as a bug or as missing from the target without source evidence.
+## Current policy queue
 
-This task is issue collection and source triage only. It authorizes reading the upstream GitHub issue tracker. The local sibling checkout at `/workspace/biliuwp-lite`, pinned to `ca2caddc597b3faf05b4dac6dcb226aa0694365b`, remains the sole behavioral source reference. Do not make application-code changes as part of issue collection. Do not build, restore, run, test, validate, generate protocol code, or call application APIs. `git diff --check` is the only permitted check.
+- `work/upstream-bugs/candidate-queue.json` preserves all 477 candidate rows, their IDs/order, classifications, and original 96 batch IDs. Each row retains its previous target assessment in `history.target_assessment_before_policy` and exposes current ownership/disposition separately.
+- `work/upstream-bugs/policy-queue.json` is the complete 477-row current ownership and disposition overlay. `work/upstream-bugs/logic-validation-queue.json` contains only oldest-first pending logic work. `work/upstream-bugs/user-visual-review.json` and `USER_VISUAL_REVIEW.md` keep the 59 visual assignments with the user as the local catalog owner; no GitHub issue was edited.
+- Visual ownership: 59 reports total, 54 visual-only and 5 mixed. The visual portion of all 59 is assigned to the user. The five functional portions (#89, #549, #562, #981, #1469) remain in pending logic review.
+- Current counts from the machine-readable records: 477 candidate rows; 59 visual assignments; 409 pending logic issue rows (including the five mixed functional portions); one confirmed source logic defect (#31); two wholly addressed issues (#22, #42), plus the addressed overflow subclaim in #46; eight issues skipped wholly as skeptical, plus the skipped v2-route subclaim in #46; two issues are skipped as non-logic.
+- `work/upstream-bugs/VALIDATED_LOGIC_BUGS.md` records #31 only. The isolated target-source probe confirms the wrong request object is dispatched, not that this caused the reported playback-quality symptom. No app fix has been made.
+- `work/upstream-bugs/SKIPPED_ISSUES.json` records skipped issue/subitem rationales. Historical details for the original assessments remain in `batches/001.md` through `batches/003.md` and `policy-dispositions-002.json` / `policy-dispositions-003.json`.
 
-## Setup and baseline
+## Completed source assessments
 
-- Target: `/workspace/bilibili-uwp-liter`, branch `work`.
-- Origin: `https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter.git`.
-- Starting HEAD: `cfa40a8508c6d6e7401885bf6bb081bc5c90b173`.
-- `git pull --ff-only origin work` reported `Already up to date`; current setup HEAD is unchanged.
-- Issue source: `ywmoyue/biliuwp-lite` (`https://github.com/ywmoyue/biliuwp-lite`).
-- Reference checkout: `/workspace/biliuwp-lite`, branch `dev`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
-- No `AGENTS.md` was found under `/workspace`.
-- No issue candidates have been collected or classified in this setup step. No application source files have been changed.
+- Batch 001: #5 is not applicable on available target source evidence; #9, #14, and #21 are skipped as skeptical; #22's reported overflow is addressed by the target's 64-bit field.
+- Batch 002: #24 and #28 skipped skeptical; #27 skipped as documentation; #31 has the confirmed wrong-dispatch defect described above; all three functional claims in #36 are skipped skeptical.
+- Batch 003: #38 skipped skeptical; #42's exact Int32 overflow is addressed; #46's reported ID overflow is addressed while its v2 endpoint claim is skipped skeptical; #51 is assigned to the user as visual-only; #56 skipped as non-logic.
 
-## Collection status
+## Resume point
 
-- Complete snapshot as of 2026-10-27 23:12:11 UTC from the GitHub REST issues collection sorted by `created` ascending, `state=all`, 100 per page.
-- Fetched pages 1–11: pages 1–10 returned 100 objects each and page 11 returned 50, for 1,050 API objects. Excluded 293 pull request objects and indexed all 757 issues, open and closed. Creation range: #1 at 2022-12-11T13:07:05Z through #1499 at 2026-10-21T08:15:39Z.
-- Classification retains all 757 audit rows: 477 clear bug candidates, 215 feature requests, 20 administrative/documentation, 15 support-only, and 30 ambiguous/deferred. No issue rows were deduplicated.
-- `work/upstream-bugs/issues-index.json` is the portable metadata inventory. `collection.md` records the source and pagination. `classification-merged.json` contains metadata plus classification for all 757 issues; `candidate-queue.json` contains the 477 oldest-first candidates; `exclusions-deferred.json` records the remaining 280 reports and reasons.
-- `batch-index.md` lists 96 chronological batches of up to five candidates. Batch 001 source assessment for #5, #9, #14, #21, and #22 is recorded in `work/upstream-bugs/batches/001.md`: two are addressed/not applicable (#5, #22), three remain unconfirmed (#9, #14, #21), and none is a confirmed target defect. Batch 002 is next: #24, #27, #28, #31, and #36.
-- Candidate target status is pending source assessment except the five entries covered in Batch 001. Original issue classifications, IDs, queue order, and historical Batch 001 report are preserved; updated policy dispositions are tracked separately below. No application-code changes were made.
-- Raw issue bodies and API responses are stored outside the repository in `/workspace/work/upstream-bugs/`. No application source files were changed. No build, test, restore, run, app API, or runtime validation was performed.
+- Resume original **Batch 004** in `work/upstream-bugs/batch-index.md`: #61, #62, #65, #67, #69. #61 and #67 are pending logic assessment; #62, #65, and #69 are already assigned as user-owned visuals.
+- The next five pending logic IDs after omitting visual-only rows are #61, #67, #74, #82, and #87. Mixed issue logic subitems stay in `logic-validation-queue.json`.
+- Keep assessment evidence conservative: use the pinned sibling only as a behavior reference, separate source defects from symptom causality, and skip uncertain claims rather than promoting them to confirmed defects.
 
-## Current assessment policy and step
+## Validation and repository state
 
-- User direction for this round: assign visual bugs to the user and skip them; assess logic bugs against the full source path and pinned sibling; skip skeptical reports when the evidence does not establish a concrete bug or target applicability. This means source-trace assessment only. Do not implement fixes or run builds, tests, app/API calls, or runtime checks.
-- Keep the original 477-candidate classification, chronological batch IDs, and source reports stable. Policy dispositions below are overrides for current review priority only; do not remove, reorder, or reclassify canonical candidate rows.
-- Policy dispositions for Batch 001 (historical source assessments remain in `work/upstream-bugs/batches/001.md`):
-  - #9 — `skipped_skeptical`: the report says signing in again resolved the quality symptom; the target request shape matches the pinned sibling, and the report supplies no failing response to trace to a target logic defect.
-  - #14 — `skipped_skeptical`: the target reply POST does not explicitly inject the app-managed cookie, but the default WinRT client may receive it through its protocol filter. Source reading cannot establish cookie omission, and no target reproduction was supplied.
-  - #21 — `skipped_skeptical`: the report gives no comment ID/type, error response, or pagination context. The target's V2 request and fallback path do not identify a specific failing logic branch from the available evidence.
-  - #5 remains not applicable on available source evidence; #22 remains already fixed for the reported numeric overflow. These original dispositions are unchanged.
-- Current step: source-trace Batch 002 in creation order: #24, #27, #28, #31, and #36. All five are pending assessment; do not infer causes from issue titles alone. Record each result in the batch report and relevant catalog metadata after the trace is complete.
+- This aggregation did not inspect or modify application source or unit-test scripts and did not run tests, builds, restore, app/API calls, or runtime checks.
+- After writing these catalog/docs files, run only `git diff --check`, explicitly stage only those files, and commit the aggregation. Runtime/unit tooling and caches live outside Git under `/workspace/work` and must not be staged.
