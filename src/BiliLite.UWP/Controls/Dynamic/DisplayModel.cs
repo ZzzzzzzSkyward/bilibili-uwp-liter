@@ -213,18 +213,38 @@ namespace BiliLite.Controls.Dynamic
         /// 是否转发
         /// </summary>
         /// <summary>
-        /// Text / Repost / Reserve 模板自己把 Content(RichTextBlock) 放进 RichTextControl。
-        /// 同一个 UIElement 不能有两个父元素,外层通用 ContentPresenter 必须让位,
-        /// 否则重复添加会在布局阶段抛 ArgumentException(E_INVALIDARG)。
-        /// 图片模板只渲染 Desc,正文仍由外层 ContentPresenter 显示,因此不在此列。
+        /// 模板自己把 Content(RichTextBlock) 交给 RichTextControl 渲染的类型。
+        /// 一个 UIElement 只能有一个父元素，外层 ContentPresenter 若也拿到同一个实例会在布局阶段抛
+        /// ArgumentException(E_INVALIDARG)，所以这里决定宿主归属，而不只是决定可见性。
+        /// 图片模板分工不同：1x1 / 2x2 自己渲染正文，3x3 只渲染 Desc，正文仍由外层 ContentPresenter 显示。
         /// </summary>
         public bool TemplateRendersContent
         {
             get
             {
-                return Type == DynamicDisplayType.Text
-                    || Type == DynamicDisplayType.Repost
-                    || Type == DynamicDisplayType.Reserve;
+                switch (Type)
+                {
+                    case DynamicDisplayType.Text:
+                    case DynamicDisplayType.Repost:
+                    case DynamicDisplayType.Reserve:
+                        return true;
+                    case DynamicDisplayType.Photo:
+                        {
+                            var photoCount = ImagesInfo?.Count ?? 0;
+                            return photoCount <= 1 || photoCount == 4;
+                        }
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        /// <summary>外层通用 ContentPresenter 的内容；模板渲染正文时返回 null，保证 RichTextBlock 只有一个宿主。</summary>
+        public RichTextBlock PresenterContent
+        {
+            get
+            {
+                return TemplateRendersContent ? null : Content;
             }
         }
 
@@ -232,7 +252,7 @@ namespace BiliLite.Controls.Dynamic
         {
             get
             {
-                return ShowContent && !TemplateRendersContent ? Visibility.Visible : Visibility.Collapsed;
+                return ShowContent && PresenterContent != null ? Visibility.Visible : Visibility.Collapsed;
             }
         }
 

@@ -647,9 +647,10 @@ namespace BiliLite.Modules.User
                         ShowError = false;
                         ErrorMsg = "";
                         LogHelper.Log("User dynamic VM stage=rest-feed-items-published page=" + feedPage + " count=" + restMapped.Count + " hasMore=" + restHasMore + " offset=" + (nextRestOffset ?? "") + " generation=" + generation, LogType.INFO);
-                        if (restPage == 1 && restMapped.Count == 0)
+                        if (!CanLoadMore && (Items == null || Items.Count == 0))
                         {
-                            //REST 也没有内容：保留 gRPC 的拒绝说明，而不是显示一个无解释的空列表
+                            //分页已经停下，而且累积下来一张都没有：保留 gRPC 的拒绝说明，而不是显示一个无解释的空列表。
+                            //游标还在前进时第一页为空只说明这一页没内容，继续翻页。
                             PublishFeedError(restFallbackMessage ?? "动态请求失败");
                         }
                         return;

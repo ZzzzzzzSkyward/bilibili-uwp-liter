@@ -77,7 +77,7 @@
             </Grid>
           </HyperlinkButton>
           <!--内容-->
-          <ContentPresenter Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Margin="0 4" Content="{x:Bind Path=Model.Content,Mode=OneWay}"/>
+          <ContentPresenter Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Margin="0 4" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
           <!--卡片-->
           <ContentPresenter Content="{x:Bind Path=CardContent,Mode=OneWay}" Padding="0 4 0 0"/>
           <StackPanel Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}" Margin="0 4 0 0" Orientation="Horizontal">

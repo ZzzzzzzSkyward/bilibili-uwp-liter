@@ -79,7 +79,7 @@
     <local:DynamicItemControl Model="{Binding}">
       <local:DynamicItemControl.CardContent>
         <StackPanel Orientation="Vertical">
-          <local:RichTextControl Text="{Binding Path=OneRowInfo.Desc}"/>
+          <local:RichTextControl Content="{Binding Path=Content}" Text="{Binding Path=OneRowInfo.Desc}"/>
           <Border HorizontalAlignment="Left" CornerRadius="4" MaxHeight="500" MaxWidth="400">
             <Grid>
               <HyperlinkButton Padding="0" Command="{Binding Path=ImageCommand}" CommandParameter="{Binding Path=ImagesInfo[0]}">
@@ -136,7 +136,7 @@
     <local:DynamicItemControl Model="{Binding}">
       <local:DynamicItemControl.CardContent>
         <StackPanel Orientation="Vertical">
-          <local:RichTextControl Text="{Binding Path=OneRowInfo.Subtitle}"/>
+          <local:RichTextControl Text="{Binding Path=OneRowInfo.Subtitle}" Content="{Binding Path=Content}"/>
           <GridView MaxWidth="300" SelectionMode="None" HorizontalAlignment="Left" ItemsSource="{Binding Path=ImagesInfo}">
             <GridView.ItemTemplate>
               <DataTemplate>
