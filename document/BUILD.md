@@ -13,9 +13,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1
 - Commit the bumped manifests together with the change that triggered the build. `-NoVersionBump` is an escape hatch for a throwaway rebuild at the current version (for example, re-running a failed build while diagnosing); it must not be the default in a release or verification run.
 - A full run takes about two minutes. Let it finish and read the result once, rather than polling.
 
-### Known build failure: CS2012 on `BiliLiter.exe`
+### `CS2012` on `BiliLiter.exe`
 
-`error CS2012: ... intermediatexaml\BiliLiter.exe ... used by another process` followed by `MSB4181 CompileXaml returned false` means a reused MSBuild node still holds the intermediate exe from an earlier run; it is not a source error. Wait for the node to exit (or close the leftover `MSBuild.exe` with the same start time) and rerun - a plain retry at the same version has been clean. `-NoVersionBump` is correct for that retry, otherwise the failed attempt still burns a revision.
+A reused MSBuild node kept `obj\x64\Release\intermediatexaml\BiliLiter.exe` open, so the next build failed with `CS2012` followed by `MSB4181 CompileXaml returned false` - a lock, not a source error. The script now passes `-nodeReuse:false` and `-p:UseSharedCompilation=false`, which fixed it here: a full packaging run followed immediately by a `-Fast` run both completed without the error.
+
+If it still happens after killing leftovers (`Get-Process MSBuild | Stop-Process`), rerun with `-NoVersionBump` so the failed attempt does not burn a revision.
 
 ### Fast compile loop
 

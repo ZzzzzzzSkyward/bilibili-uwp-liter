@@ -116,18 +116,28 @@ if ($Fast -and -not $Restore) {
     Write-Host '还原    : 已跳过（-Fast，需要时加 -Restore）'
 }
 else {
-    & $msbuild $solution -t:Restore -p:RestorePackagesConfig=true -v:m -nologo
+    & $msbuild $solution -t:Restore -p:RestorePackagesConfig=true -v:m -nologo -nodeReuse:false
     if ($LASTEXITCODE -ne 0) {
         throw "NuGet 还原失败（退出码 $LASTEXITCODE）。"
     }
 }
 
-$buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platform=x64', '-v:m', '-nologo', '-m')
+# nodeReuse:false 与关闭编译服务器: 复用的 MSBuild 节点会持有 intermediatexaml\BiliLiter.exe,
+# 让紧随其后的第二次生成因 CS2012 失败
+$buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platform=x64', '-v:m', '-nologo', '-m', '-nodeReuse:false', '-p:UseSharedCompilation=false')
 if (-not $Fast) {
     $buildArgs += "-p:AppxPackageDir=$OutputDir"
 }
 $buildOutput = @()
 & $msbuild @buildArgs | Tee-Object -Variable buildOutput
+if ($LASTEXITCODE -ne 0 -and ($buildOutput -match 'error CS2012')) {
+    # XAML 编译中间产物被残留的 MSBuild 节点占用：清掉残留节点后重试一次
+    Write-Warning '检测到 CS2012（intermediatexaml 被残留 MSBuild 节点占用），清理节点后重试一次。'
+    Get-Process MSBuild -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 3
+    $buildOutput = @()
+    & $msbuild @buildArgs | Tee-Object -Variable buildOutput
+}
 if ($LASTEXITCODE -ne 0) {
     throw "生成失败（退出码 $LASTEXITCODE）。"
 }
