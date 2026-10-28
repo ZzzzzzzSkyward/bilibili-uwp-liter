@@ -1,27 +1,29 @@
-# Round 2 review — `5237b9d`
+# Review — `22a9814`
 
-Read the updated `bug_report.md` and reviewed changes since `1fb7aa4`, with three GPT-6-luna reviewers. Sole behavior reference: sibling `ywmoyue/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`. Static source review only; no application edits, API requests, builds, tests or runtime validation. Format check only. Build results quoted in the bug report belong to the other environment.
+Read the current `bug_report.md` and reviewed the recent changes since the previous review (`4ed90e6`), with two GPT-6-luna reviewers. Source inspection only: no builds, tests, format checks, API calls, or runtime validation. Application code is unchanged. Build/device evidence in the bug report is the author's evidence, not this review's.
 
-## BR-05 — Fix pagination after a fully filtered page
+## 1. BR-13: clear the other owner's Content, not just its Visibility
 
-`Controls/MyListView.cs:167-173` consumes `_itemsVersion` before executing load-more. It only re-arms when items or ItemsSource change (`:107-117`). If a page contains only ads/banners, `MapToUserCards` produces no visible cards, but `Modules/User/DynamicVM.cs:571-589` still advances the cursor and restores the server's `HasMore`. Appending zero cards leaves the item version unchanged. The next short-viewport check returns immediately, even though more server pages remain. With no scrollable content, the user cannot reach the next page by scrolling either.
+`src/BiliLite.UWP/Controls/Dynamic/DynamicItemControl.xaml:80` still binds the generic presenter's `Content` to `Model.Content` for Text/Repost/Reserve cards. The new getter in `Controls/Dynamic/DisplayModel.cs:231-237` only collapses that presenter. Collapsing a control does not clear its Content or detach an already parented UIElement. The templates still hand the same RichTextBlock to RichTextControl (`DynamicTemplate.xaml:9,74,175`), whose callback inserts it directly into `Parent.Children` (`RichTextControl.xaml.cs:49-60,86-88`). The ownership conflict described in the report therefore remains possible; hiding one consumer does not establish a single owner.
 
-Approve a page-completion signal in addition to item changes: after a successful request advances the cursor, recheck the short viewport while `CanLoadMore` remains true, even if zero items were added. Make the signal run after Loading clears so the command actually starts. Keep one request at a time and stop on failure, terminal `HasMore`, or a repeated cursor. Simply rechecking on `CanLoadMore` false-to-true does not work while the consumed item-version check remains unchanged.
+For a REST-fallback text/repost card with a nonempty body, both consumers still receive the same instance. Treat BR-13 as unresolved at source level. Give the generic presenter a separate content getter that returns null whenever the template renders the body, or conditionally create only the owning presenter. Keep the visibility getter for spacing if useful. No cloning or broader model rewrite is needed for this fix.
 
-The sibling also filters cards after reading server pagination state (`ViewModels/UserDynamic/UserDynamicAllViewModel.cs:238-255`), so visible item count cannot stand in for page progress. This is the only new must-fix found in this batch.
+## 2. BR-13: one/four-image gRPC cards now lose their rich body
 
-## Decisions requested in the report
+`src/BiliLite.UWP/Controls/Dynamic/DynamicTemplate.xaml:82,139` removes the Content binding from Photo1x1 and Photo2x2, leaving only plain Desc/Subtitle. For 2024/gRPC cards, `DynamicParse.ParseOneRowInfo2024` still builds `data.Content = Render(item.richtext)` (`DynamicParse.cs:219-230`), but `ConvertToDisplay2024` sets `ShowContent=false` (`Modules/User/DynamicVM.cs:1303`). The generic presenter therefore does not display that rich body. After this change, one-image and four-image posts lose rich hyperlinks/emotes and render only the plain description. The report's claim that their body moves to the generic presenter applies to the legacy path, not both converter paths.
 
-- **Repost pane:** keep short-viewport pagination enabled. It is a paginated list with its own Loading and `has_more` handling (`Modules/User/DynamicRepostVM.cs:50-56,83,118-127`). No feed-page-only restriction is needed. Apply the completion fix above consistently.
-- **Article login gate:** limit the new gate at `Modules/User/DynamicVM.cs:451` to All/Video/Season, the gRPC feeds covered by the original decision. Article uses `ArticleV2` at `:499-525`. The sibling's Article loader has no feed login gate (`ViewModels/UserDynamic/UserDynamicAllViewModel.cs:286-306,370-374`). Preserve that source behavior; a cookie-backed REST request does not itself justify requiring an app access key before trying it.
-- **Medialist subtitle:** keep the source subtitle, including blank. The `medialist`/`ugc_season` split and 收藏夹 comment routing are correct; no fabricated counts or extra template are needed.
+Keep one rich-text owner for both converters. A small solution is to restore the photo templates' Content bindings and make the generic content getter return null for the actual photo layouts that render Content themselves. Apply the same ownership choice consistently to outer and reposted cards. Prefer keeping the existing rich rendering; do not clone the blocks just to relocate them. Photo3x3 is a separate existing layout and does not need a redesign for this regression.
 
-## Remaining items
+## 3. BR-05/11: an empty first REST page overrides valid pagination
 
-BR-01/02/03: accept the mapping, label-only change, and custom-season visibility/navigation. BR-04: accept the generation/queued-refresh change. BR-09: accept cursor restoration on teardown; no additional source-level issue found.
+`src/BiliLite.UWP/Modules/User/DynamicVM.cs:650-654` calls `PublishFeedError` whenever REST page 1 maps to zero cards. This happens even when the response has `has_more=true` and an advancing offset, so `CanContinuePaging` has just returned true at line 645. `PublishFeedError` immediately sets `CanLoadMore=false` (`:866-874`), preventing the short-viewport completion check from requesting page 2.
 
-BR-10: accept the fan-count retrieval and binding notification. The sibling uses an additional user-card read when OwnerExt is absent (`ViewModels/Video/VideoDetailPageViewModel.cs:329-346`) and also defines the chosen `/x/relation/stat` request (`Models/Requests/Api/User/UserDetailAPI.cs:69-78`). No further restructuring is requested.
+An empty cards array, or a page whose entries all lack desc and are skipped at lines 616-622, can therefore show a failure and strand later available cards. Continue paging while the cursor advances and the existing empty-page cap allows it. Only publish the empty-feed failure once pagination stops and the accumulated list is still empty; do not limit that decision to page 1.
 
-BR-08: accept the narrow HTTP/header diagnostics and retry state, subject to the Article scope decision above. Trailer-only statuses remain unavailable, exactly as reported; this does not recover or distinguish the measured -400/-101 causes. Keep the explicit unknown-response failure. No new trailer API, REST fallback, or empty-success shortcut is approved. Numeric header-code precedence has no demonstrated caller impact here; no separate cleanup requested.
+## Report decisions
 
-BR-06 remains rejected; BR-07 remains deferred. No runtime/device behavior is claimed verified by this review.
+- **BR-11:** keep the REST fallback as practical recovery for the reported gRPC rejection, with the empty-page fix above. A real-buvid metadata change can be a separate follow-up; the report does not establish that it fixes the rejection, so it should not replace the working fallback on that assumption.
+- **BR-13:** preserve rich body rendering and fix actual ownership. The issue is which control receives Content, not whether the body sits a few pixels above or inside the photo card.
+- **BR-14:** no substantive issue found in the encoding change. No further style or structural cleanup requested.
+
+No runtime/device behavior is claimed verified.
