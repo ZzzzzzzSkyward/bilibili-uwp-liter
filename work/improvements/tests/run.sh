@@ -80,3 +80,4 @@ JSON
 "$DOTNET_ROOT/dotnet" "$scratch/LM05.dll"
 
 "$(dirname -- "${BASH_SOURCE[0]}")/run-api01.sh"
+"$(dirname -- "${BASH_SOURCE[0]}")/run-auth01b.sh"

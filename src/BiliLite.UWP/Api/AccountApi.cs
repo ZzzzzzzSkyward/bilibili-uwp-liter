@@ -197,7 +197,8 @@ namespace BiliLite.Api
             return new ApiModel
             {
                 method = RestSharp.Method.Post,
-                baseUrl = "https://passport.bilibili.com/x/safecenter/captcha/pre"
+                baseUrl = "https://passport.bilibili.com/x/safecenter/captcha/pre",
+                body = ""
             };
         }
 
@@ -256,6 +257,33 @@ namespace BiliLite.Api
                 baseUrl = "https://passport.bilibili.com/x/passport-login/web/exchange_cookie",
                 body = "code=" + FormValue(code)
             };
+        }
+
+        /// <summary>Build the cookie-authenticated request that starts browser-cookie to app-token conversion.</summary>
+        public ApiModel GetCookieToAccessKey(ApiKeyInfo appKey)
+        {
+            if (appKey == null || string.IsNullOrWhiteSpace(appKey.Appkey))
+                throw new ArgumentException("A login app key is required.", nameof(appKey));
+            const string signedApiParameter = "api=http://link.acg.tv/forum.php";
+            var wireApiParameter = "api=" + FormValue("http://link.acg.tv/forum.php");
+            return new ApiModel
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = "https://passport.bilibili.com/login/app/third",
+                parameter = "appkey=" + FormValue(appKey.Appkey) + "&" + wireApiParameter + ApiHelper.GetSign(signedApiParameter, appKey),
+                need_cookie = true
+            };
+        }
+
+        /// <summary>Build the cookie-authenticated confirmation request used for app-token conversion.</summary>
+        public ApiModel GetCookieToAccessKey(string confirmUrl)
+        {
+            Uri uri;
+            if (!Uri.TryCreate(confirmUrl, UriKind.Absolute, out uri) || !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
+                !uri.IsDefaultPort || !string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Fragment) ||
+                !(uri.Host.Equals("bilibili.com", StringComparison.OrdinalIgnoreCase) || uri.Host.EndsWith(".bilibili.com", StringComparison.OrdinalIgnoreCase)))
+                throw new ArgumentException("The cookie confirmation URL must be an HTTPS Bilibili URL.", nameof(confirmUrl));
+            return new ApiModel { method = RestSharp.Method.Get, baseUrl = uri.AbsoluteUri, need_cookie = true };
         }
 
         /// <summary>Read account cookie refresh state using the existing login cookie.</summary>

@@ -19,6 +19,7 @@ args+=("-r:$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll")
   "$repo/src/BiliLite.UWP/Models/Requests/Api/DanmakuApi.cs" \
   "$repo/src/BiliLite.UWP/Services/CookieService.cs" \
   "$repo/src/BiliLite.UWP/Services/HttpLogSanitizer.cs" \
+  "$repo/src/BiliLite.UWP/Services/PasswordLoginSession.cs" \
   "$repo/src/BiliLite.UWP/Services/WbiKeyService.cs" \
   "$(dirname -- "${BASH_SOURCE[0]}")/API01Stubs.cs" \
   "$(dirname -- "${BASH_SOURCE[0]}")/API01.cs"

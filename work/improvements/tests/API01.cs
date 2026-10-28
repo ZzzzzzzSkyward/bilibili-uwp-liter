@@ -132,6 +132,7 @@ internal static class API01
         await TestApiHelperWbiWrapper();
         TestMigratedEndpointRequests();
         TestAuthenticationEndpointRequests();
+        await TestPasswordLoginSessionGuard();
 
         Console.WriteLine("API-01 actual-source cookie/WBI/API endpoint probes passed: " + assertions);
     }
@@ -274,6 +275,18 @@ internal static class API01
             exchange.body == "code=one-time%2Fcode" && !exchange.need_cookie,
             "verified cookie exchange builder does not explicitly request cookie injection");
 
+        var tokenExchange = api.GetCookieToAccessKey(new ApiKeyInfo("fixture-appkey", "fixture-secret"));
+        Check(tokenExchange.need_cookie && tokenExchange.baseUrl == "https://passport.bilibili.com/login/app/third" &&
+            tokenExchange.parameter == "appkey=fixture-appkey&api=http%3A%2F%2Flink.acg.tv%2Fforum.php&sign=8bd04ca99baac526fb6c05c91ad66593",
+            "cookie-to-access-key API signs the literal endpoint value before escaping its wire parameter");
+        Check(api.GetCookieToAccessKey("https://passport.bilibili.com/login/app/third/confirm?x=1").need_cookie,
+            "cookie-to-access-key confirmation accepts a Bilibili HTTPS URL");
+        foreach (var unsafeConfirm in new[] { "https://evil.example/confirm", "http://passport.bilibili.com/confirm", "https://passport.bilibili.com:444/confirm", "https://user@passport.bilibili.com/confirm" })
+        {
+            try { api.GetCookieToAccessKey(unsafeConfirm); throw new Exception("expected unsafe confirmation URL rejection"); }
+            catch (ArgumentException) { assertions++; }
+        }
+
         var csrf = new string('a', 256);
         var csrfPage = api.RefreshCsrf(csrf);
         Check(csrfPage.method == RestSharp.Method.Get && csrfPage.need_cookie &&
@@ -302,6 +315,108 @@ internal static class API01
             !BiliLite.Services.HttpLogSanitizer.ShouldLogApiMessage("https://api.bilibili.com/x/safecenter/user/info") &&
             BiliLite.Services.HttpLogSanitizer.ShouldLogApiMessage("https://api.bilibili.com/x/web-interface/nav"),
             "HTTP logging redacts refresh paths and omits response messages for password and verification endpoints");
+    }
+
+    private static async Task TestPasswordLoginSessionGuard()
+    {
+        Check(PasswordLoginSessionValidator.ParseExchangeRefreshToken("{\"code\":0,\"data\":{\"refresh_token\":\"cookie-refresh\"}}") == "cookie-refresh",
+            "cookie exchange requires a successful envelope and extracts the browser refresh token");
+        foreach (var badBody in new[] { "not-json", "{\"data\":{\"refresh_token\":\"token\"}}", "{\"code\":-1,\"data\":{\"refresh_token\":\"token\"}}", "{\"code\":0,\"data\":{}}" })
+        {
+            try { PasswordLoginSessionValidator.ParseExchangeRefreshToken(badBody); throw new Exception("expected invalid exchange envelope rejection"); }
+            catch (FormatException) { assertions++; }
+        }
+
+        var cookieJar = PasswordLoginSessionValidator.ParseCookies(new[]
+        {
+            "DedeUserID=123; Domain=.bilibili.com; Path=/; Secure; HttpOnly",
+            "SESSDATA=session-value; Domain=.bilibili.com; Path=/; Secure; HttpOnly",
+            "bili_jct=csrf-value; Domain=.bilibili.com; Path=/; Secure"
+        }, new Uri("https://passport.bilibili.com/x/passport-login/web/exchange_cookie"));
+        var session = PasswordLoginSessionValidator.CreateSession("access-key", "cookie-refresh", cookieJar, "123");
+        Check(session.UserId == 123 && session.Cookies.Count >= 3,
+            "session validator accepts a complete staged root-domain cookie jar and matching redirect identity");
+
+        foreach (var redirectMid in new[] { "456", "not-an-id" })
+        {
+            try { PasswordLoginSessionValidator.CreateSession("access-key", "cookie-refresh", cookieJar, redirectMid); throw new Exception("expected redirect identity mismatch"); }
+            catch (FormatException) { assertions++; }
+        }
+
+        var missingCookies = PasswordLoginSessionValidator.ParseCookies(new[]
+        {
+            "DedeUserID=123; Domain=.bilibili.com; Path=/; Secure",
+            "bili_jct=csrf-value; Domain=.bilibili.com; Path=/; Secure"
+        }, new Uri("https://passport.bilibili.com/"));
+        try { PasswordLoginSessionValidator.CreateSession("access-key", "cookie-refresh", missingCookies); throw new Exception("expected missing session cookie rejection"); }
+        catch (FormatException) { assertions++; }
+
+        var emptyCookies = PasswordLoginSessionValidator.ParseCookies(new[]
+        {
+            "DedeUserID=123; Domain=.bilibili.com; Path=/",
+            "SESSDATA=; Domain=.bilibili.com; Path=/",
+            "bili_jct=csrf-value; Domain=.bilibili.com; Path=/"
+        }, new Uri("https://passport.bilibili.com/"));
+        try { PasswordLoginSessionValidator.CreateSession("access-key", "cookie-refresh", emptyCookies); throw new Exception("expected empty session cookie rejection"); }
+        catch (FormatException) { assertions++; }
+
+        var conflicting = new PasswordLoginSession
+        {
+            AccessKey = "access-key", CookieRefreshToken = "cookie-refresh", UserId = 123,
+            Cookies = session.Cookies.Concat(new[] { new PasswordLoginCookie
+            {
+                Name = "DedeUserID", Value = "456", Domain = ".bilibili.com", Path = "/", Secure = true
+            }}).ToList()
+        };
+        try { PasswordLoginSessionValidator.ValidateSession(conflicting); throw new Exception("expected conflicting cookie identity rejection"); }
+        catch (FormatException) { assertions++; }
+
+        var coordinator = new PasswordLoginSessionCoordinator();
+        var operation = coordinator.BeginOperation();
+        var commitCount = 0;
+        try
+        {
+            await coordinator.CompleteAsync(operation, () => Task.FromResult(
+                PasswordLoginSessionValidator.CreateSession("", "cookie-refresh", cookieJar)), _ => commitCount++);
+            throw new Exception("expected incomplete session rejection");
+        }
+        catch (FormatException) { assertions++; }
+        Check(commitCount == 0, "malformed staged session never invokes the persistence callback");
+
+        var rollbackState = "old-session";
+        var rollbackLogs = new List<string>();
+        var rollbackCommitted = PasswordLoginSessionCommitter.TryCommit(session,
+            () => rollbackState,
+            staged => { rollbackState = staged.AccessKey; throw new InvalidOperationException("fixture write failure"); },
+            snapshot => rollbackState = snapshot,
+            rollbackLogs.Add);
+        Check(!rollbackCommitted && rollbackState == "old-session" && rollbackLogs.Count == 1 &&
+            !rollbackLogs[0].Contains("access-key") && !rollbackLogs[0].Contains("cookie-refresh"),
+            "failed explicit persistence restores the old session and logs only a sanitized exception type");
+
+        var retryCount = 0;
+        var retryCommitted = await coordinator.CompleteAsync(operation,
+            () => Task.FromResult(session), _ => { commitCount++; retryCount++; });
+        var duplicateCommitted = await coordinator.CompleteAsync(operation,
+            () => Task.FromResult(session), _ => commitCount++);
+        Check(retryCommitted && !duplicateCommitted && retryCount == 1 && commitCount == 1,
+            "a valid retry commits once and a duplicate completion cannot persist twice");
+
+        var staleCoordinator = new PasswordLoginSessionCoordinator();
+        var staleOperation = staleCoordinator.BeginOperation();
+        var gate = new TaskCompletionSource<PasswordLoginSession>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var staleCommits = 0;
+        var pending = staleCoordinator.CompleteAsync(staleOperation, () => gate.Task, _ => staleCommits++);
+        staleCoordinator.Invalidate();
+        gate.SetResult(session);
+        Check(!await pending && staleCommits == 0, "response arriving after cancellation is stale and cannot replace the current session");
+
+        var supersededCoordinator = new PasswordLoginSessionCoordinator();
+        var superseded = supersededCoordinator.BeginOperation();
+        supersededCoordinator.BeginOperation();
+        var stageCalls = 0;
+        Check(!await supersededCoordinator.CompleteAsync(superseded, () => { stageCalls++; return Task.FromResult(session); }, _ => { }) && stageCalls == 0,
+            "an already stale operation is rejected before starting its network stage");
     }
 
     private static BiliLite.Services.CookieService NewCookieService(FakeCookieStore store, IDictionary<string, string> settings,
