@@ -3,8 +3,8 @@
 ## Resume point
 
 - Repo: `/workspace/bilibili-uwp-liter`, branch `work`.
-- Published application baseline: `8106491` (LM-05 reviewed); API-01 implementation is in progress for root review.
-- Next after API-01 review: **AUTH-01 — missing authentication endpoints**.
+- Published application baseline: `241c4e5` (API-01 reviewed). No pending application changes.
+- Next: **AUTH-01 — missing authentication endpoints**.
 - Plan: `work/improvements/PLAN.md`. Detailed checkpoint: `IMPROVEMENT_PROGRESS.md`.
 
 ## Completed
@@ -18,7 +18,7 @@
 
 ## Next batch
 
-AUTH-01: port the missing authentication endpoints using the pinned sibling reference, preserving current login UI and credential-free logging. The API-01 change and its source/test boundaries are described in `IMPROVEMENT_PROGRESS.md`.
+AUTH-01: retrieve the pinned AccountApi/login-flow source through the GitHub connector, inventory existing target endpoints, and port missing secondary-verification/refresh endpoints while preserving current login UI and credential-free logging. The API-01 change and its source/test boundaries are described in `IMPROVEMENT_PROGRESS.md`.
 
 Real UWP permissions/restart, UI/media-event timing, codec support and asynchronous decoder-failure recovery need user app testing; do not claim these were validated locally.
 

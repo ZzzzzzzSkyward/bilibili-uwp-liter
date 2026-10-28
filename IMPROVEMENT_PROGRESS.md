@@ -5,7 +5,7 @@
 - The integration baseline and preserved plan are committed in `3ede2d158d954745bf59674efc1e7992c10f9f28`.
 - `work/improvements/BASELINE.md` records the target and pinned sibling boundaries, relevant package versions, and explicit project compile inclusion constraints.
 
-## Current step: LM-05 reviewed and published; API-01 next
+## Historical LM-05 checkpoint
 
 - Started from clean target HEAD `a8435c1` after the LM-03 reviewed handoff. LM-02 and LM-03 remain reviewed and published. LM-04 setup checkpoint `478e14d` records the batch start. LM-04 implementation and review follow-up are committed and published; see the latest checkpoint below.
 - LM-03 added `LocalMediaPlaybackAdapter` to resolve manifest tracks through the saved FutureAccessList folder grant and map every item into the existing DASH player structures. Collection item selection opens `LocalPlayerPage` at the chosen playlist index. `LocalPlayInfo` keeps legacy fields and adds typed video/audio/subtitle/danmaku metadata.
@@ -19,7 +19,7 @@
 - The playlist adapter resolves subtitle and danmaku `StorageFile` handles through the saved FutureAccessList folder grant. The player uses the existing cue model/timer and `DanmuControl`; it clears old visuals/pools on selection changes and uses generation/owner guards so stale reads, cue renders, XML parses, or queued renderer callbacks cannot overwrite a newer selection/item or a disposed player. Per-track failures retain stage, collection/item/track IDs, and full exception details in logs.
 - `work/improvements/tests/run.sh` passes actual-source LM-01–05 probes. LM-05 covers JSON/SRT/VTT cues and invalid inputs, VTT metadata/markup, timer cue selection boundaries, asynchronous selection/item/dispose guards, independent danmaku toggle subsets, empty selection, merged timestamp order, and full track failure context. LM-03 now also verifies saved-grant subtitle/danmaku file handles. `git diff --check` passes. These are offline source probes; they do not validate UWP media event timing or actual decoder/renderer behavior. No app build, restore, launch, protocol generation, or live API call was run.
 
-## Current step: API-01 implementation complete; root review pending
+## Current step: API-01 reviewed and published; AUTH-01 next
 
 - Started from target HEAD `c9f76a7`. Root supplied the pinned sibling source through the GitHub connector at `ywmoyue/biliuwp-lite`, commit [`ca2caddc597b3faf05b4dac6dcb226aa0694365b`](https://github.com/ywmoyue/biliuwp-lite/tree/ca2caddc597b3faf05b4dac6dcb226aa0694365b); inspected files: `Services/CookieService.cs`, `Services/WbiKeyService.cs`, `Services/ApiHelper.cs`, `Models/Requests/Api/BaseApi.cs`, and `Models/Requests/Api/DanmakuApi.cs`. No fetch/pull was used.
 - Added `BiliLite.Services.CookieService` around the target browser-cookie store, existing settings keys, refresh-state check, refresh-token flow, timer, and token fields. The old global `ICookieService` and `CookieService` remain source-compatible; `ApiHelper.Cookie` remains a mutable global-shim field, and its public CSRF, refresh-state, refresh-token, timestamp, and async-void refresh wrappers delegate through the current field. Target settings persistence remains in place; the sibling cookie-list schema and DI setup were not ported.
@@ -32,7 +32,7 @@
 
 - Baseline is clean HEAD `a8435c1`; the LM-03 implementation and handoff are committed. LM-04 will add selectors inside the existing `PlayerControl`, reuse the manifest track handles, and preserve the current item, position, and playing state across reopen. Focused actual-source probes will exercise switch state and rollback. No app build, restore, launch, protocol generation, or live API test is in scope.
 
-## Next step after root review: AUTH-01 missing authentication endpoints
+## Next step: AUTH-01 missing authentication endpoints
 
 ## Prior step: LM-02 reviewed and published; LM-03 next
 
@@ -100,3 +100,10 @@
 - Root ran the LM-01–05 offline runner successfully, including 22 LM-05 assertions. Tests exercise actual parser/merge/guard helpers with storage and player model stubs; UWP UI wiring and the NSDanmaku parser/render boundary were source-reviewed, not executed. Project/XAML XML checks and `git diff 01be302 HEAD --check` passed. No application build, restore, launch, protocol generation, or live API tests were run.
 - The restored checkout initially contained only the master baseline. Before the handover was available, root fetched the user-identified remote work branch and fast-forwarded the clean local work branch to `01be302`; no further fetch/pull occurred. The missing standalone test SDK was downloaded to the documented offline tools path.
 - Resume API-01 per the preserved plan. The pinned sibling is absent in this restored environment; check its pinned revision before source-dependent behavior ports. Real UWP permission persistence, UI/media timing, decoding, and renderer behavior remain for user app testing. SRT/VTT styling/layout metadata is reduced to plain cue text in the existing subtitle renderer.
+
+
+## API-01 publication checkpoint
+
+- Implementation `a6ae587` and service-boundary follow-up `241c4e5` reviewed by root and pushed normally to `origin/work`. Root reviewed source compatibility shims, production WBI request/response ownership, guest navigation replies, cache expiry/coalescing/retry, cookie synchronization and confirmation dispatch, incremental Emote API migration, Danmaku like/unlike request construction, and project source entries.
+- Root ran the final focused offline API-01 runner: all 30 assertions passed. The agent also ran the LM-01–05 plus API-01 runner and the legacy batch-002 refresh-dispatch entry point successfully. Root verified project XML and each new Compile entry, and `git diff c9f76a7 HEAD --check` passed. The harness compiles actual service, ApiHelper, AccountApi and endpoint source with Windows cookie/settings/network boundaries stubbed; it does not validate Windows cookies or live authentication/API behavior. No app build, restore, launch, protocol generation, live application API tests, or fetch/pull was performed.
+- Resume AUTH-01 by retrieving the pinned AccountApi and login-flow reference through the GitHub connector, inventorying target endpoints, and adding only missing secondary-verification/refresh endpoints through the compatibility layer. Preserve the target login UI and account persistence.
