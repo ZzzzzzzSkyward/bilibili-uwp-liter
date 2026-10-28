@@ -1562,7 +1562,7 @@ namespace BiliLite.Controls
                 var menu = new MenuFlyout();
                 foreach (var item in player_info.subtitle.subtitles)
                 {
-                    ToggleMenuFlyoutItem menuitem = new ToggleMenuFlyoutItem() { Text = item.lan_doc, Tag = item.subtitle_url };
+                    ToggleMenuFlyoutItem menuitem = new ToggleMenuFlyoutItem() { Text = $"{item.lan_doc}({item.lan})", Tag = item.subtitle_url };
                     menuitem.Click += Menuitem_Click;
                     menu.Items.Add(menuitem);
                 }

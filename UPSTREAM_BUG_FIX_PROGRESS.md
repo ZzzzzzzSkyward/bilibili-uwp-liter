@@ -38,8 +38,8 @@ Batch 005 baseline: user-owned HEAD `b6d17888b4a4871137a598fe240462813670a939`; 
 
 - Setup and baseline record: `9597c58`.
 - #1243 empty URL guard and actual-prefix regression probe: `d739637`.
-- #1305 actual played-item marker lifecycle and Dispose probes: pending commit hash.
-- #1311 language-label preservation and selection probe: pending commit hash.
+- #1305 actual played-item marker lifecycle and Dispose probes: `6043664`.
+- #1311 language-label preservation and selection probe: `4719abb`.
 
 ## Batch 004 verification
 
@@ -62,6 +62,8 @@ Batch 005 baseline: user-owned HEAD `b6d17888b4a4871137a598fe240462813670a939`; 
 | #146 | Fixed | Episode list preview key-down/up events now stop focused-list arrow navigation and reach the player seek path, matching the pinned sibling. Source review and `git diff --check`; no UI runtime. Commit `d019842805fd406aa2d39d707bf86af03f61c09e`. |
 | #275 | Fixed | `top_replies` now deserializes as the target display model and is prepended as pinned comments; old `upper.top` remains supported, normal first replies are preserved, and duplicate IDs are suppressed. Actual insertion-block probe passes pinned-first/visible, same normal-first and nested objects, duplicate suppression, and pinned-only cases; UWP controls and full model are stubbed. Commits `839d0c8b8712d2c5631dbb4d9bd27c65d5e00746` and corrective follow-up `ade587708588bac3d9607c13b62e7cbe1fe860c8`. |
 | #358 | Fixed | Active history page migrated to cookie-authenticated `/x/web-interface/history/cursor`, with cursor pagination, response mapping to existing item bindings/actions, refresh reset, empty-page end behavior, and supported archive/PGC/live/article navigation. Full actual `HistoryVM` and DTO source plus actual extracted `HistoryWbi` method pass the isolated recording-boundary probe; no app runtime. Commit `94e65a935c44c02e5f3ce96cda33d2f5265b12f1`. |
+| #1305 | Fixed | `Playing` marks the current logical item as played; switching `season_id`, `ep_id`, or `cid` resets that marker, while same-item refresh retains it. Extracted-source marker and `Dispose` probes pass; cleanup precedes the awaited history call, untouched restored progress is saved without a history report, and natural-end history remains skipped. Commit `6043664`. |
+| #1311 | Partial mitigation | Online and newly downloaded subtitle labels retain `lan_doc(lan)` for the existing AI marker heuristic. Extracted-source probe passes AI marker, manual-language, and enabled-setting cases. Fully unmarked AI tracks and existing saved labels remain unresolved; not counted as fixed. Commit `4719abb`. |
 
 ## Batch 003 issue commits
 
