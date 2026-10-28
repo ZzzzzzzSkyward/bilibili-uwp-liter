@@ -11,16 +11,21 @@ sealed class Harness
 {
     public CommentCursor cursor;
     public Button btn_LoadMore = new() { Visibility = Visibility.Collapsed };
-    public void Apply(CommentResult m)
+    public void Apply(CommentResult m, bool legacyFallback)
     {
+        var isCursorApiResponse = true;
+        if (legacyFallback)
+        {
+            isCursorApiResponse = false;
+        }
                                     cursor=m.data.cursor;
-                            if (m.data.replies.Count >= 10 && cursor?.PaginationReply?.NextOffset != null)
+                            if (m.data.replies.Count >= 10 && (!isCursorApiResponse || cursor?.PaginationReply?.NextOffset != null))
                             {
                                 btn_LoadMore.Visibility = Visibility.Visible;
                             }
     }
 }
-static void Check(string label, string nextOffset, bool expectedVisible)
+static void Check(string label, string nextOffset, bool legacyFallback, bool expectedVisible)
 {
     var page = new CommentResult
     {
@@ -31,11 +36,12 @@ static void Check(string label, string nextOffset, bool expectedVisible)
         }
     };
     var harness = new Harness();
-    harness.Apply(page);
+    harness.Apply(page, legacyFallback);
     var visible = harness.btn_LoadMore.Visibility == Visibility.Visible;
     Console.WriteLine($"{label}: load-more visible={visible}, nextOffset={harness.cursor?.PaginationReply?.NextOffset ?? "<null>"}");
     if (visible != expectedVisible) Environment.ExitCode = 1;
 }
-Check("terminal ten-reply page", null, false);
-Check("nonterminal ten-reply page", "next-page-offset", true);
-if (Environment.ExitCode == 0) Console.WriteLine("PASS: terminal cursor hides load-more; nonterminal cursor keeps next-page action");
+Check("modern terminal ten-reply page", null, false, false);
+Check("modern nonterminal ten-reply page", "next-page-offset", false, true);
+Check("legacy ten-reply page without cursor", null, true, true);
+if (Environment.ExitCode == 0) Console.WriteLine("PASS: modern terminal cursor ends pagination; modern and legacy nonterminal pages retain load-more");

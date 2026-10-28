@@ -6,15 +6,20 @@ tools_root="${UPSTREAM_UNIT_TOOLS:-/workspace/work/upstream-unit-tools}"
 source_file="$repo_root/src/BiliLite.UWP/Controls/CommentControl.xaml.cs"
 fragment="$script_dir/next-cursor-load-more.csx"
 harness="$script_dir/terminal-comment-cursor-test.csx"
-python3 - "$source_file" "$fragment" <<'PY'
+python3 - "$source_file" "$fragment" "$script_dir/cursor-api-branch.csx" "$script_dir/legacy-fallback-branch.csx" <<'PY'
 import sys
 source = open(sys.argv[1], encoding='utf-8-sig').read()
 start = source.index('                            cursor=m.data.cursor;')
-end = source.index('\n                            }', source.index('if (m.data.replies.Count >= 10 && cursor?.PaginationReply?.NextOffset != null)', start)) + len('\n                            }')
+condition = source.index('if (m.data.replies.Count >= 10 && (!isCursorApiResponse || cursor?.PaginationReply?.NextOffset != null))', start)
+end = source.index('\n                            }', condition) + len('\n                            }')
 fragment = source[start:end]
 open(sys.argv[2], 'w').write('\n'.join(line.rstrip() for line in fragment.splitlines()) + '\n')
+initial = next(line.strip() for line in source.splitlines() if 'var isCursorApiResponse = true;' in line)
+fallback = next(line.strip() for line in source.splitlines() if 'isCursorApiResponse = false;' in line)
+open(sys.argv[3], 'w').write(initial + '\n')
+open(sys.argv[4], 'w').write(fallback + '\n')
 PY
-grep -Fq 'm.data.replies.Count >= 10 && cursor?.PaginationReply?.NextOffset != null' "$fragment"
+grep -Fq 'm.data.replies.Count >= 10 && (!isCursorApiResponse || cursor?.PaginationReply?.NextOffset != null)' "$fragment"
 cat > "$harness" <<'CSHARP'
 using System;
 using System.Collections.Generic;
@@ -29,12 +34,17 @@ sealed class Harness
 {
     public CommentCursor cursor;
     public Button btn_LoadMore = new() { Visibility = Visibility.Collapsed };
-    public void Apply(CommentResult m)
+    public void Apply(CommentResult m, bool legacyFallback)
     {
+        __ACTUAL_CURSOR_API_BRANCH__
+        if (legacyFallback)
+        {
+            __ACTUAL_LEGACY_FALLBACK_BRANCH__
+        }
         __ACTUAL_CURSOR_AND_LOAD_MORE_BLOCK__
     }
 }
-static void Check(string label, string nextOffset, bool expectedVisible)
+static void Check(string label, string nextOffset, bool legacyFallback, bool expectedVisible)
 {
     var page = new CommentResult
     {
@@ -45,19 +55,21 @@ static void Check(string label, string nextOffset, bool expectedVisible)
         }
     };
     var harness = new Harness();
-    harness.Apply(page);
+    harness.Apply(page, legacyFallback);
     var visible = harness.btn_LoadMore.Visibility == Visibility.Visible;
     Console.WriteLine($"{label}: load-more visible={visible}, nextOffset={harness.cursor?.PaginationReply?.NextOffset ?? "<null>"}");
     if (visible != expectedVisible) Environment.ExitCode = 1;
 }
-Check("terminal ten-reply page", null, false);
-Check("nonterminal ten-reply page", "next-page-offset", true);
-if (Environment.ExitCode == 0) Console.WriteLine("PASS: terminal cursor hides load-more; nonterminal cursor keeps next-page action");
+Check("modern terminal ten-reply page", null, false, false);
+Check("modern nonterminal ten-reply page", "next-page-offset", false, true);
+Check("legacy ten-reply page without cursor", null, true, true);
+if (Environment.ExitCode == 0) Console.WriteLine("PASS: modern terminal cursor ends pagination; modern and legacy nonterminal pages retain load-more");
 CSHARP
-python3 - "$harness" "$fragment" <<'PY'
+python3 - "$harness" "$fragment" "$script_dir/cursor-api-branch.csx" "$script_dir/legacy-fallback-branch.csx" <<'PY'
 import sys
 harness = open(sys.argv[1]).read()
-harness = harness.replace('__ACTUAL_CURSOR_AND_LOAD_MORE_BLOCK__', open(sys.argv[2]).read().rstrip())
+for marker, path in zip(('__ACTUAL_CURSOR_AND_LOAD_MORE_BLOCK__', '__ACTUAL_CURSOR_API_BRANCH__', '__ACTUAL_LEGACY_FALLBACK_BRANCH__'), sys.argv[2:]):
+    harness = harness.replace(marker, open(path).read().rstrip())
 open(sys.argv[1], 'w').write(harness)
 PY
 export DOTNET_ROOT="$tools_root/dotnet"

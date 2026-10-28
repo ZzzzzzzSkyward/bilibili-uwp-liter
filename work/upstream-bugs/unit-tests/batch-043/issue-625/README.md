@@ -1,14 +1,5 @@
-# Issue 625: UGC collection comment dispatch
+# Issue #625 isolated source probe
 
-Run from the repository checkout with `work/upstream-bugs/unit-tests/batch-043/issue-625/run-ugc-collection-comment-dispatch.sh`. The runner extracts and executes the actual `UserDynamicPage` open-comment handler from `src/BiliLite.UWP/Pages/Home/UserDynamicPage.xaml.cs` lines 100–148 with a recording `Utils.ShowComment` stub.
+Run `run-ugc-collection-comment-dispatch.sh` from this checkout. The probe executes the extracted mapper assignment from `DynUgcSeason.Avid` to `ugc_season.aid`, the display row's AID assignment, and the complete target open-comment handler with a recording `Utils.ShowComment` boundary.
 
-The valid fixture uses numeric IDs: target mapping sets `basic.rid_str` from the dynamic ID and separately maps `DynUgcSeason.Avid` to `major.ugc_season.aid`; `ConvertToDisplay2024` copies `basic.rid_str` to `ReplyID`; the display parser tags UGC season cards as `合集`. The current handler chooses Video comments for that tag but passes `ReplyID`.
-
-Current assertion result:
-
-```text
-Video comment dispatch: oid=901234567890123456, type=2
-FAIL: UGC collection comment used the dynamic ID instead of the mapped video AID
-```
-
-This unit proves the handler dispatches the dynamic ID for the source-supported display state. It does not execute the full mapper/converter or call the comment API; the mapped video AID expectation comes from the source DTO mapping. It does not claim an end-to-end backend response.
+Its fixture gives the dynamic and video AID distinct numeric values. It verifies that a `合集` card dispatches Video comments with the mapped video AID while the display model retains the dynamic ID in `ReplyID`. The probe does not execute the complete mapper/converter, UWP app, or comment API.

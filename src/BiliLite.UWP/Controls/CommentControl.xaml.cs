@@ -164,12 +164,14 @@ namespace BiliLite.Controls
                 ObservableCollection<CommentModel> ls = new ObservableCollection<CommentModel>();
 
 
+                var isCursorApiResponse = true;
                 var api = await commentApi.CommentV2(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page,
                     _loadCommentInfo.CommentMode, offsetStr: cursor?.PaginationReply?.NextOffset);
                 var re = await api.Request();
                 var errorCheck = await re.GetData<object>();
                 if (!re.status || (errorCheck != null && errorCheck.code < 0))
                 {
+                    isCursorApiResponse = false;
                     re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page, _loadCommentInfo.CommentMode).Request();
                 }
                 if (re.status)
@@ -234,7 +236,7 @@ namespace BiliLite.Controls
                             _page++;
 
                             cursor=m.data.cursor;
-                            if (m.data.replies.Count >= 10 && cursor?.PaginationReply?.NextOffset != null)
+                            if (m.data.replies.Count >= 10 && (!isCursorApiResponse || cursor?.PaginationReply?.NextOffset != null))
                             {
                                 btn_LoadMore.Visibility = Visibility.Visible;
                             }
