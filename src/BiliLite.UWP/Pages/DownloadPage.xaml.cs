@@ -84,9 +84,9 @@ namespace BiliLite.Pages
                 LogLocalMediaFailure(exception);
                 Utils.ShowMessageToast("导入媒体库失败", exception.Message);
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                LogHelper.Log("Local media library operation failed; stage=" + stage + "; collectionId=" + collectionId, LogType.ERROR);
+                LogHelper.Log("Local media library operation failed; stage=" + stage + "; collectionId=" + collectionId, LogType.ERROR, exception);
                 Utils.ShowMessageToast("打开本地媒体库失败", "请重试或重新导入文件夹。");
             }
             finally
@@ -109,9 +109,9 @@ namespace BiliLite.Pages
                 LogLocalMediaFailure(exception);
                 Utils.ShowMessageToast("打开媒体库失败", exception.Message + " 请重新导入文件夹。");
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                LogHelper.Log("Local media library operation failed; stage=collection-open; collectionId=" + saved.Id, LogType.ERROR);
+                LogHelper.Log("Local media library operation failed; stage=collection-open; collectionId=" + saved.Id, LogType.ERROR, exception);
                 Utils.ShowMessageToast("打开媒体库失败", "请重新导入文件夹后重试。");
             }
         }
@@ -135,7 +135,7 @@ namespace BiliLite.Pages
         private static void LogLocalMediaFailure(LocalMediaLibraryException exception)
         {
             LogHelper.Log("Local media library operation failed; stage=" + exception.Stage + "; collectionId=" + exception.CollectionId,
-                LogType.ERROR);
+                LogType.ERROR, exception);
         }
 
         private void listDowned_ItemClick(object sender, ItemClickEventArgs e)
