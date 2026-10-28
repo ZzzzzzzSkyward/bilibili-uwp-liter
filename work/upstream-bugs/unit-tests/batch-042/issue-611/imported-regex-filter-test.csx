@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -10,13 +11,19 @@ sealed class SettingVMStub
 {
     public List<string> ShieldWords = new();
     public List<string> ShieldUsers = new();
-    public List<string> ShieldRegulars = new() { @"/.\1{16}/", "local-valid" };
+    public ObservableCollection<string> ShieldRegulars = new();
 }
 static class SettingHelper
 {
     public static class VideoDanmaku { public const string SHIELD_REGULAR = "fixture-shield-regular"; }
     public static List<string> PersistedRegulars = new();
-    public static void SetValue(string key, List<string> values)
+    public static T GetValue<T>(string key, T fallback)
+    {
+        if (key == VideoDanmaku.SHIELD_REGULAR)
+            return (T)(object)new ObservableCollection<string>(PersistedRegulars);
+        return fallback;
+    }
+    public static void SetValue(string key, IEnumerable<string> values)
     {
         if (key == VideoDanmaku.SHIELD_REGULAR) PersistedRegulars = values.ToList();
     }
@@ -49,7 +56,7 @@ sealed class DanmuControlStub
 sealed class Harness
 {
     public SettingVMStub settingVM = new();
-    public List<string> ShieldRegulars;
+    public ObservableCollection<string> ShieldRegulars;
     public int p = 1;
     public int level = 0;
     public bool needDistinct = false;
@@ -63,7 +70,9 @@ sealed class Harness
     public List<DanmuFilterItem> items;
     public Harness(string fixtureRule, string validRule)
     {
-        ShieldRegulars = settingVM.ShieldRegulars;
+        SettingHelper.PersistedRegulars = new List<string> { fixtureRule, "local-valid" };
+        LoadCachedRules();
+        settingVM.ShieldRegulars = ShieldRegulars;
         items = new List<DanmuFilterItem>
         {
             new DanmuFilterItem { type = 1, filter = fixtureRule },
@@ -85,6 +94,16 @@ sealed class Harness
                 return false;
             }
         }
+    public void LoadCachedRules()
+    {
+        ShieldRegulars = SettingHelper.GetValue<ObservableCollection<string>>(SettingHelper.VideoDanmaku.SHIELD_REGULAR, new ObservableCollection<string>() { });
+            var validRegulars = ShieldRegulars.Where(IsValidDanmuRegex).ToList();
+            if (validRegulars.Count != ShieldRegulars.Count)
+            {
+                ShieldRegulars = new ObservableCollection<string>(validRegulars);
+                SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_REGULAR, ShieldRegulars);
+            }
+    }
     public void Import()
     {
         var ShieldRegulars = settingVM.ShieldRegulars;
@@ -158,13 +177,15 @@ try { Regex.IsMatch("visible fixture", rule); }
 catch (ArgumentException) { regexRejected = true; }
 Console.WriteLine($"Regex parser rejects imported fixture: {regexRejected}");
 var harness = new Harness(rule, validRule);
+var cachedRulesPrunedBeforeSync = !SettingHelper.PersistedRegulars.Contains(rule) && SettingHelper.PersistedRegulars.Contains("local-valid");
+Console.WriteLine($"Cached invalid rule pruned before sync: {cachedRulesPrunedBeforeSync}");
 harness.Import();
 Console.WriteLine($"Invalid imported rule persisted: {SettingHelper.PersistedRegulars.Contains(rule)}");
 Console.WriteLine($"Empty regex persisted: {SettingHelper.PersistedRegulars.Contains(string.Empty)}");
 Console.WriteLine($"Valid local/cloud rules preserved: {SettingHelper.PersistedRegulars.Contains("local-valid") && SettingHelper.PersistedRegulars.Contains(validRule)}");
 await harness.Render();
 Console.WriteLine($"Danmaku added after render pass: {harness.DanmuControl.AddCount}");
-var passed = regexRejected && !SettingHelper.PersistedRegulars.Contains(rule) &&
+var passed = regexRejected && cachedRulesPrunedBeforeSync && !SettingHelper.PersistedRegulars.Contains(rule) &&
     !SettingHelper.PersistedRegulars.Contains(string.Empty) &&
     SettingHelper.PersistedRegulars.Contains("local-valid") && SettingHelper.PersistedRegulars.Contains(validRule) &&
     harness.DanmuControl.AddCount > 0;
