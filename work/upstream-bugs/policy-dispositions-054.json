@@ -1,0 +1,25 @@
+{
+  "batch": 54,
+  "processed": [
+    {
+      "issue": 799,
+      "status": "user_visual"
+    },
+    {
+      "issue": 800,
+      "status": "skipped"
+    },
+    {
+      "issue": 802,
+      "status": "skipped"
+    },
+    {
+      "issue": 806,
+      "status": "skipped"
+    },
+    {
+      "issue": 812,
+      "status": "skipped"
+    }
+  ]
+}
