@@ -208,11 +208,10 @@ namespace BiliLite.Controls
                                 {
                                     foreach (var item in m.data.topReplies)
                                     {
-                                        var pinnedReply = item.ToCommentModel();
-                                        pinnedReply.showTop = Visibility.Visible;
-                                        if (!displayedReplies.Any(reply => reply.rpid == pinnedReply.rpid))
+                                        item.showTop = Visibility.Visible;
+                                        if (!displayedReplies.Any(reply => reply.rpid == item.rpid))
                                         {
-                                            displayedReplies.Add(pinnedReply);
+                                            displayedReplies.Add(item);
                                         }
                                     }
                                 }
@@ -748,7 +747,7 @@ namespace BiliLite.Controls
         public CommentModel top { get; set; }
 
         [JsonProperty("top_replies")]
-        public List<CommentItem> topReplies { get; set; }
+        public List<CommentModel> topReplies { get; set; }
 
     }
     public class CommentModel : INotifyPropertyChanged
