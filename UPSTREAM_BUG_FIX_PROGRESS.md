@@ -1,10 +1,10 @@
 # Upstream logic bug fix progress
 
-## Current phase: batch 004 complete; awaiting user build/testing
+## Current phase: batch 005 in progress; awaiting user build/testing
 
 The user authorized implementation fixes and commits. Batches 001–003 fixed nine findings; batch 004 fixed #611, #625, and #1216, bringing the total to 12 of 15. Root reviewed this batch and handles publication. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
 
-Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed54f0b8d9` (clean). Per user instruction, no pull/fetch was performed. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`. Batch 004 is reviewed and complete; user build/testing is pending. The next finding is #1243.
+Batch 005 starts from user-owned target branch `work` at clean HEAD `b6d17888b4a4871137a598fe240462813670a939`. Per user instruction, no pull/fetch is performed. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`. Batch 004 is complete; batch 005 addresses #1243 → #1305 → #1311. No application build, restore, run, protocol generation, or live API testing is permitted; user build/testing remains pending.
 
 ## Constraints
 
@@ -16,6 +16,8 @@ Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed
 ## Batch state
 
 Batch 004 order: #611 → #625 → #1216. All three fixes are implemented, including #1216 compatibility with the legacy page-number fallback.
+
+Batch 005 baseline: clean HEAD `b6d17888b4a4871137a598fe240462813670a939`; no pull/fetch. Batch status: in progress. #1243, #1305, and #1311 are pending source review and implementation. Update this record after each issue commit; root reviews and handles publication.
 
 | #611 | Fixed | Cached rules are validated as `LoadShieldSetting` reads them, pruning and persisting only when invalid entries exist; cloud and cached rules are also validated and materialized when sync merges them. Empty and malformed patterns are removed; valid local/cloud expressions are retained. Actual extracted load, import, validator, and render fragments pass cached-offline pruning, malformed local/cloud and empty patterns, valid-rule preservation, and comment rendering. No application runtime. Commits recorded below. |
 | #625 | Fixed | The 2024 UGC-season display row now carries its mapped video AID, and collection comments dispatch that AID as video OID while preserving dynamic `ReplyID` and other routes. Probe executes the extracted mapper Avid→aid assignment, display AID assignment, and full actual comment handler with distinct IDs. No application runtime. Commit recorded below. |
