@@ -1,8 +1,8 @@
 # Upstream logic bug fix progress
 
-## Current phase: batch 005 complete locally; root review/publication pending
+## Current phase: batch 005 reviewed and published; user build/testing pending
 
-Batch 005 is complete locally. #1243 and #1305 are fully fixed; #1311 has a source-backed partial mitigation that preserves language markers on online and newly created downloaded subtitle labels. Fully unmarked AI tracks and existing saved labels remain unresolved, so #1311 is not counted as fixed. Root reviews and handles publication. No pull/fetch was performed.
+Batch 005 was reviewed and pushed to `origin/work` through `9443244`. #1243 and #1305 are fully fixed; #1311 has a source-backed partial mitigation that preserves language markers on online and newly created downloaded subtitle labels. Fully unmarked AI tracks and existing saved labels remain unresolved, so #1311 is not counted as fixed. The current total is 14 of 15 fully fixed. No pull/fetch was performed.
 
 The user authorized implementation fixes and commits. Batches 001–003 fixed nine findings; batch 004 fixed #611, #625, and #1216, bringing the total to 12 of 15. Root reviewed this batch and handles publication. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
 
@@ -39,9 +39,9 @@ Batch 005 baseline: user-owned HEAD `b6d17888b4a4871137a598fe240462813670a939`; 
 - Setup and baseline record: `9597c58`.
 - #1243 empty URL guard and actual-prefix regression probe: `d739637`.
 - #1305 actual played-item marker lifecycle and Dispose probes: `6043664`.
-- #1311 language-label preservation and selection probe: `4719abb`.
+- #1311 language-label preservation and selection probe: `9443244`.
 
-## Batch 004 verification
+## Batch 004–005 verification
 
 - #611: `work/upstream-bugs/unit-tests/batch-042/issue-611/run-imported-regex-filter.sh` passes against extracted target cache-load and cloud-import code, validator, and render loop. It verifies a cached invalid pattern is persisted-pruned before sync, invalid cloud patterns and an empty pattern are rejected, valid local/cloud rules survive, and the visible comment reaches the add boundary.
 - #625: `work/upstream-bugs/unit-tests/batch-043/issue-625/run-ugc-collection-comment-dispatch.sh` passes with extracted mapper Avid→aid, display AID, and full target comment handler; dynamic ID and video AID remain distinct.
@@ -63,7 +63,7 @@ Batch 005 baseline: user-owned HEAD `b6d17888b4a4871137a598fe240462813670a939`; 
 | #275 | Fixed | `top_replies` now deserializes as the target display model and is prepended as pinned comments; old `upper.top` remains supported, normal first replies are preserved, and duplicate IDs are suppressed. Actual insertion-block probe passes pinned-first/visible, same normal-first and nested objects, duplicate suppression, and pinned-only cases; UWP controls and full model are stubbed. Commits `839d0c8b8712d2c5631dbb4d9bd27c65d5e00746` and corrective follow-up `ade587708588bac3d9607c13b62e7cbe1fe860c8`. |
 | #358 | Fixed | Active history page migrated to cookie-authenticated `/x/web-interface/history/cursor`, with cursor pagination, response mapping to existing item bindings/actions, refresh reset, empty-page end behavior, and supported archive/PGC/live/article navigation. Full actual `HistoryVM` and DTO source plus actual extracted `HistoryWbi` method pass the isolated recording-boundary probe; no app runtime. Commit `94e65a935c44c02e5f3ce96cda33d2f5265b12f1`. |
 | #1305 | Fixed | `Playing` marks the current logical item as played; switching `season_id`, `ep_id`, or `cid` resets that marker, while same-item refresh retains it. Extracted-source marker and `Dispose` probes pass; cleanup precedes the awaited history call, untouched restored progress is saved without a history report, and natural-end history remains skipped. Commit `6043664`. |
-| #1311 | Partial mitigation | Online and newly downloaded subtitle labels retain `lan_doc(lan)` for the existing AI marker heuristic. Extracted-source probe passes AI marker, manual-language, and enabled-setting cases. Fully unmarked AI tracks and existing saved labels remain unresolved; not counted as fixed. Commit `4719abb`. |
+| #1311 | Partial mitigation | Online and newly downloaded subtitle labels retain `lan_doc(lan)` for the existing AI marker heuristic. Extracted-source probe passes AI marker, manual-language, and enabled-setting cases. Fully unmarked AI tracks and existing saved labels remain unresolved; not counted as fixed. Commit `9443244`. |
 
 ## Batch 003 issue commits
 
@@ -87,4 +87,11 @@ Batch 005 baseline: user-owned HEAD `b6d17888b4a4871137a598fe240462813670a939`; 
 - #358: `work/upstream-bugs/unit-tests/fix-batch-002/issue-358/run.sh` — passes against the full actual `HistoryVM` and actual extracted `AccountApi.HistoryWbi`, with real Newtonsoft deserialization of fixture JSON and a recording request boundary. Confirms initial GET shape/cookie flag, cursor append, archive/PGC item mapping and `kid` deletion key apart from nested OID, empty terminal page, and refresh reset. This executes no UWP navigation, actual transport, or live API. The earlier format-only command could not start because the available .NET tool failed initialization (`/home/agent/.dotnet/8.0.427.toolpath.sentinel` was read-only, then NuGet migration mutex initialization failed with `DOTNET_CLI_HOME` redirected to `/tmp`).
 - No application build, restore, run, protocol generation, live app API call, or end-to-end behavior check was performed in batch 002.
 
-Batch 002 application changes were reviewed and pushed to `origin/work` through `f6c8a4fe19cf1b073b53c7dba200b6f6c246decf`, including the history navigation fallback follow-up. Both isolated probes passed after that commit; temporary compiler outputs are excluded from Git. Batches 001–003 completed nine fixes. Batch 004 brings the current total to 12 of 15; user build/testing is pending, and #1243 is next.
+Batch 002 application changes were reviewed and pushed to `origin/work` through `f6c8a4fe19cf1b073b53c7dba200b6f6c246decf`, including the history navigation fallback follow-up. Both isolated probes passed after that commit; temporary compiler outputs are excluded from Git. Batches 001–003 completed nine fixes. After batch 005, 14 of 15 findings are fully fixed; #1311 remains partially mitigated. User build/testing is pending.
+
+## Final batch handoff
+
+- Root reviewed the application diff and isolated-source probe scope; `git diff b6d1788 --check` passes.
+- Source commits: #1243 `d739637`, #1305 `6043664`, #1311 partial `9443244`. Normal push to `origin/work` succeeded through `9443244`; this handoff is committed and published separately.
+- Remaining logic issue: #1311 needs a discriminator supported by the sibling for fully unmarked AI tracks. Existing downloads cannot recover discarded language fields. Do not count this as fixed or guess API field semantics.
+- Next work depends on user app build/testing and feedback; no application build or live API testing was performed here. Visual issues remain assigned to the user.

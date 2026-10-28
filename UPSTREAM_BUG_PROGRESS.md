@@ -1,8 +1,8 @@
 # Upstream issue assessment progress
 
-## Current step: implementation complete locally; root review/publication pending
+## Current step: reviewed fixes published; user build/testing pending
 
-Batch 005 is complete locally: #1243 and #1305 are fully fixed, and #1311 has a limited label-preservation mitigation. The fix count is 14 of 15; #1311 is not counted because fully unmarked AI subtitles and existing saved labels remain unresolved. Root reviews and handles publication. Details and probe evidence are in [UPSTREAM_BUG_FIX_PROGRESS.md](UPSTREAM_BUG_FIX_PROGRESS.md).
+Batch 005 was reviewed and pushed to `origin/work` through `9443244`: #1243 and #1305 are fully fixed, and #1311 has a limited label-preservation mitigation. The fix count is 14 of 15; #1311 is not counted because fully unmarked AI subtitles and existing saved labels remain unresolved. No pull/fetch was performed. Details and probe evidence are in [UPSTREAM_BUG_FIX_PROGRESS.md](UPSTREAM_BUG_FIX_PROGRESS.md).
 
 Assessment covered all 96 original batches; the original catalog retains 757 issues and 477 bug candidates. The assessment contained no application fixes; implementation is tracked separately below.
 
