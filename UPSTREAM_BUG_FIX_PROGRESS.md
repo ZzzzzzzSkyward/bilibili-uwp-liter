@@ -1,10 +1,10 @@
 # Upstream logic bug fix progress
 
-## Current phase: batch 003 complete; awaiting user build/testing
+## Current phase: batch 004 in progress; awaiting user build/testing
 
 The user authorized implementation fixes and commits. Batch 001 fixed #31, #105, and #121; batch 002 fixed #146, #275, and #358. Batch 003 is implementing the next three findings in order. Root reviews and pushes completed batches. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
 
-Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instruction, no pull/fetch was performed. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
+Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed54f0b8d9` (clean). Per user instruction, no pull/fetch was performed. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
 
 ## Constraints
 
@@ -14,6 +14,8 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 - Do not claim end-to-end app behavior from isolated probes or source review.
 
 ## Batch state
+
+Batch 004 order: #611 → #625 → #1216. #611 import validation, #625 UGC collection AID exposure and comment dispatch, and #1216 terminal cursor state are in progress. No batch 004 fix commit has been made yet.
 
 | #378 | Fixed | Target model now preserves absolute URLs and maps malformed, null, and empty values to the pinned sibling fallback. Extracted actual nested class probe passes all four cases; no API/UI runtime. Commit recorded below. |
 | #404 | Fixed | Empty `area_entrance_v2` now skips area parsing while the populated first-entry path remains intact. Extracted actual block probe passes empty and populated shapes. Commit recorded below. |
