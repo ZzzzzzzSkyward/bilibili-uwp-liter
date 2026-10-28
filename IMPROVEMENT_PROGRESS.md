@@ -5,7 +5,15 @@
 - The integration baseline and preserved plan are committed in `3ede2d158d954745bf59674efc1e7992c10f9f28`.
 - `work/improvements/BASELINE.md` records the target and pinned sibling boundaries, relevant package versions, and explicit project compile inclusion constraints.
 
-## Current step: LM-01 reviewed and published; LM-02 next
+## Current step: LM-02 folder import
+
+- LM-01 remains reviewed and published at the prior implementation commit. LM-02 starts from clean target HEAD `863cf0689796e10f6b8e329bac84316d9336c212`.
+- UI entrypoint: add a local media library pivot beside the existing offline downloads in `DownloadPage`; preserve the page's current single-file picker and downloaded-video playback handlers.
+- LM-02 service boundary: import a picked `StorageFolder`, load `bili-media.json`, resolve manifest-relative assets through UWP storage APIs, validate with the LM-01 validator, then save collection metadata and a FutureAccessList token. Saved collection rows reopen by token and are revalidated. The page exposes collection details only; item playback remains LM-03.
+- Import persistence happens only after every reference validates. Reimport should replace the saved registration for the same root/collection without leaving duplicate access-list tokens.
+- Keep failure messages useful and stage-specific while logging collection IDs only; do not log manifest contents, paths, or credentials.
+
+## Prior completed step: LM-01 reviewed and published
 
 - Implemented typed schema-v1 collection, item, and track models; a JSON loader; and a validator in `Models/LocalMedia` and `Services/LocalMedia`.
 - The loader raises contextual `LocalMediaManifestException` errors. LM-02 must catch and display these errors in the app.
