@@ -6,8 +6,8 @@ tools_root="${UPSTREAM_UNIT_TOOLS:-/workspace/work/upstream-unit-tools}"
 source_file="$repo_root/src/BiliLite.UWP/Controls/PlayerControl.xaml.cs"
 fragment="$script_dir/dispose-method.csx"
 harness="$script_dir/dispose-stop-order-test.csx"
-sed -n '2582,2610p' "$source_file" > "$fragment"
-grep -Fq 'await playerHelper.ReportHistory(CurrentPlayItem, Player.Position);' "$fragment"
+sed -n '/^        public async void Dispose()/,/^        }/p' "$source_file" > "$fragment"
+grep -Fq 'await playerHelper.ReportHistory(historyItem, historyPosition);' "$fragment"
 cat > "$harness" <<'CSHARP'
 using System;
 using System.Threading.Tasks;
@@ -22,7 +22,9 @@ sealed class PlayInfo
 }
 static class SettingHelper
 {
-    public static void SetValue<T>(string key, T value) { }
+    public static string SavedKey;
+    public static object SavedValue;
+    public static void SetValue<T>(string key, T value) { SavedKey = key; SavedValue = value; }
 }
 sealed class StubPlayer
 {
@@ -43,9 +45,16 @@ sealed class StubPlayer
 sealed class StubPlayerHelper
 {
     public TaskCompletionSource<bool> PendingReport = new(TaskCreationOptions.RunContinuationsAsynchronously);
-    public Task ReportHistory(PlayInfo item, double position) => PendingReport.Task;
+    public PlayInfo ReportedItem;
+    public double ReportedPosition;
+    public Task ReportHistory(PlayInfo item, double position)
+    {
+        ReportedItem = item;
+        ReportedPosition = position;
+        return PendingReport.Task;
+    }
 }
-sealed class StubTimer { public void Stop() { } }
+sealed class StubTimer { public bool IsStopped; public void Stop() { IsStopped = true; } }
 sealed class PlayerControlHarness
 {
     public PlayInfo CurrentPlayItem = new();
@@ -64,16 +73,23 @@ cat >> "$harness" <<'CSHARP'
 }
 
 var control = new PlayerControlHarness();
+var originalItem = control.CurrentPlayItem;
 control.Dispose();
 var stoppedBeforeReportCompleted = control.Player.IsDisposed;
 Console.WriteLine($"Player disposed while report pending: {stoppedBeforeReportCompleted}");
+var historyCaptured = ReferenceEquals(control.playerHelper.ReportedItem, originalItem)
+    && control.playerHelper.ReportedPosition == 42
+    && SettingHelper.SavedKey == "epfixture-episode"
+    && Equals(SettingHelper.SavedValue, 42d)
+    && control.danmuTimer == null;
+Console.WriteLine($"History and resume position captured before report: {historyCaptured}");
 control.playerHelper.PendingReport.TrySetResult(true);
 await control.Player.DisposedSignal.Task.WaitAsync(TimeSpan.FromSeconds(2));
 Console.WriteLine($"Player disposed after report completed: {control.Player.IsDisposed}");
-var passed = stoppedBeforeReportCompleted;
+var passed = stoppedBeforeReportCompleted && historyCaptured;
 Console.WriteLine(passed
-    ? "PASS: player stopped before history report completed"
-    : "FAIL: player stop is blocked by pending history report");
+    ? "PASS: player cleanup completed before captured history report"
+    : "FAIL: player cleanup or captured history data was incorrect");
 Environment.ExitCode = passed ? 0 : 1;
 CSHARP
 export DOTNET_ROOT="$tools_root/dotnet"

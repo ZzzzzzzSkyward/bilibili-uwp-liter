@@ -2581,13 +2581,11 @@ namespace BiliLite.Controls
 
         public async void Dispose()
         {
-            if (CurrentPlayItem != null)
-            {
-                SettingHelper.SetValue<double>(CurrentPlayItem.season_id != 0 ? "ep" + CurrentPlayItem.ep_id : CurrentPlayItem.cid, Player.Position);
-                //当视频播放结束的话，Position为0
-                if (Player.PlayState != PlayState.End)
-                    await playerHelper.ReportHistory(CurrentPlayItem, Player.Position);
-            }
+            var historyItem = CurrentPlayItem;
+            var historyPosition = Player.Position;
+            var shouldReportHistory = historyItem != null && Player.PlayState != PlayState.End;
+            if (historyItem != null)
+                SettingHelper.SetValue<double>(historyItem.season_id != 0 ? "ep" + historyItem.ep_id : historyItem.cid, historyPosition);
 
             Player.PlayStateChanged -= Player_PlayStateChanged;
             Player.PlayMediaEnded -= Player_PlayMediaEnded;
@@ -2607,6 +2605,9 @@ namespace BiliLite.Controls
             {
                 dispRequest = null;
             }
+            //当视频播放结束的话，Position为0
+            if (shouldReportHistory)
+                await playerHelper.ReportHistory(historyItem, historyPosition);
         }
 
         private void GridViewSelectColor_ItemClick(object sender, ItemClickEventArgs e)
