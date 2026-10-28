@@ -577,6 +577,7 @@ namespace BiliLite.Modules
                 if (liveMessage != null)
                 {
                     liveMessage.NewMessage -= LiveMessage_NewMessage;
+                    liveMessage.Dispose();
                     liveMessage = null;
                    
                 }
@@ -1238,6 +1239,9 @@ namespace BiliLite.Modules
 
         public void Dispose()
         {
+            MessageCenter.LoginedEvent -= MessageCenter_LoginedEvent;
+            MessageCenter.LogoutedEvent -= MessageCenter_LogoutedEvent;
+
             if (cancelSource != null)
             {
                 cancelSource.Cancel();
