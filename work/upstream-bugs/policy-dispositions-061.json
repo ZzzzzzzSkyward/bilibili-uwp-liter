@@ -1,0 +1,71 @@
+{
+  "batch": 61,
+  "baseline": {
+    "target_commit": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
+    "sibling_path": "/workspace/biliuwp-lite",
+    "sibling_commit": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"
+  },
+  "dispositions": [
+    {
+      "issue": 923,
+      "subitem": "crash_after_watching_any_video_for_a_while",
+      "disposition": "skipped_skeptical",
+      "confidence": "low",
+      "evidence": [
+        "The entire issue body is a pointer to Discussion #920; there is no reproduction sequence, version, stack trace, device context, or comment in the issue thread.",
+        "The target and pinned sibling both have broad video-playback lifecycles, but the report gives no detail that would identify which active player path or event should be inspected."
+      ],
+      "reason": "A generic delayed crash claim cannot be tied to a target call chain from the discussion-only issue body.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 925,
+      "subitem": "tab_add_button_hit_region_shrinks_at_far_right",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": [
+        "The body gives a direct UI reproduction: add tabs until the plus button is at the far right, where only its bottom edge responds to clicks.",
+        "The target defines the built-in Microsoft.UI.Xaml.Controls.TabView and add-button event in src/BiliLite.UWP/MainPage.xaml:3-4; MainPage.xaml.cs:115-132 creates and inserts tabs. No custom hit-test geometry for the add button appears in this path.",
+        "The pinned sibling uses the same built-in TabView add-button pattern in src/BiliLite.UWP/MainPage.xaml:17-31, so source differences do not establish a logic defect; hit-region presentation is assigned to user visual review."
+      ],
+      "reason": "The only stated defect is the visual hit area of the tab-strip add button, which belongs to the visual-review owner.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 930,
+      "subitem": "transient_false_buffering_indicator_after_ffmpeg_speed_change",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": [
+        "The report says FFmpegInterop displays a brief central “buffering” indicator after a speed shortcut even though the video is already loaded and continues playing.",
+        "Target src/BiliLite.UWP/Controls/PlayerControl.xaml.cs:2277-2309 shows the loading label for the Player.PlayState.Loading event, while speed changes use Player.SetRate from the player controls; the report gives no evidence of a playback interruption beyond the transient label.",
+        "The same symptom is presentation-only under current policy and is owned by user visual review."
+      ],
+      "reason": "The report identifies a brief false status overlay without a functional playback failure, so it belongs in visual review.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 933,
+      "subitem": "anime_short_review_like_and_dislike_requests_fail",
+      "disposition": "skipped_skeptical",
+      "confidence": "medium",
+      "evidence": [
+        "The issue body says only that anime-review like/dislike errors occur and that the related API was updated; it includes no request/response or exact new contract.",
+        "The target UI actively routes review-button clicks through SeasonDetailPage.xaml.cs:452-462 to SeasonReviewVM.Like/Dislike and then SeasonApi.LikeReview/DislikeReview. The target methods use `https://bangumi.bilibili.com/review/api/like` and `/dislike` in src/BiliLite.UWP/Api/SeasonApi.cs:83-108.",
+        "The pinned sibling's active SeasonApi uses `/pgc/review/action/like` and `/dislike` in src/BiliLite.UWP/Models/Requests/Api/SeasonApi.cs:94-120, but this source difference plus the issue's unspecific API-update claim does not independently prove the server rejects the target route today. No live request or external API-doc check was made."
+      ],
+      "reason": "The target call path is found, but the report does not specify a verifiable request contract and route differences alone do not prove the current service failure.",
+      "suggested_unit_case": null,
+      "fix": null
+    }
+  ],
+  "validation": {
+    "target_source_only": true,
+    "app_build_or_run": false,
+    "app_api_or_live_service_call": false,
+    "unit_runtime_probe": "Not run; no C# runtime/compiler is installed and no probe could validate a remote API contract or a presentation-only symptom."
+  }
+}

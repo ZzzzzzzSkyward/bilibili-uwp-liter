@@ -1,0 +1,21 @@
+{
+  "batch": 74,
+  "dispositions": [
+    {
+      "issue": 1129,
+      "disposition": "user_visual"
+    },
+    {
+      "issue": 1132,
+      "disposition": "skipped_skeptical"
+    },
+    {
+      "issue": 1137,
+      "disposition": "skipped_skeptical"
+    },
+    {
+      "issue": 1140,
+      "disposition": "skipped_skeptical"
+    }
+  ]
+}

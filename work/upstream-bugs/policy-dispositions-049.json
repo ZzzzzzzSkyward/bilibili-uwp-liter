@@ -1,0 +1,25 @@
+{
+  "batch": 49,
+  "processed": [
+    {
+      "issue": 725,
+      "status": "pending_review"
+    },
+    {
+      "issue": 735,
+      "status": "pending_review"
+    },
+    {
+      "issue": 737,
+      "status": "skipped"
+    },
+    {
+      "issue": 740,
+      "status": "skipped"
+    },
+    {
+      "issue": 741,
+      "status": "skipped"
+    }
+  ]
+}

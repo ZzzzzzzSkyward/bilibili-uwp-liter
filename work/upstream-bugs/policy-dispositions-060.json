@@ -1,0 +1,59 @@
+{
+  "batch": 60,
+  "baseline": {
+    "target_commit": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
+    "sibling_path": "/workspace/biliuwp-lite",
+    "sibling_commit": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"
+  },
+  "dispositions": [
+    {
+      "issue": 911,
+      "subitem": "x86_package_702_hangs_at_startup",
+      "disposition": "skipped_skeptical",
+      "confidence": "medium",
+      "evidence": [
+        "The body reports that the x86 4.7.6.702 package stays at the startup screen, while 4.7.6.701 was usable; the direct-install package also produced a screenshot-only error.",
+        "Comments confirm that release 4.7.6.703 installed and started normally, but they do not identify the failing startup component or an associated code/packaging change.",
+        "The report concerns a historical packaged build. The current target app manifest declares package version 1.0.9.4, and no current startup call path can be tied from the available evidence to the 702-specific failure."
+      ],
+      "reason": "The regression was resolved by a later package release, but the report and follow-up do not reveal its cause, so no target logic defect can be independently assessed.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 918,
+      "subitem": "hold_to_high_speed_causes_playback_stutter_or_rollback",
+      "disposition": "skipped_skeptical",
+      "confidence": "medium",
+      "evidence": [
+        "The body compares long-press speed playback to the official client and reports intermittent stutter/frame drops and playback rollback, but supplies no video sample, engine identification, or log.",
+        "The target active gesture path is `PlayerControl.InitializeGesture` -> `OnHolding` in src/BiliLite.UWP/Controls/PlayerControl.xaml.cs:2052-2059, 2062-2093; it calls `Player.SetRate(3.0d)` on hold start and restores the configured speed on completion/cancel. This locates the operation but does not establish a defect in the player wrapper or either engine.",
+        "The pinned sibling has an analogous active `OnHolding` -> `StartHolding`/`StopHolding` -> `Player.SetRate` path at src/BiliLite.UWP/Controls/PlayerControl.xaml.cs:2242-2303, with configurable rate and cancel behavior; no linked fix or source explanation connects that difference to the reported stutter/rollback.",
+        "The maintainer's comment asks which player is used; the reporter says switching from Native to FFmpegInterop substantially improved stutter, which further leaves the engine-specific cause unresolved."
+      ],
+      "reason": "The playback complaint is concrete but engine-dependent and the available thread/source evidence does not isolate a target logic error or validated cause.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 918,
+      "subitem": "brief_buffering_label_when_using_right_arrow_with_ffmpeginterop",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": [
+        "The reporter's follow-up separately says each right-arrow press under FFmpegInterop briefly displays the `buffering` label despite playback otherwise being improved and says the effect barely impacts use.",
+        "Target PlayerControl.xaml.cs:2277-2309 binds the loading indicator to `Player_PlayStateChanged(PlayState.Loading)`, while seek shortcuts are handled elsewhere in the same control; the comment does not establish whether the brief state reflects a real engine transition or only a cosmetic label.",
+        "The target policy assigns presentation-only reports to the user-owned visual review ledger."
+      ],
+      "reason": "This follow-up describes only a transient status-label appearance without an asserted playback failure; it belongs in visual review.",
+      "suggested_unit_case": null,
+      "fix": null
+    }
+  ],
+  "validation": {
+    "target_source_only": true,
+    "app_build_or_run": false,
+    "app_api_or_live_service_call": false,
+    "unit_runtime_probe": "Not run; no C# runtime/compiler is installed, and source alone does not establish a deterministic expected player outcome."
+  }
+}

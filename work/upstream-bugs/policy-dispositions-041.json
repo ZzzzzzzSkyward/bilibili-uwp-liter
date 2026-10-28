@@ -1,0 +1,21 @@
+{
+  "batch": 41,
+  "processed": [
+    {
+      "issue": 597,
+      "status": "skipped"
+    },
+    {
+      "issue": 598,
+      "status": "confirmed_logic"
+    },
+    {
+      "issue": 607,
+      "status": "skipped"
+    },
+    {
+      "issue": 608,
+      "status": "skipped"
+    }
+  ]
+}

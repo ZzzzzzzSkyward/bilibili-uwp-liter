@@ -1,0 +1,29 @@
+{
+  "batch": 18,
+  "baseline": {
+    "target_commit": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
+    "sibling_commit": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"
+  },
+  "processed": [
+    {
+      "issue": 236,
+      "status": "skipped_skeptical"
+    },
+    {
+      "issue": 240,
+      "status": "not_applicable"
+    },
+    {
+      "issue": 242,
+      "status": "skipped_skeptical"
+    },
+    {
+      "issue": 245,
+      "status": "not_applicable"
+    },
+    {
+      "issue": 246,
+      "status": "skipped_skeptical"
+    }
+  ]
+}

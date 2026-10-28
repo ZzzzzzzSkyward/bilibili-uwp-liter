@@ -1,0 +1,37 @@
+{
+  "batch": 26,
+  "baseline": {
+    "target_commit": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
+    "sibling_path": "/workspace/biliuwp-lite",
+    "sibling_commit": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"
+  },
+  "dispositions": [
+    {
+      "issue": 354,
+      "disposition": "skipped_skeptical"
+    },
+    {
+      "issue": 357,
+      "disposition": "validated_logic_addressed"
+    },
+    {
+      "issue": 358,
+      "subitem": "playback_history_uses_closed_endpoint",
+      "disposition": "validated_logic_present",
+      "confidence": "high",
+      "evidence": [
+        "Issue author/maintainer states the playback-history interface is closed and should be replaced by the web or gRPC interface.",
+        "Target src/BiliLite.UWP/Pages/User/HistoryPage.xaml.cs:26-30 invokes HistoryVM.LoadHistory on first navigation; target src/BiliLite.UWP/Modules/User/HistoryVM.cs:50-60 calls AccountApi.History(Page,24).",
+        "Target src/BiliLite.UWP/Api/AccountApi.cs:273-282 still constructs the signed Android /x/v2/history request, the route the maintainer identifies as closed.",
+        "Pinned sibling src/BiliLite.UWP/ViewModels/User/HistoryViewModel.cs:87-99 calls HistoryWbi, which targets /x/web-interface/history/cursor with cookie auth at src/BiliLite.UWP/Models/Requests/Api/AccountApi.cs:295-312."
+      ],
+      "reason": "The active target page still requests the exact endpoint the maintainer says has been closed, while the sibling source uses a concrete replacement endpoint.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 363,
+      "disposition": "skipped_skeptical"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "batch": 27,
+  "baseline": {
+    "target_commit": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
+    "sibling_path": "/workspace/biliuwp-lite",
+    "sibling_commit": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"
+  },
+  "dispositions": [
+    {"issue": 368, "disposition": "skipped_skeptical"},
+    {"issue": 376, "disposition": "skipped_skeptical"},
+    {
+      "issue": 378,
+      "subitem": "malformed_glory_jump_url_crashes_anchor_panel",
+      "disposition": "validated_logic_present",
+      "confidence": "high",
+      "evidence": [
+        "Issue comments state the maintainer reproduced the anchor-panel crash on some rooms and traced it to invalid API-provided jumpUrl values breaking page rendering.",
+        "Target src/BiliLite.UWP/Modules/Detail/LiveRoomVM.cs:852-863 loads the anchor profile; its LiveAnchorProfileGloryInfo model exposes raw jump_url as a string at :1753-1761 and the profile holds the list at :1776-1807.",
+        "Target src/BiliLite.UWP/Pages/LiveDetailPage.xaml:833-840 binds each raw jump_url directly to HyperlinkButton.NavigateUri without validation or fallback.",
+        "Pinned sibling Models/Common/Live/LiveAnchorProfileGloryInfo.cs:22-30 validates JumpUrl with IsUrl and substitutes ApiHelper.NOT_FOUND_URL for invalid values; Pages/LiveDetailPage.xaml:2091-2103 binds that sanitized property."
+      ],
+      "reason": "The maintainer's reported invalid input reaches a URI-typed XAML binding unvalidated in target; the pinned sibling adds an input guard and safe fallback on the same data path.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {"issue": 378, "subitem": "live_room_title_missing", "disposition": "skipped_skeptical"},
+    {"issue": 381, "disposition": "skipped_skeptical"},
+    {"issue": 391, "disposition": "skipped_skeptical"}
+  ]
+}

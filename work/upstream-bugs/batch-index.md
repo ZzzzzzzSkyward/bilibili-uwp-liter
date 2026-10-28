@@ -1,11 +1,8 @@
-# Oldest-first issue assessment queue
+# Original candidate inventory
 
-Original candidate IDs, creation order, and 96 batch boundaries are preserved. Current policy marks visual reports as user-owned; mixed reports keep their functional subitems in logic review.
+This table preserves candidate IDs, creation order, original classification, and batch boundaries. Its row statuses and the counts below predate the saved source assessments. Current issue dispositions are recorded in the per-batch `policy-dispositions-*.json` ledgers. The canonical queue files and current rollup remain pending aggregation after the remaining assessments and independent reviews are complete.
 
-- **Candidates:** 477; **visual assigned:** 59 (54 visual-only, 5 mixed); **pending logic issues:** 409.
-- **Confirmed target logic defects:** #31 only; its relation to the reported 480p symptom is unproven.
-- **Next original batch:** 004 — #61, #62, #65, #67, #69. Logic pending: #61 and #67; visual assignments: #62, #65, and #69.
-- The next five pending logic issue IDs after visual-only items are #61, #67, #74, #82, #87.
+Completed source-assessment ranges: 001–028, 041–052, and 059–083. Actionable reports are retained in `batches/`; skip-only and already-addressed current-round prose was pruned while exact disposition ledgers remain. The current saved findings are listed in `UPSTREAM_BUG_PROGRESS.md`.
 
 | Batch | Candidate 1 | Candidate 2 | Candidate 3 | Candidate 4 | Candidate 5 |
 |---:|---|---|---|---|---|
