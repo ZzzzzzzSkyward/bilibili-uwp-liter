@@ -146,6 +146,8 @@
     <Compile Include="Models\Requests\Api\DanmakuApi.cs" />
     <Compile Include="Services\CookieService.cs" />
     <Compile Include="Services\HttpLogSanitizer.cs" />
+    <Compile Include="Services\PasswordLoginSession.cs" />
+    <Compile Include="Services\IsolatedPasswordLoginTransport.cs" />
     <Compile Include="Services\WbiKeyService.cs" />
     <Compile Include="Api\GitApi.cs" />
     <Compile Include="Api\Home\AnimeAPI.cs" />
@@ -526,6 +528,7 @@
     <Content Include="Assets\Image\2233login.png" />
     <Content Include="Assets\Image\DefaultImage.png" />
     <Content Include="Assets\JiYan\极验.htm" />
+    <Content Include="Assets\Auth\PasswordLoginCaptcha.html" />
     <Content Include="Assets\JiYan\极验_files\fullpage.0.0.0.js" />
     <Content Include="Assets\JiYan\极验_files\gt.js" />
     <Content Include="Assets\LargeTile.scale-100.png" />

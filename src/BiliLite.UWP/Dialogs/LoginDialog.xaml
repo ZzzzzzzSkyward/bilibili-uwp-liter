@@ -4,6 +4,7 @@
     <StackPanel>
       <!--密码登录-->
       <StackPanel Visibility="{x:Bind Path=loginVM.LoginType,Mode=OneWay,Converter={StaticResource display},ConverterParameter=0}">
+        <StackPanel Visibility="{x:Bind Path=loginVM.PasswordCredentialsHidden,Mode=OneWay,Converter={StaticResource display}}">
         <Grid>
           <Grid x:Name="show" VerticalAlignment="Top">
             <Grid.ColumnDefinitions>
@@ -26,6 +27,7 @@
         <TextBox x:Name="txtUsername" PlaceholderText="请输入用户名/手机号" Text="{x:Bind Path=loginVM.UserName,Mode=TwoWay}"/>
         <TextBlock Margin="0 4">密码</TextBlock>
         <PasswordBox x:Name="txtPassword" PlaceholderText="请输入密码" Password="{x:Bind Path=loginVM.Password,Mode=TwoWay}" GotFocus="txt_Password_GotFocus" LostFocus="txt_Password_LostFocus"/>
+        </StackPanel>
         <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
           <HyperlinkButton Command="{x:Bind Path=loginVM.LoginTypeCommand}">
             <HyperlinkButton.CommandParameter>
@@ -40,6 +42,16 @@
             </HyperlinkButton.CommandParameter>
             <TextBlock>切换至短信登录</TextBlock>
           </HyperlinkButton>
+        </StackPanel>
+        <StackPanel Visibility="{x:Bind Path=loginVM.PasswordVerificationPanelHidden,Mode=OneWay,Converter={StaticResource display}}" Margin="4 8">
+          <TextBlock>请输入发送到 <Run Text="{x:Bind Path=loginVM.HideTel,Mode=OneWay}"/> 的安全验证码</TextBlock>
+          <Grid Margin="0 6">
+            <TextBox PlaceholderText="请输入验证码" Text="{x:Bind Path=loginVM.Code,Mode=TwoWay}"/>
+            <HyperlinkButton HorizontalAlignment="Right" IsEnabled="{x:Bind Path=loginVM.EnableSendSMS,Mode=OneWay}" Command="{x:Bind Path=loginVM.SendPasswordVerificationSMSCommand}">
+              <TextBlock>重新发送验证码</TextBlock>
+            </HyperlinkButton>
+          </Grid>
+          <TextBlock Visibility="{x:Bind Path=loginVM.EnableSendSMS,Mode=OneWay,Converter={StaticResource display}}" FontSize="12" HorizontalAlignment="Right"><Run Text="{x:Bind Path=loginVM.SMSCountDown,Mode=OneWay}"/> 秒后可重新发送</TextBlock>
         </StackPanel>
       </StackPanel>
       <!--短信登录-->

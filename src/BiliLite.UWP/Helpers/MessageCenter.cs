@@ -61,6 +61,9 @@ namespace BiliLite.Helpers
             SettingHelper.SetValue<DateTime>(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.Now);
             SettingHelper.SetValue<string>(SettingHelper.Account.REFRESH_KEY, "");
             SettingHelper.SetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, null);
+            SettingHelper.SetValue<string>("CookieSESSDATA", "");
+            SettingHelper.SetValue<string>("CookieCSRF", "");
+            SettingHelper.SetValue<string>("CookieRefreshToken", "");
             ClearCookie();
             LogoutedEvent?.Invoke(null, null);
         }
