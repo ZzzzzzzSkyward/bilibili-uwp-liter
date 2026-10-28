@@ -1,0 +1,25 @@
+{
+  "batch": 87,
+  "issues": [
+    {
+      "issue": 1341,
+      "status": "skipped_skeptical"
+    },
+    {
+      "issue": 1343,
+      "status": "skipped_skeptical"
+    },
+    {
+      "issue": 1349,
+      "status": "skipped_skeptical"
+    },
+    {
+      "issue": 1351,
+      "status": "skipped_skeptical"
+    },
+    {
+      "issue": 1355,
+      "status": "skipped_skeptical"
+    }
+  ]
+}
