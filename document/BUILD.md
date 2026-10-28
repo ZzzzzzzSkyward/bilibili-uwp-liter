@@ -15,9 +15,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1
 
 ### `CS2012` on `BiliLiter.exe`
 
-A reused MSBuild node kept `obj\x64\Release\intermediatexaml\BiliLiter.exe` open, so the next build failed with `CS2012` followed by `MSB4181 CompileXaml returned false` - a lock, not a source error. The script now passes `-nodeReuse:false` and `-p:UseSharedCompilation=false`, which fixed it here: a full packaging run followed immediately by a `-Fast` run both completed without the error.
+`obj\x64\Release\intermediatexaml\BiliLiter.exe` is held open by a compiler process that is still exiting, so the next build fails with `CS2012` followed by `MSB4181 CompileXaml returned false` - a lock, not a source error. `-nodeReuse:false` and `-p:UseSharedCompilation=false` reduce it but do not remove it: the locker seen here was a spawned `csc`/`XamlCompiler`, and a fixed `Start-Sleep 3` retry was still too early, so the retry failed with the same error against a different process id.
 
-If it still happens after killing leftovers (`Get-Process MSBuild | Stop-Process`), rerun with `-NoVersionBump` so the failed attempt does not burn a revision.
+The script now extracts the locked path from the `CS2012` message, kills `MSBuild`/`VBCSCompiler`/`csc`, waits until the file can be opened with `FileShare.None` (up to 30 s, polling every 500 ms), and only then retries - at most twice. A fixed sleep is a guess; the exclusive-open probe is the actual precondition.
+
+If a run still fails, rerun with `-NoVersionBump` so the failed attempt does not burn a revision.
 
 ### Fast compile loop
 

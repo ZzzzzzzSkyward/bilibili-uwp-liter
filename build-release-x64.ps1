@@ -140,13 +140,36 @@ $buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platfor
 if (-not $Fast) {
     $buildArgs += "-p:AppxPackageDir=$OutputDir"
 }
+# 打开失败说明还有进程持有句柄；等到真正能独占打开再重试，比固定 sleep 可靠
+function Wait-FileReleased {
+    param([string]$Path, [int]$TimeoutSeconds = 30)
+    if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return $true }
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        try {
+            $stream = [System.IO.File]::Open($Path, 'Open', 'ReadWrite', 'None')
+            $stream.Dispose()
+            return $true
+        }
+        catch {
+            Start-Sleep -Milliseconds 500
+        }
+    }
+    return $false
+}
+
 $buildOutput = @()
 & $msbuild @buildArgs | Tee-Object -Variable buildOutput
-if ($LASTEXITCODE -ne 0 -and ($buildOutput -match 'error CS2012')) {
-    # XAML 编译中间产物被残留的 MSBuild 节点占用：清掉残留节点后重试一次
-    Write-Warning '检测到 CS2012（intermediatexaml 被残留 MSBuild 节点占用），清理节点后重试一次。'
-    Get-Process MSBuild -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 3
+for ($attempt = 1; $attempt -le 2; $attempt++) {
+    if ($LASTEXITCODE -eq 0 -or -not ($buildOutput -match 'error CS2012')) { break }
+    # XAML 编译中间产物被残留的编译器进程占用（-nodeReuse:false 也挡不住正在退出的节点）
+    $locked = if ($buildOutput -match '[“"]([^”"]+intermediatexaml\\[^”"]+)[”"]') { $Matches[1] }
+              else { Join-Path $root 'src\BiliLite.UWP\obj\x64\Release\intermediatexaml\BiliLiter.exe' }
+    Write-Warning "检测到 CS2012（$(Split-Path -Leaf $locked) 被占用），清理编译器进程后重试（第 $attempt 次）。"
+    Get-Process MSBuild, VBCSCompiler, csc -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    if (-not (Wait-FileReleased -Path $locked -TimeoutSeconds 30)) {
+        Write-Warning '等不到文件释放，直接重试。'
+    }
     $buildOutput = @()
     & $msbuild @buildArgs | Tee-Object -Variable buildOutput
 }
