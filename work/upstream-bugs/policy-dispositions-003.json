@@ -1,0 +1,86 @@
+{
+  "batch": 3,
+  "baseline": {
+    "target_commit": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
+    "sibling_path": "/workspace/biliuwp-lite",
+    "sibling_commit": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"
+  },
+  "dispositions": [
+    {
+      "issue": 38,
+      "subitem": "autoplay_error_then_silent_audio",
+      "disposition": "skipped_skeptical",
+      "confidence": "medium",
+      "evidence": [
+        "Issue #38 body contains screenshots, including a log screenshot, but no textual error detail; the only comment says version 4.7.4 resolved it.",
+        "Target src/BiliLite.UWP/Controls/PlayerControl.xaml.cs:1613-1702 selects/falls back between playback engines; Player_PlayMediaError at :2453-2456 only displays the error, and Player_PlayMediaOpened at :2527-2538 starts playback when _autoPlay is set.",
+        "Pinned sibling PlayerControl has corresponding quality selection and playback error handling, but no identifiable 4.7.4 correction for this sequence in the pinned snapshot."
+      ],
+      "reason": "The functional symptom is concrete, but the screenshot-only diagnostic cannot be tied to a particular target path or cause; the resolution note names no code change.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 42,
+      "subitem": "favorite_folder_id_overflow",
+      "disposition": "validated_logic_addressed",
+      "confidence": "high",
+      "evidence": [
+        "The issue log identifies JSON integer 2265532925 at [1].id as too large for Int32 while deserializing the response from /x/v3/fav/folder/created/list-all.",
+        "Target src/BiliLite.UWP/Pages/UserInfoPage.xaml.cs:277-280 triggers loading when the favorite tab is selected; src/BiliLite.UWP/Modules/User/UserDetail/UserFavlistVM.cs:52-69 deserializes the list to FavFolderItemModel, whose id property is long at :132-138.",
+        "Target src/BiliLite.UWP/Api/User/UserDetailAPI.cs:183-190 uses the same endpoint; the pinned sibling model also declares id as long."
+      ],
+      "reason": "The exact overflowing field from the report is represented as a 64-bit integer in the assessed target and sibling source.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 46,
+      "subitem": "guard_list_v2_route_and_large_ids",
+      "disposition": "validated_logic_present",
+      "confidence": "medium_high",
+      "evidence": [
+        "Issue #46 reports the v1 /xlive/app-room/v1/guardTab/topList route, gives an oversized ruid parse error, and provides the v2 route and required request parameters; maintainer comment confirms the log's Int32 overflow diagnosis.",
+        "Target src/BiliLite.UWP/Pages/LiveDetailPage.xaml.cs:886 -> src/BiliLite.UWP/Modules/Detail/LiveRoomVM.cs:942-978 -> src/BiliLite.UWP/Api/Live/LiveRoomAPI.cs:211-220 is the full fetch path; the API helper still constructs the v1 URL.",
+        "Target embedded LiveGuardRankItem at src/BiliLite.UWP/Modules/Detail/LiveRoomVM.cs:1814-1828 uses long for uid and ruid, handling the old log's oversized IDs.",
+        "Pinned sibling src/BiliLite.UWP/Models/Requests/Api/Live/LiveRoomAPI.cs:255-267 also uses v1 while its LiveRoomViewModel and guard model parse long IDs."
+      ],
+      "reason": "The old Int32 parse failure is addressed, but the target still requests the v1 route that the report identifies as missing some rooms; the v2 route in the report is absent from the target request path. Live service behavior was not tested.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 51,
+      "subitem": "search_suggestion_ime_visual_overlap",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": [
+        "Issue #51 reports only that search suggestions overlap the IME candidate list.",
+        "Maintainer and another commenter both report inability to reproduce on their stated Windows/IME configurations; the issue was moved to discussion after no further response."
+      ],
+      "reason": "The sole reported effect is cosmetic visual overlap; per current policy this belongs in the user-owned visual ledger, and no functional logic defect is claimed.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 56,
+      "subitem": "traditional_to_simplified_conversion_suggestion",
+      "disposition": "skipped_non_logic",
+      "confidence": "high",
+      "evidence": [
+        "Issue #56 quotes discussion #52 proposing OpenCC because a simple dictionary allegedly handles some characters and words poorly; no concrete failing input/output is given and issue #56 has no comments.",
+        "Target src/BiliLite.UWP/Helpers/ChineseConverter.cs:19-28 already routes traditional-to-simplified conversion through OpenCCNET.ZhConverter.HantToHans; CCToSrt.cs and Utils.cs use this helper, and BiliLite.UWP.csproj references OpenCCNET.",
+        "Pinned sibling also uses OpenCCNET through src/BiliLite.UWP/Extensions/StringExtensions.cs:74-80."
+      ],
+      "reason": "This is an implementation-quality suggestion without a demonstrated broken behavior, and its requested OpenCC approach is already present in both inspected source trees.",
+      "suggested_unit_case": null,
+      "fix": null
+    }
+  ],
+  "validation": {
+    "application_source_changed": false,
+    "unit_tests_run": false,
+    "build_restore_or_app_run": false,
+    "reason_no_unit_run": "The source findings are directly established by field types and request paths. A synthetic unit test would not establish remote API behavior or the unexplained player error; no C# runtime was available."
+  }
+}
