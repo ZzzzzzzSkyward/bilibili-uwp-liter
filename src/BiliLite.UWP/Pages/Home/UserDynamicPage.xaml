@@ -106,6 +106,12 @@
             <!--</ListView.ItemsPanel>-->
           </controls:MyListView>
           <ProgressRing Grid.Row="1" VerticalAlignment="Bottom" Margin="8" IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.Loading,Mode=OneWay}"/>
+          <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.ShowError,Mode=OneWay}">
+            <TextBlock Text="{x:Bind Path=dynamicVM.ErrorMsg,Mode=OneWay}" TextWrapping="Wrap" MaxWidth="320" TextAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}"/>
+            <controls:RoundButton Command="{x:Bind Path=dynamicVM.RefreshCommand}" Margin="0 12 0 0" Padding="16 8" HorizontalAlignment="Center">
+              <TextBlock Text="重试"/>
+            </controls:RoundButton>
+          </StackPanel>
           <StackPanel Orientation="Vertical" Grid.Row="1" VerticalAlignment="Bottom" Margin="20 12" HorizontalAlignment="Right">
             <controls:RoundButton x:Name="btnGrid" ToolTipService.ToolTip="切换为瀑布流" Click="btnGrid_Click" Margin="0 0 0 8" Padding="12">
               <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="" Foreground="White"/>

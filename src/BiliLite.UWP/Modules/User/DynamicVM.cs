@@ -56,6 +56,12 @@ namespace BiliLite.Modules.User
         private string updateBaseline;
         private string articleOffset;
         private bool lastPageFailed;
+        //每次刷新/切分类都递增，只有持有一致代号的请求才能发布结果
+        private int requestGeneration;
+        //刷新在请求进行中被请求时置位，由旧请求结束时启动最新一次刷新
+        private bool refreshQueued;
+        //真正的在途请求标记（Loading 只是界面状态）
+        private bool feedRequestInFlight;
         public DynamicVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
@@ -112,6 +118,18 @@ namespace BiliLite.Modules.User
             get { return _loadMore; }
             set { _loadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
+        private bool _showError = false;
+        public bool ShowError
+        {
+            get { return _showError; }
+            set { _showError = value; DoPropertyChanged("ShowError"); }
+        }
+        private string _errorMsg = "";
+        public string ErrorMsg
+        {
+            get { return _errorMsg; }
+            set { _errorMsg = value; DoPropertyChanged("ErrorMsg"); }
+        }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
         public DynamicType DynamicType { get; set; } = DynamicType.UserDynamic;
@@ -130,17 +148,25 @@ namespace BiliLite.Modules.User
 
         public async void Refresh()
         {
-            if (Loading)
-            {
-                return;
-            }
+            //先作废正在进行的请求：即使它还没结束，也不能再发布旧分类的数据
+            requestGeneration++;
+            refreshQueued = true;
             Items = null;
             CanLoadMore = false;
             lastPageFailed = false;
+            ShowError = false;
+            ErrorMsg = "";
             feedPage = 1;
             historyOffset = null;
             updateBaseline = null;
             articleOffset = null;
+            if (feedRequestInFlight)
+            {
+                //请求进行中，由它的 finally 丢弃结果后启动本次刷新（最新分类胜出）
+                LogHelper.Log("User dynamic VM stage=refresh-queued generation=" + requestGeneration + " itemType=" + UserDynamicType, LogType.INFO);
+                return;
+            }
+            refreshQueued = false;
             await GetDynamicItems();
         }
         public async void LoadMore()
@@ -399,22 +425,53 @@ namespace BiliLite.Modules.User
         };
         public async Task GetDynamicItems(string idx = "", bool loadMore = false)
         {
+            //代号在第一个 await 之前取得，之后只认这一份分类/代号
+            var generation = ++requestGeneration;
+            var requestDynamicType = DynamicType;
+            var requestItemType = UserDynamicType;
+            refreshQueued = false;
             var stage = "request-start";
             try
             {
                 CanLoadMore = false;
+                feedRequestInFlight = true;
                 Loading = true;
                 if (!loadMore)
                 {
                     lastPageFailed = false;
+                    ShowError = false;
+                    ErrorMsg = "";
                     feedPage = 1;
                     historyOffset = null;
                     updateBaseline = null;
                     articleOffset = null;
                 }
-                LogHelper.Log("User dynamic VM stage=request-start dynamicType=" + DynamicType + " itemType=" + UserDynamicType + " history=" + (idx != ""), LogType.DEBUG);
+                LogHelper.Log("User dynamic VM stage=request-start generation=" + generation + " dynamicType=" + requestDynamicType + " itemType=" + requestItemType + " history=" + (idx != ""), LogType.DEBUG);
 
-                if (DynamicType == DynamicType.UserDynamic)
+                if (requestDynamicType == DynamicType.UserDynamic && !SettingHelper.Account.Logined)
+                {
+                    stage = "login-prompt";
+                    LogHelper.Log("User dynamic VM stage=login-prompt generation=" + generation + " itemType=" + requestItemType, LogType.INFO);
+                    var logined = await Utils.ShowLoginDialog();
+                    if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                    {
+                        LogHelper.Log("User dynamic VM stage=login-prompt discarded generation=" + generation, LogType.DEBUG);
+                        return;
+                    }
+                    if (!logined)
+                    {
+                        //未登录：给出登录提示状态，而不是走传输失败分支，也不发送请求
+                        lastPageFailed = true;
+                        ShowError = true;
+                        ErrorMsg = "请先登录后查看动态";
+                        Utils.ShowMessageToast(ErrorMsg);
+                        LogHelper.Log("User dynamic VM stage=login-required generation=" + generation, LogType.INFO);
+                        return;
+                    }
+                    stage = "feed-request";
+                }
+
+                if (requestDynamicType == DynamicType.UserDynamic)
                 {
                     stage = "feed-request";
                     var page = loadMore ? feedPage + 1 : 1;
@@ -423,9 +480,14 @@ namespace BiliLite.Modules.User
                     string nextOffset = null;
                     string nextBaseline = null;
 
-                    if (UserDynamicType == UserDynamicType.All)
+                    if (requestItemType == UserDynamicType.All)
                     {
                         var reply = await grpcService.GetDynAll(page, loadMore ? historyOffset : null);
+                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                        {
+                            LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
+                            return;
+                        }
                         if (reply?.DynamicList == null)
                         {
                             throw new InvalidOperationException("DynAll returned no dynamic list");
@@ -434,15 +496,25 @@ namespace BiliLite.Modules.User
                         hasMore = reply.DynamicList.HasMore;
                         nextOffset = reply.DynamicList.HistoryOffset;
                     }
-                    else if (UserDynamicType == UserDynamicType.Article)
+                    else if (requestItemType == UserDynamicType.Article)
                     {
                         var articleRequest = dynamicAPI.ArticleV2(page, loadMore ? articleOffset : null);
                         var response = await articleRequest.Request();
+                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                        {
+                            LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
+                            return;
+                        }
                         if (!response.status)
                         {
                             throw new InvalidOperationException(response.message);
                         }
                         var data = await response.GetData<JObject>();
+                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                        {
+                            LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
+                            return;
+                        }
                         if (data == null || !data.success || data.data == null)
                         {
                             throw new InvalidOperationException(data?.message ?? "Article feed returned no data");
@@ -456,11 +528,16 @@ namespace BiliLite.Modules.User
                     else
                     {
                         var reply = await grpcService.GetDynVideo(page, loadMore ? historyOffset : null, loadMore ? updateBaseline : null);
+                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                        {
+                            LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
+                            return;
+                        }
                         if (reply == null)
                         {
                             throw new InvalidOperationException("DynVideo returned no reply");
                         }
-                        if (UserDynamicType == UserDynamicType.Season)
+                        if (requestItemType == UserDynamicType.Season)
                         {
                             grpcCards = DynamicGrpcMapper.MapToUserSeasonCards(reply.VideoFollowList?.List);
                             hasMore = false;
@@ -486,6 +563,11 @@ namespace BiliLite.Modules.User
                     }
 
                     stage = "feed-items-publish";
+                    if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                    {
+                        LogHelper.Log("User dynamic VM stage=feed-items-publish discarded generation=" + generation, LogType.DEBUG);
+                        return;
+                    }
                     if (loadMore && Items != null)
                     {
                         foreach (var item in mapped)
@@ -500,25 +582,27 @@ namespace BiliLite.Modules.User
                     feedPage = page;
                     historyOffset = nextOffset;
                     updateBaseline = nextBaseline;
-                    if (UserDynamicType == UserDynamicType.Article)
+                    if (requestItemType == UserDynamicType.Article)
                     {
                         articleOffset = nextOffset;
                     }
                     CanLoadMore = hasMore;
                     lastPageFailed = false;
+                    ShowError = false;
+                    ErrorMsg = "";
                     var itemTypes = string.Join(",", grpcCards.Select(item => item?.type ?? "null").Distinct());
                     var firstId = grpcCards.FirstOrDefault()?.id_str ?? "";
-                    LogHelper.Log("User dynamic VM stage=feed-items-published page=" + feedPage + " count=" + grpcCards.Count + " hasMore=" + hasMore + " types=" + itemTypes + " firstDynamicId=" + firstId, LogType.INFO);
+                    LogHelper.Log("User dynamic VM stage=feed-items-published page=" + feedPage + " count=" + grpcCards.Count + " hasMore=" + hasMore + " types=" + itemTypes + " firstDynamicId=" + firstId + " generation=" + generation, LogType.INFO);
                     return;
                 }
 
-                var api = dynamicAPI.DyanmicNew(UserDynamicType);
-                switch (DynamicType)
+                var api = dynamicAPI.DyanmicNew(requestItemType);
+                switch (requestDynamicType)
                 {
                     case DynamicType.UserDynamic:
                         if (idx != "")
                         {
-                            api = dynamicAPI.HistoryDynamic(idx, UserDynamicType);
+                            api = dynamicAPI.HistoryDynamic(idx, requestItemType);
                         }
                         break;
                     case DynamicType.Topic:
@@ -530,8 +614,13 @@ namespace BiliLite.Modules.User
                         break;
                 }
                 var results = await api.Request();
+                if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                {
+                    LogHelper.Log("User dynamic VM stage=response-received discarded generation=" + generation, LogType.DEBUG);
+                    return;
+                }
                 stage = "response-received";
-                LogHelper.Log("User dynamic VM stage=response-received status=" + results.status, LogType.DEBUG);
+                LogHelper.Log("User dynamic VM stage=response-received status=" + results.status + " generation=" + generation, LogType.DEBUG);
                 if (results.status)
                 {
                     var data = results.GetJObject();
@@ -543,6 +632,11 @@ namespace BiliLite.Modules.User
                         var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["cards"]?.ToString() ?? "[]", jsonSerializerSettings);
                         var itemTypes = string.Join(",", items.Select(item => item.desc == null ? "null" : item.desc.type.ToString()).Distinct());
                         LogHelper.Log("User dynamic VM stage=cards-deserialized count=" + items.Count + " types=" + itemTypes, LogType.DEBUG);
+                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                        {
+                            LogHelper.Log("User dynamic VM stage=items-publish discarded generation=" + generation, LogType.DEBUG);
+                            return;
+                        }
                         if (items.Count > 0)
                         {
                             CanLoadMore = true;
@@ -574,35 +668,64 @@ namespace BiliLite.Modules.User
                                 Items.Add(item);
                             }
                         }
-                        LogHelper.Log("User dynamic VM stage=items-published count=" + Items.Count, LogType.DEBUG);
+                        LogHelper.Log("User dynamic VM stage=items-published count=" + Items.Count + " generation=" + generation, LogType.DEBUG);
                         lastPageFailed = false;
+                        ShowError = false;
+                        ErrorMsg = "";
                     }
                     else
                     {
-                        lastPageFailed = true;
-                        Utils.ShowMessageToast(data["message"].ToString());
+                        PublishFeedError(data["message"].ToString());
                     }
                 }
                 else
                 {
-                    lastPageFailed = true;
-                    Utils.ShowMessageToast(results.message);
+                    PublishFeedError(results.message);
 
                 }
             }
             catch (Exception ex)
             {
+                if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                {
+                    LogHelper.Log("User dynamic VM stage=" + stage + " discarded generation=" + generation, LogType.DEBUG, ex);
+                    return;
+                }
                 CanLoadMore = false;
-                lastPageFailed = true;
                 LogHelper.Log("User dynamic VM stage=" + stage + " failed", LogType.ERROR, ex);
                 var handel = HandelError<AnimeHomeModel>(ex);
-                Utils.ShowMessageToast(handel.message);
+                PublishFeedError(handel.message);
             }
             finally
             {
-                Loading = false;
-
+                if (generation == requestGeneration)
+                {
+                    feedRequestInFlight = false;
+                    Loading = false;
+                }
+                else if (refreshQueued)
+                {
+                    //旧请求作废且期间有新刷新（切换分类）：现在才启动最新分类的请求
+                    refreshQueued = false;
+                    LogHelper.Log("User dynamic VM stage=refresh-dequeued supersededGeneration=" + generation + " itemType=" + UserDynamicType, LogType.INFO);
+                    await GetDynamicItems();
+                }
             }
+        }
+        private bool IsCurrentRequest(int generation, DynamicType dynamicType, UserDynamicType itemType)
+        {
+            return generation == requestGeneration && dynamicType == this.DynamicType && itemType == this.UserDynamicType;
+        }
+        //失败状态：记录以便重试，错因仅在列表为空时作为整页错误展示
+        private void PublishFeedError(string message)
+        {
+            lastPageFailed = true;
+            if (Items == null || Items.Count == 0)
+            {
+                ShowError = true;
+                ErrorMsg = message;
+            }
+            Utils.ShowMessageToast(message);
         }
         public async Task GetDynamicDetail(string id)
         {
@@ -690,7 +813,7 @@ namespace BiliLite.Modules.User
                         Type = DynamicDisplayType.Other,
                         IntType = 999,
                         DynamicID = item.desc.dynamic_id,
-                        ContentStr = $"未适配的类型{data.IntType}:\r\n" + JsonConvert.SerializeObject(item)
+                        ContentStr = ""
                     };
                 }
                 data.OneRowInfo = DynamicParse.ParseOneRowInfo(data.Type, card);
@@ -896,7 +1019,7 @@ namespace BiliLite.Modules.User
                     Type = DynamicDisplayType.Other,
                     IntType = 999,
                     DynamicID = item.desc.dynamic_id,
-                    ContentStr = "动态加载失败:\r\n" + JsonConvert.SerializeObject(item)
+                    ContentStr = "动态加载失败"
                 };
             }
 
@@ -913,7 +1036,7 @@ namespace BiliLite.Modules.User
                         Type = DynamicDisplayType.Other,
                         IntType = 999,
                         DynamicID = item.id_str,
-                        ContentStr = $"未适配的类型{item.type}:\r\n" + JsonConvert.SerializeObject(item)
+                        ContentStr = ""
                     };
                 }
                 var data = new DynamicItemDisplayModel()
@@ -1036,8 +1159,8 @@ namespace BiliLite.Modules.User
                 {
                     Type = DynamicDisplayType.Other,
                     IntType = 999,
-                    DynamicID = item.modules.module_dynamic.major.archive.jump_url,
-                    ContentStr = "动态加载失败:\r\n" + JsonConvert.SerializeObject(item)
+                    DynamicID = item.id_str,
+                    ContentStr = "动态加载失败"
                 };
             }
 
