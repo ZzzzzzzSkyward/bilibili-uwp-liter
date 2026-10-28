@@ -13,6 +13,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1
 - Commit the bumped manifests together with the change that triggered the build. `-NoVersionBump` is an escape hatch for a throwaway rebuild at the current version (for example, re-running a failed build while diagnosing); it must not be the default in a release or verification run.
 - A full run takes about two minutes. Let it finish and read the result once, rather than polling.
 
+### Fast compile loop
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Fast -NoVersionBump
+```
+
+- `-Fast` builds only `src/BiliLite.UWP/BiliLite.UWP.csproj` and skips MSIX packaging, which takes the run to about a minute (measured 54-58 s on this machine versus roughly 120 s for the full pipeline). It still runs the C# compiler, the XAML compiler, and PRI generation, so it catches `CS####`, `WMC####`, and `CompileXaml` failures.
+- `-Fast` skips the NuGet restore; add `-Restore` when packages changed. NuGet restore, packaging, and the WebApi/ApiTester/Win32Tools projects are only covered by the plain run.
+- Keep `-NoVersionBump` here: a compile loop must not burn a package revision per iteration.
+- A green fast build is not a release check. Run the plain script once before publishing.
+
 ## Watch for a new push
 
 ```powershell

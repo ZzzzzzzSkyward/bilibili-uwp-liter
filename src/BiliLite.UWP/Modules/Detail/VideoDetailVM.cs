@@ -154,7 +154,6 @@ namespace BiliLite.Modules
                 Loaded = false;
                 Loading = true;
                 ShowError = false;
-                var needGetUserReq = false;
                 var webResult = await videoAPI.DetailWebInterface(id, isbvid).Request();
                 var webRelatesResult = await videoAPI.RelatesWebInterface(id, isbvid).Request();
                 ApiDataModel<VideoDetailModel> data = null;
@@ -168,7 +167,6 @@ namespace BiliLite.Modules
                         if (relatesData.success)
                         {
                             data.data.relates = relatesData.data;
-                            needGetUserReq = true;
                         }
                         else
                         {
@@ -202,14 +200,15 @@ namespace BiliLite.Modules
 
                 if (data != null && data.success)
                 {
-                    data.data.req_user = data.data.req_user ?? new VideoDetailReqUserModel { attention = -999 };
+                    data.data.req_user = data.data.req_user ?? new VideoDetailReqUserModel();
+                    if (data.data.req_user.attention != 1 && data.data.req_user.attention != -999)
+                    {
+                        data.data.req_user.attention = -999;
+                    }
                     VideoInfo = data.data;
                     Loaded = true;
-                    if (needGetUserReq)
-                    {
-                        await GetAttentionUp();
-                        await GetUserVideoStates();
-                    }
+                    await GetAttentionUp();
+                    await GetUserVideoStates();
                     await LoadVideoTags(data.data.aid);
                     await LoadFavorite(data.data.aid);
                 }
@@ -256,7 +255,11 @@ namespace BiliLite.Modules
         private async Task GetAttentionUp()
         {
             VideoInfo.req_user = VideoInfo.req_user ?? new VideoDetailReqUserModel();
-            VideoInfo.req_user.attention = -999;
+            if (VideoInfo.req_user.attention != 1 && VideoInfo.req_user.attention != -999)
+            {
+                VideoInfo.req_user.attention = -999;
+            }
+            var previousAttention = VideoInfo.req_user.attention;
             if (!SettingHelper.Account.Logined)
             {
                 return;
@@ -272,14 +275,12 @@ namespace BiliLite.Modules
 
                 var data = await result.GetJson<ApiDataModel<JObject>>();
                 var attribute = data.data?["attribute"]?.ToObject<int>();
-                if (attribute == 2 || attribute == 6)
-                {
-                    VideoInfo.req_user.attention = 1;
-                }
+                VideoInfo.req_user.attention = attribute == 2 || attribute == 6 ? 1 : -999;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.Message);
+                VideoInfo.req_user.attention = previousAttention;
             }
         }
 
@@ -611,12 +612,12 @@ namespace BiliLite.Modules
                 if (VideoInfo.req_user.attention == 1)
                 {
                     VideoInfo.req_user.attention = -999;
-                    VideoInfo.owner_ext.fans -= 1;
+                    if (VideoInfo.owner_ext != null) VideoInfo.owner_ext.fans -= 1;
                 }
                 else
                 {
                     VideoInfo.req_user.attention = 1;
-                    VideoInfo.owner_ext.fans += 1;
+                    if (VideoInfo.owner_ext != null) VideoInfo.owner_ext.fans += 1;
                 }
             }
         }

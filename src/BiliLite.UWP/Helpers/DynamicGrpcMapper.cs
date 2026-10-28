@@ -299,6 +299,7 @@ namespace BiliLite.Helpers
             var moduleDesc = GetModule(source, DynModuleType.ModuleDesc)?.ModuleDesc;
             var fold = GetModule(source, DynModuleType.ModuleFold)?.ModuleFold;
 
+            var commentId = GetCommentId(source.CardType, dynamic) ?? source.Extend.DynIdStr;
             var card = new DynamicCardModel2024
             {
                 id_str = source.Extend.DynIdStr,
@@ -306,10 +307,8 @@ namespace BiliLite.Helpers
                 visible = true,
                 basic = new DynamicCardModel2024_basic
                 {
-                    comment_id_str = source.Extend.DynIdStr,
-                    rid_str = source.CardType == GrpcDynamicType.Music && dynamic?.DynMusic != null
-                        ? dynamic.DynMusic.Id.ToString()
-                        : source.Extend.DynIdStr,
+                    comment_id_str = commentId,
+                    rid_str = commentId,
                     comment_type = 1,
                 },
                 modules = new DynamicCardModel2024_modules
@@ -337,6 +336,32 @@ namespace BiliLite.Helpers
             }
 
             return card;
+        }
+
+        /// <summary>
+        /// 评论与详情使用的 oid：视频/番剧/合集用稿件 AID，专栏用 cvid，音乐用歌曲 ID；其余卡片退回动态 ID。
+        /// </summary>
+        private static string GetCommentId(GrpcDynamicType cardType, ModuleDynamic dynamic)
+        {
+            if (dynamic == null)
+            {
+                return null;
+            }
+            switch (cardType)
+            {
+                case GrpcDynamicType.Av:
+                    return dynamic.DynArchive == null ? null : dynamic.DynArchive.Avid.ToString();
+                case GrpcDynamicType.Article:
+                    return dynamic.DynArticle == null ? null : dynamic.DynArticle.Id.ToString();
+                case GrpcDynamicType.Pgc:
+                    return dynamic.DynPgc == null ? null : dynamic.DynPgc.Aid.ToString();
+                case GrpcDynamicType.UgcSeason:
+                    return dynamic.DynUgcSeason == null ? null : dynamic.DynUgcSeason.Avid.ToString();
+                case GrpcDynamicType.Music:
+                    return dynamic.DynMusic == null ? null : dynamic.DynMusic.Id.ToString();
+                default:
+                    return null;
+            }
         }
 
         private static DynamicCardModel2024_dynamic MapDynamic(ModuleDynamic source, ModuleDesc moduleDesc, ModuleFold fold)
@@ -396,7 +421,7 @@ namespace BiliLite.Helpers
             {
                 result.major.pgc = new DynamicCardModel2024_season
                 {
-                    aid = source.DynPgc.Aid.ToString(),
+                    aid = source.DynPgc.Aid > 0 ? source.DynPgc.Aid.ToString() : null,
                     cover = source.DynPgc.Cover,
                     epid = (int)source.DynPgc.Epid,
                     season_id = (int)source.DynPgc.SeasonId,
@@ -462,6 +487,7 @@ namespace BiliLite.Helpers
                     desc_first = source.DynCommonLive.CoverLabel,
                     desc_second = source.DynCommonLive.CoverLabel2,
                     jump_url = FirstNonEmpty(source.DynCommonLive.Uri, "https://live.bilibili.com/" + source.DynCommonLive.Id),
+                    live_state = (int)source.DynCommonLive.LiveState,
                 };
             }
             else if (source.DynLiveRcmd != null)
