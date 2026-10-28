@@ -15,3 +15,5 @@ PASS: played history is captured before cleanup; unplayed and natural-end histor
 ```
 
 The fixture confirms the local cleanup ordering and captured values using the extracted target method. It does not establish real API latency, indefinite playback, or exact audio duration. The helper/network boundary is stubbed; no HTTP request is made.
+
+The same extracted method now also runs with `LocalPlayInfo.IsManifestPlayback = true`; it verifies collection playback disposes the player without reporting Bilibili history.

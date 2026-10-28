@@ -118,18 +118,49 @@ namespace BiliLite.Pages
 
         private async Task ShowCollectionDetailsAsync(LocalMediaCollection collection)
         {
-            var details = string.Join(Environment.NewLine, collection.Manifest.Items.Select((item, index) => (index + 1) + ". " + item.Title));
+            var items = new ListView
+            {
+                ItemsSource = collection.Manifest.Items.Select((item, index) => new LocalMediaItemRow
+                {
+                    Index = index,
+                    Title = (index + 1) + ". " + item.Title
+                }).ToList(),
+                IsItemClickEnabled = true,
+                SelectionMode = ListViewSelectionMode.Single,
+                SelectedIndex = 0,
+                MaxHeight = 420
+            };
             var dialog = new ContentDialog
             {
                 Title = collection.Title,
-                Content = new ScrollViewer
-                {
-                    Content = new TextBlock { Text = details, TextWrapping = TextWrapping.Wrap },
-                    MaxHeight = 420
-                },
+                Content = items,
+                PrimaryButtonText = "播放",
                 CloseButtonText = "关闭"
             };
-            await dialog.ShowAsync();
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary && items.SelectedItem is LocalMediaItemRow selected)
+                await OpenCollectionItemAsync(collection, selected.Index);
+        }
+
+        private async Task OpenCollectionItemAsync(LocalMediaCollection collection, int index)
+        {
+            try
+            {
+                var playlist = await LocalMediaPlaybackAdapter.CreatePlaylistAsync(collection, index);
+                MessageCenter.NavigateToPage(this, new NavigationInfo
+                {
+                    icon = Symbol.Play,
+                    page = typeof(LocalPlayerPage),
+                    parameters = new LocalPlayInfo { PlayInfos = playlist.PlayInfos, Index = playlist.Index },
+                    title = collection.Title
+                });
+            }
+            catch (LocalMediaPlaybackException exception)
+            {
+                LogHelper.Log("Local media playback preparation failed; stage=" + exception.Stage +
+                    "; collectionId=" + exception.CollectionId + "; itemId=" + exception.ItemId,
+                    LogType.ERROR, exception);
+                Utils.ShowMessageToast("播放本地媒体失败", "请检查媒体文件后重新导入文件夹。");
+            }
         }
 
         private static void LogLocalMediaFailure(LocalMediaLibraryException exception)
@@ -553,5 +584,12 @@ namespace BiliLite.Pages
         {
 
         }
+    }
+
+    internal sealed class LocalMediaItemRow
+    {
+        public int Index { get; set; }
+        public string Title { get; set; }
+        public override string ToString() => Title;
     }
 }

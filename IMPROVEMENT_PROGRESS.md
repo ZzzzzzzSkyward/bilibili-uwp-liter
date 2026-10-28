@@ -5,12 +5,16 @@
 - The integration baseline and preserved plan are committed in `3ede2d158d954745bf59674efc1e7992c10f9f28`.
 - `work/improvements/BASELINE.md` records the target and pinned sibling boundaries, relevant package versions, and explicit project compile inclusion constraints.
 
-## Current step: LM-03 playback adapter
+## Completed step: LM-03 playback adapter
 
-- Starting from clean target HEAD `d89722f`. LM-02 remains reviewed and published.
-- Adapter boundary: resolve validated manifest media through the saved FutureAccessList folder grant, map the default video/audio to the existing local DASH player structures, and navigate selected collection items through `LocalPlayerPage`. Typed manifest track metadata remains available for LM-04/LM-05; legacy local download properties stay intact.
-- Guard manifest-backed collection sessions against Bilibili history, subtitle, danmaku, and send calls while preserving downloaded-video and single-file behavior. Use stable collection/item resume keys. External audio uses the current FFmpeg-backed local path where required; no player engine is added.
-- Setup checkpoint recorded before implementation. Focused actual-source adapter tests will stub storage and player model boundaries. No app build, restore, launch, protocol generation, or live API calls are in scope.
+- Starting from clean target HEAD `d89722f` after setup checkpoint `e28d9d4`. LM-02 remains reviewed and published.
+- Added `LocalMediaPlaybackAdapter` to resolve manifest tracks through the saved FutureAccessList folder grant and map every item into the existing DASH player structures. Collection item selection opens `LocalPlayerPage` at the chosen playlist index. `LocalPlayInfo` keeps legacy fields and adds typed video/audio/subtitle/danmaku metadata; no track selector or subtitle/danmaku adapter is claimed.
+- Manifest playback uses stable encoded collection/item resume IDs. Its history, subtitle, danmaku-network, and danmaku-send paths are guarded; downloaded-video and single-file flows retain their existing routing. FFmpeg local playback uses the resolved `StorageFile` handles. A native-engine failure switches using the manifest tracks, local storage mode, and current playback position.
+- `work/improvements/tests/run.sh` passes actual-source LM-01, LM-02, and LM-03 checks. LM-03 covers playlist mapping, default video/audio handles, retained typed metadata, no implicit subtitle selection, stable and non-colliding resume IDs, and stage/collection/item exceptions with the underlying storage exception.
+- The actual-source issue #105 disposal and #598 natural-end probes pass for existing report behavior and confirm manifest playback skips Bilibili history. `git diff --check` passed. No app build, restore, launch, protocol generation, or live API call was run. These isolated checks do not prove real UWP storage permissions, native/FFmpeg codec support, or Windows player behavior.
+- LM-04 alternate video/audio selection and LM-05 subtitle/danmaku loading remain pending.
+
+## Next step: LM-04 video and audio track selection
 
 ## Prior step: LM-02 reviewed and published; LM-03 next
 

@@ -612,11 +612,11 @@ namespace BiliLite.Controls
                 if (isLocal)
                 {
 
-                    var videoFile = await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Video.Url);
+                    var videoFile = dashPlayUrlInfo.Video.file ?? await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Video.Url);
                     _ffmpegMSSVideo = await FFmpegMediaSource.CreateFromStreamAsync(await videoFile.OpenAsync(FileAccessMode.Read), _ffmpegConfig);
                     if (dashPlayUrlInfo.Audio != null)
                     {
-                        var audioFile = await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Audio.Url);
+                        var audioFile = dashPlayUrlInfo.Audio.file ?? await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Audio.Url);
                         _ffmpegMSSAudio = await FFmpegMediaSource.CreateFromStreamAsync(await audioFile.OpenAsync(FileAccessMode.Read), _ffmpegConfig);
                     }
                 }

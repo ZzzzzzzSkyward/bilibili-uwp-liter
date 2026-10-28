@@ -34,7 +34,9 @@ sealed class PlayInfo
     public long season_id = 1;
     public string ep_id = "fixture-episode";
     public string cid = "fixture-cid";
+    public LocalPlayInfo LocalPlayInfo;
 }
+sealed class LocalPlayInfo { public bool IsManifestPlayback; }
 static class SettingHelper
 {
     public static string SavedKey;
@@ -128,6 +130,12 @@ var naturalEndWasNotReported = endedControl.playerHelper.ReportedItem == null
     && Equals(SettingHelper.SavedValue, 0.5d);
 Console.WriteLine($"Natural-end item was not reported and cleanup ran: {naturalEndWasNotReported}");
 passed = passed && naturalEndWasNotReported;
+var localControl = new PlayerControlHarness();
+localControl.CurrentPlayItem.LocalPlayInfo = new LocalPlayInfo { IsManifestPlayback = true };
+localControl.Dispose();
+var localWasNotReported = localControl.playerHelper.ReportedItem == null && localControl.Player.IsDisposed;
+Console.WriteLine($"Manifest-backed local playback skipped Bilibili history and cleanup ran: {localWasNotReported}");
+passed = passed && localWasNotReported;
 Console.WriteLine(passed
     ? "PASS: played history is captured before cleanup; unplayed and natural-end history are skipped"
     : "FAIL: disposal history behavior did not match playback state");

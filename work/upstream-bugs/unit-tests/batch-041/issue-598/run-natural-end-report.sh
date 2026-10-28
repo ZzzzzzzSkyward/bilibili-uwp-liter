@@ -27,7 +27,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 enum Visibility { Visible }
-sealed class PlayInfo { public bool is_interaction; }
+sealed class PlayInfo { public bool is_interaction; public LocalPlayInfo LocalPlayInfo; }
+sealed class LocalPlayInfo { public bool IsManifestPlayback; }
 sealed class InteractionInfo { public int is_leaf; }
 sealed class InteractionVm { public InteractionInfo Info = new(); }
 sealed class DanmuStub { public void PauseDanmaku() { } public void ClearAll() { } }
@@ -73,6 +74,12 @@ var passed = control.playerHelper.Calls == 1
 Console.WriteLine(passed
     ? $"PASS: natural completion reported this item at exact duration ({control.Player.Duration}) once"
     : $"FAIL: expected one report for current item at {control.Player.Duration}, observed {control.playerHelper.Calls} call(s) at {control.playerHelper.LastProgress}");
+var localControl = new PlayerControlHarness();
+localControl.CurrentPlayItem.LocalPlayInfo = new LocalPlayInfo { IsManifestPlayback = true };
+localControl.InvokePlayerEnd();
+var localWasNotReported = localControl.playerHelper.Calls == 0;
+Console.WriteLine($"Manifest-backed local natural end skipped Bilibili history: {localWasNotReported}");
+passed = passed && localWasNotReported;
 Environment.ExitCode = passed ? 0 : 1;
 CSHARP
 export DOTNET_ROOT="$tools_root/dotnet"

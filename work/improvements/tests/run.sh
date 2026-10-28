@@ -37,3 +37,17 @@ cat > "$scratch/LM02.runtimeconfig.json" <<'JSON'
 {"runtimeOptions":{"tfm":"net8.0","framework":{"name":"Microsoft.NETCore.App","version":"8.0.33"}}}
 JSON
 "$DOTNET_ROOT/dotnet" "$scratch/LM02.dll"
+
+"$tools/dotnet/dotnet" "$sdk/Roslyn/bincore/csc.dll" -nologo -langversion:latest -target:exe -out:"$scratch/LM03.dll" "${args[@]}" \
+  "$repo/src/BiliLite.UWP/Models/LocalMedia/LocalMediaManifest.cs" \
+  "$repo/src/BiliLite.UWP/Models/LocalMedia/LocalMediaItem.cs" \
+  "$repo/src/BiliLite.UWP/Models/LocalMedia/LocalMediaTrack.cs" \
+  "$repo/src/BiliLite.UWP/Modules/Player/Playurl/BiliPlayUrlInfo.cs" \
+  "$repo/src/BiliLite.UWP/Services/LocalMedia/LocalMediaPlaybackAdapter.cs" \
+  "$(dirname -- "${BASH_SOURCE[0]}")/LocalMediaStorageStubs.cs" \
+  "$(dirname -- "${BASH_SOURCE[0]}")/LM03ControlStubs.cs" \
+  "$(dirname -- "${BASH_SOURCE[0]}")/LM03.cs"
+cat > "$scratch/LM03.runtimeconfig.json" <<'JSON'
+{"runtimeOptions":{"tfm":"net8.0","framework":{"name":"Microsoft.NETCore.App","version":"8.0.33"}}}
+JSON
+"$DOTNET_ROOT/dotnet" "$scratch/LM03.dll"

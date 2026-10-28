@@ -162,6 +162,7 @@
     <Compile Include="Services\GrpcService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaLibraryService.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaPlaybackAdapter.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaValidator.cs" />
     <Compile Include="Api\User\FavoriteAPI.cs" />
     <Compile Include="Api\User\FollowAPI.cs" />
