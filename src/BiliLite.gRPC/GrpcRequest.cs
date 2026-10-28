@@ -1,8 +1,11 @@
 ﻿using Google.Protobuf;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Threading.Tasks;
 using BiliLite.gRPC.Api;
 using System.Diagnostics;
@@ -38,6 +41,47 @@ namespace BiliLite.gRPC
             if (Uri.TryCreate(url, UriKind.Absolute, out uri))
                 return uri.GetLeftPart(UriPartial.Path);
             return "unparsed-endpoint";
+        }
+
+        // netstandard2.0 上拿不到 gRPC trailers,只能读取服务端放到响应头里的状态
+        private static readonly string[] ServerMetadataHeaders = { "grpc-status", "grpc-message", "bili-status-code" };
+
+        /// <summary>
+        /// 读取响应头中可用的服务端状态,没有时返回 null
+        /// </summary>
+        private static string ReadServerMetadata(HttpResponseMessage response, out int? serverCode)
+        {
+            serverCode = null;
+            var parts = new List<string>();
+            foreach (var name in ServerMetadataHeaders)
+            {
+                IEnumerable<string> values;
+                if (!response.Headers.TryGetValues(name, out values) || values == null)
+                    continue;
+                var value = string.Join(",", values.Where(x => !string.IsNullOrEmpty(x)).ToArray());
+                if (value.Length == 0)
+                    continue;
+                parts.Add(name + "=" + value);
+                if (serverCode == null && name != "grpc-message")
+                {
+                    int parsed;
+                    if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed))
+                        serverCode = parsed;
+                }
+            }
+            return parts.Count == 0 ? null : string.Join("; ", parts);
+        }
+
+        private static string DescribeFailure(HttpResponseMessage response, string metadata, int responseBytes)
+        {
+            var reason = string.IsNullOrEmpty(response.ReasonPhrase) ? "unknown" : response.ReasonPhrase.Trim();
+            var builder = new StringBuilder();
+            builder.Append("请求失败,HTTP ").Append((int)response.StatusCode).Append(' ').Append(reason);
+            if (response.IsSuccessStatusCode)
+                builder.Append(",没有数据返回");
+            builder.Append(",responseBytes=").Append(responseBytes);
+            builder.Append(metadata == null ? ",未返回grpc-status等服务端状态" : ",服务端状态: " + metadata);
+            return builder.ToString();
         }
 
         private static GrpcRequest _instance;
@@ -106,8 +150,22 @@ namespace BiliLite.gRPC
                 byteArrayContent.Headers.ContentType = new MediaTypeHeaderValue("application/grpc");
                 byteArrayContent.Headers.ContentLength = bodyBytes.Length;
                 var response = await httpClient.PostAsync(url, byteArrayContent);
-                LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
+                int? serverCode;
+                var metadata = ReadServerMetadata(response, out serverCode);
+                LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " status=" + (int)response.StatusCode
+                    + " metadata=" + (metadata ?? "none") + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 var data = await response.Content.ReadAsByteArrayAsync();
+                if (!response.IsSuccessStatusCode)
+                {
+                    LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " rejected httpStatus=" + (int)response.StatusCode
+                        + " metadata=" + (metadata ?? "none") + " responseBytes=" + data.Length);
+                    return new GrpcResult()
+                    {
+                        code = serverCode ?? (int)response.StatusCode,
+                        status = false,
+                        message = DescribeFailure(response, metadata, data.Length),
+                    };
+                }
                 if (data.Length > 5)
                 {
                     return new GrpcResult()
@@ -120,12 +178,13 @@ namespace BiliLite.gRPC
                 }
                 else
                 {
-                    LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length);
+                    LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length
+                        + " metadata=" + (metadata ?? "none"));
                     return new GrpcResult()
                     {
-                        code = -102,
+                        code = serverCode ?? -102,
                         status = false,
-                        message = "请求失败,没有数据返回",
+                        message = DescribeFailure(response, metadata, data.Length),
                     };
                 }
             }
@@ -157,28 +216,45 @@ namespace BiliLite.gRPC
             {
                 using (HttpClient httpClient = new HttpClient())
                 {
-                    var data = await httpClient.GetByteArrayAsync(url);
-                    LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " durationMs=" + stopwatch.ElapsedMilliseconds + " responseBytes=" + data.Length);
-                    // var data = await response.Content.ReadAsByteArrayAsync();
-                    if (data.Length > 5)
+                    using (var response = await httpClient.GetAsync(url))
                     {
-                        return new GrpcResult()
+                        int? serverCode;
+                        var metadata = ReadServerMetadata(response, out serverCode);
+                        var data = await response.Content.ReadAsByteArrayAsync();
+                        LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " status=" + (int)response.StatusCode
+                            + " metadata=" + (metadata ?? "none") + " durationMs=" + stopwatch.ElapsedMilliseconds + " responseBytes=" + data.Length);
+                        if (!response.IsSuccessStatusCode)
                         {
-                            code = 0,
-                            status = true,
-                            message = "请求成功",
-                            results = data.Skip(5).ToArray()
-                        };
-                    }
-                    else
-                    {
-                        LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length);
-                        return new GrpcResult()
+                            LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " rejected httpStatus=" + (int)response.StatusCode
+                                + " metadata=" + (metadata ?? "none") + " responseBytes=" + data.Length);
+                            return new GrpcResult()
+                            {
+                                code = serverCode ?? (int)response.StatusCode,
+                                status = false,
+                                message = DescribeFailure(response, metadata, data.Length),
+                            };
+                        }
+                        if (data.Length > 5)
                         {
-                            code = -102,
-                            status = false,
-                            message = "请求失败,没有数据返回",
-                        };
+                            return new GrpcResult()
+                            {
+                                code = 0,
+                                status = true,
+                                message = "请求成功",
+                                results = data.Skip(5).ToArray()
+                            };
+                        }
+                        else
+                        {
+                            LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length
+                                + " metadata=" + (metadata ?? "none"));
+                            return new GrpcResult()
+                            {
+                                code = serverCode ?? -102,
+                                status = false,
+                                message = DescribeFailure(response, metadata, data.Length),
+                            };
+                        }
                     }
                 }
             }
