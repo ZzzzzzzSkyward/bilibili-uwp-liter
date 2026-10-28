@@ -16,7 +16,7 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 ## Batch state
 
 | #378 | Fixed | Target model now preserves absolute URLs and maps malformed, null, and empty values to the pinned sibling fallback. Extracted actual nested class probe passes all four cases; no API/UI runtime. Commit recorded below. |
-| #404 | Pending | Guard the empty `area_entrance_v2` array while preserving existing live-room loading. |
+| #404 | Fixed | Empty `area_entrance_v2` now skips area parsing while the populated first-entry path remains intact. Extracted actual block probe passes empty and populated shapes. Commit recorded below. |
 | #598 | Pending | Restore the natural-end history report at the target handler position before auto-next handling. |
 
 | Issue | State | Evidence / commit |
@@ -30,7 +30,8 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 
 ## Batch 003 issue commits
 
-- #378: `TBD`.
+- #378: `408169f`.
+- #404: `TBD`.
 
 ## Verification record
 
