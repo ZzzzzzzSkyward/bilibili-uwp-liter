@@ -39,3 +39,9 @@
 
 - The prior aggregation did not inspect or modify application source or unit-test scripts and did not run tests, builds, restore, app/API calls, or runtime checks.
 - After writing these catalog/docs files, run only `git diff --check`, explicitly stage only those files, and commit the aggregation. Runtime/unit tooling and caches live outside Git under `/workspace/work` and must not be staged.
+
+## Live assessment checkpoint
+
+- Original Batch 004 source assessment is complete: #61 is skipped as skeptical on both subclaims; #67 is addressed by the target source. #62, #65, and #69 remain assigned to the user as visual reports.
+- Original candidate accounting remains at the 409 pending-logic baseline until final queue aggregation. The completed Batch 004 dispositions are recorded separately in `work/upstream-bugs/policy-dispositions-004.json`; details are in `work/upstream-bugs/batches/004.md`.
+- The active source-assessment step is original Batch 005. No application code changed; no app build, restore, API request, runtime check, or unit test was run for Batch 004.

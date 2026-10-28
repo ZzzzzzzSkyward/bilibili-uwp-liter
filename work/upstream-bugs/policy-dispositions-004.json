@@ -1,0 +1,94 @@
+{
+  "batch": 4,
+  "baseline": {
+    "target_commit": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
+    "sibling_path": "/workspace/biliuwp-lite",
+    "sibling_commit": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"
+  },
+  "dispositions": [
+    {
+      "issue": 61,
+      "subitem": "discovery_page_raw_url_network_failure",
+      "disposition": "skipped_skeptical",
+      "confidence": "high",
+      "evidence": [
+        "Issue body says raw.githubusercontent.com was unreachable in the reporter's network and a proxy restored the discovery page.",
+        "Target src/BiliLite.UWP/Modules/Other/FindMoreVM.cs:27 loads the remote entrance document; the supplied log does not establish a reproducible target-side failure independent of network reachability."
+      ],
+      "reason": "Network/environment-specific report; no concrete target logic defect is established.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 61,
+      "subitem": "profile_submitted_videos_509",
+      "disposition": "skipped_skeptical",
+      "confidence": "medium",
+      "evidence": [
+        "Issue logs a 509 from /x/space/arc/search and a GetSubmitVideo exception; maintainer says the service interface changed and reports changing the route.",
+        "Current target src/BiliLite.UWP/Api/User/UserDetailAPI.cs:75-86 builds and WBI-signs /x/space/wbi/arc/search; UserSubmitVideoVM.cs:85-153 handles nonzero response codes with an error message.",
+        "Pinned sibling uses a cursor-based submission route in Models/Requests/Api/User/UserDetailAPI.cs and ViewModels/User/UserSubmitVideoViewModel.cs:157-189.",
+        "No response from the target's current request path is supplied."
+      ],
+      "reason": "The logged endpoint is not the current target endpoint, and the report gives no failing response for the current target path; the old 509 does not establish a present defect.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 62,
+      "subitem": "whole_visual_report",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": [
+        "The report concerns danmaku bounds, a fullscreen white strip, and tab separators; these are visual/layout concerns already assigned to user review."
+      ],
+      "reason": "Visual review is assigned to the user; no logic validation performed.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 65,
+      "subitem": "whole_visual_report",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": [
+        "The report concerns visual danmaku overflow and is already assigned to user visual review."
+      ],
+      "reason": "Visual review is assigned to the user; no logic validation performed.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 67,
+      "subitem": "cookie_enabled_comment_list_requests",
+      "disposition": "addressed",
+      "confidence": "high",
+      "evidence": [
+        "Target src/BiliLite.UWP/Controls/CommentControl.xaml.cs:167-174 calls CommentV2 and falls back to Comment.",
+        "Target src/BiliLite.UWP/Api/CommentApi.cs:75-95 sets need_cookie=login with login defaulting true; Comment at :48-58 also sets need_cookie=true.",
+        "Target src/BiliLite.UWP/Helpers/Utils.cs:36-44 routes cookie-enabled GETs through HttpHelper.GetWithWebCookie; HttpHelper.cs:163-232 constructs a Cookie header from the cookie manager.",
+        "Pinned sibling src/BiliLite.UWP/Models/Requests/Api/CommentApi.cs:48-58,70-99 uses need_cookie=true on both comment endpoints."
+      ],
+      "reason": "The requested cookie-enabled path is present for both the primary request and fallback in the target source.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 69,
+      "subitem": "whole_visual_report",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": [
+        "The report concerns image z-order in the dynamic-comment view and is already assigned to user visual review."
+      ],
+      "reason": "Visual review is assigned to the user; no logic validation performed.",
+      "suggested_unit_case": null,
+      "fix": null
+    }
+  ],
+  "validation": {
+    "application_source_changed": false,
+    "unit_tests_run": false,
+    "application_project_build_restore_or_app_run": false
+  }
+}
