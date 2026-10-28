@@ -5,7 +5,14 @@
 - The integration baseline and preserved plan are committed in `3ede2d158d954745bf59674efc1e7992c10f9f28`.
 - `work/improvements/BASELINE.md` records the target and pinned sibling boundaries, relevant package versions, and explicit project compile inclusion constraints.
 
-## Current step: LM-02 reviewed and published; LM-03 next
+## Current step: LM-03 playback adapter
+
+- Starting from clean target HEAD `d89722f`. LM-02 remains reviewed and published.
+- Adapter boundary: resolve validated manifest media through the saved FutureAccessList folder grant, map the default video/audio to the existing local DASH player structures, and navigate selected collection items through `LocalPlayerPage`. Typed manifest track metadata remains available for LM-04/LM-05; legacy local download properties stay intact.
+- Guard manifest-backed collection sessions against Bilibili history, subtitle, danmaku, and send calls while preserving downloaded-video and single-file behavior. Use stable collection/item resume keys. External audio uses the current FFmpeg-backed local path where required; no player engine is added.
+- Setup checkpoint recorded before implementation. Focused actual-source adapter tests will stub storage and player model boundaries. No app build, restore, launch, protocol generation, or live API calls are in scope.
+
+## Prior step: LM-02 reviewed and published; LM-03 next
 
 - LM-01 remains reviewed and published at the prior implementation commit. LM-02 starts from clean target HEAD `863cf0689796e10f6b8e329bac84316d9336c212`.
 - UI entrypoint: add a local media library pivot beside the existing offline downloads in `DownloadPage`; preserve the page's current single-file picker and downloaded-video playback handlers.
