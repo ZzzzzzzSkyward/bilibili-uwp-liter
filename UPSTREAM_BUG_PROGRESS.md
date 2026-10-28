@@ -2,7 +2,7 @@
 
 ## Scope and guardrails
 
-The source catalog contains 757 GitHub issues after excluding pull requests; 477 bug candidates retain their original order across 96 batches. The target app source snapshot is `cfa40a8508c6d6e7401885bf6bb081bc5c90b173`; the sole behavior reference is `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dacd6cb226aa0694365b`.
+The source catalog contains 757 GitHub issues after excluding pull requests; 477 bug candidates retain their original order across 96 batches. The target app source snapshot is `cfa40a8508c6d6e7401885bf6bb081bc5c90b173`; the sole behavior reference is `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
 
 Do not change application code, build or restore the app/solution, generate protocol code, call live application APIs, or run the app. Isolated unit execution is allowed for a concrete source-logic claim. The confirmed #31 source defect and its isolated probe are documented in `work/upstream-bugs/VALIDATED_LOGIC_BUGS.md` and `work/upstream-bugs/unit-tests/batch-002/README.md`.
 
