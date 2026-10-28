@@ -1,6 +1,14 @@
 # Upstream logic bug fix progress
 
-## Current phase: batch 005 in progress; awaiting user build/testing
+## Current phase: paused by user; batch 005 incomplete
+
+## Pause checkpoint
+
+- All agents were stopped on the user's pause request. No further fixes or tests are running.
+- Last completed local implementation/documentation HEAD before this checkpoint: `ee6ed38`; #1243 fix is committed as `d739637`. Batch 005 has not been pushed; last published HEAD is `b6d1788`.
+- #1305 changes remain uncommitted in `PlayerControl.xaml.cs` and the existing #105 probe files. The agent reported passing played/unplayed Dispose probes; final root review and the issue commit remain pending.
+- #1311 has uncommitted source-backed partial changes in `PlayerControl.xaml.cs`, `DownloadDialog.xaml.cs`, and new `unit-tests/batch-085/` artifacts. These retain `lan_doc(lan)` labels like the sibling. The agent reported its label/selection probe passing. Fully unmarked AI tracks and old downloaded labels remain unresolved; do not count #1311 as fully fixed.
+- Resume by reviewing the existing diff, completing #1305's commit, then reviewing/committing the limited #1311 changes with their stated limits. Preserve all pending source and probe files. No pull/fetch under the current user-owned HEAD instruction.
 
 The user authorized implementation fixes and commits. Batches 001–003 fixed nine findings; batch 004 fixed #611, #625, and #1216, bringing the total to 12 of 15. Root reviewed this batch and handles publication. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
 

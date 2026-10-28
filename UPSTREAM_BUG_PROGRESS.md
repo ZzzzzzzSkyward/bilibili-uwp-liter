@@ -1,6 +1,8 @@
 # Upstream issue assessment progress
 
-## Current step: batch 005 in progress; awaiting user build/testing
+## Current step: paused by user; batch 005 incomplete
+
+Paused checkpoint: #1243 is committed locally (`d739637`); #1305 and the limited #1311 label-preservation changes remain uncommitted. All agents are stopped. No batch 005 commits were pushed. Resume details are in [UPSTREAM_BUG_FIX_PROGRESS.md](UPSTREAM_BUG_FIX_PROGRESS.md). The committed fix count remains 13 of 15; fully unmarked AI subtitles remain unresolved.
 
 Assessment covered all 96 original batches; the original catalog retains 757 issues and 477 bug candidates. The assessment contained no application fixes; implementation is tracked separately below.
 
