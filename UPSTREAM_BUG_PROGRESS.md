@@ -4,7 +4,7 @@
 
 - Source catalog: complete GitHub REST issue snapshot for `ywmoyue/biliuwp-lite`, 757 actual issues (open and closed), after excluding 293 pull requests. Original classification retains all 757 rows; 477 eligible bug candidates remain in their original creation order and 96 batch groups.
 - Target app source snapshot remains `cfa40a8508c6d6e7401885bf6bb081bc5c90b173`; the sole behavior reference is `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
-- Do not change application code, build or restore the app/solution, generate protocol code, call live application APIs, or run the app. User direction now permits isolated unit execution for a concrete piece of source logic; it does not permit app builds or runtime validation. The one completed isolated unit probe is documented in `work/upstream-bugs/VALIDATED_LOGIC_BUGS.md` and `work/upstream-bugs/unit-tests/batch-002/README.md`. Do not run more tests or builds in this aggregation task.
+- Do not change application code, build or restore the app/solution, generate protocol code, call live application APIs, or run the app. User direction permits isolated unit execution for a concrete piece of source logic; it does not permit application/project/solution builds, app restores, or runtime validation. The completed #31 isolated unit probe is documented in `work/upstream-bugs/VALIDATED_LOGIC_BUGS.md` and `work/upstream-bugs/unit-tests/batch-002/README.md`.
 - This aggregation changes only local catalog and documentation data. Do not alter upstream issues or raw collection caches.
 
 ## Current policy queue
@@ -28,7 +28,14 @@
 - The next five pending logic IDs after omitting visual-only rows are #61, #67, #74, #82, and #87. Mixed issue logic subitems stay in `logic-validation-queue.json`.
 - Keep assessment evidence conservative: use the pinned sibling only as a behavior reference, separate source defects from symptom causality, and skip uncertain claims rather than promoting them to confirmed defects.
 
+## Current continuation setup
+
+- This round started from clean `work` HEAD `b4a3cb78266091d34801d3e2d3ae958184d553b9`. `git pull --ff-only origin work` reported `Already up to date`.
+- The target application source snapshot remains `cfa40a8508c6d6e7401885bf6bb081bc5c90b173`; later commits in the current branch update only the local issue catalog and assessment documentation. The pinned sibling remains clean at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`. No `AGENTS.md` was found under `/workspace`.
+- Continue source assessment from original Batch 004. #61 and #67 are the pending logic candidates in that batch; #62, #65, and #69 remain assigned as user-owned visual reports. The next oldest pending logic IDs after those are #74, #82, and #87.
+- Available prior isolated-unit tooling is documented at `work/upstream-bugs/unit-tests/batch-002/README.md`; the runner is `work/upstream-bugs/unit-tests/batch-002/run-refresh-cookie-dispatch.sh`, and its SDK/tool caches are under `/workspace/work/upstream-unit-tools` outside Git. This setup step did not run the unit or change application source.
+
 ## Validation and repository state
 
-- This aggregation did not inspect or modify application source or unit-test scripts and did not run tests, builds, restore, app/API calls, or runtime checks.
+- The prior aggregation did not inspect or modify application source or unit-test scripts and did not run tests, builds, restore, app/API calls, or runtime checks.
 - After writing these catalog/docs files, run only `git diff --check`, explicitly stage only those files, and commit the aggregation. Runtime/unit tooling and caches live outside Git under `/workspace/work` and must not be staged.
