@@ -212,6 +212,30 @@ namespace BiliLite.Controls.Dynamic
         /// <summary>
         /// 是否转发
         /// </summary>
+        /// <summary>
+        /// Text / Repost / Reserve 模板自己把 Content(RichTextBlock) 放进 RichTextControl。
+        /// 同一个 UIElement 不能有两个父元素,外层通用 ContentPresenter 必须让位,
+        /// 否则重复添加会在布局阶段抛 ArgumentException(E_INVALIDARG)。
+        /// 图片模板只渲染 Desc,正文仍由外层 ContentPresenter 显示,因此不在此列。
+        /// </summary>
+        public bool TemplateRendersContent
+        {
+            get
+            {
+                return Type == DynamicDisplayType.Text
+                    || Type == DynamicDisplayType.Repost
+                    || Type == DynamicDisplayType.Reserve;
+            }
+        }
+
+        public Visibility ContentPresenterVisibility
+        {
+            get
+            {
+                return ShowContent && !TemplateRendersContent ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
         public bool IsRepost { get; set; } = false;
         /// <summary>
         /// 是否自己动态
