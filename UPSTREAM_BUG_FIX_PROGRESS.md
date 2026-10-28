@@ -15,10 +15,11 @@ Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed
 
 ## Batch state
 
-Batch 004 order: #611 → #625 → #1216. #611 and #625 are fixed; #1216 terminal cursor state remains in progress.
+Batch 004 order: #611 → #625 → #1216. All three fixes are implemented; #611 requires a small follow-up to match the pinned sibling's empty-pattern validation behavior.
 
 | #611 | Fixed | Cloud and previously saved local regex rules are merged, validated with .NET regex parsing, and materialized before replacing persisted settings. Invalid patterns are removed; valid local/cloud expressions are retained. Actual extracted import block, validator, and render filter probe passes the malformed issue fixture plus valid-rule/comment cases. No application runtime. Commit recorded below. |
 | #625 | Fixed | The 2024 UGC-season display row now carries its mapped video AID, and collection comments dispatch that AID as video OID while preserving dynamic `ReplyID` and other routes. Probe executes the extracted mapper Avid→aid assignment, display AID assignment, and full actual comment handler with distinct IDs. No application runtime. Commit recorded below. |
+| #1216 | Fixed | The response cursor is stored before load-more visibility is decided; a next page is offered only when the existing 10-reply threshold and nonnull next offset are both present. Actual extracted cursor/button statements pass terminal and nonterminal ten-reply cases. Initial request cursor remains null; no app runtime or live response was used. Commit recorded below. |
 
 | #378 | Fixed | Target model now preserves absolute URLs and maps malformed, null, and empty values to the pinned sibling fallback. Extracted actual nested class probe passes all four cases; no API/UI runtime. Commit recorded below. |
 | #404 | Fixed | Empty `area_entrance_v2` now skips area parsing while the populated first-entry path remains intact. Extracted actual block probe passes empty and populated shapes. Commit recorded below. |
