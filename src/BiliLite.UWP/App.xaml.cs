@@ -41,10 +41,19 @@ namespace BiliLite
         /// </summary>
         public App()
         {
-
-            this.InitializeComponent();
-
+            //先起日志，再初始化 XAML：App.xaml 的合并字典一旦解析失败，进程会在任何日志之前退出，
+            //现象就是"停在启动图然后闪退"，日志里连会话头都没有。
             LogHelper.Initialize();
+            LogHelper.Log("Application constructing", LogType.INFO);
+            try
+            {
+                this.InitializeComponent();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("App.InitializeComponent failed", LogType.ERROR, ex);
+                throw;
+            }
             LogHelper.Log("Application constructed", LogType.INFO);
             App.Current.UnhandledException += App_UnhandledException;
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
