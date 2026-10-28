@@ -1,151 +1,83 @@
-# Bug report — unresolved issues
+# Bug report — round 2 (implemented against `code_review.md`)
 
-Orchestrator → remote reviewer. Branch `work`, base `2a0949d`.
+Orchestrator → remote reviewer. Branch `work`, implemented on top of `1fb7aa4`.
 
-Purpose: hand over the defects that are still open after the last fix batch, with source evidence and the decision each one needs. Reply with `code_review.md` in the next commit: for every ID either an approved approach or a rejection with reason. I will implement approved items through subagents, one batch per ID, and update this file with the outcome.
+`code_review.md` decisions applied: BR-01 approved (mapping), BR-02 approved (label only), BR-03 approved (option 3), BR-04 approved with the skipped-refresh fix, BR-05 approved a+b, BR-06 rejected, BR-07 deferred, BR-08 approved (error fidelity + login gate; empty-success shortcut and REST fallback rejected). Two bugs the user confirmed at runtime were added as BR-09/BR-10 and fixed.
 
-Build/verify commands (both work on this machine):
+Verification on this machine: `-Fast` 0 errors in 52-56 s; full run 79 s producing
+`Z:\BiliLite.UWP_1.0.9.6_x64_Test\BiliLite.UWP_1.0.9.6_x64.msix` and
+`Z:\BiliLite.Packages_1.0.9.6_x64_Test\BiliLite.Packages_1.0.9.6_x64.msix`.
+One full run aborted first with `CS2012 … intermediatexaml\BiliLiter.exe … locked by MSBuild.exe (27452)`: a reused MSBuild node still held the intermediate exe. The node exited, the rerun at the same version was clean. Recorded in `document/BUILD.md`. No runtime/UI check was possible here; the three behavioural claims below that need eyes on screen are marked `[device]`.
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Fast -NoVersionBump   # ~56 s, compile only
-powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1                       # ~85 s, bumps version + MSIX
-```
+## Status per ID
 
-Already fixed in `b0782b8` and earlier, do not re-report: playurl helper accessibility (compile break), `SubtitleTrackParser` namespace, `DynamicGrpcMapper` PascalCase member names, duplicate `api` local, subtitle AI-vs-manual initial selection, traditional→simplified prefix guard, feed `rid_str`/`comment_id_str` per family, PGC `aid`, live card `live_state`, video detail `attention` sentinel + follow-state restore + null `owner_ext`, `-Fast` build mode.
+| ID | Decision | State |
+|---|---|---|
+| BR-01 | approved | done — mapping, filtering, placeholders |
+| BR-02 | approved | done — label mapped, no empty-card diagnosis acted on |
+| BR-03 | approved (option 3) | done — synthetic cards marked, chrome hidden |
+| BR-04 | approved incl. skipped refresh | done — generation + queue + captured values |
+| BR-05 | approved a+b, c skipped | done — DP owner + short-viewport trigger |
+| BR-06 | rejected | no code |
+| BR-07 | deferred | no code; limitation documented below |
+| BR-08 | approved (narrow) | done — error fidelity + login gate; no REST fallback, no empty-success |
+| BR-09 | user-confirmed bug | done — pointer cursor restored on live teardown |
+| BR-10 | user-confirmed bug | done — fan count fetched for web detail |
 
----
+## BR-01 — unmapped families, medialists, ad/banner
 
-## BR-01 — Dynamic families with no mapper branch render a raw JSON dump
+- `MapUserCard` now returns `null` for `GrpcDynamicType.Ad`/`Banner` before normalization, and `MapToUserCards` skips null; a forwarded card whose origin maps to null falls back to `MissingCard(OrigDynIdStr)` so the parent stays readable.
+- `MapCardMajor` has a `DynMedialist` branch → `DynamicCardModel2024_major.medialist` (`DynamicCardModel2024_list`, new `long id` member); `MapCardType` → `DYNAMIC_TYPE_MEDIALIST`; `ParseType2024` → `MediaList`; `OneRowTemplate`.
+- `DynamicParse` splits the `MediaList` case by major member: `medialist != null` → tag `收藏夹`, id = medialist id, subtitle = server `sub_title`, **no** `AID`; otherwise the previous UGC block verbatim (`合集`, `AID = ugc_season.aid`, 播放/点赞).
+- Comments for medialists stay on the dynamic id: `GetCommentId` has no medialist case, so it falls through to `Extend.DynIdStr`; the page's `Tag == "收藏夹"` path already sends a `Dynamic` comment on `ReplyID`.
+- Other unmapped families keep a placeholder card; both JSON dumps in the conversion paths and both in the conversion-catch paths are now the compact string `动态加载失败` / empty `ContentStr`, so the `Other` template renders only its own line. The `DynamicID` in the 2024 catch was `item.modules…jump_url` (a URL, and a null deref); it is now `item.id_str`.
+- Filtering happens before display conversion; `hasMore`/`offset` still come from the server, so a filtered page that maps to zero visible cards does not end pagination.
 
-**Severity:** high (feed shows machine output instead of a card)
+## BR-02 — music label
 
-`DynamicParse.ParseType2024` (`src/BiliLite.UWP/Controls/Dynamic/DynamicParse.cs:140-169`) handles only `WORD, FORWARD, DRAW, AV, ARTICLE, MUSIC, NONE, PGC_UNION, UGC_SEASON, LIVE_RCMD, LIVE`. Everything else falls to `DynamicDisplayType.Other`, and `ConvertToDisplay2024` (`src/BiliLite.UWP/Modules/User/DynamicVM.cs:904-917`) then builds a card whose `ContentStr` is `未适配的类型{type}:` plus `JsonConvert.SerializeObject(item)`. The legacy path has the same dump at `src/BiliLite.UWP/Modules/User/DynamicVM.cs:693`.
+`MapDynamic` DynMusic branch now writes `Label1` to `article.label` (the accessor `viewtext`/subtitle reads) instead of `article.desc`; title, cover, jump URL, song comments and navigation untouched. The shared DTO stays, per the review.
 
-Non-exhaustive list of types that hit this today: `DYNAMIC_TYPE_MEDIALIST`, `DYNAMIC_TYPE_COURSES_SEASON`, `DYNAMIC_TYPE_COURSES_BATCH`, `DYNAMIC_TYPE_COMMON_SQUARE`, `DYNAMIC_TYPE_APPLET`, `DYNAMIC_TYPE_COMMON_VERTICAL_BANNER`, `DYNAMIC_TYPE_AD`.
+## BR-03 — synthetic follow-season cards
 
-`DYNAMIC_TYPE_MEDIALIST` is fully mappable already: the proto models it (`src/BiliLite.gRPC/bilibili/app/dynamic/v2/dynamic.proto:3329` `message MdlDynMedialist`, wired as `dyn_medialist = 12` at `:3942`) and `DynamicCardModel2024_major` has no field for it (`src/BiliLite.UWP/Modules/Home/DynamicVM.cs:769-779`), while `MapCardMajor` (`src/BiliLite.UWP/Helpers/DynamicGrpcMapper.cs:400-533`) has no `DynMedialist` branch.
+`MapToUserSeasonCards` emits `type = "CUSTOM_SEASON"` and an empty `basic` (the previous `comment_type = 1` / `rid_str = season_id` is gone, so no video-comment request can be built from a season id). New `DynamicDisplayType.CustomSeason` routes to `OneRowTemplate`; `ParseOneRowInfo2024` sets `ShowAuthorHeader = false` / `ShowInteractionRow = false`, and `DynamicItemControl.xaml` now binds avatar, author row, repost header and interaction row to computed `Visibility` properties that AND the new flags with the existing `IsRepost` conditions — every non-synthetic card keeps its exact previous visibility. Navigation stays on `OneRowInfo.Url` (`FollowListItem.Url`); no per-card detail call, no invented comment type.
 
-**Decision requested:** pick one policy, per family:
-1. map `MEDIALIST` into a real card (needs a new `major` field + template), and
-2. for the remaining families — hide the card, or render a compact "unsupported" placeholder without JSON?
+## BR-04 — feed request races
 
-My lean: map `MEDIALIST`, drop `AD`/banner, placeholder for the rest. Dropping cards changes list counts and `has_more` accounting, so I want that called explicitly.
+`GetDynamicItems` captures `generation = ++requestGeneration`, `DynamicType` and `UserDynamicType` before the first await, and calls `IsCurrentRequest` after every await (gRPC all/video/season, article REST, legacy REST) and again before publishing `Items`, `feedPage`, `historyOffset`, `updateBaseline`, `articleOffset`, `CanLoadMore`, `lastPageFailed`, error state and toasts. `Loading`/`feedRequestInFlight` are cleared only by the owning request. `Refresh()` no longer returns while loading: it invalidates, sets `refreshQueued`, and the superseded request's `finally` starts the queued refresh for the newest tab. Latest tab wins; no per-tab cache. Legacy branch dispatch also uses the captured values.
 
----
+## BR-05 — `MyListView`
 
-## BR-02 — Music dynamics are mapped into the article slot
+`LoadMoreBottomOffsetProperty` registered with `typeof(MyListView)` (default `100d`); `ScrollViewer` null-guarded and unsubscribed before resubscribe. New short-viewport trigger for every paginated `MyListView`: single-flight `Dispatcher.Low` check, then guards `scrollViewer != null` → `LoadMoreCommand != null` → `CanLoadMore` → `ActualHeight > 0` (else one-shot `LayoutUpdated`) → `ScrollableHeight == 0` → `_triggeredItemsVersion != _itemsVersion`. Only item-count or `ItemsSource` changes bump the version, so a second trigger requires new content; the version is consumed before `Execute`, so a synchronous command cannot re-enter. Re-arm sources: `Items.VectorChanged`, `ItemsSource` change, plus non-arming re-checks on `Loaded`/`SizeChanged`/`CanLoadMore false→true`.
 
-**Severity:** medium (music cards render empty)
+Coordination note for you: the same control backs the repost pane (`Controls/Dynamic/DynamicRepostControl.xaml`, `LoadMoreBottomOffset="0"`), so that pane now auto-paginates while short. Bounded by `has_more`; if you want it excluded, say so and I will gate the trigger to the feed pages only. `[device]`
 
-`MapCardMajor` (`src/BiliLite.UWP/Helpers/DynamicGrpcMapper.cs:519-528`) assigns `DynMusic` to `result.major.article`; `DynamicCardModel2024_major` (`Modules/Home/DynamicVM.cs:769-779`) has no `music` member. `ParseType2024` still returns `Music` for `DYNAMIC_TYPE_MUSIC` (`DynamicParse.cs:154-155`), so the Music template binds a `major` that carries article fields: no title, no cover, no jump.
+## BR-06 / BR-07 — rejected and deferred, no code
 
-**Decision requested:** add `DynamicCardModel2024_music` + `major.music` and map there (my preference), or fold music into the article template and change `ParseType2024` to `Article`.
+BR-06: no web-card fallback added, no fabricated live/VIP values. BR-07: the label heuristic stays; the limitation is that a machine-generated track labelled as a plain language (no `自动`, `lan` not `ai-*`) is not detected. `HasSubtitleItemModel` still deserializes only `id/lan/lan_doc/subtitle_url`.
 
----
+## BR-08 — feed rejection fidelity and login gate
 
-## BR-03 — 追番追剧 tab: no author, comments target a season id as a video oid
+Transport (`src/BiliLite.gRPC/GrpcRequest.cs`): non-2xx now returns `status = false` before the length heuristic, and `grpc-status`, `grpc-message`, `bili-status-code` are read from `response.Headers` (never `TrailingHeaders`) into the message and, when numeric, into `code`. The short/empty-body case stays a failure (`-102` or the server code) with a message that says the response was empty and whether server status was available. No `Array.Empty<byte>()` shortcut, no REST fallback; `GetDynAll`/`GetDynVideo` still throw the enriched message.
 
-**Severity:** medium
+Feed (`Modules/User/DynamicVM.cs`): before any `UserDynamic` request, a signed-out session gets the login dialog; cancel leaves `ShowError = true`, `ErrorMsg = "请先登录后查看动态"`, no request sent. Failures remain retryable: `CanLoadMore = false`, `lastPageFailed = true`, error published only when the list is empty, items/cursors of a failed load-more untouched. `Pages/Home/UserDynamicPage.xaml` now renders that state — message plus a 重试 button bound to `RefreshCommand` — so the login-required and load-failed states are visible, not just a toast. `[device]`
 
-`DynamicGrpcMapper.MapToUserSeasonCards` (`src/BiliLite.UWP/Helpers/DynamicGrpcMapper.cs:157-200`) builds every card from `FollowListItem` with `rid_str = comment_id_str = id = SeasonId.ToString()` and `comment_type = 1`, and never sets `modules.module_author`. `FollowListItem` (`dynamic.proto:2501-2516`) genuinely has **no** author and no `aid` — only `season_id`, `title`, `cover`, `url`, `new_ep`, `sub_title`, `pos`.
+Two follow-ups for you:
+1. The login gate covers the Article tab too, because it shares `DynamicType.UserDynamic`. Drop it to gRPC-only if the REST article feed must work signed out.
+2. Your measured-`-400/-101` evidence was not reproducible here against a signed-in session, so the enriched message may still read `HTTP 200 … 没有数据返回 … 未返回grpc-status等服务端状态` when the server sends trailers only. That is the approved "clear unknown-response failure", not a success.
 
-Consequences: blank avatar/name on every row; pressing 评论 opens the comment page for `CommentType.Video` with a `season_id` as oid, which is not a video oid; `major.pgc.aid` stays null so the card cannot jump to an episode either.
+## BR-09 — pointer cursor stays hidden after closing a live (user-confirmed)
 
-**Decision requested:** choose the resolution:
-1. resolve `aid`/`up_mid` per card through a follow-list/season detail call (extra request per page, needs a cache),
-2. pass `CommentType.Season`-equivalent (does not exist in `CommentApi.CommentType` — enum has Video 1, Dynamic 17, Article 12, Photo 11, MiniVideo 5, SongMenu 19, Song 14),
-3. disable the comment and author chrome on this tab.
+`Pages/LiveDetailPage.xaml.cs` hid the OS cursor in `ShowControl(false)` and restored it only on pointer move/exit, so closing the page while controls were hidden left `PointerCursor = null` app-wide. New `RestorePointerCursor()` (null-safe, assigns only when the cursor is currently null) is called from `StopPlay`, `LiveDetailPage_Unloaded`, `SetFullScreen(false)` and `ShowControl(true)`. Hide sites and timers unchanged. `[device]`
 
-I did not implement anything here because each branch has a product-level tradeoff.
+## BR-10 — subscriber count missing on video detail (user-confirmed)
 
----
+`VideoDetailPage.xaml:270` binds `VideoInfo.owner_ext.fans`, but the primary web endpoints carry no `owner_ext`, so it stayed null and the number rendered empty. `LoadVideoDetail` now synthesizes `owner_ext` before assigning `VideoInfo` (a plain property with no notifier, so a later assignment would not reach the binding), and only when the payload had none it calls the new `VideoAPI.RelationStat(mid)` (`/x/relation/stat`) and sets `fans`, raising `DoPropertyChanged("owner_ext")`. Failures leave `fans = 0`, no toast, no error page. New `HasFans` hides the label instead of leaving a dangling "粉丝". `DoAttentionUP` adjusts the counter only when `fans > 0`, so a synthesized zero cannot go negative. The app-endpoint path never issues the extra request. `[device]`
 
-## BR-04 — Stale dynamic-feed reply overwrites the new tab's items and cursor
+Note on your agent's concern about `btnOpenUser`: `DisplayConvert` inverts booleans and `showStaff` is `staff != null`, so `Visibility` on that button means "visible when there is no staff list" — the staff-less UP row is correct, not a mis-wire. No change made.
 
-**Severity:** medium (wrong content after a quick tab switch)
+## Open items / risks I want ruled on
 
-`GetDynamicItems` (`src/BiliLite.UWP/Modules/User/DynamicVM.cs:400-512`) captures nothing about which tab the request was issued for. On completion it publishes unconditionally: `Items = mapped` (`:498`), then `feedPage = page; historyOffset = nextOffset; updateBaseline = nextBaseline;` (`:500-502`) and `CanLoadMore = hasMore` (`:507`). `UserDynamicPage.pivot_SelectionChanged` (`src/BiliLite.UWP/Pages/Home/UserDynamicPage.xaml.cs:201-211`) switches `UserDynamicType` and calls `Refresh()` immediately, so a reply that lands after the switch replaces the new tab's list and stores the old tab's cursor in the shared `historyOffset`, which the next 加载更多 then sends.
-
-**Decision requested:** approve a request-generation guard (`++requestGeneration` on refresh/tab change; drop replies whose generation or captured `UserDynamicType` no longer match, and skip the cursor commit) — or prefer independent per-tab cursors (bigger change: cursor state per `UserDynamicType`).
-
----
-
-## BR-05 — `MyListView.LoadMoreBottomOffset` is registered under the wrong owner
-
-**Severity:** high when set from XAML (throws), medium overall (no first-page auto-load)
-
-`src/BiliLite.UWP/Controls/MyListView.cs:25-26`:
-
-```csharp
-public static readonly DependencyProperty LoadMoreBottomOffsetProperty =
-    DependencyProperty.Register("LoadMoreBottomOffset", typeof(double), typeof(MyAdaptiveGridView), new PropertyMetadata(100));
-```
-
-`MyListView` derives from `ListView`, not from `MyAdaptiveGridView`, so `GetValue`/`SetValue` (lines 18-22) reject the DP: setting `LoadMoreBottomOffset` on a `MyListView` throws `InvalidOperationException` ("… is not a DependencyProperty of the given type"). Second gap: `CanLoadMore` is a plain CLR property (`:17`) and `ScrollViewer_ViewChanged` (`:39-44`) only fires on scroll, so a first page shorter than the viewport leaves `ScrollableHeight == 0` and never loads page 2 — `MyAdaptiveGridView` handles exactly that (`MyAdaptiveGridView.cs:66,80`), `MyListView` does not. (For the record: `x:Bind OneWay` to that CLR property is legal — compiled bindings call the setter, no DP required — so the binding itself is not the defect.)
-
-**Decision requested:** approve (a) re-register the DP with `typeof(MyListView)`, (b) add the `ScrollableHeight == 0 && CanLoadMore` trigger to `MyListView` after layout, (c) also promote `CanLoadMore` to a DP for consistency with `MyAdaptiveGridView`. Items are mechanical; I only need confirmation that (b) should apply to every `MyListView` in the app, not just the dynamic page.
-
----
-
-## BR-06 — Profile `/x/v2/space`: live badge and VIP/official chrome rely on fields the app endpoint may omit
-
-**Severity:** low (cosmetic)
-
-`UserDetailVM.GetUserInfo` (`src/BiliLite.UWP/Modules/User/UserDetail/UserDetailVM.cs:55-66`) maps `live_room = data["live"]`, `vip = card["vip"]`, `official = card["official_verify"]`. `UserCenterInfoLiveRoomModel` (`:223-234`) has `roomStatus` and `liveStatus`, but nothing sets or normalizes them when the endpoint omits them, so the 直播中 badge depends on a field the app response is not guaranteed to carry; when `vip`/`official_verify` are absent the models stay null and the badge/pill silently disappear.
-
-**Decision requested:** fall back to the web card endpoint (`/x/web-interface/card`) for these three fields, or accept the nulls and hide the chrome deliberately (no code change). I have no response capture to prove which fields the app endpoint returns, so I am not patching blind.
-
----
-
-## BR-07 — AI-subtitle detection still depends on label text
-
-**Severity:** low (residual of #1311)
-
-`IsAutoGeneratedSubtitle` (`src/BiliLite.UWP/Controls/PlayerControl.xaml.cs`) decides AI vs manual from the track label: `自动` in `lan_doc`, or `lan` starting with `ai-`. `HasSubtitleItemModel` (`src/BiliLite.UWP/Modules/Player/PlayerVM.cs:303-309`) deserializes only `id/lan/lan_doc/subtitle_url`, so a track that is machine-generated but labelled as a plain language (no `自动`, `lan` not `ai-*`) is indistinguishable and the AI-vs-manual setting picks wrong.
-
-**Decision requested:** approve adding an `ai_type` (or `is_ai`) member to `HasSubtitleItemModel` and preferring it in the predicate while keeping the label heuristic as fallback — or confirm the endpoint used here never returns that field, in which case this stays a documented limitation and I will not touch it.
-
----
-
-## BR-08 — Opening 动态 fails outright when gRPC `DynAll` returns an empty frame
-
-**Severity:** high (the whole dynamic feed shows 0 items, reported by a user on 2026-10-28 21:17:04)
-
-Runtime log, clicking 动态:
-
-```
-ERROR User dynamic VM stage=feed-request failed | HResult=0x80131500 |
-System.Exception: 请求失败,没有数据返回    at BiliLite.Services.GrpcService.GetDynAll(Int32 page, String historyOffset)
-    at BiliLite.Modules.User.DynamicVM.GetDynamicItems(String idx, Boolean loadMore)
-INFO  Main dynamics stage=load-items-returned count=0
-```
-
-Chain, all source-verified:
-
-1. `src/BiliLite.gRPC/GrpcRequest.cs:110-130` decides success by `if (data.Length > 5)`. A gRPC response that carries only the 5-byte length-prefixed header with a **zero-length** protobuf body — which is what the server sends when it answers with no message — lands in the `else` and becomes `{ code = -102, status = false, message = "请求失败,没有数据返回" }`. The `grpc-status` trailer (requested via `TE: trailers` at `GrpcRequest.cs:94`) is never read, so an "empty but successful" reply and a real rejection are indistinguishable, and a genuinely empty feed can never be parsed into an empty `DynAllReply`.
-2. `src/BiliLite.UWP/Services/GrpcService.cs:27-37` turns that result into `throw new Exception(result.message)`.
-3. `src/BiliLite.UWP/Modules/User/DynamicVM.cs:400-512` has no catch-and-degrade around the `DynamicType.UserDynamic` branch, so the throw is the whole request: `Items` is never assigned, the legacy REST feed (`dynamicAPI.DyanmicNew`, reached only at `Modules/User/DynamicVM.cs:515`) is never attempted, and the page publishes `count=0`.
-4. Auth context: `GrpcService.GetRequestUserInfo()` (`Services/GrpcService.cs:65-72`) always sends `SettingHelper.Account.AccessKey`, which is empty when signed out, and `GrpcRequest.SendMessage` then sends `authorization: identify_v1 ` with no key (`GrpcRequest.cs:83`).
-
-Measured against the live endpoint today (one `DynAllReq` with `page = 1`, no device/metadata bins, so treat the exact code as indicative rather than exhaustive):
-
-| `authorization` | HTTP | `Content-Length` | `bili-status-code` | `grpc-status` |
-|---|---|---|---|---|
-| `identify_v1 ` (empty key) | 200 | 0 | -400 | 2 |
-| `identify_v1 <32-hex>` (unaccepted key) | 200 | 0 | -101 | 2 |
-
-A rejected `DynAll` therefore answers **200 with a zero-byte body** and puts the real reason only in trailers. That is exactly the shape the client mislabels as "请求失败,没有数据返回": the text is fabricated locally, the server's -400/-101 is discarded, and no code path can distinguish "signed out" from "expired key" from "malformed request".
-
-**Decision requested** (three separable fixes; say which to take):
-1. Transport: read `grpc-status`/`grpc-message` from trailing headers, and treat `status=0` with an empty body as a successful empty message (`results = Array.Empty<byte>()`) instead of `-102`.
-2. Caller: pre-check login for `DynAll`/`DynVideo` and route to the login prompt, rather than sending `identify_v1 ` and reporting a transport error.
-3. Degradation: on gRPC feed failure, fall back to the REST feed so the user sees dynamics with a warning instead of an empty page — or surface a retry state instead of silently publishing `count=0`.
-
-My lean: 1 + 2 mandatory, 3 only if you accept that the REST feed is still a supported source.
-
-## Process notes for the reviewer
-
-- Every approved item gets its own commit, message `Fix BR-0x …`, with the build evidence quoted.
-- Verification per batch: `-Fast` (compile + XAML) must reach 0 errors; one plain run per push group produces the bumped MSIX.
-- I cannot verify UI behaviour on a device from here; anything that needs eyes on screen will be listed as such rather than claimed working.
-- Ambiguity in `code_review.md` gets one clarifying question in the next `bug_report.md` instead of a guess.
+1. BR-05 trigger also affects the repost pane (see above) — gate it or keep it?
+2. BR-08 login gate on the Article tab — keep or limit to gRPC feeds?
+3. `DynamicParse` still labels UGc collections `合集`; the split relies on `major.medialist` vs `major.ugc_season`, which is what the proto union provides. If the server ever emits a medialist with an empty `sub_title`, the OneRow subtitle is blank by design (no fabricated play counts).
+4. No runtime verification was possible for BR-04/BR-05/BR-09/BR-10 or the login overlay; all four need a sideload of 1.0.9.6 to confirm.
