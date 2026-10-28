@@ -1,10 +1,10 @@
 # Upstream logic bug fix progress
 
-## Current phase: batch 004 in progress; awaiting user build/testing
+## Current phase: batch 004 complete; awaiting user build/testing
 
 The user authorized implementation fixes and commits. Batch 001 fixed #31, #105, and #121; batch 002 fixed #146, #275, and #358. Batch 003 is implementing the next three findings in order. Root reviews and pushes completed batches. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
 
-Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed54f0b8d9` (clean). Per user instruction, no pull/fetch was performed. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
+Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed54f0b8d9` (clean). Per user instruction, no pull/fetch was performed. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`. Batch 004 is complete; its commits await root review/push. The next finding is #1243.
 
 ## Constraints
 
@@ -20,6 +20,20 @@ Batch 004 order: #611 → #625 → #1216. All three fixes are implemented; #611 
 | #611 | Fixed | Cloud and previously saved local regex rules are merged, validated with .NET regex construction, and materialized before replacing persisted settings. Empty and malformed patterns are removed; valid local/cloud expressions are retained. Actual extracted import block, validator, and render filter probe passes malformed local/cloud patterns, an empty pattern, valid-rule preservation, and comment rendering. No application runtime. Commits recorded below. |
 | #625 | Fixed | The 2024 UGC-season display row now carries its mapped video AID, and collection comments dispatch that AID as video OID while preserving dynamic `ReplyID` and other routes. Probe executes the extracted mapper Avid→aid assignment, display AID assignment, and full actual comment handler with distinct IDs. No application runtime. Commit recorded below. |
 | #1216 | Fixed | The response cursor is stored before load-more visibility is decided; a next page is offered only when the existing 10-reply threshold and nonnull next offset are both present. Actual extracted cursor/button statements pass terminal and nonterminal ten-reply cases. Initial request cursor remains null; no app runtime or live response was used. Commit recorded below. |
+
+## Batch 004 commits
+
+- Setup and baseline record: `6d5e2bb`.
+- #611 invalid local/cloud rule filtering and extracted-source probe: `4b8dc07`; empty-pattern alignment with the pinned sibling and probe: `c7f59d7`.
+- #625 mapped UGC AID display and collection comment dispatch: `ce6e9b3`.
+- #1216 terminal cursor handling and extracted-source probe: `4f7885f`.
+
+## Batch 004 verification
+
+- #611: `work/upstream-bugs/unit-tests/batch-042/issue-611/run-imported-regex-filter.sh` passes against extracted target import code, validator, and render loop. It verifies invalid local/cloud patterns and an empty pattern are pruned, valid local/cloud rules survive, and the visible comment reaches the add boundary.
+- #625: `work/upstream-bugs/unit-tests/batch-043/issue-625/run-ugc-collection-comment-dispatch.sh` passes with extracted mapper Avid→aid, display AID, and full target comment handler; dynamic ID and video AID remain distinct.
+- #1216: `work/upstream-bugs/unit-tests/batch-079/issue-1216/run-terminal-comment-cursor.sh` passes with extracted actual cursor/load-more statements for terminal and nonterminal ten-reply cases.
+- `git diff --check` passes. No application build, restore, run, protocol generation, live API call, or end-to-end claim was made.
 
 | #378 | Fixed | Target model now preserves absolute URLs and maps malformed, null, and empty values to the pinned sibling fallback. Extracted actual nested class probe passes all four cases; no API/UI runtime. Commit recorded below. |
 | #404 | Fixed | Empty `area_entrance_v2` now skips area parsing while the populated first-entry path remains intact. Extracted actual block probe passes empty and populated shapes. Commit recorded below. |
