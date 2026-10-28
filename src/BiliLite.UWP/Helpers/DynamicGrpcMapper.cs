@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using Bilibili.App.Dynamic.V2;
@@ -34,7 +34,7 @@ namespace BiliLite.Helpers
                 var id = source.Extend.DynIdStr;
                 var item = new DynamicItemModel
                 {
-                    Desc = new DynamicDescModel
+                    desc = new DynamicDescModel
                     {
                         uid = author?.Mid.ToString() ?? "",
                         dynamic_id = id,
@@ -51,9 +51,9 @@ namespace BiliLite.Helpers
                         {
                             continue;
                         }
-                        item.Desc.type = 8;
-                        item.Desc.rid = dynamic.DynArchive.Avid.ToString();
-                        item.Desc.view = dynamic.DynArchive.View;
+                        item.desc.type = 8;
+                        item.desc.rid = dynamic.DynArchive.Avid.ToString();
+                        item.desc.view = dynamic.DynArchive.View;
                         item.Video = new DynamicVideoCardModel
                         {
                             aid = dynamic.DynArchive.Avid.ToString(),
@@ -79,19 +79,19 @@ namespace BiliLite.Helpers
                         {
                             continue;
                         }
-                        item.Desc.type = 512;
-                        item.Desc.rid = dynamic.DynPgc.Aid.ToString();
+                        item.desc.type = 512;
+                        item.desc.rid = dynamic.DynPgc.Aid.ToString();
                         item.Season = new DynamicSeasonCardModel
                         {
-                            Aid = dynamic.DynPgc.Aid.ToString(),
-                            Cover = dynamic.DynPgc.Cover,
-                            Url = dynamic.DynPgc.JumpUrl,
-                            NewDesc = FirstNonEmpty(dynamic.DynPgc.CoverLeftText1, dynamic.DynPgc.CoverLeftText2),
-                            Season = new DynamicSeasonCardApiSeasonInfoModel
+                            aid = dynamic.DynPgc.Aid.ToString(),
+                            cover = dynamic.DynPgc.Cover,
+                            url = dynamic.DynPgc.JumpUrl,
+                            new_desc = FirstNonEmpty(dynamic.DynPgc.CoverLeftText1, dynamic.DynPgc.CoverLeftText2),
+                            season = new DynamicSeasonCardApiSeasonInfoModel
                             {
-                                Title = dynamic.DynPgc.Title,
-                                SeasonId = (int)dynamic.DynPgc.SeasonId,
-                                Cover = dynamic.DynPgc.Cover,
+                                title = dynamic.DynPgc.Title,
+                                season_id = (int)dynamic.DynPgc.SeasonId,
+                                cover = dynamic.DynPgc.Cover,
                             }
                         };
                         break;
@@ -100,8 +100,8 @@ namespace BiliLite.Helpers
                         {
                             continue;
                         }
-                        item.Desc.type = 4310;
-                        item.Desc.rid = dynamic.DynUgcSeason.Avid.ToString();
+                        item.desc.type = 4310;
+                        item.desc.rid = dynamic.DynUgcSeason.Avid.ToString();
                         item.Video = new DynamicVideoCardModel
                         {
                             aid = dynamic.DynUgcSeason.Avid.ToString(),

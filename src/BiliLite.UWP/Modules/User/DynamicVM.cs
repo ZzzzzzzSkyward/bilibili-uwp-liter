@@ -436,8 +436,8 @@ namespace BiliLite.Modules.User
                     }
                     else if (UserDynamicType == UserDynamicType.Article)
                     {
-                        var api = dynamicAPI.ArticleV2(page, loadMore ? articleOffset : null);
-                        var response = await api.Request();
+                        var articleRequest = dynamicAPI.ArticleV2(page, loadMore ? articleOffset : null);
+                        var response = await articleRequest.Request();
                         if (!response.status)
                         {
                             throw new InvalidOperationException(response.message);

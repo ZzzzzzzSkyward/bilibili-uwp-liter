@@ -4,7 +4,7 @@ using System.Linq;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using System.Net;
-using BiliLite.Modules.Player;
+using BiliLite.Modules;
 using Newtonsoft.Json;
 
 namespace BiliLite.Services.LocalMedia

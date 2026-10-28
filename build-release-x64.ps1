@@ -8,15 +8,23 @@
   MSIX 输出目录，默认 Z:\。
 .PARAMETER NoVersionBump
   不递增版本号（用于调试/重复出包）。
+.PARAMETER Fast
+  只编译 BiliLite.UWP 项目，不生成 MSIX，用于改动后的快速编译校验（不含打包）。
+.PARAMETER Restore
+  -Fast 下仍然执行 NuGet 还原（默认跳过，因为包很少变化）。
 .EXAMPLE
   .\build-release-x64.ps1
 .EXAMPLE
   .\build-release-x64.ps1 -Clean
+.EXAMPLE
+  .\build-release-x64.ps1 -Fast -NoVersionBump
 #>
 param(
     [switch]$Clean,
     [string]$OutputDir = 'Z:\',
-    [switch]$NoVersionBump
+    [switch]$NoVersionBump,
+    [switch]$Fast,
+    [switch]$Restore
 )
 
 $ErrorActionPreference = 'Stop'
@@ -25,10 +33,17 @@ $solution = Join-Path $root 'BiliLite.sln'
 if (-not (Test-Path $solution)) {
     throw "找不到解决方案：$solution"
 }
-if (-not (Test-Path $OutputDir)) {
-    throw "输出目录不存在：$OutputDir（可用 -OutputDir 指定其他路径）"
+if ($Fast) {
+    $buildItem = Join-Path $root 'src\BiliLite.UWP\BiliLite.UWP.csproj'
+    Write-Host '模式    : 快速编译（仅 BiliLite.UWP，不打包 MSIX）'
 }
-$OutputDir = (Resolve-Path $OutputDir).ProviderPath.TrimEnd('\') + '\'
+else {
+    $buildItem = $solution
+    if (-not (Test-Path $OutputDir)) {
+        throw "输出目录不存在：$OutputDir（可用 -OutputDir 指定其他路径）"
+    }
+    $OutputDir = (Resolve-Path $OutputDir).ProviderPath.TrimEnd('\') + '\'
+}
 
 # ---------- 版本号：递增后再生成，确保每个发布版本都更高 ----------
 $manifests = @(
@@ -84,9 +99,11 @@ if (-not $msbuild) {
 
 $target = if ($Clean) { 'Rebuild' } else { 'Build' }
 Write-Host "MSBuild : $msbuild"
-Write-Host "解决方案: $solution"
+Write-Host "构建对象: $buildItem"
 Write-Host "配置    : Release|x64 ($target)"
-Write-Host "输出目录: $OutputDir"
+if (-not $Fast) {
+    Write-Host "输出目录: $OutputDir"
+}
 if ($NoVersionBump) {
     Write-Host "包版本  : $current（未递增）"
 }
@@ -95,16 +112,30 @@ else {
 }
 
 # 还原 NuGet 包：packages.config 与 PackageReference 两种项目都要覆盖
-& $msbuild $solution -t:Restore -p:RestorePackagesConfig=true -v:m -nologo
-if ($LASTEXITCODE -ne 0) {
-    throw "NuGet 还原失败（退出码 $LASTEXITCODE）。"
+if ($Fast -and -not $Restore) {
+    Write-Host '还原    : 已跳过（-Fast，需要时加 -Restore）'
+}
+else {
+    & $msbuild $solution -t:Restore -p:RestorePackagesConfig=true -v:m -nologo
+    if ($LASTEXITCODE -ne 0) {
+        throw "NuGet 还原失败（退出码 $LASTEXITCODE）。"
+    }
 }
 
+$buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platform=x64', '-v:m', '-nologo', '-m')
+if (-not $Fast) {
+    $buildArgs += "-p:AppxPackageDir=$OutputDir"
+}
 $buildOutput = @()
-& $msbuild $solution -t:$target -p:Configuration=Release -p:Platform=x64 -p:AppxPackageDir=$OutputDir -v:m -nologo |
-    Tee-Object -Variable buildOutput
+& $msbuild @buildArgs | Tee-Object -Variable buildOutput
 if ($LASTEXITCODE -ne 0) {
     throw "生成失败（退出码 $LASTEXITCODE）。"
+}
+
+if ($Fast) {
+    Write-Host ''
+    Write-Host '快速编译完成（未生成 MSIX）。'
+    return
 }
 
 $packages = $buildOutput | ForEach-Object {
