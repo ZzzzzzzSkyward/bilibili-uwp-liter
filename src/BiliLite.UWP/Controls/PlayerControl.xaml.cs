@@ -1420,6 +1420,7 @@ namespace BiliLite.Controls
                     requestedTrack,
                     (savedPosition, resumePlaying) =>
                     {
+                        EnsureLocalSwitchItem(item, resumeId);
                         _position = savedPosition;
                         _autoPlay = resumePlaying;
                         _restoreLocalTrackPositionOnOpen = true;
@@ -1428,7 +1429,9 @@ namespace BiliLite.Controls
                     wasPlaying,
                     async () =>
                     {
+                        EnsureLocalSwitchItem(item, resumeId);
                         var result = await PlayLocalFile(preservePlaybackState: true);
+                        EnsureLocalSwitchItem(item, resumeId);
                         return new LocalMediaTrackOpenResult
                         {
                             Success = result.result,
@@ -1455,6 +1458,11 @@ namespace BiliLite.Controls
             }
             catch (Exception exception)
             {
+                if (!IsLocalSwitchItemCurrent(item, resumeId))
+                {
+                    LogHelper.Log("Local media track switch stopped after item changed; stage=" + stage + "; collectionId=" + collectionId + "; itemId=" + itemId + "; trackId=" + trackId + "; exception=" + exception, LogType.INFO);
+                    return;
+                }
                 LogHelper.Log("Local media track switch failed; stage=" + stage + "; collectionId=" + collectionId + "; itemId=" + itemId + "; trackId=" + trackId + "; exception=" + exception, LogType.ERROR);
                 ShowDialog("The selected track could not be opened. " + exception.Message, isAudio ? "切换音频失败" : "切换视频失败");
             }
@@ -1467,6 +1475,17 @@ namespace BiliLite.Controls
                 BottomBtnNext.IsEnabled = true;
                 UpdateLocalTrackSelectors();
             }
+        }
+
+        private bool IsLocalSwitchItemCurrent(PlayInfo item, string resumeId)
+        {
+            return ReferenceEquals(CurrentPlayItem, item) && CurrentPlayItem?.LocalPlayInfo?.ResumeId == resumeId;
+        }
+
+        private void EnsureLocalSwitchItem(PlayInfo item, string resumeId)
+        {
+            if (!IsLocalSwitchItemCurrent(item, resumeId))
+                throw new OperationCanceledException("The local playback item changed during the track switch.");
         }
 
         private static string FormatLocalTrackSwitchFailure(LocalMediaTrackOpenResult result)
