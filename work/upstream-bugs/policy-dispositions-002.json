@@ -107,8 +107,16 @@
   ],
   "validation": {
     "application_source_changed": false,
-    "unit_tests_run": false,
-    "build_restore_or_app_run": false,
-    "reason_no_unit_run": "The direct findings were established by source-path evidence; the available environment has no C# execution host, and no synthetic runtime was installed."
+    "unit_tests_run": true,
+    "isolated_csharp_probe": {
+      "status": "failed_expected_bug",
+      "runner": ".NET 8.0.427 with dotnet-script 1.6.0",
+      "source_fragment": "src/BiliLite.UWP/Api/ApiHelper.cs:493-502, extracted verbatim and diff-confirmed",
+      "stub": "ApiModel.Request records method and base URL; it makes no network call.",
+      "expected_dispatch": "POST https://passport.bilibili.com/x/passport-login/web/confirm/refresh",
+      "observed_dispatch": "GET https://www.bilibili.com/correspond/1/fixture-path",
+      "interpretation": "The expected assertion failure confirms that the extracted target code invokes the prior request object instead of the constructed confirmation request. It does not validate the reported quality symptom."
+    },
+    "application_project_build_restore_or_app_run": false
   }
 }
