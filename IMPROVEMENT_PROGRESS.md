@@ -5,7 +5,7 @@
 - The integration baseline and preserved plan are committed in `3ede2d158d954745bf59674efc1e7992c10f9f28`.
 - `work/improvements/BASELINE.md` records the target and pinned sibling boundaries, relevant package versions, and explicit project compile inclusion constraints.
 
-## Current step: LM-05 implementation complete; root review pending
+## Current step: LM-05 reviewed and published; API-01 next
 
 - Started from clean target HEAD `a8435c1` after the LM-03 reviewed handoff. LM-02 and LM-03 remain reviewed and published. LM-04 setup checkpoint `478e14d` records the batch start. LM-04 implementation and review follow-up are committed and published; see the latest checkpoint below.
 - LM-03 added `LocalMediaPlaybackAdapter` to resolve manifest tracks through the saved FutureAccessList folder grant and map every item into the existing DASH player structures. Collection item selection opens `LocalPlayerPage` at the chosen playlist index. `LocalPlayInfo` keeps legacy fields and adds typed video/audio/subtitle/danmaku metadata.
@@ -23,7 +23,7 @@
 
 - Baseline is clean HEAD `a8435c1`; the LM-03 implementation and handoff are committed. LM-04 will add selectors inside the existing `PlayerControl`, reuse the manifest track handles, and preserve the current item, position, and playing state across reopen. Focused actual-source probes will exercise switch state and rollback. No app build, restore, launch, protocol generation, or live API test is in scope.
 
-## Next step after root review: API-01 compatibility layer and API organization
+## Next step: API-01 compatibility layer and API organization
 
 ## Prior step: LM-02 reviewed and published; LM-03 next
 
@@ -82,4 +82,12 @@
 
 - Setup `478e14d`, implementation `90ac3de`, item identity follow-up `b543150`. Root reviewed selector wiring, actual switch coordinator and tests, local playback routing/state handling, and failure logs. Normal push to `origin/work` succeeded through `b543150`; this handoff is published separately. No pull/fetch was performed.
 - Agent LM-01–04 isolated probes passed; root `git diff a8435c1 --check` passed. Coordinator tests cover position/play-state callbacks and immediate failure rollback, not UWP media events or real decoding. No app build, restore, launch, protocol generation, or live API test was performed.
-- LM-05 implementation complete and ready for root review. Resume API-01 after review; verify any reference-based changes against the pinned sibling when available.
+- LM-05 completed in the following checkpoint.
+
+
+## LM-05 publication checkpoint
+
+- Implementation `8106491` reviewed by root and pushed normally to `origin/work`. Root reviewed saved-grant file handles, parser conversion into existing cue models, subtitle defaults/off selection, independent enabled XML track merging, project/XAML entries, and async load/render boundaries.
+- Root ran the LM-01–05 offline runner successfully, including 22 LM-05 assertions. Tests exercise actual parser/merge/guard helpers with storage and player model stubs; UWP UI wiring and the NSDanmaku parser/render boundary were source-reviewed, not executed. Project/XAML XML checks and `git diff 01be302 HEAD --check` passed. No application build, restore, launch, protocol generation, or live API tests were run.
+- The restored checkout initially contained only the master baseline. Before the handover was available, root fetched the user-identified remote work branch and fast-forwarded the clean local work branch to `01be302`; no further fetch/pull occurred. The missing standalone test SDK was downloaded to the documented offline tools path.
+- Resume API-01 per the preserved plan. The pinned sibling is absent in this restored environment; check its pinned revision before source-dependent behavior ports. Real UWP permission persistence, UI/media timing, decoding, and renderer behavior remain for user app testing. SRT/VTT styling/layout metadata is reduced to plain cue text in the existing subtitle renderer.

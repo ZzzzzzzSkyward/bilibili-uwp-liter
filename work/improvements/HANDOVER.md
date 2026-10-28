@@ -3,8 +3,8 @@
 ## Resume point
 
 - Repo: `/workspace/bilibili-uwp-liter`, branch `work`.
-- Published baseline before this handover: `091cd51` (LM-04 reviewed). No pending application changes.
-- Next after root review: **API-01 — API compatibility layer and service organization**.
+- Published application baseline: `8106491` (LM-05 reviewed). No pending application changes.
+- Next: **API-01 — API compatibility layer and service organization**.
 - Plan: `work/improvements/PLAN.md`. Detailed checkpoint: `IMPROVEMENT_PROGRESS.md`.
 
 ## Completed
@@ -17,13 +17,15 @@
 
 ## Next batch
 
+API-01: separate cookie handling and WBI signing into services while retaining the existing `ApiHelper` compatibility wrappers and public callers. Check the pinned sibling before porting existing behavior; the sibling was absent in this restored workspace. Inventory current implementations first to avoid duplicating endpoints already present.
+
 Real UWP permissions/restart, UI/media-event timing, codec support and asynchronous decoder-failure recovery need user app testing; do not claim these were validated locally.
 
 ## Working rules
 
 - Root orchestrates/reviews; **gpt-6-luna subagents write application code**.
 - Own HEAD; **skip pull/fetch**. Commit each step and push normally; no force push.
-- Sole existing behavior reference: `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b` when available; it was absent during LM-05. New manifest requirements come from the preserved plan. Do not fetch/pull to restore it without explicit user direction.
+- Sole existing behavior reference: `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b` when available; it was absent during LM-05. New manifest requirements come from the preserved plan.
 - No app builds, restores, launches, protocol generation or live application API tests. Focused offline unit tests of actual source pieces and format checks are allowed.
 - Existing unit runner: `work/improvements/tests/run.sh`; cached tools: `/workspace/work/upstream-unit-tools`. LM-01–05 actual-source probes passed; UWP storage/player boundaries are stubbed. Whitespace checks passed.
 - Preserve full exception/result details in logs with stage and collection/item/track IDs. Keep user-facing errors concise.
