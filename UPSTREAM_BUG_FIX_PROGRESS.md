@@ -32,6 +32,11 @@ Batch 005 baseline: clean HEAD `b6d17888b4a4871137a598fe240462813670a939`; no pu
 - #1216 legacy fallback compatibility: `80eade4`.
 - #611 cached-rule pruning before sync: `3bc7e36`.
 
+## Batch 005 commits
+
+- Setup and baseline record: `9597c58`.
+- #1243 empty URL guard and actual-prefix regression probe: `d739637`.
+
 ## Batch 004 verification
 
 - #611: `work/upstream-bugs/unit-tests/batch-042/issue-611/run-imported-regex-filter.sh` passes against extracted target cache-load and cloud-import code, validator, and render loop. It verifies a cached invalid pattern is persisted-pruned before sync, invalid cloud patterns and an empty pattern are rejected, valid local/cloud rules survive, and the visible comment reaches the add boundary.
