@@ -187,30 +187,43 @@ namespace BiliLite.Controls
                     if (m.code == 0)
                     {
 
-                        if (m.data.replies != null && m.data.replies.Count != 0)
+                        if (m.data.replies == null)
                         {
-
+                            m.data.replies = new ObservableCollection<CommentModel>();
+                        }
+                        var hasPinnedReplies = _page == 1 &&
+                            ((m.data.upper != null && m.data.upper.top != null) ||
+                            (m.data.topReplies != null && m.data.topReplies.Count != 0));
+                        if (m.data.replies.Count != 0 || hasPinnedReplies)
+                        {
                             if (_page == 1)
                             {
-                                if (m.data.upper.top != null)
+                                var displayedReplies = new ObservableCollection<CommentModel>();
+                                if (m.data.upper != null && m.data.upper.top != null)
                                 {
                                     m.data.upper.top.showTop = Visibility.Visible;
-                                    m.data.replies.RemoveAt(0);
-                                    m.data.replies.Insert(0, m.data.upper.top);
+                                    displayedReplies.Add(m.data.upper.top);
                                 }
-                                /*if (m.data.topReplies != null)
+                                if (m.data.topReplies != null)
                                 {
-                                    foreach(var t in m.data.topReplies)
+                                    foreach (var item in m.data.topReplies)
                                     {
-                                        t.showTop = true;
-                                        var c = t.ToCommentModel();
-
-
-                                        m.data.replies.Insert(0, c);
+                                        var pinnedReply = item.ToCommentModel();
+                                        pinnedReply.showTop = Visibility.Visible;
+                                        if (!displayedReplies.Any(reply => reply.rpid == pinnedReply.rpid))
+                                        {
+                                            displayedReplies.Add(pinnedReply);
+                                        }
                                     }
-                                }*/
-                                //ls_hot.ItemsSource = m.data.hots;
-                                ls_new.ItemsSource = m.data.replies;
+                                }
+                                foreach (var item in m.data.replies)
+                                {
+                                    if (!displayedReplies.Any(reply => reply.rpid == item.rpid))
+                                    {
+                                        displayedReplies.Add(item);
+                                    }
+                                }
+                                ls_new.ItemsSource = displayedReplies;
                             }
                             else
                             {
@@ -734,8 +747,8 @@ namespace BiliLite.Controls
         public dataCommentModel upper { get; set; }
         public CommentModel top { get; set; }
 
-        //[JsonProperty("top_replies")]
-        //public List<CommentItem> topReplies { get; set; }
+        [JsonProperty("top_replies")]
+        public List<CommentItem> topReplies { get; set; }
 
     }
     public class CommentModel : INotifyPropertyChanged
