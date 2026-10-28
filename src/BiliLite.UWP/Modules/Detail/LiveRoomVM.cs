@@ -1757,7 +1757,12 @@ namespace BiliLite.Modules
             public string activity_name { get; set; }
             public string activity_date { get; set; }
             public string pic_url { get; set; }
-            public string jump_url { get; set; }
+            private string jumpUrl;
+            public string jump_url
+            {
+                get { return jumpUrl; }
+                set { jumpUrl = Uri.TryCreate(value, UriKind.Absolute, out _) ? value : "https://www.bilibili.com/404"; }
+            }
         }
 
         public class LiveAnchorProfilePkInfo

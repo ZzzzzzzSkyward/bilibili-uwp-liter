@@ -15,7 +15,7 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 
 ## Batch state
 
-| #378 | In progress | Sanitize `jump_url` in the target nested model using the pinned sibling URL contract and 404 fallback. |
+| #378 | Fixed | Target model now preserves absolute URLs and maps malformed, null, and empty values to the pinned sibling fallback. Extracted actual nested class probe passes all four cases; no API/UI runtime. Commit recorded below. |
 | #404 | Pending | Guard the empty `area_entrance_v2` array while preserving existing live-room loading. |
 | #598 | Pending | Restore the natural-end history report at the target handler position before auto-next handling. |
 
@@ -27,6 +27,10 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 | #146 | Fixed | Episode list preview key-down/up events now stop focused-list arrow navigation and reach the player seek path, matching the pinned sibling. Source review and `git diff --check`; no UI runtime. Commit `d019842805fd406aa2d39d707bf86af03f61c09e`. |
 | #275 | Fixed | `top_replies` now deserializes as the target display model and is prepended as pinned comments; old `upper.top` remains supported, normal first replies are preserved, and duplicate IDs are suppressed. Actual insertion-block probe passes pinned-first/visible, same normal-first and nested objects, duplicate suppression, and pinned-only cases; UWP controls and full model are stubbed. Commits `839d0c8b8712d2c5631dbb4d9bd27c65d5e00746` and corrective follow-up `ade587708588bac3d9607c13b62e7cbe1fe860c8`. |
 | #358 | Fixed | Active history page migrated to cookie-authenticated `/x/web-interface/history/cursor`, with cursor pagination, response mapping to existing item bindings/actions, refresh reset, empty-page end behavior, and supported archive/PGC/live/article navigation. Full actual `HistoryVM` and DTO source plus actual extracted `HistoryWbi` method pass the isolated recording-boundary probe; no app runtime. Commit `94e65a935c44c02e5f3ce96cda33d2f5265b12f1`. |
+
+## Batch 003 issue commits
+
+- #378: `TBD`.
 
 ## Verification record
 
