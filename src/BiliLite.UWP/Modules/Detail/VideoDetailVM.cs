@@ -205,8 +205,16 @@ namespace BiliLite.Modules
                     {
                         data.data.req_user.attention = -999;
                     }
+                    // The web endpoints omit owner_ext entirely; keep it non-null so the
+                    // fans label can hide itself instead of dangling when the count is unknown.
+                    var hasOwnerExt = data.data.owner_ext != null;
+                    data.data.owner_ext = data.data.owner_ext ?? new VideoDetailOwnerExtModel();
                     VideoInfo = data.data;
                     Loaded = true;
+                    if (!hasOwnerExt)
+                    {
+                        await LoadOwnerFans();
+                    }
                     await GetAttentionUp();
                     await GetUserVideoStates();
                     await LoadVideoTags(data.data.aid);
@@ -229,6 +237,44 @@ namespace BiliLite.Modules
             {
                 Loading = false;
             }
+        }
+
+        /// <summary>
+        /// 详情接口(Web/app)可能不含粉丝数, 单独查询; 失败时保持 fans=0 且不打断页面
+        /// </summary>
+        private async Task LoadOwnerFans()
+        {
+            var mid = VideoInfo?.owner?.mid;
+            if (string.IsNullOrEmpty(mid))
+            {
+                return;
+            }
+
+            var fans = 0;
+            try
+            {
+                var results = await videoAPI.RelationStat(mid).Request();
+                if (results.status)
+                {
+                    var data = await results.GetJson<ApiDataModel<JObject>>();
+                    if (data.success)
+                    {
+                        fans = data.data?["follower"]?.ToObject<int>() ?? 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+            }
+
+            if (fans <= 0)
+            {
+                return;
+            }
+
+            VideoInfo.owner_ext.fans = fans;
+            VideoInfo.DoPropertyChanged("owner_ext");
         }
 
         private async Task LoadVideoTags(string aid)
@@ -612,12 +658,12 @@ namespace BiliLite.Modules
                 if (VideoInfo.req_user.attention == 1)
                 {
                     VideoInfo.req_user.attention = -999;
-                    if (VideoInfo.owner_ext != null) VideoInfo.owner_ext.fans -= 1;
+                    if (VideoInfo.owner_ext != null && VideoInfo.owner_ext.fans > 0) VideoInfo.owner_ext.fans -= 1;
                 }
                 else
                 {
                     VideoInfo.req_user.attention = 1;
-                    if (VideoInfo.owner_ext != null) VideoInfo.owner_ext.fans += 1;
+                    if (VideoInfo.owner_ext != null && VideoInfo.owner_ext.fans > 0) VideoInfo.owner_ext.fans += 1;
                 }
             }
         }
@@ -845,6 +891,12 @@ namespace BiliLite.Modules
         /// 粉丝数
         /// </summary>
         public int fans { get; set; }
+
+        /// <summary>
+        /// 粉丝数是否可用(接口未返回/读取失败时为 false, 用于隐藏粉丝数标签)
+        /// </summary>
+        public bool HasFans => fans > 0;
+
         /// <summary>
         /// 大会员信息
         /// </summary>

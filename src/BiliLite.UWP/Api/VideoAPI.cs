@@ -81,6 +81,20 @@ namespace BiliLite.Api
             };
         }
 
+        /// <summary>
+        /// 查询用户粉丝数(Web端详情接口不含owner_ext, 需登录Cookie)
+        /// </summary>
+        public ApiModel RelationStat(string mid)
+        {
+            return new ApiModel()
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = "https://api.bilibili.com/x/relation/stat",
+                parameter = $"&vmid={mid}",
+                need_cookie = true,
+            };
+        }
+
         public ApiModel DetailProxy(string id, bool isbvid)
         {
             ApiModel api = new ApiModel()

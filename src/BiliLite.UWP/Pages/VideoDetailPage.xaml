@@ -267,7 +267,7 @@
                     </Ellipse>
                     <StackPanel Grid.Column="1">
                       <TextBlock Margin="8 0" Text="{x:Bind Path=videoDetailVM.VideoInfo.owner.name,Mode=OneWay}"/>
-                      <TextBlock Margin="8 0" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}"><Run Text="{x:Bind Path=videoDetailVM.VideoInfo.owner_ext.fans,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>粉丝</TextBlock>
+                      <TextBlock Margin="8 0" FontSize="12" Visibility="{x:Bind Path=videoDetailVM.VideoInfo.owner_ext.HasFans,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}"><Run Text="{x:Bind Path=videoDetailVM.VideoInfo.owner_ext.fans,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>粉丝</TextBlock>
                     </StackPanel>
                     <Button Width="80" Visibility="{x:Bind Path=videoDetailVM.VideoInfo.req_user.attention,Converter={StaticResource display},ConverterParameter=1,Mode=OneWay}" Command="{x:Bind Path=videoDetailVM.AttentionCommand}" Grid.Column="2" Padding="16 4" FontSize="12">已关注</Button>
                     <Button Width="80" Visibility="{x:Bind Path=videoDetailVM.VideoInfo.req_user.attention,Converter={StaticResource display},ConverterParameter=-999,Mode=OneWay}" Command="{x:Bind Path=videoDetailVM.AttentionCommand}" Grid.Column="2" Padding="16 4" BorderThickness="1" Background="Transparent" BorderBrush="{ThemeResource HighLightColor}" Foreground="{ThemeResource HighLightColor}" FontSize="12">关注</Button>
