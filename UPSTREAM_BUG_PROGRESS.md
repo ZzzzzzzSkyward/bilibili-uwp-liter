@@ -44,4 +44,5 @@
 
 - Original Batch 004 source assessment is complete: #61 is skipped as skeptical on both subclaims; #67 is addressed by the target source. #62, #65, and #69 remain assigned to the user as visual reports.
 - Original candidate accounting remains at the 409 pending-logic baseline until final queue aggregation. The completed Batch 004 dispositions are recorded separately in `work/upstream-bugs/policy-dispositions-004.json`; details are in `work/upstream-bugs/batches/004.md`.
-- The active source-assessment step is original Batch 005. No application code changed; no app build, restore, API request, runtime check, or unit test was run for Batch 004.
+- Original Batch 005 is complete: #74's reported missing WBI handling is already addressed in the target; #82's visual mask is assigned to the user and its unsupported crash claim is skipped as skeptical; #70, #77, and #81 are assigned to the user as visual reports. The source report and dispositions are in `work/upstream-bugs/batches/005.md` and `work/upstream-bugs/policy-dispositions-005.json`.
+- The active source-assessment step is original Batch 006. No application code changed; no app build, restore, API request, runtime check, or unit test was run for Batches 004 or 005.
