@@ -75,7 +75,13 @@ namespace BiliLite.Pages.User
             }
             else
             {
-                Utils.ShowMessageToast("无法打开此类型的历史记录");
+                MessageCenter.NavigateToPage(this, new NavigationInfo()
+                {
+                    icon = Symbol.Play,
+                    page = typeof(VideoDetailPage),
+                    title = data.title,
+                    parameters = data.aid
+                });
             }
         }
 
