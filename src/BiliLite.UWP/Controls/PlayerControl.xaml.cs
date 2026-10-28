@@ -304,6 +304,7 @@ namespace BiliLite.Controls
             Window.Current.CoreWindow.KeyDown -= PlayerControl_KeyDown;
             if (_systemMediaTransportControls != null)
             {
+                _systemMediaTransportControls.ButtonPressed -= _systemMediaTransportControls_ButtonPressed;
                 _systemMediaTransportControls.DisplayUpdater.ClearAll();
                 _systemMediaTransportControls.IsEnabled = false;
                 _systemMediaTransportControls = null;
@@ -327,6 +328,7 @@ namespace BiliLite.Controls
                 updater.VideoProperties.Title = CurrentPlayItem.title;
                 updater.Update();
             }
+            _systemMediaTransportControls.ButtonPressed -= _systemMediaTransportControls_ButtonPressed;
             _systemMediaTransportControls.ButtonPressed += _systemMediaTransportControls_ButtonPressed;
 
             LoadPlayerSetting();
