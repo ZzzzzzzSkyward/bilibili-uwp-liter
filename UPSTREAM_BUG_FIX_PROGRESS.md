@@ -1,8 +1,8 @@
 # Upstream logic bug fix progress
 
-## Current phase: batch 001 complete
+## Current phase: batch 001 complete; push pending root review
 
-The user authorized implementation fixes and commits. The orchestrated first batch addressed the oldest three findings in `work/upstream-bugs/VALIDATED_LOGIC_BUGS.md`, in order: #31, #105, and #121. This batch stops after #121; #146 is next. Root will handle the previously authorized push after review. The catalog assessment, historical findings, and disposition records remain assessment history and must not be rewritten to imply the fixes were part of the assessment.
+The user authorized implementation fixes and commits. The orchestrated first batch covered the oldest three findings in `work/upstream-bugs/VALIDATED_LOGIC_BUGS.md`, in order: #31, #105, and #121; #146 is next. Push is pending root review; root will push under the existing authorization. The catalog assessment, historical findings, and disposition records remain assessment history and must not be rewritten to imply the fixes were part of the assessment.
 
 Baseline target checkout: branch `work`, HEAD `52cb42021eacf8a057a63d43e3f4ff494e31ed15` (clean when this batch began). Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
 

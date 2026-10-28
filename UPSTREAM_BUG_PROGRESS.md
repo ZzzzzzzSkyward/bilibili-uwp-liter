@@ -1,10 +1,10 @@
 # Upstream issue assessment progress
 
-## Current step: authorized fixes, batch 001
+## Current step: batch 001 complete; push pending root review
 
 Assessment covered all 96 original batches; the original catalog retains 757 issues and 477 bug candidates. The assessment contained no application fixes; implementation is tracked separately below.
 
-The assessment handoff is [VALIDATED_LOGIC_BUGS.md](work/upstream-bugs/VALIDATED_LOGIC_BUGS.md): **15 actionable logic findings**, with **six direct isolated unit probes** and **nine source-only findings**. The machine-readable handoff is [assessment-final.json](work/upstream-bugs/assessment-final.json). The pending assessment queue is empty. The user has now authorized a separate fix round for the oldest three findings, #31, #105, and #121, in that order; stop after #121 before #146. Track implementation separately in [UPSTREAM_BUG_FIX_PROGRESS.md](UPSTREAM_BUG_FIX_PROGRESS.md), preserving the assessment records as historical findings.
+The assessment handoff is [VALIDATED_LOGIC_BUGS.md](work/upstream-bugs/VALIDATED_LOGIC_BUGS.md): **15 actionable logic findings**, with **six direct isolated unit probes** and **nine source-only findings**. The machine-readable handoff is [assessment-final.json](work/upstream-bugs/assessment-final.json). The pending assessment queue is empty. The user authorized implementation fixes; the first orchestrated batch covered the oldest three findings, #31, #105, and #121, in that order. #146 is next. Track implementation separately in [UPSTREAM_BUG_FIX_PROGRESS.md](UPSTREAM_BUG_FIX_PROGRESS.md), preserving the assessment records as historical findings.
 
 Visual review belongs to the user. The original 59 assignments remain in `work/upstream-bugs/user-visual-review.json`; 19 additions are in [USER_VISUAL_REVIEW_ADDITIONS.md](work/upstream-bugs/USER_VISUAL_REVIEW_ADDITIONS.md). The final handoff records all 78 assigned IDs.
 

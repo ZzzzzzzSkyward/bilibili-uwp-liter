@@ -2167,14 +2167,15 @@ namespace BiliLite.Controls
             {
                 try
                 {
-                var pointerUpdateKind = e.GetCurrentPoint(sender as UIElement).Properties.PointerUpdateKind;
-                if (SettingHelper.GetValue<bool>(SettingHelper.UI.MOUSE_BACK, true)
-                    && (pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.XButton1Pressed
-                        || pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.MiddleButtonPressed))
-                    return;
-                gestureRecognizer.ProcessDownEvent(ps[0]);
-                e.Handled = true;
-                }catch(Exception ex) { }
+                    var pointerUpdateKind = e.GetCurrentPoint(sender as UIElement).Properties.PointerUpdateKind;
+                    if (SettingHelper.GetValue<bool>(SettingHelper.UI.MOUSE_BACK, true)
+                        && (pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.XButton1Pressed
+                            || pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.MiddleButtonPressed))
+                        return;
+                    gestureRecognizer.ProcessDownEvent(ps[0]);
+                    e.Handled = true;
+                }
+                catch (Exception ex) { }
             }
         }
 
