@@ -5,7 +5,7 @@
 - The integration baseline and preserved plan are committed in `3ede2d158d954745bf59674efc1e7992c10f9f28`.
 - `work/improvements/BASELINE.md` records the target and pinned sibling boundaries, relevant package versions, and explicit project compile inclusion constraints.
 
-## Current step: LM-02 folder import completed
+## Current step: LM-02 reviewed and published; LM-03 next
 
 - LM-01 remains reviewed and published at the prior implementation commit. LM-02 starts from clean target HEAD `863cf0689796e10f6b8e329bac84316d9336c212`.
 - UI entrypoint: add a local media library pivot beside the existing offline downloads in `DownloadPage`; preserve the page's current single-file picker and downloaded-video playback handlers.
@@ -46,3 +46,10 @@
 - Resume with LM-03: map validated manifest items into the existing player while preserving downloaded-video and single-file flows. Do not claim folder playback until the adapter is integrated; preserve explicit subtitle defaults and avoid advertising SRT/VTT playback before LM-05.
 - Keep the existing player engine, old single-file/download paths and NSDanmaku backend. Use the pinned sibling for ports and the preserved plan for the new manifest contract.
 - Prior bug series remains 14/15 fully fixed: fully unmarked AI subtitles (#1311) and old labels remain unresolved.
+
+## LM-02 publication checkpoint
+
+- Setup checkpoint: `c877ab5`; collection import implementation: `e939a6b`; exception-detail logging correction: `8be76ef`. Root reviewed the service, UWP caller boundaries, explicit project entry, and isolated test scope.
+- Normal push to `origin/work` succeeded through `8be76ef`; this handoff is published separately. No pull/fetch was performed. Root `git diff 863cf06 --check` passed.
+- The agent ran the actual-source LM-01/LM-02 harness with storage/FutureAccessList stubs. Real Windows picker, persisted permission across process restart, and UI remain for user app testing. No app build, restore, launch, protocol generation or live API test was performed.
+- Resume at LM-03: use saved folder tokens to resolve `StorageFile` assets, adapt collection items to existing playlist/player models, and wire item playback. Preserve legacy single-file/download behavior and explicit subtitle defaults. Current collection controls import/reopen/view only; no collection playback or SRT/VTT rendering is claimed.
