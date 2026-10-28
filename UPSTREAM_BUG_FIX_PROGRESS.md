@@ -15,11 +15,11 @@ Batch 004 started from target branch `work` at `1caf4c55234800188b546e0dbd7ea5ed
 
 ## Batch state
 
-Batch 004 order: #611 → #625 → #1216. All three fixes are implemented; #611 requires a small follow-up to match the pinned sibling's empty-pattern validation behavior.
+Batch 004 order: #611 → #625 → #1216. All three fixes are implemented, including #1216 compatibility with the legacy page-number fallback.
 
-| #611 | Fixed | Cloud and previously saved local regex rules are merged, validated with .NET regex construction, and materialized before replacing persisted settings. Empty and malformed patterns are removed; valid local/cloud expressions are retained. Actual extracted import block, validator, and render filter probe passes malformed local/cloud patterns, an empty pattern, valid-rule preservation, and comment rendering. No application runtime. Commits recorded below. |
+| #611 | Fixed | Cached rules are validated as `LoadShieldSetting` reads them, pruning and persisting only when invalid entries exist; cloud and cached rules are also validated and materialized when sync merges them. Empty and malformed patterns are removed; valid local/cloud expressions are retained. Actual extracted load, import, validator, and render fragments pass cached-offline pruning, malformed local/cloud and empty patterns, valid-rule preservation, and comment rendering. No application runtime. Commits recorded below. |
 | #625 | Fixed | The 2024 UGC-season display row now carries its mapped video AID, and collection comments dispatch that AID as video OID while preserving dynamic `ReplyID` and other routes. Probe executes the extracted mapper Avid→aid assignment, display AID assignment, and full actual comment handler with distinct IDs. No application runtime. Commit recorded below. |
-| #1216 | Fixed | The response cursor is stored before load-more visibility is decided; a next page is offered only when the existing 10-reply threshold and nonnull next offset are both present. Actual extracted cursor/button statements pass terminal and nonterminal ten-reply cases. Initial request cursor remains null; no app runtime or live response was used. Commit recorded below. |
+| #1216 | Fixed | The response cursor is stored before load-more visibility is decided. Modern cursor responses require the existing 10-reply threshold and a nonnull next offset; the existing page-number fallback retains its 10-reply behavior. The probe executes extracted modern/fallback branch assignments and cursor/button statements for modern terminal, modern nonterminal, and legacy no-cursor ten-reply cases. No app runtime or live response was used. Follow-up commit recorded below. |
 
 ## Batch 004 commits
 
@@ -27,12 +27,14 @@ Batch 004 order: #611 → #625 → #1216. All three fixes are implemented; #611 
 - #611 invalid local/cloud rule filtering and extracted-source probe: `4b8dc07`; empty-pattern alignment with the pinned sibling and probe: `c7f59d7`.
 - #625 mapped UGC AID display and collection comment dispatch: `ce6e9b3`.
 - #1216 terminal cursor handling and extracted-source probe: `4f7885f`.
+- #1216 legacy fallback compatibility: `80eade4`.
+- #611 cached-rule pruning before sync: `3bc7e36`.
 
 ## Batch 004 verification
 
-- #611: `work/upstream-bugs/unit-tests/batch-042/issue-611/run-imported-regex-filter.sh` passes against extracted target import code, validator, and render loop. It verifies invalid local/cloud patterns and an empty pattern are pruned, valid local/cloud rules survive, and the visible comment reaches the add boundary.
+- #611: `work/upstream-bugs/unit-tests/batch-042/issue-611/run-imported-regex-filter.sh` passes against extracted target cache-load and cloud-import code, validator, and render loop. It verifies a cached invalid pattern is persisted-pruned before sync, invalid cloud patterns and an empty pattern are rejected, valid local/cloud rules survive, and the visible comment reaches the add boundary.
 - #625: `work/upstream-bugs/unit-tests/batch-043/issue-625/run-ugc-collection-comment-dispatch.sh` passes with extracted mapper Avid→aid, display AID, and full target comment handler; dynamic ID and video AID remain distinct.
-- #1216: `work/upstream-bugs/unit-tests/batch-079/issue-1216/run-terminal-comment-cursor.sh` passes with extracted actual cursor/load-more statements for terminal and nonterminal ten-reply cases.
+- #1216: `work/upstream-bugs/unit-tests/batch-079/issue-1216/run-terminal-comment-cursor.sh` passes with extracted branch assignments and cursor/load-more statements for modern terminal, modern nonterminal, and legacy fallback ten-reply/no-cursor cases.
 - `git diff --check` passes. No application build, restore, run, protocol generation, live API call, or end-to-end claim was made.
 
 | #378 | Fixed | Target model now preserves absolute URLs and maps malformed, null, and empty values to the pinned sibling fallback. Extracted actual nested class probe passes all four cases; no API/UI runtime. Commit recorded below. |
