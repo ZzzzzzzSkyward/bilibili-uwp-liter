@@ -461,6 +461,16 @@ namespace BiliLite.Pages
             player.ChangePlayIndex(listEpisode.SelectedIndex);
         }
 
+        private void listEpisode_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void listEpisode_PreviewKeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         private void btnOpenUser_Click(object sender, RoutedEventArgs e)
         {
             var data = (sender as HyperlinkButton).DataContext;

@@ -317,7 +317,7 @@
                   <TextBlock x:Name="txtDesc" Visibility="Collapsed" RightTapped="txtDesc_RightTapped" Holding="txtDesc_Holding" Tapped="txtDesc_Tapped" IsTextSelectionEnabled="False" TextTrimming="CharacterEllipsis" TextWrapping="Wrap" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind Path=videoDetailVM.VideoInfo.desc,Mode=OneWay}"/>
                   <ContentControl x:Name="contentDesc" Foreground="{ThemeResource ForegroundTextColor}"/>
                 </StackPanel>
-                <toolkit:AdaptiveGridView Visibility="{x:Bind Path=videoDetailVM.VideoInfo.showPages,Mode=OneWay}" DesiredWidth="180" ItemHeight="36" Margin="0 8 0 0" x:Name="listEpisode" SelectionChanged="listEpisode_SelectionChanged" ItemsSource="{x:Bind Path=videoDetailVM.VideoInfo.pages,Mode=OneWay}">
+                <toolkit:AdaptiveGridView Visibility="{x:Bind Path=videoDetailVM.VideoInfo.showPages,Mode=OneWay}" DesiredWidth="180" ItemHeight="36" Margin="0 8 0 0" x:Name="listEpisode" SelectionChanged="listEpisode_SelectionChanged" PreviewKeyDown="listEpisode_PreviewKeyDown" PreviewKeyUp="listEpisode_PreviewKeyUp" ItemsSource="{x:Bind Path=videoDetailVM.VideoInfo.pages,Mode=OneWay}">
                   <GridView.Header>
                     <TextBlock Margin="0 8" FontSize="16">分集(共<Run Text="{x:Bind Path=videoDetailVM.VideoInfo.pages.Count,Mode=OneWay}"/>P)</TextBlock>
                   </GridView.Header>
