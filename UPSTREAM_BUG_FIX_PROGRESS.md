@@ -32,7 +32,7 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 
 - #378: `408169f`.
 - #404: `2932bb8`.
-- #598: `TBD`.
+- #598: `0ab19b9`.
 
 ## Batch 003 verification
 
@@ -50,4 +50,4 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 - #358: `work/upstream-bugs/unit-tests/fix-batch-002/issue-358/run.sh` — passes against the full actual `HistoryVM` and actual extracted `AccountApi.HistoryWbi`, with real Newtonsoft deserialization of fixture JSON and a recording request boundary. Confirms initial GET shape/cookie flag, cursor append, archive/PGC item mapping and `kid` deletion key apart from nested OID, empty terminal page, and refresh reset. This executes no UWP navigation, actual transport, or live API. The earlier format-only command could not start because the available .NET tool failed initialization (`/home/agent/.dotnet/8.0.427.toolpath.sentinel` was read-only, then NuGet migration mutex initialization failed with `DOTNET_CLI_HOME` redirected to `/tmp`).
 - No application build, restore, run, protocol generation, live app API call, or end-to-end behavior check was performed in batch 002.
 
-Batch 002 application changes were reviewed and pushed to `origin/work` through `f6c8a4fe19cf1b073b53c7dba200b6f6c246decf`, including the history navigation fallback follow-up. Both isolated probes passed after that commit; temporary compiler outputs are excluded from Git. Six of the 15 assessed findings have implementation fixes. User build/testing is pending; next finding: #611.
+Batch 002 application changes were reviewed and pushed to `origin/work` through `f6c8a4fe19cf1b073b53c7dba200b6f6c246decf`, including the history navigation fallback follow-up. Both isolated probes passed after that commit; temporary compiler outputs are excluded from Git. Nine of the 15 assessed findings have implementation fixes, including batch 003. User build/testing is pending; next finding: #611.
