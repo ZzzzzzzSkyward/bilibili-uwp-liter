@@ -1053,6 +1053,7 @@ namespace BiliLite.Controls
                 _hasPlayedCurrentItem = false;
             }
             CurrentPlayItem = selectedPlayItem;
+            UpdateLocalTrackSelectors();
             if (CurrentPlayItem.is_interaction)
             {
                 ShowPlaylistButton = false;
@@ -1356,6 +1357,123 @@ namespace BiliLite.Controls
             await SetQuality();
         }
 
+        private void UpdateLocalTrackSelectors()
+        {
+            var localInfo = CurrentPlayItem?.LocalPlayInfo;
+            var isManifest = localInfo?.IsManifestPlayback == true;
+            LocalTracksPivot.Visibility = isManifest ? Visibility.Visible : Visibility.Collapsed;
+            _updatingLocalTrackSelectors = true;
+            try
+            {
+                var videoOptions = LocalMediaTrackSelection.VideoOptions(localInfo);
+                var audioOptions = LocalMediaTrackSelection.AudioOptions(localInfo);
+                LocalVideoTrackSelector.ItemsSource = isManifest ? videoOptions : null;
+                LocalAudioTrackSelector.ItemsSource = isManifest ? audioOptions : null;
+                LocalVideoTrackSelector.SelectedItem = videoOptions.FirstOrDefault(option => ReferenceEquals(option.Track, localInfo?.SelectedVideoTrack));
+                LocalAudioTrackSelector.SelectedItem = audioOptions.FirstOrDefault(option =>
+                    option.IsEmbeddedAudio ? localInfo?.SelectedAudioTrack == null : ReferenceEquals(option.Track, localInfo?.SelectedAudioTrack));
+            }
+            finally
+            {
+                _updatingLocalTrackSelectors = false;
+            }
+        }
+
+        private async void LocalVideoTrackSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_updatingLocalTrackSelectors || _localTrackSwitching || !(LocalVideoTrackSelector.SelectedItem is LocalMediaTrackSelectionOption option) || option.Track == null)
+                return;
+            await SwitchLocalTrackAsync(option.Track, isAudio: false);
+        }
+
+        private async void LocalAudioTrackSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_updatingLocalTrackSelectors || _localTrackSwitching || !(LocalAudioTrackSelector.SelectedItem is LocalMediaTrackSelectionOption option))
+                return;
+            await SwitchLocalTrackAsync(option.IsEmbeddedAudio ? null : option.Track, isAudio: true);
+        }
+
+        private async Task SwitchLocalTrackAsync(LocalMediaPlaybackTrack requestedTrack, bool isAudio)
+        {
+            var item = CurrentPlayItem;
+            var localInfo = item?.LocalPlayInfo;
+            if (localInfo?.IsManifestPlayback != true || _localTrackSwitching)
+                return;
+
+            var resumeId = localInfo.ResumeId;
+            var position = Player.Position;
+            var wasPlaying = Player.PlayState == PlayState.Playing;
+            var itemId = localInfo.ManifestItem.Id;
+            var collectionId = localInfo.ManifestCollectionId;
+            var trackId = requestedTrack?.Track?.Id ?? "embedded";
+            var stage = isAudio ? "audio-track-switch" : "video-track-switch";
+            _localTrackSwitching = true;
+            LocalVideoTrackSelector.IsEnabled = false;
+            LocalAudioTrackSelector.IsEnabled = false;
+            EpisodeList.IsEnabled = false;
+            BottomBtnNext.IsEnabled = false;
+            try
+            {
+                var outcome = await LocalMediaTrackSwitchCoordinator.SwitchAsync(
+                    localInfo,
+                    isAudio,
+                    requestedTrack,
+                    (savedPosition, resumePlaying) =>
+                    {
+                        _position = savedPosition;
+                        _autoPlay = resumePlaying;
+                        _restoreLocalTrackPositionOnOpen = true;
+                    },
+                    position,
+                    wasPlaying,
+                    async () =>
+                    {
+                        var result = await PlayLocalFile(preservePlaybackState: true);
+                        return new LocalMediaTrackOpenResult
+                        {
+                            Success = result.result,
+                            Message = result.message,
+                            Detail = result.detail_message
+                        };
+                    });
+
+                if (!ReferenceEquals(CurrentPlayItem, item) || CurrentPlayItem?.LocalPlayInfo?.ResumeId != resumeId)
+                    return;
+                if (outcome.Success)
+                    return;
+
+                var failure = outcome.OpenException?.ToString() ?? FormatLocalTrackSwitchFailure(outcome.OpenResult);
+                var recoveryFailed = outcome.RestoreException != null || outcome.RestoreResult?.Success != true;
+                if (recoveryFailed)
+                    _restoreLocalTrackPositionOnOpen = false;
+                var rollback = outcome.RestoreException?.ToString() ?? FormatLocalTrackSwitchFailure(outcome.RestoreResult);
+                LogHelper.Log("Local media track switch failed; stage=" + stage + "-rollback-reopen; collectionId=" + collectionId + "; itemId=" + itemId + "; trackId=" + trackId + "; failure=" + failure + "; rollback=" + rollback, LogType.ERROR);
+                var message = outcome.OpenResult?.Message;
+                if (string.IsNullOrWhiteSpace(message))
+                    message = outcome.OpenException?.Message ?? "The selected track could not be opened.";
+                ShowDialog(message, isAudio ? "切换音频失败" : "切换视频失败");
+            }
+            catch (Exception exception)
+            {
+                LogHelper.Log("Local media track switch failed; stage=" + stage + "; collectionId=" + collectionId + "; itemId=" + itemId + "; trackId=" + trackId + "; exception=" + exception, LogType.ERROR);
+                ShowDialog("The selected track could not be opened. " + exception.Message, isAudio ? "切换音频失败" : "切换视频失败");
+            }
+            finally
+            {
+                _localTrackSwitching = false;
+                LocalVideoTrackSelector.IsEnabled = true;
+                LocalAudioTrackSelector.IsEnabled = true;
+                EpisodeList.IsEnabled = true;
+                BottomBtnNext.IsEnabled = true;
+                UpdateLocalTrackSelectors();
+            }
+        }
+
+        private static string FormatLocalTrackSwitchFailure(LocalMediaTrackOpenResult result)
+        {
+            return "message=" + (result?.Message ?? "") + "; detail=" + (result?.Detail ?? "") + "; success=" + (result?.Success.ToString() ?? "null");
+        }
+
         private double _position = 0;
         private bool _autoPlay = false;
         private bool _hasPlayedCurrentItem = false;
@@ -1412,6 +1530,9 @@ namespace BiliLite.Controls
         }
 
         private bool loadingDanmaku = false;
+        private bool _updatingLocalTrackSelectors;
+        private bool _localTrackSwitching;
+        private bool _restoreLocalTrackPositionOnOpen;
 
         private async Task LoadDanmaku(int segmentIndex)
         {
@@ -1494,7 +1615,7 @@ namespace BiliLite.Controls
             }
         }
 
-        private async Task PlayLocalFile()
+        private async Task<PlayerOpenResult> PlayLocalFile(bool preservePlaybackState = false)
         {
             VideoLoading.Visibility = Visibility.Visible;
             PlayerOpenResult result = new PlayerOpenResult()
@@ -1526,7 +1647,8 @@ namespace BiliLite.Controls
             if (result.result)
             {
                 VideoLoading.Visibility = Visibility.Collapsed;
-                Player.Play();
+                if (!preservePlaybackState)
+                    Player.Play();
             }
             else
             {
@@ -1538,8 +1660,10 @@ namespace BiliLite.Controls
                         "; message=" + result.message,
                         LogType.ERROR);
                 }
-                ShowErrorDialog(result.message + "[LocalFile]");
+                if (!preservePlaybackState)
+                    ShowErrorDialog(result.message + "[LocalFile]");
             }
+            return result;
         }
 
         private async Task GetPlayerInfo()
@@ -2264,13 +2388,13 @@ namespace BiliLite.Controls
 
         private void TopBtnSettingDanmaku_Click(object sender, RoutedEventArgs e)
         {
-            SettingPivot.SelectedIndex = 1;
+            SettingPivot.SelectedIndex = 2;
             SplitView.IsPaneOpen = true;
         }
 
         private void TopBtnMore_Click(object sender, RoutedEventArgs e)
         {
-            SettingPivot.SelectedIndex = 2;
+            SettingPivot.SelectedIndex = CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true ? 1 : 3;
             SplitView.IsPaneOpen = true;
         }
 
@@ -2603,9 +2727,11 @@ namespace BiliLite.Controls
             {
                 if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
                 {
+                    var localInfo = CurrentPlayItem.LocalPlayInfo;
                     LogHelper.Log("Local media playback failed; stage=engine-change; collectionId=" +
-                        CurrentPlayItem.LocalPlayInfo.ManifestCollectionId + "; itemId=" +
-                        CurrentPlayItem.LocalPlayInfo.ManifestItem.Id + "; detail=" + result.detail_message,
+                        localInfo.ManifestCollectionId + "; itemId=" + localInfo.ManifestItem.Id + "; videoTrackId=" +
+                        (localInfo.SelectedVideoTrack?.Track?.Id ?? "unknown") + "; audioTrackId=" +
+                        (localInfo.SelectedAudioTrack?.Track?.Id ?? "embedded") + "; message=" + result.message + "; detail=" + result.detail_message,
                         LogType.ERROR);
                 }
                 ShowDialog(result.message, "播放失败");
@@ -2617,10 +2743,11 @@ namespace BiliLite.Controls
         {
             txtInfo.Text = Player.GetMediaInfo();
             VideoLoading.Visibility = Visibility.Collapsed;
-            if (_position != 0)
+            if (_position != 0 || _restoreLocalTrackPositionOnOpen)
             {
                 Player.SetPosition(_position);
             }
+            _restoreLocalTrackPositionOnOpen = false;
             if (_autoPlay)
             {
                 Player.Play();

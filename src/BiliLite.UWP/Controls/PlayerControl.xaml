@@ -223,6 +223,19 @@
                 </ListView>
               </Grid>
             </PivotItem>
+            <PivotItem x:Name="LocalTracksPivot" Visibility="Collapsed" Foreground="White">
+              <PivotItem.Header>
+                <TextBlock Foreground="White" FontSize="18">本地轨道</TextBlock>
+              </PivotItem.Header>
+              <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <StackPanel Margin="12">
+                  <TextBlock Margin="0,8" Text="视频轨道" />
+                  <ComboBox x:Name="LocalVideoTrackSelector" DisplayMemberPath="Label" SelectionChanged="LocalVideoTrackSelector_SelectionChanged" />
+                  <TextBlock Margin="0,16,0,8" Text="音频轨道" />
+                  <ComboBox x:Name="LocalAudioTrackSelector" DisplayMemberPath="Label" SelectionChanged="LocalAudioTrackSelector_SelectionChanged" />
+                </StackPanel>
+              </ScrollViewer>
+            </PivotItem>
             <PivotItem Foreground="White">
               <PivotItem.Header>
                 <TextBlock Foreground="White" FontSize="18">弹幕</TextBlock>
