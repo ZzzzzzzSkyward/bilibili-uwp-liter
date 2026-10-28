@@ -1,6 +1,6 @@
 # Upstream logic bug fix progress
 
-## Current phase: batch 003 implementation in progress (#378 → #404 → #598)
+## Current phase: batch 003 complete; awaiting user build/testing
 
 The user authorized implementation fixes and commits. Batch 001 fixed #31, #105, and #121; batch 002 fixed #146, #275, and #358. Batch 003 is implementing the next three findings in order. Root reviews and pushes completed batches. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
 
@@ -17,7 +17,7 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 
 | #378 | Fixed | Target model now preserves absolute URLs and maps malformed, null, and empty values to the pinned sibling fallback. Extracted actual nested class probe passes all four cases; no API/UI runtime. Commit recorded below. |
 | #404 | Fixed | Empty `area_entrance_v2` now skips area parsing while the populated first-entry path remains intact. Extracted actual block probe passes empty and populated shapes. Commit recorded below. |
-| #598 | Pending | Restore the natural-end history report at the target handler position before auto-next handling. |
+| #598 | Fixed | Natural-end handler awaits one history report for the current item at `Player.Duration` after interaction early returns and before mode/auto-next handling. Updated actual-handler probe passes exact item, duration, and once assertions. Commit recorded below. |
 
 | Issue | State | Evidence / commit |
 |---|---|---|
@@ -31,7 +31,15 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 ## Batch 003 issue commits
 
 - #378: `408169f`.
-- #404: `TBD`.
+- #404: `2932bb8`.
+- #598: `TBD`.
+
+## Batch 003 verification
+
+- #378: `work/upstream-bugs/unit-tests/batch-003/issue-378/run.sh` — passes against the extracted actual nested target class; absolute URL is preserved and malformed, null, and empty values use the sibling fallback.
+- #404: `work/upstream-bugs/unit-tests/batch-003/issue-404/run.sh` — passes against the extracted actual target block; empty area arrays skip indexing and populated first-entry lists are loaded. Shape stubs only; no live API or UI execution.
+- #598: `work/upstream-bugs/unit-tests/batch-041/issue-598/run-natural-end-report.sh` — passes against the current actual handler, extracted by declaration and balanced braces; verifies exactly one report with the same item reference and exact `Player.Duration` (100 fixture). Report boundary is a local stub.
+- Batch 003 started at `87cf0d1` after the prior batch 002 push; root reviews and handles pushes. No pull/fetch, application build, restore, run, protocol generation, or live API test was performed.
 
 ## Verification record
 
@@ -42,4 +50,4 @@ Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instr
 - #358: `work/upstream-bugs/unit-tests/fix-batch-002/issue-358/run.sh` — passes against the full actual `HistoryVM` and actual extracted `AccountApi.HistoryWbi`, with real Newtonsoft deserialization of fixture JSON and a recording request boundary. Confirms initial GET shape/cookie flag, cursor append, archive/PGC item mapping and `kid` deletion key apart from nested OID, empty terminal page, and refresh reset. This executes no UWP navigation, actual transport, or live API. The earlier format-only command could not start because the available .NET tool failed initialization (`/home/agent/.dotnet/8.0.427.toolpath.sentinel` was read-only, then NuGet migration mutex initialization failed with `DOTNET_CLI_HOME` redirected to `/tmp`).
 - No application build, restore, run, protocol generation, live app API call, or end-to-end behavior check was performed in batch 002.
 
-Batch 002 application changes were reviewed and pushed to `origin/work` through `f6c8a4fe19cf1b073b53c7dba200b6f6c246decf`, including the history navigation fallback follow-up. Both isolated probes passed after that commit; temporary compiler outputs are excluded from Git. Six of the 15 assessed findings have implementation fixes. User build/testing is pending; next finding: #378.
+Batch 002 application changes were reviewed and pushed to `origin/work` through `f6c8a4fe19cf1b073b53c7dba200b6f6c246decf`, including the history navigation fallback follow-up. Both isolated probes passed after that commit; temporary compiler outputs are excluded from Git. Six of the 15 assessed findings have implementation fixes. User build/testing is pending; next finding: #611.

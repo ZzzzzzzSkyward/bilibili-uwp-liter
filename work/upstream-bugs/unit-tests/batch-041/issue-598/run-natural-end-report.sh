@@ -6,8 +6,21 @@ tools_root="${UPSTREAM_UNIT_TOOLS:-/workspace/work/upstream-unit-tools}"
 source_file="$repo_root/src/BiliLite.UWP/Controls/PlayerControl.xaml.cs"
 fragment="$script_dir/player-media-ended.csx"
 harness="$script_dir/natural-end-report-test.csx"
-sed -n '2374,2451p' "$source_file" > "$fragment"
-grep -Fq '//await playerHelper.ReportHistory(CurrentPlayItem, Player.Duration);' "$fragment"
+python3 - "$source_file" "$fragment" <<'PYEXTRACT'
+import sys
+source=open(sys.argv[1],encoding='utf-8-sig').read()
+start=source.index('        private async void Player_PlayMediaEnded(')
+brace=source.index('{',start)
+depth=0
+for end in range(brace,len(source)):
+    if source[end]=='{': depth+=1
+    elif source[end]=='}':
+        depth-=1
+        if depth==0:
+            open(sys.argv[2],'w').write(source[start:end+1]+'\n')
+            break
+else: raise SystemExit('Could not locate end of Player_PlayMediaEnded')
+PYEXTRACT
 cat > "$harness" <<'CSHARP'
 using System;
 using System.Collections.Generic;
@@ -25,7 +38,9 @@ sealed class PlayerStub { public double Duration = 100; public void Play() { } }
 sealed class HistoryStub
 {
     public int Calls;
-    public Task ReportHistory(PlayInfo item, double progress) { Calls++; return Task.CompletedTask; }
+    public PlayInfo LastItem;
+    public double LastProgress;
+    public Task ReportHistory(PlayInfo item, double progress) { Calls++; LastItem = item; LastProgress = progress; return Task.CompletedTask; }
 }
 static class Utils { public static void ShowMessageToast(string message) { } }
 sealed class PlayerControlHarness
@@ -52,11 +67,12 @@ cat >> "$harness" <<'CSHARP'
 
 var control = new PlayerControlHarness();
 control.InvokePlayerEnd();
-Console.WriteLine($"History report calls on natural end: {control.playerHelper.Calls}");
-var passed = control.playerHelper.Calls > 0;
+var passed = control.playerHelper.Calls == 1
+    && ReferenceEquals(control.playerHelper.LastItem, control.CurrentPlayItem)
+    && control.playerHelper.LastProgress == control.Player.Duration;
 Console.WriteLine(passed
-    ? "PASS: natural completion reported final progress"
-    : "FAIL: natural completion did not report final progress");
+    ? $"PASS: natural completion reported this item at exact duration ({control.Player.Duration}) once"
+    : $"FAIL: expected one report for current item at {control.Player.Duration}, observed {control.playerHelper.Calls} call(s) at {control.playerHelper.LastProgress}");
 Environment.ExitCode = passed ? 0 : 1;
 CSHARP
 export DOTNET_ROOT="$tools_root/dotnet"

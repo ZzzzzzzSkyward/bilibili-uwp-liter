@@ -14,7 +14,9 @@ sealed class PlayerStub { public double Duration = 100; public void Play() { } }
 sealed class HistoryStub
 {
     public int Calls;
-    public Task ReportHistory(PlayInfo item, double progress) { Calls++; return Task.CompletedTask; }
+    public PlayInfo LastItem;
+    public double LastProgress;
+    public Task ReportHistory(PlayInfo item, double progress) { Calls++; LastItem = item; LastProgress = progress; return Task.CompletedTask; }
 }
 static class Utils { public static void ShowMessageToast(string message) { } }
 sealed class PlayerControlHarness
@@ -47,7 +49,7 @@ sealed class PlayerControlHarness
                 InteractionChoices.Visibility = Visibility.Visible;
                 return;
             }
-            //await playerHelper.ReportHistory(CurrentPlayItem, Player.Duration);
+            await playerHelper.ReportHistory(CurrentPlayItem, Player.Duration);
             //列表顺序播放
             if (PlayerSettingPlayMode.SelectedIndex == 0)
             {
@@ -116,9 +118,10 @@ sealed class PlayerControlHarness
 
 var control = new PlayerControlHarness();
 control.InvokePlayerEnd();
-Console.WriteLine($"History report calls on natural end: {control.playerHelper.Calls}");
-var passed = control.playerHelper.Calls > 0;
+var passed = control.playerHelper.Calls == 1
+    && ReferenceEquals(control.playerHelper.LastItem, control.CurrentPlayItem)
+    && control.playerHelper.LastProgress == control.Player.Duration;
 Console.WriteLine(passed
-    ? "PASS: natural completion reported final progress"
-    : "FAIL: natural completion did not report final progress");
+    ? $"PASS: natural completion reported this item at exact duration ({control.Player.Duration}) once"
+    : $"FAIL: expected one report for current item at {control.Player.Duration}, observed {control.playerHelper.Calls} call(s) at {control.playerHelper.LastProgress}");
 Environment.ExitCode = passed ? 0 : 1;
