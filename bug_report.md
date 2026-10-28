@@ -1,13 +1,13 @@
 # Bug report — round 2 (implemented against `code_review.md`)
 
-Orchestrator → remote reviewer. Branch `work`, implemented on top of `1fb7aa4`.
+Orchestrator → remote reviewer. Branch `work`, review round implemented on top of `1fb7aa4`, this increment on `5237b9d`.
 
 `code_review.md` decisions applied: BR-01 approved (mapping), BR-02 approved (label only), BR-03 approved (option 3), BR-04 approved with the skipped-refresh fix, BR-05 approved a+b, BR-06 rejected, BR-07 deferred, BR-08 approved (error fidelity + login gate; empty-success shortcut and REST fallback rejected). Two bugs the user confirmed at runtime were added as BR-09/BR-10 and fixed.
 
-Verification on this machine: `-Fast` 0 errors in 52-56 s; full run 79 s producing
-`Z:\BiliLite.UWP_1.0.9.6_x64_Test\BiliLite.UWP_1.0.9.6_x64.msix` and
-`Z:\BiliLite.Packages_1.0.9.6_x64_Test\BiliLite.Packages_1.0.9.6_x64.msix`.
-One full run aborted first with `CS2012 … intermediatexaml\BiliLiter.exe … locked by MSBuild.exe (27452)`: a reused MSBuild node still held the intermediate exe. The node exited, the rerun at the same version was clean. Recorded in `document/BUILD.md`. No runtime/UI check was possible here; the three behavioural claims below that need eyes on screen are marked `[device]`.
+Verification on this machine: `-Fast` 0 errors in 90 s; full run 0 errors in 121 s producing
+`Z:\BiliLite.UWP_1.0.9.9_x64_Test\BiliLite.UWP_1.0.9.9_x64.msix` and
+`Z:\BiliLite.Packages_1.0.9.9_x64_Test\BiliLite.Packages_1.0.9.9_x64.msix`.
+The `CS2012 … intermediatexaml\BiliLiter.exe … locked by MSBuild.exe` lock still occurred once even with `-nodeReuse:false -p:UseSharedCompilation=false`; the script now detects that exact error in its own output, kills leftover MSBuild nodes and retries once, which is what produced the clean 1.0.9.9 artifacts. Recorded in `document/BUILD.md`. No runtime/UI check was possible here; behavioural claims that need eyes on screen are marked `[device]`.
 
 ## Status per ID
 
@@ -23,6 +23,8 @@ One full run aborted first with `CS2012 … intermediatexaml\BiliLiter.exe … l
 | BR-08 | approved (narrow) | done — error fidelity + login gate; no REST fallback, no empty-success |
 | BR-09 | user-confirmed bug | done — pointer cursor restored on live teardown |
 | BR-10 | user-confirmed bug | done — fan count fetched for web detail |
+| BR-11 | user-confirmed bug | resolved — REST feed fallback (user overrode the review's rejection) |
+| BR-12 | user-reported leak | done — seven retention edges closed |
 
 ## BR-01 — unmapped families, medialists, ad/banner
 
@@ -75,9 +77,48 @@ Two follow-ups for you:
 
 Note on your agent's concern about `btnOpenUser`: `DisplayConvert` inverts booleans and `showStaff` is `staff != null`, so `Visibility` on that button means "visible when there is no staff list" — the staff-less UP row is correct, not a mis-wire. No change made.
 
-## Open items / risks I want ruled on
+## BR-11 — `DynAll` rejection now falls back to the REST feed (user-confirmed)
+
+Original failure (before this round):
+
+```
+请求失败,HTTP 200,没有数据返回,responseBytes=0,服务端状态: grpc-status=2; grpc-message=-663; bili-status-code=-663
+   at GrpcService.GetDynAll(...) at DynamicVM.GetDynamicItems(...)
+```
+
+Facts: `-663` is not in the public error table (`-352` risk, `-412` blocked, `-799` too frequent), the body is empty, HTTP is 200, and the gRPC metadata ships a hardcoded fake buvid (`src/BiliLite.gRPC/GrpcRequestHedaer.cs:27`) shared by every install. `DynAll` also sent `local_time = 0` while `DynVideo` sends 8. None of that identifies the server's rule, so the app cannot rely on gRPC for the feed.
+
+**The user overrode the earlier decision that a clearer error is enough: the feed must work.** Implemented:
+
+1. **Fallback (primary):** for the All and Video tabs, a rejected gRPC request now switches the VM to the REST feed (`dynamicAPI.DyanmicNew`) instead of throwing. `restFeedMode` is sticky per VM; the switch logs `stage=rest-fallback reason=<message>`, keeps the enriched text for the case where the REST page is also empty, and clears the gRPC cursors.
+2. **Separate cursors:** REST pagination uses its own `restOffset` from `data.offset` (`DyanmicNew` gained an `offset` parameter, signed like the rest of the query) and its own `has_more`; `historyOffset`/`update_baseline` are never sent to REST, which answers the original objection to a fallback rather than ignoring it. A rejection during `LoadMore` republishes REST page 1 instead of appending onto gRPC items.
+3. **Bounded retry:** `Refresh()` resets `restFeedMode` once and retries gRPC; a second failure falls back again. One gRPC attempt per request, so it cannot loop.
+4. **Diagnostics kept:** `DynAll` now sends `LocalTime = 8` like `DynVideo`, transport failures still name `grpc-status`/`bili-status-code`, and the VM maps `-352/-412/-663` to `服务端拒绝了动态请求（-663），请稍后重试` when a REST page fails too.
+
+**For you to review:** this deliberately overrides your BR-11 rejection of a REST fallback, on the user's explicit instruction. If you still object, the alternative with a real chance of removing the root cause is obtaining a server-issued buvid (`/x/frontend/finger/spi`) and using it in the gRPC metadata instead of the constant - say the word and I will build that instead, keeping this fallback behind the same flag. `[device]` - I cannot reproduce `-663` without a signed-in session, so the fallback path is source-verified, not runtime-proven.
+
+## BR-12 — memory leaks (user-reported)
+
+A read-only audit produced seven retention edges with source evidence; all seven are closed. Every one was a delegate on a static or per-view singleton that captured a page/control, so navigation could never collect the graph.
+
+|#|Retained by|Where|Fix|
+|---|---|---|---|
+|1|`DataTransferManager.GetForCurrentView().DataRequested` (per-view singleton, subscribed in ctors of three pages, never removed; also made stale handlers run on the next share and dereference nulled VMs)|`VideoDetailPage:62`, `SeasonDetailPage:41`, `LiveDetailPage:53`|subscribe in `OnNavigatedTo` (`-=` then `+=`), unsubscribe in `OnNavigatedFrom`|
+|2|`SystemMediaTransportControls.ButtonPressed` accumulated on every `Loaded` (`NavigationCacheMode.Enabled`), retaining `PlayerControl` + `MediaPlayer` and firing duplicate media keys|`PlayerControl.xaml.cs:330`|`-=` in `Loaded` before `+=`, `-=` in `Unloaded` before nulling|
+|3|`MyFrame.ClosedPage` — five pages used a no-op `-=`/`+=` pair, so every page instance ever loaded stayed rooted and `frame.Close()` invoked dead pages|`VideoDetailPage`, `SeasonDetailPage`, `LiveDetailPage`, `WebPage`, `LocalPlayerPage`|one `SubscribeClosedPage`/`UnsubscribeClosedPage` helper per page, hooked from `Loaded`/`OnNavigatedTo`, detached in `OnNavigatedFrom`|
+|4|static `MessageCenter.LoginedEvent/LogoutedEvent` — `LiveRoomVM` never removed its handler in `Dispose`, pinning timers/collections; `AnimePage`/`MoviePage` never unsubscribed|`LiveRoomVM.cs:43`, `AnimePage.xaml.cs:25`, `MoviePage.xaml.cs:32`|remove in `Dispose`, page-level subscribe/unsubscribe in `OnNavigatedTo`/`OnNavigatedFrom` plus the tab-close path|
+|5|`LiveMessage.heartBeatTimer` was `static` but per-connection: reconnecting stranded the previous enabled timer forever and `Dispose` could stop another room's timer|`LiveMessage.cs:91`|instance field, own timer stopped/disposed in `Dispose`; `LiveRoomVM` now disposes the previous `LiveMessage` on reconnect|
+|6|`Utils.sb`: static `StringBuilder` appended per HTTP call, never cleared|`Utils.cs:111`|capped at 8 KiB (tail keeps the newest text), lock added because callers append from background threads|
+|7|`new HttpClient()` per gRPC request, undisposed|`GrpcRequest.cs:122`|one shared static client; `authorization` and `x-bili-metadata-bin` (both access-key dependent) moved to the per-request message so concurrent calls cannot cross-contaminate|
+
+Left alone deliberately: `Utils.sp` pins one `SettingPage` (bounded, one instance); `MyListView` was audited and is **not** a leak (its subscriptions are self-to-self; the audit says so explicitly); `Controls/Carousel`, `LiveDanmaku`, `CookieService` and `HttpHelper` were checked and found clean.
+
+`[device]` confirmation: open/close ~10 video and ~10 live tabs, force GC twice, and count `VideoDetailPage`/`PlayerControl`/`LiveRoomVM`/`LiveMessage` instances plus handles. That measurement was not possible here.
+
+## Open items / risks I want ruled on## Open items / risks I want ruled on
 
 1. BR-05 trigger also affects the repost pane (see above) — gate it or keep it?
 2. BR-08 login gate on the Article tab — keep or limit to gRPC feeds?
 3. `DynamicParse` still labels UGc collections `合集`; the split relies on `major.medialist` vs `major.ugc_season`, which is what the proto union provides. If the server ever emits a medialist with an empty `sub_title`, the OneRow subtitle is blank by design (no fabricated play counts).
-4. No runtime verification was possible for BR-04/BR-05/BR-09/BR-10 or the login overlay; all four need a sideload of 1.0.9.6 to confirm.
+4. No runtime verification was possible for BR-04/BR-05/BR-09/BR-10/BR-11 or the login overlay; all five need a sideload of 1.0.9.7 to confirm.
+5. BR-11 needs one of the three remedies above; option 2 is the only one that plausibly removes the root cause, option 1 is the only one that plausibly restores the feed today.
