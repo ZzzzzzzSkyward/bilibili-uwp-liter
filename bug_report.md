@@ -125,7 +125,16 @@ Chain, all source-verified:
 1. `src/BiliLite.gRPC/GrpcRequest.cs:110-130` decides success by `if (data.Length > 5)`. A gRPC response that carries only the 5-byte length-prefixed header with a **zero-length** protobuf body — which is what the server sends when it answers with no message — lands in the `else` and becomes `{ code = -102, status = false, message = "请求失败,没有数据返回" }`. The `grpc-status` trailer (requested via `TE: trailers` at `GrpcRequest.cs:94`) is never read, so an "empty but successful" reply and a real rejection are indistinguishable, and a genuinely empty feed can never be parsed into an empty `DynAllReply`.
 2. `src/BiliLite.UWP/Services/GrpcService.cs:27-37` turns that result into `throw new Exception(result.message)`.
 3. `src/BiliLite.UWP/Modules/User/DynamicVM.cs:400-512` has no catch-and-degrade around the `DynamicType.UserDynamic` branch, so the throw is the whole request: `Items` is never assigned, the legacy REST feed (`dynamicAPI.DyanmicNew`, reached only at `Modules/User/DynamicVM.cs:515`) is never attempted, and the page publishes `count=0`.
-4. Auth context: `GrpcService.GetRequestUserInfo()` (`Services/GrpcService.cs:65-72`) always sends `SettingHelper.Account.AccessKey`, which is empty when signed out, and `GrpcRequest.SendMessage` then sends `authorization: identify_v1 ` with no key (`GrpcRequest.cs:83`). `DynAll` is a logged-in endpoint, so a signed-out session is one plausible trigger for the empty frame; a temporary server-side rejection is the other. The log line alone cannot tell them apart, because nothing records the `grpc-status` value or the HTTP status of this failure path.
+4. Auth context: `GrpcService.GetRequestUserInfo()` (`Services/GrpcService.cs:65-72`) always sends `SettingHelper.Account.AccessKey`, which is empty when signed out, and `GrpcRequest.SendMessage` then sends `authorization: identify_v1 ` with no key (`GrpcRequest.cs:83`).
+
+Measured against the live endpoint today (one `DynAllReq` with `page = 1`, no device/metadata bins, so treat the exact code as indicative rather than exhaustive):
+
+| `authorization` | HTTP | `Content-Length` | `bili-status-code` | `grpc-status` |
+|---|---|---|---|---|
+| `identify_v1 ` (empty key) | 200 | 0 | -400 | 2 |
+| `identify_v1 <32-hex>` (unaccepted key) | 200 | 0 | -101 | 2 |
+
+A rejected `DynAll` therefore answers **200 with a zero-byte body** and puts the real reason only in trailers. That is exactly the shape the client mislabels as "请求失败,没有数据返回": the text is fabricated locally, the server's -400/-101 is discarded, and no code path can distinguish "signed out" from "expired key" from "malformed request".
 
 **Decision requested** (three separable fixes; say which to take):
 1. Transport: read `grpc-status`/`grpc-message` from trailing headers, and treat `status=0` with an empty body as a successful empty message (`results = Array.Empty<byte>()`) instead of `-102`.
