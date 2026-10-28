@@ -67,14 +67,17 @@ sealed class Harness
         items = new List<DanmuFilterItem>
         {
             new DanmuFilterItem { type = 1, filter = fixtureRule },
-            new DanmuFilterItem { type = 1, filter = validRule }
+            new DanmuFilterItem { type = 1, filter = validRule },
+            new DanmuFilterItem { type = 1, filter = string.Empty }
         };
     }
     private static bool IsValidDanmuRegex(string pattern)
         {
+            if (string.IsNullOrEmpty(pattern))
+                return false;
             try
             {
-                Regex.IsMatch(string.Empty, pattern);
+                new Regex(pattern);
                 return true;
             }
             catch (ArgumentException)
@@ -157,10 +160,12 @@ Console.WriteLine($"Regex parser rejects imported fixture: {regexRejected}");
 var harness = new Harness(rule, validRule);
 harness.Import();
 Console.WriteLine($"Invalid imported rule persisted: {SettingHelper.PersistedRegulars.Contains(rule)}");
+Console.WriteLine($"Empty regex persisted: {SettingHelper.PersistedRegulars.Contains(string.Empty)}");
 Console.WriteLine($"Valid local/cloud rules preserved: {SettingHelper.PersistedRegulars.Contains("local-valid") && SettingHelper.PersistedRegulars.Contains(validRule)}");
 await harness.Render();
 Console.WriteLine($"Danmaku added after render pass: {harness.DanmuControl.AddCount}");
 var passed = regexRejected && !SettingHelper.PersistedRegulars.Contains(rule) &&
+    !SettingHelper.PersistedRegulars.Contains(string.Empty) &&
     SettingHelper.PersistedRegulars.Contains("local-valid") && SettingHelper.PersistedRegulars.Contains(validRule) &&
     harness.DanmuControl.AddCount > 0;
 Console.WriteLine(passed

@@ -157,9 +157,11 @@ namespace BiliLite.Modules
 
         private static bool IsValidDanmuRegex(string pattern)
         {
+            if (string.IsNullOrEmpty(pattern))
+                return false;
             try
             {
-                Regex.IsMatch(string.Empty, pattern);
+                new Regex(pattern);
                 return true;
             }
             catch (ArgumentException)
