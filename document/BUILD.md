@@ -43,6 +43,27 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\watch-remote.ps1 -Fetch
 - Output: the baseline SHA in the first line, then silence until the SHA changes. Unreachable remotes retry instead of exiting and warn at most once a minute.
 - Pull and rebuild only after it reports a change; the script does not pull on its own.
 
+## Encoding: keeping the Chinese output readable
+
+Windows PowerShell 5.1 writes standard output in the console code page (936/GBK on this machine), so the Chinese lines become mojibake the moment MSYS/git-bash, `grep` or a log reader treats them as UTF-8. Two layers fix it:
+
+1. **In the script** (already done): `build-release-x64.ps1` sets `[Console]::OutputEncoding`, `[Console]::InputEncoding` and `$OutputEncoding` to a BOM-less `UTF8Encoding` before writing anything, inside a `try` because a host without a console handle throws. Its own `Write-Host` text and the MSBuild output it forwards are then UTF-8, so `... | grep 快速编译完成` works with no decoder in between.
+2. **When calling PowerShell ad hoc**, do the same in the command instead of post-processing:
+
+```powershell
+powershell -NoProfile -Command "[Console]::OutputEncoding=[Text.Encoding]::UTF8; & .\build-release-x64.ps1 -Fast -NoVersionBump"
+```
+
+Reading output that was already written in GBK needs a decoder, not a code change:
+
+```bash
+iconv -f GB18030 -t UTF-8 -c build.log | grep -a "error"
+```
+
+`-c` is not optional: one invalid byte aborts `iconv`, the pipe closes, and the producing PowerShell process dies mid-build - which is how an earlier packaging run appeared to "fail" while its log was truncated. Related rules learned the hard way: grep an ASCII marker (`error`, `msix`, `CS2012`) rather than a Chinese literal when the encoding is unknown; write logs to a stable Windows path (`H:/tmp/build.log`) because the MSYS `/tmp` does not survive between tool calls; and never trust a pipeline's exit status when the last stage is `grep`/`iconv` (`${PIPESTATUS[0]}` or a marker file instead).
+
+`pwsh` (PowerShell 7) defaults to UTF-8 and needs none of this; the wrapper above is only for `powershell.exe`.
+
 ## Read the errors
 
 - `error CS####` lines are real compiler errors. Fix those first.

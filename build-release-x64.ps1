@@ -27,6 +27,18 @@ param(
     [switch]$Restore
 )
 
+# Windows PowerShell 5.1 按控制台代码页(本机 936/GBK)写标准输出, 被 MSYS/git-bash 等按 UTF-8 读取时中文会变成乱码。
+# 显式改成无 BOM 的 UTF-8: 本脚本自己的 Write-Host, 以及管道下游的 iconv/grep 都能直接按 UTF-8 处理。
+try {
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    [Console]::OutputEncoding = $utf8
+    [Console]::InputEncoding = $utf8
+    $OutputEncoding = $utf8
+}
+catch {
+    # 非交互宿主(例如无控制台句柄时)设置失败不影响构建, 继续走原来的编码
+}
+
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $solution = Join-Path $root 'BiliLite.sln'
