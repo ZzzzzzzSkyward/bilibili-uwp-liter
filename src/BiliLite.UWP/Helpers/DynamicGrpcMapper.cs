@@ -139,7 +139,7 @@ namespace BiliLite.Helpers
 
             foreach (var source in dynamicItems)
             {
-                if (source == null || source.Extend == null || source.CardType == GrpcDynamicType.Banner)
+                if (source == null || source.Extend == null)
                 {
                     continue;
                 }
@@ -172,14 +172,11 @@ namespace BiliLite.Helpers
                 var id = source.SeasonId.ToString();
                 result.Add(new DynamicCardModel2024
                 {
-                    type = "DYNAMIC_TYPE_PGC_UNION",
+                    // 关注列表的合集没有作者也没有稿件，使用专门的合成卡片类型。
+                    type = "CUSTOM_SEASON",
                     id_str = id,
-                    basic = new DynamicCardModel2024_basic
-                    {
-                        rid_str = id,
-                        comment_id_str = id,
-                        comment_type = 1,
-                    },
+                    // 合成卡片没有可评论的目标，空的 basic 仅供显示层读取字段。
+                    basic = new DynamicCardModel2024_basic(),
                     modules = new DynamicCardModel2024_modules
                     {
                         module_dynamic = new DynamicCardModel2024_dynamic
@@ -290,7 +287,12 @@ namespace BiliLite.Helpers
         {
             if (source == null || source.Extend == null)
             {
-                return MissingCard("");
+                return null;
+            }
+            // 广告与通栏没有可展示的动态内容，在归一化之前直接丢弃。
+            if (source.CardType == GrpcDynamicType.Ad || source.CardType == GrpcDynamicType.Banner)
+            {
+                return null;
             }
 
             var author = GetModule(source, DynModuleType.ModuleAuthor)?.ModuleAuthor;
@@ -330,9 +332,8 @@ namespace BiliLite.Helpers
 
             if (source.CardType == GrpcDynamicType.Forward)
             {
-                card.orig = dynamic?.DynForward?.Item == null
-                    ? MissingCard(source.Extend.OrigDynIdStr)
-                    : MapUserCard(dynamic.DynForward.Item);
+                // 原动态可能属于被丢弃的类型，此时用占位卡片保证父卡片仍然可读。
+                card.orig = MapUserCard(dynamic?.DynForward?.Item) ?? MissingCard(source.Extend.OrigDynIdStr);
             }
 
             return card;
@@ -451,6 +452,18 @@ namespace BiliLite.Helpers
                     },
                 };
             }
+            else if (source.DynMedialist != null)
+            {
+                // 播单没有稿件 AID 与统计，只有 id/uri/title/sub_title/cover。
+                result.major.medialist = new DynamicCardModel2024_list
+                {
+                    id = source.DynMedialist.Id,
+                    cover = source.DynMedialist.Cover,
+                    desc = source.DynMedialist.SubTitle,
+                    jump_url = source.DynMedialist.Uri,
+                    title = source.DynMedialist.Title,
+                };
+            }
             else if (source.DynArticle != null)
             {
                 result.major.article = new DynamicCardModel2024_article
@@ -522,7 +535,7 @@ namespace BiliLite.Helpers
                 {
                     id = (int)source.DynMusic.Id,
                     covers = new List<string> { source.DynMusic.Cover },
-                    desc = source.DynMusic.Label1,
+                    label = source.DynMusic.Label1,
                     jump_url = source.DynMusic.Uri,
                     title = source.DynMusic.Title,
                 };
@@ -642,6 +655,7 @@ namespace BiliLite.Helpers
                 case GrpcDynamicType.UgcSeason: return "DYNAMIC_TYPE_UGC_SEASON";
                 case GrpcDynamicType.Article: return "DYNAMIC_TYPE_ARTICLE";
                 case GrpcDynamicType.Music: return "DYNAMIC_TYPE_MUSIC";
+                case GrpcDynamicType.Medialist: return "DYNAMIC_TYPE_MEDIALIST";
                 case GrpcDynamicType.Live: return "DYNAMIC_TYPE_LIVE";
                 case GrpcDynamicType.LiveRcmd: return "DYNAMIC_TYPE_LIVE_RCMD";
                 case GrpcDynamicType.Fold: return "DYNAMIC_TYPE_WORD";

@@ -14,7 +14,7 @@
           <ColumnDefinition Width="Auto"/>
           <ColumnDefinition/>
         </Grid.ColumnDefinitions>
-        <HyperlinkButton Visibility="{x:Bind Path=Model.IsRepost,Converter={StaticResource display},Mode=OneWay}" Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}" Padding="0" VerticalAlignment="Top">
+        <HyperlinkButton Visibility="{x:Bind Path=Model.AuthorHeaderVisibility,Mode=OneWay}" Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}" Padding="0" VerticalAlignment="Top">
           <Grid>
             <Ellipse Width="40" Height="40" Stroke="WhiteSmoke" StrokeThickness="1">
               <Ellipse.Fill>
@@ -27,7 +27,7 @@
         </HyperlinkButton>
         <StackPanel Grid.Column="1" Margin="12 0">
           <!--用户信息-->
-          <Grid Visibility="{x:Bind Path=Model.IsRepost,Converter={StaticResource display},Mode=OneWay}">
+          <Grid Visibility="{x:Bind Path=Model.AuthorHeaderVisibility,Mode=OneWay}">
             <Grid.ColumnDefinitions>
               <ColumnDefinition/>
               <ColumnDefinition Width="Auto"/>
@@ -58,7 +58,7 @@
               <AppBarButton Icon="Delete" ToolTipService.ToolTip="删除" Command="{x:Bind Path=Model.DeleteCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Visibility="{x:Bind Path=Model.IsSelf,Mode=OneWay}" Width="30"/>
             </StackPanel>
           </Grid>
-          <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.IsRepost,Mode=OneWay}" Padding="0" Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}">
+          <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.RepostAuthorVisibility,Mode=OneWay}" Padding="0" Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}">
             <Grid>
               <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
                 <Ellipse Width="24" Height="24" Margin="0 0 8 0">
@@ -71,7 +71,7 @@
                   <Run Text="{x:Bind Path=Model.Tooltip,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" FontSize="12"/>
                 </TextBlock>
               </StackPanel>
-              <Button Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" HorizontalAlignment="Right" Foreground="{ThemeResource ForegroundTextColor}" Background="Transparent" Visibility="{x:Bind Path=Model.IsRepost,Mode=OneWay}">
+              <Button Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" HorizontalAlignment="Right" Foreground="{ThemeResource ForegroundTextColor}" Background="Transparent" Visibility="{x:Bind Path=Model.RepostAuthorVisibility,Mode=OneWay}">
                 <FontIcon FontFamily="Segoe MDL2 Assets" Glyph=""/>
               </Button>
             </Grid>
@@ -80,7 +80,7 @@
           <ContentPresenter Visibility="{x:Bind Path=Model.ShowContent,Mode=OneWay}" Margin="0 4" Content="{x:Bind Path=Model.Content,Mode=OneWay}"/>
           <!--卡片-->
           <ContentPresenter Content="{x:Bind Path=CardContent,Mode=OneWay}" Padding="0 4 0 0"/>
-          <StackPanel Visibility="{x:Bind Path=Model.IsRepost,Converter={StaticResource display},Mode=OneWay}" Margin="0 4 0 0" Orientation="Horizontal">
+          <StackPanel Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}" Margin="0 4 0 0" Orientation="Horizontal">
             <HyperlinkButton Width="100" Command="{x:Bind Path=Model.RepostCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left">
               <StackPanel Orientation="Horizontal">
                 <fa:FontAwesome Icon="Solid_Share" Margin="0 2 0 0" FontSize="14"/>

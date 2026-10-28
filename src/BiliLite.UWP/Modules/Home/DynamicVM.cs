@@ -313,6 +313,8 @@ namespace BiliLite.Modules
                   ??
                   modules?.module_dynamic?.major?.ugc_season?.title
                   ??
+                  modules?.module_dynamic?.major?.medialist?.title
+                  ??
                   modules?.module_dynamic?.major?.pgc?.title
                   ??
                   modules?.module_dynamic?.additional?.title
@@ -329,6 +331,7 @@ namespace BiliLite.Modules
                     modules?.module_dynamic?.major?.article?.jump_url ??
                     modules?.module_dynamic?.major?.pgc?.jump_url ??
                     modules?.module_dynamic?.major?.ugc_season?.jump_url ??
+                    modules?.module_dynamic?.major?.medialist?.jump_url ??
                     modules?.module_dynamic?.major?.live?.jump_url ??
                      "";
                 if (url.Length == 0) return url;
@@ -378,6 +381,7 @@ namespace BiliLite.Modules
                   modules?.module_dynamic?.major?.article?.covers?.FirstOrDefault() ??
                   modules?.module_dynamic?.major?.pgc?.cover ??
                   modules?.module_dynamic?.major?.ugc_season?.cover ??
+                  modules?.module_dynamic?.major?.medialist?.cover ??
                   "";
             }
         }
@@ -774,6 +778,7 @@ namespace BiliLite.Modules
         public DynamicCardModel2024_article article { get; set; }
         public DynamicCardModel2024_season pgc { get; set; }
         public DynamicCardModel2024_list ugc_season { get; set; }
+        public DynamicCardModel2024_list medialist { get; set; }
         public DynamicCardModel2024_live_rcmd live_rcmd { get; set; }
         public string type { get; set; }
     }
@@ -819,6 +824,8 @@ namespace BiliLite.Modules
     }
     public class DynamicCardModel2024_list
     {
+        // 播单 ID；合集卡片没有该字段（0）。
+        public long id { get; set; }
         public long aid { get; set; }
         //public object badge{ get; set; }
         public string cover { get; set; }

@@ -2,6 +2,7 @@
 using BiliLite.Modules;
 using System.Collections.Generic;
 using System.Windows.Input;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
 namespace BiliLite.Controls.Dynamic
@@ -216,6 +217,35 @@ namespace BiliLite.Controls.Dynamic
         /// 是否自己动态
         /// </summary>
         public bool IsSelf { get; set; }
+        /// <summary>
+        /// 是否显示作者信息（关注列表的合成合集卡片没有作者）
+        /// </summary>
+        public bool ShowAuthorHeader { get; set; } = true;
+        /// <summary>
+        /// 是否显示转发、评论、点赞一行
+        /// </summary>
+        public bool ShowInteractionRow { get; set; } = true;
+        /// <summary>
+        /// 作者头像与昵称：原条件为“非转发”
+        /// </summary>
+        public Visibility AuthorHeaderVisibility
+        {
+            get { return !IsRepost && ShowAuthorHeader ? Visibility.Visible : Visibility.Collapsed; }
+        }
+        /// <summary>
+        /// 转发来源的作者行：原条件为“转发”
+        /// </summary>
+        public Visibility RepostAuthorVisibility
+        {
+            get { return IsRepost && ShowAuthorHeader ? Visibility.Visible : Visibility.Collapsed; }
+        }
+        /// <summary>
+        /// 互动栏：原条件为“非转发”
+        /// </summary>
+        public Visibility InteractionRowVisibility
+        {
+            get { return !IsRepost && ShowInteractionRow ? Visibility.Visible : Visibility.Collapsed; }
+        }
         public string DynamicUrl { get { return $"https://t.bilibili.com/{DynamicID}"; } }
     }
 
