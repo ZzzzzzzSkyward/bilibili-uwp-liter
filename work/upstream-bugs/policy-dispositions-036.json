@@ -3,8 +3,8 @@
   "processed": [
     {"issue": 521, "status": "skipped"},
     {"issue": 527, "status": "skipped"},
-    {"issue": 528, "status": "assigned_visual"},
+    {"issue": 528, "status": "user_visual"},
     {"issue": 529, "status": "skipped"},
-    {"issue": 530, "status": "assigned_visual"}
+    {"issue": 530, "status": "user_visual"}
   ]
 }

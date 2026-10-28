@@ -15,7 +15,7 @@
     },
     {
       "issue": 1235,
-      "status": "validated_logic_bug"
+      "status": "skipped_skeptical"
     }
   ]
 }
