@@ -5,9 +5,9 @@
 - The integration baseline and preserved plan are committed in `3ede2d158d954745bf59674efc1e7992c10f9f28`.
 - `work/improvements/BASELINE.md` records the target and pinned sibling boundaries, relevant package versions, and explicit project compile inclusion constraints.
 
-## Current step: LM-04 implementation complete; review handoff
+## Current step: LM-04 reviewed and published; LM-05 next
 
-- Started from clean target HEAD `a8435c1` after the LM-03 reviewed handoff. LM-02 and LM-03 remain reviewed and published. LM-04 setup checkpoint `478e14d` records the batch start. The LM-04 implementation is committed in this handoff; root review and publication remain.
+- Started from clean target HEAD `a8435c1` after the LM-03 reviewed handoff. LM-02 and LM-03 remain reviewed and published. LM-04 setup checkpoint `478e14d` records the batch start. LM-04 implementation and review follow-up are committed and published; see the latest checkpoint below.
 - LM-03 added `LocalMediaPlaybackAdapter` to resolve manifest tracks through the saved FutureAccessList folder grant and map every item into the existing DASH player structures. Collection item selection opens `LocalPlayerPage` at the chosen playlist index. `LocalPlayInfo` keeps legacy fields and adds typed video/audio/subtitle/danmaku metadata; LM-05 still owns subtitle/danmaku adapters.
 - Manifest playback uses stable encoded collection/item resume IDs. Its history, subtitle, danmaku-network, and danmaku-send paths are guarded; downloaded-video and single-file flows retain their existing routing. FFmpeg local playback uses the resolved `StorageFile` handles. A native-engine failure switches using the manifest tracks, local storage mode, and current playback position.
 - `work/improvements/tests/run.sh` passes actual-source LM-01, LM-02, and LM-03 checks. LM-03 covers playlist mapping, default video/audio handles, retained typed metadata, no implicit subtitle selection, stable and non-colliding resume IDs, and stage/collection/item exceptions with the underlying storage exception.
@@ -76,3 +76,9 @@
 - Setup checkpoint `e28d9d4`; implementation `1bc25b6`. Root reviewed the playlist adapter, model additions, caller/index routing, engine file-handle handling, manifest-specific offline branches, and focused probe scope. Normal push to `origin/work` succeeded through `1bc25b6`; this handoff is published separately.
 - Root `git diff d89722f --check` passed. The agent ran the LM-01/02/03 actual-source harness and extracted #105 Dispose / #598 natural-end probes. Manifest history suppression is covered by those probes; decoder behavior, engine-switch event timing, and UI/storage permissions are source-reviewed only and require user app testing. No app build/restore/launch or live API test was performed. No pull/fetch was performed.
 - Resume at LM-04: add video/audio selectors using typed local track handles, preserve position and playing/paused state during switches, and retain native single-file and FFmpeg external-audio routing. LM-05 still owns subtitle parsers and manifest danmaku loading; these tracks are currently metadata only.
+
+## LM-04 publication checkpoint
+
+- Setup `478e14d`, implementation `90ac3de`, item identity follow-up `b543150`. Root reviewed selector wiring, actual switch coordinator and tests, local playback routing/state handling, and failure logs. Normal push to `origin/work` succeeded through `b543150`; this handoff is published separately. No pull/fetch was performed.
+- Agent LM-01–04 isolated probes passed; root `git diff a8435c1 --check` passed. Coordinator tests cover position/play-state callbacks and immediate failure rollback, not UWP media events or real decoding. No app build, restore, launch, protocol generation, or live API test was performed.
+- Resume with LM-05: resolve subtitle/danmaku StorageFile tracks through the saved folder grant, add Bilibili JSON/SRT/VTT cue adapters and tests, load enabled XML danmaku through the existing parser and NSDanmaku pipeline, and expose selection/toggles. Preserve explicit subtitle defaults, multiple enabled danmaku tracks, current local engine/track-switch state, and legacy playback paths.
