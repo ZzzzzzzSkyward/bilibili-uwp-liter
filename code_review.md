@@ -1,29 +1,22 @@
-# Review — `22a9814`
+# Review — `aae6544`
 
-Read the current `bug_report.md` and reviewed the recent changes since the previous review (`4ed90e6`), with two GPT-6-luna reviewers. Source inspection only: no builds, tests, format checks, API calls, or runtime validation. Application code is unchanged. Build/device evidence in the bug report is the author's evidence, not this review's.
+Read the current `bug_report.md` and reviewed `56a6d93..aae654473fc7a2cb9629c52a89c6d184f66c8dfb` with two GPT-6-luna reviewers. Source inspection only; no builds, tests, linters, format checks, package inspection, or runtime validation. Device/build results in the bug report belong to its author.
 
-## 1. BR-13: clear the other owner's Content, not just its Visibility
+## BR-15: spaces in OutputDir skip the new package checks
 
-`src/BiliLite.UWP/Controls/Dynamic/DynamicItemControl.xaml:80` still binds the generic presenter's `Content` to `Model.Content` for Text/Repost/Reserve cards. The new getter in `Controls/Dynamic/DisplayModel.cs:231-237` only collapses that presenter. Collapsing a control does not clear its Content or detach an already parented UIElement. The templates still hand the same RichTextBlock to RichTextControl (`DynamicTemplate.xaml:9,74,175`), whose callback inserts it directly into `Parent.Children` (`RichTextControl.xaml.cs:49-60,86-88`). The ownership conflict described in the report therefore remains possible; hiding one consumer does not establish a single owner.
+`build-release-x64.ps1:192-194` extracts package paths with `->\s+(\S+\.msix)$`. A supported invocation such as `-OutputDir 'C:\Release Builds\'` produces an MSBuild output path containing spaces, which cannot match `\S+`. `$packages` then contains neither artifact, and the new `if ($uwpPackage)` / `if ($fullPackage)` blocks at lines 244-264 both skip their layout checks. The script can return success without inspecting or repairing the non-bootable UWP layout described in BR-15.
 
-For a REST-fallback text/repost card with a nonempty body, both consumers still receive the same instance. Treat BR-13 as unresolved at source level. Give the generic presenter a separate content getter that returns null whenever the template renders the body, or conditionally create only the owning presenter. Keep the visibility getter for spacing if useful. No cloning or broader model rewrite is needed for this fix.
+The parser predates this change, but making it the only discovery mechanism for the new layout checks turns an output-listing omission into a functional hole in the splash-crash fix. Derive the expected current-version artifact paths from OutputDir and the package names, or capture the entire path including spaces (for example `->\s+(.+\.msix)$`). Do not silently skip a required artifact when discovery finds nothing. This needs only a small script fix, not a new packaging abstraction.
 
-## 2. BR-13: one/four-image gRPC cards now lose their rich body
+## Previous findings
 
-`src/BiliLite.UWP/Controls/Dynamic/DynamicTemplate.xaml:82,139` removes the Content binding from Photo1x1 and Photo2x2, leaving only plain Desc/Subtitle. For 2024/gRPC cards, `DynamicParse.ParseOneRowInfo2024` still builds `data.Content = Render(item.richtext)` (`DynamicParse.cs:219-230`), but `ConvertToDisplay2024` sets `ShowContent=false` (`Modules/User/DynamicVM.cs:1303`). The generic presenter therefore does not display that rich body. After this change, one-image and four-image posts lose rich hyperlinks/emotes and render only the plain description. The report's claim that their body moves to the generic presenter applies to the legacy path, not both converter paths.
-
-Keep one rich-text owner for both converters. A small solution is to restore the photo templates' Content bindings and make the generic content getter return null for the actual photo layouts that render Content themselves. Apply the same ownership choice consistently to outer and reposted cards. Prefer keeping the existing rich rendering; do not clone the blocks just to relocate them. Photo3x3 is a separate existing layout and does not need a redesign for this regression.
-
-## 3. BR-05/11: an empty first REST page overrides valid pagination
-
-`src/BiliLite.UWP/Modules/User/DynamicVM.cs:650-654` calls `PublishFeedError` whenever REST page 1 maps to zero cards. This happens even when the response has `has_more=true` and an advancing offset, so `CanContinuePaging` has just returned true at line 645. `PublishFeedError` immediately sets `CanLoadMore=false` (`:866-874`), preventing the short-viewport completion check from requesting page 2.
-
-An empty cards array, or a page whose entries all lack desc and are skipped at lines 616-622, can therefore show a failure and strand later available cards. Continue paging while the cursor advances and the existing empty-page cap allows it. Only publish the empty-feed failure once pagination stops and the accumulated list is still empty; do not limit that decision to page 1.
+- **BR-13 ownership:** accepted. The generic presenter now binds PresenterContent, which returns null for the template-owned types and the matching one/four-image layouts. This actually separates ownership rather than just hiding the second consumer.
+- **BR-13 photo rendering:** accepted. Photo1x1/Photo2x2 again receive rich Content, including the 2024/gRPC converter's blocks.
+- **BR-05/11 empty first REST page:** accepted. Paging continues while CanLoadMore is true; an empty-feed error now depends on stopped pagination and the accumulated item count.
+- **Early startup logging:** no substantive issue found. LogHelper.Initialize uses local storage, package metadata and NLog; it does not require the XAML resources being initialized afterward.
+- **CS2012 retry:** no additional practical issue found in the exclusive-open wait and Rebuild change.
 
 ## Report decisions
 
-- **BR-11:** keep the REST fallback as practical recovery for the reported gRPC rejection, with the empty-page fix above. A real-buvid metadata change can be a separate follow-up; the report does not establish that it fixes the rejection, so it should not replace the working fallback on that assumption.
-- **BR-13:** preserve rich body rendering and fix actual ownership. The issue is which control receives Content, not whether the body sits a few pixels above or inside the photo card.
-- **BR-14:** no substantive issue found in the encoding change. No further style or structural cleanup requested.
-
-No runtime/device behavior is claimed verified.
+1. Ship **BiliLite.Packages** as the normal release artifact. Its project references both UWP and Win32Tools and its manifest includes the export extension. Keep UWP as a build dependency; a separate UWP-only download is useful only if a version without export is deliberately wanted. The two output variants do not both need to be offered to users. The exact imported MSBuild target behavior is not established by this source-only review, so this is not a claim that invoking the packaging project alone necessarily suppresses every standalone output.
+2. Keep the REST fallback. Queue real-buvid metadata as an optional follow-up if restoring the gRPC source becomes useful; the current report provides no reason to make it a release blocker or remove working fallback behavior.
