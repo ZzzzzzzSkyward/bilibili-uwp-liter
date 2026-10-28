@@ -1,0 +1,100 @@
+{
+  "batch": 6,
+  "baseline": {
+    "target_commit": "cfa40a8508c6d6e7401885bf6bb081bc5c90b173",
+    "sibling_path": "/workspace/biliuwp-lite",
+    "sibling_commit": "ca2caddc597b3faf05b4dac6dcb226aa0694365b"
+  },
+  "dispositions": [
+    {
+      "issue": 83,
+      "subitem": "whole_visual_report",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": ["Report concerns clipped/incomplete part-list presentation, already assigned to user visual review."],
+      "reason": "Visual/layout issue; no logic validation performed.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 87,
+      "subitem": "playback_progress_not_saved_until_page_close",
+      "disposition": "not_applicable",
+      "confidence": "high",
+      "evidence": [
+        "Thread clarifies playback progress is saved when closing the video tab and the reporter later says the issue did not recur.",
+        "Target src/BiliLite.UWP/Controls/PlayerControl.xaml.cs:2582-2590 persists position/reports history on Dispose; src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs:113-125 calls Dispose when the page closes."
+      ],
+      "reason": "Reported save-on-close behavior is implemented; no evidence establishes a periodic or application-exit save expectation.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 87,
+      "subitem": "480p_quality_claim",
+      "disposition": "skipped_skeptical",
+      "confidence": "high",
+      "evidence": [
+        "Discussion links the claim to #31, later speculates about cookie deletion and closes after no further reproduction.",
+        "Batch 002 found a refresh-dispatch defect but explicitly did not establish that it caused the observed quality response."
+      ],
+      "reason": "This issue adds no failing response or reproduction linking the quality symptom to the source defect.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 88,
+      "subitem": "whole_visual_report",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": ["Report concerns comment-image default scaling, already assigned to user visual review."],
+      "reason": "Visual presentation issue; no logic validation performed.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 89,
+      "subitem": "garbled_collection_controls",
+      "disposition": "user_visual",
+      "confidence": "high",
+      "evidence": ["Garbled up/down controls are a visual issue already assigned to user visual review."],
+      "reason": "Visual subitem; no logic validation performed.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 89,
+      "subitem": "collection_video_loading",
+      "disposition": "not_applicable",
+      "confidence": "medium",
+      "evidence": [
+        "Issue links the failure to #129, whose stack identifies an object at data.ugc_season.sections[].episodes[].page where the old implementation expected a number.",
+        "Target src/BiliLite.UWP/Modules/Detail/VideoDetailVM.cs:702-814 has no ugc_season property, and Pages/VideoDetailPage.xaml.cs:220-248 builds the playlist from top-level pages only.",
+        "Pinned sibling adds ugc_season in Models/Common/Video/Detail/VideoDetailModel.cs:102-108, models Page as an object in Models/Common/Video/VideoUgcSeasonSectionEpisode.cs:48-57, and builds collection playlists in Pages/VideoDetailPage.xaml.cs:343-370."
+      ],
+      "reason": "UGC collection playback is an additional sibling feature absent from the target; the linked parser behavior is not a defect in a target collection call path.",
+      "suggested_unit_case": null,
+      "fix": null
+    },
+    {
+      "issue": 90,
+      "subitem": "subscription_list_only_shows_first_20",
+      "disposition": "skipped_skeptical",
+      "confidence": "medium",
+      "evidence": [
+        "Target src/BiliLite.UWP/Modules/User/MyFollowSeasonVM.cs:77-145 paginates 20 records using has_next and appends subsequent pages; :169-179 invokes load-more.",
+        "Target src/BiliLite.UWP/Pages/User/FavoritePage.xaml:117-146 binds the list's load-more command and CanLoadMore flag.",
+        "Pinned sibling Modules/User/MyFollowSeasonVM.cs:82-141 uses the same page-size/has-next logic.",
+        "Issue has no pagination interaction history or response showing has_next."
+      ],
+      "reason": "The displayed first page is intentionally paginated; without evidence that the advertised next page fails, a target defect is not established.",
+      "suggested_unit_case": null,
+      "fix": null
+    }
+  ],
+  "validation": {
+    "application_source_changed": false,
+    "unit_tests_run": false,
+    "application_project_build_restore_or_app_run": false
+  }
+}
