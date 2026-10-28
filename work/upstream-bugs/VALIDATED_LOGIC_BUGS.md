@@ -1,6 +1,6 @@
 # Actionable logic findings
 
-Assessment complete: 15 retained findings in oldest-first order. Six have direct isolated unit evidence; nine are source-only. Application source remains unchanged. Unit probes use stubbed boundaries and establish only their stated local behavior.
+Assessment complete: 15 retained findings in oldest-first order. Six have direct isolated unit evidence; nine are source-only. The findings and evidence below record assessment against the then-current target source. Fixes implemented afterward are tracked in [UPSTREAM_BUG_FIX_PROGRESS.md](../../UPSTREAM_BUG_FIX_PROGRESS.md). Unit probes use stubbed boundaries and establish only their stated local behavior.
 
 | Issue | Retained defect | Evidence | Detail |
 |---|---|---|---|
