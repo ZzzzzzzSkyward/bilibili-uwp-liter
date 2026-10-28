@@ -1,0 +1,11 @@
+{
+  "batch": 38,
+  "processed": [
+    {"issue": 560, "status": "skipped"},
+    {"issue": 562, "subitem": "text_and_comment_content", "status": "skipped"},
+    {"issue": 562, "subitem": "image_sizing", "status": "assigned_visual"},
+    {"issue": 566, "status": "skipped"},
+    {"issue": 573, "status": "skipped"},
+    {"issue": 574, "status": "skipped"}
+  ]
+}
