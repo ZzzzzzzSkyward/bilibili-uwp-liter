@@ -28,6 +28,8 @@ sealed class StubPlayer
     public void Dispose()
     {
         IsDisposed = true;
+        Position = 0;
+        PlayState = PlayState.End;
         DisposedSignal.TrySetResult(true);
     }
 }
