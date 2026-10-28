@@ -92,6 +92,8 @@ namespace BiliLite.Services.LocalMedia
                         ManifestCollectionId = collection.Id,
                         ResumeId = CreateResumeId(collection.Id, item.Id)
                     };
+                    localInfo.SubtitleFiles = await ResolveTracksAsync(root, item.SubtitleTracks);
+                    localInfo.DanmakuFiles = await ResolveTracksAsync(root, item.DanmakuTracks);
                     playInfos.Add(new PlayInfo
                     {
                         play_mode = VideoPlayType.LoaclFile,
@@ -120,11 +122,18 @@ namespace BiliLite.Services.LocalMedia
             var resolved = new List<LocalMediaPlaybackTrack>();
             foreach (var track in tracks)
             {
-                resolved.Add(new LocalMediaPlaybackTrack
+                try
                 {
-                    Track = track,
-                    File = await ResolveFileAsync(root, track.Path)
-                });
+                    resolved.Add(new LocalMediaPlaybackTrack
+                    {
+                        Track = track,
+                        File = await ResolveFileAsync(root, track.Path)
+                    });
+                }
+                catch (Exception exception)
+                {
+                    throw new LocalMediaTrackLoadException("track-resolution", track?.Id ?? "unknown", exception);
+                }
             }
             return resolved;
         }

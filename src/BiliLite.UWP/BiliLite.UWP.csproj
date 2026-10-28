@@ -164,6 +164,10 @@
     <Compile Include="Services\LocalMedia\LocalMediaLibraryService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaPlaybackAdapter.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaTrackSelection.cs" />
+    <Compile Include="Services\LocalMedia\SubtitleTrackParser.cs" />
+    <Compile Include="Services\LocalMedia\DanmakuTrackLoader.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaTrackLoadException.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaAsyncLoadGuard.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaValidator.cs" />
     <Compile Include="Api\User\FavoriteAPI.cs" />
     <Compile Include="Api\User\FollowAPI.cs" />

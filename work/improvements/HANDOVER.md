@@ -4,7 +4,7 @@
 
 - Repo: `/workspace/bilibili-uwp-liter`, branch `work`.
 - Published baseline before this handover: `091cd51` (LM-04 reviewed). No pending application changes.
-- Next: **LM-05 — subtitle and danmaku track loading**.
+- Next after root review: **API-01 — API compatibility layer and service organization**.
 - Plan: `work/improvements/PLAN.md`. Detailed checkpoint: `IMPROVEMENT_PROGRESS.md`.
 
 ## Completed
@@ -13,20 +13,19 @@
 - LM-02: folder import, saved FutureAccessList grants, collection list/reopen.
 - LM-03: collection items play through the existing player; resolved StorageFile video/audio handles, stable local resume IDs, manifest-specific Bilibili network/history suppression.
 - LM-04: independent video/audio selectors, embedded audio option, position/play-state preservation, one rollback reopen after immediate switch failure.
+- LM-05: saved-grant subtitle/danmaku file resolution; Bilibili JSON, SRT, and VTT cue parsing; explicit-default subtitle selection; independently toggleable XML danmaku tracks merged through the existing parser and renderer. Actual-source offline probes cover parsing, cue selection, asynchronous stale-load guards, merged tracks, and resolved file handles.
 
 ## Next batch
 
-Resolve subtitle/danmaku files through the saved folder grant. Add Bilibili JSON/SRT/VTT subtitle cue adapters and focused parser tests; load and merge enabled XML danmaku through the existing parser and NSDanmaku renderer. Add subtitle selection and individual danmaku toggles. Respect explicit subtitle defaults and multiple enabled danmaku tracks. Keep legacy downloads/single-file playback and existing track-switch state intact.
-
-Subtitle/danmaku manifest tracks currently retain metadata only. Real UWP permissions/restart, UI/media-event timing, codec support and asynchronous decoder-failure recovery need user app testing; do not claim these were validated locally.
+Real UWP permissions/restart, UI/media-event timing, codec support and asynchronous decoder-failure recovery need user app testing; do not claim these were validated locally.
 
 ## Working rules
 
 - Root orchestrates/reviews; **gpt-6-luna subagents write application code**.
 - Own HEAD; **skip pull/fetch**. Commit each step and push normally; no force push.
-- Sole existing behavior reference: `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`. New manifest requirements come from the preserved plan.
+- Sole existing behavior reference: `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b` when available; it was absent during LM-05. New manifest requirements come from the preserved plan. Do not fetch/pull to restore it without explicit user direction.
 - No app builds, restores, launches, protocol generation or live application API tests. Focused offline unit tests of actual source pieces and format checks are allowed.
-- Existing unit runner: `work/improvements/tests/run.sh`; cached tools: `/workspace/work/upstream-unit-tools`. LM-01–04 probes passed; storage/player boundaries are stubbed. Whitespace checks passed.
+- Existing unit runner: `work/improvements/tests/run.sh`; cached tools: `/workspace/work/upstream-unit-tools`. LM-01–05 actual-source probes passed; UWP storage/player boundaries are stubbed. Whitespace checks passed.
 - Preserve full exception/result details in logs with stage and collection/item/track IDs. Keep user-facing errors concise.
 - Update `IMPROVEMENT_PROGRESS.md` at every step. Favor practical small changes.
 - SponsorBlock excluded; live tiles optional. API/auth, gRPC, danmaku improvements and player toasts follow local-media work per plan.

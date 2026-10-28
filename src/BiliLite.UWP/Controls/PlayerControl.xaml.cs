@@ -146,6 +146,8 @@ namespace BiliLite.Controls
         public LocalMediaPlaybackTrack SelectedAudioTrack { get; set; }
         public IList<LocalMediaTrack> SubtitleTracks { get; set; }
         public IList<LocalMediaTrack> DanmakuTracks { get; set; }
+        public IList<LocalMediaPlaybackTrack> SubtitleFiles { get; set; }
+        public IList<LocalMediaPlaybackTrack> DanmakuFiles { get; set; }
         public string ManifestCollectionId { get; set; }
         public string ResumeId { get; set; }
 
@@ -232,6 +234,11 @@ namespace BiliLite.Controls
         /// 当前选中的字幕名称
         /// </summary>
         private string CurrentSubtitleName { get; set; } = "无";
+        private int _playItemGeneration;
+        private int _subtitleTicket;
+        private readonly LocalMediaAsyncLoadGuard _subtitleLoadGuard = new LocalMediaAsyncLoadGuard();
+        private readonly LocalMediaAsyncLoadGuard _danmakuLoadGuard = new LocalMediaAsyncLoadGuard();
+        private readonly HashSet<string> _enabledManifestDanmaku = new HashSet<string>(StringComparer.Ordinal);
 
         private DisplayInformation displayInformation = DisplayInformation.GetForCurrentView();
 
@@ -976,13 +983,15 @@ namespace BiliLite.Controls
             var needDistinct = DanmuSettingMerge.IsOn;
             var level = DanmuSettingShieldLevel.Value;
             var max = Convert.ToInt32(DanmuSettingMaxNum.Value);
+            var poolSnapshot = danmakuPool;
+            var itemGeneration = _playItemGeneration;
             await Task.Run(async () =>
             {
                 try
                 {
-                    if (danmakuPool != null && danmakuPool.ContainsKey(p))
+                    if (poolSnapshot != null && poolSnapshot.ContainsKey(p))
                     {
-                        var data = danmakuPool[p].Where(x => true);
+                        var data = poolSnapshot[p].Where(x => true);
                         //云屏蔽
                         data = data.Where(x => x.weight >= level);
                         //去重
@@ -1014,7 +1023,8 @@ namespace BiliLite.Controls
                         {
                             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
                             {
-                                DanmuControl.AddDanmu(item, false);
+                                if (itemGeneration == _playItemGeneration && ReferenceEquals(poolSnapshot, danmakuPool))
+                                    DanmuControl.AddDanmu(item, false);
                             });
                         }
                         data = null;
@@ -1037,9 +1047,10 @@ namespace BiliLite.Controls
                 return;
             }
             //清空字幕
-            subtitles = null;
-            subtitleTimer?.Stop();
-            subtitleTimer = null;
+            _subtitleLoadGuard.Invalidate();
+            _danmakuLoadGuard.Invalidate();
+            var itemGeneration = ++_playItemGeneration;
+            ClearSubTitle();
             Player.ClosePlay();
             if (index >= PlayInfos.Count)
             {
@@ -1053,6 +1064,14 @@ namespace BiliLite.Controls
                 _hasPlayedCurrentItem = false;
             }
             CurrentPlayItem = selectedPlayItem;
+            _subtitleTicket = _subtitleLoadGuard.Begin(selectedPlayItem);
+            _danmakuLoadGuard.Begin(selectedPlayItem);
+            _enabledManifestDanmaku.Clear();
+            if (selectedPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
+            {
+                foreach (var track in selectedPlayItem.LocalPlayInfo.DanmakuFiles ?? new List<LocalMediaPlaybackTrack>())
+                    if (track.Track.EnabledByDefault) _enabledManifestDanmaku.Add(track.Track.Id);
+            }
             UpdateLocalTrackSelectors();
             if (CurrentPlayItem.is_interaction)
             {
@@ -1097,8 +1116,11 @@ namespace BiliLite.Controls
             }
             //await playerHelper.ReportHistory(CurrentPlayItem, 0);
             await SetDanmaku();
+            if (!ReferenceEquals(CurrentPlayItem, selectedPlayItem) || itemGeneration != _playItemGeneration) return;
             await SetQuality();
+            if (!ReferenceEquals(CurrentPlayItem, selectedPlayItem) || itemGeneration != _playItemGeneration) return;
             await GetPlayerInfo();
+            if (!ReferenceEquals(CurrentPlayItem, selectedPlayItem) || itemGeneration != _playItemGeneration) return;
 
             Player.ABPlay = VideoPlayHistoryHelper.FindABPlayHistory(CurrentPlayItem);
             if (Player.ABPlay == null)
@@ -1144,64 +1166,130 @@ namespace BiliLite.Controls
             }
             var menuitem = (sender as ToggleMenuFlyoutItem);
             CurrentSubtitleName = menuitem.Text;
-            if (menuitem.Text == "无")
+            var generation = _subtitleTicket = _subtitleLoadGuard.Begin(CurrentPlayItem);
+            if (menuitem.Tag == null)
             {
                 ClearSubTitle();
             }
+            else if (menuitem.Tag is LocalMediaPlaybackTrack localSubtitle)
+            {
+                LoadManifestSubtitleAsync(localSubtitle, CurrentPlayItem, generation);
+            }
             else
             {
-                SetSubTitle(menuitem.Tag.ToString());
+                SetSubTitle(menuitem.Tag.ToString(), generation);
             }
             menuitem.IsChecked = true;
+        }
+
+        private async void LoadManifestSubtitleAsync(LocalMediaPlaybackTrack track, PlayInfo item, int generation)
+        {
+            var stage = "subtitle-read";
+            try
+            {
+                ClearSubTitle();
+                await _subtitleLoadGuard.LoadAndApplyAsync(generation, item, async () =>
+                {
+                    var text = await FileIO.ReadTextAsync(track.File);
+                    stage = "subtitle-parse";
+                    var format = track.Track.Format;
+                    if (string.IsNullOrWhiteSpace(format)) format = System.IO.Path.GetExtension(track.Track.Path).TrimStart('.');
+                    return SubtitleTrackParser.Parse(text, format);
+                }, loaded =>
+                {
+                    subtitles = loaded;
+                    if (subtitles.body.Count > 0)
+                    {
+                        subtitleTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+                        subtitleTimer.Tick += SubtitleTimer_Tick;
+                        subtitleTimer.Start();
+                    }
+                });
+            }
+            catch (Exception exception)
+            {
+                LogHelper.Log($"Local subtitle load failed stage={stage} collectionId={item?.LocalPlayInfo?.ManifestCollectionId} itemId={item?.LocalPlayInfo?.ManifestItem?.Id} trackId={track?.Track?.Id} detail={exception}", LogType.ERROR);
+                if (_subtitleLoadGuard.IsCurrent(generation, item)) Utils.ShowMessageToast("加载本地字幕失败");
+            }
+        }
+
+        private void ClearSubTitle()
+        {
+            subtitleTimer?.Stop();
+            subtitleTimer = null;
+            subtitles = null;
+            currentSubtitleText = "";
+            BorderSubtitle.Visibility = Visibility.Collapsed;
+            BorderSubtitle.Child = null;
         }
 
         /// <summary>
         /// 设置字幕文件
         /// </summary>
         /// <param name="url"></param>
-        private async void SetSubTitle(string url)
+        private void SetSubTitle(string url)
         {
+            SetSubTitle(url, _subtitleTicket = _subtitleLoadGuard.Begin(CurrentPlayItem));
+        }
+
+        private async void SetSubTitle(string url, int generation)
+        {
+            var item = CurrentPlayItem;
             try
             {
-                subtitles = await playerHelper.GetSubtitle(url);
-                if (subtitles != null)
+                ClearSubTitle();
+                await _subtitleLoadGuard.LoadAndApplyAsync(generation, item, async () =>
                 {
+                    var loaded = await playerHelper.GetSubtitle(url);
+                    return loaded;
+                }, loaded =>
+                {
+                    subtitles = loaded;
+                    if (subtitles == null) return;
                     //转为简体
                     if (SettingHelper.GetValue<bool>(SettingHelper.Roaming.TO_SIMPLIFIED, true) && CurrentSubtitleName == "中文（繁体）")
                     {
-                        foreach (var item in subtitles.body)
+                        foreach (var cue in subtitles.body)
                         {
-                            item.content = Utils.ToSimplifiedChinese(item.content);
+                            cue.content = Utils.ToSimplifiedChinese(cue.content);
                         }
                     }
                     subtitleTimer = new DispatcherTimer();
                     subtitleTimer.Interval = TimeSpan.FromMilliseconds(100);
                     subtitleTimer.Tick += SubtitleTimer_Tick;
                     subtitleTimer.Start();
-                }
+                });
             }
             catch (Exception)
             {
-                Utils.ShowMessageToast("加载字幕失败了");
+                if (_subtitleLoadGuard.IsCurrent(generation, item)) Utils.ShowMessageToast("加载字幕失败了");
             }
         }
 
         private async void SubtitleTimer_Tick(object sender, object e)
         {
+            var generation = _subtitleTicket;
+            var activeSubtitles = subtitles;
             if (Player.PlayState == PlayState.Playing)
             {
-                if (subtitles == null)
+                if (activeSubtitles == null)
                 {
                     return;
                 }
                 var time = Player.Position;
-                var first = subtitles.body.FirstOrDefault(x => x.from <= time && x.to >= time);
+                var first = SubtitleTrackParser.FindCue(activeSubtitles, time);
                 if (first != null)
                 {
                     if (first.content != currentSubtitleText)
                     {
                         BorderSubtitle.Visibility = Visibility.Visible;
-                        BorderSubtitle.Child = await GenerateSubtitleItem(first.content);
+                        var visual = await GenerateSubtitleItem(first.content);
+                        if (!_subtitleLoadGuard.TryApply(generation, CurrentPlayItem, () =>
+                        {
+                            if (!ReferenceEquals(activeSubtitles, subtitles)) return;
+                            BorderSubtitle.Child = visual;
+                        })) return;
+                        if (!ReferenceEquals(activeSubtitles, subtitles)) return;
                         currentSubtitleText = first.content;
                     }
                 }
@@ -1217,7 +1305,16 @@ namespace BiliLite.Controls
         {
             if (BorderSubtitle.Visibility == Visibility.Visible && currentSubtitleText != "")
             {
-                BorderSubtitle.Child = await GenerateSubtitleItem(currentSubtitleText);
+                var ticket = _subtitleTicket;
+                var item = CurrentPlayItem;
+                var activeSubtitles = subtitles;
+                var text = currentSubtitleText;
+                var visual = await GenerateSubtitleItem(text);
+                _subtitleLoadGuard.TryApply(ticket, item, () =>
+                {
+                    if (ReferenceEquals(activeSubtitles, subtitles) && currentSubtitleText == text)
+                        BorderSubtitle.Child = visual;
+                });
             }
         }
 
@@ -1284,23 +1381,6 @@ namespace BiliLite.Controls
             grid.Children.Add(image);
 
             return grid;
-        }
-
-        /// <summary>
-        /// 清除字幕
-        /// </summary>
-        private void ClearSubTitle()
-        {
-            if (subtitles != null)
-            {
-                if (subtitleTimer != null)
-                {
-                    subtitleTimer.Stop();
-                    subtitleTimer = null;
-                }
-                BorderSubtitle.Visibility = Visibility.Collapsed;
-                subtitles = null;
-            }
         }
 
         public void ChangePlayIndex(int index)
@@ -1499,13 +1579,27 @@ namespace BiliLite.Controls
 
         private async Task SetDanmaku(bool update = false)
         {
+            var loadingItem = CurrentPlayItem;
+            var loadingTicket = 0;
             try
             {
                 if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
                 {
-                    danmakuPool?.Clear();
-                    danmakuLoadedSegment = new List<int>();
-                    TxtDanmuCount.Text = "未加载本地弹幕";
+                    var item = CurrentPlayItem;
+                    var generation = loadingTicket = _danmakuLoadGuard.Begin(item);
+                    danmakuPool = new Dictionary<int, List<DanmakuModel>>();
+                    DanmuControl.ClearAll();
+                    TxtDanmuCount.Text = "0";
+                    var tracks = (CurrentPlayItem.LocalPlayInfo.DanmakuFiles ?? new List<LocalMediaPlaybackTrack>())
+                        .Where(track => _enabledManifestDanmaku.Contains(track.Track.Id)).ToList();
+                    await _danmakuLoadGuard.LoadAndApplyAsync(generation, item,
+                        () => DanmakuTrackLoader.LoadAsync(tracks, async file => danmakuParse.ParseBiliBili(await FileIO.ReadTextAsync(file))),
+                        list =>
+                        {
+                            danmakuPool = list.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
+                            danmakuLoadedSegment = new List<int>();
+                            TxtDanmuCount.Text = list.Count.ToString();
+                        });
                     return;
                 }
                 if (CurrentPlayItem.play_mode == VideoPlayType.Download && !update)
@@ -1517,12 +1611,16 @@ namespace BiliLite.Controls
                         TxtDanmuCount.Text = "无弹幕文件";
                         return;
                     }
-                    var danmakuFile = await StorageFile.GetFileFromPathAsync(path);
-                    var danmuList = danmakuParse.ParseBiliBili(await FileIO.ReadTextAsync(danmakuFile));
-                    danmakuPool = danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
-                    TxtDanmuCount.Text = danmuList.Count.ToString();
-                    danmuList.Clear();
-                    danmuList = null;
+                    var ticket = _danmakuLoadGuard.Begin(loadingItem);
+                    await _danmakuLoadGuard.LoadAndApplyAsync(ticket, loadingItem, async () =>
+                    {
+                        var danmakuFile = await StorageFile.GetFileFromPathAsync(path);
+                        return danmakuParse.ParseBiliBili(await FileIO.ReadTextAsync(danmakuFile));
+                    }, danmuList =>
+                    {
+                        danmakuPool = danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
+                        TxtDanmuCount.Text = danmuList.Count.ToString();
+                    });
                 }
                 else
                 {
@@ -1542,10 +1640,37 @@ namespace BiliLite.Controls
                     //danmuList = null;
                 }
             }
-            catch (Exception)
+            catch (Exception exception)
             {
-                Utils.ShowMessageToast("弹幕加载失败");
+                if (loadingItem?.LocalPlayInfo?.IsManifestPlayback == true)
+                {
+                    var trackException = exception as LocalMediaTrackLoadException;
+                    LogHelper.Log($"Local danmaku load failed stage={trackException?.Stage ?? "read-or-parse"} collectionId={loadingItem.LocalPlayInfo.ManifestCollectionId} itemId={loadingItem.LocalPlayInfo.ManifestItem?.Id} trackId={trackException?.TrackId ?? "unknown"} detail={exception}", LogType.ERROR);
+                }
+                if (ReferenceEquals(loadingItem, CurrentPlayItem) &&
+                    (loadingItem?.LocalPlayInfo?.IsManifestPlayback != true || _danmakuLoadGuard.IsCurrent(loadingTicket, loadingItem)))
+                    Utils.ShowMessageToast("弹幕加载失败");
             }
+        }
+
+        private async void ManifestDanmakuTrack_Click(object sender, RoutedEventArgs e)
+        {
+            var item = sender as ToggleMenuFlyoutItem;
+            var track = item?.Tag as LocalMediaPlaybackTrack;
+            if (track == null || CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback != true) return;
+            if (item.IsChecked) _enabledManifestDanmaku.Add(track.Track.Id);
+            else _enabledManifestDanmaku.Remove(track.Track.Id);
+            await SetDanmaku();
+        }
+
+        private void LocalDanmakuTracksButton_Click(object sender, RoutedEventArgs e)
+        {
+            (LocalDanmakuTracksButton.Tag as MenuFlyout)?.ShowAt(LocalDanmakuTracksButton);
+        }
+
+        private void LocalSubtitleTracksButton_Click(object sender, RoutedEventArgs e)
+        {
+            (BottomBtnSelctSubtitle.Flyout as MenuFlyout)?.ShowAt(LocalSubtitleTracksButton);
         }
 
         private bool loadingDanmaku = false;
@@ -1565,7 +1690,10 @@ namespace BiliLite.Controls
                     danmakuPool.Clear();
                     segmentIndex = 1;
                 }
-                var danmuList = await playerHelper.GetDanmaku(CurrentPlayItem.cid, segmentIndex);
+                var requestedItem = CurrentPlayItem;
+                var requestedGeneration = _playItemGeneration;
+                var danmuList = await playerHelper.GetDanmaku(requestedItem.cid, segmentIndex);
+                if (!ReferenceEquals(requestedItem, CurrentPlayItem) || requestedGeneration != _playItemGeneration) return;
                 foreach (var item in danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList()))
                 {
                     if (danmakuPool.ContainsKey(item.Key))
@@ -1691,15 +1819,50 @@ namespace BiliLite.Controls
             if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
             {
                 var menu = new MenuFlyout();
-                menu.Items.Add(new ToggleMenuFlyoutItem() { Text = "无", IsChecked = true });
-                CurrentSubtitleName = "无";
+                var subtitleFiles = CurrentPlayItem.LocalPlayInfo.SubtitleFiles ?? new List<LocalMediaPlaybackTrack>();
+                foreach (var track in subtitleFiles)
+                {
+                    var subtitleItem = new ToggleMenuFlyoutItem
+                    {
+                        Text = track.Track.Label ?? track.Track.Language ?? track.Track.Id,
+                        Tag = track,
+                        IsChecked = track.Track.IsDefault
+                    };
+                    subtitleItem.Click += Menuitem_Click;
+                    menu.Items.Add(subtitleItem);
+                }
+                var selectedSubtitle = subtitleFiles.FirstOrDefault(track => track.Track.IsDefault);
+                var noneItem = new ToggleMenuFlyoutItem { Text = "无", IsChecked = selectedSubtitle == null };
+                noneItem.Click += Menuitem_Click;
+                menu.Items.Add(noneItem);
+                CurrentSubtitleName = selectedSubtitle == null ? "无" : (selectedSubtitle.Track.Label ?? selectedSubtitle.Track.Id);
                 BottomBtnSelctSubtitle.Flyout = menu;
                 BottomBtnSelctSubtitle.Visibility = Visibility.Collapsed;
+                LocalSubtitleTracksButton.Visibility = subtitleFiles.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
                 BorderSubtitle.Visibility = Visibility.Collapsed;
+                var danmakuMenu = new MenuFlyout();
+                foreach (var track in CurrentPlayItem.LocalPlayInfo.DanmakuFiles ?? new List<LocalMediaPlaybackTrack>())
+                {
+                    var danmakuItem = new ToggleMenuFlyoutItem
+                    {
+                        Text = track.Track.Label ?? track.Track.Language ?? track.Track.Id,
+                        Tag = track,
+                        IsChecked = _enabledManifestDanmaku.Contains(track.Track.Id)
+                    };
+                    danmakuItem.Click += ManifestDanmakuTrack_Click;
+                    danmakuMenu.Items.Add(danmakuItem);
+                }
+                LocalDanmakuTracksButton.Tag = danmakuMenu;
+                if (selectedSubtitle != null)
+                {
+                    _subtitleTicket = _subtitleLoadGuard.Begin(CurrentPlayItem);
+                    LoadManifestSubtitleAsync(selectedSubtitle, CurrentPlayItem, _subtitleTicket);
+                }
                 TopOnline.Text = "本地媒体";
                 return;
             }
             var autoAISubtitle = SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_OPEN_AI_SUBTITLE, false);
+            LocalSubtitleTracksButton.Visibility = Visibility.Collapsed;
             if (CurrentPlayItem.play_mode == VideoPlayType.Download)
             {
                 if (CurrentPlayItem.LocalPlayInfo.Subtitles != null && CurrentPlayItem.LocalPlayInfo.Subtitles.Count > 0)
@@ -2821,6 +2984,10 @@ namespace BiliLite.Controls
 
         public async void Dispose()
         {
+            _subtitleLoadGuard.Invalidate();
+            _danmakuLoadGuard.Invalidate();
+            _playItemGeneration++;
+            ClearSubTitle();
             var historyItem = CurrentPlayItem;
             var historyPosition = Player.Position;
             var shouldReportHistory = historyItem != null && historyItem.LocalPlayInfo?.IsManifestPlayback != true && _hasPlayedCurrentItem && Player.PlayState != PlayState.End;
@@ -3051,46 +3218,56 @@ namespace BiliLite.Controls
 
         private async void ImportSingleDanmaku(StorageFile file)
         {
+            var item = CurrentPlayItem;
+            var ticket = _danmakuLoadGuard.Begin(item);
             try
             {
-                CurrentPlayItem.LocalPlayInfo.DanmakuPath = file.Path;
-                var danmuList = await danmakuParse.ParseBiliBili(file);
-                danmakuPool = danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
-                TxtDanmuCount.Text = danmuList.Count.ToString();
-                danmuList.Clear();
-                danmuList = null;
+                if (item?.LocalPlayInfo != null) item.LocalPlayInfo.DanmakuPath = file.Path;
+                danmakuPool = new Dictionary<int, List<DanmakuModel>>();
+                DanmuControl.ClearAll();
+                await _danmakuLoadGuard.LoadAndApplyAsync(ticket, item, () => danmakuParse.ParseBiliBili(file), danmuList =>
+                {
+                    danmakuPool = danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
+                    TxtDanmuCount.Text = danmuList.Count.ToString();
+                });
             }
             catch (Exception ex)
             {
-                Utils.ShowMessageToast("加载弹幕文件失败", $"{ex.Message}");
+                if (_danmakuLoadGuard.IsCurrent(ticket, item)) Utils.ShowMessageToast("加载弹幕文件失败", $"{ex.Message}");
             }
         }
 
         private async void ImportSingleSubtitle(StorageFile file)
         {
+            var item = CurrentPlayItem;
+            var ticket = _subtitleTicket = _subtitleLoadGuard.Begin(item);
             try
             {
-                var j = JsonConvert.DeserializeObject<SubtitleModel>(await FileIO.ReadTextAsync(file));
-                subtitles = j;
-                if (subtitles != null)
+                ClearSubTitle();
+                await _subtitleLoadGuard.LoadAndApplyAsync(ticket, item, async () =>
                 {
+                    return JsonConvert.DeserializeObject<SubtitleModel>(await FileIO.ReadTextAsync(file));
+                }, loaded =>
+                {
+                    subtitles = loaded;
+                    if (subtitles == null) return;
                     //转为简体
                     if (SettingHelper.GetValue<bool>(SettingHelper.Roaming.TO_SIMPLIFIED, true) && CurrentSubtitleName == "中文（繁体）")
                     {
-                        foreach (var item in subtitles.body)
+                        foreach (var cue in subtitles.body)
                         {
-                            item.content = Utils.ToSimplifiedChinese(item.content);
+                            cue.content = Utils.ToSimplifiedChinese(cue.content);
                         }
                     }
                     subtitleTimer = new DispatcherTimer();
                     subtitleTimer.Interval = TimeSpan.FromMilliseconds(100);
                     subtitleTimer.Tick += SubtitleTimer_Tick;
                     subtitleTimer.Start();
-                }
+                });
             }
             catch (Exception ex)
             {
-                Utils.ShowMessageToast("加载字幕文件失败", $"{ex.Message}");
+                if (_subtitleLoadGuard.IsCurrent(ticket, item)) Utils.ShowMessageToast("加载字幕文件失败", $"{ex.Message}");
             }
         }
     }

@@ -15,9 +15,12 @@ internal static class LM03
         var rootPath = Path.Combine(Path.GetTempPath(), "lm03-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(rootPath, "video"));
         Directory.CreateDirectory(Path.Combine(rootPath, "audio"));
+        Directory.CreateDirectory(Path.Combine(rootPath, "subs"));
         File.WriteAllText(Path.Combine(rootPath, "video", "main.mkv"), "video");
         File.WriteAllText(Path.Combine(rootPath, "video", "alternate.mp4"), "video");
         File.WriteAllText(Path.Combine(rootPath, "audio", "main.flac"), "audio");
+        File.WriteAllText(Path.Combine(rootPath, "subs", "en.json"), "{}");
+        File.WriteAllText(Path.Combine(rootPath, "danmaku.xml"), "<i/>");
         try
         {
             var root = CreateFolder(rootPath);
@@ -56,6 +59,8 @@ internal static class LM03
             Assert(playInfo.LocalPlayInfo.SelectedAudioTrack.Track == audioDefault, "selected audio track remains typed for LM-04");
             Assert(playInfo.LocalPlayInfo.SubtitleTracks.Count == 1 && !playInfo.LocalPlayInfo.SubtitleTracks[0].IsDefault, "subtitle metadata is retained without implicit activation");
             Assert(playInfo.LocalPlayInfo.DanmakuTracks.Single().EnabledByDefault, "danmaku metadata is retained for LM-05");
+            Assert(playInfo.LocalPlayInfo.SubtitleFiles.Single().File.Path.EndsWith("subs/en.json", StringComparison.Ordinal), "subtitle file resolves through saved collection grant");
+            Assert(playInfo.LocalPlayInfo.DanmakuFiles.Single().File.Path.EndsWith("danmaku.xml", StringComparison.Ordinal), "danmaku file resolves through saved collection grant");
 
             var repeated = await LocalMediaPlaybackAdapter.CreatePlaylistAsync(collection, 0);
             var sameIdentity = await LocalMediaPlaybackAdapter.CreatePlaylistAsync(collection, 0);
@@ -84,10 +89,11 @@ internal static class LM03
             catch (LocalMediaPlaybackException exception)
             {
                 Assert(exception.Stage == "track-resolution" && exception.CollectionId == "broken" && exception.ItemId == "bad-item", "adapter failures include stage and collection/item identifiers");
-                Assert(exception.InnerException is FileNotFoundException, "adapter failure retains the full underlying exception");
+                var trackFailure = exception.InnerException as LocalMediaTrackLoadException;
+                Assert(trackFailure?.TrackId == "missing" && trackFailure.InnerException is FileNotFoundException, "adapter failure retains track id and full underlying storage exception");
             }
 
-            Console.WriteLine("LM-03 checks passed: playlist mapping, default StorageFile tracks, retained metadata, explicit subtitle-off behavior, stable resume IDs, and contextual failures.");
+            Console.WriteLine("LM-03 checks passed: playlist mapping, default StorageFile tracks, saved-grant subtitle/danmaku handles, retained metadata, explicit subtitle-off behavior, stable resume IDs, and contextual failures.");
         }
         finally
         {

@@ -27,6 +27,8 @@ namespace BiliLite.Controls
         public LocalMediaPlaybackTrack SelectedAudioTrack { get; set; }
         public IList<LocalMediaTrack> SubtitleTracks { get; set; }
         public IList<LocalMediaTrack> DanmakuTracks { get; set; }
+        public IList<LocalMediaPlaybackTrack> SubtitleFiles { get; set; }
+        public IList<LocalMediaPlaybackTrack> DanmakuFiles { get; set; }
         public string ManifestCollectionId { get; set; }
         public string ResumeId { get; set; }
     }

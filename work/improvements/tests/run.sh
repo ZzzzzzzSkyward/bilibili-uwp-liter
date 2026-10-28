@@ -44,6 +44,7 @@ JSON
   "$repo/src/BiliLite.UWP/Models/LocalMedia/LocalMediaTrack.cs" \
   "$repo/src/BiliLite.UWP/Modules/Player/Playurl/BiliPlayUrlInfo.cs" \
   "$repo/src/BiliLite.UWP/Services/LocalMedia/LocalMediaPlaybackAdapter.cs" \
+  "$repo/src/BiliLite.UWP/Services/LocalMedia/LocalMediaTrackLoadException.cs" \
   "$(dirname -- "${BASH_SOURCE[0]}")/LocalMediaStorageStubs.cs" \
   "$(dirname -- "${BASH_SOURCE[0]}")/LM03ControlStubs.cs" \
   "$(dirname -- "${BASH_SOURCE[0]}")/LM03.cs"
@@ -62,3 +63,18 @@ cat > "$scratch/LM04.runtimeconfig.json" <<'JSON'
 {"runtimeOptions":{"tfm":"net8.0","framework":{"name":"Microsoft.NETCore.App","version":"8.0.33"}}}
 JSON
 "$DOTNET_ROOT/dotnet" "$scratch/LM04.dll"
+
+"$tools/dotnet/dotnet" "$sdk/Roslyn/bincore/csc.dll" -nologo -langversion:latest -target:exe -out:"$scratch/LM05.dll" "${args[@]}" \
+  "$repo/src/BiliLite.UWP/Models/LocalMedia/LocalMediaTrack.cs" \
+  "$repo/src/BiliLite.UWP/Services/LocalMedia/SubtitleTrackParser.cs" \
+  "$repo/src/BiliLite.UWP/Services/LocalMedia/DanmakuTrackLoader.cs" \
+  "$repo/src/BiliLite.UWP/Services/LocalMedia/LocalMediaTrackLoadException.cs" \
+  "$repo/src/BiliLite.UWP/Services/LocalMedia/LocalMediaAsyncLoadGuard.cs" \
+  "$(dirname -- "${BASH_SOURCE[0]}")/LocalMediaStorageStubs.cs" \
+  "$(dirname -- "${BASH_SOURCE[0]}")/LM05Stubs.cs" \
+  "$(dirname -- "${BASH_SOURCE[0]}")/LM05.cs"
+cp "$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll" "$scratch/Newtonsoft.Json.dll"
+cat > "$scratch/LM05.runtimeconfig.json" <<'JSON'
+{"runtimeOptions":{"tfm":"net8.0","framework":{"name":"Microsoft.NETCore.App","version":"8.0.33"}}}
+JSON
+"$DOTNET_ROOT/dotnet" "$scratch/LM05.dll"
