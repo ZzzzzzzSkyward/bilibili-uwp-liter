@@ -1,10 +1,10 @@
 # Upstream logic bug fix progress
 
-## Current phase: batch 002 complete; awaiting user build/testing
+## Current phase: batch 003 implementation in progress (#378 → #404 → #598)
 
-The user authorized implementation fixes and commits. Batch 001 fixed #31, #105, and #121. Batch 002 fixed the next three findings, #146, #275, and #358, in order. Root reviews and pushes completed batches. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
+The user authorized implementation fixes and commits. Batch 001 fixed #31, #105, and #121; batch 002 fixed #146, #275, and #358. Batch 003 is implementing the next three findings in order. Root reviews and pushes completed batches. The assessment catalog and its historical disposition records remain unchanged; implementation status is tracked here.
 
-Batch 002 started from target branch `work` at `9fe3b5ac8e652ef553f42c837b931650adced7ff` (clean). Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
+Batch 003 started from target branch `work` at `87cf0d1` (clean). Per user instruction, no pull/fetch was performed. Behavior reference: sibling `/workspace/biliuwp-lite`, pinned at `ca2caddc597b3faf05b4dac6dcb226aa0694365b`.
 
 ## Constraints
 
@@ -14,6 +14,10 @@ Batch 002 started from target branch `work` at `9fe3b5ac8e652ef553f42c837b931650
 - Do not claim end-to-end app behavior from isolated probes or source review.
 
 ## Batch state
+
+| #378 | In progress | Sanitize `jump_url` in the target nested model using the pinned sibling URL contract and 404 fallback. |
+| #404 | Pending | Guard the empty `area_entrance_v2` array while preserving existing live-room loading. |
+| #598 | Pending | Restore the natural-end history report at the target handler position before auto-next handling. |
 
 | Issue | State | Evidence / commit |
 |---|---|---|
