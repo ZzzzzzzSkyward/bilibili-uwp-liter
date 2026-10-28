@@ -131,7 +131,11 @@ namespace BiliLite.Pages.Home
                     break;
                 case Controls.Dynamic.DynamicDisplayType.MediaList:
                     if (e.OneRowInfo.Tag != "收藏夹")
+                    {
+                        if (e.OneRowInfo.Tag == "合集")
+                            id = e.OneRowInfo.AID;
                         commentType = Api.CommentApi.CommentType.Video;
+                    }
                     break;
                 default:
                     id = e.DynamicID;

@@ -362,6 +362,7 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = "播放:" + item.viewtext + " 点赞:" + item.like,
                             Tag = "合集",
                             ID = item.aid,
+                            AID = item.modules?.module_dynamic?.major?.ugc_season?.aid.ToString(),
                             Title = item.title,
                         };
                         info.Url = item.jumpurl;

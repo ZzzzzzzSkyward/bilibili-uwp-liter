@@ -17,6 +17,14 @@ static class Controls
         public sealed class DynamicItemDisplayOneRowInfo { public string Tag; public string ID; public string AID; }
     }
 }
+sealed class SourceUgcSeason { public long Avid; }
+sealed class SourceDynamic { public SourceUgcSeason DynUgcSeason; }
+sealed class DynamicCardModel2024_list { public long aid; }
+sealed class DynamicCardModel2024_major { public DynamicCardModel2024_list ugc_season; }
+sealed class DynamicCardModel2024_dynamic { public DynamicCardModel2024_major major; }
+sealed class DynamicCardModel2024_modules { public DynamicCardModel2024_dynamic module_dynamic; }
+sealed class DynamicCardModel2024_basic { public string rid_str; }
+sealed class DynamicCardModel2024 { public DynamicCardModel2024_basic basic; public DynamicCardModel2024_modules modules; }
 static class Api
 {
     public static class CommentApi
@@ -77,7 +85,11 @@ sealed class UserDynamicPageHarness
                     break;
                 case Controls.Dynamic.DynamicDisplayType.MediaList:
                     if (e.OneRowInfo.Tag != "收藏夹")
+                    {
+                        if (e.OneRowInfo.Tag == "合集")
+                            id = e.OneRowInfo.AID;
                         commentType = Api.CommentApi.CommentType.Video;
+                    }
                     break;
                 default:
                     id = e.DynamicID;
@@ -99,17 +111,36 @@ sealed class UserDynamicPageHarness
 // mapped `major.ugc_season.aid` retains the playable video's AID separately.
 var dynamicId = "901234567890123456";
 var videoAid = "987654321";
+var source = new SourceDynamic { DynUgcSeason = new SourceUgcSeason { Avid = long.Parse(videoAid) } };
+var mappedSeason = new DynamicCardModel2024_list { aid = source.DynUgcSeason.Avid, };
+var item = new DynamicCardModel2024
+{
+    basic = new DynamicCardModel2024_basic { rid_str = dynamicId },
+    modules = new DynamicCardModel2024_modules
+    {
+        module_dynamic = new DynamicCardModel2024_dynamic
+        {
+            major = new DynamicCardModel2024_major { ugc_season = mappedSeason }
+        }
+    }
+};
+var oneRowInfo = new Controls.Dynamic.DynamicItemDisplayOneRowInfo
+{
+    Tag = "合集",
+    ID = dynamicId,
+    AID = item.modules?.module_dynamic?.major?.ugc_season?.aid.ToString(),
+};
 var displayItem = new Controls.Dynamic.DynamicItemDisplayModel
 {
     DynamicID = dynamicId,
-    ReplyID = dynamicId,
+    ReplyID = item.basic.rid_str,
     Type = Controls.Dynamic.DynamicDisplayType.MediaList,
-    OneRowInfo = new Controls.Dynamic.DynamicItemDisplayOneRowInfo { Tag = "合集", ID = dynamicId }
+    OneRowInfo = oneRowInfo
 };
 new UserDynamicPageHarness().OpenComment(displayItem);
 Console.WriteLine($"Video comment dispatch: oid={Utils.LastOid}, type={Utils.LastType}");
 var expectedType = (int)Api.CommentApi.CommentType.Video;
-var passed = Utils.LastOid == videoAid && Utils.LastType == expectedType;
+var passed = Utils.LastOid == videoAid && Utils.LastType == expectedType && displayItem.ReplyID == dynamicId;
 Console.WriteLine(passed
     ? "PASS: UGC collection comment used the mapped video AID"
     : "FAIL: UGC collection comment used the dynamic ID instead of the mapped video AID");
