@@ -62,6 +62,25 @@ namespace BiliLite.Services
             throw new Exception(result.message);
         }
 
+        public async Task<DynDetailReply> GetDynDetail(string id)
+        {
+            var request = new DynDetailReq
+            {
+                DynamicId = id,
+            };
+
+            var result = await GrpcRequest.Instance.SendMessage(
+                DynamicGrpcBaseUrl + "DynDetail",
+                request,
+                GetRequestUserInfo());
+            if (result.status)
+            {
+                return DynDetailReply.Parser.ParseFrom(result.results);
+            }
+
+            throw new Exception(result.message);
+        }
+
         public async Task<DynVideoReply> GetDynVideo(int page, string historyOffset, string updateBaseline)
         {
             var request = new DynVideoReq

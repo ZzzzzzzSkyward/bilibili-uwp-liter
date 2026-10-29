@@ -39,7 +39,7 @@ Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90
 | --- | --- | --- |
 | ~~G1~~ | ~~Honor the account app key when building gRPC headers~~ — **done**, commits `cfcd3de`, `75e8ecb`; report `work/improvements/G1_REPORT.md` | Existing transport |
 | ~~G2~~ | ~~Use sibling archive search in the existing user-video keyword search~~ — **done**, commit `Search user submissions through the sibling archive-search gRPC`; report `IMPROVEMENT_PROGRESS.md` | G1; two additional proto files |
-| G3 | Load dynamic details through the existing gRPC mapper | G1; no new proto |
+| ~~G3~~ | ~~Load dynamic details through the existing gRPC mapper~~ — **done**, commit `Load dynamic details through the existing gRPC mapper`; report `IMPROVEMENT_PROGRESS.md` | G1; no new proto |
 | G4 | Add gRPC user-space dynamics with source-specific paging | G1; existing mapper and proto |
 | D1 | Browse loaded danmaku, copy text, and like a selected online comment | Existing pool and like builder |
 | D2 | Import/export filter JSON and fix user-filter persistence | Existing settings collections |
@@ -83,6 +83,8 @@ Finish one usable batch at a time. D1, D2 and N1 can be implemented independentl
 **Result:** the current search box gains the sibling's archive-search path without a new page or changes to ordinary category/order browsing.
 
 ## G3 — Dynamic detail through gRPC
+
+**Status: implemented and verified locally (commit `Load dynamic details through the existing gRPC mapper`).** `GrpcService.GetDynDetail(id)` mirrors `GetDynAll` against `Dynamic/DynDetail`; `DynamicVM.GetDynamicDetail` tries gRPC first, maps `reply.Item` through the unchanged `DynamicGrpcMapper.MapToUserCards(new[] { reply.Item })`, publishes the single card via `ConvertToDisplay2024`, and otherwise falls through silently to the untouched REST body. Verification and limits are recorded in `IMPROVEMENT_PROGRESS.md`.
 
 **Target:** `Services/GrpcService.cs`, `Modules/User/DynamicVM.cs::GetDynamicDetail`, `Helpers/DynamicGrpcMapper.cs`. Existing navigation is `Pages/User/DynamicDetailPage.xaml.cs::OnNavigatedTo`.
 

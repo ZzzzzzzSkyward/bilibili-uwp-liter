@@ -942,6 +942,21 @@ namespace BiliLite.Modules.User
             {
                 CanLoadMore = false;
                 Loading = true;
+                //优先走 gRPC 详情，复用动态流同一套映射；映射不出唯一一张卡片就回落到下面的 REST 详情
+                try
+                {
+                    var detail = await grpcService.GetDynDetail(id);
+                    var detailCards = DynamicGrpcMapper.MapToUserCards(new[] { detail?.Item });
+                    if (detailCards.Count == 1)
+                    {
+                        Items = new ObservableCollection<DynamicItemDisplayModel> { ConvertToDisplay2024(detailCards[0]) };
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogHelper.Log("User dynamic VM stage=detail-grpc-fallback id=" + id + " reason=" + ex.Message, LogType.INFO, ex);
+                }
                 var api = dynamicAPI.DynamicDetail(id);
 
                 var results = await api.Request();
