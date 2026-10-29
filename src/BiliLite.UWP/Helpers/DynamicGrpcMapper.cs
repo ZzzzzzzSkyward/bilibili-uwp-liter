@@ -340,7 +340,7 @@ namespace BiliLite.Helpers
         }
 
         /// <summary>
-        /// 评论与详情使用的 oid：视频/番剧/合集用稿件 AID，专栏用 cvid，音乐用歌曲 ID；其余卡片退回动态 ID。
+        /// 评论与详情使用的 oid：视频/番剧/合集用稿件 AID，专栏用 cvid，音乐用歌曲 ID，图片用相册对象 ID；其余卡片退回动态 ID。
         /// </summary>
         private static string GetCommentId(GrpcDynamicType cardType, ModuleDynamic dynamic)
         {
@@ -360,6 +360,8 @@ namespace BiliLite.Helpers
                     return dynamic.DynUgcSeason == null ? null : dynamic.DynUgcSeason.Avid.ToString();
                 case GrpcDynamicType.Music:
                     return dynamic.DynMusic == null ? null : dynamic.DynMusic.Id.ToString();
+                case GrpcDynamicType.Draw:
+                    return dynamic.DynDraw == null ? null : dynamic.DynDraw.Id.ToString();
                 default:
                     return null;
             }

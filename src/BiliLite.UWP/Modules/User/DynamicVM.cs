@@ -1051,8 +1051,14 @@ namespace BiliLite.Modules.User
                     var detailCards = DynamicGrpcMapper.MapToUserCards(new[] { detail?.Item });
                     if (detailCards.Count == 1)
                     {
-                        Items = new ObservableCollection<DynamicItemDisplayModel> { ConvertToDisplay2024(detailCards[0]) };
-                        return;
+                        var display = ConvertToDisplay2024(detailCards[0]);
+                        //未支持的类型和转换失败都会退化成 Other 占位卡片，这类结果要留给 REST 详情
+                        if (display.Type != DynamicDisplayType.Other)
+                        {
+                            Items = new ObservableCollection<DynamicItemDisplayModel> { display };
+                            return;
+                        }
+                        LogHelper.Log("User dynamic VM stage=detail-grpc-unusable type=" + detailCards[0].type + " dynamicId=" + id, LogType.INFO);
                     }
                 }
                 catch (Exception ex)

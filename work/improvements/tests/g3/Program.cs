@@ -31,6 +31,9 @@ namespace G3Probe
             GrpcServiceUsesDynDetailEndpoint(detailEndpoint);
             OneItemWithExtendMapsToSingleCard();
             ItemWithoutExtendMapsToNothing();
+            DrawCardUsesPhotoObjectId();
+            UnsupportedCardTypeStaysUnrenderable();
+            DetailOnlyAcceptsRenderableCards();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -117,6 +120,93 @@ namespace G3Probe
             Check(DynamicGrpcMapper.MapToUserCards(new[] { noExtend }).Count == 0,
                 "item with null Extend maps to an empty list (REST fallback)");
             Check(DynamicGrpcMapper.MapToUserCards(null).Count == 0, "null collection maps to an empty list");
+        }
+
+        // Review finding 1: a photo dynamic must route comments to the album object id, not the dynamic id.
+        private static void DrawCardUsesPhotoObjectId()
+        {
+            var draw = new DynamicItem
+            {
+                CardType = DynamicType.Draw,
+                Extend = new Extend { DynIdStr = "712345678901234" },
+            };
+            draw.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleDynamic,
+                ModuleDynamic = new ModuleDynamic { DynDraw = new MdlDynDraw { Id = 987654321L } },
+            });
+
+            var cards = DynamicGrpcMapper.MapToUserCards(new[] { draw });
+            Check(cards.Count == 1, "photo card maps to exactly one card");
+            Check(cards[0].id_str == "712345678901234", "photo card keeps Extend.DynIdStr as id_str");
+            Check(cards[0].basic.rid_str == "987654321",
+                "photo card routes comments to the photo object id, not the dynamic id");
+            Check(cards[0].basic.comment_id_str == "987654321",
+                "photo card comment_id_str is the photo object id");
+
+            var av = new DynamicItem
+            {
+                CardType = DynamicType.Av,
+                Extend = new Extend { DynIdStr = "712345678901235" },
+            };
+            av.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleDynamic,
+                ModuleDynamic = new ModuleDynamic { DynArchive = new MdlDynArchive { Avid = 123456L } },
+            });
+            var avCards = DynamicGrpcMapper.MapToUserCards(new[] { av });
+            Check(avCards.Count == 1 && avCards[0].basic.rid_str == "123456",
+                "video card still routes comments to the AVID");
+
+            var drawWithoutDraw = new DynamicItem
+            {
+                CardType = DynamicType.Draw,
+                Extend = new Extend { DynIdStr = "712345678901236" },
+            };
+            Check(DynamicGrpcMapper.MapToUserCards(new[] { drawWithoutDraw })[0].basic.rid_str == "712345678901236",
+                "photo card without DynDraw falls back to the dynamic id");
+        }
+
+        // Review finding 2: a type the mapper cannot render must stay visibly unsupported so the
+        // detail VM can reject it and reach the REST card.
+        private static void UnsupportedCardTypeStaysUnrenderable()
+        {
+            var item = new DynamicItem
+            {
+                CardType = DynamicType.Story,
+                Extend = new Extend { DynIdStr = "712345678901237" },
+            };
+            var cards = DynamicGrpcMapper.MapToUserCards(new[] { item });
+            Check(cards.Count == 1, "unsupported card type still yields one card");
+            Check(cards[0].type == "DYNAMIC_TYPE_UNSUPPORTED",
+                "mapper reports DYNAMIC_TYPE_UNSUPPORTED for a type it cannot render");
+            Check(cards[0].basic.rid_str == "712345678901237",
+                "unsupported card falls back to the dynamic id for its oid");
+        }
+
+        private static void DetailOnlyAcceptsRenderableCards()
+        {
+            var root = RepoRoot();
+            var vmSource = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "Modules", "User", "DynamicVM.cs"));
+            var start = vmSource.IndexOf("public async Task GetDynamicDetail(string id)", StringComparison.Ordinal);
+            Check(start >= 0, "GetDynamicDetail exists in the user dynamic VM");
+
+            var restIndex = start < 0 ? -1 : vmSource.IndexOf("dynamicAPI.DynamicDetail(id)", start, StringComparison.Ordinal);
+            var branch = start >= 0 && restIndex > start ? vmSource.Substring(start, restIndex - start) : "";
+            Check(branch.Contains("var display = ConvertToDisplay2024(detailCards[0]);"),
+                "detail converts the gRPC card before storing it");
+            Check(branch.Contains("if (display.Type != DynamicDisplayType.Other)"),
+                "detail accepts the gRPC card only when the display type is not Other");
+            Check(branch.Contains("stage=detail-grpc-unusable"),
+                "unusable gRPC detail is logged before the REST fallback");
+            Check(!branch.Contains("Items = new ObservableCollection<DynamicItemDisplayModel> { ConvertToDisplay2024"),
+                "detail no longer stores the raw conversion result unconditionally");
+
+            var parseSource = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "Controls", "Dynamic", "DynamicParse.cs"));
+            Check(parseSource.Contains("case \"DYNAMIC_TYPE_NONE\":") && parseSource.Contains("return DynamicDisplayType.Miss;"),
+                "deleted/missing dynamics still parse to Miss, which the not-Other guard accepts");
+            Check(!parseSource.Contains("case \"DYNAMIC_TYPE_UNSUPPORTED\":"),
+                "unsupported cards have no display type and fall to Other");
         }
 
         private static string RepoRoot()
