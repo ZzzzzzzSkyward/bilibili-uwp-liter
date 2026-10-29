@@ -129,6 +129,26 @@ namespace BiliLite.Services
             throw new Exception(result.message);
         }
 
+        public async Task<RepostListRsp> GetDynRepostList(string dynamicId, string offset = "")
+        {
+            var request = new RepostListReq
+            {
+                DynamicId = dynamicId,
+                Offset = offset ?? "",
+            };
+
+            var result = await GrpcRequest.Instance.SendMessage(
+                DynamicGrpcBaseUrl + "RepostList",
+                request,
+                GetRequestUserInfo());
+            if (result.status)
+            {
+                return RepostListRsp.Parser.ParseFrom(result.results);
+            }
+
+            throw new Exception(result.message);
+        }
+
         private static GrpcBiliUserInfo GetRequestUserInfo()
         {
             return new GrpcBiliUserInfo(

@@ -2,6 +2,7 @@
 using BiliLite.Helpers;
 using BiliLite.Models.Dynamic;
 using BiliLite.Pages;
+using BiliLite.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -17,9 +18,11 @@ namespace BiliLite.Modules.User
     public class DynamicRepostVM:IModules
     {
         readonly Api.User.DynamicAPI dynamicAPI;
+        readonly GrpcService grpcService;
         public DynamicRepostVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
+            grpcService = new GrpcService();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
             UserCommand = new RelayCommand<object>(OpenUser);
@@ -46,53 +49,23 @@ namespace BiliLite.Modules.User
             get { return _Items; }
             set { _Items = value; DoPropertyChanged("Items"); }
         }
-        string next = "";
+        // gRPC 与 REST 的分页游标互不相干：一个回包里的 offset 不能拿去请求另一个接口。
+        string grpcOffset = "";
+        string restOffset = "";
+        // 本列表一旦回退到 REST 就固定下来，直到 Refresh/Clear，避免每页都先失败一次。
+        bool useRestFallback = false;
+
         public async Task GetDynamicItems()
         {
             try
             {
                 CanLoadMore = false;
                 Loading = true;
-                var api = dynamicAPI.DynamicRepost(ID,next);
-              
-                var results = await api.Request();
-                if (results.status)
+                if (!useRestFallback && await TryLoadGrpcPage())
                 {
-                    var data = results.GetJObject();
-                    if (data["code"].ToInt32() == 0)
-                    {
-                        var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["items"]?.ToString() ?? "[]");
-                        
-                        ObservableCollection<DynamicItemDisplayModel> _ls = new ObservableCollection<DynamicItemDisplayModel>();
-                        foreach (var item in items)
-                        {
-                            _ls.Add(ConvertToDisplayRepost(item));
-                        }
-                        if (Items == null)
-                        {
-
-                            Items = _ls;
-                        }
-                        else
-                        {
-                            foreach (var item in _ls)
-                            {
-                                Items.Add(item);
-                            }
-                        }
-                        CanLoadMore = (data["data"]?["has_more"]?.ToInt32()??0) == 1;
-                        next = data["data"]?["has_more"]?.ToString()??"";
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data["message"].ToString());
-                    }
+                    return;
                 }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
-
-                }
+                await LoadRestPage();
             }
             catch (Exception ex)
             {
@@ -102,16 +75,95 @@ namespace BiliLite.Modules.User
             finally
             {
                 Loading = false;
-
             }
         }
+
+        /// <summary>
+        /// 返回 false 表示本页没有可用的 gRPC 数据，调用方应改走 REST。
+        /// </summary>
+        private async Task<bool> TryLoadGrpcPage()
+        {
+            try
+            {
+                var rsp = await grpcService.GetDynRepostList(ID, grpcOffset);
+                var displays = DynamicRepostMapper.ToDisplayList(
+                    DynamicGrpcMapper.MapToUserCards(rsp?.List),
+                    UserCommand);
+                if (displays.Count > 0)
+                {
+                    Append(displays);
+                    grpcOffset = rsp?.Offset ?? "";
+                    CanLoadMore = rsp?.HasMore ?? false;
+                    return true;
+                }
+                LogHelper.Log("Dynamic repost VM stage=repost-grpc-unusable dynamicId=" + ID + " offset=" + grpcOffset, LogType.INFO);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Dynamic repost VM stage=repost-grpc-failed dynamicId=" + ID + " offset=" + grpcOffset + " message=" + ex.Message, LogType.INFO);
+            }
+
+            useRestFallback = true;
+            return false;
+        }
+
+        private async Task LoadRestPage()
+        {
+            var api = dynamicAPI.DynamicRepost(ID, restOffset);
+
+            var results = await api.Request();
+            if (results.status)
+            {
+                var data = results.GetJObject();
+                if (data["code"].ToInt32() == 0)
+                {
+                    var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["items"]?.ToString() ?? "[]");
+
+                    var displays = new List<DynamicItemDisplayModel>();
+                    foreach (var item in items)
+                    {
+                        displays.Add(ConvertToDisplayRepost(item));
+                    }
+                    Append(displays);
+                    // 上一版把 has_more 当成 offset 回传，第二页会重复第一页；这里推进真正的 offset，
+                    // 并要求 has_more 与 offset 同时有效，否则分页会在第一页打转。
+                    var hasMore = (data["data"]?["has_more"]?.ToInt32() ?? 0) == 1;
+                    restOffset = data["data"]?["offset"]?.ToString() ?? "";
+                    CanLoadMore = hasMore && !string.IsNullOrEmpty(restOffset);
+                }
+                else
+                {
+                    Utils.ShowMessageToast(data["message"].ToString());
+                }
+            }
+            else
+            {
+                Utils.ShowMessageToast(results.message);
+            }
+        }
+
+        private void Append(IEnumerable<DynamicItemDisplayModel> displays)
+        {
+            if (Items == null)
+            {
+                Items = new ObservableCollection<DynamicItemDisplayModel>(displays);
+                return;
+            }
+            foreach (var item in displays)
+            {
+                Items.Add(item);
+            }
+        }
+
         public async void Refresh()
         {
             if (Loading)
             {
                 return;
             }
-            next = "";
+            grpcOffset = "";
+            restOffset = "";
+            useRestFallback = false;
             Items = null;
             await GetDynamicItems();
         }
@@ -188,7 +240,9 @@ namespace BiliLite.Modules.User
 
         public void Clear()
         {
-            next = "";
+            grpcOffset = "";
+            restOffset = "";
+            useRestFallback = false;
             Items = null;
 
         }

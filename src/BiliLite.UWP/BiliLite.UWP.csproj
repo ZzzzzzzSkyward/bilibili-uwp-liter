@@ -291,6 +291,7 @@
     <Compile Include="Helpers\DownloadHelper.cs" />
     <Compile Include="Helpers\ExceptionHandler.cs" />
     <Compile Include="Helpers\DynamicGrpcMapper.cs" />
+    <Compile Include="Helpers\DynamicRepostMapper.cs" />
     <Compile Include="Helpers\SpaceArchiveGrpcMapper.cs" />
     <Compile Include="Helpers\HttpHelper.cs" />
     <Compile Include="Helpers\LogHelper.cs" />
