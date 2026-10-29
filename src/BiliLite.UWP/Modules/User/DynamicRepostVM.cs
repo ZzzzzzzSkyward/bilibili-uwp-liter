@@ -54,6 +54,8 @@ namespace BiliLite.Modules.User
         string restOffset = "";
         // 本列表一旦回退到 REST 就固定下来，直到 Refresh/Clear，避免每页都先失败一次。
         bool useRestFallback = false;
+        // 换源时已展示的 gRPC 条目必须让位给第一条 REST 页，否则同一批转发会重复出现。
+        bool replaceListOnRestPage = false;
 
         public async Task GetDynamicItems()
         {
@@ -103,6 +105,7 @@ namespace BiliLite.Modules.User
                 LogHelper.Log("Dynamic repost VM stage=repost-grpc-failed dynamicId=" + ID + " offset=" + grpcOffset + " message=" + ex.Message, LogType.INFO);
             }
 
+            replaceListOnRestPage = true;
             useRestFallback = true;
             return false;
         }
@@ -123,6 +126,16 @@ namespace BiliLite.Modules.User
                     foreach (var item in items)
                     {
                         displays.Add(ConvertToDisplayRepost(item));
+                    }
+                    // 从 gRPC 换到 REST 时，之前的条目整体作废：第一条成功的 REST 页顶替它们，
+                    // 之后各 REST 页照旧追加，这样既不会把同一批转发显示两次，分页也能继续往后走。
+                    if (replaceListOnRestPage)
+                    {
+                        replaceListOnRestPage = false;
+                        if (Items != null)
+                        {
+                            Items.Clear();
+                        }
                     }
                     Append(displays);
                     // 上一版把 has_more 当成 offset 回传，第二页会重复第一页；这里推进真正的 offset，
@@ -164,6 +177,7 @@ namespace BiliLite.Modules.User
             grpcOffset = "";
             restOffset = "";
             useRestFallback = false;
+            replaceListOnRestPage = false;
             Items = null;
             await GetDynamicItems();
         }
@@ -243,6 +257,7 @@ namespace BiliLite.Modules.User
             grpcOffset = "";
             restOffset = "";
             useRestFallback = false;
+            replaceListOnRestPage = false;
             Items = null;
 
         }

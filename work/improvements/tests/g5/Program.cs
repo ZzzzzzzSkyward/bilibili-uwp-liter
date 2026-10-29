@@ -37,6 +37,7 @@ namespace G5Probe
             NullCardsAreSkipped();
             UnusableRepostPageFallsBackToRest();
             RepostVmKeepsCursorsSeparate();
+            RepostFallbackReplacesList();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -279,6 +280,33 @@ namespace G5Probe
             var csproj = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "BiliLite.UWP.csproj"));
             Check(csproj.Contains("<Compile Include=\"Helpers\\DynamicRepostMapper.cs\" />"),
                 "the UWP project compiles the new DynamicRepostMapper helper");
+        }
+
+        // 评审发现：gRPC 页已显示后再回退到 REST，旧实现把第一条 REST 页追加在 gRPC 条目之后，
+        // 两边若有同一批转发就会重复；换源时发布列表必须先被清空，之后各 REST 页才继续追加。
+        private static void RepostFallbackReplacesList()
+        {
+            var vmSource = File.ReadAllText(Path.Combine(RepoRoot(), "src", "BiliLite.UWP", "Modules", "User", "DynamicRepostVM.cs"));
+            var grpcPage = SliceMethod(vmSource, "private async Task<bool> TryLoadGrpcPage()");
+            var restPage = SliceMethod(vmSource, "private async Task LoadRestPage()");
+            var refresh = SliceMethod(vmSource, "public async void Refresh()");
+            var clear = SliceMethod(vmSource, "public void Clear()");
+
+            // Bite test (c): dropping this line makes the first REST page append after the gRPC rows.
+            Check(grpcPage.Contains("replaceListOnRestPage = true;"),
+                "source: the gRPC-to-REST switch marks the shown list for replacement");
+
+            var clearAt = restPage.IndexOf("Items.Clear();", StringComparison.Ordinal);
+            var appendAt = restPage.IndexOf("Append(displays);", StringComparison.Ordinal);
+            Check(clearAt >= 0 && appendAt > clearAt,
+                "source: the fallback REST page clears the published list before appending it");
+
+            var consumeAt = restPage.IndexOf("replaceListOnRestPage = false;", StringComparison.Ordinal);
+            Check(consumeAt >= 0 && restPage.Contains("\n                    Append(displays);"),
+                "source: the REST branch consumes the replacement once and still appends later pages");
+
+            Check(refresh.Contains("replaceListOnRestPage = false;") && clear.Contains("replaceListOnRestPage = false;"),
+                "source: Refresh and Clear reset the replacement marker with the fallback flag");
         }
 
         private static string SliceMethod(string source, string signature)
