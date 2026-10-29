@@ -50,6 +50,6 @@ Not run: any UWP build (workload absent), application launch, live Bilibili API 
 
 ## Open items handed forward
 
-- **Push pending:** `cfcd3de` and `75e8ecb` are committed locally but not published — `github.com:443` became unreachable during the round (`api.github.com` and `raw.githubusercontent.com` still answered) and all push retries failed. Re-run `git push origin work` from a working network.
+- **Published:** `cfcd3de`, `75e8ecb` and `e54557c` are on `origin/work`. The first push attempt failed while `github.com:443` was unreachable (`api.github.com` and `raw.githubusercontent.com` still answered); a later retry succeeded unchanged, so no history repair was needed.
 - Next batch is **G2** (user-video keyword search through `Space/SearchArchive`) per `PLAN.md`; its G1 prerequisite is now satisfied. D1/D2/N1 remain independent.
 - `#1311` (fully unmarked AI subtitle tracks) and the user visual review assignments are still open from the bug series.
