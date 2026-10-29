@@ -107,6 +107,28 @@ namespace BiliLite.Services
             throw new Exception(result.message);
         }
 
+        public async Task<DynSpaceRsp> GetDynSpace(long mid, string from = "space", int page = 1, string offset = null)
+        {
+            var request = new DynSpaceReq
+            {
+                HostUid = mid,
+                From = from,
+                Page = page,
+                HistoryOffset = offset ?? "",
+            };
+
+            var result = await GrpcRequest.Instance.SendMessage(
+                DynamicGrpcBaseUrl + "DynSpace",
+                request,
+                GetRequestUserInfo());
+            if (result.status)
+            {
+                return DynSpaceRsp.Parser.ParseFrom(result.results);
+            }
+
+            throw new Exception(result.message);
+        }
+
         private static GrpcBiliUserInfo GetRequestUserInfo()
         {
             return new GrpcBiliUserInfo(

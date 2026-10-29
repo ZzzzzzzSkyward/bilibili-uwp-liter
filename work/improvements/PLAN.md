@@ -40,7 +40,7 @@ Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90
 | ~~G1~~ | ~~Honor the account app key when building gRPC headers~~ — **done**, commits `cfcd3de`, `75e8ecb`; report `work/improvements/G1_REPORT.md` | Existing transport |
 | ~~G2~~ | ~~Use sibling archive search in the existing user-video keyword search~~ — **done**, commit `Search user submissions through the sibling archive-search gRPC`; report `IMPROVEMENT_PROGRESS.md` | G1; two additional proto files |
 | ~~G3~~ | ~~Load dynamic details through the existing gRPC mapper~~ — **done**, commit `Load dynamic details through the existing gRPC mapper`; report `IMPROVEMENT_PROGRESS.md` | G1; no new proto |
-| G4 | Add gRPC user-space dynamics with source-specific paging | G1; existing mapper and proto |
+| ~~G4~~ | ~~Add gRPC user-space dynamics with source-specific paging~~ — **done**, commit `Serve user-space dynamics from the gRPC space feed with REST fallback`; report `IMPROVEMENT_PROGRESS.md` | G1; existing mapper and proto |
 | D1 | Browse loaded danmaku, copy text, and like a selected online comment | Existing pool and like builder |
 | D2 | Import/export filter JSON and fix user-filter persistence | Existing settings collections |
 | N1 | Keyed player overlays for volume, brightness, seek and held speed | Existing player handlers |
@@ -98,6 +98,8 @@ Finish one usable batch at a time. D1, D2 and N1 can be implemented independentl
 **Result:** an opened dynamic uses the same modern mapping already used by feed cards, while the existing REST detail path remains available.
 
 ## G4 — User-space dynamics
+
+**Status: implemented and verified locally (commit `Serve user-space dynamics from the gRPC space feed with REST fallback`).** `GrpcService.GetDynSpace(mid, from, page, offset)` mirrors `GetDynAll` against `Dynamic/DynSpace`; the `DynamicType.Space` branch of `Modules/User/DynamicVM.cs::GetDynamicItems` runs it behind the existing request-generation guard, maps `reply.List` through the unchanged `DynamicGrpcMapper.MapToUserCards` and publishes each card with `ConvertToDisplay2024`, paging on `spacePage`/`spaceOffset` and stopping on the server's `HasMore`. A failed call flips the sticky `spaceRestMode` flag, drops the gRPC page and restarts the query at page one of the untouched `SpaceHistory` REST body with an empty `idx`. Verification, reset points and limits are recorded in `IMPROVEMENT_PROGRESS.md`.
 
 **Existing caller:** `Pages/UserInfoPage.xaml.cs` selects `DynamicType.Space`. `Modules/User/DynamicVM.cs` currently handles it with `DynamicAPI.SpaceHistory(Uid, idx)` and legacy cards.
 

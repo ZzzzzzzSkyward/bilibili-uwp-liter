@@ -72,6 +72,14 @@ namespace BiliLite.Modules.User
         //所以连续空页达到上限就停止，作为兜底（只在达到上限的那一页记一条日志）
         private const int EmptyPageCap = 5;
         private int consecutiveEmptyPages;
+        //个人空间动态（Space）的 gRPC 分页状态：页序号与 history_offset 自成一套，
+        //既不与全部/视频动态流的 historyOffset/updateBaseline 共享，也不与 SpaceHistory 的 REST 游标（idx）互传
+        private int spacePage = 1;
+        private string spaceOffset;
+        //Space 的 REST 兜底粘滞到实例：gRPC 被拒后后续页都走 SpaceHistory，直到刷新或换用户
+        private bool spaceRestMode;
+        //spacePage/spaceOffset/spaceRestMode 属于哪个用户；Uid 变了这组状态必须作废
+        private string spaceUid;
         public DynamicVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
@@ -445,6 +453,14 @@ namespace BiliLite.Modules.User
         {
             NullValueHandling = NullValueHandling.Ignore
         };
+        //Space 的 gRPC 分页状态回到初始：页序号、游标、REST 兜底开关一起复位，并记住这组状态属于哪个用户
+        private void ResetSpaceFeed()
+        {
+            spacePage = 1;
+            spaceOffset = null;
+            spaceRestMode = false;
+            spaceUid = Uid;
+        }
         public async Task GetDynamicItems(string idx = "", bool loadMore = false)
         {
             //代号在第一个 await 之前取得，之后只认这一份分类/代号
@@ -452,6 +468,14 @@ namespace BiliLite.Modules.User
             var requestDynamicType = DynamicType;
             var requestItemType = UserDynamicType;
             refreshQueued = false;
+            //换了用户：上一用户的页序号/游标/兜底开关全部作废，本次按第一页重新开始（不能续在别人的列表后面）
+            var spaceStateReset = false;
+            if (requestDynamicType == DynamicType.Space && !string.Equals(spaceUid, Uid, StringComparison.Ordinal))
+            {
+                spaceStateReset = true;
+                ResetSpaceFeed();
+                LogHelper.Log("User dynamic VM stage=space-uid-changed generation=" + generation + " uid=" + (Uid ?? ""), LogType.INFO);
+            }
             var stage = "request-start";
             try
             {
@@ -460,6 +484,7 @@ namespace BiliLite.Modules.User
                 Loading = true;
                 if (!loadMore)
                 {
+                    ResetSpaceFeed();
                     lastPageFailed = false;
                     ShowError = false;
                     ErrorMsg = "";
@@ -746,6 +771,83 @@ namespace BiliLite.Modules.User
                     var firstId = grpcCards.FirstOrDefault()?.id_str ?? "";
                     LogHelper.Log("User dynamic VM stage=feed-items-published page=" + feedPage + " count=" + grpcCards.Count + " hasMore=" + hasMore + " types=" + itemTypes + " firstDynamicId=" + firstId + " generation=" + generation, LogType.INFO);
                     return;
+                }
+
+                //个人空间动态：先走 gRPC 的 DynSpace（自带 has_more 与 history_offset），被拒则在本次请求内改走
+                //SpaceHistory 的 REST 分页；兜底开关（spaceRestMode）粘滞到实例，直到刷新或换用户
+                if (requestDynamicType == DynamicType.Space)
+                {
+                    //换用户的请求按第一页重新发布，不能续在上一用户的列表后面
+                    var spaceLoadMore = loadMore && !spaceStateReset;
+                    if (!spaceRestMode)
+                    {
+                        stage = "space-feed-request";
+                        try
+                        {
+                            var reply = await grpcService.GetDynSpace(long.Parse(Uid), page: spacePage, offset: spaceLoadMore ? spaceOffset : null);
+                            if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                            {
+                                LogHelper.Log("User dynamic VM stage=space-feed-request discarded generation=" + generation, LogType.DEBUG);
+                                return;
+                            }
+                            if (reply == null)
+                            {
+                                throw new InvalidOperationException("DynSpace returned no reply");
+                            }
+                            var spaceCards = DynamicGrpcMapper.MapToUserCards(reply.List);
+                            stage = "space-card-convert";
+                            var spaceMapped = new ObservableCollection<DynamicItemDisplayModel>();
+                            foreach (var card in spaceCards)
+                            {
+                                spaceMapped.Add(ConvertToDisplay2024(card));
+                            }
+                            stage = "space-items-publish";
+                            if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                            {
+                                LogHelper.Log("User dynamic VM stage=space-items-publish discarded generation=" + generation, LogType.DEBUG);
+                                return;
+                            }
+                            if (spaceLoadMore && spacePage > 1 && Items != null)
+                            {
+                                foreach (var item in spaceMapped)
+                                {
+                                    Items.Add(item);
+                                }
+                            }
+                            else
+                            {
+                                Items = spaceMapped;
+                            }
+                            spaceOffset = reply.HistoryOffset;
+                            spacePage++;
+                            //停止条件只认服务端的 has_more：本页即使被过滤成 0 张卡片也不代表没有下一页
+                            CanLoadMore = reply.HasMore;
+                            lastPageFailed = false;
+                            ShowError = false;
+                            ErrorMsg = "";
+                            LogHelper.Log("User dynamic VM stage=space-items-published page=" + (spacePage - 1) + " count=" + spaceMapped.Count + " hasMore=" + reply.HasMore + " offset=" + (spaceOffset ?? "") + " generation=" + generation, LogType.INFO);
+                            return;
+                        }
+                        catch (Exception ex)
+                        {
+                            if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                            {
+                                LogHelper.Log("User dynamic VM stage=" + stage + " discarded generation=" + generation, LogType.DEBUG, ex);
+                                return;
+                            }
+                            //兜底本身只记一条 INFO：错误留给 REST 的结果说话，不额外弹提示
+                            LogHelper.Log("User dynamic VM stage=space-rest-fallback reason=" + ex.Message + " loadMore=" + loadMore + " generation=" + generation, LogType.INFO);
+                            spaceRestMode = true;
+                            //gRPC 已渲染的页作废，页序号/游标清空：本次请求从 REST 第一页重新取（空 idx），
+                            //SpaceHistory 的 idx 与 DynSpace 的 history_offset 分属两套，绝不互相传递
+                            spacePage = 1;
+                            spaceOffset = null;
+                            Items = null;
+                            idx = "";
+                            loadMore = false;
+                            stage = "space-rest-fallback";
+                        }
+                    }
                 }
 
                 var api = dynamicAPI.DyanmicNew(requestItemType);
