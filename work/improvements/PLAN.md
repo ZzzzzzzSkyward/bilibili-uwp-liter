@@ -37,7 +37,7 @@ Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90
 
 | Batch | Concrete deliverable | Depends on |
 | --- | --- | --- |
-| G1 | Honor the account app key when building gRPC headers | Existing transport |
+| ~~G1~~ | ~~Honor the account app key when building gRPC headers~~ — **done**, commits `cfcd3de`, `75e8ecb`; report `work/improvements/G1_REPORT.md` | Existing transport |
 | G2 | Use sibling archive search in the existing user-video keyword search | G1; two additional proto files |
 | G3 | Load dynamic details through the existing gRPC mapper | G1; no new proto |
 | G4 | Add gRPC user-space dynamics with source-specific paging | G1; existing mapper and proto |
@@ -50,6 +50,8 @@ Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90
 Finish one usable batch at a time. D1, D2 and N1 can be implemented independently of the gRPC sequence; avoid simultaneous edits to `PlayerControl.xaml(.cs)`. For each batch, the implementation handoff should name changed files, describe the resulting behavior, update the relevant progress note, and report only the permitted formatting check. Do not append a testing or hardening phase.
 
 ## G1 — App-key-aware gRPC headers
+
+**Status: implemented and verified locally (commits `cfcd3de`, `75e8ecb`).** Ported the pinned header factory into `src/BiliLite.gRPC/Api/`, deleted the old `GrpcRequestHedaer.cs`, and moved every profile/account header onto the per-request `HttpRequestMessage`. Unknown or empty app keys fall back to the Android profile, so the target's default login key keeps its pre-G1 behavior. Verification and the two parity decisions are recorded in `work/improvements/G1_REPORT.md` and `IMPROVEMENT_PROGRESS.md`.
 
 **Gap:** `src/BiliLite.gRPC/GrpcRequest.cs::SendMessage(..., GrpcBiliUserInfo)` currently forwards only `AccessKey`. `UserMid` and `AppKey` never influence headers. `CreateSharedHttpClient` fixes Android headers globally. The sibling chooses Android/iOS header builders by app key.
 

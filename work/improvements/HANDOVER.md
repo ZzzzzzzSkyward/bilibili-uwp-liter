@@ -3,9 +3,10 @@
 ## Resume point
 
 - Repo: `/workspace/bilibili-uwp-liter`, branch `work`.
-- Published application baseline: `c4687a058f7e064cb27799cec2251d195cb3368f` — complete AUTH-01b implementation, reviewed and pushed to `origin/work`. No pending application changes.
-- Next: **the user's Windows application testing and bug-fix pass**. The user requested a completed major feature before this commit, then this final handover and session end. Do not start another feature in this session.
-- Plan: `work/improvements/PLAN.md`. Detailed checkpoint: `IMPROVEMENT_PROGRESS.md`.
+- Published application baseline: `c4687a058f7e064cb27799cec2251d195cb3368f` — complete AUTH-01b implementation, reviewed and pushed to `origin/work`.
+- Latest local work: batch **G1** (app-key-aware gRPC headers), commits `cfcd3de` + review follow-up `75e8ecb`. Build of `src/BiliLite.gRPC` and the new `work/improvements/tests/g1` probe (102 assertions) pass; **the commits are local only — the push to `origin/work` was blocked because `github.com:443` was unreachable from this machine** (`api.github.com`/`raw.githubusercontent.com` still answered). Push from a working network before the next batch, or re-run `git push origin work`.
+- Next batch: **G2** (user-video keyword search via `Space/SearchArchive`) per `work/improvements/PLAN.md`. G1's transport prerequisite is now in place. D1/D2/N1 remain independent of the gRPC sequence.
+- Plan: `work/improvements/PLAN.md`. Detailed checkpoint: `IMPROVEMENT_PROGRESS.md`. Round report: `work/improvements/G1_REPORT.md`.
 
 ## Completed
 
