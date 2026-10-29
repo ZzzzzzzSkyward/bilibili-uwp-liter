@@ -892,6 +892,57 @@ FallbackColor=""#ffffff"" />
             await settingVM.SyncDanmuFilter();
         }
 
+        private async void DanmuSettingExportFilter_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var picker = new FileSavePicker();
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.SuggestedFileName = "bilibili.block";
+                picker.FileTypeChoices.Add("JSON文件", new List<string> { ".json" });
+                var file = await picker.PickSaveFileAsync();
+                if (file == null)
+                    return;
+
+                await FileIO.WriteTextAsync(file, settingVM.ExportDanmuFilterJson());
+                Utils.ShowMessageToast("弹幕屏蔽规则已导出");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("导出弹幕屏蔽规则失败", LogType.ERROR, ex);
+                Utils.ShowMessageToast("导出弹幕屏蔽规则失败", ex.Message);
+            }
+        }
+
+        private async void DanmuSettingImportFilter_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var picker = new FileOpenPicker();
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeFilter.Add(".json");
+                var file = await picker.PickSingleFileAsync();
+                if (file == null)
+                    return;
+
+                var text = await FileIO.ReadTextAsync(file);
+                var added = settingVM.ImportDanmuFilterJson(text);
+                if (added > 0)
+                {
+                    Utils.ShowMessageToast("已导入" + added + "条弹幕屏蔽规则");
+                }
+                else
+                {
+                    Utils.ShowMessageToast("没有可导入的新规则");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("导入弹幕屏蔽规则失败", LogType.ERROR, ex);
+                Utils.ShowMessageToast("导入弹幕屏蔽规则失败", ex.Message);
+            }
+        }
+
         private void RemoveDanmuWord_Click(object sender, RoutedEventArgs e)
         {
             var word = (sender as AppBarButton).DataContext as string;
@@ -939,7 +990,7 @@ FallbackColor=""#ffffff"" />
                 return;
             }
             settingVM.ShieldUsers.Add(DanmuSettingTxtUser.Text);
-            SettingHelper.SetValue(VideoDanmaku.SHIELD_WORD, settingVM.ShieldUsers);
+            SettingHelper.SetValue(VideoDanmaku.SHIELD_USER, settingVM.ShieldUsers);
             var result = await settingVM.AddDanmuFilterItem(DanmuSettingTxtUser.Text, 2);
             DanmuSettingTxtUser.Text = "";
             if (!result)

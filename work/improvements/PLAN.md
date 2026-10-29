@@ -42,7 +42,7 @@ Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90
 | ~~G3~~ | ~~Load dynamic details through the existing gRPC mapper~~ — **done**, commit `Load dynamic details through the existing gRPC mapper`; report `IMPROVEMENT_PROGRESS.md` | G1; no new proto |
 | ~~G4~~ | ~~Add gRPC user-space dynamics with source-specific paging~~ — **done**, commit `Serve user-space dynamics from the gRPC space feed with REST fallback`; report `IMPROVEMENT_PROGRESS.md` | G1; existing mapper and proto |
 | D1 | Browse loaded danmaku, copy text, and like a selected online comment | Existing pool and like builder |
-| D2 | Import/export filter JSON and fix user-filter persistence | Existing settings collections |
+| ~~D2~~ | ~~Import/export filter JSON and fix user-filter persistence~~ — **done**, commit `Exchange danmaku filters as JSON files and persist blocked users under their own key`; report `IMPROVEMENT_PROGRESS.md` | Existing settings collections |
 | N1 | Keyed player overlays for volume, brightness, seek and held speed | Existing player handlers |
 | G5 | Add gRPC repost listing using the existing detail/repost UI | G3's reusable card conversion |
 | C1–C3 | Display Bilibili video collections and remote playlists, with selection and continued playback | Existing video detail, medialist builders and playlist UI; independent of gRPC |
@@ -128,6 +128,8 @@ Finish one usable batch at a time. D1, D2 and N1 can be implemented independentl
 **Result:** users can inspect loaded comments and use the already-ported like API. Existing rendering, sending, XML import and local-track selection continue through their current paths.
 
 ## D2 — Useful danmaku settings additions
+
+**Status: implemented (commit `Exchange danmaku filters as JSON files and persist blocked users under their own key`).** `SettingVM.ExportDanmuFilterJson`/`ImportDanmuFilterJson` exchange a two-field array, the page gained 导入/导出 buttons beside the cloud-sync button, and `DanmuSettingAddUser_Click` now persists `ShieldUsers` under `SHIELD_USER`. Verification and the offline gaps are recorded in `IMPROVEMENT_PROGRESS.md`.
 
 **Target:** `Modules/SettingVM.cs`, `Pages/SettingPage.xaml(.cs)`, and `Helpers/SettingHelper.cs` constants already used there.
 
