@@ -43,6 +43,8 @@
     <Protobuf Include="Proto\Request\PlayViewReq.proto" GrpcServices="Client" />
     <Protobuf Include="Proto\Reply\DanmakuReply.proto" GrpcServices="Client" />
     <Protobuf Include="bilibili\app\archive\middleware\v1\preload.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\app\archive\v1\archive.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\app\interfaces\v1\space.proto" GrpcServices="Client" />
     <Protobuf Include="bilibili\app\dynamic\v2\dynamic.proto" GrpcServices="Client" />
     <Protobuf Include="bilibili\dagw\component\avatar\common\common.proto" GrpcServices="Client" />
     <Protobuf Include="bilibili\dagw\component\avatar\v1\avatar.proto" GrpcServices="Client" />

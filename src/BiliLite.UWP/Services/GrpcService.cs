@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Bilibili.App.Dynamic.V2;
+using Bilibili.App.Interface.V1;
 using BiliLite.Api;
 using BiliLite.gRPC;
 using BiliLite.gRPC.Api;
@@ -11,6 +12,29 @@ namespace BiliLite.Services
     public class GrpcService
     {
         private const string DynamicGrpcBaseUrl = "https://grpc.biliapi.net:443/bilibili.app.dynamic.v2.Dynamic/";
+        private const string SpaceGrpcBaseUrl = "https://grpc.biliapi.net:443/bilibili.app.interface.v1.Space/";
+
+        public async Task<SearchArchiveReply> SearchSpaceArchive(string mid, int page = 1, int pageSize = 30, string keyword = "")
+        {
+            var request = new SearchArchiveReq
+            {
+                Keyword = keyword,
+                Mid = long.Parse(mid),
+                Pn = page,
+                Ps = pageSize,
+            };
+
+            var result = await GrpcRequest.Instance.SendMessage(
+                SpaceGrpcBaseUrl + "SearchArchive",
+                request,
+                GetRequestUserInfo());
+            if (result.status)
+            {
+                return SearchArchiveReply.Parser.ParseFrom(result.results);
+            }
+
+            throw new Exception(result.message);
+        }
 
         public async Task<DynAllReply> GetDynAll(int page = 1, string historyOffset = null)
         {

@@ -38,7 +38,7 @@ Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90
 | Batch | Concrete deliverable | Depends on |
 | --- | --- | --- |
 | ~~G1~~ | ~~Honor the account app key when building gRPC headers~~ — **done**, commits `cfcd3de`, `75e8ecb`; report `work/improvements/G1_REPORT.md` | Existing transport |
-| G2 | Use sibling archive search in the existing user-video keyword search | G1; two additional proto files |
+| ~~G2~~ | ~~Use sibling archive search in the existing user-video keyword search~~ — **done**, commit `Search user submissions through the sibling archive-search gRPC`; report `IMPROVEMENT_PROGRESS.md` | G1; two additional proto files |
 | G3 | Load dynamic details through the existing gRPC mapper | G1; no new proto |
 | G4 | Add gRPC user-space dynamics with source-specific paging | G1; existing mapper and proto |
 | D1 | Browse loaded danmaku, copy text, and like a selected online comment | Existing pool and like builder |
@@ -67,6 +67,8 @@ Finish one usable batch at a time. D1, D2 and N1 can be implemented independentl
 **Result:** current playback/feed callers can actually use the app-key context they already pass. This is the remaining transport part of old GRPC-01. The sibling also uses fixed buvid values; this batch does not establish a real-buvid solution or prove the server's feed rejection is fixed. Keep REST fallback.
 
 ## G2 — User-video keyword search
+
+**Status: implemented and verified locally (commit `Search user submissions through the sibling archive-search gRPC`).** Added `bilibili/app/archive/v1/archive.proto` and `bilibili/app/interfaces/v1/space.proto` byte-for-byte from the pinned sibling, plus the two `GrpcServices="Client"` entries. `GrpcService.SearchSpaceArchive` mirrors `GetDynAll`; `SpaceArchiveGrpcMapper` maps all ten item fields without AutoMapper, and `UserSubmitVideoVM.GetSubmitVideo` keeps the REST branch for category/order browsing and falls back to REST from page one if the gRPC search fails. Verification and limits are recorded in `IMPROVEMENT_PROGRESS.md`.
 
 **Existing entry point:** `Pages/UserInfoPage.xaml::searchVideo` binds `Keyword`; `.xaml.cs::searchVideo_QuerySubmitted` refreshes `Modules/User/UserDetail/UserSubmitVideoVM`. Its `GetSubmitVideo` currently sends both browsing and keyword searches through `UserDetailAPI.SubmitVideosWbi`.
 
