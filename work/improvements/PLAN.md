@@ -1,339 +1,230 @@
-The plan is to port notifications, gRPC, API organization, authentication improvements, and danmaku improvements, while expanding your existing local-media player into a structured media-library system. SponsorBlock is excluded entirely.
+# Remaining feature plan
 
-The key architectural decision is to keep the existing player as the playback engine and introduce a local media manifest that describes a video and its associated audio, subtitles, and danmaku files. This avoids hard-coding assumptions about a folder's layout into the player.
+Updated 2026-10-29 against target `work` at `e9c624aa4300f781bbad523925d1358b644f2b12`.
 
-## Implementation phases
+## Working agreement
 
-Phase 1 — Establish the integration boundary
+- This turn produces a plan only. No application or release-script implementation.
+- Use `/workspace/biliuwp-lite` at `ca2caddc597b3faf05b4dac6dcb226aa0694365b` as the sole reference for ported behavior. Target source and history establish what already exists. Do not use external API documentation, other forks, or guesses about server behavior.
+- GitHub access is for repository setup/source retrieval only. No internet API experiments or application API calls.
+- No tests or validation, including existing offline probes, builds, restore, application launch, protocol generation, package inspection, XML checks, or runtime checks. The only check is `git diff --check` for formatting. These restrictions also apply to the implementation batches below until the user changes them.
+- Root plans and coordinates; use `gpt-6-luna` subagents with high reasoning effort for detailed source work and later implementation. This document does not authorize starting implementation in the planning turn.
+- Prefer small working changes in the existing classes. Refactoring is allowed when it directly helps the feature. Avoid a DI migration, generic service framework, renderer rewrite, or unrelated defensive-code pass.
+- Keep the existing player, NSDanmaku, download/single-file routes, authentication services, and working REST fallbacks as the integration points. SponsorBlock stays excluded. Live tiles remain optional.
 
-Foundation · Before feature ports
+Target paths below are relative to `/workspace/bilibili-uwp-liter`; sibling paths are relative to `/workspace/biliuwp-lite`. Both use the `src/` layout. The sibling has been restored locally at the pinned revision. The target now tracks `origin/work`; the initial checkout was stale at `e2c7958`.
 
-- Preserve the existing `PlayerControl`, `LocalPlayerPage`, and local playback path.
-- Introduce a local-media domain model independent of UI controls.
-- Record the target's current API, auth, danmaku, and gRPC dependencies before changing them.
-- Add compatibility adapters so existing downloaded videos continue to play.
+## What is already implemented
 
-Phase 2 — Local-media schema and loading
+These are source/history findings, not new runtime verification. Do not repeat the old plan's completed phases.
 
-First user-facing deliverable
+| Area | Current implementation | Planning consequence |
+| --- | --- | --- |
+| LM-01–LM-05 | Manifest models/loader; folder import and saved grants; playlist adapter; independent video/audio selection; JSON/SRT/VTT subtitles; toggleable merged XML danmaku | Core local-media work is complete. Keep the current schema and services. |
+| API-01 | `CookieService`, `WbiKeyService`, compatibility `ApiHelper`, `BaseApi`, Emote shim, `DanmakuApi.Like` request builder | Do not re-create these services or the like endpoint. |
+| AUTH-01a/b | Verification/refresh builders, password secondary-verification UI, isolated cookie exchange, account persistence, logout cleanup | No established remaining authentication feature. Do not add speculative QR/history variants. |
+| Read API migration | Playback/detail, feeds, catalog/search, comments, account/library/live reads already migrated | No blanket endpoint or namespace migration. Add methods only with a concrete caller. |
+| gRPC playback/danmaku | Current playback and TV danmaku protos, request/parser integration, user-info overload | Already ported; adapt transport in place. |
+| gRPC feeds | `GrpcService.GetDynAll/GetDynVideo`, home/user callers, `DynamicGrpcMapper`, paging and REST fallback | Do not port these again. |
+| Danmaku settings | Existing player settings, filter editing/sync, local track loading and NSDanmaku rendering | Remaining work is list/actions and targeted settings additions. |
+| Player notifications | Generic `MessageToast` and central `ToolTip/TxtToolTip` exist; sibling-style keyed player overlays do not | Adapt existing input handlers to a player-local overlay service. |
 
-- Define a versioned manifest and folder convention.
-- Discover media assets, validate paths, and associate alternate tracks.
-- Support both manifest-driven folders and a single-file playback fallback.
-- Wire the manifest into the current player, including subtitle and danmaku selection.
+Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90ac3de`, `8106491`; API services `a6ae587`/`241c4e5`; authentication `fbcf805`/`c4687a0`; dynamic protocol/feed work `1ca07b6`/`96fb4c7`. Later changes matter: `d0d3e8d` adds REST fallback, `082ec8e` fixes feed-specific paging/login behavior, and `d51f5e4` fixes filtered-empty REST paging and rich-content ownership. Preserve those results when extending feeds.
 
-Phase 3 — API and authentication
+`HANDOVER.md` and older progress sections contain historical instructions to skip fetches or run offline probes. The current user request supersedes those instructions. Its old “GRPC-01 next” statement predates later gRPC/feed commits.
 
-Low-level service changes
+## Suggested implementation order
 
-- Separate API endpoint classes, cookie handling, and WBI signing.
-- Port missing account-verification and cookie-refresh endpoints.
-- Keep existing public method signatures until callers can migrate safely.
+| Batch | Concrete deliverable | Depends on |
+| --- | --- | --- |
+| G1 | Honor the account app key when building gRPC headers | Existing transport |
+| G2 | Use sibling archive search in the existing user-video keyword search | G1; two additional proto files |
+| G3 | Load dynamic details through the existing gRPC mapper | G1; no new proto |
+| G4 | Add gRPC user-space dynamics with source-specific paging | G1; existing mapper and proto |
+| D1 | Browse loaded danmaku, copy text, and like a selected online comment | Existing pool and like builder |
+| D2 | Import/export filter JSON and fix user-filter persistence | Existing settings collections |
+| N1 | Keyed player overlays for volume, brightness, seek and held speed | Existing player handlers |
+| G5 | Add gRPC repost listing using the existing detail/repost UI | G3's reusable card conversion |
+| C1–C3 | Display Bilibili video collections and remote playlists, with selection and continued playback | Existing video detail, medialist builders and playlist UI; independent of gRPC |
 
-Phase 4 — gRPC and danmaku
+Finish one usable batch at a time. D1, D2 and N1 can be implemented independently of the gRPC sequence; avoid simultaneous edits to `PlayerControl.xaml(.cs)`. For each batch, the implementation handoff should name changed files, describe the resulting behavior, update the relevant progress note, and report only the permitted formatting check. Do not append a testing or hardening phase.
 
-- Add protocol definitions and gRPC methods incrementally.
-- Add the dedicated danmaku API and selected rendering controls.
-- Preserve the existing `NSDanmaku` backend and add other renderers only if needed.
-
-Phase 5 — Notifications and hardening
-
-- Integrate the player toast service first.
-- Add live-tile/background-task support only if wanted.
-- Run regression tests across authentication, streaming, downloads, danmaku, and local playback.
-
-## Local-media manifest v1
-
-Your baseline already has the necessary starting point: `LocalPlayerPage`, `PlayInfo`, `PlayerControl`, `BiliDashPlayUrlInfo`, and `BiliDashItem.file`. The target's per-item `LocalPlayInfo` currently stores a single playback info object, a subtitle dictionary, one danmaku path, and a quality value. The source's model adds separate video/audio track collections and current selections.
-
-Use that idea, but introduce a stable manifest schema of your own rather than copying the source's internal types directly.
-
-### 1. Supported folder layout
-
-Use `bili-media.json` as the manifest filename. All paths inside it are relative to the folder containing that manifest.
-
-My Series/
-
-`bili-media.json` — collection manifest
-
-`poster.jpg` — optional cover
-
-`Episodes/01/`
-
-`video-1080p.mkv`, `video-720p.mp4`
-
-`audio/ja.flac`, `audio/en.m4a`
-
-`subtitles/en.srt`, `subtitles/zh-Hans.json`
-
-`danmaku/bilibili.xml`, `danmaku/translated.xml`
-
-`Episodes/02/` — same structure for the next episode
-
-The manifest can describe a movie or an entire series. Each item is independently playable, and its video, audio, subtitle, and danmaku tracks can reference files anywhere beneath the collection root.
-
-### 2. Canonical manifest example
-
-This is the proposed v1 data contract. It supports alternate video files, external audio tracks, multiple subtitle tracks, and multiple danmaku tracks.
-
-```
-
-{
-  "schemaVersion": 1,
-  "id": "sample-series",
-  "title": "Sample Series",
-  "poster": "poster.jpg",
-  "items": [
-    {
-      "id": "ep01",
-      "title": "Episode 1",
-      "videoTracks": [
-        {
-          "id": "1080p",
-          "path": "Episodes/01/video-1080p.mkv",
-          "label": "1080p",
-          "quality": "1080p",
-          "default": true
-        },
-        {
-          "id": "720p",
-          "path": "Episodes/01/video-720p.mp4",
-          "label": "720p",
-          "quality": "720p",
-          "default": false
-        }
-      ],
-      "audioTracks": [
-        {
-          "id": "ja",
-          "path": "Episodes/01/audio/ja.flac",
-          "label": "Japanese",
-          "language": "ja-JP",
-          "default": true
-        },
-        {
-          "id": "en",
-          "path": "Episodes/01/audio/en.m4a",
-          "label": "English",
-          "language": "en",
-          "default": false
-        }
-      ],
-      "subtitleTracks": [
-        {
-          "id": "en",
-          "path": "Episodes/01/subtitles/en.srt",
-          "label": "English",
-          "language": "en",
-          "format": "srt",
-          "default": true
-        },
-        {
-          "id": "zh",
-          "path": "Episodes/01/subtitles/zh-Hans.json",
-          "label": "Simplified Chinese",
-          "language": "zh-Hans",
-          "format": "bilibili-json",
-          "default": false
-        }
-      ],
-      "danmakuTracks": [
-        {
-          "id": "bili",
-          "path": "Episodes/01/danmaku/bilibili.xml",
-          "label": "Bilibili",
-          "language": "zh-CN",
-          "format": "bilibili-xml",
-          "enabledByDefault": true
-        },
-        {
-          "id": "translation",
-          "path": "Episodes/01/danmaku/translated.xml",
-          "label": "Translation",
-          "language": "en",
-          "format": "bilibili-xml",
-          "enabledByDefault": false
-        }
-      ]
-    }
-  ]
-}
-
-```
-
-The example is illustrative; the loader must validate that every referenced file actually exists.
-
-### 3. Schema rules
-
-| Field              | Contract                                                                                                     |
-| ------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `schemaVersion`    | Required integer; v1 is `1`.                                                                                 |
-| `id`               | Stable, non-empty collection or item identifier.                                                             |
-| `items`            | One or more playable items.                                                                                  |
-| `videoTracks`      | Required, at least one video file. Each entry is an alternative video track, such as a different resolution. |
-| `audioTracks`      | Optional external audio files. When empty, use the video's embedded audio where supported.                   |
-| `subtitleTracks`   | Optional independent subtitle files. At most one is selected by default.                                     |
-| `danmakuTracks`    | Optional independent danmaku files. Multiple tracks can be enabled and merged.                               |
-| `path`             | Relative path, using `/` separators; absolute paths and parent-directory traversal are forbidden.            |
-| `language`         | Optional BCP 47 language tag, such as `en`, `ja-JP`, or `zh-Hans`.                                           |
-| `default`          | Selects the initial video, audio, or subtitle track. At most one default per respective track category.      |
-| `enabledByDefault` | Controls initial danmaku activation; multiple tracks may be enabled.                                         |
+## G1 — App-key-aware gRPC headers
 
-Keep the v1 manifest deliberately small. Add sync offsets, chapter markers, richer metadata, and embedded-stream selection in a later schema version once the playback implementation supports them.
+**Gap:** `src/BiliLite.gRPC/GrpcRequest.cs::SendMessage(..., GrpcBiliUserInfo)` currently forwards only `AccessKey`. `UserMid` and `AppKey` never influence headers. `CreateSharedHttpClient` fixes Android headers globally. The sibling chooses Android/iOS header builders by app key.
 
-### 4. File-format contract
+**Sibling references:** `src/BiliLite.gRPC/Api/{GrpcRequestHeaderFactory,IGrpcRequestHeader,AndroidGrpcRequestHeader,AndroidGrpcRequestHeaderConfig,IosGrpcRequestHeader,IosGrpcRequestHeaderConfig,Constants}.cs`, plus its `GrpcRequest.cs` and `GrpcBiliUserInfo.cs`.
 
-The manifest format and the decoder's capabilities are separate concerns. A file can pass manifest validation but still fail to decode.
+**Target changes:** `src/BiliLite.gRPC/GrpcRequest.cs`, `GrpcRequestHedaer.cs`, and only the header helper files needed under `src/BiliLite.gRPC/Api/`.
 
-| Media type     | Initial formats                                                    |
-| -------------- | ------------------------------------------------------------------ |
-| Video          | MP4, MKV, MOV, WebM, AVI, subject to the installed playback engine |
-| External audio | AAC, M4A, MP3, FLAC, WAV, OGG, subject to decoder support          |
-| Subtitles      | Bilibili JSON, SRT, VTT                                            |
-| Danmaku        | Bilibili XML                                                       |
+1. Build the per-request headers from the full `GrpcBiliUserInfo`, choosing the sibling's supported Android/iOS profile by `AppKey`. Keep the existing Android behavior for the access-key-only overload and target-specific keys that have no sibling profile; do not break existing custom-key configuration.
+2. Keep the shared `HttpClient`; put profile/account headers on `HttpRequestMessage`, rather than changing the client's global headers when accounts or app profiles change.
+3. Reuse the current metadata/config proto types. Retain the target's HTTP status reporting, readable server status, diagnostics and response handling. Port header construction only, rather than replacing transport with the sibling's older implementation.
+4. Keep `Api/PlayURL.cs` and UWP `Services/GrpcService.cs` using the existing user-info overload. No new caller abstraction or DI setup is necessary.
 
-Your existing player already parses Bilibili subtitle JSON and Bilibili danmaku XML. Add SRT/VTT subtitle adapters; do not claim support for those formats until their parsing and rendering tests pass. ASS/SSA subtitles and additional danmaku formats can be added through future parser adapters.
+**Result:** current playback/feed callers can actually use the app-key context they already pass. This is the remaining transport part of old GRPC-01. The sibling also uses fixed buvid values; this batch does not establish a real-buvid solution or prove the server's feed rejection is fixed. Keep REST fallback.
 
-## Local-media implementation tasks
+## G2 — User-video keyword search
 
-These are the concrete code changes I recommend making in the target repository.
+**Existing entry point:** `Pages/UserInfoPage.xaml::searchVideo` binds `Keyword`; `.xaml.cs::searchVideo_QuerySubmitted` refreshes `Modules/User/UserDetail/UserSubmitVideoVM`. Its `GetSubmitVideo` currently sends both browsing and keyword searches through `UserDetailAPI.SubmitVideosWbi`.
 
-LM-01 — Add the manifest models and loader
+**Sibling references:** `Services/GrpcService.cs::SearchSpaceArchive`, `ViewModels/User/UserSubmitVideoViewModel.cs::GetSubmitVideo`, and `bilibili/app/interfaces/v1/space.proto` under `src/BiliLite.gRPC/`.
 
-New model and service classes
+1. Add only `bilibili/app/interfaces/v1/space.proto` and `bilibili/app/archive/v1/archive.proto` to the target gRPC project. `space.proto` also imports preload and Dynamic V2; their avatar dependency chain is already present. The target has 16 proto entries now, not the original nine. Do not copy the sibling's entire proto tree or generate code in this session.
+2. Add `GrpcService.SearchSpaceArchive(mid, page, pageSize, keyword)`. Match sibling `SearchArchiveReq.Keyword/Mid/Pn/Ps`, endpoint `bilibili.app.interface.v1.Space/SearchArchive`, and reply `Archives/Total`.
+3. In `UserSubmitVideoVM.GetSubmitVideo`, use that method for nonempty keyword searches with the default category/order. `SearchArchiveReq` has no category/order fields: keep the REST branch for nondefault `SelectTid` or `SelectOrder`, rather than silently ignoring controls.
+4. Map each reply's nested `Archive` directly into the target's existing `SubmitVideoItemModel`: aid, title, cover, description, author, duration text, publication time, view/comment/danmaku counts. Follow the sibling mapping's field meanings; do not introduce AutoMapper for this one conversion.
+5. Use `Total` and the existing page/item count for loading more and `Nothing`. A successful empty search is an empty result, not a reason to switch sources. Keep REST as the fallback for a failed gRPC search; start from page one when changing source and keep the chosen source for subsequent pages of that query.
 
-Create:
+**Result:** the current search box gains the sibling's archive-search path without a new page or changes to ordinary category/order browsing.
 
-- `Models/LocalMedia/LocalMediaManifest.cs`
-- `Models/LocalMedia/LocalMediaItem.cs`
-- `Models/LocalMedia/LocalMediaTrack.cs`
-- `Services/LocalMedia/LocalMediaManifestLoader.cs`
-- `Services/LocalMedia/LocalMediaValidator.cs`
+## G3 — Dynamic detail through gRPC
 
-Use the existing Newtonsoft.Json dependency. Validate schema version, required fields, duplicate track IDs, default selections, supported formats, and path containment.
+**Target:** `Services/GrpcService.cs`, `Modules/User/DynamicVM.cs::GetDynamicDetail`, `Helpers/DynamicGrpcMapper.cs`. Existing navigation is `Pages/User/DynamicDetailPage.xaml.cs::OnNavigatedTo`.
 
-Acceptance: a valid manifest loads into typed models; an invalid manifest produces a useful error without crashing the app.
+**Sibling:** `Services/GrpcService.cs::GetDynDetail`, `ViewModels/UserDynamic/UserDynamicDetailViewModel.cs::LoadData`.
 
-LM-02 — Add folder-based import
+1. Add `GetDynDetail(id)` using `DynDetailReq.DynamicId`, the `Dynamic/DynDetail` endpoint, and `DynDetailReply.Item`. All message types are in the already-included Dynamic V2 proto.
+2. Map `reply.Item` through `DynamicGrpcMapper.MapToUserCards`, then the existing `ConvertToDisplay2024` path. Keep the existing IDs, comment targets, origin/repost cards and navigation behavior; no new card templates.
+3. Keep `DynamicAPI.DynamicDetail` and `ConvertToDisplay` as the REST fallback when the new route fails or provides no usable detail item. Keep detail loading separate from the All/Video feed's account gate.
+4. If repost listing needs the same conversion in G5, extract only the small card-to-display operation from `DynamicVM`; do not refactor the entire view model.
 
-UI and Windows storage permissions
+**Result:** an opened dynamic uses the same modern mapping already used by feed cards, while the existing REST detail path remains available.
 
-Add a folder-picker flow and a `LocalMediaLibraryService`. Open `bili-media.json` from the selected folder and resolve every asset relative to that root.
+## G4 — User-space dynamics
 
-Use `StorageApplicationPermissions.FutureAccessList` to retain access to selected folders across app sessions. Do not require broad filesystem access just to support imported collections.
+**Existing caller:** `Pages/UserInfoPage.xaml.cs` selects `DynamicType.Space`. `Modules/User/DynamicVM.cs` currently handles it with `DynamicAPI.SpaceHistory(Uid, idx)` and legacy cards.
 
-Preserve the existing single-file picker as a fallback that creates a one-item local session without a manifest.
+**Sibling:** `Services/GrpcService.cs::GetDynSpace`, `ViewModels/UserDynamic/UserDynamicSpaceViewModel.cs::GetDynamicItems/HandleDynamicResults`.
 
-Acceptance: users can open a collection, navigate its episodes, and reopen it after restarting the app.
+1. Add `GetDynSpace(mid, from, page, offset)` using `DynSpaceReq.HostUid/Page/From/HistoryOffset`. Read `DynSpaceRsp.List/HasMore/Offset`. No additional proto files.
+2. In the existing Space branch, map `List` with `MapToUserCards` and `ConvertToDisplay2024`. Use `HasMore/Offset` for paging and reset them when the viewed user changes or refresh starts.
+3. Retain `SpaceHistory` as REST fallback. Keep its `idx` independent from gRPC's history offset, following the source-switch arrangement already present for the All feed. Do not reuse the All feed's account gate for Space, or alter Topic/Article behavior.
+4. Reuse the current request lifecycle and page-loading behavior. Keep the recent filtered-empty-page fix: displayed item count alone does not determine whether another source page exists.
 
-LM-03 — Adapt manifest items to the existing player
+**Result:** user-profile dynamics gain the sibling's gRPC data source within the existing tab and card renderer.
 
-Compatibility adapter
+## D1 — Danmaku list and actions
 
-Add `Services/LocalMedia/LocalMediaPlaybackAdapter.cs`.
+**Already done:** `Models/Requests/Api/DanmakuApi.cs::Like(dmid, oid, op)` constructs the cookie/CSRF request. `Modules/Player/PlayerVM.cs::GetDanmaku` already maps server IDs into NSDanmaku `rowID` and author hashes into `sendID`.
 
-Translate each manifest item into the existing `LocalPlayerPage` playlist and `PlayInfo` model. Extend the per-item local playback model with typed track metadata while retaining its existing `Info`, `Subtitles`, `DanmakuPath`, and `Quality` properties for legacy downloads.
+**Sibling:** `Controls/Common/DanmakuListControl.xaml(.cs)`, `ViewModels/Common/DanmakuListViewModel.cs`, `Services/NsDanmakuController.cs::FindDanmakus`, and `Models/Common/Danmaku/`.
 
-Reuse `BiliDashPlayUrlInfo.Video`, `BiliDashPlayUrlInfo.Audio`, and `BiliDashItem.file` to represent local video and audio files. Do not duplicate the player engine.
+1. Create `Controls/DanmakuListControl.xaml(.cs)` with a small row model in its code-behind, and place its flyout in the existing `Controls/PlayerControl.xaml` toolbar. Reuse the sibling's two modes: comments within ten seconds of the playhead, and all comments currently loaded in the pool. “All” means loaded comments; do not download an entire video just to open the list.
+2. In `PlayerControl.xaml.cs`, expose a narrow snapshot from the existing `danmakuPool`, sorted by time. Map `rowID/sendID/text/time` to a small row model. A helper and the existing NSDanmaku model are enough; no `IDanmakuController`, alternate renderer, or AutoMapper dependency.
+3. Add Copy and Like row actions. Use the target clipboard/message helpers and the existing `DanmakuApi.Like(rowID, CurrentPlayItem.cid, 1).Request()`, interpreting the API response through the target's current `ApiResults` conventions.
+4. Scope remote Like to online Bilibili playback with the current cid/account and a server `rowID`. Newly sent comments have no server ID in the current local insertion path, so those rows offer copy only. Local XML and manifest playback still support browsing/copying without a remote action. Refresh the list for the current item when reopened.
+5. The sibling UI implements Like only. An explicit Cancel like action may send `op=2` for a row liked during this open session; do not display an invented server-synchronized liked state or count. If adding block-author, reuse `ShieldUsers` and the existing settings persistence, not a separate filter store.
+6. Add the new C#/XAML entries to `BiliLite.UWP.csproj` using its explicit Compile/Page pattern.
 
-Acceptance: legacy downloaded videos and single-file playback work unchanged.
+**Result:** users can inspect loaded comments and use the already-ported like API. Existing rendering, sending, XML import and local-track selection continue through their current paths.
 
-LM-04 — Add video and audio track selection
+## D2 — Useful danmaku settings additions
 
-Add local track selectors to the existing player UI, adapting the source's separate `VideoTrackInfos`, `AudioTrackInfos`, and current-track selection concept.
+**Target:** `Modules/SettingVM.cs`, `Pages/SettingPage.xaml(.cs)`, and `Helpers/SettingHelper.cs` constants already used there.
 
-- Select alternate video files without leaving the current item.
-- Select external audio files independently of video.
-- Preserve playback position during track changes.
-- Use the FFmpeg-backed playback path for external video/audio combinations where needed; keep the native path as an option for compatible single-file playback.
-- Report unsupported codecs and failed track switches cleanly.
+**Sibling:** `ViewModels/Settings/VideoDanmakuSettingsControlViewModel.cs::ImportDanmuFilter/ExportDanmuFilter/ImportDanmakuFilterCore/ExportDanmakuFilterCore` and `Controls/Settings/VideoDanmakuSettingsControl.xaml(.cs)`.
 
-Acceptance: switch between two video tracks and two audio tracks without losing the current playback position.
+1. Add Import JSON and Export JSON beside the current filter-sync controls. Keep the existing keyword, regex and user collections and existing settings keys.
+2. Use the sibling interchange fields: a JSON array with `type` and `filter`, where type 0 = keyword, 1 = regex, 2 = user. The sibling also serializes `id` and `opened`; its importer uses only type/filter, matching the target's string collections. Export `bilibili.block.json`; import unions entries into the corresponding current collections without duplicates. Reuse `SettingVM.IsValidDanmuRegex` instead of copying the sibling's narrow export heuristic that drops legitimate patterns. File import does not invoke cloud sync.
+3. Fix the concrete target mismatch in `SettingPage.xaml.cs::DanmuSettingAddUser_Click`: it currently persists `ShieldUsers` under `VideoDanmaku.SHIELD_WORD`. Match the sibling's user-list storage under `SHIELD_USER`.
+4. Use the target's existing file pickers/Newtonsoft.Json and ordinary XAML buttons. No SettingsCard package, new settings architecture, engine selector, or purely cosmetic regrouping is required.
 
-LM-05 — Add subtitle and danmaku track loading
+**Result:** filters can be moved between installations as files, and adding a blocked user persists to the correct collection. Keep cloud filter sync as its separate existing command.
 
-Create:
+## N1 — Player overlay toasts
 
-- `Services/LocalMedia/SubtitleTrackParser.cs`
-- `Services/LocalMedia/DanmakuTrackLoader.cs`
+**Target integration points:** `Controls/PlayerControl.xaml` video overlay near `ToolTip/TxtToolTip`; `.xaml.cs` keyboard actions, `HandleSlideProgressDelta`, `HandleSlideVolumeDelta`, `HandleSlideBrightnessDelta`, holding-speed start/end, and `Dispose`.
 
-Convert SRT/VTT cues into the cue model used by the existing subtitle UI and timer. Reuse the current Bilibili JSON subtitle parser.
+**Sibling:** `Services/PlayerToastService.cs`, `Controls/PlayerToast.xaml(.cs)`, `ViewModels/PlayerToastViewModel.cs`, and their callers in `Controls/PlayerControl.xaml.cs`.
 
-For danmaku, parse each enabled XML file through the existing parser, merge the results by timestamp, and feed the combined list into the existing `NSDanmaku` renderer. Add a UI to enable or disable individual danmaku tracks.
+1. Add `Controls/PlayerToast.xaml(.cs)`, `Services/PlayerToastService.cs` and a player-local overlay Canvas. Construct one service per `PlayerControl`; the target has no sibling-style DI startup to register into. Use direct properties or its existing notification pattern instead of adding a container.
+2. Adapt the sibling's keyed `Show`, `KeepStart` and `KeepClose` behavior for Volume, Brightness, Progress, Msg, Accelerating and Speed. Updating a key replaces its text and restarts its timeout; held acceleration stays visible until released.
+3. Replace existing central-tooltip writes for those same actions with the service calls. Keep their existing volume, brightness, seeking and playback-speed calculations. Each action should produce one overlay rather than both old and new feedback.
+4. Keep timer/UI ownership within that player; remove overlays and stop timers in `Dispose`. Position overlays from the current player dimensions rather than copying the sibling's fixed six-slot index. Use UWP dispatcher/timer facilities already present in the target.
+5. Omit SponsorBlock types, skip-segment buttons and dependencies from the source toast control. Keep generic application `MessageToast` for existing non-player callers. Add explicit Compile/Page entries for new files.
 
-Acceptance: subtitle selection works across supported formats, and multiple danmaku tracks can be enabled without duplicating the entire playback pipeline.
+**Result:** player feedback can update independently by action and held speed has a persistent indicator. This is in-player feedback; it does not require Windows notifications or background tasks.
 
-## Port plan for the other features
+The old plan's warning about an empty `ShowToast()` referred to `Extensions/Notifications/NotificationShowExtensions.cs`, not `PlayerToastService.Show`, which is implemented in the sibling. Do not port that unrelated stub.
 
-### API organization and authentication
+## G5 — Dynamic repost list
 
-API-01 — Introduce a compatibility layer.
+**Target:** `Services/GrpcService.cs`, `Modules/User/DynamicRepostVM.cs::GetDynamicItems/ConvertToDisplayRepost`, `Controls/Dynamic/DynamicRepostControl.xaml.cs::LoadData` and the existing detail page.
 
-Source reference: [`Models/Requests/Api`](https://github.com/ywmoyue/biliuwp-lite/tree/dev/src/BiliLite.UWP/Models/Requests/Api?utm_source=chatgpt.com).
+**Sibling:** `Services/GrpcService.cs::GetDynRepostList`, `ViewModels/UserDynamic/UserDynamicRepostViewModel.cs::GetDynamicItemRepostsCore/HandleDynamicResults`.
 
-- Introduce a shared `BaseApi` and migrate endpoint classes incrementally into `Models/Requests/Api/`.
-- Extract cookie management into `CookieService`.
-- Extract WBI key retrieval, caching, and signing into `WbiKeyService`.
-- Keep the existing static `ApiHelper` methods as compatibility wrappers while callers are migrated.
-- Port the source's dedicated `DanmakuApi.Like` endpoint after the base API and cookie service are available.
+1. Add `GetDynRepostList(id, offset)` with `RepostListReq.DynamicId/Offset` and reply `List/HasMore/Offset`. Reuse the existing Dynamic V2 proto.
+2. Convert returned items with the modern mapper and the small reusable display conversion from G3, adapting only the repost-list fields/templates that differ. The current `ConvertToDisplayRepost` expects legacy `DynamicCardModel`; do not pass protobuf items into it.
+3. Keep `DynamicAPI.DynamicRepost(ID, next)` as fallback and separate its paging cursor from gRPC's. Keep existing repost submission/actions outside this read migration.
 
-Acceptance: existing API callers still work, and API endpoint code no longer needs to manage cookie refresh and signing independently.
+**Result:** the existing repost panel gains the sibling data source without a separate page or a full dynamic renderer rewrite.
 
-AUTH-01 — Port missing authentication endpoints.
+## Carry-forward release item, separate from feature ports
 
-Compare the source [`AccountApi.cs`](https://github.com/ywmoyue/biliuwp-lite/blob/dev/src/BiliLite.UWP/Models/Requests/Api/AccountApi.cs?utm_source=chatgpt.com) against the [target ](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/master/src/BiliLite.UWP/Api/AccountApi.cs?utm_source=chatgpt.com)[`AccountApi.cs`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/master/src/BiliLite.UWP/Api/AccountApi.cs?utm_source=chatgpt.com).
+Current `code_review.md` identifies an unresolved target-specific issue in `build-release-x64.ps1`: `->\s+(\S+\.msix)$` omits artifact paths containing spaces, so the subsequent package-layout work can be skipped. This is not evidence for changing a sibling API.
 
-Port these in order:
+If release-tooling work is selected later, capture the entire artifact path (including spaces), or derive the current package paths from `OutputDir`/version; do not treat a missing required artifact as successful completion. Keep existing layout helpers and CS2012 retry behavior. Do not build, inspect packages, or run the script under the current format-only instruction.
 
-1. Password-login secondary verification: masked phone lookup, verification SMS, confirmation code submission, and cookie exchange.
-2. Cookie-refresh CSRF and confirmation endpoints.
-3. Missing history/WBI and QR-login variants where required.
+`bug_report.md` records the earlier splash/layout issue as resolved on 1.0.9.14; that historical result is distinct from this newer review finding. The packaging project remains the source of the export-capable artifact. Whether to offer an additional UWP-only download is a product choice, not a prerequisite for this plan.
 
-Keep the target's `GetKey2023()`, `Login2023()`, and existing login UI. Integrate new endpoints into the existing login flow rather than replacing it wholesale.
+## Parked work
 
-Acceptance: independently test password, SMS, QR login, secondary verification, session restoration, cookie refresh, and logout. Verify that failed verification cannot accidentally replace a valid session.
+- **Live tiles:** optional, outside the sequence above. If selected, port sibling `Services/Notification/LiveTileService.cs`, the necessary parts of `Extensions/Notifications/NotificationShowExtensions.cs`, `src/BackgroundTasks/TileFeedBackgroundTask.cs` and its project/manifest registration as a separate feature. Its async refresh must finish before completing the background-task deferral; the sibling task currently disposes a returned Task without awaiting it. The sibling's `ShowToast()` stub supplies no implemented notification feature.
+- **Real buvid:** no source-backed acquisition flow has been established by this plan. App-key-aware headers are useful independently; do not promise they remove feed rejection or remove REST fallback.
+- **Alternate danmaku renderer:** no current feature requires FrostMaster or the sibling's controller hierarchy. Keep NSDanmaku.
+- **More API/auth variants:** no identified caller requires them. Do not copy all endpoint classes into a different namespace just to match the sibling tree.
+- **Local-library expansion:** the original five milestones are implemented. Automatic discovery, new manifest versions, chapters, extra subtitle formats, artwork UI and library management polish need their own concrete request. Keep the current manifest models as the contract; the old illustrative schema does not need to be recreated here.
 
-### gRPC
+## Execution boundary
 
-Source reference: [`BiliLite.gRPC`](https://github.com/ywmoyue/biliuwp-lite/tree/dev/src/BiliLite.gRPC?utm_source=chatgpt.com).
+This rewrite is the deliverable for the current turn. No feature, packaging fix, test, validation, build, restore, launch or protocol generation is executed. The next implementation session can take G1 as its first batch, or choose D1/D2/N1 for an independent user-facing feature. Keep all checks limited to formatting until instructed otherwise.
 
-GRPC-01 — Port the transport abstractions.
+## C1–C3 — Show Bilibili video collections and playlists
 
-- Adapt the source's request-header factory and Android/iOS header models to the target's existing gRPC request class.
-- Keep the existing nine protobuf definitions; do not copy all 128 source definitions as a single change.
-- Add generated protobuf classes and corresponding service methods by feature.
+**Requested feature:** display the collection/playlist supplied by Bilibili, including its videos and current selection, and let users select a video or continue through the list. This covers UGC collections attached to a video and remote medialist playlists. Local-media manifests, a video's own multi-part `pages`, and PGC seasons remain their existing separate flows.
 
-GRPC-02 — Add service methods incrementally.
+**Current target:** `Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin` already build the resource-list requests but have no production caller. `Pages/VideoDetailPage.xaml.cs` already defines `VideoPlaylist` (`Index/Playlist`) and `VideoPlaylistItem` (`ID/Author/Cover/Title`); `OnNavigatedTo`, `ListView_SelectionChanged`, and `player_AllMediaEndEvent` display and advance a materialized list. `Modules/Detail/VideoDetailVM.cs::VideoDetailModel` does not retain `ugc_season`, so collections returned by video detail are currently discarded. Dynamic-feed UGC cards do not supply this detail-page feature.
 
-Start with the source's `GrpcService` methods for space archive search and dynamic feeds/details. Add other methods only when the UI or a requested feature needs them.
+### C1 — Collection metadata and grouped video list
 
-Acceptance: test successful responses, invalid or empty replies, timeouts, network errors, and authenticated requests. Confirm that existing playback and API requests are unaffected.
+**Sibling references:** `Models/Common/Video/{VideoUgcSeason,VideoUgcSeasonSection,VideoUgcSeasonSectionEpisode}.cs`, `Models/Common/Video/Detail/VideoDetailModel.cs`, `ViewModels/Video/VideoDetailViewModel.cs::ShowUgcSeason`, and `Pages/VideoDetailPage.xaml.cs::InitUgcSeason/VideoListView_SelectionChanged`.
 
-### Danmaku
+**Target files:** `Modules/Detail/VideoDetailVM.cs`, new `Models/VideoCollections.cs`, `Pages/VideoDetailPage.xaml(.cs)`, and `BiliLite.UWP.csproj` for the new Compile entry.
 
-Source references: [`DanmakuApi.cs`](https://github.com/ywmoyue/biliuwp-lite/blob/dev/src/BiliLite.UWP/Models/Requests/Api/DanmakuApi.cs?utm_source=chatgpt.com), [`IDanmakuController.cs`](https://github.com/ywmoyue/biliuwp-lite/blob/dev/src/BiliLite.UWP/Services/Interfaces/IDanmakuController.cs?utm_source=chatgpt.com).
+1. Add `[JsonProperty("ugc_season")]` to the current detail model and adapt the sibling's collection/section/episode models. Retain collection ID/title/cover/intro/statistics; section ID/title; episode aid/bvid/cid/title/cover/author and duration. Follow the sibling's `arc.pic` cover fallback and episode `page.duration` mapping.
+2. Deserialize this through the existing `LoadVideoDetail` pipeline: `DetailWebInterface` reads `/x/web-interface/view` with aid/bvid and cookies; the existing signed `/x/v2/view` app request remains a fallback. Collection metadata is embedded in the detail response. Do not invent a separate collection-metadata endpoint or request the same video detail again just for its collection.
+3. Add a collection tab/section to `VideoDetailPage`, showing collection title/intro and section headers with each video's cover, title, author and duration. Adapt the current `PlayListTpl` with grouped items or simple section expanders; the sibling's whole `VideoListView`, DI setup and AutoMapper stack are unnecessary.
+4. Select the current entry by canonical aid from `VideoInfo`, so opening by BV ID selects the same video. Clicking another entry calls the current `InitializeVideo(entry.aid)` path while retaining the collection list. On refresh/navigation, update the existing collection view rather than inserting duplicate tabs.
 
-DM-01 — Port the useful capabilities, not the whole renderer stack.
+**Result:** opening a video belonging to a UGC collection shows its source-provided sections and videos, with the current video selected. A detail response without a collection uses the existing page layout.
 
-- Add the dedicated danmaku like/unlike API.
-- Improve the current danmaku list and settings UI.
-- If multiple rendering engines are required, introduce `IDanmakuController` and wrap the existing `NSDanmaku` implementation first.
-- Add the alternative FrostMaster renderer only as a separate, optional change, with dependency and performance testing.
+### C2 — Remote playlist loading and paging
 
-Acceptance: existing danmaku rendering, filtering, sending, importing, and settings still work. Test the new API independently of renderer selection.
+**Sibling references:** `Services/Biz/MediaListService.cs::GetMediaList/LoadMoreMediaList`, `Models/Common/Video/MediaListResources.cs`, `Models/Requests/Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin`, and `Controls/VideoListView.xaml.cs::BtnLoadMore_OnTapped`.
 
-### Notifications
+**Target files:** existing `Api/VideoAPI.cs` builders, new `Models/MediaListResources.cs` and `Services/MediaListService.cs`, plus `Pages/VideoDetailPage.xaml(.cs)` and explicit project entries.
 
-Source references: [`PlayerToastService.cs`](https://github.com/ywmoyue/biliuwp-lite/blob/dev/src/BiliLite.UWP/Services/PlayerToastService.cs?utm_source=chatgpt.com) and [`LiveTileService.cs`](https://github.com/ywmoyue/biliuwp-lite/blob/dev/src/BiliLite.UWP/Services/Notification/LiveTileService.cs?utm_source=chatgpt.com).
+1. Reuse `GET https://api.bilibili.com/x/v2/medialist/resource/list`. Keep its existing parameters: `type`, `biz_id=mediaListId`, `oid=lastAid`, `otype=2`, `ps` (default 20), `direction=false`, `desc=true`, `sort_field=1`, `tid=0`, `with_current=false`. Reuse the signed Android-key builder and the unsigned variant as provided; do not add a second endpoint implementation or a new cookie requirement.
+2. Adapt response fields `media_list`, `has_more`, `total_count`; each item supplies `id/title/cover/upper.name/duration`. Map them directly into the current playlist item shape, adding duration. List resource IDs map to video IDs; duration is seconds. Preserve source order.
+3. Add a small directly constructed service. The first request uses an empty `oid`; match the sibling's unsigned retry when the signed response lacks `media_list`. A returned empty list is distinct from missing list data. Report request failures through the current API/message conventions.
+4. Carry `MediaListId`, `MediaListType`, source kind, `HasMore`, `TotalCount` and the last returned aid with the active playlist. Load more using that last aid as `oid`, append to the same bound list, and update from the new `has_more`. The next cursor comes from the response items, not the selected playback row. Reuse returned IDs to avoid duplicate visible rows.
+5. Show loaded/total counts and a Load more action while `HasMore` is true. Metadata comes from available source fields: the sibling resource model does not establish a remote playlist title/owner beyond its items, so use a generic playlist label unless the navigation source supplies a title.
 
-NOTIFY-01 — Port player overlay toasts first.
+**Result:** remote playlists can display more than their first page without downloading the entire list upfront.
 
-- Add and register `PlayerToastService`.
-- Integrate it with the existing player controls for volume, brightness, progress and temporary messages.
-- Correct the source's empty `ShowToast()` implementation if that method is required; do not port it expecting working behavior.
+### C3 — Source links and playback continuity
 
-NOTIFY-02 — Optional live tiles.
+**Sibling references:** `Services/MessageCenter.cs` medialist route, `Models/Common/Video/VideoPlaylist.cs`, `Models/Common/Video/VideoPlaylistItem.cs`, `Pages/VideoDetailPage.xaml.cs::OnNavigatedTo/player_AllMediaEndEvent`, and `Controls/VideoListView.xaml.cs` selection behavior.
 
-If live tiles are a product requirement, port the background task, register it in the packaging manifest, and fix the async task lifecycle so tile updates finish before the background task completes its deferral. Keep this separate from the in-player toast work.
+**Target files:** `Helpers/MessageCenter.cs`, `Pages/VideoDetailPage.xaml(.cs)` and its existing `VideoPlaylist/VideoPlaylistItem` types. Extend those types in place unless moving them directly simplifies reuse.
 
-Acceptance: overlay notifications appear and disappear correctly; background tile updates complete reliably and do not prevent the application from launching.
+1. Add the sibling-supported `bilibili://music/playlist/playpage/{id}` route, reading optional `page_type` and using the sibling route's default of 2. Keep that separate from the API method's default type of 1. Load the first page through C2, then navigate using an extended `VideoPlaylist` carrying the remote ID/type and paging state.
+2. Keep the existing `ml...` favorite-folder route intact. Collection IDs, uploader mids, favorite-folder IDs and medialist `biz_id` are not interchangeable. Accept IDs/types from the supported source URI; do not derive a medialist ID from a UGC collection ID.
+3. Use the existing playlist selection handler to load each chosen video's details and its own `pages`. Keep the active queue and selected row while that video's detail response changes. A collection embedded in a queued video can be browsed separately without replacing the remote queue the user opened.
+4. Extend `player_AllMediaEndEvent` to advance after the current video's own parts finish. For collections, continue in section/episode order. For remote queues, fetch the next page when playback reaches the final loaded item and `HasMore` is true, then advance; finish only when the source is exhausted. A failed next-page request leaves a visible retry/Load more action.
+5. Keep caller-supplied in-memory `VideoPlaylist` playback working through the same handler. This display/read feature does not add collection editing, favorite mutations or batch downloads.
+
+**Result:** a supported Bilibili playlist link opens a visible, playable remote queue; choosing a row and reaching a page boundary both continue through the existing player.
+
+**Sequence and scope:** implement C1 first for collection display directly from a normal video, then C2 and C3 for remote lists. These batches are independent of G1–G5. All behavior references remain the pinned sibling. This addition is planning only; perform no live API calls, tests, builds or validation, and use only `git diff --check` for formatting.
