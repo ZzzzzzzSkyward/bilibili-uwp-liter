@@ -224,6 +224,7 @@ namespace BiliLite.Services
             {
                 hasInitializedRefreshState = initialized;
                 needsCookieRefresh = needed;
+                refreshCheckAttempts = 0;
             }
         }
 
@@ -242,7 +243,6 @@ namespace BiliLite.Services
             }
 
             var correspondPath = GetCorrespondPath(timestamp);
-            CookieTimestamp = 0;
             var correspond = await send(accountApi.RefreshCsrf(correspondPath));
             var csrf = "";
             if (correspond?.code == 200)
@@ -276,6 +276,7 @@ namespace BiliLite.Services
                 var confirmCode = (int?)confirmBody["code"];
                 if (confirmCode == 0)
                 {
+                    CookieTimestamp = 0;
                     SetRefreshState(true, false);
                     return;
                 }

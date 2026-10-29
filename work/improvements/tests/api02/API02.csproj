@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>API02</AssemblyName>
+    <RootNamespace>API02</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\..\src\BiliLite.UWP\Services\CookieService.cs" Link="CookieService.cs" />
+    <Compile Include="..\..\..\..\src\BiliLite.UWP\Api\AccountApi.cs" Link="AccountApi.cs" />
+    <Compile Include="..\..\..\..\src\BiliLite.UWP\Api\ApiHelper.cs" Link="ApiHelper.cs" />
+    <Compile Include="..\..\..\..\src\BiliLite.UWP\Services\WbiKeyService.cs" Link="WbiKeyService.cs" />
+    <Compile Include="..\API01Stubs.cs" Link="API01Stubs.cs" />
+  </ItemGroup>
+
+</Project>
