@@ -1554,7 +1554,7 @@ namespace BiliLite.Controls
             }
             if (mediaPlayerAudio.MediaPlayer != null)
             {
-                mediaPlayerVideo.SetMediaPlayer(null);
+                mediaPlayerAudio.SetMediaPlayer(null);
             }
             if (_ffmpegMSSVideo != null)
             {
