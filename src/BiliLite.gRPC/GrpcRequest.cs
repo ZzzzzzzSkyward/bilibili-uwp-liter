@@ -143,6 +143,10 @@ namespace BiliLite.gRPC
 
         private async Task<GrpcResult> SendMessageCore(string url, IMessage message, GrpcBiliUserInfo userInfo)
         {
+            // 归一化一次:null 用户信息按匿名 Android 请求走。
+            // access key 用空串而不是 null,因为 protobuf 的 string setter 拒绝 null
+            // (Metadata.AccessKey 走 ProtoPreconditions.CheckNotNull),null 会在填头时抛异常。
+            userInfo = userInfo ?? new GrpcBiliUserInfo(string.Empty, 0, null);
             var requestId = NewRequestId();
             var endpoint = DescribeEndpoint(url);
             var stopwatch = Stopwatch.StartNew();

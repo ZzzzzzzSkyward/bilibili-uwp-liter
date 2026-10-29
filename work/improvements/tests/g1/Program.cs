@@ -103,6 +103,8 @@ internal static class Program
 
     private static void ResolveHeaderNeverNull()
     {
+        CheckEqual("IosGrpcRequestHeader", TypeName(ResolveHeader(new GrpcBiliUserInfo("ak", 123, IOS_KEY))), "resolve ios key");
+        CheckEqual("AndroidGrpcRequestHeader", TypeName(ResolveHeader(new GrpcBiliUserInfo("ak", 123, ANDROID_KEY))), "resolve android key");
         CheckEqual("AndroidGrpcRequestHeader", TypeName(ResolveHeader(new GrpcBiliUserInfo("ak", 0, LOGIN_KEY))), "resolve login key");
         CheckEqual("AndroidGrpcRequestHeader", TypeName(ResolveHeader(new GrpcBiliUserInfo("ak", 0, ""))), "resolve empty key");
         CheckEqual("AndroidGrpcRequestHeader", TypeName(ResolveHeader(new GrpcBiliUserInfo("ak", 0, null))), "resolve null key");
@@ -148,6 +150,9 @@ internal static class Program
         var userInfo = new GrpcBiliUserInfo("ak-123", 0, ANDROID_KEY);
         var headers = GetHeaders(HeaderFor(ANDROID_KEY), userInfo);
 
+        foreach (var name in new[] { "x-bili-metadata-bin", "x-bili-device-bin", "x-bili-network-bi", "x-bili-locale-bin", "x-bili-fawkes-req-bin" })
+            Check(!headers[name].Contains("="), "android " + name + " has no base64 padding");
+
         var metadata = Metadata.Parser.ParseFrom(
             Convert.FromBase64String(headers["x-bili-metadata-bin"] + new string('=', (4 - headers["x-bili-metadata-bin"].Length % 4) % 4)));
         CheckEqual("ak-123", metadata.AccessKey, "metadata access key");
@@ -186,6 +191,9 @@ internal static class Program
         CheckEqual("identify_v1 ak-ios", headers["authorization"], "ios authorization");
         Check(headers["User-Agent"].StartsWith("bili-universal/76700100 os/ios model/iPad 9G mobi_app/iphone osVer/15.5 network/2", StringComparison.Ordinal),
             "ios user agent");
+
+        foreach (var name in new[] { "x-bili-metadata-bin", "x-bili-device-bin", "x-bili-network-bin", "x-bili-locale-bin", "x-bili-fawkes-req-bin" })
+            Check(!headers[name].Contains("="), "ios " + name + " has no base64 padding");
 
         var guest = GetHeaders(HeaderFor(IOS_KEY), new GrpcBiliUserInfo("", 0, IOS_KEY));
         CheckEqual("", guest["authorization"], "ios empty access key authorization");
@@ -234,6 +242,9 @@ internal static class Program
         CheckEqual(':', first[51], "trace id colon 51");
         Check(first.EndsWith(":0:0", StringComparison.Ordinal), "trace id suffix :0:0");
         Check(first.Substring(0, 32).All(c => "0123456789abcdefghijklmnopqrstuvwxyz".IndexOf(c) >= 0), "trace id prefix charset");
+        // 第二段是随机 id 的第 16-31 位原样拷贝,第 24-29 位是时间戳的 6 位小写十六进制
+        CheckEqual(first.Substring(16, 16), first.Substring(33, 16), "trace id second segment copies chars 16-31");
+        Check(first.Substring(24, 6).All(c => "0123456789abcdef".IndexOf(c) >= 0), "trace id timestamp is lowercase hex");
         Check(first != second, "trace id differs per call");
     }
 
@@ -257,7 +268,7 @@ internal static class Program
         Check(client.DefaultRequestHeaders.Count() == 0, "shared client has no default headers");
     }
 
-    private static void HeadersReachTheWire()
+    private static string CaptureWireHead(GrpcBiliUserInfo userInfo, out GrpcResult result)
     {
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -285,11 +296,18 @@ internal static class Program
             }
         });
 
-        var result = GrpcRequest.Instance
-            .SendMessage("http://127.0.0.1:" + port + "/probe", new PlayViewReq(), new GrpcBiliUserInfo("wire-ak", 0, ANDROID_KEY))
+        result = GrpcRequest.Instance
+            .SendMessage("http://127.0.0.1:" + port + "/probe", new PlayViewReq(), userInfo)
             .GetAwaiter().GetResult();
         server.Wait(5000);
         listener.Stop();
+        return requestHead;
+    }
+
+    private static void HeadersReachTheWire()
+    {
+        GrpcResult result;
+        var requestHead = CaptureWireHead(new GrpcBiliUserInfo("wire-ak", 0, ANDROID_KEY), out result);
 
         Check(requestHead != null, "wire request captured");
         Check(result.status, "wire request succeeded: " + result.message);
@@ -302,5 +320,22 @@ internal static class Program
         Check(!head.Contains("\r\nx-bili-network-bin:"), "wire has no network-bin for android");
         Check(head.Contains("\r\nx-bili-metadata-bin: "), "wire metadata bin");
         Check(requestHead.StartsWith("POST /probe HTTP/1.1", StringComparison.Ordinal), "wire request line");
+
+        // iOS 档必须真的自解析头走到线上,而不是只靠工厂映射
+        var iosHead = CaptureWireHead(new GrpcBiliUserInfo("wire-ios", 123, IOS_KEY), out result);
+        Check(iosHead != null, "ios wire request captured");
+        Check(result.status, "ios wire request succeeded: " + result.message);
+        var iosLower = iosHead.ToLowerInvariant();
+        Check(iosLower.Contains("\r\nx-bili-mid: 123"), "ios wire mid");
+        Check(iosLower.Contains("\r\nx-bili-network-bin: "), "ios wire network-bin");
+        Check(!iosLower.Contains("app-key"), "ios wire has no app-key");
+
+        // null 用户信息归一化后应是一次真正的匿名 Android 请求,而不是异常兜底结果
+        var anonHead = CaptureWireHead(null, out result);
+        Check(result.status, "anonymous wire request succeeded: " + result.message);
+        Check(anonHead != null, "anonymous wire request captured");
+        var anonLower = anonHead.ToLowerInvariant();
+        Check(anonLower.Contains("\r\napp-key: android"), "anonymous wire APP-KEY");
+        Check(anonLower.Contains("\r\nauthorization: identify_v1 \r\n"), "anonymous wire authorization");
     }
 }
