@@ -1,0 +1,133 @@
+# Remaining work — single index
+
+Compiled 2026-10-30 for branch `work`. One entry per open item, each pointing at the markdown
+that owns its detail. Read this file first; open the referenced section only when you start the item.
+
+State of the branch when this was written:
+
+| Fact | Value |
+| --- | --- |
+| `origin/work` head | `96c26cd Review origin/work 6ae19816…` (reviewer) |
+| Local commits ahead | G5 `b39739a`, space-timezone review fix `4fca416` |
+| Shipped this cycle | G1, G2, G3 (+ its review fixes), G4, D2, G5 |
+| Offline probes | `work/improvements/tests/{g2,g3,g4,d2,g5}/run.sh` → 22 / 34 / 41 / 58 / 61 assertions |
+| Buildable here | `src/BiliLite.gRPC` only (0/0). No UWP workload, so no UWP build, no launch, no live API call |
+
+---
+
+## 1. D1 — Danmaku list and actions (feature, unstarted)
+
+- **Goal:** browse the comment pool in a flyout (last 10 s / whole loaded pool), copy text, like an
+  online comment; new locally-sent comments get copy only.
+- **Detail:** `PLAN.md` → `## D1 — Danmaku list and actions` (also lists what already exists: the
+  like request builder and `rowID/sendID` mapping).
+- **Targets:** new `Controls/DanmakuListControl.xaml(.cs)`, `Controls/PlayerControl.xaml(.cs)`,
+  `BiliLite.UWP.csproj` (explicit Compile/Page entries).
+- **Why deferred:** pure XAML/UI; nothing here can be compiled or launched, so the batch would ship
+  source-reviewed-only. Needs a device check by the maintainer.
+- **Conflict:** touches `PlayerControl.xaml(.cs)`, which N1 also edits — do not run them together.
+- **Sibling reference:** `Controls/Common/DanmakuListControl.xaml(.cs)`,
+  `ViewModels/Common/DanmakuListViewModel.cs`, `Services/NsDanmakuController.cs::FindDanmakus`.
+
+## 2. N1 — Keyed player overlay toasts (feature, unstarted)
+
+- **Goal:** replace central-tooltip writes with per-key overlays for volume, brightness, seek,
+  message, held acceleration and speed; held speed stays visible until release.
+- **Detail:** `PLAN.md` → `## N1 — Player overlay toasts`.
+- **Targets:** new `Controls/PlayerToast.xaml(.cs)`, `Services/PlayerToastService.cs`,
+  `Controls/PlayerControl.xaml(.cs)` handlers (`HandleSlideProgressDelta`, `HandleSlideVolumeDelta`,
+  `HandleSlideBrightnessDelta`, hold-speed start/end, `Dispose`).
+- **Why deferred:** same UI-only limitation; also the largest handler-rewrite of the remaining set.
+- **Traps:** one service per `PlayerControl` (no DI container in the target); remove timers in
+  `Dispose`; omit SponsorBlock types; do not touch generic `MessageToast`.
+- **Conflict:** `PlayerControl.xaml(.cs)` is shared with D1.
+
+## 3. C1–C3 — Video collections and remote playlists (feature, unstarted, 3 sub-batches)
+
+Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
+
+- **C1 — collection metadata + grouped list.** Retain `ugc_season` from the existing detail
+  response, new `Models/VideoCollections.cs`, collection tab in `Pages/VideoDetailPage.xaml(.cs)`,
+  select the current entry by canonical aid.
+- **C2 — remote medialist loading/paging.** Small `Services/MediaListService.cs` over the existing
+  `Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin` builders (currently unused), cursor from
+  response items, load-more while `has_more`.
+- **C3 — source links + playback continuity.** `bilibili://music/playlist/playpage/{id}` route in
+  `Helpers/MessageCenter.cs`, extend `VideoPlaylist`/`VideoPlaylistItem` in
+  `Pages/VideoDetailPage.xaml.cs`, advance across page boundaries when `HasMore`.
+- **Detail:** `PLAN.md` → `## C1–C3 — Show Bilibili video collections and playlists` (each
+  sub-batch has its own numbered section with sibling references and exact constraints).
+- **Why deferred:** three UI batches against one page; also the only remaining area with no gRPC
+  component, so it does not benefit from the probe harness already built.
+
+## 4. Home dynamics show an empty page when the gRPC feed is rejected (`-663`) — **new, from a live log**
+
+- **Symptom (maintainer log, 2026-10-30 06:54):**
+  `Home dynamics stage=request-start failed … grpc-status=2; grpc-message=-663; bili-status-code=-663`
+  from `GrpcService.GetDynVideo` via `Modules/Home/DynamicVM.GetDynamicItems`. The page then shows a
+  toast and stays empty.
+- **Root cause:** `src/BiliLite.UWP/Modules/Home/DynamicVM.cs` is gRPC-only (996 lines; no REST
+  branch, no `dynamicAPI` field). Every other dynamic surface was given a REST fallback —
+  `Modules/User/DynamicVM.cs` switches to `stage=rest-fallback` and serves the legacy feed, and
+  `bug_report.md` records that path as verified on device (BR-13). The home tab never got it.
+- **`-663` itself is a known environment condition, not a new regression:** `src/BiliLite.UWP/Assets/Text/dbginfo.md:21-22`
+  states the UWP app keys are rejected by some APIs with `-663`; `bug_report.md` (BR-13 log block)
+  shows the same code on the working 动态 tab before it falls back to REST.
+- **Fix shape:** restore the pre-gRPC legacy branch from `96fb4c7^` (`DyanmicNew(UserDynamicType.Video)`
+  for the newest page, `HistoryDynamic(idx, …)` for older pages, cards deserialized straight into
+  `ObservableCollection<DynamicItemModel>`, which still carries the legacy `card`/`desc` JSON shape
+  its templates expect), triggered from the existing `catch`, with its own cursor fields next to
+  `_historyOffset`/`_updateBaseline` and reset in `Refresh()`.
+- **Verification that is possible offline:** `work/improvements/tests/g4` already compiles the real
+  `Modules/Home/DynamicVM.cs` against WinRT stubs and a stand-in `GrpcService`, so a stubbed
+  throwing `GetDynVideo` plus a REST fixture can execute the fallback, its stickiness and its cursor
+  separation for real.
+
+## 5. Release tooling — MSIX artifact path regex
+
+- **Item:** `build-release-x64.ps1` uses `->\s+(\S+\.msix)$`, which drops artifact paths containing
+  spaces, after which package-layout validation can be skipped and a broken layout passes.
+- **Detail:** `PLAN.md` → `## Carry-forward release item, separate from feature ports`.
+- **Constraint recorded there:** capture the whole path, derive package paths from `OutputDir`/version,
+  never treat a missing required artifact as success, keep the CS2012 retry.
+- **Context on why layout matters:** `bug_report.md` → BR-15 (1.0.9.12 shipped a non-bootable root
+  `BiliLiter.exe`).
+
+## 6. Review loop — nothing open
+
+- Latest review: `code_review.md` at `96c26cd`, covering `6ae1981`. Its single finding
+  (`DynSpaceReq.LocalTime` unset while `DynAllReq`/`DynVideoReq` send 8) is fixed in `4fca416`, with g4
+  pinning all three assignments (41 assertions); both earlier detail findings were confirmed addressed by that same review.
+- Earlier reviews and their resolutions: `code_review.md` history (`22f3a63`, `d68fe0a`, `96c26cd`),
+  `IMPROVEMENT_PROGRESS.md` sections for API-01 and G3–G5.
+
+## 7. Parked / explicitly out of scope
+
+`PLAN.md` → `## Parked work`: live tiles, real buvid acquisition, alternate danmaku renderer,
+extra auth/API variants, local-library expansion. Not scheduled; each needs its own request.
+
+## 8. Environment constraints that shape every batch
+
+- No UWP workload on this machine: UWP source changes are probe-verified and source-asserted only;
+  `src/BiliLite.gRPC` is the only project that truly builds. Say so in every report.
+- `github.com:443` is intermittently unreachable; pushes and fetches need retry loops (both succeeded
+  eventually in this cycle).
+- `~/.omp/agent/config.yml` → `modelRoles.task` currently `opencode-go/deepseek-v4.1-flash`; the
+  original `opencode-go/longcat-2.5-preview-free` fails with `No model selected`, so delegation only
+  works with the current value.
+- Two `Package.appxmanifest` version bumps (`1.0.9.15`) sit uncommitted in the working tree; they are
+  the maintainer's, not part of any batch here.
+
+---
+
+## Suggested next order
+
+1. Item 4 (home dynamics fallback) — the only open item backed by a real failure log, and the only
+   one that can be tested by execution offline.
+2. D1, then N1 (both touch `PlayerControl`; one at a time).
+3. C1 → C2 → C3.
+4. Item 5 whenever a packaging change is wanted.
+
+Sources: `work/improvements/PLAN.md`, `IMPROVEMENT_PROGRESS.md`, `code_review.md`, `bug_report.md`,
+`LOGGING_PROGRESS.md`, `work/bug-fixes/dynamic-feed-mapper.md`,
+`work/bug-fixes/video-dynamics-pagination.md`.
