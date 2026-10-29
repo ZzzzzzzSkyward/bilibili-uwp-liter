@@ -29,6 +29,7 @@ namespace G4Probe
             DynSpaceRspRoundTripsList();
             EmptyDynSpaceRspHasNoItems();
             GrpcServiceUsesDynSpaceEndpoint(spaceEndpoint);
+            DynamicRequestsReportEastAsiaLocalTime();
             SpaceListItemMapsToSingleCard();
             EmptySpacePageMapsToNoCards();
             SpaceFeedKeepsItsOwnPagingState();
@@ -114,6 +115,56 @@ namespace G4Probe
                 "GrpcService.GetDynSpace reports the transport message on a rejected call");
             Check(!source.Contains("DynSpaceReply"),
                 "space feed uses DynSpaceRsp (the reply name the proto actually defines)");
+        }
+
+        private static void DynamicRequestsReportEastAsiaLocalTime()
+        {
+            // local_time is an int32 whose protobuf default is 0 (UTC), so every dynamic request that
+            // carries it must assign the same client timezone; an omitted assignment silently diverges.
+            var source = File.ReadAllText(Path.Combine(RepoRoot(), "src", "BiliLite.UWP", "Services", "GrpcService.cs"));
+
+            var space = MethodBody(source, "public async Task<DynSpaceRsp> GetDynSpace(");
+            Check(Regex.IsMatch(space, @"new DynSpaceReq\s*\{[^}]*LocalTime = 8"),
+                "GrpcService.GetDynSpace reports the East Asia client timezone (local_time = 8) on the space request");
+
+            var all = MethodBody(source, "public async Task<DynAllReply> GetDynAll(");
+            Check(Regex.IsMatch(all, @"new DynAllReq\s*\{[^}]*LocalTime = 8"),
+                "GrpcService.GetDynAll still reports local_time = 8");
+
+            var video = MethodBody(source, "public async Task<DynVideoReply> GetDynVideo(");
+            Check(Regex.IsMatch(video, @"new DynVideoReq\s*\{[^}]*LocalTime = 8"),
+                "GrpcService.GetDynVideo still reports local_time = 8");
+        }
+
+        /// <summary>Text of the first method whose declaration starts with <paramref name="signature"/>, braces included.</summary>
+        private static string MethodBody(string source, string signature)
+        {
+            var start = source.IndexOf(signature, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                return "";
+            }
+
+            var open = source.IndexOf('{', start);
+            if (open < 0)
+            {
+                return "";
+            }
+
+            var depth = 0;
+            for (var i = open; i < source.Length; i++)
+            {
+                if (source[i] == '{')
+                {
+                    depth++;
+                }
+                else if (source[i] == '}' && --depth == 0)
+                {
+                    return source.Substring(open, i - open + 1);
+                }
+            }
+
+            return "";
         }
 
         private static void SpaceListItemMapsToSingleCard()

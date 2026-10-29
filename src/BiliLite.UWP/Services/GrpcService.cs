@@ -115,6 +115,8 @@ namespace BiliLite.Services
                 From = from,
                 Page = page,
                 HistoryOffset = offset ?? "",
+                //与 DynAll/DynVideo 一致,服务端按当地时间(东八区)分页
+                LocalTime = 8,
             };
 
             var result = await GrpcRequest.Instance.SendMessage(
