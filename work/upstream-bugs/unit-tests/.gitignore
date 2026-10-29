@@ -1,0 +1,26 @@
+# Generated source extracts and harnesses; runners recreate these.
+/batch-002/refresh-cookie-dispatch-fragment.csx
+/batch-002/refresh-cookie-dispatch-test.csx
+/batch-008/issue-105/dispose-method.csx
+/batch-008/issue-105/dispose-stop-order-test.csx
+/batch-041/issue-598/player-media-ended.csx
+/batch-041/issue-598/natural-end-report-test.csx
+/batch-042/issue-611/import-regex-rules.csx
+/batch-042/issue-611/load-cached-regex-rules.csx
+/batch-042/issue-611/regex-validation-helper.csx
+/batch-042/issue-611/render-filter-loop.csx
+/batch-042/issue-611/imported-regex-filter-test.csx
+/batch-043/issue-625/open-comment-handler.csx
+/batch-043/issue-625/display-aid-fragment.csx
+/batch-043/issue-625/mapper-aid-fragment.csx
+/batch-043/issue-625/ugc-collection-comment-dispatch-test.csx
+/batch-079/issue-1216/next-cursor-load-more.csx
+/batch-079/issue-1216/cursor-api-branch.csx
+/batch-079/issue-1216/legacy-fallback-branch.csx
+/batch-079/issue-1216/terminal-comment-cursor-test.csx
+/batch-081/issue-1243/empty-url-guard.csx
+/batch-081/issue-1243/empty-url-guard-test.csx
+/batch-084/issue-1305/probe.csx
+/batch-085/issue-1311/probe.csx
+/fix-batch-002/issue-275/source-fragment.csx
+/fix-batch-002/issue-275/test.csx

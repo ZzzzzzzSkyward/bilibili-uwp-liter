@@ -1,5 +1,7 @@
 # Isolated `RefreshCookie` dispatch unit
 
+The current wrapper delegates to `work/improvements/tests/run-api01.sh`, which covers the actual-source API/cookie refresh behavior. The old fixed-line fragment and harness are obsolete and were removed during history cleanup. The original evidence below is retained as a historical report, not a description of the current runner.
+
 Run from the repository checkout with:
 
 ```sh

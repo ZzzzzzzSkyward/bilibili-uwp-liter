@@ -11,7 +11,7 @@
   "direct_source_unit_issue_ids": [31, 105, 598, 611, 625, 1243],
   "source_only_issue_ids": [121, 146, 275, 358, 378, 404, 1216, 1305, 1311],
   "actionable_issue_ids_oldest_first": [31, 105, 121, 146, 275, 358, 378, 404, 598, 611, 625, 1216, 1243, 1305, 1311],
-  "disposition_records": "policy-dispositions-*.json",
+  "disposition_records": "https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/tree/50970c5/work/upstream-bugs (archived policy-dispositions-*.json)",
   "visual_owner": "user",
   "visual_issue_count": 78,
   "visual_issue_ids": [51, 62, 65, 69, 70, 77, 81, 82, 83, 88, 89, 95, 96, 100, 102, 131, 144, 159, 192, 199, 299, 353, 418, 439, 460, 473, 528, 530, 549, 562, 583, 590, 609, 658, 716, 799, 816, 875, 888, 897, 900, 910, 918, 922, 925, 930, 943, 953, 964, 981, 993, 1044, 1047, 1066, 1068, 1093, 1094, 1112, 1116, 1127, 1129, 1139, 1171, 1210, 1231, 1240, 1251, 1329, 1335, 1361, 1410, 1423, 1428, 1431, 1451, 1454, 1469, 1498],

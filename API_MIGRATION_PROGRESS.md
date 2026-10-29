@@ -48,12 +48,14 @@ No `dotnet`, `csharpier`, or `fantomas` executable was available, and the target
 
 Only formatting checks were run: workers report `git diff --check` passed for their owned changes, and the central progress note passed its trailing-whitespace check. No tests, builds, package restore, protocol generation, runtime checks, API requests, or correctness validation were run.
 
-## Worker notes and resumption
+## Archived worker notes and resumption
 
-- [Playback, video detail, gRPC protocols and parsers](work/api-migration/playback.md)
-- [Comments and emotes](work/api-migration/comments.md)
-- [Feed and followed-author reads](work/api-migration/feed_follow.md)
-- [Search and catalog discovery](work/api-migration/catalog.md)
-- [Account, library and live-room reads](work/api-migration/account_reads.md)
+The completed worker notes were removed during history cleanup; these links retain the original implementation details in Git history.
+
+- [Playback, video detail, gRPC protocols and parsers](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/50970c5/work/api-migration/playback.md)
+- [Comments and emotes](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/50970c5/work/api-migration/comments.md)
+- [Feed and followed-author reads](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/50970c5/work/api-migration/feed_follow.md)
+- [Search and catalog discovery](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/50970c5/work/api-migration/catalog.md)
+- [Account, library and live-room reads](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/50970c5/work/api-migration/account_reads.md)
 
 All implementation batches above are committed. To resume this work, start from the current target HEAD, use only the pinned sibling checkout as API behavior evidence, and preserve the mutation exclusions and format-only verification limit. The worker notes identify the exact source symbols and any reference additions intentionally left outside scope.

@@ -1,1 +1,0 @@
-isCursorApiResponse = false;

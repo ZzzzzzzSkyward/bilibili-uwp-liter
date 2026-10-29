@@ -1,9 +1,0 @@
-{
-  "batch": 81,
-  "issues": [
-    { "issue": 1241, "status": "skipped_skeptical" },
-    { "issue": 1242, "status": "skipped_skeptical" },
-    { "issue": 1243, "status": "validated_logic_bug" },
-    { "issue": 1244, "status": "skipped_skeptical" }
-  ]
-}
