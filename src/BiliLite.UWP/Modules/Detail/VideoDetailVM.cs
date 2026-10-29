@@ -1,6 +1,8 @@
 ﻿using BiliLite.Api;
 using BiliLite.Helpers;
 using BiliLite.Models;
+using BiliLite.Models.Common;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -858,6 +860,20 @@ namespace BiliLite.Modules
             }
         }
         public VideoDetailHistoryModel history { get; set; }
+
+        /// <summary>
+        /// 合集，视频不属于合集时为空
+        /// </summary>
+        [JsonProperty("ugc_season")]
+        public VideoUgcSeason UgcSeason { get; set; }
+
+        public bool showUgcSeason
+        {
+            get
+            {
+                return UgcSeason != null && UgcSeason.Sections != null && UgcSeason.Sections.Count > 0;
+            }
+        }
     } 
     public class VideoDetailRightsModel
     {

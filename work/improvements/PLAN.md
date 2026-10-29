@@ -45,7 +45,7 @@ Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90
 | ~~D2~~ | ~~Import/export filter JSON and fix user-filter persistence~~ — **done**, commit `Exchange danmaku filters as JSON files and persist blocked users under their own key`; report `IMPROVEMENT_PROGRESS.md` | Existing settings collections |
 | N1 | Keyed player overlays for volume, brightness, seek and held speed | Existing player handlers |
 | ~~G5~~ | ~~Add gRPC repost listing using the existing detail/repost UI~~ — **done**, commit `Load dynamic reposts through the gRPC list with REST fallback`; report `IMPROVEMENT_PROGRESS.md` | G3's reusable card conversion |
-| C1–C3 | Display Bilibili video collections and remote playlists, with selection and continued playback | Existing video detail, medialist builders and playlist UI; independent of gRPC |
+| C1–C3 | Display Bilibili video collections and remote playlists, with selection and continued playback — C1 **done**, commit `Show the source UGC collection on the video detail page`; C2–C3 open | Existing video detail, medialist builders and playlist UI; independent of gRPC |
 
 Finish one usable batch at a time. D1, D2 and N1 can be implemented independently of the gRPC sequence; avoid simultaneous edits to `PlayerControl.xaml(.cs)`. For each batch, the implementation handoff should name changed files, describe the resulting behavior, update the relevant progress note, and report only the permitted formatting check. Do not append a testing or hardening phase.
 
@@ -197,6 +197,8 @@ This rewrite is the deliverable for the current turn. No feature, packaging fix,
 **Current target:** `Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin` already build the resource-list requests but have no production caller. `Pages/VideoDetailPage.xaml.cs` already defines `VideoPlaylist` (`Index/Playlist`) and `VideoPlaylistItem` (`ID/Author/Cover/Title`); `OnNavigatedTo`, `ListView_SelectionChanged`, and `player_AllMediaEndEvent` display and advance a materialized list. `Modules/Detail/VideoDetailVM.cs::VideoDetailModel` does not retain `ugc_season`, so collections returned by video detail are currently discarded. Dynamic-feed UGC cards do not supply this detail-page feature.
 
 ### C1 — Collection metadata and grouped video list
+
+**Status: implemented and verified locally (commit `Show the source UGC collection on the video detail page`).** `VideoDetailModel` now keeps `ugc_season` through the unchanged `LoadVideoDetail` pipeline; the new `Models/VideoCollections.cs` adapts the sibling's collection/section/episode models with the real payload keys (`stat`, `stat.fav`, `arc.pic`/`arc.author` fallbacks, `page.duration`); `VideoDetailPage` renders a 合集 pivot built from that response and selects the episode whose aid equals `VideoInfo.aid`. No new endpoint and no second detail request were added. Verification and the offline limits are recorded in `IMPROVEMENT_PROGRESS.md`.
 
 **Sibling references:** `Models/Common/Video/{VideoUgcSeason,VideoUgcSeasonSection,VideoUgcSeasonSectionEpisode}.cs`, `Models/Common/Video/Detail/VideoDetailModel.cs`, `ViewModels/Video/VideoDetailViewModel.cs::ShowUgcSeason`, and `Pages/VideoDetailPage.xaml.cs::InitUgcSeason/VideoListView_SelectionChanged`.
 

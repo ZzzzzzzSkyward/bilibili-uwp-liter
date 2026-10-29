@@ -42,13 +42,15 @@ State of the branch when this was written:
   `Dispose`; omit SponsorBlock types; do not touch generic `MessageToast`.
 - **Conflict:** `PlayerControl.xaml(.cs)` is shared with D1.
 
-## 3. C1–C3 — Video collections and remote playlists (feature, unstarted, 3 sub-batches)
+## 3. C1–C3 — Video collections and remote playlists (feature, C1 done, C2–C3 unstarted)
 
 Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
 
-- **C1 — collection metadata + grouped list.** Retain `ugc_season` from the existing detail
-  response, new `Models/VideoCollections.cs`, collection tab in `Pages/VideoDetailPage.xaml(.cs)`,
-  select the current entry by canonical aid.
+- **C1 — collection metadata + grouped list.** **Done** (commit
+  `Show the source UGC collection on the video detail page`): `VideoDetailModel.UgcSeason` keeps
+  `ugc_season` from the existing detail response, new `Models/VideoCollections.cs`, a 合集 pivot in
+  `Pages/VideoDetailPage.xaml(.cs)` with sections and episode rows, selection keyed on the canonical
+  `VideoInfo.aid`. Verification in `IMPROVEMENT_PROGRESS.md`.
 - **C2 — remote medialist loading/paging.** Small `Services/MediaListService.cs` over the existing
   `Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin` builders (currently unused), cursor from
   response items, load-more while `has_more`.
@@ -57,8 +59,9 @@ Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
   `Pages/VideoDetailPage.xaml.cs`, advance across page boundaries when `HasMore`.
 - **Detail:** `PLAN.md` → `## C1–C3 — Show Bilibili video collections and playlists` (each
   sub-batch has its own numbered section with sibling references and exact constraints).
-- **Why deferred:** three UI batches against one page; also the only remaining area with no gRPC
-  component, so it does not benefit from the probe harness already built.
+- **Traps:** `Pages/VideoDetailPage.xaml.cs` now builds the 合集 pivot item at index 0, so anything
+  reading `pivot.Items[0]` must use `playlistPivotItem`/`ugcSeasonPivotItem` instead (C3's
+  page-boundary advance lands in the same file).
 
 ## 4. Home dynamics show an empty page when the gRPC feed is rejected (`-663`) — **done** (batch commit `Fall back to the legacy feed when the home dynamic gRPC call is rejected`, the single local commit on `work` that closed this item)
 

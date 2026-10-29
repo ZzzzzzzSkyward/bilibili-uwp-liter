@@ -38,6 +38,26 @@
         </ListView>
       </PivotItem>
     </DataTemplate>
+    <DataTemplate x:Key="UgcSeasonEpisodeTpl">
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto"/>
+          <ColumnDefinition/>
+        </Grid.ColumnDefinitions>
+        <Border CornerRadius="2">
+          <Image Width="100" Source="{Binding Cover}"/>
+        </Border>
+        <StackPanel Grid.Column="1" Margin="8 0 0 0">
+          <TextBlock TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{Binding Title}" Foreground="{ThemeResource ForegroundTextColor}"/>
+          <TextBlock Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Margin="0 4 0 0" Text="{Binding Author}"/>
+          <TextBlock Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Margin="0 4 0 0" Text="{Binding Duration}"/>
+        </StackPanel>
+      </Grid>
+    </DataTemplate>
+    <Style x:Key="UgcSeasonEpisodeItemStyle" TargetType="ListViewItem">
+      <Setter Property="Padding" Value="4"/>
+      <Setter Property="Margin" Value="8 4"/>
+    </Style>
   </Page.Resources>
   <Grid>
     <Grid Visibility="{x:Bind Path=videoDetailVM.Loaded,Mode=OneWay}">

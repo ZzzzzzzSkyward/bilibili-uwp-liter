@@ -6,6 +6,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 using BiliLite.Modules;
+using BiliLite.Models.Common;
 using Microsoft.UI.Xaml.Controls;
 using BiliLite.Helpers;
 using Windows.ApplicationModel.DataTransfer;
@@ -29,6 +30,14 @@ namespace BiliLite.Pages
         public string Author { get; set; }
         public string Cover { get; set; }
         public string Title { get; set; }
+    }
+    public class VideoUgcSeasonEpisodeView
+    {
+        public string Aid { get; set; }
+        public string Title { get; set; }
+        public string Author { get; set; }
+        public string Cover { get; set; }
+        public string Duration { get; set; }
     }
     public sealed partial class VideoDetailPage : PlayPage
     {
@@ -128,6 +137,7 @@ namespace BiliLite.Pages
                 videoDetailVM.Loading = true;
                 videoDetailVM.VideoInfo = null;
             }
+            RemoveUgcSeason();
             changedFlag = true;
             player?.FullScreen(false);
             player?.MiniWidnows(false);
@@ -140,6 +150,10 @@ namespace BiliLite.Pages
             request.Data.SetWebLink(new Uri(videoDetailVM.VideoInfo.short_link));
         }
         VideoPlaylist playlist;
+        PivotItem playlistPivotItem;
+        PivotItem ugcSeasonPivotItem;
+        readonly List<ListView> ugcSeasonEpisodeLists = new List<ListView>();
+        string ugcSeasonAid;
         bool flag = false;
         string _id = "";
         protected async override void OnNavigatedTo(NavigationEventArgs e)
@@ -169,6 +183,7 @@ namespace BiliLite.Pages
                     var element = PlayListTpl.GetElement(new Windows.UI.Xaml.ElementFactoryGetArgs()) as PivotItem;
                     element.DataContext = playlist;
                  
+                    playlistPivotItem = element;
                     pivot.Items.Insert(0, element);
                     pivot.SelectedIndex = 0;
                     await InitializeVideo(playlist.Playlist[playlist.Index].ID);
@@ -273,7 +288,157 @@ namespace BiliLite.Pages
                     Oid = videoDetailVM.VideoInfo.aid
                 });
             }
+            ApplyUgcSeason();
             flag = false;
+        }
+
+        /// <summary>
+        /// 合集信息就在详情响应里，这里只刷新页签，不再单独请求
+        /// </summary>
+        private void ApplyUgcSeason()
+        {
+            var info = videoDetailVM.VideoInfo;
+            if (info == null || !info.showUgcSeason)
+            {
+                RemoveUgcSeason();
+                return;
+            }
+
+            // 用详情里的 aid 选中当前视频，按BV打开时也能选中同一行
+            ugcSeasonAid = info.aid;
+            ugcSeasonEpisodeLists.Clear();
+
+            var panel = new StackPanel();
+            panel.Children.Add(new TextBlock
+            {
+                Text = info.UgcSeason.Title,
+                FontSize = 20,
+                FontWeight = Windows.UI.Text.FontWeights.SemiBold,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(12, 12, 12, 0),
+            });
+            if (!string.IsNullOrEmpty(info.UgcSeason.Intro))
+            {
+                panel.Children.Add(new TextBlock
+                {
+                    Text = info.UgcSeason.Intro,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(12, 8, 12, 0),
+                });
+            }
+
+            foreach (var section in info.UgcSeason.Sections)
+            {
+                if (section?.Episodes == null || section.Episodes.Count == 0) continue;
+
+                var header = new TextBlock
+                {
+                    Text = section.Title,
+                    FontSize = 16,
+                    FontWeight = Windows.UI.Text.FontWeights.SemiBold,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(12, 16, 12, 4),
+                };
+                panel.Children.Add(header);
+
+                var listView = new ListView()
+                {
+                    ItemsSource = section.Episodes.Select(ToUgcSeasonEpisodeView).ToList(),
+                    ItemTemplate = (DataTemplate)Resources["UgcSeasonEpisodeTpl"],
+                    ItemContainerStyle = (Style)Resources["UgcSeasonEpisodeItemStyle"],
+                    SelectionMode = ListViewSelectionMode.Single,
+                };
+                // 分集列表整体滚动，不要各自滚动
+                ScrollViewer.SetVerticalScrollMode(listView, ScrollMode.Disabled);
+                ScrollViewer.SetVerticalScrollBarVisibility(listView, ScrollBarVisibility.Disabled);
+                listView.SelectionChanged += UgcSeasonEpisode_SelectionChanged;
+                panel.Children.Add(listView);
+                ugcSeasonEpisodeLists.Add(listView);
+            }
+
+            if (ugcSeasonEpisodeLists.Count == 0)
+            {
+                RemoveUgcSeason();
+                return;
+            }
+
+            if (ugcSeasonPivotItem == null)
+            {
+                ugcSeasonPivotItem = new PivotItem()
+                {
+                    Margin = new Thickness(0),
+                    Header = new TextBlock() { Text = "合集", FontSize = 18 },
+                };
+            }
+            ugcSeasonPivotItem.Content = new ScrollViewer()
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Content = panel,
+            };
+
+            // 已经有合集页签时只换内容，避免刷新、切换视频后出现重复页签
+            if (!pivot.Items.Contains(ugcSeasonPivotItem))
+            {
+                var selectedItem = pivot.SelectedItem;
+                pivot.Items.Insert(0, ugcSeasonPivotItem);
+                if (selectedItem != null) pivot.SelectedItem = selectedItem;
+            }
+
+            SelectUgcSeasonEpisode();
+        }
+
+        private void SelectUgcSeasonEpisode()
+        {
+            foreach (var listView in ugcSeasonEpisodeLists)
+            {
+                var episodes = listView.ItemsSource as List<VideoUgcSeasonEpisodeView>;
+                listView.SelectedItem = episodes?.FirstOrDefault(x => x.Aid == ugcSeasonAid && !string.IsNullOrEmpty(x.Aid));
+            }
+        }
+
+        private void RemoveUgcSeason()
+        {
+            ugcSeasonAid = null;
+            ugcSeasonEpisodeLists.Clear();
+            if (ugcSeasonPivotItem == null) return;
+            ugcSeasonPivotItem.Content = null;
+            if (pivot.Items.Contains(ugcSeasonPivotItem))
+            {
+                pivot.Items.Remove(ugcSeasonPivotItem);
+            }
+        }
+
+        private async void UgcSeasonEpisode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var listView = sender as ListView;
+            var item = listView?.SelectedItem as VideoUgcSeasonEpisodeView;
+            // 选中当前播放的视频时不重新加载，只换一个分集时才播放并清掉其它分区的高亮
+            if (item == null || item.Aid == ugcSeasonAid) return;
+            if (string.IsNullOrEmpty(item.Aid)) return;
+            foreach (var other in ugcSeasonEpisodeLists)
+            {
+                if (!ReferenceEquals(other, listView)) other.SelectedItem = null;
+            }
+            await InitializeVideo(item.Aid);
+        }
+
+        private static VideoUgcSeasonEpisodeView ToUgcSeasonEpisodeView(VideoUgcSeasonSectionEpisode episode)
+        {
+            return new VideoUgcSeasonEpisodeView()
+            {
+                Aid = episode.Aid,
+                Title = episode.Title,
+                Author = episode.Author?.Name,
+                Cover = episode.Cover,
+                Duration = FormatDuration(episode.Page?.Duration ?? 0),
+            };
+        }
+
+        private static string FormatDuration(long seconds)
+        {
+            if (seconds < 0) seconds = 0;
+            var duration = TimeSpan.FromSeconds(seconds);
+            return seconds >= 3600 ? duration.ToString(@"hh\:mm\:ss") : duration.ToString(@"mm\:ss");
         }
         private void CreateQR()
         {
@@ -598,8 +763,9 @@ namespace BiliLite.Pages
                 Utils.ShowMessageToast("播放完毕");
                 return;
             }
-            var listView= (pivot.Items[0] as PivotItem).Content as ListView;
-         
+            // 合集页签插在最前面，这里按引用取播放列表，不依赖页签顺序
+            var listView = playlistPivotItem?.Content as ListView;
+            if (listView == null) return;
             listView.SelectedIndex = playlist.Index + 1; 
         }
 
