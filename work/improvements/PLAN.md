@@ -45,7 +45,7 @@ Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90
 | ~~D2~~ | ~~Import/export filter JSON and fix user-filter persistence~~ — **done**, commit `Exchange danmaku filters as JSON files and persist blocked users under their own key`; report `IMPROVEMENT_PROGRESS.md` | Existing settings collections |
 | N1 | Keyed player overlays for volume, brightness, seek and held speed | Existing player handlers |
 | ~~G5~~ | ~~Add gRPC repost listing using the existing detail/repost UI~~ — **done**, commit `Load dynamic reposts through the gRPC list with REST fallback`; report `IMPROVEMENT_PROGRESS.md` | G3's reusable card conversion |
-| C1–C3 | Display Bilibili video collections and remote playlists, with selection and continued playback — C1 **done**, commit `Show the source UGC collection on the video detail page`; C2–C3 open | Existing video detail, medialist builders and playlist UI; independent of gRPC |
+| C1–C3 | Display Bilibili video collections and remote playlists, with selection and continued playback — C1 **done**, commit `Show the source UGC collection on the video detail page`; C2 **done**, commit `Load remote playlists with paging on the video detail page`; C3 open | Existing video detail, medialist builders and playlist UI; independent of gRPC |
 
 Finish one usable batch at a time. D1, D2 and N1 can be implemented independently of the gRPC sequence; avoid simultaneous edits to `PlayerControl.xaml(.cs)`. For each batch, the implementation handoff should name changed files, describe the resulting behavior, update the relevant progress note, and report only the permitted formatting check. Do not append a testing or hardening phase.
 
@@ -212,6 +212,8 @@ This rewrite is the deliverable for the current turn. No feature, packaging fix,
 **Result:** opening a video belonging to a UGC collection shows its source-provided sections and videos, with the current video selected. A detail response without a collection uses the existing page layout.
 
 ### C2 — Remote playlist loading and paging
+
+**Status: implemented and verified locally (commit `Load remote playlists with paging on the video detail page`).** `Models/MediaListResources.cs` adapts the sibling's `media_list`/`has_more`/`total_count` response and adds a `MediaListPagingState` that owns the cursor, de-duplication and loaded/total counts; `Services/MediaListService.cs` is a directly constructed service over the existing `Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin` builders (`oid` empty on the first request, the last returned aid afterwards, unsigned retry only when the signed response carries no `media_list`); `Pages/VideoDetailPage.xaml(.cs)` binds an active remote playlist with duration rows, a loaded/total count and a Load more action while `HasMore`. No new endpoint, no DI and no new cookie requirement were added. Verification and the offline limits are recorded in `IMPROVEMENT_PROGRESS.md`.
 
 **Sibling references:** `Services/Biz/MediaListService.cs::GetMediaList/LoadMoreMediaList`, `Models/Common/Video/MediaListResources.cs`, `Models/Requests/Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin`, and `Controls/VideoListView.xaml.cs::BtnLoadMore_OnTapped`.
 

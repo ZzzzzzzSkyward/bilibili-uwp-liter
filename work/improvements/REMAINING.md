@@ -51,9 +51,11 @@ Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
   `ugc_season` from the existing detail response, new `Models/VideoCollections.cs`, a 合集 pivot in
   `Pages/VideoDetailPage.xaml(.cs)` with sections and episode rows, selection keyed on the canonical
   `VideoInfo.aid`. Verification in `IMPROVEMENT_PROGRESS.md`.
-- **C2 — remote medialist loading/paging.** Small `Services/MediaListService.cs` over the existing
-  `Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin` builders (currently unused), cursor from
-  response items, load-more while `has_more`.
+- **C2 — remote medialist loading/paging.** **Done** (commit
+  `Load remote playlists with paging on the video detail page`): small `Services/MediaListService.cs`
+  over the existing `Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin` builders,
+  `Models/MediaListResources.cs` with the paging state, cursor from the last returned aid,
+  load-more while `has_more`. Verification in `IMPROVEMENT_PROGRESS.md`.
 - **C3 — source links + playback continuity.** `bilibili://music/playlist/playpage/{id}` route in
   `Helpers/MessageCenter.cs`, extend `VideoPlaylist`/`VideoPlaylistItem` in
   `Pages/VideoDetailPage.xaml.cs`, advance across page boundaries when `HasMore`.

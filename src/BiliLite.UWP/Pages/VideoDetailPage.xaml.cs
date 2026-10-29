@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -13,6 +15,7 @@ using Windows.ApplicationModel.DataTransfer;
 using BiliLite.Controls;
 using Windows.System;
 using BiliLite.Dialogs;
+using BiliLite.Services;
 using System.Threading.Tasks;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -22,7 +25,16 @@ namespace BiliLite.Pages
     public class VideoPlaylist
     {
         public int Index { get; set; }
-        public List<VideoPlaylistItem> Playlist { get; set; }
+        public IList<VideoPlaylistItem> Playlist { get; set; }
+        /// <summary>
+        /// 非空表示这是远程 medialist,列表内容由 MediaListService 分页读取
+        /// </summary>
+        public string MediaListId { get; set; }
+        public int MediaListType { get; set; } = MediaListService.DefaultMediaListType;
+        /// <summary>
+        /// 导航来源给出的标题,没有就用通用标题
+        /// </summary>
+        public string Title { get; set; }
     }
     public class VideoPlaylistItem
     {
@@ -30,6 +42,7 @@ namespace BiliLite.Pages
         public string Author { get; set; }
         public string Cover { get; set; }
         public string Title { get; set; }
+        public string Duration { get; set; }
     }
     public class VideoUgcSeasonEpisodeView
     {
@@ -168,6 +181,13 @@ namespace BiliLite.Pages
         PivotItem ugcSeasonPivotItem;
         readonly List<ListView> ugcSeasonEpisodeLists = new List<ListView>();
         string ugcSeasonAid;
+        // 远程 medialist 播放列表:行、翻页状态和页签内容都由这里持有
+        readonly MediaListService mediaListService = new MediaListService();
+        MediaListPagingState mediaListState;
+        ObservableCollection<VideoPlaylistItem> mediaListRows;
+        ListView mediaListListView;
+        TextBlock mediaListCountText;
+        Button mediaListLoadMoreButton;
         bool flag = false;
         string _id = "";
         protected async override void OnNavigatedTo(NavigationEventArgs e)
@@ -190,8 +210,13 @@ namespace BiliLite.Pages
                 if (e.Parameter is VideoPlaylist)
                 {
                     playlist = e.Parameter as VideoPlaylist;
+                    // 带 medialist ID 的是远程播放列表:先取首页再播放,不走内存列表
+                    if (!string.IsNullOrEmpty(playlist.MediaListId))
+                    {
+                        await InitializeMediaListPlaylist();
+                        return;
+                    }
 
-                  
                     var element = PlayListTpl.GetElement(new Windows.UI.Xaml.ElementFactoryGetArgs()) as PivotItem;
                     element.DataContext = playlist;
                  
@@ -452,6 +477,129 @@ namespace BiliLite.Pages
             var duration = TimeSpan.FromSeconds(seconds);
             return seconds >= 3600 ? duration.ToString(@"hh\:mm\:ss") : duration.ToString(@"mm\:ss");
         }
+
+        /// <summary>
+        /// 远程播放列表:建页签、取首页、播放第一行。翻页只追加到同一个列表。
+        /// </summary>
+        private async Task InitializeMediaListPlaylist()
+        {
+            mediaListState = new MediaListPagingState(playlist.MediaListId, playlist.MediaListType, MediaListSourceKind.MediaList, playlist.Title);
+            mediaListRows = new ObservableCollection<VideoPlaylistItem>();
+            playlist.Playlist = mediaListRows;
+            playlist.Index = Math.Max(0, playlist.Index);
+
+            mediaListCountText = new TextBlock()
+            {
+                FontSize = 12,
+            };
+            mediaListLoadMoreButton = new Button()
+            {
+                Content = "加载更多",
+                Margin = new Thickness(0, 8, 0, 0),
+            };
+            mediaListLoadMoreButton.Click += MediaListLoadMore_Click;
+
+            var header = new StackPanel() { Margin = new Thickness(12, 4, 12, 4) };
+            header.Children.Add(mediaListCountText);
+            header.Children.Add(mediaListLoadMoreButton);
+
+            mediaListListView = new ListView()
+            {
+                Header = header,
+                ItemsSource = mediaListRows,
+                ItemTemplate = (DataTemplate)Resources["MediaListRowTpl"],
+                ItemContainerStyle = (Style)Resources["UgcSeasonEpisodeItemStyle"],
+                SelectionMode = ListViewSelectionMode.Single,
+            };
+            mediaListListView.SelectionChanged += ListView_SelectionChanged;
+
+            // 页签内容是 ListView,播放结束的自动连播照旧按引用取 playList 页签
+            var element = new PivotItem()
+            {
+                Margin = new Thickness(0),
+                Header = new TextBlock() { Text = mediaListState.Title, FontSize = 18 },
+                Content = mediaListListView,
+            };
+            playlistPivotItem = element;
+            pivot.Items.Insert(0, element);
+            pivot.SelectedIndex = 0;
+
+            if (!await LoadMediaListPage())
+            {
+                // 失败已由服务提示,页签保留并显示已加载 0,不会留下一个空白页签
+                RefreshMediaListChrome();
+                return;
+            }
+
+            if (mediaListRows.Count == 0)
+            {
+                Utils.ShowMessageToast("播放列表是空的");
+                return;
+            }
+            var index = Math.Min(playlist.Index, mediaListRows.Count - 1);
+            playlist.Index = index;
+            mediaListListView.SelectedIndex = index;
+            await InitializeVideo(mediaListRows[index].ID);
+        }
+
+        private async void MediaListLoadMore_Click(object sender, RoutedEventArgs e)
+        {
+            if (mediaListState == null || !mediaListState.HasMore) return;
+            mediaListLoadMoreButton.IsEnabled = false;
+            await LoadMediaListPage();
+            RefreshMediaListChrome();
+        }
+
+        /// <summary>
+        /// 取一页并追加。游标来自 MediaListPagingState 记录的上一页最后一条 aid,
+        /// 与当前选中的播放行无关;服务层已按返回的 ID 去重。
+        /// </summary>
+        private async Task<bool> LoadMediaListPage()
+        {
+            if (mediaListState == null) return false;
+            var page = mediaListState.IsFirstPage
+                ? await mediaListService.GetMediaList(mediaListState.MediaListId, mediaListState.MediaListType)
+                : await mediaListService.LoadMoreMediaList(mediaListState);
+            // 失败已经由服务按现有提示方式上报,这里保留已加载的行和"加载更多"
+            if (page == null) return false;
+
+            var loaded = mediaListState.LoadedCount;
+            mediaListState.Append(page);
+            for (var i = loaded; i < mediaListState.LoadedCount; i++)
+            {
+                mediaListRows.Add(ToPlaylistItem(mediaListState.Rows[i]));
+            }
+            RefreshMediaListChrome();
+            return true;
+        }
+
+        private void RefreshMediaListChrome()
+        {
+            if (mediaListState == null) return;
+            if (mediaListCountText != null)
+            {
+                mediaListCountText.Text = "已加载 " + mediaListState.CountText;
+            }
+            if (mediaListLoadMoreButton != null)
+            {
+                mediaListLoadMoreButton.IsEnabled = mediaListState.HasMore;
+                mediaListLoadMoreButton.Visibility = mediaListState.HasMore ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
+        private static VideoPlaylistItem ToPlaylistItem(MediaListItem item)
+        {
+            return new VideoPlaylistItem()
+            {
+                // 列表资源ID就是视频的 aid
+                ID = item.Id.ToString(CultureInfo.InvariantCulture),
+                Title = item.Title,
+                Cover = item.Cover,
+                Author = item.Upper?.Name,
+                Duration = FormatDuration(item.Duration),
+            };
+        }
+
         private void CreateQR()
         {
             try

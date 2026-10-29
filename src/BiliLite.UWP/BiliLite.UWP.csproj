@@ -168,6 +168,7 @@
     <Compile Include="Api\SeasonIndexAPI.cs" />
     <Compile Include="Api\User\DynamicAPI.cs" />
     <Compile Include="Services\GrpcService.cs" />
+    <Compile Include="Services\MediaListService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaLibraryService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaPlaybackAdapter.cs" />
@@ -316,6 +317,7 @@
     <Compile Include="Models\ReturnModel.cs" />
     <Compile Include="Models\UserModels.cs" />
     <Compile Include="Models\VideoCollections.cs" />
+    <Compile Include="Models\MediaListResources.cs" />
     <Compile Include="Modules\Detail\FavoriteDetailVM.cs" />
     <Compile Include="Modules\DownloadVM.cs" />
     <Compile Include="Modules\EmoteVM.cs" />
