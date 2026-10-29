@@ -17,7 +17,14 @@ namespace BiliLite.Controls
             get { return _LoadMoreCommand; }
             set { _LoadMoreCommand = value; }
         }
-        public bool CanLoadMore { get; set; } = false;
+        public bool CanLoadMore
+        {
+            get { return (bool)GetValue(CanLoadMoreProperty); }
+            set { SetValue(CanLoadMoreProperty, value); }
+        }
+
+        public static readonly DependencyProperty CanLoadMoreProperty =
+            DependencyProperty.Register("CanLoadMore", typeof(bool), typeof(MyAdaptiveGridView), new PropertyMetadata(false));
 
         public double LoadMoreBottomOffset
         {
@@ -56,7 +63,7 @@ namespace BiliLite.Controls
             this.RegisterPropertyChangedCallback(LoadingProperty, new DependencyPropertyChangedCallback((obj,e)=> {
                 if( !Loading)
                 {
-                    if (scrollViewer.ScrollableHeight == 0)
+                    if (scrollViewer.ScrollableHeight == 0 && CanLoadMore)
                     {
                         LoadMoreCommand?.Execute(null);
                     }
@@ -70,7 +77,7 @@ namespace BiliLite.Controls
         {
             
             Debug.WriteLine("内容变更");
-            if (scrollViewer.ScrollableHeight == 0)
+            if (scrollViewer.ScrollableHeight == 0 && CanLoadMore)
             {
                 LoadMoreCommand?.Execute(null);
             }
@@ -78,7 +85,7 @@ namespace BiliLite.Controls
 
         private void ScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
         {
-            if (scrollViewer.VerticalOffset >= scrollViewer.ScrollableHeight - LoadMoreBottomOffset&& CanLoadMore)
+            if (scrollViewer.VerticalOffset >= scrollViewer.ScrollableHeight - LoadMoreBottomOffset && CanLoadMore)
             {
                 LoadMoreCommand?.Execute(null);
             }

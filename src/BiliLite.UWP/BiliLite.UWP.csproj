@@ -26,7 +26,7 @@
     <AppxBundle>Never</AppxBundle>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
-    <PackageCertificateThumbprint>B96203FBC1EFAEDCC332A14E4AF52E0A2721DDF5</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>3F95D7B0B185635BA827AF4A3E82E31EC3675FCF</PackageCertificateThumbprint>
     <PackageCertificateKeyFile>
     </PackageCertificateKeyFile>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
@@ -141,6 +141,14 @@
     <Compile Include="Api\ApiHelper.cs" />
     <Compile Include="Api\CommentApi.cs" />
     <Compile Include="Api\EmoteApi.cs" />
+    <Compile Include="Models\Requests\Api\BaseApi.cs" />
+    <Compile Include="Models\Requests\Api\EmoteApi.cs" />
+    <Compile Include="Models\Requests\Api\DanmakuApi.cs" />
+    <Compile Include="Services\CookieService.cs" />
+    <Compile Include="Services\HttpLogSanitizer.cs" />
+    <Compile Include="Services\PasswordLoginSession.cs" />
+    <Compile Include="Services\IsolatedPasswordLoginTransport.cs" />
+    <Compile Include="Services\WbiKeyService.cs" />
     <Compile Include="Api\GitApi.cs" />
     <Compile Include="Api\Home\AnimeAPI.cs" />
     <Compile Include="Api\Home\ChannelAPI.cs" />
@@ -159,6 +167,16 @@
     <Compile Include="Api\SeasonApi.cs" />
     <Compile Include="Api\SeasonIndexAPI.cs" />
     <Compile Include="Api\User\DynamicAPI.cs" />
+    <Compile Include="Services\GrpcService.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaLibraryService.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaPlaybackAdapter.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaTrackSelection.cs" />
+    <Compile Include="Services\LocalMedia\SubtitleTrackParser.cs" />
+    <Compile Include="Services\LocalMedia\DanmakuTrackLoader.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaTrackLoadException.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaAsyncLoadGuard.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaValidator.cs" />
     <Compile Include="Api\User\FavoriteAPI.cs" />
     <Compile Include="Api\User\FollowAPI.cs" />
     <Compile Include="Api\User\AtAPI.cs" />
@@ -272,6 +290,7 @@
     <Compile Include="Helpers\ControlHelper.cs" />
     <Compile Include="Helpers\DownloadHelper.cs" />
     <Compile Include="Helpers\ExceptionHandler.cs" />
+    <Compile Include="Helpers\DynamicGrpcMapper.cs" />
     <Compile Include="Helpers\HttpHelper.cs" />
     <Compile Include="Helpers\LogHelper.cs" />
     <Compile Include="Helpers\MessageCenter.cs" />
@@ -284,6 +303,9 @@
     </Compile>
     <Compile Include="Models\ApiModel.cs" />
     <Compile Include="Models\Common.cs" />
+    <Compile Include="Models\LocalMedia\LocalMediaItem.cs" />
+    <Compile Include="Models\LocalMedia\LocalMediaManifest.cs" />
+    <Compile Include="Models\LocalMedia\LocalMediaTrack.cs" />
     <Compile Include="Models\Dynamic\DynamicModel.cs" />
     <Compile Include="Models\Dynamic\DynamicUserProfileModel.cs" />
     <Compile Include="Models\GenerateMPDModel.cs" />
@@ -506,6 +528,7 @@
     <Content Include="Assets\Image\2233login.png" />
     <Content Include="Assets\Image\DefaultImage.png" />
     <Content Include="Assets\JiYan\极验.htm" />
+    <Content Include="Assets\Auth\PasswordLoginCaptcha.html" />
     <Content Include="Assets\JiYan\极验_files\fullpage.0.0.0.js" />
     <Content Include="Assets\JiYan\极验_files\gt.js" />
     <Content Include="Assets\LargeTile.scale-100.png" />

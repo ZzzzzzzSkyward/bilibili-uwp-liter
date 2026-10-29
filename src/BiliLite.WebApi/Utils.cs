@@ -24,12 +24,12 @@ namespace BiliLite.WebApi
             }
             stringBuilder.Append(appsecret);
             result = ToMD5(stringBuilder.ToString()).ToLower();
-            return url+"&sign=" + result;
+            return url + "&sign=" + result;
         }
         public static string ToMD5(string input)
         {
             MD5 mD5 = MD5.Create();
-            var com= mD5.ComputeHash(Encoding.UTF8.GetBytes(input));
+            var com = mD5.ComputeHash(Encoding.UTF8.GetBytes(input));
             var str = "";
             foreach (var item in com)
             {

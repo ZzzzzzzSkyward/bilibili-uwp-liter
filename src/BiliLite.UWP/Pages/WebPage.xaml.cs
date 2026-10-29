@@ -26,11 +26,7 @@ namespace BiliLite.Pages
         }
         private async void WebPage_Loaded(object sender, RoutedEventArgs e)
         {
-            if (this.Parent is MyFrame)
-            {
-                (this.Parent as MyFrame).ClosedPage -= WebPage_ClosedPage;
-                (this.Parent as MyFrame).ClosedPage += WebPage_ClosedPage;
-            }
+            SubscribeClosedPage();
             await webView.EnsureCoreWebView2Async();
             webView.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
             webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
@@ -41,6 +37,23 @@ namespace BiliLite.Pages
             webView.CoreWebView2.Settings.AreDefaultScriptDialogsEnabled = true;
             webView.CoreWebView2.Settings.IsBuiltInErrorPageEnabled = true;
             webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
+        }
+
+        private void SubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= WebPage_ClosedPage;
+                frame.ClosedPage += WebPage_ClosedPage;
+            }
+        }
+
+        private void UnsubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= WebPage_ClosedPage;
+            }
         }
 
         private void WebPage_ClosedPage(object sender, EventArgs e)
@@ -54,6 +67,7 @@ namespace BiliLite.Pages
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            SubscribeClosedPage();
             if (e.NavigationMode == NavigationMode.New)
             {
                 var uri = e.Parameter.ToString();
@@ -73,6 +87,11 @@ namespace BiliLite.Pages
 
             }
 
+        }
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            UnsubscribeClosedPage();
+            base.OnNavigatedFrom(e);
         }
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {

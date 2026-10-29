@@ -2,6 +2,7 @@
 using BiliLite.Modules;
 using System.Collections.Generic;
 using System.Windows.Input;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 
 namespace BiliLite.Controls.Dynamic
@@ -211,11 +212,84 @@ namespace BiliLite.Controls.Dynamic
         /// <summary>
         /// 是否转发
         /// </summary>
+        /// <summary>
+        /// 模板自己把 Content(RichTextBlock) 交给 RichTextControl 渲染的类型。
+        /// 一个 UIElement 只能有一个父元素，外层 ContentPresenter 若也拿到同一个实例会在布局阶段抛
+        /// ArgumentException(E_INVALIDARG)，所以这里决定宿主归属，而不只是决定可见性。
+        /// 图片模板分工不同：1x1 / 2x2 自己渲染正文，3x3 只渲染 Desc，正文仍由外层 ContentPresenter 显示。
+        /// </summary>
+        public bool TemplateRendersContent
+        {
+            get
+            {
+                switch (Type)
+                {
+                    case DynamicDisplayType.Text:
+                    case DynamicDisplayType.Repost:
+                    case DynamicDisplayType.Reserve:
+                        return true;
+                    case DynamicDisplayType.Photo:
+                        {
+                            var photoCount = ImagesInfo?.Count ?? 0;
+                            return photoCount <= 1 || photoCount == 4;
+                        }
+                    default:
+                        return false;
+                }
+            }
+        }
+
+        /// <summary>外层通用 ContentPresenter 的内容；模板渲染正文时返回 null，保证 RichTextBlock 只有一个宿主。</summary>
+        public RichTextBlock PresenterContent
+        {
+            get
+            {
+                return TemplateRendersContent ? null : Content;
+            }
+        }
+
+        public Visibility ContentPresenterVisibility
+        {
+            get
+            {
+                return ShowContent && PresenterContent != null ? Visibility.Visible : Visibility.Collapsed;
+            }
+        }
+
         public bool IsRepost { get; set; } = false;
         /// <summary>
         /// 是否自己动态
         /// </summary>
         public bool IsSelf { get; set; }
+        /// <summary>
+        /// 是否显示作者信息（关注列表的合成合集卡片没有作者）
+        /// </summary>
+        public bool ShowAuthorHeader { get; set; } = true;
+        /// <summary>
+        /// 是否显示转发、评论、点赞一行
+        /// </summary>
+        public bool ShowInteractionRow { get; set; } = true;
+        /// <summary>
+        /// 作者头像与昵称：原条件为“非转发”
+        /// </summary>
+        public Visibility AuthorHeaderVisibility
+        {
+            get { return !IsRepost && ShowAuthorHeader ? Visibility.Visible : Visibility.Collapsed; }
+        }
+        /// <summary>
+        /// 转发来源的作者行：原条件为“转发”
+        /// </summary>
+        public Visibility RepostAuthorVisibility
+        {
+            get { return IsRepost && ShowAuthorHeader ? Visibility.Visible : Visibility.Collapsed; }
+        }
+        /// <summary>
+        /// 互动栏：原条件为“非转发”
+        /// </summary>
+        public Visibility InteractionRowVisibility
+        {
+            get { return !IsRepost && ShowInteractionRow ? Visibility.Visible : Visibility.Collapsed; }
+        }
         public string DynamicUrl { get { return $"https://t.bilibili.com/{DynamicID}"; } }
     }
 

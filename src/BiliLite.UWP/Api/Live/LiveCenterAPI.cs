@@ -8,9 +8,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = "https://api.live.bilibili.com/xlive/app-interface/v1/relation/liveAnchor",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + "&qn=0&sortRule=0&filterRule=0",
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true) + "&qn=0&sortRule=0&filterRule=0",
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
         public ApiModel FollowUnLive(int page)
@@ -19,9 +19,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://api.live.bilibili.com/xlive/app-interface/v1/relation/unliveAnchor",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&page={page}&pagesize=30",
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true) + $"&page={page}&pagesize=30",
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
         public ApiModel History(int page)
@@ -29,10 +29,10 @@
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = "https://app.bilibili.com{ApiHelper.api2}/history/liveList",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&pn={page}&ps=20",
+                baseUrl = "https://app.bilibili.com/x/v2/history/liveList",
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true) + $"&pn={page}&ps=20",
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
         public ApiModel SignInfo()
@@ -41,9 +41,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = "https://api.live.bilibili.com/rc/v2/Sign/getSignInfo",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + "&actionKey=appkey",
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true) + "&actionKey=appkey",
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
         public ApiModel DoSign()

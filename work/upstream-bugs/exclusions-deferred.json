@@ -1,0 +1,2531 @@
+{
+  "excluded_count": 280,
+  "classification_counts": {
+    "admin": 20,
+    "ambiguous": 30,
+    "feature_request": 215,
+    "support_question": 15
+  },
+  "items": [
+    {
+      "number": 1,
+      "title": "Changedlog",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1",
+      "state": "closed",
+      "created_at": "2022-12-11T13:07:05Z",
+      "classification": "admin",
+      "reason": "admin"
+    },
+    {
+      "number": 12,
+      "title": "Todo",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/12",
+      "state": "closed",
+      "created_at": "2023-02-05T03:38:06Z",
+      "classification": "admin",
+      "reason": "This concerns project documentation, release administration, planning, or maintenance rather than an app behavior defect: Todo."
+    },
+    {
+      "number": 17,
+      "title": "如果您有余力的话 能否升级sdk以支持云母特性",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/17",
+      "state": "closed",
+      "created_at": "2023-02-10T15:07:13Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 如果您有余力的话 能否升级sdk以支持云母特性."
+    },
+    {
+      "number": 18,
+      "title": "dalao有余力时能否编译一份v3橙子版的哔哩",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/18",
+      "state": "closed",
+      "created_at": "2023-02-10T15:30:00Z",
+      "classification": "feature_request",
+      "reason": "This asks for a separate legacy v3 build, which is a distribution/version request."
+    },
+    {
+      "number": 26,
+      "title": "添加搜索建议",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/26",
+      "state": "closed",
+      "created_at": "2023-03-16T00:05:57Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 添加搜索建议."
+    },
+    {
+      "number": 29,
+      "title": "希望能自由设置字幕大小、颜色和位置",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/29",
+      "state": "open",
+      "created_at": "2023-03-16T13:01:50Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 希望能自由设置字幕大小、颜色和位置."
+    },
+    {
+      "number": 33,
+      "title": "希望在视频动态页面，封面图的右下角，显示视频的时长",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/33",
+      "state": "closed",
+      "created_at": "2023-04-06T04:32:17Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 希望在视频动态页面，封面图的右下角，显示视频的时长."
+    },
+    {
+      "number": 35,
+      "title": "- 首页视频强制显示 up 主 (目前版本有一部分视频会显示 tag 而不是 up 主)",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/35",
+      "state": "closed",
+      "created_at": "2023-04-06T14:58:10Z",
+      "classification": "feature_request",
+      "reason": "The reporter asks all homepage recommendations to show uploader names; the sibling changelog records this as an added presentation capability, with no claim that an existing uploader field is broken."
+    },
+    {
+      "number": 43,
+      "title": "需求：希望能添加视频无损音质的支持",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/43",
+      "state": "closed",
+      "created_at": "2023-04-09T07:56:45Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 需求：希望能添加视频无损音质的支持."
+    },
+    {
+      "number": 47,
+      "title": "找了很久终于找到能用的，特来给个star",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/47",
+      "state": "closed",
+      "created_at": "2023-04-12T13:06:36Z",
+      "classification": "admin",
+      "reason": "This concerns project documentation, release administration, planning, or maintenance rather than an app behavior defect: 找了很久终于找到能用的，特来给个star."
+    },
+    {
+      "number": 49,
+      "title": "日志输出添加类型名",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/49",
+      "state": "closed",
+      "created_at": "2023-04-15T01:06:59Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 日志输出添加类型名."
+    },
+    {
+      "number": 53,
+      "title": "clash rule mode 会导致“出现一个未知的错误” 全页面无法加载",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/53",
+      "state": "closed",
+      "created_at": "2023-04-18T03:13:22Z",
+      "classification": "support_question",
+      "reason": "The user asks how to configure Clash rule mode; the report does not isolate an app defect."
+    },
+    {
+      "number": 55,
+      "title": "使用 Clash for Windows 代理时，打开首页加载不出来",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/55",
+      "state": "closed",
+      "created_at": "2023-04-18T11:29:23Z",
+      "classification": "support_question",
+      "reason": "The failure is tied to a particular proxy setup and lacks evidence distinguishing setup from an app defect."
+    },
+    {
+      "number": 57,
+      "title": "能否支持合集功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/57",
+      "state": "closed",
+      "created_at": "2023-04-19T06:45:56Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 能否支持合集功能."
+    },
+    {
+      "number": 59,
+      "title": "支持查看评论区图片",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/59",
+      "state": "closed",
+      "created_at": "2023-04-28T15:52:04Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 支持查看评论区图片."
+    },
+    {
+      "number": 64,
+      "title": "播放器支持按住倍速播放手势",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/64",
+      "state": "closed",
+      "created_at": "2023-04-30T14:07:02Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 播放器支持按住倍速播放手势."
+    },
+    {
+      "number": 66,
+      "title": "移除标签栏TabView上方空白空间",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/66",
+      "state": "closed",
+      "created_at": "2023-05-01T04:22:48Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 移除标签栏TabView上方空白空间."
+    },
+    {
+      "number": 71,
+      "title": "新UI能否给个启用与否的开关",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/71",
+      "state": "closed",
+      "created_at": "2023-05-04T10:56:56Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 新UI能否给个启用与否的开关."
+    },
+    {
+      "number": 75,
+      "title": "倍速和清晰度按钮优化建议",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/75",
+      "state": "closed",
+      "created_at": "2023-05-05T13:15:10Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 倍速和清晰度按钮优化建议."
+    },
+    {
+      "number": 76,
+      "title": "支持忽略版本",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/76",
+      "state": "closed",
+      "created_at": "2023-05-06T00:23:02Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 支持忽略版本."
+    },
+    {
+      "number": 84,
+      "title": "开启自动播放铺满窗口后全屏再退出来",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/84",
+      "state": "closed",
+      "created_at": "2023-05-07T08:54:38Z",
+      "classification": "ambiguous",
+      "reason": "The title and image do not describe the resulting failure clearly enough to classify."
+    },
+    {
+      "number": 85,
+      "title": "播放控件部分未圆角",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/85",
+      "state": "closed",
+      "created_at": "2023-05-07T09:01:37Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 播放控件部分未圆角."
+    },
+    {
+      "number": 86,
+      "title": "建议添加启动时打开上次浏览的标签页",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/86",
+      "state": "closed",
+      "created_at": "2023-05-07T09:02:37Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 建议添加启动时打开上次浏览的标签页."
+    },
+    {
+      "number": 92,
+      "title": "深色模式下背景色似乎有些偏亮",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/92",
+      "state": "closed",
+      "created_at": "2023-05-09T14:46:38Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 深色模式下背景色似乎有些偏亮."
+    },
+    {
+      "number": 94,
+      "title": "关于「图片圆角半径」设置的优化建议",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/94",
+      "state": "closed",
+      "created_at": "2023-05-10T11:43:39Z",
+      "classification": "feature_request",
+      "reason": "The existing image-radius setting leaves its hover frame square, producing inconsistent rendering."
+    },
+    {
+      "number": 103,
+      "title": "PicView 屏蔽右上角那仨！！！我误触导致直接关闭App四五次了",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/103",
+      "state": "closed",
+      "created_at": "2023-05-18T02:59:17Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: PicView 屏蔽右上角那仨！！！我误触导致直接关闭App四五次了."
+    },
+    {
+      "number": 122,
+      "title": "4.6.1版本新增的⌈播放列表⌋优先级高于设置中的⌈详情页右侧默认选项卡⌋",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/122",
+      "state": "closed",
+      "created_at": "2023-05-23T17:19:52Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 4.6.1版本新增的⌈播放列表⌋优先级高于设置中的⌈详情页右侧默认选项卡⌋."
+    },
+    {
+      "number": 139,
+      "title": "按住倍速播放能否改为右方向键",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/139",
+      "state": "closed",
+      "created_at": "2023-05-28T01:47:15Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 按住倍速播放能否改为右方向键."
+    },
+    {
+      "number": 150,
+      "title": "长评论建议折叠一下",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/150",
+      "state": "closed",
+      "created_at": "2023-06-08T08:50:29Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 长评论建议折叠一下."
+    },
+    {
+      "number": 153,
+      "title": "支持设置直播代理",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/153",
+      "state": "closed",
+      "created_at": "2023-06-09T07:07:44Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 支持设置直播代理."
+    },
+    {
+      "number": 158,
+      "title": "顶部 Tab 宽度加载时和加载后能不能固定",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/158",
+      "state": "closed",
+      "created_at": "2023-06-11T05:25:07Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 顶部 Tab 宽度加载时和加载后能不能固定."
+    },
+    {
+      "number": 160,
+      "title": "播放列表与稍后再看存在冲突，能否考虑将播放列表位置挪到视频详情页下部",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/160",
+      "state": "closed",
+      "created_at": "2023-06-12T14:56:34Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 播放列表与稍后再看存在冲突，能否考虑将播放列表位置挪到视频详情页下部."
+    },
+    {
+      "number": 165,
+      "title": "优化用第三方浏览器打开链接失败时的用户体验",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/165",
+      "state": "closed",
+      "created_at": "2023-06-17T00:46:05Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 优化用第三方浏览器打开链接失败时的用户体验."
+    },
+    {
+      "number": 176,
+      "title": "调整标签页样式",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/176",
+      "state": "closed",
+      "created_at": "2023-07-01T15:25:37Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 调整标签页样式."
+    },
+    {
+      "number": 188,
+      "title": "希望能更改新标签页的背景",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/188",
+      "state": "closed",
+      "created_at": "2023-07-04T13:30:10Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 希望能更改新标签页的背景."
+    },
+    {
+      "number": 190,
+      "title": "修改ApiHelper.IL_BASE_URL地址",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/190",
+      "state": "closed",
+      "created_at": "2023-07-06T02:16:56Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 修改ApiHelper.IL_BASE_URL地址."
+    },
+    {
+      "number": 191,
+      "title": "支持杜比全景声",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/191",
+      "state": "closed",
+      "created_at": "2023-07-06T13:38:31Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 支持杜比全景声."
+    },
+    {
+      "number": 195,
+      "title": "提供安装教程文档到安装压缩包中",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/195",
+      "state": "closed",
+      "created_at": "2023-07-09T15:05:37Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 提供安装教程文档到安装压缩包中."
+    },
+    {
+      "number": 207,
+      "title": "用户投稿切换gRPC实现",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/207",
+      "state": "closed",
+      "created_at": "2023-07-14T15:41:48Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 用户投稿切换gRPC实现."
+    },
+    {
+      "number": 212,
+      "title": "请问有考虑完善“我的消息”功能吗",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/212",
+      "state": "closed",
+      "created_at": "2023-07-15T03:35:11Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 请问有考虑完善“我的消息”功能吗."
+    },
+    {
+      "number": 228,
+      "title": "变更Cookie存储方案",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/228",
+      "state": "closed",
+      "created_at": "2023-07-26T11:44:41Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 变更Cookie存储方案."
+    },
+    {
+      "number": 235,
+      "title": "支持设置日志级别",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/235",
+      "state": "closed",
+      "created_at": "2023-07-29T02:40:25Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 支持设置日志级别."
+    },
+    {
+      "number": 243,
+      "title": "抱歉, 看到了, 相关推荐就在详情那边, 麻烦作者把这个 issue关闭.",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/243",
+      "state": "closed",
+      "created_at": "2023-08-03T03:57:10Z",
+      "classification": "admin",
+      "reason": "This concerns project documentation, release administration, planning, or maintenance rather than an app behavior defect: 抱歉, 看到了, 相关推荐就在详情那边, 麻烦作者把这个 issue关闭.."
+    },
+    {
+      "number": 248,
+      "title": "启动时由于网络原因，检测不到github更新的json，提示错误",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/248",
+      "state": "closed",
+      "created_at": "2023-08-05T06:23:45Z",
+      "classification": "support_question",
+      "reason": "The reported failure depends on network access to GitHub, so the report does not establish an app defect."
+    },
+    {
+      "number": 250,
+      "title": "有clash有不兼容的情况吗？uwp lookback 已经设置了",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/250",
+      "state": "closed",
+      "created_at": "2023-08-08T15:37:13Z",
+      "classification": "support_question",
+      "reason": "The user asks for help with Clash/UWP loopback setup, without isolating an app defect."
+    },
+    {
+      "number": 253,
+      "title": "建议加强字字幕功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/253",
+      "state": "closed",
+      "created_at": "2023-08-10T06:06:51Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 建议加强字字幕功能."
+    },
+    {
+      "number": 268,
+      "title": "新增弹幕引擎接入并支持切换",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/268",
+      "state": "closed",
+      "created_at": "2023-08-19T09:28:47Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 新增弹幕引擎接入并支持切换."
+    },
+    {
+      "number": 271,
+      "title": "移除FLV选项",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/271",
+      "state": "closed",
+      "created_at": "2023-08-26T03:21:53Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 移除FLV选项."
+    },
+    {
+      "number": 284,
+      "title": "要是有个动态磁贴功能就好了捏",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/284",
+      "state": "closed",
+      "created_at": "2023-08-29T12:26:49Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 要是有个动态磁贴功能就好了捏."
+    },
+    {
+      "number": 321,
+      "title": "启用issue模板",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/321",
+      "state": "closed",
+      "created_at": "2023-09-17T13:31:00Z",
+      "classification": "admin",
+      "reason": "This concerns project documentation, release administration, planning, or maintenance rather than an app behavior defect: 启用issue模板."
+    },
+    {
+      "number": 341,
+      "title": "提供对于直播弹幕的弹幕引擎选择",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/341",
+      "state": "closed",
+      "created_at": "2023-10-07T05:08:24Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 提供对于直播弹幕的弹幕引擎选择."
+    },
+    {
+      "number": 345,
+      "title": "大佬，按照你的说明自己尝试编译了一下",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/345",
+      "state": "closed",
+      "created_at": "2023-10-12T14:25:28Z",
+      "classification": "support_question",
+      "reason": "The body asks for setup/help or describes a network/environment issue without enough evidence to isolate an app defect: 大佬，按照你的说明自己尝试编译了一下."
+    },
+    {
+      "number": 350,
+      "title": "对于软件的建议",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/350",
+      "state": "closed",
+      "created_at": "2023-10-19T05:28:57Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 对于软件的建议."
+    },
+    {
+      "number": 362,
+      "title": "4.6.17没有 new_version.json",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/362",
+      "state": "closed",
+      "created_at": "2023-10-27T02:51:07Z",
+      "classification": "admin",
+      "reason": "This concerns project documentation, release administration, planning, or maintenance rather than an app behavior defect: 4.6.17没有 new_version.json."
+    },
+    {
+      "number": 366,
+      "title": "登录问题修复方案记录",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/366",
+      "state": "open",
+      "created_at": "2023-10-28T04:55:57Z",
+      "classification": "admin",
+      "reason": "This concerns project documentation, release administration, planning, or maintenance rather than an app behavior defect: 登录问题修复方案记录."
+    },
+    {
+      "number": 372,
+      "title": "重构播放器记录",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/372",
+      "state": "open",
+      "created_at": "2023-10-29T12:17:17Z",
+      "classification": "admin",
+      "reason": "This concerns project documentation, release administration, planning, or maintenance rather than an app behavior defect: 重构播放器记录."
+    },
+    {
+      "number": 375,
+      "title": "更新证书",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/375",
+      "state": "closed",
+      "created_at": "2023-10-29T12:45:14Z",
+      "classification": "admin",
+      "reason": "This concerns project documentation, release administration, planning, or maintenance rather than an app behavior defect: 更新证书."
+    },
+    {
+      "number": 389,
+      "title": "希望可以推出一个ARM32的版本",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/389",
+      "state": "closed",
+      "created_at": "2023-10-31T16:56:52Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 希望可以推出一个ARM32的版本."
+    },
+    {
+      "number": 398,
+      "title": "已缓存的视频，在打开原网页时能不能自动播放已缓存的视频",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/398",
+      "state": "open",
+      "created_at": "2023-11-09T13:22:51Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 已缓存的视频，在打开原网页时能不能自动播放已缓存的视频."
+    },
+    {
+      "number": 399,
+      "title": "能否为客户端接入VSR（AI视频上采样）技术？",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/399",
+      "state": "closed",
+      "created_at": "2023-11-13T05:03:56Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 能否为客户端接入VSR（AI视频上采样）技术？."
+    },
+    {
+      "number": 409,
+      "title": "更换ghproxy的地址",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/409",
+      "state": "closed",
+      "created_at": "2023-11-24T04:07:16Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 更换ghproxy的地址."
+    },
+    {
+      "number": 415,
+      "title": "希望在视频详情页增加一个合集列表",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/415",
+      "state": "closed",
+      "created_at": "2023-11-28T10:30:12Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 希望在视频详情页增加一个合集列表."
+    },
+    {
+      "number": 421,
+      "title": "缓存Wbi令牌",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/421",
+      "state": "closed",
+      "created_at": "2023-12-02T10:26:01Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 缓存Wbi令牌."
+    },
+    {
+      "number": 483,
+      "title": "希望能增加“音量均衡”功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/483",
+      "state": "open",
+      "created_at": "2024-01-20T19:27:17Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 希望能增加“音量均衡”功能."
+    },
+    {
+      "number": 485,
+      "title": "支持设置请求时使用的build值",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/485",
+      "state": "closed",
+      "created_at": "2024-01-27T03:27:58Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 支持设置请求时使用的build值."
+    },
+    {
+      "number": 490,
+      "title": "支持xbox吗？",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/490",
+      "state": "closed",
+      "created_at": "2024-02-05T08:56:24Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 支持xbox吗？."
+    },
+    {
+      "number": 492,
+      "title": "互动视频功能代码生命周期问题",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/492",
+      "state": "closed",
+      "created_at": "2024-02-09T07:55:05Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 互动视频功能代码生命周期问题."
+    },
+    {
+      "number": 497,
+      "title": "已下载视频加入搜索框",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/497",
+      "state": "closed",
+      "created_at": "2024-02-21T15:03:45Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 已下载视频加入搜索框."
+    },
+    {
+      "number": 500,
+      "title": "播放历史页面支持搜索功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/500",
+      "state": "closed",
+      "created_at": "2024-02-23T04:04:16Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 播放历史页面支持搜索功能."
+    },
+    {
+      "number": 501,
+      "title": "增加“新建页面”自定义为首页",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/501",
+      "state": "closed",
+      "created_at": "2024-02-23T14:52:50Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 增加“新建页面”自定义为首页."
+    },
+    {
+      "number": 506,
+      "title": "收藏夹排序谢谢喵",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/506",
+      "state": "closed",
+      "created_at": "2024-02-25T00:50:10Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 收藏夹排序谢谢喵."
+    },
+    {
+      "number": 508,
+      "title": "加载已下载内容时添加加载进度显示",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/508",
+      "state": "closed",
+      "created_at": "2024-02-25T14:08:12Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 加载已下载内容时添加加载进度显示."
+    },
+    {
+      "number": 511,
+      "title": "同时实现方向键快进/长按三倍速",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/511",
+      "state": "closed",
+      "created_at": "2024-02-29T11:15:19Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 同时实现方向键快进/长按三倍速."
+    },
+    {
+      "number": 517,
+      "title": "给已关注up主设置分组",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/517",
+      "state": "closed",
+      "created_at": "2024-03-08T12:46:51Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 给已关注up主设置分组."
+    },
+    {
+      "number": 519,
+      "title": "希望增加简介链接可视且直接由浏览器打开。",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/519",
+      "state": "closed",
+      "created_at": "2024-03-11T08:29:39Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 希望增加简介链接可视且直接由浏览器打开。."
+    },
+    {
+      "number": 525,
+      "title": "无法批量下载合集里的视频",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/525",
+      "state": "closed",
+      "created_at": "2024-03-16T09:53:52Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 无法批量下载合集里的视频."
+    },
+    {
+      "number": 526,
+      "title": "播放器音量/亮度不是100%打开新视频时提示当前音量/亮度",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/526",
+      "state": "closed",
+      "created_at": "2024-03-16T09:57:17Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 播放器音量/亮度不是100%打开新视频时提示当前音量/亮度."
+    },
+    {
+      "number": 538,
+      "title": "减少安装包体积",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/538",
+      "state": "closed",
+      "created_at": "2024-03-23T04:35:21Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 减少安装包体积."
+    },
+    {
+      "number": 539,
+      "title": "导出视频时自动将视频名字设置为文件名字",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/539",
+      "state": "closed",
+      "created_at": "2024-03-23T04:38:52Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 导出视频时自动将视频名字设置为文件名字."
+    },
+    {
+      "number": 540,
+      "title": "添加设置视频的初始音量和亮度",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/540",
+      "state": "closed",
+      "created_at": "2024-03-23T12:47:04Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 添加设置视频的初始音量和亮度."
+    },
+    {
+      "number": 542,
+      "title": "评论下显示热门回复",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/542",
+      "state": "closed",
+      "created_at": "2024-03-25T08:40:47Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 评论下显示热门回复."
+    },
+    {
+      "number": 544,
+      "title": "首页栏目自定义能否增加稍后再看和历史记录以及收藏",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/544",
+      "state": "closed",
+      "created_at": "2024-03-26T03:52:57Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 首页栏目自定义能否增加稍后再看和历史记录以及收藏."
+    },
+    {
+      "number": 545,
+      "title": "在播放窗口显示播放进度",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/545",
+      "state": "closed",
+      "created_at": "2024-03-26T05:28:28Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 在播放窗口显示播放进度."
+    },
+    {
+      "number": 548,
+      "title": "优化一下播放列表/合集切换分集时重新加载整个标签页的问题",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/548",
+      "state": "open",
+      "created_at": "2024-03-27T13:59:14Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 优化一下播放列表/合集切换分集时重新加载整个标签页的问题."
+    },
+    {
+      "number": 550,
+      "title": "分P实现优化",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/550",
+      "state": "closed",
+      "created_at": "2024-03-27T14:38:31Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 分P实现优化."
+    },
+    {
+      "number": 551,
+      "title": "播放器操作提示Toast样式调整/播放列表切换视频不会重新提示低音量",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/551",
+      "state": "closed",
+      "created_at": "2024-03-27T14:40:30Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 播放器操作提示Toast样式调整/播放列表切换视频不会重新提示低音量."
+    },
+    {
+      "number": 552,
+      "title": "建议默认启用 新窗口打开图片预览",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/552",
+      "state": "closed",
+      "created_at": "2024-03-27T14:44:18Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 建议默认启用 新窗口打开图片预览."
+    },
+    {
+      "number": 558,
+      "title": "深色模式下启动图背景改为黑色，白色有点刺眼",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/558",
+      "state": "closed",
+      "created_at": "2024-04-06T14:52:57Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 深色模式下启动图背景改为黑色，白色有点刺眼."
+    },
+    {
+      "number": 559,
+      "title": "快捷键切换倍速时希望加上toast提示",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/559",
+      "state": "closed",
+      "created_at": "2024-04-07T02:43:34Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 快捷键切换倍速时希望加上toast提示."
+    },
+    {
+      "number": 570,
+      "title": "希望能出一个直播间进场提示消息屏蔽的功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/570",
+      "state": "closed",
+      "created_at": "2024-04-10T09:13:32Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 希望能出一个直播间进场提示消息屏蔽的功能."
+    },
+    {
+      "number": 571,
+      "title": "[建议] 希望加入刷新快捷键 F5 或者 Ctrl + R",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/571",
+      "state": "closed",
+      "created_at": "2024-04-10T14:00:18Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: [建议] 希望加入刷新快捷键 F5 或者 Ctrl + R."
+    },
+    {
+      "number": 576,
+      "title": "【建议】UP主界面全部播放",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/576",
+      "state": "closed",
+      "created_at": "2024-04-11T11:53:46Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 【建议】UP主界面全部播放."
+    },
+    {
+      "number": 577,
+      "title": "新增导出导入设置功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/577",
+      "state": "closed",
+      "created_at": "2024-04-12T12:13:53Z",
+      "classification": "feature_request",
+      "reason": "This requests a new capability or usability change rather than reporting a broken existing function: 新增导出导入设置功能."
+    },
+    {
+      "number": 589,
+      "title": "4.6.29.4版本部分动态无法显示",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/589",
+      "state": "closed",
+      "created_at": "2024-04-19T11:30:24Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 4.6.29.4版本部分动态无法显示 does not establish a reproducible product defect."
+    },
+    {
+      "number": 594,
+      "title": "动态界面显示无法显示动态，已将动态数据复制到下面了",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/594",
+      "state": "closed",
+      "created_at": "2024-04-25T06:14:22Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 动态界面显示无法显示动态，已将动态数据复制到下面了 does not establish a reproducible product defect."
+    },
+    {
+      "number": 596,
+      "title": "首页推荐页视频打开都是哔哩哔哩漫画直播间",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/596",
+      "state": "closed",
+      "created_at": "2024-04-26T10:17:51Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 首页推荐页视频打开都是哔哩哔哩漫画直播间."
+    },
+    {
+      "number": 599,
+      "title": "直播详情页保存显示底部礼物栏设置",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/599",
+      "state": "closed",
+      "created_at": "2024-04-28T11:41:27Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 直播详情页保存显示底部礼物栏设置."
+    },
+    {
+      "number": 604,
+      "title": "可设置播放器中移动鼠标立即显示进度条",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/604",
+      "state": "open",
+      "created_at": "2024-04-29T03:53:18Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 可设置播放器中移动鼠标立即显示进度条."
+    },
+    {
+      "number": 605,
+      "title": "新增播放历史记录相关设置项",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/605",
+      "state": "closed",
+      "created_at": "2024-04-29T12:35:19Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 新增播放历史记录相关设置项."
+    },
+    {
+      "number": 615,
+      "title": "关于分P标题",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/615",
+      "state": "closed",
+      "created_at": "2024-05-05T16:25:20Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a fixed-column option to improve visibility of long part titles."
+    },
+    {
+      "number": 617,
+      "title": "添加设置直播弹幕引擎功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/617",
+      "state": "closed",
+      "created_at": "2024-05-06T12:03:32Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 添加设置直播弹幕引擎功能."
+    },
+    {
+      "number": 638,
+      "title": "安装出现问题",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/638",
+      "state": "closed",
+      "created_at": "2024-05-21T10:04:02Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 安装出现问题 does not establish a reproducible product defect."
+    },
+    {
+      "number": 640,
+      "title": "点击评论区时间快速空降",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/640",
+      "state": "closed",
+      "created_at": "2024-05-21T12:32:16Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 点击评论区时间快速空降."
+    },
+    {
+      "number": 645,
+      "title": "CC 字幕样式美化",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/645",
+      "state": "closed",
+      "created_at": "2024-05-22T15:40:03Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: CC 字幕样式美化."
+    },
+    {
+      "number": 648,
+      "title": "提示出现错误",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/648",
+      "state": "closed",
+      "created_at": "2024-05-23T12:06:46Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 提示出现错误."
+    },
+    {
+      "number": 654,
+      "title": "点击时间跳转功能可以有一些外观优化的点",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/654",
+      "state": "closed",
+      "created_at": "2024-06-01T02:22:54Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 点击时间跳转功能可以有一些外观优化的点."
+    },
+    {
+      "number": 656,
+      "title": "因为近期特殊原因导致弹幕消失",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/656",
+      "state": "closed",
+      "created_at": "2024-06-03T19:25:30Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 因为近期特殊原因导致弹幕消失 does not establish a reproducible product defect."
+    },
+    {
+      "number": 662,
+      "title": "更新失败怎么回事啊",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/662",
+      "state": "closed",
+      "created_at": "2024-06-08T06:39:41Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 更新失败怎么回事啊 does not establish a reproducible product defect."
+    },
+    {
+      "number": 664,
+      "title": "视频详情页收藏功能不完整",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/664",
+      "state": "closed",
+      "created_at": "2024-06-09T02:46:38Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 视频详情页收藏功能不完整."
+    },
+    {
+      "number": 665,
+      "title": "建议加入关闭最后一个标签页时关闭窗口的功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/665",
+      "state": "open",
+      "created_at": "2024-06-09T07:22:34Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 建议加入关闭最后一个标签页时关闭窗口的功能."
+    },
+    {
+      "number": 666,
+      "title": "添加播放视频时对弹幕的操作",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/666",
+      "state": "closed",
+      "created_at": "2024-06-09T07:32:29Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 添加播放视频时对弹幕的操作."
+    },
+    {
+      "number": 667,
+      "title": "添加 镜像画面 功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/667",
+      "state": "closed",
+      "created_at": "2024-06-09T17:08:30Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 添加 镜像画面 功能."
+    },
+    {
+      "number": 668,
+      "title": "排行榜接口可能被风控",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/668",
+      "state": "closed",
+      "created_at": "2024-06-10T03:32:12Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 排行榜接口可能被风控 does not establish a reproducible product defect."
+    },
+    {
+      "number": 673,
+      "title": "扩展倍速支持",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/673",
+      "state": "closed",
+      "created_at": "2024-06-15T11:28:33Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 扩展倍速支持."
+    },
+    {
+      "number": 678,
+      "title": "视频详情页播放列表功能补全：滚动到顶部、滚动到底部、滚动到当前视频",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/678",
+      "state": "closed",
+      "created_at": "2024-06-20T14:37:04Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 视频详情页播放列表功能补全：滚动到顶部、滚动到底部、滚动到当前视频."
+    },
+    {
+      "number": 682,
+      "title": "调整视频详情页面收藏按钮展开收藏夹列表后保存按钮的位置",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/682",
+      "state": "closed",
+      "created_at": "2024-06-22T16:42:24Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 调整视频详情页面收藏按钮展开收藏夹列表后保存按钮的位置."
+    },
+    {
+      "number": 689,
+      "title": "支持评论中添加图片",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/689",
+      "state": "closed",
+      "created_at": "2024-06-27T10:28:38Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 支持评论中添加图片."
+    },
+    {
+      "number": 691,
+      "title": "网络出错：7月2日突然无法搜索、登陆，不论是扫码，还是帐号都不行",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/691",
+      "state": "closed",
+      "created_at": "2024-07-02T02:58:53Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 网络出错：7月2日突然无法搜索、登陆，不论是扫码，还是帐号都不行 does not establish a reproducible product defect."
+    },
+    {
+      "number": 696,
+      "title": "看视频怎么鼠标左键暂停播放啊",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/696",
+      "state": "open",
+      "created_at": "2024-07-03T05:27:28Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 看视频怎么鼠标左键暂停播放啊."
+    },
+    {
+      "number": 698,
+      "title": "新增内容过滤功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/698",
+      "state": "closed",
+      "created_at": "2024-07-04T15:06:44Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 新增内容过滤功能."
+    },
+    {
+      "number": 705,
+      "title": "设置页设置项改用Windows设置控件",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/705",
+      "state": "closed",
+      "created_at": "2024-07-13T08:41:41Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 设置页设置项改用Windows设置控件."
+    },
+    {
+      "number": 711,
+      "title": "建议加个备份功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/711",
+      "state": "open",
+      "created_at": "2024-07-20T02:48:20Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 建议加个备份功能."
+    },
+    {
+      "number": 715,
+      "title": "希望能新增一个单独备份直播弹幕屏蔽词的功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/715",
+      "state": "closed",
+      "created_at": "2024-07-20T04:25:04Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 希望能新增一个单独备份直播弹幕屏蔽词的功能."
+    },
+    {
+      "number": 721,
+      "title": "标签页功能优化",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/721",
+      "state": "closed",
+      "created_at": "2024-07-21T21:51:43Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 标签页功能优化."
+    },
+    {
+      "number": 722,
+      "title": "快速收藏功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/722",
+      "state": "closed",
+      "created_at": "2024-07-21T21:57:06Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 快速收藏功能."
+    },
+    {
+      "number": 728,
+      "title": "区分方向键右键按住和点击实现不同行为",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/728",
+      "state": "closed",
+      "created_at": "2024-07-28T03:50:06Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 区分方向键右键按住和点击实现不同行为."
+    },
+    {
+      "number": 729,
+      "title": "查看视频弹幕列表",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/729",
+      "state": "closed",
+      "created_at": "2024-07-28T09:45:47Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 查看视频弹幕列表."
+    },
+    {
+      "number": 730,
+      "title": "快捷键自定义",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/730",
+      "state": "closed",
+      "created_at": "2024-07-28T09:47:25Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 快捷键自定义."
+    },
+    {
+      "number": 736,
+      "title": "播放模式增加播完暂停",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/736",
+      "state": "closed",
+      "created_at": "2024-08-03T07:06:17Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 播放模式增加播完暂停."
+    },
+    {
+      "number": 739,
+      "title": "右键收藏按钮收藏到默认收藏夹",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/739",
+      "state": "closed",
+      "created_at": "2024-08-04T06:43:17Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 右键收藏按钮收藏到默认收藏夹."
+    },
+    {
+      "number": 743,
+      "title": "无法获取到Android端智能修复画质选项（~~话说这玩意是不是用npu超分啊~~ web端也有，看来不是",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/743",
+      "state": "closed",
+      "created_at": "2024-08-05T12:11:54Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 无法获取到Android端智能修复画质选项（~~话说这玩意是不是用npu超分啊~~ web端也有，看来不是."
+    },
+    {
+      "number": 744,
+      "title": "使用代理搜索时出现-400错误",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/744",
+      "state": "closed",
+      "created_at": "2024-08-05T12:55:38Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 使用代理搜索时出现-400错误 does not establish a reproducible product defect."
+    },
+    {
+      "number": 746,
+      "title": "我的关注页面搜索和排序栏做独立处理",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/746",
+      "state": "closed",
+      "created_at": "2024-08-06T08:54:03Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 我的关注页面搜索和排序栏做独立处理."
+    },
+    {
+      "number": 747,
+      "title": "添加 关闭推荐页顶部横版推广条 的选项",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/747",
+      "state": "closed",
+      "created_at": "2024-08-06T14:09:54Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 添加 关闭推荐页顶部横版推广条 的选项."
+    },
+    {
+      "number": 759,
+      "title": "经常性弹窗，请求关闭",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/759",
+      "state": "open",
+      "created_at": "2024-08-13T04:45:18Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 经常性弹窗，请求关闭 does not establish a reproducible product defect."
+    },
+    {
+      "number": 760,
+      "title": "8k120 视频帧率疑似错误",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/760",
+      "state": "open",
+      "created_at": "2024-08-13T13:31:39Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 8k120 视频帧率疑似错误 does not establish a reproducible product defect."
+    },
+    {
+      "number": 761,
+      "title": "直播间支持发送表情",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/761",
+      "state": "closed",
+      "created_at": "2024-08-14T06:19:28Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 直播间支持发送表情."
+    },
+    {
+      "number": 762,
+      "title": "修改安装教程",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/762",
+      "state": "closed",
+      "created_at": "2024-08-14T11:32:59Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 修改安装教程."
+    },
+    {
+      "number": 769,
+      "title": "导出视频srt转换失败",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/769",
+      "state": "open",
+      "created_at": "2024-08-17T08:00:54Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 导出视频srt转换失败 does not establish a reproducible product defect."
+    },
+    {
+      "number": 770,
+      "title": "分p视频点击打开路径报错",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/770",
+      "state": "closed",
+      "created_at": "2024-08-17T08:02:13Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 分p视频点击打开路径报错 does not establish a reproducible product defect."
+    },
+    {
+      "number": 779,
+      "title": "快捷键设置页支持录制 mouse4&5 鼠标侧键",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/779",
+      "state": "open",
+      "created_at": "2024-08-20T13:17:55Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 快捷键设置页支持录制 mouse4&5 鼠标侧键."
+    },
+    {
+      "number": 781,
+      "title": "快捷键设置页 Up 建议改为 ↑ Down 改为 ↓ ",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/781",
+      "state": "closed",
+      "created_at": "2024-08-21T08:25:16Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 快捷键设置页 Up 建议改为 ↑ Down 改为 ↓."
+    },
+    {
+      "number": 793,
+      "title": "默认最大音质设置项",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/793",
+      "state": "closed",
+      "created_at": "2024-08-26T12:33:07Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 默认最大音质设置项."
+    },
+    {
+      "number": 797,
+      "title": "希望增加鼠标设置为快捷键功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/797",
+      "state": "open",
+      "created_at": "2024-08-31T10:51:00Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 希望增加鼠标设置为快捷键功能."
+    },
+    {
+      "number": 803,
+      "title": "偶现播放报错",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/803",
+      "state": "closed",
+      "created_at": "2024-09-09T15:21:09Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 偶现播放报错 does not establish a reproducible product defect."
+    },
+    {
+      "number": 804,
+      "title": "看番时缺少自动跳过片头片尾",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/804",
+      "state": "closed",
+      "created_at": "2024-09-11T14:39:57Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 看番时缺少自动跳过片头片尾."
+    },
+    {
+      "number": 805,
+      "title": "全屏播放器后选集页自动定位到当前分p",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/805",
+      "state": "closed",
+      "created_at": "2024-09-11T15:13:18Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 全屏播放器后选集页自动定位到当前分p."
+    },
+    {
+      "number": 808,
+      "title": "点按方向键步进分档",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/808",
+      "state": "closed",
+      "created_at": "2024-09-12T12:49:57Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 点按方向键步进分档."
+    },
+    {
+      "number": 809,
+      "title": "win10无法安装",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/809",
+      "state": "closed",
+      "created_at": "2024-09-15T02:43:29Z",
+      "classification": "ambiguous",
+      "reason": "The available report for win10无法安装 does not establish a reproducible product defect."
+    },
+    {
+      "number": 818,
+      "title": "下载视频加入出错自动重试功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/818",
+      "state": "closed",
+      "created_at": "2024-09-17T23:32:18Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 下载视频加入出错自动重试功能."
+    },
+    {
+      "number": 819,
+      "title": "python 视频批量合并脚步",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/819",
+      "state": "closed",
+      "created_at": "2024-09-17T23:50:19Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: python 视频批量合并脚步."
+    },
+    {
+      "number": 821,
+      "title": "建立下载视频索引",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/821",
+      "state": "closed",
+      "created_at": "2024-09-20T11:52:04Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 建立下载视频索引."
+    },
+    {
+      "number": 822,
+      "title": "章节看点列表",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/822",
+      "state": "closed",
+      "created_at": "2024-09-21T12:58:59Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 章节看点列表."
+    },
+    {
+      "number": 825,
+      "title": "安装证书更新",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/825",
+      "state": "closed",
+      "created_at": "2024-09-24T03:48:14Z",
+      "classification": "admin",
+      "reason": "This concerns project maintenance or developer/release operations: 安装证书更新."
+    },
+    {
+      "number": 827,
+      "title": "每次启动都会弹出报错信息\"程序出现一个错误，已记录\"",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/827",
+      "state": "closed",
+      "created_at": "2024-09-24T18:46:04Z",
+      "classification": "ambiguous",
+      "reason": "The available report for 每次启动都会弹出报错信息\"程序出现一个错误，已记录\" does not establish a reproducible product defect."
+    },
+    {
+      "number": 829,
+      "title": "sqlite数据库迁移更新",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/829",
+      "state": "closed",
+      "created_at": "2024-09-26T11:33:03Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: sqlite数据库迁移更新."
+    },
+    {
+      "number": 831,
+      "title": "支持修改缓存目录或在内存中缓冲视频",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/831",
+      "state": "closed",
+      "created_at": "2024-09-26T14:56:41Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 支持修改缓存目录或在内存中缓冲视频."
+    },
+    {
+      "number": 837,
+      "title": "添加仅音频功能，以实现更好得挂在后台听视频",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/837",
+      "state": "closed",
+      "created_at": "2024-09-30T07:40:24Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 添加仅音频功能，以实现更好得挂在后台听视频."
+    },
+    {
+      "number": 838,
+      "title": "不知道为什么安装不了",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/838",
+      "state": "closed",
+      "created_at": "2024-10-01T02:08:16Z",
+      "classification": "support_question",
+      "reason": "The body seeks help or clarification about 不知道为什么安装不了, rather than describing a confirmed product defect."
+    },
+    {
+      "number": 843,
+      "title": "关闭自动播放下一个视频功能和播放列表定位",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/843",
+      "state": "closed",
+      "created_at": "2024-10-02T08:54:33Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 关闭自动播放下一个视频功能和播放列表定位."
+    },
+    {
+      "number": 857,
+      "title": "安装教程完善",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/857",
+      "state": "closed",
+      "created_at": "2024-10-08T13:26:44Z",
+      "classification": "support_question",
+      "reason": "The body seeks help or clarification about 安装教程完善, rather than describing a confirmed product defect."
+    },
+    {
+      "number": 862,
+      "title": "UI优化：顶部标签高度感觉可以稍微降低一些",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/862",
+      "state": "closed",
+      "created_at": "2024-10-11T14:50:31Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: UI优化：顶部标签高度感觉可以稍微降低一些."
+    },
+    {
+      "number": 863,
+      "title": "CC字幕 添加快捷键快速切换开关",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/863",
+      "state": "closed",
+      "created_at": "2024-10-11T14:56:54Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: CC字幕 添加快捷键快速切换开关."
+    },
+    {
+      "number": 866,
+      "title": "希望能将up上传的番剧分段视频导出成一个完整的视频",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/866",
+      "state": "open",
+      "created_at": "2024-10-13T15:09:52Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 希望能将up上传的番剧分段视频导出成一个完整的视频."
+    },
+    {
+      "number": 870,
+      "title": "是否可以添加一个屏蔽彩色弹幕的功能，太多企图刷存在感的弹幕了",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/870",
+      "state": "closed",
+      "created_at": "2024-10-17T02:30:13Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 是否可以添加一个屏蔽彩色弹幕的功能，太多企图刷存在感的弹幕了."
+    },
+    {
+      "number": 872,
+      "title": "Windows 11 24H2 杜比全景声无声",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/872",
+      "state": "closed",
+      "created_at": "2024-10-20T14:06:04Z",
+      "classification": "support_question",
+      "reason": "The body seeks help or clarification about Windows 11 24H2 杜比全景声无声, rather than describing a confirmed product defect."
+    },
+    {
+      "number": 874,
+      "title": "加入SponsorBlock功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/874",
+      "state": "closed",
+      "created_at": "2024-10-21T07:54:24Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 加入SponsorBlock功能."
+    },
+    {
+      "number": 891,
+      "title": "外置插件",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/891",
+      "state": "open",
+      "created_at": "2024-10-27T03:45:20Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 外置插件."
+    },
+    {
+      "number": 899,
+      "title": "新版本配色不统一",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/899",
+      "state": "closed",
+      "created_at": "2024-10-30T11:35:18Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 新版本配色不统一."
+    },
+    {
+      "number": 903,
+      "title": "挂载外部Ass字幕",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/903",
+      "state": "closed",
+      "created_at": "2024-11-01T03:45:57Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 挂载外部Ass字幕."
+    },
+    {
+      "number": 912,
+      "title": "首页推送的直播 右键菜单快速设置过滤",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/912",
+      "state": "closed",
+      "created_at": "2024-11-13T12:02:34Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 首页推送的直播 右键菜单快速设置过滤."
+    },
+    {
+      "number": 914,
+      "title": "为啥还不发布新版本",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/914",
+      "state": "closed",
+      "created_at": "2024-11-20T10:13:16Z",
+      "classification": "admin",
+      "reason": "This concerns project maintenance or developer/release operations: 为啥还不发布新版本."
+    },
+    {
+      "number": 924,
+      "title": "缺少合适的数字证书",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/924",
+      "state": "closed",
+      "created_at": "2024-11-22T16:45:19Z",
+      "classification": "support_question",
+      "reason": "The body seeks help or clarification about 缺少合适的数字证书, rather than describing a confirmed product defect."
+    },
+    {
+      "number": 926,
+      "title": "增加鼠标右键功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/926",
+      "state": "open",
+      "created_at": "2024-11-23T11:50:37Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 增加鼠标右键功能."
+    },
+    {
+      "number": 929,
+      "title": "【快捷键】可以加个切换1倍速和当前倍速的功能吗",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/929",
+      "state": "closed",
+      "created_at": "2024-12-01T04:01:23Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 【快捷键】可以加个切换1倍速和当前倍速的功能吗."
+    },
+    {
+      "number": 939,
+      "title": "下载视频页优化",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/939",
+      "state": "closed",
+      "created_at": "2024-12-14T09:30:28Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 下载视频页优化."
+    },
+    {
+      "number": 940,
+      "title": "视频详情页提供av号可复制",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/940",
+      "state": "closed",
+      "created_at": "2024-12-14T09:42:46Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 视频详情页提供av号可复制."
+    },
+    {
+      "number": 945,
+      "title": "希望推荐页和热门页预加载的视频项多一些，并且滚动条到底前可以提前预加载",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/945",
+      "state": "closed",
+      "created_at": "2024-12-17T10:43:00Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 希望推荐页和热门页预加载的视频项多一些，并且滚动条到底前可以提前预加载."
+    },
+    {
+      "number": 949,
+      "title": "直播间的一些需求",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/949",
+      "state": "closed",
+      "created_at": "2024-12-19T10:25:06Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 直播间的一些需求."
+    },
+    {
+      "number": 957,
+      "title": "下载视频页优化2",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/957",
+      "state": "closed",
+      "created_at": "2024-12-25T03:16:06Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 下载视频页优化2."
+    },
+    {
+      "number": 962,
+      "title": "能否添加支持视频章节分段",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/962",
+      "state": "closed",
+      "created_at": "2024-12-31T03:58:09Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 能否添加支持视频章节分段."
+    },
+    {
+      "number": 967,
+      "title": "希望能够解析HDR真彩解析度",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/967",
+      "state": "closed",
+      "created_at": "2025-01-02T19:28:31Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 希望能够解析HDR真彩解析度."
+    },
+    {
+      "number": 979,
+      "title": "安装教程简化",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/979",
+      "state": "closed",
+      "created_at": "2025-01-09T07:28:07Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 安装教程简化."
+    },
+    {
+      "number": 986,
+      "title": "Github action 编译失败",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/986",
+      "state": "closed",
+      "created_at": "2025-01-13T02:18:09Z",
+      "classification": "admin",
+      "reason": "This concerns project maintenance or developer/release operations: Github action 编译失败."
+    },
+    {
+      "number": 989,
+      "title": "单独制作消息中心一期",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/989",
+      "state": "closed",
+      "created_at": "2025-01-13T06:19:45Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 单独制作消息中心一期."
+    },
+    {
+      "number": 994,
+      "title": "新增自动刷新播放地址设置项",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/994",
+      "state": "closed",
+      "created_at": "2025-01-18T08:58:40Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 新增自动刷新播放地址设置项."
+    },
+    {
+      "number": 996,
+      "title": "Changedlog(2)",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/996",
+      "state": "closed",
+      "created_at": "2025-01-18T10:27:50Z",
+      "classification": "admin",
+      "reason": "This concerns project maintenance or developer/release operations: Changedlog(2)."
+    },
+    {
+      "number": 1001,
+      "title": "单窗口模式下返回按钮样式统一",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1001",
+      "state": "closed",
+      "created_at": "2025-01-20T10:11:15Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 单窗口模式下返回按钮样式统一."
+    },
+    {
+      "number": 1002,
+      "title": "搜索页视频时长像官网一样显示小时",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1002",
+      "state": "closed",
+      "created_at": "2025-01-20T10:12:02Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 搜索页视频时长像官网一样显示小时."
+    },
+    {
+      "number": 1003,
+      "title": "提供本地关注功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1003",
+      "state": "closed",
+      "created_at": "2025-01-20T10:12:58Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 提供本地关注功能."
+    },
+    {
+      "number": 1004,
+      "title": "希望直播也可以仅音频播放，去除已下架的签到按钮",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1004",
+      "state": "closed",
+      "created_at": "2025-01-20T14:25:23Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 希望直播也可以仅音频播放，去除已下架的签到按钮."
+    },
+    {
+      "number": 1005,
+      "title": "关于FFmpegInterop中FFmpeg option的一些疑问",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1005",
+      "state": "closed",
+      "created_at": "2025-01-20T18:07:18Z",
+      "classification": "support_question",
+      "reason": "The body seeks help or clarification about 关于FFmpegInterop中FFmpeg option的一些疑问, rather than describing a confirmed product defect."
+    },
+    {
+      "number": 1008,
+      "title": "简化安装步骤，发布软件到chocolatey",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1008",
+      "state": "open",
+      "created_at": "2025-01-23T07:11:33Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 简化安装步骤，发布软件到chocolatey."
+    },
+    {
+      "number": 1018,
+      "title": "为同时拥有 全景声和HIRES 音轨 的稿件提供特殊的缓存方式",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1018",
+      "state": "closed",
+      "created_at": "2025-02-04T01:53:14Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 为同时拥有 全景声和HIRES 音轨 的稿件提供特殊的缓存方式."
+    },
+    {
+      "number": 1019,
+      "title": "直播界面无法选择视频编码如HEVC/AV1等硬解方式",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1019",
+      "state": "open",
+      "created_at": "2025-02-04T08:45:39Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 直播界面无法选择视频编码如HEVC/AV1等硬解方式."
+    },
+    {
+      "number": 1021,
+      "title": "能否增加切换账号的功能？",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1021",
+      "state": "open",
+      "created_at": "2025-02-05T09:29:40Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 能否增加切换账号的功能？."
+    },
+    {
+      "number": 1023,
+      "title": "播放列表功能增加",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1023",
+      "state": "closed",
+      "created_at": "2025-02-06T03:31:32Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 播放列表功能增加."
+    },
+    {
+      "number": 1025,
+      "title": "设置UI优化建议",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1025",
+      "state": "closed",
+      "created_at": "2025-02-06T04:03:24Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 设置UI优化建议."
+    },
+    {
+      "number": 1028,
+      "title": "图片预览支持自动全屏",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1028",
+      "state": "closed",
+      "created_at": "2025-02-06T04:20:52Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 图片预览支持自动全屏."
+    },
+    {
+      "number": 1029,
+      "title": "重建索引增加完成提示",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1029",
+      "state": "closed",
+      "created_at": "2025-02-06T04:26:25Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 重建索引增加完成提示."
+    },
+    {
+      "number": 1030,
+      "title": "设置界面添加搜索功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1030",
+      "state": "closed",
+      "created_at": "2025-02-06T04:28:03Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 设置界面添加搜索功能."
+    },
+    {
+      "number": 1031,
+      "title": "设置UI优化",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1031",
+      "state": "closed",
+      "created_at": "2025-02-06T04:29:30Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 设置UI优化."
+    },
+    {
+      "number": 1039,
+      "title": "choco安装方式在24H2中安装失败",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1039",
+      "state": "closed",
+      "created_at": "2025-02-08T14:56:37Z",
+      "classification": "support_question",
+      "reason": "The body seeks help or clarification about choco安装方式在24H2中安装失败, rather than describing a confirmed product defect."
+    },
+    {
+      "number": 1051,
+      "title": "直播添加解码切换策略",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1051",
+      "state": "open",
+      "created_at": "2025-02-13T16:55:26Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 直播添加解码切换策略."
+    },
+    {
+      "number": 1057,
+      "title": "choco安装失败时日志输出",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1057",
+      "state": "closed",
+      "created_at": "2025-02-16T12:52:27Z",
+      "classification": "admin",
+      "reason": "This concerns project maintenance or developer/release operations: choco安装失败时日志输出."
+    },
+    {
+      "number": 1065,
+      "title": "下载希望能自己设置默认画质和音质，或者沿用上次下载的设置",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1065",
+      "state": "closed",
+      "created_at": "2025-02-18T14:18:17Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 下载希望能自己设置默认画质和音质，或者沿用上次下载的设置."
+    },
+    {
+      "number": 1078,
+      "title": "下载更多画质时下载状态错误问题",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1078",
+      "state": "open",
+      "created_at": "2025-02-26T13:34:36Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 下载更多画质时下载状态错误问题."
+    },
+    {
+      "number": 1079,
+      "title": "x64_native 与 x64 的区别",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1079",
+      "state": "closed",
+      "created_at": "2025-02-26T18:06:56Z",
+      "classification": "support_question",
+      "reason": "The body seeks help or clarification about x64_native 与 x64 的区别, rather than describing a confirmed product defect."
+    },
+    {
+      "number": 1083,
+      "title": "希望在收藏夹中右键视频以删除收藏",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1083",
+      "state": "closed",
+      "created_at": "2025-03-02T10:43:44Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 希望在收藏夹中右键视频以删除收藏."
+    },
+    {
+      "number": 1084,
+      "title": "希望可以优化以下首页的可自定义选项",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1084",
+      "state": "open",
+      "created_at": "2025-03-02T13:39:05Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 希望可以优化以下首页的可自定义选项."
+    },
+    {
+      "number": 1087,
+      "title": "希望可以接入空降助手",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1087",
+      "state": "closed",
+      "created_at": "2025-03-03T07:50:47Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 希望可以接入空降助手."
+    },
+    {
+      "number": 1092,
+      "title": "免登入看視頻評論",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1092",
+      "state": "closed",
+      "created_at": "2025-03-05T03:13:34Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 免登入看視頻評論."
+    },
+    {
+      "number": 1098,
+      "title": "Xaml实时预览中断debug调试",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1098",
+      "state": "open",
+      "created_at": "2025-03-07T08:28:48Z",
+      "classification": "admin",
+      "reason": "This concerns project maintenance or developer/release operations: Xaml实时预览中断debug调试."
+    },
+    {
+      "number": 1115,
+      "title": "视频进度条显示章节看点刻度",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1115",
+      "state": "closed",
+      "created_at": "2025-03-14T13:10:21Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 视频进度条显示章节看点刻度."
+    },
+    {
+      "number": 1120,
+      "title": "视频动态页面显示充电视频",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1120",
+      "state": "open",
+      "created_at": "2025-03-21T07:38:35Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 视频动态页面显示充电视频."
+    },
+    {
+      "number": 1121,
+      "title": "支持对up主的视频合集管理，比如订阅合集",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1121",
+      "state": "open",
+      "created_at": "2025-03-21T07:41:21Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 支持对up主的视频合集管理，比如订阅合集."
+    },
+    {
+      "number": 1133,
+      "title": "接入其他播放器",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1133",
+      "state": "closed",
+      "created_at": "2025-04-07T06:21:05Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 接入其他播放器."
+    },
+    {
+      "number": 1136,
+      "title": "期待添加批量下载视频字幕功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1136",
+      "state": "open",
+      "created_at": "2025-04-08T14:21:20Z",
+      "classification": "feature_request",
+      "reason": "The body asks for a new capability or UX change: 期待添加批量下载视频字幕功能."
+    },
+    {
+      "number": 1141,
+      "title": "更大的小窗",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1141",
+      "state": "closed",
+      "created_at": "2025-04-24T02:03:57Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1142,
+      "title": "开启“不上报历史记录”功能后，再关闭这个功能依旧没有历史记录",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1142",
+      "state": "closed",
+      "created_at": "2025-04-24T23:47:35Z",
+      "classification": "support_question",
+      "reason": "Asks about availability or product behavior without establishing a broken existing app function."
+    },
+    {
+      "number": 1152,
+      "title": "多窗口模式不可用",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1152",
+      "state": "open",
+      "created_at": "2025-05-02T05:23:53Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1153,
+      "title": "WebPlayer初始化错误",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1153",
+      "state": "closed",
+      "created_at": "2025-05-02T06:50:21Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1161,
+      "title": "新增Mpegts播放器",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1161",
+      "state": "closed",
+      "created_at": "2025-05-07T11:36:32Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1163,
+      "title": "新增视频画面操作功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1163",
+      "state": "closed",
+      "created_at": "2025-05-09T03:26:30Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1165,
+      "title": "番剧莉可丽丝在此app中无小动画",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1165",
+      "state": "closed",
+      "created_at": "2025-05-09T16:40:28Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1173,
+      "title": "Changedlog(3)",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1173",
+      "state": "open",
+      "created_at": "2025-05-15T07:31:41Z",
+      "classification": "admin",
+      "reason": "Concerns project direction, release notes, or internal maintenance rather than an app behavior defect."
+    },
+    {
+      "number": 1177,
+      "title": "用shakaplayer看视频进度条抽搐",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1177",
+      "state": "open",
+      "created_at": "2025-05-16T08:01:55Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1195,
+      "title": "dev分支播放报错",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1195",
+      "state": "closed",
+      "created_at": "2025-05-28T04:30:46Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1198,
+      "title": "播放器控件不能无脑用滑块",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1198",
+      "state": "closed",
+      "created_at": "2025-05-31T09:33:49Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1211,
+      "title": "选中软件后会变暗",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1211",
+      "state": "closed",
+      "created_at": "2025-06-06T12:46:14Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1213,
+      "title": "Win11下浅色主题聚焦时背景色过于灰暗",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1213",
+      "state": "closed",
+      "created_at": "2025-06-06T13:17:55Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1217,
+      "title": "每次启动应用都会弹出检查更新失败",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1217",
+      "state": "closed",
+      "created_at": "2025-06-11T09:21:20Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1219,
+      "title": "有关评论的问题",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1219",
+      "state": "closed",
+      "created_at": "2025-06-12T09:21:30Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1224,
+      "title": "导出视频报错The process instance has already exited",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1224",
+      "state": "closed",
+      "created_at": "2025-06-14T06:38:21Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1228,
+      "title": "独立专栏阅读页",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1228",
+      "state": "closed",
+      "created_at": "2025-06-17T11:35:54Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1239,
+      "title": "支持设置主题背景源与是否启用主题特效",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1239",
+      "state": "closed",
+      "created_at": "2025-06-22T14:26:00Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1253,
+      "title": "快捷键希望自选快进/快退时长和增加退出铺满窗口的快捷键",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1253",
+      "state": "closed",
+      "created_at": "2025-06-29T14:05:19Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1254,
+      "title": "希望增加AI总结视频功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1254",
+      "state": "open",
+      "created_at": "2025-06-29T14:08:45Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1257,
+      "title": "希望可以在已下载视频界面添加弹幕更新选项",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1257",
+      "state": "closed",
+      "created_at": "2025-07-02T13:08:05Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1261,
+      "title": "添加mpv播放器",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1261",
+      "state": "closed",
+      "created_at": "2025-07-04T08:02:34Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1263,
+      "title": "项目可迁移到WindowsAPP SDK吗",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1263",
+      "state": "closed",
+      "created_at": "2025-07-05T01:18:00Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1266,
+      "title": "设置搜索点击搜索结果，选项无法自动展开",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1266",
+      "state": "closed",
+      "created_at": "2025-07-06T06:46:47Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1271,
+      "title": "希望能设置一个调回之前风格样式的选项",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1271",
+      "state": "open",
+      "created_at": "2025-07-11T13:03:26Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1272,
+      "title": "希望能给一些界面加上多选删除",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1272",
+      "state": "closed",
+      "created_at": "2025-07-12T03:12:58Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1275,
+      "title": "4.8.4版本eset报毒",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1275",
+      "state": "closed",
+      "created_at": "2025-07-14T07:04:24Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1286,
+      "title": "大佬大佬,能否给标签页添加一个暂停键以便于暂停和定位? 以及在A标签页打开的B标签页能在A后面而不是D后面(像浏览器那样)",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1286",
+      "state": "closed",
+      "created_at": "2025-08-07T07:28:30Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1287,
+      "title": "依赖注入服务注入代码改为编译时生成",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1287",
+      "state": "closed",
+      "created_at": "2025-08-09T09:21:45Z",
+      "classification": "admin",
+      "reason": "Concerns project direction, release notes, or internal maintenance rather than an app behavior defect."
+    },
+    {
+      "number": 1288,
+      "title": "为评论区加上当前评论数量",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1288",
+      "state": "closed",
+      "created_at": "2025-08-13T03:39:38Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1291,
+      "title": "修复并完善仅音频播放模式",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1291",
+      "state": "open",
+      "created_at": "2025-08-21T03:15:58Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1299,
+      "title": "更新排行榜分区id",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1299",
+      "state": "closed",
+      "created_at": "2025-08-28T11:44:22Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1302,
+      "title": "空降助手支持Sponsor类型提示手动跳过",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1302",
+      "state": "closed",
+      "created_at": "2025-09-09T10:24:36Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1303,
+      "title": "可设置评论显示链接原文",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1303",
+      "state": "closed",
+      "created_at": "2025-09-09T10:25:31Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1304,
+      "title": "如果是代码上的问题，请提交issue",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1304",
+      "state": "closed",
+      "created_at": "2025-09-09T14:58:05Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1307,
+      "title": "新增发评反诈功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1307",
+      "state": "closed",
+      "created_at": "2025-09-13T11:33:51Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1319,
+      "title": "没有大会员高码率和60帧的画质选项吗？开了大会员也只有1080p高清",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1319",
+      "state": "closed",
+      "created_at": "2025-09-23T18:45:45Z",
+      "classification": "support_question",
+      "reason": "Asks about availability or product behavior without establishing a broken existing app function."
+    },
+    {
+      "number": 1323,
+      "title": "更新证书",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1323",
+      "state": "closed",
+      "created_at": "2025-09-28T06:30:13Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1332,
+      "title": "发评反诈功能添加申诉入口",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1332",
+      "state": "closed",
+      "created_at": "2025-10-13T06:30:36Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1333,
+      "title": "添加弹幕引擎",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1333",
+      "state": "open",
+      "created_at": "2025-10-13T09:23:00Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1345,
+      "title": "使用WebPlayer播放已下载视频",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1345",
+      "state": "closed",
+      "created_at": "2025-11-05T12:00:40Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1350,
+      "title": "缓存视频无法用WebPlayer播放",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1350",
+      "state": "open",
+      "created_at": "2025-11-09T03:45:19Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1352,
+      "title": "旧版动态模板相关代码均可移除",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1352",
+      "state": "closed",
+      "created_at": "2025-11-12T06:59:36Z",
+      "classification": "admin",
+      "reason": "Concerns project direction, release notes, or internal maintenance rather than an app behavior defect."
+    },
+    {
+      "number": 1354,
+      "title": "打开视频时不等待空降助手加载",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1354",
+      "state": "closed",
+      "created_at": "2025-11-25T10:04:54Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1360,
+      "title": "单窗口模式增加回到主页的按钮",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1360",
+      "state": "closed",
+      "created_at": "2025-11-30T06:31:52Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1365,
+      "title": "可自定义的cdn替换域名",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1365",
+      "state": "closed",
+      "created_at": "2025-12-19T07:32:44Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1371,
+      "title": "请求增加主页推荐流列数的自定义",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1371",
+      "state": "closed",
+      "created_at": "2025-12-25T08:25:40Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1372,
+      "title": "评论区字体大小自定义",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1372",
+      "state": "closed",
+      "created_at": "2025-12-25T08:28:41Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1376,
+      "title": "优化-抽象下载器实现代码",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1376",
+      "state": "closed",
+      "created_at": "2026-01-13T09:39:44Z",
+      "classification": "admin",
+      "reason": "Concerns project direction, release notes, or internal maintenance rather than an app behavior defect."
+    },
+    {
+      "number": 1381,
+      "title": "孩子们，b站又炸了",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1381",
+      "state": "closed",
+      "created_at": "2026-01-18T07:25:59Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1389,
+      "title": "抵制WinUI3化从你我做起",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1389",
+      "state": "closed",
+      "created_at": "2026-02-01T06:18:51Z",
+      "classification": "admin",
+      "reason": "Concerns project direction, release notes, or internal maintenance rather than an app behavior defect."
+    },
+    {
+      "number": 1392,
+      "title": "快捷键支持全局热键",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1392",
+      "state": "open",
+      "created_at": "2026-02-03T12:40:11Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1393,
+      "title": "完善稍后再看的删除功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1393",
+      "state": "closed",
+      "created_at": "2026-02-05T10:02:37Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1398,
+      "title": "适配win10平板模式返回键",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1398",
+      "state": "closed",
+      "created_at": "2026-02-08T02:27:09Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1402,
+      "title": "空降助手数据加载流程修复，且需要忽略请求证书错误",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1402",
+      "state": "closed",
+      "created_at": "2026-02-13T06:40:26Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1415,
+      "title": "添加拉黑用户功能",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1415",
+      "state": "closed",
+      "created_at": "2026-03-03T10:17:53Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1426,
+      "title": "使用Native播放器播放本地已下载视频",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1426",
+      "state": "open",
+      "created_at": "2026-04-05T07:18:52Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1444,
+      "title": "加载缓慢或报错",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1444",
+      "state": "open",
+      "created_at": "2026-05-08T15:01:16Z",
+      "classification": "ambiguous",
+      "reason": "The available report is too sparse or externally dependent to establish an app defect confidently."
+    },
+    {
+      "number": 1455,
+      "title": "视频详情页右侧面板响应式效果支持设置关闭",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1455",
+      "state": "closed",
+      "created_at": "2026-05-27T11:19:39Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1475,
+      "title": "时光代理人第三季周四十八点抢先看电视端无水印视频能下载不？",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1475",
+      "state": "closed",
+      "created_at": "2026-08-21T03:17:58Z",
+      "classification": "support_question",
+      "reason": "Asks about availability or product behavior without establishing a broken existing app function."
+    },
+    {
+      "number": 1495,
+      "title": "明确「使用内置浏览器」开关的生效范围（部分页面的链接固定走外部浏览器）",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1495",
+      "state": "open",
+      "created_at": "2026-10-01T07:48:33Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    },
+    {
+      "number": 1499,
+      "title": "播放器小窗悬浮窗口尺寸限制解除",
+      "url": "https://github.com/ywmoyue/biliuwp-lite/issues/1499",
+      "state": "closed",
+      "created_at": "2026-10-21T08:15:39Z",
+      "classification": "feature_request",
+      "reason": "Requests a new capability, preference, or platform option without establishing a defect in existing behavior."
+    }
+  ]
+}

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace BiliLite.Modules
 {
@@ -93,6 +94,12 @@ namespace BiliLite.Modules
 
             //正则关键词
             ShieldRegulars = SettingHelper.GetValue<ObservableCollection<string>>(SettingHelper.VideoDanmaku.SHIELD_REGULAR, new ObservableCollection<string>() { });
+            var validRegulars = ShieldRegulars.Where(IsValidDanmuRegex).ToList();
+            if (validRegulars.Count != ShieldRegulars.Count)
+            {
+                ShieldRegulars = new ObservableCollection<string>(validRegulars);
+                SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_REGULAR, ShieldRegulars);
+            }
 
             //用户
             ShieldUsers = SettingHelper.GetValue<ObservableCollection<string>>(SettingHelper.VideoDanmaku.SHIELD_USER, new ObservableCollection<string>() { });
@@ -124,7 +131,7 @@ namespace BiliLite.Modules
                     }
                     {
                         var users = items.Where(x => x.type == 1).Select(x => x.filter).ToList();
-                        var ls = ShieldRegulars.Union(users);
+                        var ls = ShieldRegulars.Union(users).Where(IsValidDanmuRegex).ToList();
                         ShieldRegulars.Clear();
                         foreach (var item in ls)
                         {
@@ -151,6 +158,21 @@ namespace BiliLite.Modules
             catch (Exception ex)
             {
                 LogHelper.Log("读取弹幕屏蔽词失败", LogType.ERROR, ex);
+            }
+        }
+
+        private static bool IsValidDanmuRegex(string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern))
+                return false;
+            try
+            {
+                new Regex(pattern);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                return false;
             }
         }
 

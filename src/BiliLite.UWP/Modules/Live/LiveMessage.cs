@@ -88,7 +88,7 @@ namespace BiliLite.Modules.Live
         {
             ws = new ClientWebSocket();
         }
-        private static System.Timers.Timer heartBeatTimer;
+        private System.Timers.Timer heartBeatTimer;
         public async Task Connect(long roomID, long uid, CancellationToken cancellationToken)
         {
             if (ws.State != WebSocketState.Open && ws.State != WebSocketState.Connecting)
@@ -100,6 +100,7 @@ namespace BiliLite.Modules.Live
             await JoinRoomAsync(roomID, uid);
             //发送心跳
             await SendHeartBeatAsync();
+            StopHeartBeatTimer();
             heartBeatTimer = new System.Timers.Timer(1000 * 30);
             heartBeatTimer.Elapsed += HeartBeatTimer_Elapsed;
             heartBeatTimer.Start();
@@ -418,10 +419,18 @@ namespace BiliLite.Modules.Live
 
         }
 
+        private void StopHeartBeatTimer()
+        {
+            if (heartBeatTimer == null) return;
+            heartBeatTimer.Stop();
+            heartBeatTimer.Elapsed -= HeartBeatTimer_Elapsed;
+            heartBeatTimer.Dispose();
+            heartBeatTimer = null;
+        }
+
         public void Dispose()
         {
-            heartBeatTimer?.Stop();
-            heartBeatTimer?.Dispose();
+            StopHeartBeatTimer();
             ws.Dispose(); 
         }
     }

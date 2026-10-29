@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -43,6 +42,13 @@
     <Protobuf Include="Proto\Reply\PlayViewReply.proto" GrpcServices="Client" />
     <Protobuf Include="Proto\Request\PlayViewReq.proto" GrpcServices="Client" />
     <Protobuf Include="Proto\Reply\DanmakuReply.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\app\archive\middleware\v1\preload.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\app\dynamic\v2\dynamic.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\dagw\component\avatar\common\common.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\dagw\component\avatar\v1\avatar.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\dagw\component\avatar\v1\plugin.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\app\playurl\v1\playurl.proto" GrpcServices="Client" />
+    <Protobuf Include="bilibili\tv\interfaces\dm\v1\dm.proto" GrpcServices="Client" />
   </ItemGroup>
 
 </Project>

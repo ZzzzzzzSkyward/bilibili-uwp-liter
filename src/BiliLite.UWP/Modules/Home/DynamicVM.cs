@@ -8,24 +8,35 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using BiliLite.Services;
 namespace BiliLite.Modules
 {
     public class DynamicVM : IModules
     {
-        readonly Api.User.DynamicAPI dynamicAPI;
+        private readonly GrpcService _grpcService;
+        private int _page = 1;
+        private string _historyOffset;
+        private string _updateBaseline;
         public DynamicVM()
         {
-            dynamicAPI = new Api.User.DynamicAPI();
+            _grpcService = new GrpcService();
             dynamicItemDataTemplateSelector = new DynamicItemDataTemplateSelector();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
         public DynamicItemDataTemplateSelector dynamicItemDataTemplateSelector { get; set; }
         private bool _loading = true;
+        private bool _canLoadMore;
+        private bool _lastPageFailed;
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
+        }
+        public bool CanLoadMore
+        {
+            get { return _canLoadMore; }
+            set { _canLoadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
@@ -37,48 +48,54 @@ namespace BiliLite.Modules
             set { _Items = value; DoPropertyChanged("Items"); }
         }
 
-        public async Task GetDynamicItems(string idx = "")
+        public async Task GetDynamicItems(int page = 1)
         {
+            var stage = "request-start";
             try
             {
                 Loading = true;
-                var api = dynamicAPI.DyanmicNew(Api.User.DynamicAPI.UserDynamicType.Video);
-                if (idx != "")
+                CanLoadMore = false;
+                _lastPageFailed = false;
+                if (page == 1)
                 {
-                    api = dynamicAPI.HistoryDynamic(idx, Api.User.DynamicAPI.UserDynamicType.Video);
+                    _historyOffset = null;
+                    _updateBaseline = null;
                 }
-                var results = await api.Request();
-                if (results.status)
+                LogHelper.Log("Home dynamics stage=request-start rpc=Dynamic/DynVideo page=" + page
+                    + " hasHistoryOffset=" + !string.IsNullOrEmpty(_historyOffset)
+                    + " hasUpdateBaseline=" + !string.IsNullOrEmpty(_updateBaseline), LogType.DEBUG);
+                var result = await _grpcService.GetDynVideo(page, _historyOffset, _updateBaseline);
+                stage = "response-received";
+                var dynamicList = result.DynamicList;
+                var mappedItems = DynamicGrpcMapper.MapToHomeItems(dynamicList.List);
+                LogHelper.Log("Home dynamics stage=response-mapped rpc=Dynamic/DynVideo page=" + page
+                    + " sourceCount=" + dynamicList.List.Count + " mappedCount=" + mappedItems.Count + " hasMore=" + dynamicList.HasMore
+                    + " hasHistoryOffset=" + !string.IsNullOrEmpty(dynamicList.HistoryOffset)
+                    + " hasUpdateBaseline=" + !string.IsNullOrEmpty(dynamicList.UpdateBaseline), LogType.DEBUG);
+
+                stage = "collection-update";
+                if (page == 1 || Items == null)
                 {
-                    var data = results.GetJObject();
-                    if (data["code"].ToInt32() == 0)
-                    {
-                        var items = JsonConvert.DeserializeObject<ObservableCollection<DynamicItemModel>>(data["data"]["items"].ToString());
-                        if (Items == null)
-                        {
-                            Items = items;
-                        }
-                        else
-                        {
-                            foreach (var item in items)
-                            {
-                                Items.Add(item);
-                            }
-                        }
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data["message"].ToString());
-                    }
+                    Items = new ObservableCollection<DynamicItemModel>(mappedItems);
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
-
+                    foreach (var item in mappedItems)
+                    {
+                        Items.Add(item);
+                    }
                 }
+                _historyOffset = dynamicList.HistoryOffset;
+                _updateBaseline = dynamicList.UpdateBaseline;
+                _page = page;
+                CanLoadMore = dynamicList.HasMore;
+                LogHelper.Log("Home dynamics stage=items-published page=" + _page + " count=" + Items.Count, LogType.DEBUG);
             }
             catch (Exception ex)
             {
+                CanLoadMore = false;
+                _lastPageFailed = true;
+                LogHelper.Log("Home dynamics stage=" + stage + " failed", LogType.ERROR, ex);
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
             }
@@ -94,7 +111,12 @@ namespace BiliLite.Modules
                 return;
             }
             Items = null;
-            await GetDynamicItems();
+            CanLoadMore = false;
+            _lastPageFailed = false;
+            _page = 1;
+            _historyOffset = null;
+            _updateBaseline = null;
+            await GetDynamicItems(1);
         }
         public async void LoadMore()
         {
@@ -102,12 +124,11 @@ namespace BiliLite.Modules
             {
                 return;
             }
-            if (Items == null || Items.Count == 0)
+            if (Items == null || Items.Count == 0 || (!CanLoadMore && !_lastPageFailed))
             {
                 return;
             }
-            var last = Items.LastOrDefault();
-            await GetDynamicItems(last.desc.dynamic_id);
+            await GetDynamicItems(_page + 1);
         }
 
 
@@ -123,18 +144,49 @@ namespace BiliLite.Modules
         /// <summary>
         /// json字符串,根据desc里的type，获得数据
         /// </summary>
-        public string card { get; set; }
+        private string _card;
+        private DynamicVideoCardModel _video;
+        public DynamicVideoCardModel Video
+        {
+            get { return _video; }
+            set { _video = value; }
+        }
+        public DynamicSeasonCardModel Season { get; set; }
+        public string card
+        {
+            get { return _card; }
+            set
+            {
+                _card = value;
+                _video = null;
+                Season = null;
+            }
+        }
         public DynamicDescModel desc { get; set; }
-        public DynamicCardModel2024 video
+        public DynamicVideoCardModel video
         {
             get
             {
-                if (desc != null && desc.type == 8)
+                if (desc != null && (desc.type == 8 || desc.type == 4310))
                 {
-                    return Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicCardModel2024>(card);
+                    if (_video == null)
+                    {
+                        try
+                        {
+                            _video = Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicVideoCardModel>(card);
+                            LogHelper.Log("Home dynamics stage=video-card-converted type=" + desc.type + " dynamicId=" + desc.dynamic_id + " hasOwner=" + (_video?.owner != null) + " hasStats=" + (_video?.stat != null), LogType.DEBUG);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.Log("Home dynamics stage=video-card-conversion-failed type=" + desc.type + " dynamicId=" + desc.dynamic_id, LogType.ERROR, ex);
+                            throw;
+                        }
+                    }
+                    return _video;
                 }
                 return null;
             }
+            set { _video = value; }
         }
         public DynamicSeasonCardModel season
         {
@@ -142,10 +194,11 @@ namespace BiliLite.Modules
             {
                 if (desc != null && desc.type == 512)
                 {
-                    return Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicSeasonCardModel>(card);
+                    return Season ?? Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicSeasonCardModel>(card);
                 }
                 return null;
             }
+            set { Season = value; }
         }
     }
     public class DynamicItemDataTemplateSelector : DataTemplateSelector
@@ -154,7 +207,8 @@ namespace BiliLite.Modules
         protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
         {
             var card = item as DynamicItemModel;
-            if (card.desc.type == 8)
+            LogHelper.Log("Home dynamics stage=template-select type=" + (card?.desc == null ? "null" : card.desc.type.ToString()) + " dynamicId=" + (card?.desc?.dynamic_id ?? ""), LogType.DEBUG);
+            if (card.desc.type == 8 || card.desc.type == 4310)
             {
                 return resource["DynamicVideo"] as DataTemplate;
             }
@@ -167,8 +221,9 @@ namespace BiliLite.Modules
     public class DynamicDescModel
     {
         public string uid { get; set; }
+        public string time_text { get; set; }
         /// <summary>
-        /// 8=视频，512=番剧
+        /// 8=视频，512=番剧，4310=用户投稿合集
         /// </summary>
         public int type { get; set; }
         public string rid { get; set; }
@@ -196,6 +251,8 @@ namespace BiliLite.Modules
         public long pubdate { get; set; }
         public string title { get; set; }
         public DynamicVideoCardStatModel stat { get; set; }
+        public string viewtext { get { return stat == null ? "0" : stat.view.ToString(); } }
+        public string danmakutext { get { return stat == null ? "0" : stat.danmaku.ToString(); } }
     }
     public class DynamicVideoCardStatModel
     {
@@ -256,6 +313,8 @@ namespace BiliLite.Modules
                   ??
                   modules?.module_dynamic?.major?.ugc_season?.title
                   ??
+                  modules?.module_dynamic?.major?.medialist?.title
+                  ??
                   modules?.module_dynamic?.major?.pgc?.title
                   ??
                   modules?.module_dynamic?.additional?.title
@@ -272,6 +331,7 @@ namespace BiliLite.Modules
                     modules?.module_dynamic?.major?.article?.jump_url ??
                     modules?.module_dynamic?.major?.pgc?.jump_url ??
                     modules?.module_dynamic?.major?.ugc_season?.jump_url ??
+                    modules?.module_dynamic?.major?.medialist?.jump_url ??
                     modules?.module_dynamic?.major?.live?.jump_url ??
                      "";
                 if (url.Length == 0) return url;
@@ -318,9 +378,10 @@ namespace BiliLite.Modules
                 return
                   modules?.module_dynamic?.major?.archive?.cover ??
                   modules?.module_dynamic?.major?.live?.cover ??
-                  modules?.module_dynamic?.major?.article?.covers?[0] ??
+                  modules?.module_dynamic?.major?.article?.covers?.FirstOrDefault() ??
                   modules?.module_dynamic?.major?.pgc?.cover ??
                   modules?.module_dynamic?.major?.ugc_season?.cover ??
+                  modules?.module_dynamic?.major?.medialist?.cover ??
                   "";
             }
         }
@@ -330,6 +391,7 @@ namespace BiliLite.Modules
             {
                 return
                   modules?.module_dynamic?.major?.archive?.aid ??
+                  modules?.module_dynamic?.major?.pgc?.aid ??
                   modules?.module_dynamic?.major?.pgc?.season_id_string ??
                   modules?.module_dynamic?.major?.live?.id ??
                   basic.rid_str ??
@@ -716,6 +778,7 @@ namespace BiliLite.Modules
         public DynamicCardModel2024_article article { get; set; }
         public DynamicCardModel2024_season pgc { get; set; }
         public DynamicCardModel2024_list ugc_season { get; set; }
+        public DynamicCardModel2024_list medialist { get; set; }
         public DynamicCardModel2024_live_rcmd live_rcmd { get; set; }
         public string type { get; set; }
     }
@@ -735,6 +798,7 @@ namespace BiliLite.Modules
     public class DynamicCardModel2024_season
     {
         //public object badge{ get; set; }
+        public string aid { get; set; }
         public string cover { get; set; }
         public int epid { get; set; }
         public int season_id { get; set; }
@@ -760,6 +824,8 @@ namespace BiliLite.Modules
     }
     public class DynamicCardModel2024_list
     {
+        // 播单 ID；合集卡片没有该字段（0）。
+        public long id { get; set; }
         public long aid { get; set; }
         //public object badge{ get; set; }
         public string cover { get; set; }

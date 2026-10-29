@@ -154,38 +154,76 @@ namespace BiliLite.Modules
                 Loaded = false;
                 Loading = true;
                 ShowError = false;
-                var results = await videoAPI.Detail(id, isbvid).Request();
-                if (results.status)
+                var webResult = await videoAPI.DetailWebInterface(id, isbvid).Request();
+                var webRelatesResult = await videoAPI.RelatesWebInterface(id, isbvid).Request();
+                ApiDataModel<VideoDetailModel> data = null;
+                if (webResult.status && webRelatesResult.status)
                 {
-                    var data = await results.GetJson<ApiDataModel<VideoDetailModel>>();
-                    if (!data.success)
+                    data = await webResult.GetJson<ApiDataModel<VideoDetailModel>>();
+                    if (data.success)
+                    {
+                        data.data.short_link = "https://b23.tv/" + data.data.bvid;
+                        var relatesData = await webRelatesResult.GetJson<ApiDataModel<List<VideoDetailRelatesModel>>>();
+                        if (relatesData.success)
+                        {
+                            data.data.relates = relatesData.data;
+                        }
+                        else
+                        {
+                            data = null;
+                        }
+                    }
+                }
+
+                // The app endpoint remains a fallback when either web read is unavailable.
+                if (data == null || !data.success)
+                {
+                    var results = await videoAPI.Detail(id, isbvid).Request();
+                    if (results.status)
+                    {
+                        data = await results.GetJson<ApiDataModel<VideoDetailModel>>();
+                    }
+                    else
                     {
                         var result_proxy = await videoAPI.DetailProxy(id, isbvid).Request();
                         if (result_proxy.status)
                         {
                             data = await result_proxy.GetJson<ApiDataModel<VideoDetailModel>>();
                         }
-                    }
-                    if (data.success)
-                    {
-                        VideoInfo = data.data;
-                        Loaded = true;
-
-                        await LoadFavorite(data.data.aid);
-                    }
-                    else
-                    {
-                        ShowError = true;
-                        ErrorMsg = data.message;
-                        //Utils.ShowMessageToast(data.message);
+                        else
+                        {
+                            ShowError = true;
+                            ErrorMsg = results.message;
+                        }
                     }
                 }
-                else
+
+                if (data != null && data.success)
+                {
+                    data.data.req_user = data.data.req_user ?? new VideoDetailReqUserModel();
+                    if (data.data.req_user.attention != 1 && data.data.req_user.attention != -999)
+                    {
+                        data.data.req_user.attention = -999;
+                    }
+                    // The web endpoints omit owner_ext entirely; keep it non-null so the
+                    // fans label can hide itself instead of dangling when the count is unknown.
+                    var hasOwnerExt = data.data.owner_ext != null;
+                    data.data.owner_ext = data.data.owner_ext ?? new VideoDetailOwnerExtModel();
+                    VideoInfo = data.data;
+                    Loaded = true;
+                    if (!hasOwnerExt)
+                    {
+                        await LoadOwnerFans();
+                    }
+                    await GetAttentionUp();
+                    await GetUserVideoStates();
+                    await LoadVideoTags(data.data.aid);
+                    await LoadFavorite(data.data.aid);
+                }
+                else if (!ShowError)
                 {
                     ShowError = true;
-                    ErrorMsg = results.message;
-                    //Utils.ShowMessageToast(results.message);
-
+                    ErrorMsg = data?.message ?? "视频详情读取失败";
                 }
             }
             catch (Exception ex)
@@ -198,6 +236,145 @@ namespace BiliLite.Modules
             finally
             {
                 Loading = false;
+            }
+        }
+
+        /// <summary>
+        /// 详情接口(Web/app)可能不含粉丝数, 单独查询; 失败时保持 fans=0 且不打断页面
+        /// </summary>
+        private async Task LoadOwnerFans()
+        {
+            var mid = VideoInfo?.owner?.mid;
+            if (string.IsNullOrEmpty(mid))
+            {
+                return;
+            }
+
+            var fans = 0;
+            try
+            {
+                var results = await videoAPI.RelationStat(mid).Request();
+                if (results.status)
+                {
+                    var data = await results.GetJson<ApiDataModel<JObject>>();
+                    if (data.success)
+                    {
+                        fans = data.data?["follower"]?.ToObject<int>() ?? 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+            }
+
+            if (fans <= 0)
+            {
+                return;
+            }
+
+            VideoInfo.owner_ext.fans = fans;
+            VideoInfo.DoPropertyChanged("owner_ext");
+        }
+
+        private async Task LoadVideoTags(string aid)
+        {
+            try
+            {
+                var results = await videoAPI.Tags(aid).Request();
+                if (!results.status)
+                {
+                    return;
+                }
+                var data = await results.GetJson<ApiDataModel<List<VideoDetailTagModel>>>();
+                if (data.success && VideoInfo != null)
+                {
+                    VideoInfo.tag = data.data;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+            }
+        }
+
+        private async Task GetAttentionUp()
+        {
+            VideoInfo.req_user = VideoInfo.req_user ?? new VideoDetailReqUserModel();
+            if (VideoInfo.req_user.attention != 1 && VideoInfo.req_user.attention != -999)
+            {
+                VideoInfo.req_user.attention = -999;
+            }
+            var previousAttention = VideoInfo.req_user.attention;
+            if (!SettingHelper.Account.Logined)
+            {
+                return;
+            }
+
+            try
+            {
+                var result = await followAPI.GetAttention(VideoInfo.owner.mid).Request();
+                if (!result.status)
+                {
+                    return;
+                }
+
+                var data = await result.GetJson<ApiDataModel<JObject>>();
+                var attribute = data.data?["attribute"]?.ToObject<int>();
+                VideoInfo.req_user.attention = attribute == 2 || attribute == 6 ? 1 : -999;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+                VideoInfo.req_user.attention = previousAttention;
+            }
+        }
+
+        private async Task GetUserVideoStates()
+        {
+            try
+            {
+                if (!SettingHelper.Account.Logined || VideoInfo == null)
+                {
+                    return;
+                }
+
+                VideoInfo.req_user = VideoInfo.req_user ?? new VideoDetailReqUserModel();
+                var likeTask = videoAPI.HasLike(VideoInfo.aid, VideoInfo.bvid).Request();
+                var coinTask = videoAPI.HasCoin(VideoInfo.aid, VideoInfo.bvid).Request();
+                var favoriteTask = videoAPI.HasFav(VideoInfo.aid, VideoInfo.bvid).Request();
+                await Task.WhenAll(likeTask, coinTask, favoriteTask);
+
+                if (likeTask.Result.status)
+                {
+                    var data = await likeTask.Result.GetJson<ApiDataModel<int>>();
+                    if (data.success)
+                    {
+                        VideoInfo.req_user.like = data.data == 1 ? 1 : 0;
+                    }
+                }
+
+                if (coinTask.Result.status)
+                {
+                    var data = await coinTask.Result.GetJson<ApiDataModel<JObject>>();
+                    if (data.success && data.data?["multiply"] != null)
+                    {
+                        VideoInfo.req_user.coin = data.data["multiply"].ToObject<int>() > 0 ? 1 : 0;
+                    }
+                }
+
+                if (favoriteTask.Result.status)
+                {
+                    var data = await favoriteTask.Result.GetJson<ApiDataModel<JObject>>();
+                    if (data.success && data.data?["favoured"] != null)
+                    {
+                        VideoInfo.req_user.favorite = data.data["favoured"].ToObject<bool>() ? 1 : 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine(ex.Message);
             }
         }
         public void Refresh()
@@ -481,12 +658,12 @@ namespace BiliLite.Modules
                 if (VideoInfo.req_user.attention == 1)
                 {
                     VideoInfo.req_user.attention = -999;
-                    VideoInfo.owner_ext.fans -= 1;
+                    if (VideoInfo.owner_ext != null && VideoInfo.owner_ext.fans > 0) VideoInfo.owner_ext.fans -= 1;
                 }
                 else
                 {
                     VideoInfo.req_user.attention = 1;
-                    VideoInfo.owner_ext.fans += 1;
+                    if (VideoInfo.owner_ext != null && VideoInfo.owner_ext.fans > 0) VideoInfo.owner_ext.fans += 1;
                 }
             }
         }
@@ -714,6 +891,12 @@ namespace BiliLite.Modules
         /// 粉丝数
         /// </summary>
         public int fans { get; set; }
+
+        /// <summary>
+        /// 粉丝数是否可用(接口未返回/读取失败时为 false, 用于隐藏粉丝数标签)
+        /// </summary>
+        public bool HasFans => fans > 0;
+
         /// <summary>
         /// 大会员信息
         /// </summary>

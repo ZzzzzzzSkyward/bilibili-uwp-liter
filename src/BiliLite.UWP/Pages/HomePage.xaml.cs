@@ -122,8 +122,28 @@ namespace BiliLite.Pages
         private void navView_SelectionChanged(Microsoft.UI.Xaml.Controls.NavigationView sender, Microsoft.UI.Xaml.Controls.NavigationViewSelectionChangedEventArgs args)
         {
             var item = args.SelectedItem as HomeNavItem;
-            frame.Navigate(item.Page, item.Parameters);
-            this.UpdateLayout();
+            var pageType = item?.Page == null ? "null" : item.Page.FullName;
+            LogHelper.Log("Home navigation stage=selection title=" + (item?.Title ?? "") + " page=" + pageType, LogType.INFO);
+            bool navigated;
+            try
+            {
+                navigated = frame.Navigate(item.Page, item.Parameters);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Home navigation stage=frame-navigate-failed page=" + pageType, LogType.ERROR, ex);
+                throw;
+            }
+            LogHelper.Log("Home navigation stage=frame-navigate-complete page=" + pageType + " navigated=" + navigated, LogType.INFO);
+            try
+            {
+                this.UpdateLayout();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Home navigation stage=layout-update-failed page=" + pageType, LogType.ERROR, ex);
+                throw;
+            }
         }
 
 

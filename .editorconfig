@@ -1,0 +1,9 @@
+root = true
+
+[*.cs]
+indent_style = space
+indent_size = 4
+
+[*.{xaml,xml}]
+indent_style = space
+indent_size = 2

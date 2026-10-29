@@ -38,17 +38,28 @@ namespace BiliLite.Pages
             NavigationCacheMode = NavigationCacheMode.Enabled;
             seasonDetailVM = new SeasonDetailVM();
             seasonReviewVM = new SeasonReviewVM();
-            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
-            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
             RightInfo.Width = new GridLength(SettingHelper.GetValue<double>(SettingHelper.UI.RIGHT_DETAIL_WIDTH, 320), GridUnitType.Pixel);
         }
 
         private void SeasonDetailPage_Loaded(object sender, RoutedEventArgs e)
         {
-            if (this.Parent is MyFrame)
+            SubscribeClosedPage();
+        }
+
+        private void SubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
             {
-                (this.Parent as MyFrame).ClosedPage -= SeasonDetailPage_ClosedPage;
-                (this.Parent as MyFrame).ClosedPage += SeasonDetailPage_ClosedPage;
+                frame.ClosedPage -= SeasonDetailPage_ClosedPage;
+                frame.ClosedPage += SeasonDetailPage_ClosedPage;
+            }
+        }
+
+        private void UnsubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= SeasonDetailPage_ClosedPage;
             }
         }
 
@@ -79,6 +90,10 @@ namespace BiliLite.Pages
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            SubscribeClosedPage();
+            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
+            dataTransferManager.DataRequested -= DataTransferManager_DataRequested;
+            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
 
             if (e.NavigationMode == NavigationMode.New)
             {
@@ -110,6 +125,12 @@ namespace BiliLite.Pages
                 MessageCenter.ChangeTitle(Title);
             }
 
+        }
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            DataTransferManager.GetForCurrentView().DataRequested -= DataTransferManager_DataRequested;
+            UnsubscribeClosedPage();
+            base.OnNavigatedFrom(e);
         }
 
         private async Task InitSeasonDetail()

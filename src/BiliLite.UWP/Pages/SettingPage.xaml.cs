@@ -963,6 +963,77 @@ FallbackColor=""#ffffff"" />
 
         }
 
+        private async void ExportLogs_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                LogHelper.Flush();
+
+                var logFolder = await ApplicationData.Current.LocalFolder.CreateFolderAsync("log", CreationCollisionOption.OpenIfExists);
+                var logFiles = (await logFolder.GetFilesAsync())
+                    .Where(file => file.FileType.Equals(".log", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(file => file.Name)
+                    .ToList();
+                var recentLogs = logFiles.Skip(Math.Max(0, logFiles.Count - 7)).ToList();
+                var export = new StringBuilder();
+                var version = Windows.ApplicationModel.Package.Current.Id.Version;
+                export.AppendLine("BiliLite diagnostic log export");
+                export.AppendLine("Exported: " + DateTimeOffset.Now.ToString("o"));
+                export.AppendLine("Session ID: " + LogHelper.SessionId);
+                export.AppendLine("App version: " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision);
+                export.AppendLine("Included log files: " + recentLogs.Count + " (latest 7)");
+                export.AppendLine();
+
+                foreach (var logFile in recentLogs)
+                {
+                    export.AppendLine("===== " + logFile.Name + " =====");
+                    export.AppendLine(await FileIO.ReadTextAsync(logFile));
+                    export.AppendLine();
+                }
+
+                var picker = new FileSavePicker();
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.SuggestedFileName = "BiliLite-diagnostics-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                picker.FileTypeChoices.Add("文本文件", new List<string> { ".txt" });
+                var destination = await picker.PickSaveFileAsync();
+                if (destination == null)
+                    return;
+
+                await FileIO.WriteTextAsync(destination, export.ToString());
+                Utils.ShowMessageToast("诊断日志已导出");
+            }
+            catch (Exception ex)
+            {
+                Utils.ShowMessageToast("导出日志失败", ex.Message);
+            }
+        }
+
+        private async void MarkProblem_Click(object sender, RoutedEventArgs e)
+        {
+            var noteBox = new TextBox
+            {
+                AcceptsReturn = true,
+                Height = 100,
+                PlaceholderText = "可选：简单描述刚才的操作或现象"
+            };
+            var dialog = new ContentDialog
+            {
+                Title = "标记问题发生时刻",
+                Content = noteBox,
+                PrimaryButtonText = "记录",
+                SecondaryButtonText = "取消"
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                return;
+
+            var note = (noteBox.Text ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            LogHelper.Log("User marked a problem; time=" + DateTimeOffset.Now.ToString("o")
+                + "; sessionId=" + LogHelper.SessionId + "; note=" + note, LogType.INFO);
+            LogHelper.Flush();
+            Utils.ShowMessageToast("已在日志中标记问题时刻");
+        }
+
         private void LiveDanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(LiveDanmuSettingTxtWord.Text))

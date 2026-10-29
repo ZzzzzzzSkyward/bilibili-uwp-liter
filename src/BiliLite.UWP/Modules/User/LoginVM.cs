@@ -1,5 +1,6 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Models;
+using BiliLite.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -20,6 +21,19 @@ namespace BiliLite.Modules.User
         Timer smsTimer;
         Timer qrTimer;
         Api.AccountApi accountApi;
+        private readonly PasswordLoginSessionCoordinator passwordSessionCoordinator = new PasswordLoginSessionCoordinator();
+        private long passwordSessionOperation;
+        private string passwordVerificationTmpToken;
+        private string passwordVerificationRequestId;
+        private string passwordVerificationCaptchaKey;
+        private string passwordVerificationChallenge;
+        private string passwordVerificationGt;
+        private string passwordVerificationValidate;
+        private string passwordVerificationSeccode;
+        private string passwordVerificationRecaptchaToken;
+        private bool passwordVerificationPending;
+        private bool passwordVerificationCaptchaActive;
+        private bool passwordLoginDialogClosed;
         public LoginVM()
         {
             account = new Account();
@@ -27,17 +41,53 @@ namespace BiliLite.Modules.User
             Countries = new ObservableCollection<CountryItemModel>();
             LoginTypeCommand = new RelayCommand<int>(ChangeLoginType);
             SendSMSCommand = new RelayCommand(SendSMSCode);
+            SendPasswordVerificationSMSCommand = new RelayCommand(SendPasswordVerificationSMS);
             RefreshQRCommand = new RelayCommand(RefreshQRCode);
             smsTimer = new Timer(1000);
             smsTimer.Elapsed += SmsTimer_Elapsed;
+            MessageCenter.LogoutedEvent += MessageCenter_LogoutedEvent;
             Manual = false;
+        }
+        private void MessageCenter_LogoutedEvent(object sender, EventArgs e)
+        {
+            if (!passwordLoginDialogClosed) CancelPasswordVerification();
         }
         public event EventHandler<Uri> OpenWebView;
         public event EventHandler<bool> SetWebViewVisibility;
         public event EventHandler CloseDialog;
         public ICommand LoginTypeCommand { get; private set; }
         public ICommand SendSMSCommand { get; private set; }
+        public ICommand SendPasswordVerificationSMSCommand { get; private set; }
         public ICommand RefreshQRCommand { get; private set; }
+
+        public bool PasswordVerificationPending
+        {
+            get => passwordVerificationPending;
+            private set
+            {
+                if (passwordVerificationPending == value) return;
+                passwordVerificationPending = value;
+                DoPropertyChanged(nameof(PasswordVerificationPending));
+                DoPropertyChanged(nameof(PasswordVerificationPanelHidden));
+                DoPropertyChanged(nameof(PasswordCredentialsHidden));
+            }
+        }
+
+        public bool PasswordVerificationPanelHidden => !PasswordVerificationPending;
+        public bool PasswordCredentialsHidden => PasswordVerificationPending;
+        public bool PasswordVerificationCaptchaActive
+        {
+            get => passwordVerificationCaptchaActive;
+            private set
+            {
+                if (passwordVerificationCaptchaActive == value) return;
+                passwordVerificationCaptchaActive = value;
+                DoPropertyChanged(nameof(PasswordVerificationCaptchaActive));
+            }
+        }
+        public bool IsPasswordVerificationFlow => !passwordLoginDialogClosed && !string.IsNullOrEmpty(passwordVerificationTmpToken);
+        public long PasswordVerificationOperation => passwordSessionOperation;
+        public bool IsPasswordLoginDialogClosed => passwordLoginDialogClosed;
 
         public int loginType = 1;
         /// <summary>
@@ -80,6 +130,7 @@ namespace BiliLite.Modules.User
 
         public void ChangeLoginType(int type)
         {
+            if (type != LoginType) CancelPasswordVerification();
             LoginType = type;
 
             switch (type)
@@ -120,19 +171,56 @@ namespace BiliLite.Modules.User
 
         public void DoLogin()
         {
+            if (PasswordVerificationCaptchaActive) return;
             if (loginType == 1)
             {
                 DoSMSLogin();
             }
             if (loginType == 0)
             {
+                if (PasswordVerificationPending)
+                {
+                    CompletePasswordLoginCheck();
+                    return;
+                }
                 DoPasswordLogin();
             }
 
         }
 
+        public void CancelPasswordVerification()
+        {
+            passwordSessionCoordinator.Invalidate();
+            PasswordVerificationPending = false;
+            PasswordVerificationCaptchaActive = false;
+            passwordVerificationTmpToken = null;
+            passwordVerificationRequestId = null;
+            passwordVerificationCaptchaKey = null;
+            passwordVerificationChallenge = null;
+            passwordVerificationGt = null;
+            passwordVerificationValidate = null;
+            passwordVerificationSeccode = null;
+            passwordVerificationRecaptchaToken = null;
+            passwordSessionOperation = 0;
+            HideTel = "";
+            Code = "";
+            EnableSendSMS = true;
+            SMSCountDown = 60;
+            if (smsTimer != null) smsTimer.Stop();
+            PrimaryButtonEnable = true;
+            SetWebViewVisibility?.Invoke(this, false);
+        }
+
+        public void EndLoginDialog()
+        {
+            MessageCenter.LogoutedEvent -= MessageCenter_LogoutedEvent;
+            passwordLoginDialogClosed = true;
+            CancelPasswordVerification();
+        }
+
         public async void ValidateLogin(JObject jObject)
         {
+            if (passwordLoginDialogClosed || IsPasswordVerificationFlow) return;
             try
             {
                 if (jObject["access_token"] != null)
@@ -428,20 +516,36 @@ namespace BiliLite.Modules.User
             get { return password; }
             set { password = value; DoPropertyChanged("Password"); }
         }
+        private string hideTel = "";
+        public string HideTel
+        {
+            get { return hideTel; }
+            private set { hideTel = value; DoPropertyChanged(nameof(HideTel)); }
+        }
         string pwdSessionId = "";
         public async void DoPasswordLogin(string seccode = "", string validate = "", string challenge = "", string recaptcha_token = "")
         {
-            PrimaryButtonEnable = false;
-            if (UserName.Length == 0)
+            if (passwordLoginDialogClosed) return;
+            if (string.IsNullOrWhiteSpace(UserName))
             {
                 Utils.ShowMessageToast("请输入用户名");
                 return;
             }
-            if (Password.Length == 0)
+            if (string.IsNullOrEmpty(Password))
             {
                 Utils.ShowMessageToast("请输入密码");
                 return;
             }
+
+            var username = UserName;
+            var clearPassword = Password;
+            // A new password attempt abandons any incomplete secondary flow.
+            // Keep pwdSessionId untouched here so the existing manual captcha
+            // retry can continue using its original request session.
+            CancelPasswordVerification();
+            PrimaryButtonEnable = false;
+            var operation = passwordSessionCoordinator.BeginOperation();
+            passwordSessionOperation = operation;
             try
             {
                 if (seccode == "")
@@ -450,28 +554,33 @@ namespace BiliLite.Modules.User
                 }
 
 
-                var pwd = await account.EncryptedPassword(Password);
-                var results = await accountApi.LoginV3(UserName, pwd, pwdSessionId, seccode, validate, challenge, recaptcha_token).Request();
+                var pwd = await account.EncryptedPassword(clearPassword);
+                if (!passwordSessionCoordinator.IsCurrent(operation) || passwordLoginDialogClosed || LoginType != 0) return;
+                var results = await accountApi.LoginV3(username, pwd, pwdSessionId, seccode, validate, challenge, recaptcha_token).Request();
+                if (!passwordSessionCoordinator.IsCurrent(operation) || passwordLoginDialogClosed || LoginType != 0) return;
                 if (results.status)
                 {
                     var data = await results.GetData<LoginResultModel>();
-                    var result = await HandleLoginResult(data.code, data.message, data.data);
-
+                    if (!passwordSessionCoordinator.IsCurrent(operation) || passwordLoginDialogClosed || LoginType != 0) return;
+                    var result = await HandleLoginResult(data.code, data.message, data.data, operation, true);
+                    if (!passwordSessionCoordinator.IsCurrent(operation) || passwordLoginDialogClosed || LoginType != 0) return;
                     HandleResult(result);
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    Utils.ShowMessageToast("密码登录请求失败，请重试");
                 }
             }
             catch (Exception ex)
             {
-                Utils.ShowMessageToast(ex.Message);
+                LogHelper.Log("Password login failed at login stage. exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+                Utils.ShowMessageToast("密码登录失败，请重试");
 
             }
             finally
             {
-                PrimaryButtonEnable = true;
+                if (!passwordLoginDialogClosed && LoginType == 0 && !PasswordVerificationCaptchaActive && passwordSessionCoordinator.IsCurrent(operation))
+                    PrimaryButtonEnable = true;
             }
         }
 
@@ -567,13 +676,19 @@ namespace BiliLite.Modules.User
 
         #endregion
 
-        private async Task<LoginCallbackModel> HandleLoginResult(int code, string message, LoginResultModel result)
+        private async Task<LoginCallbackModel> HandleLoginResult(int code, string message, LoginResultModel result,
+            long passwordOperation = 0, bool passwordLogin = false)
         {
             if (code == 0)
             {
                 if (result.status == 0)
                 {
-                    await account.SaveLogin(result.token_info.access_token, result.token_info.refresh_token, result.token_info.expires_in, result.token_info.mid, result.sso, result.cookie_info);
+                    if (result.token_info == null || string.IsNullOrWhiteSpace(result.token_info.access_token) || result.token_info.mid <= 0)
+                        return new LoginCallbackModel { status = LoginStatus.Fail, message = "登录响应缺少有效会话信息" };
+                    var saved = await account.SaveLogin(result.token_info.access_token, result.token_info.refresh_token,
+                        result.token_info.expires_in, result.token_info.mid, result.sso, result.cookie_info);
+                    if (!saved)
+                        return new LoginCallbackModel { status = LoginStatus.Fail, message = "登录信息保存失败，请重试" };
                     return new LoginCallbackModel()
                     {
                         status = LoginStatus.Success,
@@ -582,6 +697,32 @@ namespace BiliLite.Modules.User
                 }
                 if (result.status == 1 || result.status == 2)
                 {
+                    if (passwordLogin)
+                    {
+                        passwordVerificationTmpToken = GetQueryParameter(result.url, "tmp_token") ?? GetQueryParameter(result.url, "tmp_code");
+                        passwordVerificationRequestId = GetQueryParameter(result.url, "request_id");
+                        if (!passwordSessionCoordinator.IsCurrent(passwordOperation) ||
+                            string.IsNullOrWhiteSpace(passwordVerificationTmpToken) || string.IsNullOrWhiteSpace(passwordVerificationRequestId))
+                            return new LoginCallbackModel { status = LoginStatus.Fail, message = "登录验证信息已失效，请重新登录" };
+
+                        var captcha = await StartGeetestCaptcha();
+                        if (!passwordSessionCoordinator.IsCurrent(passwordOperation))
+                            return new LoginCallbackModel { status = LoginStatus.Fail, message = "登录验证信息已失效，请重新登录" };
+                        if (captcha == null || string.IsNullOrWhiteSpace(captcha.gee_gt) || string.IsNullOrWhiteSpace(captcha.gee_challenge))
+                            return new LoginCallbackModel { status = LoginStatus.Fail, message = "无法加载安全验证，请重试" };
+                        passwordVerificationGt = captcha.gee_gt;
+                        passwordVerificationChallenge = captcha.gee_challenge;
+                        passwordVerificationRecaptchaToken = captcha.recaptcha_token ?? "";
+                        PasswordVerificationCaptchaActive = true;
+                        return new LoginCallbackModel
+                        {
+                            status = LoginStatus.NeedCaptcha,
+                            message = "本次登录需要安全验证",
+                            url = "http://fake/?gee_gt=" + Uri.EscapeDataString(captcha.gee_gt) +
+                                "&gee_challenge=" + Uri.EscapeDataString(captcha.gee_challenge) +
+                                "&recaptcha_token=" + Uri.EscapeDataString(captcha.recaptcha_token ?? "")
+                        };
+                    }
                     return new LoginCallbackModel()
                     {
                         status = LoginStatus.NeedValidate,
@@ -629,6 +770,16 @@ namespace BiliLite.Modules.User
                     break;
                 case LoginStatus.NeedCaptcha:
                     SetWebViewVisibility?.Invoke(this, true);
+                    if (PasswordVerificationCaptchaActive)
+                    {
+                        PrimaryButtonEnable = false;
+                        var captchaPage = new Uri("ms-appx-web:///Assets/Auth/PasswordLoginCaptcha.html?gee_gt=" +
+                            Uri.EscapeDataString(passwordVerificationGt ?? "") + "&gee_challenge=" +
+                            Uri.EscapeDataString(passwordVerificationChallenge ?? "") + "&recaptcha_token=" +
+                            Uri.EscapeDataString(passwordVerificationRecaptchaToken ?? "") + "&operation=" + passwordSessionOperation);
+                        OpenWebView?.Invoke(this, captchaPage);
+                        break;
+                    }
                     //验证码重定向
                     //源码:https://github.com/xiaoyaocz/some_web
                     var newuri = new Uri("https://l78z.nsapps.cn/bili_gt.html" + uri.Query + "&app=uwp");
@@ -652,6 +803,189 @@ namespace BiliLite.Modules.User
                 default:
                     break;
             }
+        }
+
+        private async Task<GeetestRequestModel> StartGeetestCaptcha()
+        {
+            try
+            {
+                var response = await IsolatedPasswordLoginTransport.SendVerificationAsync(accountApi.GeetestCaptcha());
+                if (!response.status) return null;
+                var body = response.GetJObject();
+                if ((int?)body["code"] != 0 || body["data"] == null) return null;
+                return JsonConvert.DeserializeObject<GeetestRequestModel>(body["data"].ToString());
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Password login captcha setup failed. exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+                return null;
+            }
+        }
+
+        public async void CompletePasswordVerificationCaptcha(string challenge, string validate, string seccode,
+            string recaptchaToken, long operation)
+        {
+            if (!PasswordVerificationCaptchaActive || operation != passwordSessionOperation ||
+                !passwordSessionCoordinator.IsCurrent(operation) || LoginType != 0 || passwordLoginDialogClosed) return;
+            PasswordVerificationCaptchaActive = false;
+            PrimaryButtonEnable = false;
+            SetWebViewVisibility?.Invoke(this, false);
+            if (string.IsNullOrWhiteSpace(challenge) || string.IsNullOrWhiteSpace(validate) || string.IsNullOrWhiteSpace(seccode))
+            {
+                CancelPasswordVerification();
+                Utils.ShowMessageToast("安全验证失败，请重试");
+                PrimaryButtonEnable = true;
+                return;
+            }
+
+            passwordVerificationChallenge = challenge;
+            passwordVerificationValidate = validate;
+            passwordVerificationSeccode = seccode;
+            if (!string.IsNullOrWhiteSpace(recaptchaToken)) passwordVerificationRecaptchaToken = recaptchaToken;
+
+            try
+            {
+                var phoneResponse = await IsolatedPasswordLoginTransport.SendVerificationAsync(accountApi.FetchHideTel(passwordVerificationTmpToken));
+                if (!IsCurrentPasswordOperation(operation)) return;
+                if (!phoneResponse.status) throw new FormatException("Password login masked phone lookup failed.");
+                var phoneBody = phoneResponse.GetJObject();
+                if ((int?)phoneBody["code"] != 0)
+                    throw new FormatException("Password login masked phone lookup returned an error.");
+                var maskedPhone = (string)phoneBody["data"]?["account_info"]?["hide_tel"];
+                if (string.IsNullOrWhiteSpace(maskedPhone))
+                    throw new FormatException("Password login masked phone lookup was incomplete.");
+                HideTel = maskedPhone;
+
+                await SendPasswordVerificationSMSCore(operation);
+            }
+            catch (Exception ex)
+            {
+                if (IsCurrentPasswordOperation(operation))
+                {
+                    LogHelper.Log("Password login secondary verification failed at SMS stage. exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+                    Utils.ShowMessageToast("无法发送安全验证码，请重试");
+                }
+            }
+            finally
+            {
+                if (IsCurrentPasswordOperation(operation)) PrimaryButtonEnable = true;
+            }
+        }
+
+        public async void SendPasswordVerificationSMS()
+        {
+            var operation = passwordSessionOperation;
+            if (!PasswordVerificationPending || !EnableSendSMS || !IsCurrentPasswordOperation(operation)) return;
+            EnableSendSMS = false;
+            PrimaryButtonEnable = false;
+            try
+            {
+                await SendPasswordVerificationSMSCore(operation);
+            }
+            catch (Exception ex)
+            {
+                if (IsCurrentPasswordOperation(operation))
+                {
+                    EnableSendSMS = true;
+                    LogHelper.Log("Password login SMS resend failed. exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+                    Utils.ShowMessageToast("无法发送安全验证码，请重试");
+                }
+            }
+            finally
+            {
+                if (IsCurrentPasswordOperation(operation)) PrimaryButtonEnable = true;
+            }
+        }
+
+        private async Task SendPasswordVerificationSMSCore(long operation)
+        {
+            var response = await IsolatedPasswordLoginTransport.SendVerificationAsync(accountApi.SendVerifySMS(
+                passwordVerificationTmpToken, passwordVerificationRecaptchaToken, passwordVerificationChallenge,
+                passwordVerificationGt, passwordVerificationValidate, passwordVerificationSeccode));
+            if (!IsCurrentPasswordOperation(operation)) return;
+            if (!response.status) throw new FormatException("Password login SMS request failed.");
+            var body = response.GetJObject();
+            if ((int?)body["code"] != 0) throw new FormatException("Password login SMS request returned an error.");
+            var key = (string)body["data"]?["captcha_key"];
+            if (string.IsNullOrWhiteSpace(key)) throw new FormatException("Password login SMS request omitted its confirmation key.");
+            passwordVerificationCaptchaKey = key;
+            PasswordVerificationPending = true;
+            Code = "";
+            EnableSendSMS = false;
+            SMSCountDown = 60;
+            smsTimer.Start();
+        }
+
+        private async void CompletePasswordLoginCheck()
+        {
+            if (string.IsNullOrWhiteSpace(Code))
+            {
+                Utils.ShowMessageToast("请输入验证码");
+                return;
+            }
+            var operation = passwordSessionOperation;
+            if (!IsCurrentPasswordOperation(operation)) return;
+            PrimaryButtonEnable = false;
+            try
+            {
+                var response = await IsolatedPasswordLoginTransport.SendVerificationAsync(accountApi.SubmitPwdLoginSMSCheck(
+                    Code, passwordVerificationTmpToken, passwordVerificationRequestId, passwordVerificationCaptchaKey));
+                if (!IsCurrentPasswordOperation(operation)) return;
+                if (!response.status) throw new FormatException("Password login SMS confirmation failed.");
+                var body = response.GetJObject();
+                if ((int?)body["code"] != 0)
+                    throw new FormatException("Password login SMS confirmation returned an error.");
+                var exchangeCode = (string)body["data"]?["code"];
+                if (string.IsNullOrWhiteSpace(exchangeCode))
+                    throw new FormatException("Password login SMS confirmation omitted its exchange code.");
+
+                PasswordLoginSession committedSession = null;
+                var committed = await passwordSessionCoordinator.CompleteAsync(operation,
+                    () => new IsolatedPasswordLoginTransport(accountApi, Api.ApiHelper.LoginKey).ExchangeAsync(exchangeCode),
+                    session =>
+                    {
+                        if (!account.CommitCookieLogin(session))
+                            throw new InvalidOperationException("Password login session could not be persisted.");
+                        committedSession = session;
+                    });
+                if (!committed || committedSession == null || passwordLoginDialogClosed) return;
+
+                PasswordVerificationPending = false;
+                PasswordVerificationCaptchaActive = false;
+                _ = account.FinishCookieLoginAsync(committedSession);
+                if (!passwordLoginDialogClosed && passwordSessionOperation == operation && LoginType == 0)
+                    CloseDialog?.Invoke(this, null);
+            }
+            catch (Exception ex)
+            {
+                if (IsCurrentPasswordOperation(operation))
+                {
+                    LogHelper.Log("Password login failed at verified cookie exchange stage. exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+                    Utils.ShowMessageToast("安全验证未完成，请检查验证码后重试");
+                }
+            }
+            finally
+            {
+                if (IsCurrentPasswordOperation(operation)) PrimaryButtonEnable = true;
+            }
+        }
+
+        private bool IsCurrentPasswordOperation(long operation) =>
+            !passwordLoginDialogClosed && LoginType == 0 && passwordSessionCoordinator.IsCurrent(operation);
+
+        private static string GetQueryParameter(string url, string name)
+        {
+            Uri uri;
+            if (!Uri.TryCreate(url, UriKind.Absolute, out uri)) return null;
+            foreach (var pair in uri.Query.TrimStart('?').Split('&'))
+            {
+                var separator = pair.IndexOf('=');
+                if (separator < 0) continue;
+                var key = Uri.UnescapeDataString(pair.Substring(0, separator).Replace('+', ' '));
+                if (string.Equals(key, name, StringComparison.Ordinal))
+                    return Uri.UnescapeDataString(pair.Substring(separator + 1).Replace('+', ' '));
+            }
+            return null;
         }
 
     }
@@ -685,6 +1019,14 @@ namespace BiliLite.Modules.User
         public string access_token { get; set; }
         public int expires_in { get; set; }
         public string refresh_token { get; set; }
+    }
+    public class GeetestRequestModel
+    {
+        public string recaptcha_token { get; set; }
+        public string gee_challenge { get; set; }
+        public string gee_gt { get; set; }
+        public string gee_validate { get; set; }
+        public string gee_seccode { get; set; }
     }
    
 }

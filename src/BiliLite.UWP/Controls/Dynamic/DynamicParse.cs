@@ -79,7 +79,11 @@ namespace BiliLite.Controls.Dynamic
         /// <summary>
         /// 其他
         /// </summary>
-        Other
+        Other,
+        /// <summary>
+        /// 关注列表中的合集（合成卡片，没有作者和稿件ID）
+        /// </summary>
+        CustomSeason
     }
     public static class DynamicParse
     {
@@ -159,6 +163,10 @@ namespace BiliLite.Controls.Dynamic
                     return DynamicDisplayType.Season;
                 case "DYNAMIC_TYPE_UGC_SEASON":
                     return DynamicDisplayType.MediaList;
+                case "DYNAMIC_TYPE_MEDIALIST":
+                    return DynamicDisplayType.MediaList;
+                case "CUSTOM_SEASON":
+                    return DynamicDisplayType.CustomSeason;
                 case "DYNAMIC_TYPE_LIVE_RCMD":
                     return DynamicDisplayType.Live;
                 case "DYNAMIC_TYPE_LIVE":
@@ -321,7 +329,8 @@ namespace BiliLite.Controls.Dynamic
                             Tag = "专栏",
 
                         };
-                        info.Url = "https://www.bilibili.com/read/cv" + info.ID;
+                        info.Url = item.modules?.module_dynamic?.major?.article?.jump_url
+                            ?? ("https://www.bilibili.com/read/cv" + info.ID);
                     }
                     break;
                 case DynamicDisplayType.Live:
@@ -355,15 +364,48 @@ namespace BiliLite.Controls.Dynamic
                     break;
                 case DynamicDisplayType.MediaList:
                     {
+                        var medialist = item.modules?.module_dynamic?.major?.medialist;
+                        if (medialist != null)
+                        {
+                            // 播单没有稿件 AID 与统计数据，副标题退化为下发的副标题文本。
+                            info = new DynamicItemDisplayOneRowInfo()
+                            {
+                                Cover = medialist.cover,
+                                Subtitle = medialist.desc,
+                                Tag = "收藏夹",
+                                ID = medialist.id.ToString(),
+                                Title = item.title,
+                            };
+                        }
+                        else
+                        {
+                            info = new DynamicItemDisplayOneRowInfo()
+                            {
+                                Cover = item.pic ?? "" + "@412w_232h_1c.jpg",
+                                Subtitle = "播放:" + item.viewtext + " 点赞:" + item.like,
+                                Tag = "合集",
+                                ID = item.aid,
+                                AID = item.modules?.module_dynamic?.major?.ugc_season?.aid.ToString(),
+                                Title = item.title,
+                            };
+                        }
+                        info.Url = item.jumpurl;
+                    }
+                    break;
+                case DynamicDisplayType.CustomSeason:
+                    {
                         info = new DynamicItemDisplayOneRowInfo()
                         {
-                            Cover = item.pic ?? "" + "@412w_232h_1c.jpg",
-                            Subtitle = "播放:" + item.viewtext + " 点赞:" + item.like,
-                            Tag = "合集",
+                            Cover = item.pic,
+                            Subtitle = item.modules?.module_dynamic?.major?.pgc?.stat?.play ?? "",
                             ID = item.aid,
                             Title = item.title,
+                            CoverWidth = 160,
                         };
                         info.Url = item.jumpurl;
+                        // 合成卡片没有作者，也没有可以转发的动态，隐藏作者栏与互动栏。
+                        data.ShowAuthorHeader = false;
+                        data.ShowInteractionRow = false;
                     }
                     break;
                 case DynamicDisplayType.Photo:
@@ -382,6 +424,8 @@ namespace BiliLite.Controls.Dynamic
                 var imgs = new List<string> { };
                 var objs = new List<DyanmicItemDisplayImageInfo>() { };
                 var imgsrc = item.modules?.module_dynamic?.major?.draw?.items;
+                var allImages = imgsrc?.Select(img => img.src).Where(src => !string.IsNullOrEmpty(src)).ToList()
+                    ?? new List<string>();
                 int i = 0;
                 if (imgsrc != null)
                     foreach (var img in imgsrc)
@@ -395,8 +439,7 @@ namespace BiliLite.Controls.Dynamic
                                 Height = img.height,
                                 Width = img.width,
                                 Index = i,
-                                //偷懒方法，点击图片时可以获取全部图片信息，好孩子不要学
-                                AllImages = imgs,
+                                AllImages = allImages,
                             });
                         }
                         i++;

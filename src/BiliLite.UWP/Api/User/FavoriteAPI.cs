@@ -171,9 +171,9 @@ namespace BiliLite.Api.User
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/v3/fav/resource/list",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&media_id={fid}&mid={SettingHelper.Account.UserID}&keyword={Uri.EscapeDataString(keyword)}&pn={page}&ps=20"
+                parameter = $"media_id={fid}&mid={SettingHelper.Account.UserID}&keyword={Uri.EscapeDataString(keyword)}&pn={page}&ps=20&platform=web",
+                need_cookie = true,
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
         public ApiModel FavoriteSeasonInfo(string season_id, string keyword, int page = 1)

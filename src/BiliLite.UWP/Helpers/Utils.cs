@@ -39,7 +39,7 @@ namespace BiliLite.Helpers
             {
                 if (api.need_cookie)
                 {
-                    return await HttpHelper.GetWithWebCookie(api.url, api.headers);
+                    return await HttpHelper.GetWithWebCookie(api.url, api.headers, api.ExtraCookies);
                 }
                 return await HttpHelper.Get(api.url, api.headers);
             }
@@ -108,12 +108,26 @@ namespace BiliLite.Helpers
             MessageToast ms = new MessageToast(Message, TimeSpan.FromSeconds(seconds));
             ms.Show();
         }
+        // sb 是进程级日志缓冲,只增不减会随请求数一直涨到 OOM;
+        // 超过 8 KiB 就丢掉最旧的前缀,只保留最后 8 KiB(单条超长消息同样被裁到尾部),
+        // 每次 AddALog 结束时缓冲区都不会超过上限;
+        // 读取点只有本方法里的 sp?.Log(sb),SettingPage.Log 取的是尾部文本,截掉前缀不影响显示
+        private const int SbMaxLength = 8 * 1024;
+        private static readonly object sbLock = new object();
         public static StringBuilder sb = new StringBuilder();
         public static Pages.SettingPage sp = null;
         public static void AddALog(string message)
         {
-            sb.AppendLine(message);
+            lock (sbLock)
+            {
+                sb.AppendLine(message);
+                if (sb.Length > SbMaxLength)
+                {
+                    sb.Remove(0, sb.Length - SbMaxLength);
+                }
+            }
             sp?.Log(sb);
+            LogHelper.Log(message, LogType.DEBUG);
         }
         public static void ShowMessageToast(string message,string longmsg, int seconds = 10, [System.Runtime.CompilerServices.CallerMemberName] string memberName = "", [System.Runtime.CompilerServices.CallerFilePath] string filePath = "", [System.Runtime.CompilerServices.CallerLineNumber] int lineNumber = 0)
         {

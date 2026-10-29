@@ -16,6 +16,11 @@
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/pgc/app/follow/v2/bangumi",
                 parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&pn={page}&ps={pagesize}&status={status}",
+                headers = new System.Collections.Generic.Dictionary<string, string>()
+                {
+                    { "x-bili-aurora-zone", "sh001" },
+                    { "x-bili-aurora-eid", "UlMFQVcABlAH" }
+                }
             };
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
@@ -102,6 +107,20 @@
             };
             api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
             return api;
+        }
+
+        /// <summary>
+        /// 查询用户与自己的关系（attribute: 0=未关注, 2=已关注, 6=已互关, 128=已拉黑）
+        /// </summary>
+        public ApiModel GetAttention(string mid)
+        {
+            return new ApiModel()
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/relation",
+                parameter = $"fid={mid}",
+                need_cookie = true
+            };
         }
 
 

@@ -50,8 +50,6 @@ namespace BiliLite.Pages
             Title = "直播间";
             this.NavigationCacheMode = NavigationCacheMode.Enabled;
             dispRequest = new DisplayRequest();
-            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
-            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
             _config = new MediaSourceConfig();
             _config.FFmpegOptions.Add("rtsp_transport", "tcp");
             _config.FFmpegOptions.Add("user_agent", "Mozilla/5.0 BiliDroid/1.12.0 (bbcallen@gmail.com)");
@@ -268,6 +266,7 @@ namespace BiliLite.Pages
             Window.Current.CoreWindow.KeyDown -= CoreWindow_KeyDown;
             timer_focus.Stop();
             controlTimer.Stop();
+            RestorePointerCursor();
         }
 
         private void LiveDetailPage_Loaded(object sender, RoutedEventArgs e)
@@ -275,13 +274,26 @@ namespace BiliLite.Pages
             Window.Current.CoreWindow.KeyDown += CoreWindow_KeyDown;
             BtnFoucs.Focus(FocusState.Programmatic);
             DanmuControl.ClearAll();
-            if (this.Parent is MyFrame)
-            {
-                (this.Parent as MyFrame).ClosedPage -= LiveDetailPage_ClosedPage;
-                (this.Parent as MyFrame).ClosedPage += LiveDetailPage_ClosedPage;
-            }
+            SubscribeClosedPage();
             timer_focus.Start();
             controlTimer.Start();
+        }
+
+        private void SubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= LiveDetailPage_ClosedPage;
+                frame.ClosedPage += LiveDetailPage_ClosedPage;
+            }
+        }
+
+        private void UnsubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= LiveDetailPage_ClosedPage;
+            }
         }
         //判断是否按下mod键
         private bool IsDown(Windows.System.VirtualKey key)
@@ -424,11 +436,16 @@ namespace BiliLite.Pages
             liveRoomVM = null;
             SetFullScreen(false);
             MiniWidnows(false);
+            RestorePointerCursor();
         }
         string roomid;
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            SubscribeClosedPage();
+            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
+            dataTransferManager.DataRequested -= DataTransferManager_DataRequested;
+            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
             if (e.NavigationMode == NavigationMode.New)
             {
                 LoadSetting();
@@ -455,6 +472,12 @@ namespace BiliLite.Pages
             if (e.NavigationMode == NavigationMode.Back )
                 StopPlay();
             base.OnNavigatingFrom(e);
+        }
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            DataTransferManager.GetForCurrentView().DataRequested -= DataTransferManager_DataRequested;
+            UnsubscribeClosedPage();
+            base.OnNavigatedFrom(e);
         }
         
         private void LoadSetting()
@@ -754,6 +777,7 @@ namespace BiliLite.Pages
                 {
                     view.ExitFullScreenMode();
                 }
+                RestorePointerCursor();
             }
         }
 
@@ -1020,6 +1044,20 @@ namespace BiliLite.Pages
 
         }
         bool runing = false;
+
+        /// <summary>
+        /// 恢复箭头指针。页面可能已脱离窗口（CoreWindow 为 null），此时直接忽略。
+        /// 指针已可见时不再重建，避免多余的 CoreCursor 分配。
+        /// </summary>
+        private void RestorePointerCursor()
+        {
+            var coreWindow = Window.Current?.CoreWindow;
+            if (coreWindow != null && coreWindow.PointerCursor == null)
+            {
+                coreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
+            }
+        }
+
         private async void ShowControl(bool show)
         {
             if (runing) return;
@@ -1028,6 +1066,7 @@ namespace BiliLite.Pages
             {
                 showControlsFlag = 0;
                 control.Visibility = Visibility.Visible;
+                RestorePointerCursor();
                 await control.FadeInAsync(280);
 
             }
