@@ -83,7 +83,24 @@ Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
   throwing `GetDynVideo` plus a REST fixture can execute the fallback, its stickiness and its cursor
   separation for real.
 
-## 5. Release tooling — MSIX artifact path regex
+## 5. Long-running stability — `LONG_RUNNING_STABILITY_REPORT.md` (source study only, no device data)
+
+That report (root of the repo) investigated the long-session playback/tab/WebView complaints at
+`59f89eb`. Its items, and where they stand here:
+
+| # | Finding | State |
+| --- | --- | --- |
+| 1 | Closed media tabs keep their window `Share` (`DataRequested`) subscription, because `MainPage.ClosePage`/`MyFrame.Close` never navigate away; `VideoDetailPage`/`SeasonDetailPage`/`LiveDetailPage` only unsubscribe in `OnNavigatedFrom`. Retains pages for the window's life and lets a closed page answer a later Share. | **Open — highest-value remaining stability fix** (report's own priority) |
+| 2 | Player opens are unowned: `Controls/Player.xaml.cs` awaits media creation and then reuses shared player fields, and `SetQuality`/`ChangeQuality`/`Player_ChangeEngine` can overlap. Needs a per-open session id, local-until-accepted resources, and rejection of obsolete callbacks. | **Open — deferred, largest refactor in the report** |
+| 3 | Separate-audio element was detached from the wrong element in the close path. | **Done** — `0668875`; guarded by `work/improvements/tests/stab/run.sh` |
+| 4 | `WebPage` close could race its `EnsureCoreWebView2Async` continuations; the WebView2 was never explicitly closed. | **Done** — `546b409`; same guard script |
+| 5 | Background playback: transport-control ownership follows the visual control's load/unload, so a departing tab can disable the shared system media controls; no mute-on-minimize code exists. | **Open — analysis only; the report itself says device evidence is required before claiming a cause** |
+
+Item 1 practical shape (from the report): one repeatable cleanup routine used by both permanent tab
+close and navigation departure, removing window-level subscriptions there, and making Share belong to
+the active page. Item 2's shape is a session id per open — do not attempt it inside a UI batch.
+
+## 6. Release tooling — MSIX artifact path regex
 
 - **Item:** `build-release-x64.ps1` uses `->\s+(\S+\.msix)$`, which drops artifact paths containing
   spaces, after which package-layout validation can be skipped and a broken layout passes.
@@ -93,7 +110,7 @@ Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
 - **Context on why layout matters:** `bug_report.md` → BR-15 (1.0.9.12 shipped a non-bootable root
   `BiliLiter.exe`).
 
-## 6. Review loop — nothing open
+## 7. Review loop — nothing open
 
 - Latest review: `code_review.md` at `96c26cd`, covering `6ae1981`. Its single finding
   (`DynSpaceReq.LocalTime` unset while `DynAllReq`/`DynVideoReq` send 8) is fixed in `4fca416`, with g4
@@ -101,12 +118,12 @@ Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
 - Earlier reviews and their resolutions: `code_review.md` history (`22f3a63`, `d68fe0a`, `96c26cd`),
   `IMPROVEMENT_PROGRESS.md` sections for API-01 and G3–G5.
 
-## 7. Parked / explicitly out of scope
+## 8. Parked / explicitly out of scope
 
 `PLAN.md` → `## Parked work`: live tiles, real buvid acquisition, alternate danmaku renderer,
 extra auth/API variants, local-library expansion. Not scheduled; each needs its own request.
 
-## 8. Environment constraints that shape every batch
+## 9. Environment constraints that shape every batch
 
 - No UWP workload on this machine: UWP source changes are probe-verified and source-asserted only;
   `src/BiliLite.gRPC` is the only project that truly builds. Say so in every report.
@@ -124,9 +141,11 @@ extra auth/API variants, local-library expansion. Not scheduled; each needs its 
 
 1. Item 4 (home dynamics fallback) — the only open item backed by a real failure log, and the only
    one that can be tested by execution offline.
-2. D1, then N1 (both touch `PlayerControl`; one at a time).
-3. C1 → C2 → C3.
-4. Item 5 whenever a packaging change is wanted.
+2. Stability item 1 (closed-tab `Share` subscriptions), then item 2 only if a session-ownership
+   refactor is wanted.
+3. D1, then N1 (both touch `PlayerControl`; one at a time).
+4. C1 → C2 → C3.
+5. Item 6 whenever a packaging change is wanted.
 
 Sources: `work/improvements/PLAN.md`, `IMPROVEMENT_PROGRESS.md`, `code_review.md`, `bug_report.md`,
 `LOGGING_PROGRESS.md`, `work/bug-fixes/dynamic-feed-mapper.md`,
