@@ -20,38 +20,22 @@ namespace BiliLite.gRPC
 
         // 每次 new HttpClient() 都会自带一套连接池/句柄,不释放就只能等终结器回收,
         // 动态流每刷新一页都会漏一份,所以进程内共用一个实例。
-        // 该实例的 DefaultRequestHeaders 只在构造时写一次,之后永不修改:
-        // 随 access_key 变化的 authorization / x-bili-metadata-bin 挂到每个 HttpRequestMessage 上,
+        // 该实例只保留超时,所有请求头都随 app-key 逐请求挂到 HttpRequestMessage 上,
         // 并发请求各用各的头,不存在 DefaultRequestHeaders 竞态。
         private static readonly HttpClient SharedHttpClient = CreateSharedHttpClient();
 
+        // app-key 未识别/为空(含用户自定义 key)时一律回落到 Android 档
+        private static readonly AndroidGrpcRequestHeader DefaultGrpcRequestHeader = new AndroidGrpcRequestHeader();
+
         private static HttpClient CreateSharedHttpClient()
         {
-            // 与原实现一致:HttpClient 默认超时 100s
-            var client = new HttpClient();
-            client.Timeout = TimeSpan.FromSeconds(100);
-            var config = new GrpcRequestHeaderConfig(string.Empty);
-            var ua = $"Dalvik/{GrpcRequestHeaderConfig.dalvik_ver} "
-                + $"(Linux; U; Android {GrpcRequestHeaderConfig.os_ver}; {GrpcRequestHeaderConfig.brand} {GrpcRequestHeaderConfig.model}) {GrpcRequestHeaderConfig.app_ver} "
-                + $"os/android model/{GrpcRequestHeaderConfig.model} mobi_app/android build/{GrpcRequestHeaderConfig.build} "
-                + $"channel/{GrpcRequestHeaderConfig.channel} innerVer/{GrpcRequestHeaderConfig.build} osVer/{GrpcRequestHeaderConfig.os_ver} "
-                + $"network/{GrpcRequestHeaderConfig.network_type}";
-            // 这些头的取值与请求无关(只读 GrpcRequestHeaderConfig 的静态字段),可以在构造时固化
-            var headers = client.DefaultRequestHeaders;
-            headers.TryAddWithoutValidation("User-Agent", ua);
-            headers.TryAddWithoutValidation("APP-KEY", "android");
-            headers.TryAddWithoutValidation("x-bili-device-bin", config.GetDeviceBin());
-            headers.TryAddWithoutValidation("x-bili-network-bin", config.GetNetworkBin());
-            headers.TryAddWithoutValidation("x-bili-restriction-bin", "");
-            headers.TryAddWithoutValidation("x-bili-locale-bin", config.GetLocaleBin());
-            headers.TryAddWithoutValidation("x-bili-fawkes-req-bin", config.GetFawkesreqBin());
-            //headers.TryAddWithoutValidation("grpc-encoding", "gzip");
-            headers.TryAddWithoutValidation("grpc-accept-encoding", "identity");
-            headers.TryAddWithoutValidation("grpc-timeout", "17985446u");
-            headers.TryAddWithoutValidation("env", "prod");
-            headers.TryAddWithoutValidation("Transfer-Encoding", "chunked");
-            headers.TryAddWithoutValidation("TE", "trailers");
-            return client;
+            return new HttpClient { Timeout = TimeSpan.FromSeconds(100) };
+        }
+
+        internal static IGrpcRequestHeader ResolveHeader(GrpcBiliUserInfo userInfo)
+        {
+            return GrpcRequestHeaderFactory.GetGrpcRequestHeader(userInfo == null ? null : userInfo.AppKey)
+                ?? DefaultGrpcRequestHeader;
         }
 
         private static void LogDiagnostic(string message, Exception ex = null)
@@ -143,11 +127,21 @@ namespace BiliLite.gRPC
         /// <summary>
         /// 发送请求
         /// </summary>
-        /// <param name="path">路径/URL</param>
+        /// <param name="url">路径/URL</param>
         /// <param name="message">请求头</param>
         /// <param name="access_key">access_key</param>
         /// <returns>处理后的byte[]</returns>
-        public async Task<GrpcResult> SendMessage(string url, IMessage message, string access_key = "")
+        public Task<GrpcResult> SendMessage(string url, IMessage message, string access_key = "")
+        {
+            return SendMessageCore(url, message, new GrpcBiliUserInfo(access_key, 0, null));
+        }
+
+        public Task<GrpcResult> SendMessage(string url, IMessage message, GrpcBiliUserInfo userInfo)
+        {
+            return SendMessageCore(url, message, userInfo);
+        }
+
+        private async Task<GrpcResult> SendMessageCore(string url, IMessage message, GrpcBiliUserInfo userInfo)
         {
             var requestId = NewRequestId();
             var endpoint = DescribeEndpoint(url);
@@ -155,8 +149,6 @@ namespace BiliLite.gRPC
             LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " started");
             try
             {
-                var config = new GrpcRequestHeaderConfig(access_key);
-
                 var messageBytes = message.ToByteArray();
                 //校验用?第五位为数组长度
                 var stateBytes = new byte[] { 0, 0, 0, 0, (byte)messageBytes.Length };
@@ -170,9 +162,16 @@ namespace BiliLite.gRPC
                 byteArrayContent.Headers.ContentLength = bodyBytes.Length;
                 using (var request = new HttpRequestMessage(HttpMethod.Post, url))
                 {
-                    // 只有这两个头跟着 access_key 变,不能写进共享 client 的 DefaultRequestHeaders
-                    request.Headers.TryAddWithoutValidation("authorization", "identify_v1 " + access_key);
-                    request.Headers.TryAddWithoutValidation("x-bili-metadata-bin", config.GetMetadataBin());
+                    // 整个档位的头逐请求挂上:同一个共享 client 同时服务 Android / iOS 与不同账号
+                    foreach (var header in ResolveHeader(userInfo).GetHeaders(userInfo))
+                    {
+                        if (!request.Headers.TryAddWithoutValidation(header.Key, header.Value)
+                            && string.Equals(header.Key, "Transfer-Encoding", StringComparison.OrdinalIgnoreCase))
+                        {
+                            // Transfer-Encoding 是受限头,TryAddWithoutValidation 拒绝时用强类型属性补上
+                            request.Headers.TransferEncodingChunked = true;
+                        }
+                    }
                     request.Content = byteArrayContent;
                     using (var response = await SharedHttpClient.SendAsync(request))
                     {
@@ -227,11 +226,6 @@ namespace BiliLite.gRPC
                     message = "发送gRPC请求失败" + ex.Message
                 };
             }
-        }
-
-        public Task<GrpcResult> SendMessage(string url, IMessage message, GrpcBiliUserInfo userInfo)
-        {
-            return SendMessage(url, message, userInfo.AccessKey);
         }
 
         public async Task<GrpcResult> Get(string url)

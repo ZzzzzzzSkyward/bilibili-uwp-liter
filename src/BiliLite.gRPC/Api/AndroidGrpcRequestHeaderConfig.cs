@@ -1,14 +1,14 @@
-﻿using System;
+using System;
 using Google.Protobuf;
 using Proto.Header;
 
-namespace BiliLite.gRPC
+namespace BiliLite.gRPC.Api
 {
-    public class GrpcRequestHeaderConfig
+    internal class AndroidGrpcRequestHeaderConfig
     {
-        public GrpcRequestHeaderConfig(string accessKey)
+        public AndroidGrpcRequestHeaderConfig(GrpcBiliUserInfo userInfo)
         {
-            AccessKey = accessKey;
+            AccessKey = userInfo.AccessKey;
         }
         public string AccessKey { get; set; }
 
@@ -76,6 +76,7 @@ namespace BiliLite.gRPC
             msg.Oid = network_oid;
             return ToBase64(msg.ToByteArray());
         }
+
         public string GetRestrictionBin()
         {
             var msg = new Restriction();
