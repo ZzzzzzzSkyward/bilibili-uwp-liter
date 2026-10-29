@@ -42,7 +42,7 @@ State of the branch when this was written:
   `Dispose`; omit SponsorBlock types; do not touch generic `MessageToast`.
 - **Conflict:** `PlayerControl.xaml(.cs)` is shared with D1.
 
-## 3. C1–C3 — Video collections and remote playlists (feature, C1 done, C2–C3 unstarted)
+## 3. C1–C3 — Video collections and remote playlists (feature, C1–C3 done)
 
 Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
 
@@ -56,9 +56,15 @@ Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
   over the existing `Api/VideoAPI.cs::GetMediaList/GetMediaListNotLogin` builders,
   `Models/MediaListResources.cs` with the paging state, cursor from the last returned aid,
   load-more while `has_more`. Verification in `IMPROVEMENT_PROGRESS.md`.
-- **C3 — source links + playback continuity.** `bilibili://music/playlist/playpage/{id}` route in
-  `Helpers/MessageCenter.cs`, extend `VideoPlaylist`/`VideoPlaylistItem` in
-  `Pages/VideoDetailPage.xaml.cs`, advance across page boundaries when `HasMore`.
+- **C3 — source links + playback continuity.** **Done** (commit
+  `Open remote playlist links and continue playback across pages`):
+  `Models/MediaListResources.cs::MediaListRoute.TryParse` (link default `page_type` 2, separate from
+  the API default 1) and `MediaListQueue.NextAction`, `Models/VideoCollections.cs::VideoUgcSeasonOrder`
+  for section/episode order, the `bilibili://music/playlist/playpage/{id}` route in
+  `Helpers/MessageCenter.cs` (first page through the C2 service, `ml` route untouched), and
+  `Pages/VideoDetailPage.xaml(.cs)` reusing the paging state and advancing across page boundaries
+  when `HasMore`, with the visible Load more as the retry after a failed next page. Verification in
+  `IMPROVEMENT_PROGRESS.md`.
 - **Detail:** `PLAN.md` → `## C1–C3 — Show Bilibili video collections and playlists` (each
   sub-batch has its own numbered section with sibling references and exact constraints).
 - **Traps:** `Pages/VideoDetailPage.xaml.cs` now builds the 合集 pivot item at index 0, so anything
@@ -149,7 +155,7 @@ extra auth/API variants, local-library expansion. Not scheduled; each needs its 
 2. Stability item 1 (closed-tab `Share` subscriptions), then item 2 only if a session-ownership
    refactor is wanted.
 3. D1, then N1 (both touch `PlayerControl`; one at a time).
-4. C1 → C2 → C3.
+4. C1 → C2 → C3 (done).
 5. Item 6 whenever a packaging change is wanted.
 
 Sources: `work/improvements/PLAN.md`, `IMPROVEMENT_PROGRESS.md`, `code_review.md`, `bug_report.md`,

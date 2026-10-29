@@ -1,8 +1,10 @@
 ﻿using BiliLite.Controls;
 using BiliLite.Models;
+using BiliLite.Models.Common;
 using BiliLite.Pages;
 using BiliLite.Pages.Other;
 using BiliLite.Pages.User;
+using BiliLite.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -394,6 +396,18 @@ namespace BiliLite.Helpers
 
 
             /*
+             * 启动器播放列表
+             * bilibili://music/playlist/playpage/123456?page_type=2
+             * 只认这一种形态,ml 收藏夹链接留给下面的播单分支
+             */
+            MediaListRoute mediaListRoute;
+            if (MediaListRoute.TryParse(url, out mediaListRoute))
+            {
+                await OpenMediaListPlaylist(mediaListRoute);
+                return true;
+            }
+
+            /*
              * 播单
              * https://www.bilibili.com/playlist/detail/pl792
              * https://www.bilibili.com/medialist/detail/ml159001856?type=1
@@ -502,6 +516,39 @@ namespace BiliLite.Helpers
 
             return false;
 
+        }
+
+        /// <summary>
+        /// 播放列表链接:先用 medialist 接口取首页,页面再用同一份翻页状态继续加载。
+        /// 首页取不到就不打开页面,避免留下一个空队列。
+        /// </summary>
+        private static async Task OpenMediaListPlaylist(MediaListRoute route)
+        {
+            var state = new MediaListPagingState(route.MediaListId, route.MediaListType, MediaListSourceKind.MediaList);
+            // 链接里的 page_type 原样传给接口,链接默认 2,不用接口方法的默认 1
+            var page = await new MediaListService().GetMediaList(route.MediaListId, route.MediaListType);
+            if (page == null) return;
+
+            state.Append(page);
+            if (state.LoadedCount == 0)
+            {
+                Utils.ShowMessageToast("播放列表是空的");
+                return;
+            }
+
+            NavigateToPage(null, new NavigationInfo()
+            {
+                icon = Symbol.Play,
+                page = typeof(VideoDetailPage),
+                title = state.Title,
+                parameters = new VideoPlaylist()
+                {
+                    MediaListId = route.MediaListId,
+                    MediaListType = route.MediaListType,
+                    MediaListState = state,
+                    Title = state.Title,
+                }
+            });
         }
 
         public async static Task<string> HandelSeasonID(string url)

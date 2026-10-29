@@ -32,6 +32,11 @@ namespace BiliLite.Pages
         public string MediaListId { get; set; }
         public int MediaListType { get; set; } = MediaListService.DefaultMediaListType;
         /// <summary>
+        /// 远程播放列表的翻页状态。启动器链接进来的会带上已取好的首页,
+        /// 页面直接复用,不重复请求;为空时页面自己建一份。
+        /// </summary>
+        public MediaListPagingState MediaListState { get; set; }
+        /// <summary>
         /// 导航来源给出的标题,没有就用通用标题
         /// </summary>
         public string Title { get; set; }
@@ -190,6 +195,8 @@ namespace BiliLite.Pages
         Button mediaListLoadMoreButton;
         bool flag = false;
         string _id = "";
+        // 当前视频是从合集分集打开的:连播跟着合集顺序走,不去动打开时的队列
+        bool playFromUgcSeason;
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -210,6 +217,7 @@ namespace BiliLite.Pages
                 if (e.Parameter is VideoPlaylist)
                 {
                     playlist = e.Parameter as VideoPlaylist;
+                    playFromUgcSeason = false;
                     // 带 medialist ID 的是远程播放列表:先取首页再播放,不走内存列表
                     if (!string.IsNullOrEmpty(playlist.MediaListId))
                     {
@@ -456,6 +464,8 @@ namespace BiliLite.Pages
             {
                 if (!ReferenceEquals(other, listView)) other.SelectedItem = null;
             }
+            // 从合集分集点进来:连播跟合集顺序,打开时的队列原样留着
+            playFromUgcSeason = true;
             await InitializeVideo(item.Aid);
         }
 
@@ -483,10 +493,16 @@ namespace BiliLite.Pages
         /// </summary>
         private async Task InitializeMediaListPlaylist()
         {
-            mediaListState = new MediaListPagingState(playlist.MediaListId, playlist.MediaListType, MediaListSourceKind.MediaList, playlist.Title);
+            // 启动器链接已经取过首页,直接复用同一份状态;内存里传来的链接自己建一份
+            mediaListState = playlist.MediaListState ?? new MediaListPagingState(playlist.MediaListId, playlist.MediaListType, MediaListSourceKind.MediaList, playlist.Title);
+            playlist.MediaListState = mediaListState;
+            playlist.MediaListId = mediaListState.MediaListId;
+            playlist.MediaListType = mediaListState.MediaListType;
             mediaListRows = new ObservableCollection<VideoPlaylistItem>();
+            AppendMediaListRows(0);
             playlist.Playlist = mediaListRows;
             playlist.Index = Math.Max(0, playlist.Index);
+            playFromUgcSeason = false;
 
             mediaListCountText = new TextBlock()
             {
@@ -523,8 +539,11 @@ namespace BiliLite.Pages
             playlistPivotItem = element;
             pivot.Items.Insert(0, element);
             pivot.SelectedIndex = 0;
+            // 首页可能已经在状态里:先把计数和"加载更多"按已有行显示出来
+            RefreshMediaListChrome();
 
-            if (!await LoadMediaListPage())
+            // 启动器链接进来时首页已经在状态里,不要再请求一次
+            if (mediaListState.LoadedCount == 0 && !await LoadMediaListPage())
             {
                 // 失败已由服务提示,页签保留并显示已加载 0,不会留下一个空白页签
                 RefreshMediaListChrome();
@@ -534,6 +553,7 @@ namespace BiliLite.Pages
             if (mediaListRows.Count == 0)
             {
                 Utils.ShowMessageToast("播放列表是空的");
+                RefreshMediaListChrome();
                 return;
             }
             var index = Math.Min(playlist.Index, mediaListRows.Count - 1);
@@ -544,7 +564,9 @@ namespace BiliLite.Pages
 
         private async void MediaListLoadMore_Click(object sender, RoutedEventArgs e)
         {
-            if (mediaListState == null || !mediaListState.HasMore) return;
+            // 失败后按钮就是重试入口,不受 HasMore 限制
+            if (mediaListState == null) return;
+            if (!mediaListState.HasMore && !mediaListState.LastLoadFailed) return;
             mediaListLoadMoreButton.IsEnabled = false;
             await LoadMediaListPage();
             RefreshMediaListChrome();
@@ -561,16 +583,28 @@ namespace BiliLite.Pages
                 ? await mediaListService.GetMediaList(mediaListState.MediaListId, mediaListState.MediaListType)
                 : await mediaListService.LoadMoreMediaList(mediaListState);
             // 失败已经由服务按现有提示方式上报,这里保留已加载的行和"加载更多"
-            if (page == null) return false;
+            if (page == null)
+            {
+                mediaListState.MarkLoadFailed();
+                return false;
+            }
 
             var loaded = mediaListState.LoadedCount;
             mediaListState.Append(page);
+            AppendMediaListRows(loaded);
+            RefreshMediaListChrome();
+            return true;
+        }
+
+        /// <summary>
+        /// 把状态里从第 loaded 条起的新行补到绑定的集合上,已加载的行不重建
+        /// </summary>
+        private void AppendMediaListRows(int loaded)
+        {
             for (var i = loaded; i < mediaListState.LoadedCount; i++)
             {
                 mediaListRows.Add(ToPlaylistItem(mediaListState.Rows[i]));
             }
-            RefreshMediaListChrome();
-            return true;
         }
 
         private void RefreshMediaListChrome()
@@ -584,6 +618,12 @@ namespace BiliLite.Pages
             {
                 mediaListLoadMoreButton.IsEnabled = mediaListState.HasMore;
                 mediaListLoadMoreButton.Visibility = mediaListState.HasMore ? Visibility.Visible : Visibility.Collapsed;
+                // 取失败过时按钮就是重试入口,即使这一页之后没有更多也要留着
+                if (mediaListState.LastLoadFailed)
+                {
+                    mediaListLoadMoreButton.IsEnabled = true;
+                    mediaListLoadMoreButton.Visibility = Visibility.Visible;
+                }
             }
         }
 
@@ -911,22 +951,115 @@ namespace BiliLite.Pages
             var item = liveView.SelectedItem as VideoPlaylistItem;
            
             playlist.Index = playlist.Playlist.IndexOf(item);
+            // 从队列里选行:连播回到队列,队列和选中行都不换
+            playFromUgcSeason = false;
             await InitializeVideo(item.ID);
 
         }
 
-        private void player_AllMediaEndEvent(object sender, EventArgs e)
+        /// <summary>
+        /// 当前视频自己的分P播完后才会到这里:先从合集分集打开的就按分区/分集顺序走,
+        /// 否则走打开时的队列。远程队列停在最后一行且还有下一页时先取下一页,取不到就
+        /// 把"加载更多"留作重试,不跳过任何一行也不当成播完。
+        /// </summary>
+        private async void player_AllMediaEndEvent(object sender, EventArgs e)
         {
-
-            if(playlist==null||playlist.Index== playlist.Playlist.Count - 1)
+            if (playFromUgcSeason)
             {
+                // 跟着合集走:合集播完就结束,不跳回打开时的队列
+                if (await AdvanceUgcSeasonAsync()) return;
                 Utils.ShowMessageToast("播放完毕");
                 return;
             }
-            // 合集页签插在最前面，这里按引用取播放列表，不依赖页签顺序
+
+            if (playlist != null && playlist.Playlist != null && playlist.Playlist.Count > 0)
+            {
+                await AdvancePlaylistAsync();
+                return;
+            }
+
+            // 没有队列时,详情里的合集就是顺序源
+            if (await AdvanceUgcSeasonAsync()) return;
+            Utils.ShowMessageToast("播放完毕");
+        }
+
+        private async Task<bool> AdvanceUgcSeasonAsync()
+        {
+            var next = VideoUgcSeasonOrder.NextAid(videoDetailVM?.VideoInfo?.UgcSeason, ugcSeasonAid);
+            if (string.IsNullOrEmpty(next)) return false;
+
+            foreach (var listView in ugcSeasonEpisodeLists)
+            {
+                var episodes = listView.ItemsSource as List<VideoUgcSeasonEpisodeView>;
+                var row = episodes?.FirstOrDefault(x => x.Aid == next);
+                if (row == null) continue;
+                if (!ReferenceEquals(listView.SelectedItem, row))
+                {
+                    // 交给已有的分集选择处理,合集页签和当前队列都不动
+                    listView.SelectedItem = row;
+                    return true;
+                }
+                break;
+            }
+
+            playFromUgcSeason = true;
+            await InitializeVideo(next);
+            return true;
+        }
+
+        private async Task AdvancePlaylistAsync()
+        {
+            // 一页可能全是已加载的行,取完再判定一次;上限只是防止服务端反复返回 has_more
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                var action = MediaListQueue.NextAction(
+                    playlist.Index,
+                    playlist.Playlist.Count,
+                    mediaListState != null && mediaListState.HasMore,
+                    mediaListState != null && mediaListState.LastLoadFailed);
+
+                switch (action)
+                {
+                    case MediaListNextAction.PlayNextRow:
+                        await SelectPlaylistRowAsync(playlist.Index + 1);
+                        return;
+                    case MediaListNextAction.LoadNextPage:
+                        if (await LoadMediaListPage())
+                        {
+                            // 新行已经追加到同一个列表,重新判定再走
+                            continue;
+                        }
+                        // 失败:已加载行不动,"加载更多"仍然可见,就是重试入口
+                        RefreshMediaListChrome();
+                        Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
+                        return;
+                    case MediaListNextAction.RetryNextPage:
+                        RefreshMediaListChrome();
+                        Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
+                        return;
+                    default:
+                        Utils.ShowMessageToast("播放完毕");
+                        return;
+                }
+            }
+
+            Utils.ShowMessageToast("播放列表没有更多可播放的内容");
+        }
+
+        private async Task SelectPlaylistRowAsync(int index)
+        {
+            if (index < 0 || index >= playlist.Playlist.Count) return;
+
+            // 远程和内存列表的页签内容都是这个 ListView,选中会走已有的行选择处理
             var listView = playlistPivotItem?.Content as ListView;
-            if (listView == null) return;
-            listView.SelectedIndex = playlist.Index + 1; 
+            if (listView != null && listView.SelectedIndex != index)
+            {
+                listView.SelectedIndex = index;
+                return;
+            }
+
+            playlist.Index = index;
+            await InitializeVideo(playlist.Playlist[index].ID);
         }
 
         private async void btnDownload_Click(object sender, RoutedEventArgs e)

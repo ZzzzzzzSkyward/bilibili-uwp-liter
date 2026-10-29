@@ -120,4 +120,44 @@ namespace BiliLite.Models.Common
 
         public string Face { get; set; }
     }
+
+    /// <summary>
+    /// 合集的播放顺序:详情里的 Sections 就是分区的顺序,分区里 Episodes 就是分集顺序。
+    /// 纯函数,便于在 UWP 之外验证连播顺序。
+    /// </summary>
+    public static class VideoUgcSeasonOrder
+    {
+        /// <summary>
+        /// 按分区、分集顺序展开的视频 aid;没有 aid 的分集不参与连播
+        /// </summary>
+        public static List<string> AidOrder(VideoUgcSeason season)
+        {
+            var aids = new List<string>();
+            if (season?.Sections == null) return aids;
+
+            foreach (var section in season.Sections)
+            {
+                if (section?.Episodes == null) continue;
+                foreach (var episode in section.Episodes)
+                {
+                    if (episode == null || string.IsNullOrEmpty(episode.Aid)) continue;
+                    aids.Add(episode.Aid);
+                }
+            }
+            return aids;
+        }
+
+        /// <summary>
+        /// 当前视频在合集里的下一个 aid;已是最后一个或不在合集里时返回 null
+        /// </summary>
+        public static string NextAid(VideoUgcSeason season, string currentAid)
+        {
+            if (string.IsNullOrEmpty(currentAid)) return null;
+
+            var aids = AidOrder(season);
+            var index = aids.IndexOf(currentAid);
+            if (index < 0 || index == aids.Count - 1) return null;
+            return aids[index + 1];
+        }
+    }
 }
