@@ -10,7 +10,7 @@ State of the branch when this was written:
 | `origin/work` head | `96c26cd Review origin/work 6ae19816…` (reviewer) |
 | Local commits ahead | G5 `b39739a`, space-timezone review fix `4fca416` |
 | Shipped this cycle | G1, G2, G3 (+ its review fixes), G4, D2, G5 |
-| Offline probes | `work/improvements/tests/{g2,g3,g4,d2,g5}/run.sh` → 22 / 34 / 41 / 58 / 61 assertions |
+| Offline probes | `work/improvements/tests/{g2,g3,g4,d2,g5}/run.sh` → 22 / 34 / 57 / 58 / 61 assertions |
 | Buildable here | `src/BiliLite.gRPC` only (0/0). No UWP workload, so no UWP build, no launch, no live API call |
 
 ---
@@ -60,7 +60,7 @@ Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
 - **Why deferred:** three UI batches against one page; also the only remaining area with no gRPC
   component, so it does not benefit from the probe harness already built.
 
-## 4. Home dynamics show an empty page when the gRPC feed is rejected (`-663`) — **new, from a live log**
+## 4. Home dynamics show an empty page when the gRPC feed is rejected (`-663`) — **done** (batch commit `Fall back to the legacy feed when the home dynamic gRPC call is rejected`, the single local commit on `work` that closed this item)
 
 - **Symptom (maintainer log, 2026-10-30 06:54):**
   `Home dynamics stage=request-start failed … grpc-status=2; grpc-message=-663; bili-status-code=-663`

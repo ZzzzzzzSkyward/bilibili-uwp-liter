@@ -3,8 +3,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using Bilibili.App.Dynamic.V2;
+using BiliLite.Api.User;
 using BiliLite.Helpers;
+using BiliLite.Modules;
+using BiliLite.Services;
 using Google.Protobuf;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace G4Probe
 {
@@ -33,6 +38,7 @@ namespace G4Probe
             SpaceListItemMapsToSingleCard();
             EmptySpacePageMapsToNoCards();
             SpaceFeedKeepsItsOwnPagingState();
+            HomeFeedFallsBackToRestWhenGrpcIsRejected();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -220,6 +226,115 @@ namespace G4Probe
                 "the fallback engages sticky REST, drops the gRPC page and restarts with an empty SpaceHistory idx");
             Check(source.Contains("api = dynamicAPI.SpaceHistory(Uid, idx);"),
                 "SpaceHistory stays the REST source for Space");
+        }
+
+        /// <summary>
+        /// The home dynamic tab is gRPC-only in the product; this runs the real Modules/Home/DynamicVM.cs
+        /// against a rejecting GrpcService and a fixture REST DynamicAPI, so the fallback, its stickiness,
+        /// its cursor separation and the Refresh reset are executed rather than read off the source.
+        /// </summary>
+        private static void HomeFeedFallsBackToRestWhenGrpcIsRejected()
+        {
+            LogHelper.Entries.Clear();
+            DynamicAPI.Calls.Clear();
+            GrpcService.DynVideoCalls = 0;
+            GrpcService.RejectDynVideo = true;
+            DynamicAPI.Fixture = call => RestFixture("offset-returned-page1", "700000000000001", "700000000000011");
+
+            var vm = new DynamicVM();
+            vm.GetDynamicItems(1).GetAwaiter().GetResult();
+
+            Check(GrpcService.DynVideoCalls == 1,
+                "home fallback: the rejected page spent exactly one DynVideo call");
+            Check(LogHelper.Entries.Exists(e => e.StartsWith("Home dynamics stage=rest-fallback reason=", StringComparison.Ordinal)
+                    && e.Contains("grpc-message=-663") && e.Contains("rpc=Dynamic/DynVideo")),
+                "home fallback: the rejection is logged as stage=rest-fallback with the server reason before switching");
+            Check(DynamicAPI.Calls.Count == 1
+                  && DynamicAPI.Calls[0].Endpoint == "dynamic_new"
+                  && DynamicAPI.Calls[0].Cursor == null,
+                "home fallback: page 1 switches to the REST newest feed (dynamic_new, no cursor)");
+            Check(vm.Items != null && vm.Items.Count == 2,
+                "home fallback: the rejected gRPC page still publishes the REST cards");
+            Check(vm.Items[1].card.Contains("rest-700000000000011"),
+                "home fallback: REST cards keep the legacy card JSON the home templates read");
+            Check(vm.CanLoadMore,
+                "home fallback: a REST page whose last card has desc.dynamic_id can load more");
+
+            GrpcService.RejectDynVideo = false;
+            DynamicAPI.Fixture = call => RestFixture("offset-returned-page2", "700000000000021");
+            vm.GetDynamicItems(2).GetAwaiter().GetResult();
+
+            Check(GrpcService.DynVideoCalls == 1,
+                "home fallback: the mode is sticky, so the next page never calls DynVideo again");
+            Check(DynamicAPI.Calls.Count == 2 && DynamicAPI.Calls[1].Endpoint == "dynamic_history",
+                "home fallback: later pages use the legacy history feed");
+            Check(DynamicAPI.Calls[1].Cursor == "700000000000011",
+                "home fallback: the history cursor is the last published card's desc.dynamic_id");
+            Check(DynamicAPI.Calls[1].Cursor != "offset-returned-page1",
+                "home fallback: the REST cursor is not the response's data.offset");
+            Check(vm.Items.Count == 3,
+                "home fallback: later REST pages append instead of replacing");
+
+            DynamicAPI.Fixture = call => RestFixture("");
+            vm.GetDynamicItems(3).GetAwaiter().GetResult();
+            Check(!vm.CanLoadMore,
+                "home fallback: an empty REST page stops paging (CanLoadMore false)");
+            Check(vm.Items.Count == 3,
+                "home fallback: an empty REST page publishes nothing");
+
+            DynamicAPI.Calls.Clear();
+            DynamicAPI.Fixture = call => RestFixture("offset-returned-refresh", "700000000000031");
+            vm.Refresh();
+            WaitIdle(vm);
+            Check(GrpcService.DynVideoCalls == 2,
+                "home fallback: Refresh clears the sticky mode so the next attempt is gRPC");
+            Check(DynamicAPI.Calls.Count == 0,
+                "home fallback: after Refresh the REST feed is not touched");
+            Check(vm.Items != null && vm.Items.Count == 0,
+                "home fallback: Refresh replaces the list with the gRPC page instead of appending to it");
+        }
+
+        /// <summary>REST fixture shaped like dynamic_svr: cards[] plus a data.offset the product must not use as a cursor.</summary>
+        private static string RestFixture(string returnedOffset, params string[] dynamicIds)
+        {
+            var cards = new JArray();
+            foreach (var id in dynamicIds)
+            {
+                cards.Add(new JObject
+                {
+                    ["desc"] = new JObject
+                    {
+                        ["type"] = 8,
+                        ["dynamic_id"] = id,
+                        ["dynamic_id_str"] = id,
+                    },
+                    ["card"] = new JObject
+                    {
+                        ["aid"] = "a-" + id,
+                        ["title"] = "rest-" + id,
+                    }.ToString(Formatting.None),
+                });
+            }
+
+            return new JObject
+            {
+                ["code"] = 0,
+                ["message"] = "0",
+                ["data"] = new JObject
+                {
+                    ["cards"] = cards,
+                    ["offset"] = returnedOffset,
+                    ["has_more"] = 1,
+                },
+            }.ToString(Formatting.None);
+        }
+
+        private static void WaitIdle(DynamicVM vm)
+        {
+            for (var i = 0; i < 200 && vm.Loading; i++)
+            {
+                System.Threading.Thread.Sleep(10);
+            }
         }
 
         private static string RepoRoot()

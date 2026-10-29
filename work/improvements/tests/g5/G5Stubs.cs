@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Bilibili.App.Dynamic.V2;
 
@@ -93,6 +93,12 @@ namespace BiliLite.Helpers
         {
         }
 
+        public static int ToInt32(this object obj)
+        {
+            if (obj == null) return 0;
+            return int.TryParse(obj.ToString(), out var value) ? value : 0;
+        }
+
         public static string HandelTimestamp(string ts)
         {
             return "relative:" + ts;
@@ -127,5 +133,56 @@ namespace BiliLite.Modules
 {
     public class AnimeHomeModel
     {
+    }
+}
+
+// Home/DynamicVM.cs also carries the home REST fallback; g3/g5 compile only its model closure,
+// so these stand-ins keep that reference compiling without touching the network.
+namespace BiliLite.Helpers
+{
+    public sealed class HttpResults
+    {
+        public bool status { get; set; }
+        public string message { get; set; }
+
+        public Newtonsoft.Json.Linq.JObject GetJObject()
+        {
+            return Newtonsoft.Json.Linq.JObject.Parse("{}");
+        }
+    }
+}
+
+namespace BiliLite.Api
+{
+    public class ApiModel
+    {
+        public System.Threading.Tasks.Task<BiliLite.Helpers.HttpResults> Request()
+        {
+            return System.Threading.Tasks.Task.FromResult(new BiliLite.Helpers.HttpResults());
+        }
+    }
+}
+
+namespace BiliLite.Api.User
+{
+    public class DynamicAPI
+    {
+        public enum UserDynamicType
+        {
+            All = 0,
+            Video = 1,
+            Season = 2,
+            Article = 3
+        }
+
+        public ApiModel DyanmicNew(UserDynamicType type, string offset = null)
+        {
+            return new ApiModel();
+        }
+
+        public ApiModel HistoryDynamic(string dynamic_id, UserDynamicType type)
+        {
+            return new ApiModel();
+        }
     }
 }

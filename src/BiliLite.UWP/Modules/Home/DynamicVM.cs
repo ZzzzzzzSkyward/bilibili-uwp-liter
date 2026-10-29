@@ -14,12 +14,19 @@ namespace BiliLite.Modules
     public class DynamicVM : IModules
     {
         private readonly GrpcService _grpcService;
+        private readonly Api.User.DynamicAPI _dynamicAPI;
         private int _page = 1;
         private string _historyOffset;
         private string _updateBaseline;
+        //gRPC 动态接口被拒后粘滞到实例的兜底开关：置位后本页及后续页都走 REST 动态流，直到 Refresh 重新试一次 gRPC
+        private bool _restFallbackMode;
+        //REST 动态流自己的翻页游标：上一页最后一张卡的 desc.dynamic_id，
+        //与 gRPC 的 historyOffset/updateBaseline 分属两套，互不传递
+        private string _restCursor;
         public DynamicVM()
         {
             _grpcService = new GrpcService();
+            _dynamicAPI = new Api.User.DynamicAPI();
             dynamicItemDataTemplateSelector = new DynamicItemDataTemplateSelector();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
@@ -61,35 +68,95 @@ namespace BiliLite.Modules
                     _historyOffset = null;
                     _updateBaseline = null;
                 }
-                LogHelper.Log("Home dynamics stage=request-start rpc=Dynamic/DynVideo page=" + page
-                    + " hasHistoryOffset=" + !string.IsNullOrEmpty(_historyOffset)
-                    + " hasUpdateBaseline=" + !string.IsNullOrEmpty(_updateBaseline), LogType.DEBUG);
-                var result = await _grpcService.GetDynVideo(page, _historyOffset, _updateBaseline);
-                stage = "response-received";
-                var dynamicList = result.DynamicList;
-                var mappedItems = DynamicGrpcMapper.MapToHomeItems(dynamicList.List);
-                LogHelper.Log("Home dynamics stage=response-mapped rpc=Dynamic/DynVideo page=" + page
-                    + " sourceCount=" + dynamicList.List.Count + " mappedCount=" + mappedItems.Count + " hasMore=" + dynamicList.HasMore
-                    + " hasHistoryOffset=" + !string.IsNullOrEmpty(dynamicList.HistoryOffset)
-                    + " hasUpdateBaseline=" + !string.IsNullOrEmpty(dynamicList.UpdateBaseline), LogType.DEBUG);
+                if (!_restFallbackMode)
+                {
+                    try
+                    {
+                        LogHelper.Log("Home dynamics stage=request-start rpc=Dynamic/DynVideo page=" + page
+                            + " hasHistoryOffset=" + !string.IsNullOrEmpty(_historyOffset)
+                            + " hasUpdateBaseline=" + !string.IsNullOrEmpty(_updateBaseline), LogType.DEBUG);
+                        var result = await _grpcService.GetDynVideo(page, _historyOffset, _updateBaseline);
+                        stage = "response-received";
+                        var dynamicList = result.DynamicList;
+                        var mappedItems = DynamicGrpcMapper.MapToHomeItems(dynamicList.List);
+                        LogHelper.Log("Home dynamics stage=response-mapped rpc=Dynamic/DynVideo page=" + page
+                            + " sourceCount=" + dynamicList.List.Count + " mappedCount=" + mappedItems.Count + " hasMore=" + dynamicList.HasMore
+                            + " hasHistoryOffset=" + !string.IsNullOrEmpty(dynamicList.HistoryOffset)
+                            + " hasUpdateBaseline=" + !string.IsNullOrEmpty(dynamicList.UpdateBaseline), LogType.DEBUG);
 
-                stage = "collection-update";
-                if (page == 1 || Items == null)
-                {
-                    Items = new ObservableCollection<DynamicItemModel>(mappedItems);
+                        stage = "collection-update";
+                        if (page == 1 || Items == null)
+                        {
+                            Items = new ObservableCollection<DynamicItemModel>(mappedItems);
+                        }
+                        else
+                        {
+                            foreach (var item in mappedItems)
+                            {
+                                Items.Add(item);
+                            }
+                        }
+                        _historyOffset = dynamicList.HistoryOffset;
+                        _updateBaseline = dynamicList.UpdateBaseline;
+                        _page = page;
+                        CanLoadMore = dynamicList.HasMore;
+                        LogHelper.Log("Home dynamics stage=items-published page=" + _page + " count=" + Items.Count, LogType.DEBUG);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        //接口拒绝（HTTP 200 + 空体 + bili-status-code=-663 等）：错误文本先记日志，再切到 REST 动态流
+                        LogHelper.Log("Home dynamics stage=rest-fallback reason=" + ex.Message
+                            + " rpc=Dynamic/DynVideo page=" + page, LogType.INFO);
+                        _restFallbackMode = true;
+                        //gRPC 游标属于另一套分页，换源前清空；REST 游标从已发布的最后一张卡开始
+                        _historyOffset = null;
+                        _updateBaseline = null;
+                        _restCursor = page == 1 ? null : LastPublishedDynamicId();
+                    }
                 }
-                else
+
+                //REST 兜底：第一页取 dynamic_new，后续页以上一页最后一张卡的 desc.dynamic_id 取 dynamic_history
+                var restCursor = page == 1 ? null : _restCursor;
+                stage = "rest-feed-request";
+                LogHelper.Log("Home dynamics stage=" + stage + " rpc=" + (string.IsNullOrEmpty(restCursor) ? "dynamic_new" : "dynamic_history")
+                    + " page=" + page + " cursor=" + (restCursor ?? ""), LogType.DEBUG);
+                var restApi = string.IsNullOrEmpty(restCursor)
+                    ? _dynamicAPI.DyanmicNew(Api.User.DynamicAPI.UserDynamicType.Video)
+                    : _dynamicAPI.HistoryDynamic(restCursor, Api.User.DynamicAPI.UserDynamicType.Video);
+                var restResponse = await restApi.Request();
+                stage = "rest-response-received";
+                if (!restResponse.status)
                 {
-                    foreach (var item in mappedItems)
+                    throw new InvalidOperationException(restResponse.message);
+                }
+                var restData = restResponse.GetJObject();
+                if (restData == null || restData["code"] == null || restData["code"].ToInt32() != 0 || restData["data"] == null)
+                {
+                    throw new InvalidOperationException(restData?["message"]?.ToString() ?? restResponse.message);
+                }
+                stage = "rest-card-convert";
+                var restCards = JsonConvert.DeserializeObject<ObservableCollection<DynamicItemModel>>(restData["data"]["cards"]?.ToString() ?? "[]")
+                    ?? new ObservableCollection<DynamicItemModel>();
+                stage = "collection-update";
+                if (Items != null)
+                {
+                    foreach (var item in restCards)
                     {
                         Items.Add(item);
                     }
                 }
-                _historyOffset = dynamicList.HistoryOffset;
-                _updateBaseline = dynamicList.UpdateBaseline;
+                else
+                {
+                    Items = restCards;
+                }
+                var lastRestCard = restCards.Count > 0 ? restCards[restCards.Count - 1] : null;
+                _restCursor = lastRestCard?.desc?.dynamic_id;
                 _page = page;
-                CanLoadMore = dynamicList.HasMore;
-                LogHelper.Log("Home dynamics stage=items-published page=" + _page + " count=" + Items.Count, LogType.DEBUG);
+                //只有真的取到卡片、且最后一张卡带着可用的 desc.dynamic_id 时才有下一页可翻
+                CanLoadMore = restCards.Count > 0 && !string.IsNullOrEmpty(_restCursor);
+                LogHelper.Log("Home dynamics stage=items-published source=rest page=" + _page + " count=" + restCards.Count
+                    + " cursor=" + (_restCursor ?? "") + " canLoadMore=" + CanLoadMore, LogType.DEBUG);
             }
             catch (Exception ex)
             {
@@ -104,6 +171,10 @@ namespace BiliLite.Modules
                 Loading = false;
             }
         }
+        private string LastPublishedDynamicId()
+        {
+            return Items != null && Items.Count > 0 ? Items[Items.Count - 1]?.desc?.dynamic_id : null;
+        }
         public async void Refresh()
         {
             if (Loading)
@@ -116,6 +187,9 @@ namespace BiliLite.Modules
             _page = 1;
             _historyOffset = null;
             _updateBaseline = null;
+            //每次刷新重新试一次 gRPC：粘滞的 REST 兜底必须在此清掉，REST 游标也随新的动态流作废
+            _restFallbackMode = false;
+            _restCursor = null;
             await GetDynamicItems(1);
         }
         public async void LoadMore()
