@@ -146,4 +146,62 @@ grep -q '<controls:WebView2' "$page_xaml" \
 	|| fail "WebPage.xaml no longer hosts a controls:WebView2 control"
 n=$((n + 1))
 
+# --- Stability report item 1: a closed media tab must release the window Share handler. ---
+# MainPage.ClosePage() removes the tab without navigating, so OnNavigatedFrom never runs.
+# Each media page therefore owns one SubscribeShare()/ReleaseShare() pair; the frame's
+# ClosedPage handler reaches the page's close routine and that routine calls ReleaseShare().
+check_media_page() {
+	file="$repo/src/BiliLite.UWP/Pages/$1"
+	closer="$2"
+	[ -f "$file" ] || fail "source file missing: src/BiliLite.UWP/Pages/$1"
+
+	sub_body="$(method_body 'private void SubscribeShare()' "$file")"
+	[ -n "$sub_body" ] || fail "$1 has no SubscribeShare() routine"
+
+	rel_body="$(method_body 'private void ReleaseShare()' "$file")"
+	[ -n "$rel_body" ] || fail "$1 has no ReleaseShare() routine"
+
+	# 1. SubscribeShare() both removes and adds, so a repeated subscribe cannot double-add.
+	printf '%s\n' "$sub_body" | grep -Fq 'DataRequested -= DataTransferManager_DataRequested;' \
+		|| fail "$1 SubscribeShare() must remove the Share handler before adding it"
+	printf '%s\n' "$sub_body" | grep -Fq 'DataRequested += DataTransferManager_DataRequested;' \
+		|| fail "$1 SubscribeShare() no longer adds the Share handler"
+
+	# 2. ReleaseShare() removes the window-level subscription (idempotent: only a -=).
+	printf '%s\n' "$rel_body" | grep -Fq 'DataRequested -= DataTransferManager_DataRequested;' \
+		|| fail "$1 ReleaseShare() no longer removes the Share handler"
+
+	# 3. Exactly one bare 'DataRequested +=' remains, and it is the one in SubscribeShare().
+	[ "$(grep -c 'DataRequested += DataTransferManager_DataRequested;' "$file" || true)" -eq 1 ] \
+		|| fail "$1 must add the Share handler exactly once, inside SubscribeShare()"
+	printf '%s\n' "$sub_body" | grep -Fq 'DataRequested += DataTransferManager_DataRequested;' \
+		|| fail "$1 adds the Share handler outside SubscribeShare()"
+
+	# 4. The closed path (frame ClosedPage) reaches the page's close routine.
+	closed="$(method_body "private void ${1%.xaml.cs}_ClosedPage" "$file")"
+	[ -n "$closed" ] || fail "$1 has no frame ClosedPage handler"
+	printf '%s\n' "$closed" | grep -Fq "$closer();" \
+		|| fail "$1 ClosedPage handler never calls $closer()"
+
+	# 5. That close routine releases Share and the ClosedPage subscription; safe twice.
+	close_body="$(method_body "private void $closer()" "$file")"
+	[ -n "$close_body" ] || fail "could not locate $1 $closer() body"
+	printf '%s\n' "$close_body" | grep -Fq 'ReleaseShare();' \
+		|| fail "$1 $closer() must call ReleaseShare() so a closed tab stops answering Share"
+	printf '%s\n' "$close_body" | grep -Fq 'UnsubscribeClosedPage();' \
+		|| fail "$1 $closer() must drop its ClosedPage subscription"
+
+	# 6. Navigation departure uses the same routine, not its own inline removal.
+	nav_body="$(method_body 'protected override void OnNavigatedFrom' "$file")"
+	[ -n "$nav_body" ] || fail "$1 has no OnNavigatedFrom override"
+	printf '%s\n' "$nav_body" | grep -Fq 'ReleaseShare();' \
+		|| fail "$1 OnNavigatedFrom() must release Share through ReleaseShare()"
+
+	n=$((n + 6))
+}
+
+check_media_page 'VideoDetailPage.xaml.cs' 'ClosePage'
+check_media_page 'SeasonDetailPage.xaml.cs' 'ClosePage'
+check_media_page 'LiveDetailPage.xaml.cs' 'StopPlay'
+
 printf 'PASS %d assertions\n' "$n"

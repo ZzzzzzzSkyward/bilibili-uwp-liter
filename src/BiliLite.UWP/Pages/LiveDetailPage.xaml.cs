@@ -295,6 +295,17 @@ namespace BiliLite.Pages
                 frame.ClosedPage -= LiveDetailPage_ClosedPage;
             }
         }
+        private void SubscribeShare()
+        {
+            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
+            dataTransferManager.DataRequested -= DataTransferManager_DataRequested;
+            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
+        }
+
+        private void ReleaseShare()
+        {
+            DataTransferManager.GetForCurrentView().DataRequested -= DataTransferManager_DataRequested;
+        }
         //判断是否按下mod键
         private bool IsDown(Windows.System.VirtualKey key)
         {
@@ -417,6 +428,8 @@ namespace BiliLite.Pages
         }
         private void StopPlay()
         {
+            UnsubscribeClosedPage();
+            ReleaseShare();
             if (mediaPlayer != null)
             {
                 mediaPlayer.Pause();
@@ -443,9 +456,7 @@ namespace BiliLite.Pages
         {
             base.OnNavigatedTo(e);
             SubscribeClosedPage();
-            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
-            dataTransferManager.DataRequested -= DataTransferManager_DataRequested;
-            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
+            SubscribeShare();
             if (e.NavigationMode == NavigationMode.New)
             {
                 LoadSetting();
@@ -475,7 +486,7 @@ namespace BiliLite.Pages
         }
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            DataTransferManager.GetForCurrentView().DataRequested -= DataTransferManager_DataRequested;
+            ReleaseShare();
             UnsubscribeClosedPage();
             base.OnNavigatedFrom(e);
         }

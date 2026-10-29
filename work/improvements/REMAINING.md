@@ -93,7 +93,7 @@ That report (root of the repo) investigated the long-session playback/tab/WebVie
 
 | # | Finding | State |
 | --- | --- | --- |
-| 1 | Closed media tabs keep their window `Share` (`DataRequested`) subscription, because `MainPage.ClosePage`/`MyFrame.Close` never navigate away; `VideoDetailPage`/`SeasonDetailPage`/`LiveDetailPage` only unsubscribe in `OnNavigatedFrom`. Retains pages for the window's life and lets a closed page answer a later Share. | **Open — highest-value remaining stability fix** (report's own priority) |
+| 1 | Closed media tabs keep their window `Share` (`DataRequested`) subscription, because `MainPage.ClosePage`/`MyFrame.Close` never navigate away; `VideoDetailPage`/`SeasonDetailPage`/`LiveDetailPage` only unsubscribe in `OnNavigatedFrom`. Retains pages for the window's life and lets a closed page answer a later Share. | **Done** — `Release the window Share subscription when a media tab closes`; guarded by `work/improvements/tests/stab/run.sh` |
 | 2 | Player opens are unowned: `Controls/Player.xaml.cs` awaits media creation and then reuses shared player fields, and `SetQuality`/`ChangeQuality`/`Player_ChangeEngine` can overlap. Needs a per-open session id, local-until-accepted resources, and rejection of obsolete callbacks. | **Open — deferred, largest refactor in the report** |
 | 3 | Separate-audio element was detached from the wrong element in the close path. | **Done** — `0668875`; guarded by `work/improvements/tests/stab/run.sh` |
 | 4 | `WebPage` close could race its `EnsureCoreWebView2Async` continuations; the WebView2 was never explicitly closed. | **Done** — `546b409`; same guard script |
