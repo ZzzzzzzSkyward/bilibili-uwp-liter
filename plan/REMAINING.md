@@ -54,8 +54,7 @@ show `stage=feed-failed page=2` and no toast; g4 executes this contract (`LoadMo
 
 - **Goal:** browse the comment pool in a flyout (last 10 s / whole loaded pool), copy text, like an
   online comment; new locally-sent comments get copy only.
-- **Detail:** `PLAN.md` → `## D1 — Danmaku list and actions` (also lists what already exists: the
-  like request builder and `rowID/sendID` mapping).
+- **Detail:** the `Done` list in `PLAN.md` and `plan/tests/d1` (the like builder and `rowID/sendID` mapping predate the feature).
 - **Targets:** new `Controls/DanmakuListControl.xaml(.cs)`, `Controls/PlayerControl.xaml(.cs)`,
   `BiliLite.UWP.csproj` (explicit Compile/Page entries).
 - **Why deferred:** pure XAML/UI; nothing here can be compiled or launched, so the batch would ship
@@ -100,8 +99,7 @@ Ordered: C1 → C2 → C3. Independent of the gRPC sequence.
   `Pages/VideoDetailPage.xaml(.cs)` reusing the paging state and advancing across page boundaries
   when `HasMore`, with the visible Load more as the retry after a failed next page. Verification in
   `IMPROVEMENT_PROGRESS.md`.
-- **Detail:** `PLAN.md` → `## C1–C3 — Show Bilibili video collections and playlists` (each
-  sub-batch has its own numbered section with sibling references and exact constraints).
+- **Detail:** the `Done` list in `PLAN.md`; per-batch reports live in `IMPROVEMENT_PROGRESS.md`.
 - **Traps:** `Pages/VideoDetailPage.xaml.cs` now builds the 合集 pivot item at index 0, so anything
   reading `pivot.Items[0]` must use `playlistPivotItem`/`ugcSeasonPivotItem` instead (C3's
   page-boundary advance lands in the same file).
@@ -150,7 +148,7 @@ the active page. Item 2's shape is a session id per open — do not attempt it i
 
 - **Item:** `build-release-x64.ps1` uses `->\s+(\S+\.msix)$`, which drops artifact paths containing
   spaces, after which package-layout validation can be skipped and a broken layout passes.
-- **Detail:** `PLAN.md` → `## Carry-forward release item, separate from feature ports`.
+- **Detail:** `PLAN.md` → `## Release tooling — MSIX artifact path regex`.
 - **Constraint recorded there:** capture the whole path, derive package paths from `OutputDir`/version,
   never treat a missing required artifact as success, keep the CS2012 retry.
 - **Context on why layout matters:** `bug_report.md` → BR-15 (1.0.9.12 shipped a non-bootable root
@@ -191,11 +189,9 @@ extra auth/API variants, local-library expansion. Not scheduled; each needs its 
   three dynamic VMs), persistence and diagnostics `Persist and report the adaptive source history`
   (`Services/DynamicApiHistoryFileStore.cs`, app-local `dynamic-api-history.v1.json`, 32-bucket LRU,
   two-second coalesced writes). Probe `plan/tests/smart1/run.sh` → 160 assertions `PASS`.
-- **Detail:** `ADAPTIVE_PLAN.md` (spec and acceptance scenarios); `PLAN.md` →
-  `## API-SMART-01 — Adaptive dynamic API selection` (three-batch ledger, snapshot shape, log lines).
+- **Detail:** `plan/ADAPTIVE_PLAN.md` (spec and acceptance scenarios) and the `Done` list in `PLAN.md`.
 - **Remaining work:** none found in source. Nothing was deferred, and no follow-up is invented here.
-- **Why it is still listed:** no UWP workload on this machine, so device behaviour is unverified. The
-  maintainer's pass has to cover cold start, repeat-rejection preference persistence across a restart,
+- **Why it is still listed:** nothing is device-verified yet. The maintainer's pass has to cover cold start, repeat-rejection preference persistence across a restart,
   recovery to gRPC, symmetric legacy-first fallback, valid empty pages, refresh keeping learned history,
   independent histories per account/app key, and the persisted file surviving an app restart.
 
