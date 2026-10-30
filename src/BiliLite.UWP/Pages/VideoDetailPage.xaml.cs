@@ -163,6 +163,8 @@ namespace BiliLite.Pages
         {
             // 页签已经关掉,播放器马上释放:先立标记,还在路上的请求回来后按它收手
             _isClosed = true;
+            // 详情请求可能还在路上,下一次进入本页(页面是缓存的同一实例)要能重新取
+            flag = false;
             UnsubscribeClosedPage();
             ReleaseShare();
             if (videoDetailVM != null)
@@ -277,10 +279,10 @@ namespace BiliLite.Pages
                 is_bvid = true;
             }
             await videoDetailVM.LoadVideoDetail(id, is_bvid);
-            // 详情回来时页签已经关掉:播放器已释放,不再改 VM 和播放器
-            if (_isClosed)
+            // 详情回来时页签已经关掉,或者这次请求已被下一次进入本页的取详情顶替:
+            // 都不要再改 VM 和播放器(播放器可能已经释放)
+            if (_isClosed || _id != id)
             {
-                flag = false;
                 return;
             }
             if (this.VideoCover != null)
