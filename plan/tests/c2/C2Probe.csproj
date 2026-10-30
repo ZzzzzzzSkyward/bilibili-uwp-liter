@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>C2Probe</AssemblyName>
+    <RootNamespace>C2Probe</RootNamespace>
+    <NoWarn>CS0108;CS0114</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\MediaListResources.cs" Link="MediaListResources.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\MediaListService.cs" Link="MediaListService.cs" />
+  </ItemGroup>
+
+</Project>

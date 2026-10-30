@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>D2Probe</AssemblyName>
+    <RootNamespace>D2Probe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\SettingVM.cs" Link="SettingVM.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\IModules.cs" Link="IModules.cs" />
+  </ItemGroup>
+
+</Project>
