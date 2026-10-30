@@ -180,19 +180,40 @@ namespace BiliLite.Services
         public const string DynVideoRejectedMessage =
             "请求失败,HTTP 200,服务端拒绝: grpc-status=2; grpc-message=-663; bili-status-code=-663,responseBytes=0";
 
-        // 探针控制位：首页动态的 gRPC 请求可以被拒，且调用次数可断言
+        // 探针控制位：首页动态的 gRPC 请求可以被拒，且调用次数/请求游标可断言
         public static int DynVideoCalls;
         public static bool RejectDynVideo;
+        public sealed class DynVideoCall
+        {
+            public int Page { get; set; }
+            public string HistoryOffset { get; set; }
+            public string UpdateBaseline { get; set; }
+        }
+
+        public static readonly List<DynVideoCall> DynVideoRequests = new List<DynVideoCall>();
 
         public Task<DynVideoReply> GetDynVideo(int page, string historyOffset, string updateBaseline)
         {
             DynVideoCalls++;
+            DynVideoRequests.Add(new DynVideoCall { Page = page, HistoryOffset = historyOffset, UpdateBaseline = updateBaseline });
             if (RejectDynVideo)
             {
                 throw new Exception(DynVideoRejectedMessage);
             }
+            // 真实的 protobuf string 属性不接受 null：翻页重试如果丢了游标，这里就该炸
+            if (page > 1 && historyOffset == null)
+            {
+                throw new ArgumentNullException(nameof(historyOffset));
+            }
             // 真实的成功回复一定带 dynamic_list；空消息体会让产品代码在读 List 时失败
-            var reply = new DynVideoReply { DynamicList = new CardVideoDynList() };
+            var reply = new DynVideoReply
+            {
+                DynamicList = new CardVideoDynList
+                {
+                    HistoryOffset = "hist-" + page,
+                    UpdateBaseline = "base-" + page,
+                },
+            };
             return Task.FromResult(reply);
         }
 

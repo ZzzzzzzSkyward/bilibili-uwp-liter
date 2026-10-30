@@ -33,7 +33,7 @@ State of the branch when this was written:
 | Local commits ahead | none |
 | Shipped | G1–G5 (+ review rounds), D1, D2, C1, C2, C3, API-SMART-01 (3 batches: selector, VM wiring, persistence), stability items 1/3/4, home-feed REST fallback, space `LocalTime`, repost fallback replacement, `plan/` consolidation + review log |
 | Open review findings | none outstanding: latest review (`3b95659`, of `3665bdb`) is fixed in `058c899`; `code_review.md` is empty since then. Earlier findings are logged in `plan/REVIEW_LOG.md` |
-| Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `d1` 82 · `d2` 58 · `g2` 22 · `g3` 34 · `g4` 66 · `g5` 44 · `stab` 53 · `smart1` 160 — all green |
+| Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `d1` 82 · `d2` 58 · `g2` 22 · `g3` 34 · `g4` 75 · `g5` 44 · `stab` 53 · `smart1` 160 — all green |
 | Buildable here | **the UWP app now builds** (`build-release-x64.ps1 -Fast -NoVersionBump`, 0 errors, ~60–100 s); packaging to MSIX also works (`-OutputDir`). No live-API verification from here |
 | Uncommitted in tree | the maintainer's two `Package.appxmanifest` version bumps only |
 

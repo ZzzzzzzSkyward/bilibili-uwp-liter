@@ -12,6 +12,8 @@ findings that were deliberately not fixed so they are not silently dropped.
 | `bf03273` | `96de3fc` | After a gRPC repost page, switching to REST appended REST page 1 to the already-loaded gRPC rows, duplicating entries; a later gRPC page mapping to zero cards took the same path | Fixed in `9fb3d16` by replacing the list with the first REST page on the switch, as the reviewer preferred over per-id deduplication. Probe `plan/tests/g5`. |
 | `465aa55` | `1dcf688` | Closing the detail tab while an automatic next-page request was pending resumed `AdvancePlaylistAsync`, selected a row and called `InitializeVideo` on a disposed page (`dispRequest` was null) | Fixed in `18f71dc` + `db1b348`: `_isClosed` latch set first in `ClosePage()`, reset on navigation entry (the page is `NavigationCacheMode.Enabled`), and checked after every playlist/detail await. Probe `plan/tests/stab`. |
 | `df790a4` | `5e36ec2` | `BiliLite.UWP.csproj` compiled `Services\DynamicApiSelector.cs`, which was absent from that tree — the entry landed in the danmaku commit, the file one commit later | Resolved by `797dc3a`: tree `HEAD` contains both the file and the entry. No code change needed. |
+| `3b95659` | `3665bdb` | Eight async helpers took `out` parameters (CS1988), so the UWP tree could not compile | Fixed in `058c899` with `DynamicApiSourceResult`; scan shows no `async` method with `out` left in the tree. |
+| `168ee8e` | `765be46` | A failed gRPC append cleared `_historyOffset`/`_updateBaseline`, so the footer retry sent `null` into protobuf string properties and that page could never recover | Fixed in `261317f`: `ClearGrpcCursorOnRestart` keeps the last good cursor for appends and clears only on a page-1 restart or a row-replacing source switch. `plan/tests/g4` now executes the retry (`offset=hist-1`); verified by reverting the fix and watching the assertion fail. |
 | `df790a4` (same review) | `5e36ec2` | Confirmed resolved: playlist continuation guards; nothing else found in the loaded-danmaku list | No action. |
 
 ## Standing review notes
@@ -27,7 +29,9 @@ findings that were deliberately not fixed so they are not silently dropped.
 ## Probe maintenance (2026-10-30, after API-SMART-01)
 
 The selector batches rewrote internals that several probes pinned as source text, so the suite was
-reconciled: `g3` 34, `g4` 56, `g5` 44 (was 65), `smart1` 160, everything else unchanged, all green.
+reconciled: `g3` 34, `g5` 44 (was 65), `smart1` 160, everything else unchanged, all green.
+`g4` has since grown to 75 by executing the BR-16 quiet-failure contract (`LoadMoreFailureStaysQuiet`) and
+the append-retry cursor contract (`AppendFailureKeepsTheGrpcCursor`).
 
 - `g3`/`g4`/`g5` now compile the selector sources with a probe-local in-memory store and stub
   `SettingHelper`/`ApiHelper`/`HttpResults.code`, because the home VM references them.

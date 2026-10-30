@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using Bilibili.App.Dynamic.V2;
 using BiliLite.Api.User;
@@ -39,6 +40,7 @@ namespace G4Probe
             EmptySpacePageMapsToNoCards();
             SpaceFeedKeepsItsOwnPagingState();
             HomeFeedFallsBackToRestWhenGrpcIsRejected();
+            AppendFailureKeepsTheGrpcCursor();
             LoadMoreFailureStaysQuiet();
 
             Console.WriteLine("PASS " + _passed + " assertions");
@@ -230,12 +232,90 @@ namespace G4Probe
         }
 
         /// <summary>
+        /// 选择器把学到的来源历史放在静态实例里，用例之间必须清干净；
+        /// 否则前一个用例留下的冷却会改变下一个用例一开始选哪一路。
+        /// </summary>
+        private static void ResetSourceHistory()
+        {
+            var selectorField = typeof(BiliLite.Services.DynamicApiSelection)
+                .GetField("Selector", BindingFlags.NonPublic | BindingFlags.Static);
+            var selector = selectorField == null ? null : selectorField.GetValue(null);
+            ClearSourceStore(selector);
+            var storeField = selector == null
+                ? null
+                : selector.GetType().GetField("_store", BindingFlags.NonPublic | BindingFlags.Instance);
+            ClearSourceStore(storeField == null || selector == null ? null : storeField.GetValue(selector));
+        }
+
+        private static void ClearSourceStore(object owner)
+        {
+            if (owner == null) { return; }
+            foreach (var field in owner.GetType().GetFields(BindingFlags.NonPublic | BindingFlags.Instance))
+            {
+                var dictionary = field.GetValue(owner) as System.Collections.IDictionary;
+                if (dictionary != null) { dictionary.Clear(); continue; }
+                if (field.FieldType.Name.Contains("Store"))
+                {
+                    ClearSourceStore(field.GetValue(owner));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 评审发现: 翻页失败时如果连游标一起清掉，页脚重试就会把 null 送进 protobuf 的 string 属性，
+        /// 这一页永远恢复不了。游标属于"上一次成功"的状态，失败只能让轮询停下，不能把它抹掉。
+        /// </summary>
+        private static void AppendFailureKeepsTheGrpcCursor()
+        {
+            ResetSourceHistory();
+            LogHelper.Entries.Clear();
+            DynamicAPI.Calls.Clear();
+            Utils.Toasts.Clear();
+            GrpcService.DynVideoCalls = 0;
+            GrpcService.DynVideoRequests.Clear();
+            GrpcService.RejectDynVideo = false;
+
+            var vm = new DynamicVM();
+            vm.GetDynamicItems(1).GetAwaiter().GetResult();
+
+            Check(GrpcService.DynVideoCalls == 1,
+                "gRPC cursor: a clean selector starts the feed on gRPC (calls=" + GrpcService.DynVideoCalls + ")");
+            Check(GrpcService.DynVideoRequests.Count == 1 && GrpcService.DynVideoRequests[0].HistoryOffset == null,
+                "gRPC cursor: the first page carries no history offset");
+
+            GrpcService.RejectDynVideo = true;
+            vm.GetDynamicItems(2).GetAwaiter().GetResult();
+
+            Check(GrpcService.DynVideoCalls == 2 && GrpcService.DynVideoRequests[1].Page == 2,
+                "gRPC cursor: page 2 is requested from the pinned gRPC source");
+            Check(Utils.Toasts.Count == 0,
+                "gRPC cursor: the rejected append stays quiet");
+            Check(!vm.CanLoadMore,
+                "gRPC cursor: the rejected append stops paging until the footer retries");
+
+            GrpcService.RejectDynVideo = false;
+            vm.GetDynamicItems(2).GetAwaiter().GetResult();
+
+            Check(GrpcService.DynVideoCalls == 3 && GrpcService.DynVideoRequests[2].Page == 2,
+                "gRPC cursor: the retry asks for the same page again");
+            Check(GrpcService.DynVideoRequests[2].HistoryOffset == "hist-1",
+                "gRPC cursor: the retry resends the cursor of the last good page (offset=" +
+                (GrpcService.DynVideoRequests[2].HistoryOffset ?? "null") + ")");
+            Check(GrpcService.DynVideoRequests[2].UpdateBaseline == "base-1",
+                "gRPC cursor: the retry keeps the update baseline too (baseline=" +
+                (GrpcService.DynVideoRequests[2].UpdateBaseline ?? "null") + ")");
+            Check(vm.CanLoadMore == false || vm.CanLoadMore,
+                "gRPC cursor: the retry completes without throwing");
+        }
+
+        /// <summary>
         /// BR-16: 加载下一页失败时不能把数据源原文弹给用户；只有第一页两路都失败才提示，
         /// 并且提示用的是 legacy 的失败原因，不是 gRPC 的 -663 文本。
         /// 选择器会把学到的历史带到下一个用例（同一进程里的静态状态），所以这里不假定第一页由 gRPC 起步。
         /// </summary>
         private static void LoadMoreFailureStaysQuiet()
         {
+            ResetSourceHistory();
             LogHelper.Entries.Clear();
             DynamicAPI.Calls.Clear();
             Utils.Toasts.Clear();
@@ -291,6 +371,7 @@ namespace G4Probe
         /// </summary>
         private static void HomeFeedFallsBackToRestWhenGrpcIsRejected()
         {
+            ResetSourceHistory();
             LogHelper.Entries.Clear();
             DynamicAPI.Calls.Clear();
             GrpcService.DynVideoCalls = 0;
