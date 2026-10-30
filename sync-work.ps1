@@ -139,10 +139,11 @@ try {
                 Write-Host '推送    : 没有本地提交需要推送'
             }
             else {
+                $pushed = $false
                 for ($round = 1; $round -le 3; $round++) {
                     Write-Host "推送    : 尝试推送 $($state.Ahead) 个提交（第 $round 轮）"
                     $push = Invoke-Git -Arguments @('push', $Remote, $Branch) -AllowNetworkRetry
-                    if ($push.Code -eq 0) { break }
+                    if ($push.Code -eq 0) { $pushed = $true; break }
 
                     $text = ($push.Output | Out-String)
                     if ($text -match 'non-fast-forward|fetch first|rejected') {
@@ -156,11 +157,20 @@ try {
                             exit 2
                         }
                         $state = Get-AheadBehind
+                        if ($state.Ahead -eq 0) { $pushed = $true; break }
+                        if ($round -eq 3) {
+                            Write-Host "连续三轮被远端抢先，本地还有 $($state.Ahead) 个提交没有推送。稍后重跑本脚本。" -ForegroundColor Red
+                            exit 1
+                        }
                         continue
                     }
 
                     Write-Host ''
                     Write-Host "推送失败：$(($push.Output | Select-Object -Last 1))" -ForegroundColor Red
+                    exit 1
+                }
+                if (-not $pushed) {
+                    Write-Host '推送没有成功，本地提交仍未发布。' -ForegroundColor Red
                     exit 1
                 }
             }
