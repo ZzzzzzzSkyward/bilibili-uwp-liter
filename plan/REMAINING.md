@@ -3,10 +3,37 @@
 Compiled 2026-10-30 for branch `work`. One entry per open item, each pointing at the markdown
 that owns its detail. Read this file first; open the referenced section only when you start the item.
 
+## Next session: build the UWP app
+
+Nothing in this repository has ever been compiled as UWP on this machine (no UWP workload), so the
+next step is a real build, not more source edits:
+
+```powershell
+# from the repo root, in a VS2022 dev prompt with the UWP workload installed
+msbuild src/BiliLite.UWP/BiliLite.UWP.csproj /p:Configuration=Debug /p:Platform=x64
+# or the packaging route that produces an installable MSIX
+powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1
+```
+
+The two `Package.appxmanifest` files already carry a `1.0.9.15` version bump in the working tree
+(uncommitted, the maintainer's). Expect the first build to surface UWP-only compile errors from the
+recent page/XAML batches (C1–C3, D1, stability fixes) — they were written without a compiler.
+Check after install: home dynamics (should fall back to REST on `-663`), playlist link handling,
+collection tab, danmaku list flyout, and the selector's `Dynamic api stage=choose` log lines.
+
 State of the branch when this was written:
 
 | Fact | Value |
 | --- | --- |
+| `origin/work` head | `058c899 Return results from the async source helpers instead of out parameters` |
+| Local commits ahead | none |
+| Shipped | G1–G5 (+ review rounds), D1, D2, C1, C2, C3, API-SMART-01 (3 batches: selector, VM wiring, persistence), stability items 1/3/4, home-feed REST fallback, space `LocalTime`, repost fallback replacement, `plan/` consolidation + review log |
+| Open review findings | none outstanding: the async `out`-parameter finding is fixed in `058c899`; earlier findings are logged in `plan/REVIEW_LOG.md` |
+| Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `d1` 82 · `d2` 58 · `g2` 22 · `g3` 34 · `g4` 56 · `g5` 44 · `stab` 53 · `smart1` 160 — all green |
+| Buildable here | `src/BiliLite.gRPC` only (0/0). No UWP build, no launch, no live API call |
+| Uncommitted in tree | the maintainer's two `Package.appxmanifest` version bumps only |
+
+--- | --- |
 | `origin/work` head | `c735a73 Open remote playlist links and continue playback across pages` (all work below is pushed) |
 | Local commits ahead | API-SMART-01 batches `797dc3a`, `26d4e57`, `Persist and report the adaptive source history` — local only, not pushed |
 | Shipped | G1, G2, G3 (+ both review rounds), G4, G5 (+ its review fix), D2, C1, C2, C3, home-feed REST fallback, space `LocalTime`, repost fallback replacement, stability items 1 (tab Share), 3 (audio detach), 4 (WebPage close), D1, API-SMART-01 |

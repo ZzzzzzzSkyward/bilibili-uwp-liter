@@ -1,5 +1,23 @@
 # Improvement series progress
 
+## 2026-10-30 evening cycle — adaptive source selection and the plan tree
+
+| Batch | Commit | Notes |
+| --- | --- | --- |
+| Review fixes | `08bb6c5`, `4d8490a`, `5911173` | detail-selection lock fix; home feed fallback restored after a rejected gRPC page (plain exceptions now classify as transport failures instead of being ignored) |
+| D1 | `5e36ec2` | loaded-danmaku list with copy and like |
+| API-SMART-01 batch 1 | `797dc3a` | structured `GrpcResult` metadata, `GrpcRequestException`, `DynamicApiSelector` |
+| API-SMART-01 batch 2 | `26d4e57` | selector wired into home/user/repost VMs, pinned sources, two-attempt cap |
+| API-SMART-01 batch 3 | `3665bdb` | `dynamic-api-history.v1.json` store, diagnostics, index entries |
+| Plan tree | `8b8d436`, `d8757eb`, `832a6d9` | every planning artifact under `plan/`, review outcomes cached in `plan/REVIEW_LOG.md`, runner root paths repaired |
+| Probe reconciliation | `832a6d9` | selector sources compiled into g3/g4/g5, internals-pinning text assertions retired |
+| Async helpers | `16afb63` / `058c899` | eight async helpers no longer take `out` parameters (CS1988) — a real compile error the reviewer caught |
+
+Probe state after this cycle: `c1` 52 · `c2` 99 · `c3` 97 · `d1` 82 · `d2` 58 · `g2` 22 · `g3` 34 ·
+`g4` 56 · `g5` 44 · `stab` 53 · `smart1` 160, all green. `src/BiliLite.gRPC` builds 0/0.
+
+**Next step is a UWP build**, not more source work — see the header of `plan/REMAINING.md`.
+
 ## 2026-10-30 cycle — what is on `origin/work` now
 
 | Batch | Commit subject | Probe |
