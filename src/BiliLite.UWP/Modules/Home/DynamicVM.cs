@@ -141,16 +141,27 @@ namespace BiliLite.Modules
         }
 
         /// <summary>
+        /// 只有从第一页重来、或者整批换掉行（换源）时才作废 gRPC 游标。
+        /// 追加（page > 1 且不替换行）失败必须留住上一次成功页的 historyOffset/updateBaseline，
+        /// 否则 footer 重试会把 null 塞进 protobuf 的字符串字段，那一页再也接不上。
+        /// </summary>
+        private void ClearGrpcCursorOnRestart(int page, bool replaceRows)
+        {
+            if (page > 1 && !replaceRows)
+            {
+                return;
+            }
+            _historyOffset = null;
+            _updateBaseline = null;
+        }
+
+        /// <summary>
         /// gRPC 视频动态流：游标是 historyOffset/updateBaseline。
-        /// 失败时清空这套游标再交给调用方换源，REST 侧绝不会收到它们。
+        /// 这套游标只在本路里传递，REST 侧绝不会收到它们。
         /// </summary>
         private async Task<DynamicApiOutcome> RequestGrpcSourceAsync(int page, bool replaceRows, DynamicApiContext context, string stage)
         {
-            if (replaceRows)
-            {
-                _historyOffset = null;
-                _updateBaseline = null;
-            }
+            ClearGrpcCursorOnRestart(page, replaceRows);
             var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.HomeVideoFeed, DynamicApiSource.Grpc);
             var stopwatch = Stopwatch.StartNew();
             Bilibili.App.Dynamic.V2.DynVideoReply reply;
@@ -167,16 +178,14 @@ namespace BiliLite.Modules
                 DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
                 if (outcome == DynamicApiOutcome.IgnoredFailure)
                     throw;
-                _historyOffset = null;
-                _updateBaseline = null;
+                ClearGrpcCursorOnRestart(page, replaceRows);
                 _lastGrpcFailureMessage = ex.Message;
                 return outcome;
             }
             if (reply == null || reply.DynamicList == null)
             {
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage);
-                _historyOffset = null;
-                _updateBaseline = null;
+                ClearGrpcCursorOnRestart(page, replaceRows);
                 _lastGrpcFailureMessage = "动态请求失败：响应无法解析";
                 return DynamicApiOutcome.MalformedResponse;
             }
