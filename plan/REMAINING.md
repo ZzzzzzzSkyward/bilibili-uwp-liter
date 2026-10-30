@@ -25,7 +25,7 @@ State of the branch when this was written:
 
 | Fact | Value |
 | --- | --- |
-| `origin/work` head | `058c899 Return results from the async source helpers instead of out parameters` |
+| `origin/work` head | `709ecf8 Record the current plan state and make the UWP build the next step` |
 | Local commits ahead | none |
 | Shipped | G1–G5 (+ review rounds), D1, D2, C1, C2, C3, API-SMART-01 (3 batches: selector, VM wiring, persistence), stability items 1/3/4, home-feed REST fallback, space `LocalTime`, repost fallback replacement, `plan/` consolidation + review log |
 | Open review findings | none outstanding: the async `out`-parameter finding is fixed in `058c899`; earlier findings are logged in `plan/REVIEW_LOG.md` |
