@@ -7,6 +7,14 @@ State of the branch when this was written:
 
 | Fact | Value |
 | --- | --- |
+| `origin/work` head | `c735a73 Open remote playlist links and continue playback across pages` (all work below is pushed) |
+| Local commits ahead | none — `## work...origin/work` |
+| Shipped | G1, G2, G3 (+ both review rounds), G4, G5 (+ its review fix), D2, C1, C2, C3, home-feed REST fallback, space `LocalTime`, repost fallback replacement, stability items 1 (tab Share), 3 (audio detach), 4 (WebPage close) |
+| Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `g2` 22 · `g3` 34 · `g4` 57 · `g5` 65 · `d2` 58 · `stab` 31 — all `PASS`, exit 0 |
+| Buildable here | `src/BiliLite.gRPC` only (0/0). No UWP workload, so no UWP build, no launch, no live API call |
+| Uncommitted in tree | only the maintainer's two `Package.appxmanifest` version bumps (1.0.9.15) — not part of any batch |
+
+--- | --- |
 | `origin/work` head | `96c26cd Review origin/work 6ae19816…` (reviewer) |
 | Local commits ahead | G5 `b39739a`, space-timezone review fix `4fca416` |
 | Shipped this cycle | G1, G2, G3 (+ its review fixes), G4, D2, G5 |
