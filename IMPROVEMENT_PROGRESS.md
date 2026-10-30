@@ -1,5 +1,24 @@
 # Improvement series progress
 
+## 2026-10-30 cycle — what is on `origin/work` now
+
+| Batch | Commit subject | Probe |
+| --- | --- | --- |
+| G3 review fixes (photo object id as comment oid; unusable detail falls through to REST) | `Use the photo object id for draw comments and fall back when gRPC detail cannot render` | g3 34 |
+| G5 dynamic repost list through gRPC with REST fallback | `Load dynamic reposts through the gRPC list with REST fallback` | g5 65 |
+| Space requests report the East Asia client timezone (review of `96c26cd`) | `Report the East Asia client timezone on space requests` | g4 57 |
+| Remaining-work index and its refreshes | `Index the remaining work…`, `Track the long-running stability findings…`, `Refresh the remaining-work index…` | — |
+| Player close detaches the separate audio element (stability item 3) | `Detach the separate audio element when closing the player` | stab 31 |
+| Home dynamics fall back to the legacy feed when gRPC is rejected `-663` | `Fall back to the legacy feed when the home dynamic gRPC call is rejected` | g4 57 |
+| Web page marks itself closed before WebView2 teardown (stability item 4) | `Mark the web page closed before its WebView teardown runs` | stab 31 |
+| C1 UGC collection on the video detail page | `Show the source UGC collection on the video detail page` | c1 52 |
+| Closed media tabs release the window Share subscription (stability item 1) | `Release the window Share subscription when a media tab closes` | stab 31 |
+| C2 remote playlist loading and paging | `Load remote playlists with paging on the video detail page` | c2 99 |
+| Repost fallback replaces the list instead of appending a duplicate first page (review of `bf03273`) | `Replace the repost list when it falls back to REST` | g5 65 |
+| C3 playlist links and playback continuation | `Open remote playlist links and continue playback across pages` | c3 97 |
+
+Probe totals on that head: `c1` 52 · `c2` 99 · `c3` 97 · `g2` 22 · `g3` 34 · `g4` 57 · `g5` 65 · `d2` 58 · `stab` 31, all `PASS` exit 0; `src/BiliLite.gRPC` builds 0 warnings / 0 errors. Not verified: no UWP build, no application launch and no live API call on this machine, so every page/XAML/handler change is source-reviewed with the device check recorded in its batch note. Open items live in `work/improvements/REMAINING.md`.
+
 ## Current step: C3 implemented (playlist source links and playback continuity)
 
 - `src/BiliLite.UWP/Models/MediaListResources.cs` gained the offline-testable half of this batch. `MediaListRoute.TryParse(url, out route)` accepts only `bilibili://music/playlist/playpage/{digits}` (scheme matched case-insensitively, surrounding whitespace trimmed, a trailing `/`, query or `#fragment` after the id allowed): the id is copied verbatim from the link, never converted from a collection id, uploader mid or favorite-folder id. `page_type` is read from any query position; a missing, non-numeric or non-positive value falls back to `DefaultPlaylistType = 2` — the sibling route's default, deliberately kept apart from `MediaListService.DefaultMediaListType = 1`, which stays the API method's default.
