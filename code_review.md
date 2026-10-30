@@ -1,18 +1,14 @@
-# Review — `d8757eba8f3179bca152622e6e51da1819aac508`
+# Review — `26d4e575803fca1fe3deb884dd391b0741376c76`
 
-Read the current `bug_report.md` and reviewed all source changes since `8b8d436c9648f306cd185b93c17d7d58ca53ebf5` (completed review `8baf1194`), using GPT-6-luna reviewers. The remote advanced during review; both the detail-load fix and the newly arrived runner-path fix are included. Static source inspection only; no tests, builds, script/application execution, or other validation.
+Read the current `bug_report.md` and reviewed all source changes since `d8757eba8f3179bca152622e6e51da1819aac508` (completed review `7646a7e4`), using GPT-6-luna reviewers. Static source inspection only; no tests, builds, application/script execution, or other validation. The bug report's earlier device/build results were not rerun here.
 
-## The runner-path fix leaves six reported entry points broken
+## The new async helpers cannot compile with out parameters
 
-The main `plan/tests/` wrappers and upstream batches 002/003 are corrected. The following runners still calculate their repository root with only four parent traversals at line 4:
+`src/BiliLite.UWP/Modules/User/DynamicVM.cs:818-819` declares `TryUserFeedGrpcAsync` as `async Task<DynamicApiOutcome>` with `out bool retired` and `out string failureMessage`. C# forbids `out` parameters on async methods (CS1988), so this source tree cannot compile the UWP application. The same introduced issue affects all eight new helpers:
 
-- `plan/upstream-bugs/unit-tests/batch-008/issue-105/run-dispose-stop-order.sh`
-- `plan/upstream-bugs/unit-tests/batch-041/issue-598/run-natural-end-report.sh`
-- `plan/upstream-bugs/unit-tests/fix-batch-002/issue-275/run.sh`
-- `plan/upstream-bugs/unit-tests/fix-batch-002/issue-358/run.sh`
-- `plan/upstream-bugs/unit-tests/batch-084/issue-1305/run-played-item-marker.sh`
-- `plan/upstream-bugs/unit-tests/batch-085/issue-1311/run-subtitle-language-label.sh`
+- `Modules/User/DynamicVM.cs`: `TryUserFeedGrpcAsync` (818), `TryUserFeedRestAsync` (932), `TrySpaceGrpcAsync` (1085), `TrySpaceRestAsync` (1170), `TryDetailGrpcAsync` (1375), and `TryDetailRestAsync` (1425).
+- `Modules/User/DynamicRepostVM.cs`: `TryLoadGrpcPage` (132) and `LoadRestPage` (183).
 
-Each script directory is five levels below the repository root, so these paths land in `plan/` and attempt to read nonexistent `plan/src/...` files. Running any of these existing entry points fails before reaching its probe. Restore `../../../../..` in their root calculations, as already done for batch-003. This is the remaining part of the previous migration finding.
+Return a small result object from each helper carrying the outcome, retired/served flag, and failure message, then read those properties after `await` in the caller. Remove the `out` parameters from both declarations and calls. This conclusion follows from the declarations and C# language rules; no build was run.
 
-The detail-selection loading flag finding is resolved: rejected concurrent calls no longer overwrite `_id`, and the active request releases the flag in `finally`. No other worthwhile issue found in that change.
+No other worthwhile issue found in the home/user feed, detail, repost routing, or shared selector changes. The previous six runner-path findings are outside this source increment and remain unchanged.
