@@ -1,63 +1,89 @@
-# Remaining feature plan
+# Plan — open work only
 
-Updated 2026-10-30 for `work` at `d78a8a4`. Finished batches are one line each — the commits, the
-probe under `plan/tests/` and `IMPROVEMENT_PROGRESS.md` carry their history. Only open items keep
-detail, and only the detail an implementer actually needs.
+Updated 2026-10-30 for `work`. Everything shipped is one line in the commit history; the offline
+probe suite lives in `plan/tests/` and is green. Finished plan documents, reports and progress logs
+were removed on purpose — `git log` has them.
 
-## Done
+**Verification policy:** the maintainer's device pass counts as passed. A shipped item stays closed
+until the maintainer reports an actual bug; only such a report reopens it, and then it is written up
+in `bug_report.md` first.
 
-- **G1 — app-key-aware gRPC headers:** `cfcd3de`, `75e8ecb`; report `plan/G1_REPORT.md`.
-- **G2 — user-video keyword search:** `914d32f`; probe `plan/tests/g2`.
-- **G3 — dynamic detail through the gRPC mapper:** `d4c6345`, review fix `6ae1981`; probe `plan/tests/g3`.
-- **G4 — user-space dynamics with their own paging:** `65d5e8c`, timezone fix `4fca416`; probe `plan/tests/g4`.
-- **G5 — dynamic repost list:** `b39739a`, page-1 replacement fix `9fb3d16`; probe `plan/tests/g5`.
-- **D1 — danmaku list and actions:** `5e36ec2`; probe `plan/tests/d1`.
-- **D2 — danmaku filter import/export and the `SHIELD_USER` key fix:** `e94c843`; probe `plan/tests/d2`.
-- **C1 — collections on the video detail page:** `92ecd6a`; probe `plan/tests/c1`.
-- **C2 — remote playlist paging:** `34ec312`; probe `plan/tests/c2`.
-- **C3 — playlist links and continued playback:** `c735a73`, close-race fix `18f71dc`; probe `plan/tests/c3`.
-- **API-SMART-01 — adaptive gRPC/legacy source selection:** `797dc3a`, `26d4e57`, `3665bdb`; spec
-  `plan/ADAPTIVE_PLAN.md`, probe `plan/tests/smart1`.
-- **Stability items 1/3/4** (tab `Share` leak, audio detach, WebPage close race): `96de3fc`, `0668875`, `546b409`; probe `plan/tests/stab`.
-- **Home-feed REST fallback and its quiet load-more** (BR-13, BR-16): `5881dbb`, `e5c97e1`, `261317f`; `plan/tests/g4`.
+## State
 
-## N1 — Player overlay toasts
+| Fact | Value |
+| --- | --- |
+| branch | `work`, in sync with `origin/work` |
+| probes | `plan/tests/<name>/run.sh` — c1 52 · c2 99 · c3 97 · d1 82 · d2 58 · g2 22 · g3 34 · g4 75 · g5 44 · stab 53 · smart1 160, all green |
+| build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump` (compile only) or without `-Fast` to package into `Z:\` |
+| review cache | `plan/REVIEW_LOG.md` |
+| bug device log | `bug_report.md`, `code_review.md` at the repo root |
+
+## Open
+
+| # | Item | State |
+| --- | --- | --- |
+| 1 | N1 — player overlay toasts | in progress |
+| 2 | Player open/replace/close session ownership | not started |
+| 3 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence |
+| 4 | `build-release-x64.ps1` MSIX artifact path regex | not started |
+
+## 1. N1 — player overlay toasts
 
 Replace the single central label (`PlayerControl.xaml` → `ToolTip`/`TxtToolTip`) with per-action
-overlays, so volume, brightness, seek, message, held acceleration and speed no longer overwrite each
-other and held speed stays visible until release.
+overlays so volume, brightness, seek, message, held acceleration and speed stop overwriting each
+other, and held speed stays visible until release.
 
-1. New `Controls/PlayerToast.xaml(.cs)` and `Services/PlayerToastService.cs`; one service instance per
-   `PlayerControl`, no DI container. Keys: Volume, Brightness, Progress, Msg, Accelerating, Speed.
-2. `Show(key, text)` replaces that key's text and restarts its timeout; a hold API keeps
-   Accelerating/held Speed up until release. Ordinary keys auto-hide after ~1.5 s.
-3. Rewrite `HandleSlideProgressDelta`, `HandleSlideVolumeDelta`, `HandleSlideBrightnessDelta`, the
-   keyboard actions and the held-speed handler to call the service, keeping every existing step
-   calculation. One action produces one overlay, not both old and new.
-4. Position from the current player size, not the sibling's six fixed slots. Stop all timers and clear
-   overlays from `Dispose`.
-5. Omit SponsorBlock/skip-segment types; leave the generic `MessageToast` for non-player callers; add
-   explicit `Compile`/`Page` entries.
+- New `Controls/PlayerToast.xaml(.cs)` + `Services/PlayerToastService.cs`; one service per
+  `PlayerControl`, no DI container. Keys: Volume, Brightness, Progress, Msg, Accelerating, Speed.
+- `Show(key, text)` replaces that key's text and restarts its timeout; a hold API keeps
+  Accelerating/held Speed up until release; ordinary keys auto-hide after ~1.5 s.
+- The slide/keyboard handlers and the held-speed handler call the service instead of writing the
+  central label, keeping every existing step calculation; one action produces one overlay.
+- Position from the current player size. Stop all timers and clear overlays in `Dispose`.
+- Omit SponsorBlock/skip-segment types; leave the generic `MessageToast` alone; add the `Compile`/
+  `Page` entries.
 
-## Release tooling — MSIX artifact path regex
+## 2. Player session ownership
+
+`PlayerControl` opens media in several paths (native DASH, FFmpeg DASH, quality change, engine
+fallback) and mutates shared player fields across `await`s. Closing the tab or switching video while
+an open is in flight lets the old operation resume against a replaced/cleared player, attach A's
+source to B's player, or leak resources created after the close routine finished. `SetQuality` starts
+`ChangeQuality` without awaiting it; `Player_ChangeEngine` starts another open on media failure with
+no in-flight guard.
+
+Fix shape: one session id per open, new resources kept local until the session is accepted, pending
+opens invalidated on close/replacement, resources of an obsolete session disposed, callbacks from
+obsolete players rejected. Do not rewrite the player.
+
+## 3. Background playback ownership
+
+`backgroundMediaPlayback` is declared in both manifests and `PlayerControl` wires Play/Pause and
+status, so missing permissions are not the issue. The gap is ownership: system media controls are
+view-scoped, and `OnUnload` disables them for every control, so a departing tab can disable the
+controls of the player that is still playing. `App.OnSuspending` also does no player work and forces a
+finalizer wait inside the suspension window.
+
+Fix shape: one active playback owner keeps the SMTC session across tab and visibility changes, optional
+visual/danmaku work is released when backgrounded, and suspension work stays bounded. Do not recreate
+the player on every foreground return.
+
+This one has no device evidence behind it — only source reading. It needs the maintainer's
+observation (minimize vs tab switch, engine, crash details) before it is worth a refactor.
+
+## 4. Release tooling — MSIX artifact path regex
 
 `build-release-x64.ps1` matches artifacts with `->\s+(\S+\.msix)$`, which drops paths containing
-spaces and can silently skip layout validation. Capture the whole path or derive it from
-`OutputDir`/version, and never treat a missing artifact as success. Keep the layout helpers and the
-`CS2012` retry (its holder measurement is in `plan/build-tooling.md`).
+spaces and can silently skip the package-layout validation. Capture the whole path, or derive it from
+`OutputDir`/version, and never treat a missing artifact as success. Keep the layout checks and the
+`CS2012` retry (the retry names its file holders through Restart Manager and waits for them).
 
-## Parked work
+## Parked
 
-- **Live tiles:** optional; needs the sibling's tile service plus a background-task registration, and
-  its async refresh must be awaited before the deferral completes.
-- **Real buvid acquisition:** no source-backed flow established; app-key headers do not promise it.
+- **Live tiles:** optional; needs the tile service plus a background-task registration whose async
+  refresh is awaited before the deferral completes.
+- **Real buvid acquisition:** no source-backed flow; app-key headers do not promise it.
 - **Alternate danmaku renderer:** nothing needs FrostMaster; keep NSDanmaku.
-- **More API/auth variants:** no caller; do not port endpoint classes just to mirror the sibling.
-- **Local-library expansion:** the five milestones are done; further discovery/formats/artwork needs
-  its own request. Keep the current manifest models as the contract.
-
-## Verification boundary
-
-The app builds here (`build-release-x64.ps1 -Fast -NoVersionBump`) and packages to MSIX, but nothing
-has been verified on a device except the items recorded in `bug_report.md`. Anything touching XAML,
-layout or timing stays "source + build verified" until the maintainer runs it, and reports must say so.
+- **More API/auth variants:** no caller; do not port endpoint classes to mirror the sibling.
+- **Local-library expansion:** the five milestones are done; more discovery/formats/artwork needs its
+  own request. Keep the current manifest models as the contract.

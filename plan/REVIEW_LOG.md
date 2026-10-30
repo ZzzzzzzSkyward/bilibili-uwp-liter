@@ -22,7 +22,7 @@ findings that were deliberately not fixed so they are not silently dropped.
   as fixed means "fixed in source", not "verified on device".
 - The reviewer re-reads earlier findings every round, so a row stays useful for a long time.
 - New findings become plan entries: append a row here when a review is acted on, and add the
-  corresponding item to `plan/REMAINING.md` when the finding is deliberately deferred.
+  corresponding item to `plan/PLAN.md` when the finding is deliberately deferred.
 - Known reviewer-blind spots (state them when a batch relies on them): UWP XAML/visual layout,
   server behaviour, timing under a real device, and anything that needs an account.
 

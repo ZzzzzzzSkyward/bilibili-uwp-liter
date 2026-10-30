@@ -28,7 +28,7 @@ Fixes:
   writing `obj\x64\Release\intermediatexaml\BiliLiter.exe` while the parent `MSBuild.exe` still held the
   previous copy. The script waits for those handles (`-LockWaitSeconds`, default 90 s), kills only build tools
   if the wait times out, then pauses `-LockRetryDelay` (default 3 s) before the `-t:Rebuild` retry.
-  Details: `plan/build-tooling.md`.
+  The script carries the same explanation next to the recovery code.
 - `App()` now initialises logging **before** `InitializeComponent()` and wraps it in `try/catch` that logs to the app log. A future startup failure will leave a stack trace instead of a silent exit.
 
 ### BR-13 — verified on the device
