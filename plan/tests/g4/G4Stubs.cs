@@ -65,8 +65,12 @@ namespace BiliLite.Helpers
 
     public static class Utils
     {
+        /// <summary>弹出过的提示文本，按顺序；探针用它判断哪些失败被展示给用户。</summary>
+        public static readonly List<string> Toasts = new List<string>();
+
         public static void ShowMessageToast(string message, int seconds = 2)
         {
+            Toasts.Add(message);
         }
 
         public static int ToInt32(this object obj)
@@ -125,6 +129,8 @@ namespace BiliLite.Api.User
         // 夹具：REST 动态流不触网，由探针按 (endpoint, cursor) 返回固定的 JSON
         public static readonly List<RestCall> Calls = new List<RestCall>();
         public static Func<RestCall, string> Fixture = call => "{\"code\":0,\"data\":{\"cards\":[]}}";
+        /// <summary>让下一次 REST 调用像 HTTP 404 一样失败（status=false, code=404）。</summary>
+        public static bool FailNextRequest;
 
         public ApiModel DyanmicNew(UserDynamicType type, string offset = null)
         {
@@ -142,12 +148,26 @@ namespace BiliLite.Api.User
             var captured = call;
             return new ApiModel
             {
-                Handler = () => Task.FromResult(new BiliLite.Helpers.HttpResults
+                Handler = () =>
                 {
-                    status = true,
-                    message = "0",
-                    results = Fixture(captured),
-                }),
+                    if (FailNextRequest)
+                    {
+                        FailNextRequest = false;
+                        return Task.FromResult(new BiliLite.Helpers.HttpResults
+                        {
+                            status = false,
+                            code = 404,
+                            message = "NotFound",
+                            results = string.Empty,
+                        });
+                    }
+                    return Task.FromResult(new BiliLite.Helpers.HttpResults
+                    {
+                        status = true,
+                        message = "0",
+                        results = Fixture(captured),
+                    });
+                },
             };
         }
     }

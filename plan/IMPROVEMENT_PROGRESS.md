@@ -11,7 +11,10 @@
 
 The app finally builds here (`build-release-x64.ps1 -Fast -NoVersionBump`, 0 errors), so the open work is
 device verification of the shipped batches, listed at the top of `plan/REMAINING.md`, not more source changes.
-Probes after this cycle: `g3` 34 · `g4` 56 · `g5` 44 green; the untouched ones keep their counts.
+Probes after this cycle: `g3` 34 · `g4` 66 · `g5` 44 green; the untouched ones keep their counts.
+`g4` gained `LoadMoreFailureStaysQuiet`, which drives the real `Modules/Home/DynamicVM.cs` against a 404
+`dynamic_history` and asserts no toast, surviving rows, no gRPC restart, and the legacy text in the one
+page-1 double-failure toast.
 
 ## 2026-10-30 evening cycle — adaptive source selection and the plan tree
 

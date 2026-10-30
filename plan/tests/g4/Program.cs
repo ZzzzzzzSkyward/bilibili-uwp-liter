@@ -39,6 +39,7 @@ namespace G4Probe
             EmptySpacePageMapsToNoCards();
             SpaceFeedKeepsItsOwnPagingState();
             HomeFeedFallsBackToRestWhenGrpcIsRejected();
+            LoadMoreFailureStaysQuiet();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -226,6 +227,61 @@ namespace G4Probe
                 "the space feed pins the source it switched to for the feed lifetime");
             Check(source.Contains("dynamicAPI.SpaceHistory(Uid, cursor)") || source.Contains("dynamicAPI.SpaceHistory(Uid, idx)"),
                 "SpaceHistory stays the REST source for Space");
+        }
+
+        /// <summary>
+        /// BR-16: 加载下一页失败时不能把数据源原文弹给用户；只有第一页两路都失败才提示，
+        /// 并且提示用的是 legacy 的失败原因，不是 gRPC 的 -663 文本。
+        /// 选择器会把学到的历史带到下一个用例（同一进程里的静态状态），所以这里不假定第一页由 gRPC 起步。
+        /// </summary>
+        private static void LoadMoreFailureStaysQuiet()
+        {
+            LogHelper.Entries.Clear();
+            DynamicAPI.Calls.Clear();
+            Utils.Toasts.Clear();
+            GrpcService.DynVideoCalls = 0;
+            GrpcService.RejectDynVideo = true;
+            DynamicAPI.Fixture = call => RestFixture("offset-quiet-page1", "700000000000101", "700000000000102");
+
+            var vm = new DynamicVM();
+            vm.GetDynamicItems(1).GetAwaiter().GetResult();
+
+            Check(vm.Items != null && vm.Items.Count == 2,
+                "quiet load-more: page 1 publishes the REST rows (items=" + (vm.Items == null ? -1 : vm.Items.Count) + ")");
+            Check(Utils.Toasts.Count == 0,
+                "quiet load-more: a page served by the fallback never shows a toast");
+            var grpcCallsAfterPage1 = GrpcService.DynVideoCalls;
+
+            // 下一页只有 legacy 一路(REST 返回 404)：不换源、不提示、已发布的行必须留着
+            GrpcService.RejectDynVideo = false;
+            DynamicAPI.FailNextRequest = true;
+            vm.GetDynamicItems(2).GetAwaiter().GetResult();
+
+            Check(DynamicAPI.Calls.Count == 2 && DynamicAPI.Calls[1].Endpoint == "dynamic_history",
+                "quiet load-more: page 2 still asks the legacy history endpoint");
+            Check(GrpcService.DynVideoCalls == grpcCallsAfterPage1,
+                "quiet load-more: a failed load-more never restarts the feed from gRPC page 1");
+            Check(vm.Items != null && vm.Items.Count == 2,
+                "quiet load-more: the rows already on screen survive the failed append");
+            Check(!vm.CanLoadMore,
+                "quiet load-more: a failed page stops paging instead of retrying forever");
+            Check(Utils.Toasts.Count == 0,
+                "quiet load-more: a failed load-more shows no toast");
+            Check(LogHelper.Entries.Exists(entry => entry.Contains("stage=feed-failed page=2")),
+                "quiet load-more: the failure is still written to the log with its page number");
+
+            // 第一页两路都失败：允许提示一次，而且只能是 legacy 的原因，不是 grpc-message=-663
+            Utils.Toasts.Clear();
+            GrpcService.RejectDynVideo = true;
+            DynamicAPI.FailNextRequest = true;
+            var fresh = new DynamicVM();
+            fresh.GetDynamicItems(1).GetAwaiter().GetResult();
+
+            Check(Utils.Toasts.Count == 1,
+                "quiet load-more: only a page-1 double failure produces a toast (toasts=" + Utils.Toasts.Count + ")");
+            Check(Utils.Toasts.Count == 1 && Utils.Toasts[0] == "NotFound",
+                "quiet load-more: the toast carries the legacy failure text, not the gRPC rejection (" +
+                (Utils.Toasts.Count == 0 ? "none" : Utils.Toasts[0]) + ")");
         }
 
         /// <summary>
