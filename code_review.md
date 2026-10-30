@@ -1,11 +1,11 @@
-# Review — `797dc3a75addda681e11e6dc16d03796cb8592cd`
+# Review — `8b8d436c9648f306cd185b93c17d7d58ca53ebf5`
 
-Read the current `bug_report.md` and reviewed all source changes since `5e36ec21b4c80fa75cabadd06bf63274902c207b` (completed review `df790a4`), using GPT-6-luna reviewers. Static source inspection only; no tests, builds, application execution, or other validation. The bug report's earlier device/build results were not rerun here.
+Read the current `bug_report.md` and reviewed all source changes since `797dc3a75addda681e11e6dc16d03796cb8592cd` (completed review `ecc90db6`), with a GPT-6-luna reviewer. Static source inspection only; no tests, builds, script/application execution, or other validation. The bug report's earlier device/build results were not rerun here.
 
-## Selecting another video during a detail request can block all later selections
+## Moving the probe runners breaks their repository-root paths
 
-`src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs:284-286`: while video A's detail request is pending, select a different queue or UGC item B. Both selection handlers can call `InitializeVideo()` during loading. It assigns `_id = B` before checking `flag` (`268-269`), then returns because A is still loading. When A finishes, the new `_id != id` guard returns without clearing `flag`. Neither request reaches playback initialization, and every subsequent selection returns at the same loading check. The tab cannot load another video until it is closed and reopened.
+`plan/tests/run.sh:3`, `run-api01.sh:3`, `run-auth01b.sh:3`, and `run-g1.sh:5` still ascend three directories from the script directory. Moving from `work/improvements/tests/` to `plan/tests/` removed a directory level, so these now resolve the repository's parent (`/workspace` here). Running these existing entry points cannot find the application sources or G1 project. Use `../..` from these four script directories.
 
-If selections during loading should be ignored, check `flag` before assigning `_id`, so a rejected selection cannot invalidate the active request. If the newest selection should replace the old one, use a request generation and make loading-flag cleanup belong to the active generation; each accepted selection must actually start a request.
+The opposite adjustment breaks several upstream-bug runners: `plan/upstream-bugs/unit-tests/batch-003/issue-378/run.sh:3` now ascends four directories, landing in `plan/` and looking for `plan/src/...`. Moving `work/upstream-bugs/` to `plan/upstream-bugs/` did not change their nesting depth, so retain five parent traversals. The same introduced error affects batch-003 issue-404, batch-008 issue-105, batch-041 issue-598, fix-batch-002 issues 275 and 358, batch-084 issue-1305, and batch-085 issue-1311. Restore the removed parent traversal in those root calculations.
 
-The previous missing-source finding is resolved: `Services/DynamicApiSelector.cs` is now committed. The selector currently has no production callers, so it does not yet change feed routing. No other worthwhile issue found in its algorithms or the structured gRPC outcome changes.
+No application source changed in this increment. The prior detail-selection finding is unchanged; this review does not treat the planning move as fixing it.
