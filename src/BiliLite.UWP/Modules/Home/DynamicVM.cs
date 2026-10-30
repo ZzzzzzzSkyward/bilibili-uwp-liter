@@ -22,8 +22,10 @@ namespace BiliLite.Modules
         //本次动态流固定的来源：初始加载/刷新时由选择器决定，之后本页及后续页都沿用它，
         //只有同一次请求里首选失败、备用来源成功时才改到这一路，直到下一次刷新
         private DynamicApiSource? _pinnedSource;
-        //两路都失败时要呈现的错误文本（与换源前的提示一致）
-        private string _lastFailureMessage;
+        //两路各自的失败文本分开存：gRPC 的 grpc-message 只进日志，
+        //用户看到的提示只取 REST 那一路的业务/HTTP 信息，且不会被后跑的那一路覆盖
+        private string _lastLegacyFailureMessage;
+        private string _lastGrpcFailureMessage;
         //REST 动态流自己的翻页游标：上一页最后一张卡的 desc.dynamic_id，
         //与 gRPC 的 historyOffset/updateBaseline 分属两套，互不传递
         private string _restCursor;
@@ -66,6 +68,8 @@ namespace BiliLite.Modules
                 Loading = true;
                 CanLoadMore = false;
                 _lastPageFailed = false;
+                _lastLegacyFailureMessage = null;
+                _lastGrpcFailureMessage = null;
                 if (page == 1)
                 {
                     _historyOffset = null;
@@ -80,33 +84,48 @@ namespace BiliLite.Modules
                     : null;
                 var source = boundary ? decision.Source : _pinnedSource.Value;
                 var outcome = await RequestFromAsync(source, page, false, context, "home-feed page=" + page);
-                if (outcome != DynamicApiOutcome.Success)
+                if (outcome == DynamicApiOutcome.Success)
                 {
-                    //一个逻辑请求最多两路：首选失败只再试另一路一次，绝不在这里循环
-                    var alternative = DynamicApiSelection.Opposite(source);
-                    DynamicApiSelection.LogFallback(DynamicApiOperation.HomeVideoFeed, source, alternative, outcome, "home-feed page=" + page);
-                    var fallbackOutcome = alternative == DynamicApiSource.Grpc
-                        //gRPC 从第一页重新开始，成功后再整体顶替已发布的 REST 行
-                        ? await RequestGrpcSourceAsync(1, true, context, "home-grpc-fallback")
-                        //REST 从已发布的最后一张卡继续，不把两套游标互传
-                        : await RequestLegacySourceAsync(page == 1 ? null : LastPublishedDynamicId(), false, page, context, "home-rest-fallback");
-                    if (fallbackOutcome != DynamicApiOutcome.Success)
-                    {
-                        DynamicApiSelection.LogExhausted(DynamicApiOperation.HomeVideoFeed, outcome, fallbackOutcome, "home-feed page=" + page);
-                        throw new InvalidOperationException(_lastFailureMessage ?? "动态请求失败");
-                    }
-                    source = alternative;
+                    //来源在本次动态流的生命周期内固定：后续翻页不再因另一路分数更高而改源
+                    _pinnedSource = source;
+                    return;
                 }
-                //来源在本次动态流的生命周期内固定：后续翻页不再因另一路分数更高而改源
-                _pinnedSource = source;
+                if (page > 1)
+                {
+                    //翻页失败绝不换源：gRPC 兜底会从第一页重来，成功后就顶替掉已上屏的行；
+                    //用户正在看的内容也不该被一条错误提示打断，所以这里只记日志
+                    CanLoadMore = false;
+                    _lastPageFailed = true;
+                    LogHelper.Log("Home dynamics stage=feed-failed page=" + page + " source=" + source
+                        + " outcome=" + outcome, LogType.ERROR);
+                    return;
+                }
+                //第一页：一个逻辑请求最多两路，首选失败只再试另一路一次，绝不在这里循环
+                var alternative = DynamicApiSelection.Opposite(source);
+                DynamicApiSelection.LogFallback(DynamicApiOperation.HomeVideoFeed, source, alternative, outcome, "home-feed page=" + page);
+                var fallbackOutcome = alternative == DynamicApiSource.Grpc
+                    //gRPC 从第一页重新开始，成功后再整体顶替已发布的 REST 行
+                    ? await RequestGrpcSourceAsync(1, true, context, "home-grpc-fallback")
+                    //REST 从第一页重新取，不把两套游标互传
+                    : await RequestLegacySourceAsync(null, false, page, context, "home-rest-fallback");
+                if (fallbackOutcome != DynamicApiOutcome.Success)
+                {
+                    DynamicApiSelection.LogExhausted(DynamicApiOperation.HomeVideoFeed, outcome, fallbackOutcome, "home-feed page=" + page);
+                    //异常文本（只进日志）优先取 REST 那一路，gRPC 的 grpc-message 不参与
+                    throw new InvalidOperationException(_lastLegacyFailureMessage ?? _lastGrpcFailureMessage ?? "动态请求失败");
+                }
+                _pinnedSource = alternative;
             }
             catch (Exception ex)
             {
                 CanLoadMore = false;
                 _lastPageFailed = true;
                 LogHelper.Log("Home dynamics stage=feed-failed page=" + page, LogType.ERROR, ex);
-                var handel = HandelError<AnimeHomeModel>(ex);
-                Utils.ShowMessageToast(handel.message);
+                //只有第一页且 REST 那一路确实失败过才提示：提示内容来自 REST 的业务/HTTP 信息
+                if (page == 1 && !string.IsNullOrEmpty(_lastLegacyFailureMessage))
+                {
+                    Utils.ShowMessageToast(_lastLegacyFailureMessage);
+                }
             }
             finally
             {
@@ -150,7 +169,7 @@ namespace BiliLite.Modules
                     throw;
                 _historyOffset = null;
                 _updateBaseline = null;
-                _lastFailureMessage = ex.Message;
+                _lastGrpcFailureMessage = ex.Message;
                 return outcome;
             }
             if (reply == null || reply.DynamicList == null)
@@ -158,7 +177,7 @@ namespace BiliLite.Modules
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage);
                 _historyOffset = null;
                 _updateBaseline = null;
-                _lastFailureMessage = "动态请求失败：响应无法解析";
+                _lastGrpcFailureMessage = "动态请求失败：响应无法解析";
                 return DynamicApiOutcome.MalformedResponse;
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
@@ -211,7 +230,7 @@ namespace BiliLite.Modules
                 DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
                 if (outcome == DynamicApiOutcome.IgnoredFailure)
                     throw;
-                _lastFailureMessage = ex.Message;
+                _lastLegacyFailureMessage = ex.Message;
                 return outcome;
             }
             if (!restResponse.status)
@@ -219,7 +238,7 @@ namespace BiliLite.Modules
                 //HTTP 状态在 code 里：4xx/5xx 与传输失败分开归类
                 var outcome = DynamicApiSelection.ClassifyLegacy(restResponse, null);
                 DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
-                _lastFailureMessage = restResponse.message;
+                _lastLegacyFailureMessage = string.IsNullOrEmpty(restResponse.message) ? "动态请求失败" : restResponse.message;
                 return outcome;
             }
             var restData = restResponse.GetJObject();
@@ -230,7 +249,7 @@ namespace BiliLite.Modules
                 //信封合法但没有数据，或者业务码本身不是 0：都算这次没拿到有效页
                 var outcome = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
                 DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage, businessCode ?? 0);
-                _lastFailureMessage = restData?["message"]?.ToString() ?? restResponse.message;
+                _lastLegacyFailureMessage = restData?["message"]?.ToString() ?? restResponse.message ?? "动态请求失败";
                 return outcome;
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
@@ -265,10 +284,6 @@ namespace BiliLite.Modules
             return DynamicApiOutcome.Success;
         }
 
-        private string LastPublishedDynamicId()
-        {
-            return Items != null && Items.Count > 0 ? Items[Items.Count - 1]?.desc?.dynamic_id : null;
-        }
         public async void Refresh()
         {
             if (Loading)
@@ -278,6 +293,8 @@ namespace BiliLite.Modules
             Items = null;
             CanLoadMore = false;
             _lastPageFailed = false;
+            _lastLegacyFailureMessage = null;
+            _lastGrpcFailureMessage = null;
             _page = 1;
             _historyOffset = null;
             _updateBaseline = null;
