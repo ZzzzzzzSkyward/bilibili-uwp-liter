@@ -265,92 +265,100 @@ namespace BiliLite.Pages
         {
             // 页签已关:既不取详情也不换标题、不起播
             if (_isClosed) return;
-            _id = id;
+            // 上一次取详情还在路上:这次选择整条丢掉,不改 _id,免得在途请求的对账条件被顶替
             if (flag) return;
+            _id = id;
             flag = true;
-            if (long.TryParse(id, out var aid))
+            try
             {
-                avid = id;
-                is_bvid = false;
-            }
-            else
-            {
-                bvid = id;
-                is_bvid = true;
-            }
-            await videoDetailVM.LoadVideoDetail(id, is_bvid);
-            // 详情回来时页签已经关掉,或者这次请求已被下一次进入本页的取详情顶替:
-            // 都不要再改 VM 和播放器(播放器可能已经释放)
-            if (_isClosed || _id != id)
-            {
-                return;
-            }
-            if (this.VideoCover != null)
-            {
-                this.VideoCover.Visibility = SettingHelper.GetValue<bool>(SettingHelper.UI.SHOW_DETAIL_COVER, true) ? Visibility.Visible : Visibility.Collapsed;
-            }
-            if (SettingHelper.GetValue<bool>("一键三连提示", true))
-            {
-                SettingHelper.SetValue("一键三连提示", false);
-                Utils.ShowMessageToast("右键或长按点赞按钮可以一键三连哦~", 5);
-            }
-            if (videoDetailVM.VideoInfo != null)
-            {
-                avid = videoDetailVM.VideoInfo.aid;
-                var desc = ControlHelper.StringToRichText(videoDetailVM.VideoInfo.desc, null);
+                if (long.TryParse(id, out var aid))
+                {
+                    avid = id;
+                    is_bvid = false;
+                }
+                else
+                {
+                    bvid = id;
+                    is_bvid = true;
+                }
+                await videoDetailVM.LoadVideoDetail(id, is_bvid);
+                // 详情回来时页签已经关掉,或者这次请求已被下一次进入本页的取详情顶替:
+                // 都不要再改 VM 和播放器(播放器可能已经释放)
+                if (_isClosed || _id != id)
+                {
+                    return;
+                }
+                if (this.VideoCover != null)
+                {
+                    this.VideoCover.Visibility = SettingHelper.GetValue<bool>(SettingHelper.UI.SHOW_DETAIL_COVER, true) ? Visibility.Visible : Visibility.Collapsed;
+                }
+                if (SettingHelper.GetValue<bool>("一键三连提示", true))
+                {
+                    SettingHelper.SetValue("一键三连提示", false);
+                    Utils.ShowMessageToast("右键或长按点赞按钮可以一键三连哦~", 5);
+                }
+                if (videoDetailVM.VideoInfo != null)
+                {
+                    avid = videoDetailVM.VideoInfo.aid;
+                    var desc = ControlHelper.StringToRichText(videoDetailVM.VideoInfo.desc, null);
 
-                contentDesc.Content = desc;
-                ChangeTitle(videoDetailVM.VideoInfo.title);
-                CreateQR();
-                if (!string.IsNullOrEmpty(videoDetailVM.VideoInfo.redirect_url))
-                {
-                    var result = await MessageCenter.HandelSeasonID(videoDetailVM.VideoInfo.redirect_url);
-                    if (!string.IsNullOrEmpty(result))
+                    contentDesc.Content = desc;
+                    ChangeTitle(videoDetailVM.VideoInfo.title);
+                    CreateQR();
+                    if (!string.IsNullOrEmpty(videoDetailVM.VideoInfo.redirect_url))
                     {
-                        this.Frame.Navigate(typeof(SeasonDetailPage), result);
-                        //从栈中移除当前页面的历史
-                        this.Frame.BackStack.Remove(this.Frame.BackStack.FirstOrDefault(x => x.SourcePageType == this.GetType()));
-                        return;
+                        var result = await MessageCenter.HandelSeasonID(videoDetailVM.VideoInfo.redirect_url);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            this.Frame.Navigate(typeof(SeasonDetailPage), result);
+                            //从栈中移除当前页面的历史
+                            this.Frame.BackStack.Remove(this.Frame.BackStack.FirstOrDefault(x => x.SourcePageType == this.GetType()));
+                            return;
+                        }
                     }
-                }
-                List<PlayInfo> playInfos = new List<PlayInfo>();
-                int i = 0;
-                foreach (var item in videoDetailVM.VideoInfo.pages)
-                {
-                    playInfos.Add(new PlayInfo()
+                    List<PlayInfo> playInfos = new List<PlayInfo>();
+                    int i = 0;
+                    foreach (var item in videoDetailVM.VideoInfo.pages)
                     {
-                        avid = videoDetailVM.VideoInfo.aid,
-                        cid = item.cid,
-                        duration = item.duration,
-                        is_interaction = videoDetailVM.VideoInfo.interaction != null,
-                        order = i,
-                        play_mode = VideoPlayType.Video,
-                        title = "P" + item.page + " " + item.part,
-                        area = Utils.ParseArea(videoDetailVM.VideoInfo.title,videoDetailVM.VideoInfo.owner.mid)
+                        playInfos.Add(new PlayInfo()
+                        {
+                            avid = videoDetailVM.VideoInfo.aid,
+                            cid = item.cid,
+                            duration = item.duration,
+                            is_interaction = videoDetailVM.VideoInfo.interaction != null,
+                            order = i,
+                            play_mode = VideoPlayType.Video,
+                            title = "P" + item.page + " " + item.part,
+                            area = Utils.ParseArea(videoDetailVM.VideoInfo.title,videoDetailVM.VideoInfo.owner.mid)
+                        });
+                        i++;
+                    }
+                    var index = 0;
+                    if (videoDetailVM.VideoInfo.history != null)
+                    {
+                        var history = videoDetailVM.VideoInfo.pages.FirstOrDefault(x => x.cid.Equals(videoDetailVM.VideoInfo.history.cid));
+                        if (history != null)
+                        {
+                            SettingHelper.SetValue<double>(history.cid, Convert.ToDouble(videoDetailVM.VideoInfo.history.progress));
+                            index = videoDetailVM.VideoInfo.pages.IndexOf(history);
+                            //player.InitializePlayInfo(playInfos, );
+                        }
+                    }
+                    player.InitializePlayInfo(playInfos, index);
+                    comment.LoadComment(new LoadCommentInfo()
+                    {
+                        CommentMode = (int)Api.CommentApi.CommentType.Video,
+                        CommentSort = Api.CommentApi.CommentSort.Hot,
+                        Oid = videoDetailVM.VideoInfo.aid
                     });
-                    i++;
                 }
-                var index = 0;
-                if (videoDetailVM.VideoInfo.history != null)
-                {
-                    var history = videoDetailVM.VideoInfo.pages.FirstOrDefault(x => x.cid.Equals(videoDetailVM.VideoInfo.history.cid));
-                    if (history != null)
-                    {
-                        SettingHelper.SetValue<double>(history.cid, Convert.ToDouble(videoDetailVM.VideoInfo.history.progress));
-                        index = videoDetailVM.VideoInfo.pages.IndexOf(history);
-                        //player.InitializePlayInfo(playInfos, );
-                    }
-                }
-                player.InitializePlayInfo(playInfos, index);
-                comment.LoadComment(new LoadCommentInfo()
-                {
-                    CommentMode = (int)Api.CommentApi.CommentType.Video,
-                    CommentSort = Api.CommentApi.CommentSort.Hot,
-                    Oid = videoDetailVM.VideoInfo.aid
-                });
+                ApplyUgcSeason();
             }
-            ApplyUgcSeason();
-            flag = false;
+            finally
+            {
+                // 在途标记只归发起这次请求的一方:关页后重新进入再发起的请求不能被这里放开
+                if (_id == id) flag = false;
+            }
         }
 
         /// <summary>
@@ -473,6 +481,8 @@ namespace BiliLite.Pages
         {
             // 页签已关:选中事件不再换集,播放器已经释放
             if (_isClosed) return;
+            // 详情还在路上:这次选中整条丢掉,不换高亮也不改连播来源
+            if (flag) return;
             var listView = sender as ListView;
             var item = listView?.SelectedItem as VideoUgcSeasonEpisodeView;
             // 选中当前播放的视频时不重新加载，只换一个分集时才播放并清掉其它分区的高亮
@@ -575,6 +585,8 @@ namespace BiliLite.Pages
             {
                 return;
             }
+            // 详情还在路上:不选行也不起播,等在途请求自己回来
+            if (flag) return;
 
             if (mediaListRows.Count == 0)
             {
@@ -979,6 +991,8 @@ namespace BiliLite.Pages
         {
             // 页签已关:晚到的选中不再起播
             if (_isClosed) return;
+            // 详情还在路上:这次选中整条丢掉,不动队列游标
+            if (flag) return;
             var liveView = sender as ListView;
             if (liveView.SelectedItem == null ) return;
             var item = liveView.SelectedItem as VideoPlaylistItem;
@@ -999,6 +1013,8 @@ namespace BiliLite.Pages
         {
             // 页签已关:播放器已释放,播放结束事件不再续播
             if (_isClosed) return;
+            // 详情还在路上:续播这一拍丢掉,不让它顶掉在途请求
+            if (flag) return;
             if (playFromUgcSeason)
             {
                 // 跟着合集走:合集播完就结束,不跳回打开时的队列
@@ -1096,6 +1112,8 @@ namespace BiliLite.Pages
         {
             // 页签已关:不换选中行,也不起播
             if (_isClosed) return;
+            // 详情还在路上:这次换行丢掉,队列游标不动
+            if (flag) return;
             if (index < 0 || index >= playlist.Playlist.Count) return;
 
             // 远程和内存列表的页签内容都是这个 ListView,选中会走已有的行选择处理
