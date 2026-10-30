@@ -161,6 +161,8 @@ namespace BiliLite.Pages
         }
         private void ClosePage()
         {
+            // 页签已经关掉,播放器马上释放:先立标记,还在路上的请求回来后按它收手
+            _isClosed = true;
             UnsubscribeClosedPage();
             ReleaseShare();
             if (videoDetailVM != null)
@@ -194,12 +196,16 @@ namespace BiliLite.Pages
         TextBlock mediaListCountText;
         Button mediaListLoadMoreButton;
         bool flag = false;
+        // 页签关闭后页面上的一切续作都要收手:关闭路径先立标记,晚到的请求按它放弃
+        bool _isClosed;
         string _id = "";
         // 当前视频是从合集分集打开的:连播跟着合集顺序走,不去动打开时的队列
         bool playFromUgcSeason;
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            // 重新进入本页时整页重建,上一次关闭留下的标记不能拦住这次播放
+            _isClosed = false;
             SubscribeClosedPage();
             SubscribeShare();
 
@@ -255,6 +261,8 @@ namespace BiliLite.Pages
         }
         private async Task InitializeVideo(string id)
         {
+            // 页签已关:既不取详情也不换标题、不起播
+            if (_isClosed) return;
             _id = id;
             if (flag) return;
             flag = true;
@@ -269,6 +277,12 @@ namespace BiliLite.Pages
                 is_bvid = true;
             }
             await videoDetailVM.LoadVideoDetail(id, is_bvid);
+            // 详情回来时页签已经关掉:播放器已释放,不再改 VM 和播放器
+            if (_isClosed)
+            {
+                flag = false;
+                return;
+            }
             if (this.VideoCover != null)
             {
                 this.VideoCover.Visibility = SettingHelper.GetValue<bool>(SettingHelper.UI.SHOW_DETAIL_COVER, true) ? Visibility.Visible : Visibility.Collapsed;
@@ -455,6 +469,8 @@ namespace BiliLite.Pages
 
         private async void UgcSeasonEpisode_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            // 页签已关:选中事件不再换集,播放器已经释放
+            if (_isClosed) return;
             var listView = sender as ListView;
             var item = listView?.SelectedItem as VideoUgcSeasonEpisodeView;
             // 选中当前播放的视频时不重新加载，只换一个分集时才播放并清掉其它分区的高亮
@@ -545,8 +561,16 @@ namespace BiliLite.Pages
             // 启动器链接进来时首页已经在状态里,不要再请求一次
             if (mediaListState.LoadedCount == 0 && !await LoadMediaListPage())
             {
+                // 取首页期间页签被关掉:不再刷新已拆掉的页面
+                if (_isClosed) return;
                 // 失败已由服务提示,页签保留并显示已加载 0,不会留下一个空白页签
                 RefreshMediaListChrome();
+                return;
+            }
+
+            // 首页在取的过程中页签被关掉:不选行也不起播
+            if (_isClosed)
+            {
                 return;
             }
 
@@ -564,11 +588,15 @@ namespace BiliLite.Pages
 
         private async void MediaListLoadMore_Click(object sender, RoutedEventArgs e)
         {
+            // 页签已关:按钮不再取页
+            if (_isClosed) return;
             // 失败后按钮就是重试入口,不受 HasMore 限制
             if (mediaListState == null) return;
             if (!mediaListState.HasMore && !mediaListState.LastLoadFailed) return;
             mediaListLoadMoreButton.IsEnabled = false;
             await LoadMediaListPage();
+            // 取页期间页签被关掉:不再碰已拆掉的页面状态
+            if (_isClosed) return;
             RefreshMediaListChrome();
         }
 
@@ -582,6 +610,8 @@ namespace BiliLite.Pages
             var page = mediaListState.IsFirstPage
                 ? await mediaListService.GetMediaList(mediaListState.MediaListId, mediaListState.MediaListType)
                 : await mediaListService.LoadMoreMediaList(mediaListState);
+            // 页签已关:这一页只当没取到,不追加行、也不把状态记成失败
+            if (_isClosed) return false;
             // 失败已经由服务按现有提示方式上报,这里保留已加载的行和"加载更多"
             if (page == null)
             {
@@ -945,7 +975,8 @@ namespace BiliLite.Pages
 
         private async void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            
+            // 页签已关:晚到的选中不再起播
+            if (_isClosed) return;
             var liveView = sender as ListView;
             if (liveView.SelectedItem == null ) return;
             var item = liveView.SelectedItem as VideoPlaylistItem;
@@ -964,10 +995,13 @@ namespace BiliLite.Pages
         /// </summary>
         private async void player_AllMediaEndEvent(object sender, EventArgs e)
         {
+            // 页签已关:播放器已释放,播放结束事件不再续播
+            if (_isClosed) return;
             if (playFromUgcSeason)
             {
                 // 跟着合集走:合集播完就结束,不跳回打开时的队列
                 if (await AdvanceUgcSeasonAsync()) return;
+                if (_isClosed) return;
                 Utils.ShowMessageToast("播放完毕");
                 return;
             }
@@ -980,11 +1014,14 @@ namespace BiliLite.Pages
 
             // 没有队列时,详情里的合集就是顺序源
             if (await AdvanceUgcSeasonAsync()) return;
+            if (_isClosed) return;
             Utils.ShowMessageToast("播放完毕");
         }
 
         private async Task<bool> AdvanceUgcSeasonAsync()
         {
+            // 页签已关:不再按合集顺序选下一集
+            if (_isClosed) return false;
             var next = VideoUgcSeasonOrder.NextAid(videoDetailVM?.VideoInfo?.UgcSeason, ugcSeasonAid);
             if (string.IsNullOrEmpty(next)) return false;
 
@@ -1004,11 +1041,14 @@ namespace BiliLite.Pages
 
             playFromUgcSeason = true;
             await InitializeVideo(next);
-            return true;
+            // 关闭后这一集没有真正起播,调用方不必再提示播放完毕
+            return !_isClosed;
         }
 
         private async Task AdvancePlaylistAsync()
         {
+            // 页签已关:队列不再往前推
+            if (_isClosed) return;
             // 一页可能全是已加载的行,取完再判定一次;上限只是防止服务端反复返回 has_more
             for (var attempt = 0; attempt < 3; attempt++)
             {
@@ -1026,9 +1066,13 @@ namespace BiliLite.Pages
                     case MediaListNextAction.LoadNextPage:
                         if (await LoadMediaListPage())
                         {
+                            // 取页期间页签被关掉:新行留在状态里,但不选行也不起播
+                            if (_isClosed) return;
                             // 新行已经追加到同一个列表,重新判定再走
                             continue;
                         }
+                        // 页签已关:失败也不再改计数、不再提示重试
+                        if (_isClosed) return;
                         // 失败:已加载行不动,"加载更多"仍然可见,就是重试入口
                         RefreshMediaListChrome();
                         Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
@@ -1048,6 +1092,8 @@ namespace BiliLite.Pages
 
         private async Task SelectPlaylistRowAsync(int index)
         {
+            // 页签已关:不换选中行,也不起播
+            if (_isClosed) return;
             if (index < 0 || index >= playlist.Playlist.Count) return;
 
             // 远程和内存列表的页签内容都是这个 ListView,选中会走已有的行选择处理

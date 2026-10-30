@@ -204,4 +204,169 @@ check_media_page 'VideoDetailPage.xaml.cs' 'ClosePage'
 check_media_page 'SeasonDetailPage.xaml.cs' 'ClosePage'
 check_media_page 'LiveDetailPage.xaml.cs' 'StopPlay'
 
+# --- Review fix (465aa55): a closed detail tab must not resume playlist continuations. ---
+# MainPage.ClosePage() disposes the player but does not navigate, so a page fetch or a
+# video-detail request that lands after the tab closed used to select the next queue row
+# and initialize playback on a torn-down page (null dispRequest through InitializePlayInfo).
+# The page now owns one latch, set first in ClosePage() and re-checked by every continuation.
+detail="$repo/src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs"
+[ -f "$detail" ] || fail "source file missing: src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs"
+
+# A latch check must appear in the body before the first occurrence of an anchor.
+guarded_before() {
+	gbody="$1"; gend="$2"; gwhat="$3"
+	eline="$(printf '%s\n' "$gbody" | grep -nF "$gend" | cut -d: -f1 | sed -n 1p || true)"
+	[ -n "$eline" ] || { fail "$gwhat: '$gend' not found in the method body"; }
+	printf '%s\n' "$gbody" | grep -n 'if (_isClosed)' | cut -d: -f1 | awk -v e="$eline" '
+		$1 < e { found = 1 }
+		END { exit found ? 0 : 1 }
+	' || fail "$gwhat: no 'if (_isClosed)' guard before '$gend' (anchor line $eline)"
+	n=$((n + 1))
+}
+
+# A latch check must appear between two anchors, i.e. after that await and before the change.
+guarded_between() {
+	gbody="$1"; gstart="$2"; gend="$3"; gwhat="$4"
+	sline="$(printf '%s\n' "$gbody" | grep -nF "$gstart" | cut -d: -f1 | sed -n 1p || true)"
+	eline="$(printf '%s\n' "$gbody" | grep -nF "$gend" | cut -d: -f1 | sed -n 1p || true)"
+	[ -n "$sline" ] || { fail "$gwhat: '$gstart' not found in the method body"; }
+	[ -n "$eline" ] || { fail "$gwhat: '$gend' not found in the method body"; }
+	[ "$eline" -gt "$sline" ] \
+		|| fail "$gwhat: '$gend' must follow '$gstart' (start: $sline, end: $eline)"
+	printf '%s\n' "$gbody" | grep -n 'if (_isClosed)' | cut -d: -f1 | awk -v s="$sline" -v e="$eline" '
+		$1 > s && $1 < e { found = 1 }
+		END { exit found ? 0 : 1 }
+	' || fail "$gwhat: no 'if (_isClosed)' guard after '$gstart' and before '$gend' (start: $sline, end: $eline)"
+	n=$((n + 1))
+}
+
+# The first statement after a block must be the latch check: used for the initial fetch,
+# where any guard earlier inside the block would otherwise satisfy a line-range search.
+guarded_after_block() {
+	gbody="$1"; gstart="$2"; gwhat="$3"
+	printf '%s\n' "$gbody" | awk -v sig="$gstart" '
+		{ sub(/\r$/, "") }
+		state == 0 { if (index($0, sig)) state = 1; next }
+		state == 1 {
+			o = gsub(/\{/, "{"); c = gsub(/\}/, "}")
+			depth += o - c
+			if (depth > 0) state = 2
+			next
+		}
+		state == 2 {
+			o = gsub(/\{/, "{"); c = gsub(/\}/, "}")
+			depth += o - c
+			if (depth == 0) state = 3
+			next
+		}
+		state == 3 {
+			if ($0 ~ /^[[:space:]]*$/) next
+			if ($0 ~ /^[[:space:]]*\/\//) next
+			print
+			exit
+		}
+	' | sed 's/^[[:space:]]*//' | grep -qx 'if (_isClosed)' \
+		|| fail "$gwhat: the page fetch must be followed by 'if (_isClosed)' before selecting a row or starting playback"
+	n=$((n + 1))
+}
+
+# 1. Exactly one closed latch on the page.
+[ "$(grep -c '^        bool _isClosed;$' "$detail" || true)" -eq 1 ] \
+	|| fail "VideoDetailPage must own exactly one closed latch field: bool _isClosed"
+n=$((n + 1))
+
+# 2. ClosePage() runs SubscribeClosedPage()/ReleaseShare()/player?.Dispose() as before.
+close_body="$(method_body 'private void ClosePage()' "$detail")"
+[ -n "$close_body" ] || fail "could not locate the VideoDetailPage ClosePage() body"
+printf '%s\n' "$close_body" | grep -Fq 'UnsubscribeClosedPage();' \
+	|| fail "VideoDetailPage ClosePage() must still drop its ClosedPage subscription"
+printf '%s\n' "$close_body" | grep -Fq 'ReleaseShare();' \
+	|| fail "VideoDetailPage ClosePage() must still call ReleaseShare()"
+n=$((n + 1))
+
+# 3. The latch is assigned in ClosePage().
+latch_set="$(printf '%s\n' "$close_body" | grep -n '^            _isClosed = true;$' | cut -d: -f1 || true)"
+[ -n "$latch_set" ] || fail "VideoDetailPage ClosePage() no longer sets _isClosed = true"
+n=$((n + 1))
+
+# 4. It is set before every teardown step of that routine, not after.
+for spec in "unsubscribe:$(printf '%s\n' "$close_body" | grep -n 'UnsubscribeClosedPage();' | cut -d: -f1)" \
+	"share:$(printf '%s\n' "$close_body" | grep -n 'ReleaseShare();' | cut -d: -f1)" \
+	"dispose:$(printf '%s\n' "$close_body" | grep -n 'player?\.Dispose();' | cut -d: -f1)"; do
+	what="${spec%%:*}"
+	line="${spec##*:}"
+	[ -n "$line" ] && [ "$line" -gt "$latch_set" ] \
+		|| fail "ClosePage() must set the closed latch before $what (latch: $latch_set, $what: ${line:-none})"
+done
+n=$((n + 1))
+
+# 5. Re-entering the page clears the latch: a stale one must not block the next visit.
+nav_body="$(method_body 'protected async override void OnNavigatedTo' "$detail")"
+[ -n "$nav_body" ] || fail "could not locate the VideoDetailPage OnNavigatedTo() body"
+guarded_reset="$(printf '%s\n' "$nav_body" | grep -n '^            _isClosed = false;$' | cut -d: -f1 || true)"
+[ -n "$guarded_reset" ] || fail "VideoDetailPage OnNavigatedTo() no longer clears the closed latch: _isClosed = false"
+sub_line="$(printf '%s\n' "$nav_body" | grep -n 'SubscribeClosedPage();' | cut -d: -f1 | sed -n 1p || true)"
+[ -n "$sub_line" ] && [ "$guarded_reset" -lt "$sub_line" ] \
+	|| fail "VideoDetailPage OnNavigatedTo() must clear the latch before subscribing (reset: ${guarded_reset:-none}, subscribe: ${sub_line:-none})"
+n=$((n + 1))
+
+# 6. The page fetch drops a page that lands after the tab closed, for both callers.
+load_body="$(method_body 'private async Task<bool> LoadMediaListPage()' "$detail")"
+[ -n "$load_body" ] || fail "could not locate the LoadMediaListPage() body"
+guarded_between "$load_body" 'await mediaListService.LoadMoreMediaList(mediaListState);' 'if (page == null)' 'LoadMediaListPage()'
+
+# 7. The initial remote-playlist fetch is guarded before it selects or starts playback.
+init_body="$(method_body 'private async Task InitializeMediaListPlaylist()' "$detail")"
+[ -n "$init_body" ] || fail "could not locate the InitializeMediaListPlaylist() body"
+guarded_after_block "$init_body" 'if (mediaListState.LoadedCount == 0 && !await LoadMediaListPage())' 'InitializeMediaListPlaylist()'
+
+# 8. The automatic next-page continuation is guarded after its fetch, before the next row.
+advance_body="$(method_body 'private async Task AdvancePlaylistAsync()' "$detail")"
+[ -n "$advance_body" ] || fail "could not locate the AdvancePlaylistAsync() body"
+guarded_before "$advance_body" 'var action = MediaListQueue.NextAction(' 'AdvancePlaylistAsync()'
+guarded_between "$advance_body" 'if (await LoadMediaListPage())' 'continue;' 'AdvancePlaylistAsync()'
+
+# 9. The Load more button refuses a closed page and re-checks after its own fetch.
+more_body="$(method_body 'private async void MediaListLoadMore_Click' "$detail")"
+[ -n "$more_body" ] || fail "could not locate the MediaListLoadMore_Click() body"
+guarded_before "$more_body" 'mediaListLoadMoreButton.IsEnabled = false;' 'MediaListLoadMore_Click()'
+guarded_between "$more_body" 'await LoadMediaListPage();' 'RefreshMediaListChrome();' 'MediaListLoadMore_Click()'
+
+# 10. Row selection refuses a closed page, before the selection and before playback.
+select_body="$(method_body 'private async Task SelectPlaylistRowAsync' "$detail")"
+[ -n "$select_body" ] || fail "could not locate the SelectPlaylistRowAsync() body"
+guarded_before "$select_body" 'listView.SelectedIndex = index;' 'SelectPlaylistRowAsync()'
+guarded_before "$select_body" 'await InitializeVideo(playlist.Playlist[index].ID);' 'SelectPlaylistRowAsync()'
+
+# 11. The UGC season continuation refuses a closed page and re-checks after its await.
+season_body="$(method_body 'private async Task<bool> AdvanceUgcSeasonAsync()' "$detail")"
+[ -n "$season_body" ] || fail "could not locate the AdvanceUgcSeasonAsync() body"
+guarded_before "$season_body" 'listView.SelectedItem = row;' 'AdvanceUgcSeasonAsync()'
+printf '%s\n' "$season_body" | grep -Fq 'return !_isClosed;' \
+	|| fail "AdvanceUgcSeasonAsync() must report the closed page after its await: return !_isClosed"
+recheck="$(printf '%s\n' "$season_body" | grep -n 'return !_isClosed;' | cut -d: -f1 || true)"
+init_video="$(printf '%s\n' "$season_body" | grep -n 'await InitializeVideo(next);' | cut -d: -f1 || true)"
+[ -n "$init_video" ] && [ "$recheck" -gt "$init_video" ] \
+	|| fail "AdvanceUgcSeasonAsync() must re-check the latch after 'await InitializeVideo(next);' (await: ${init_video:-none}, re-check: ${recheck:-none})"
+n=$((n + 1))
+
+# 12. Video detail itself stops on both sides of its request.
+video_body="$(method_body 'private async Task InitializeVideo' "$detail")"
+[ -n "$video_body" ] || fail "could not locate the InitializeVideo() body"
+guarded_before "$video_body" '_id = id;' 'InitializeVideo()'
+guarded_between "$video_body" 'await videoDetailVM.LoadVideoDetail(id, is_bvid);' 'player.InitializePlayInfo(playInfos, index);' 'InitializeVideo()'
+
+# 13. Every event that can start a continuation checks the latch first.
+end_body="$(method_body 'private async void player_AllMediaEndEvent' "$detail")"
+[ -n "$end_body" ] || fail "could not locate the player_AllMediaEndEvent() body"
+guarded_before "$end_body" 'if (playFromUgcSeason)' 'player_AllMediaEndEvent()'
+
+ugc_sel="$(method_body 'private async void UgcSeasonEpisode_SelectionChanged' "$detail")"
+[ -n "$ugc_sel" ] || fail "could not locate the UgcSeasonEpisode_SelectionChanged() body"
+guarded_before "$ugc_sel" 'await InitializeVideo(item.Aid);' 'UgcSeasonEpisode_SelectionChanged()'
+
+queue_sel="$(method_body 'private async void ListView_SelectionChanged' "$detail")"
+[ -n "$queue_sel" ] || fail "could not locate the ListView_SelectionChanged() body"
+guarded_before "$queue_sel" 'await InitializeVideo(item.ID);' 'ListView_SelectionChanged()'
+
 printf 'PASS %d assertions\n' "$n"
