@@ -67,11 +67,14 @@ namespace BiliLite.gRPC
         private static readonly string[] ServerMetadataHeaders = { "grpc-status", "grpc-message", "bili-status-code" };
 
         /// <summary>
-        /// 读取响应头中可用的服务端状态,没有时返回 null
+        /// 读取响应头中可用的服务端状态,没有时返回 null。
+        /// grpc-status 与 bili-status-code 分开解析,供调用方做结构化失败分类,不再解析 message 文本。
         /// </summary>
-        private static string ReadServerMetadata(HttpResponseMessage response, out int? serverCode)
+        private static string ReadServerMetadata(HttpResponseMessage response, out int? serverCode, out int? grpcStatus, out int? biliStatusCode)
         {
             serverCode = null;
+            grpcStatus = null;
+            biliStatusCode = null;
             var parts = new List<string>();
             foreach (var name in ServerMetadataHeaders)
             {
@@ -82,11 +85,22 @@ namespace BiliLite.gRPC
                 if (value.Length == 0)
                     continue;
                 parts.Add(name + "=" + value);
-                if (serverCode == null && name != "grpc-message")
+                if (name == "grpc-message")
+                    continue;
+                int parsed;
+                if (!int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed))
+                    continue;
+                if (serverCode == null)
+                    serverCode = parsed;
+                if (name == "grpc-status")
                 {
-                    int parsed;
-                    if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out parsed))
-                        serverCode = parsed;
+                    if (grpcStatus == null)
+                        grpcStatus = parsed;
+                }
+                else if (name == "bili-status-code")
+                {
+                    if (biliStatusCode == null)
+                        biliStatusCode = parsed;
                 }
             }
             return parts.Count == 0 ? null : string.Join("; ", parts);
@@ -108,6 +122,38 @@ namespace BiliLite.gRPC
             if (metadata == null)
                 builder.Append(",未返回grpc-status等服务端状态");
             return builder.ToString();
+        }
+
+        // 失败分类只看结构化信号(HTTP 状态与响应头),绝不解析 message 文本
+        private static GrpcFailureKind ClassifyFailure(HttpResponseMessage response, int? grpcStatus, int? biliStatusCode)
+        {
+            // 服务端在响应头里给了非 0 状态码就是明确拒绝(含 bili-status-code=-663)
+            if (grpcStatus.HasValue && grpcStatus.Value != 0)
+                return GrpcFailureKind.EndpointRejection;
+            if (biliStatusCode.HasValue && biliStatusCode.Value != 0)
+                return GrpcFailureKind.EndpointRejection;
+            var status = (int)response.StatusCode;
+            if (status >= 500)
+                return GrpcFailureKind.HttpServerError;
+            if (status >= 400)
+                return GrpcFailureKind.EndpointRejection;
+            // 2xx/3xx 却拿不到完整 gRPC 帧,且服务端没给出状态:畸形响应
+            return GrpcFailureKind.MalformedResponse;
+        }
+
+        // message 文本与旧路径逐字一致,额外把 HTTP/gRPC/B 站状态与传输失败类型作为数据带回
+        private static GrpcResult FailureResult(int code, string message, HttpResponseMessage response, int? grpcStatus, int? biliStatusCode)
+        {
+            return new GrpcResult()
+            {
+                code = code,
+                status = false,
+                message = message,
+                httpStatus = (int)response.StatusCode,
+                grpcStatus = grpcStatus,
+                biliStatusCode = biliStatusCode,
+                failureKind = ClassifyFailure(response, grpcStatus, biliStatusCode),
+            };
         }
 
         private static GrpcRequest _instance;
@@ -180,7 +226,9 @@ namespace BiliLite.gRPC
                     using (var response = await SharedHttpClient.SendAsync(request))
                     {
                         int? serverCode;
-                        var metadata = ReadServerMetadata(response, out serverCode);
+                        int? grpcStatus;
+                        int? biliStatusCode;
+                        var metadata = ReadServerMetadata(response, out serverCode, out grpcStatus, out biliStatusCode);
                         LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " status=" + (int)response.StatusCode
                             + " metadata=" + (metadata ?? "none") + " durationMs=" + stopwatch.ElapsedMilliseconds);
                         var data = await response.Content.ReadAsByteArrayAsync();
@@ -188,12 +236,10 @@ namespace BiliLite.gRPC
                         {
                             LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " rejected httpStatus=" + (int)response.StatusCode
                                 + " metadata=" + (metadata ?? "none") + " responseBytes=" + data.Length);
-                            return new GrpcResult()
-                            {
-                                code = serverCode ?? (int)response.StatusCode,
-                                status = false,
-                                message = DescribeFailure(response, metadata, data.Length),
-                            };
+                            return FailureResult(
+                                serverCode ?? (int)response.StatusCode,
+                                DescribeFailure(response, metadata, data.Length),
+                                response, grpcStatus, biliStatusCode);
                         }
                         if (data.Length > 5)
                         {
@@ -202,19 +248,18 @@ namespace BiliLite.gRPC
                                 code = 0,
                                 status = true,
                                 message = "请求成功",
-                                results = data.Skip(5).ToArray()
+                                results = data.Skip(5).ToArray(),
+                                httpStatus = (int)response.StatusCode,
                             };
                         }
                         else
                         {
                             LogDiagnostic("gRPC requestId=" + requestId + " method=POST endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length
                                 + " metadata=" + (metadata ?? "none"));
-                            return new GrpcResult()
-                            {
-                                code = serverCode ?? -102,
-                                status = false,
-                                message = DescribeFailure(response, metadata, data.Length),
-                            };
+                            return FailureResult(
+                                serverCode ?? -102,
+                                DescribeFailure(response, metadata, data.Length),
+                                response, grpcStatus, biliStatusCode);
                         }
                     }
                 }
@@ -227,7 +272,11 @@ namespace BiliLite.gRPC
                 {
                     code = ex.HResult,
                     status = false,
-                    message = "发送gRPC请求失败" + ex.Message
+                    message = "发送gRPC请求失败" + ex.Message,
+                    // HttpClient 超时表现为取消/超时异常,其余按传输失败处理
+                    failureKind = ex is OperationCanceledException || ex is TimeoutException
+                        ? GrpcFailureKind.Timeout
+                        : GrpcFailureKind.Transport,
                 };
             }
         }
@@ -245,7 +294,9 @@ namespace BiliLite.gRPC
                     using (var response = await httpClient.GetAsync(url))
                     {
                         int? serverCode;
-                        var metadata = ReadServerMetadata(response, out serverCode);
+                        int? grpcStatus;
+                        int? biliStatusCode;
+                        var metadata = ReadServerMetadata(response, out serverCode, out grpcStatus, out biliStatusCode);
                         var data = await response.Content.ReadAsByteArrayAsync();
                         LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " status=" + (int)response.StatusCode
                             + " metadata=" + (metadata ?? "none") + " durationMs=" + stopwatch.ElapsedMilliseconds + " responseBytes=" + data.Length);
@@ -253,12 +304,10 @@ namespace BiliLite.gRPC
                         {
                             LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " rejected httpStatus=" + (int)response.StatusCode
                                 + " metadata=" + (metadata ?? "none") + " responseBytes=" + data.Length);
-                            return new GrpcResult()
-                            {
-                                code = serverCode ?? (int)response.StatusCode,
-                                status = false,
-                                message = DescribeFailure(response, metadata, data.Length),
-                            };
+                            return FailureResult(
+                                serverCode ?? (int)response.StatusCode,
+                                DescribeFailure(response, metadata, data.Length),
+                                response, grpcStatus, biliStatusCode);
                         }
                         if (data.Length > 5)
                         {
@@ -267,19 +316,18 @@ namespace BiliLite.gRPC
                                 code = 0,
                                 status = true,
                                 message = "请求成功",
-                                results = data.Skip(5).ToArray()
+                                results = data.Skip(5).ToArray(),
+                                httpStatus = (int)response.StatusCode,
                             };
                         }
                         else
                         {
                             LogDiagnostic("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " emptyFrame responseBytes=" + data.Length
                                 + " metadata=" + (metadata ?? "none"));
-                            return new GrpcResult()
-                            {
-                                code = serverCode ?? -102,
-                                status = false,
-                                message = DescribeFailure(response, metadata, data.Length),
-                            };
+                            return FailureResult(
+                                serverCode ?? -102,
+                                DescribeFailure(response, metadata, data.Length),
+                                response, grpcStatus, biliStatusCode);
                         }
                     }
                 }
@@ -291,10 +339,28 @@ namespace BiliLite.gRPC
                 {
                     code = ex.HResult,
                     status = false,
-                    message = "发送Http请求失败" + ex.Message
+                    message = "发送Http请求失败" + ex.Message,
+                    failureKind = ex is OperationCanceledException || ex is TimeoutException
+                        ? GrpcFailureKind.Timeout
+                        : GrpcFailureKind.Transport,
                 };
             }
         }
+    }
+
+    public enum GrpcFailureKind
+    {
+        None = 0,
+        /// <summary>服务端明确拒绝:非 0 的 grpc-status/bili-status-code,或 4xx</summary>
+        EndpointRejection = 1,
+        /// <summary>连接/发送阶段失败,没有拿到响应</summary>
+        Transport = 2,
+        /// <summary>请求被取消或超时</summary>
+        Timeout = 3,
+        /// <summary>HTTP 5xx</summary>
+        HttpServerError = 4,
+        /// <summary>响应完整但拿不到有效 gRPC 帧</summary>
+        MalformedResponse = 5,
     }
 
     public class GrpcResult
@@ -303,5 +369,13 @@ namespace BiliLite.gRPC
         public string message { get; set; }
         public byte[] results { get; set; }
         public bool status { get; set; }
+        /// <summary>HTTP 状态码,没收到响应时为 null</summary>
+        public int? httpStatus { get; set; }
+        /// <summary>响应头 grpc-status</summary>
+        public int? grpcStatus { get; set; }
+        /// <summary>响应头 bili-status-code(接口拒绝时常见 -663/-352/-412)</summary>
+        public int? biliStatusCode { get; set; }
+        /// <summary>传输层/HTTP 层失败类型,status 为 true 时为 None</summary>
+        public GrpcFailureKind failureKind { get; set; }
     }
 }

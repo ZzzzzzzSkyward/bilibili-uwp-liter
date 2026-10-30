@@ -59,7 +59,7 @@ namespace BiliLite.Services
                 return DynAllReply.Parser.ParseFrom(result.results);
             }
 
-            throw new Exception(result.message);
+            throw new GrpcRequestException(result);
         }
 
         public async Task<DynDetailReply> GetDynDetail(string id)
@@ -78,7 +78,7 @@ namespace BiliLite.Services
                 return DynDetailReply.Parser.ParseFrom(result.results);
             }
 
-            throw new Exception(result.message);
+            throw new GrpcRequestException(result);
         }
 
         public async Task<DynVideoReply> GetDynVideo(int page, string historyOffset, string updateBaseline)
@@ -104,7 +104,7 @@ namespace BiliLite.Services
                 return DynVideoReply.Parser.ParseFrom(result.results);
             }
 
-            throw new Exception(result.message);
+            throw new GrpcRequestException(result);
         }
 
         public async Task<DynSpaceRsp> GetDynSpace(long mid, string from = "space", int page = 1, string offset = null)
@@ -128,7 +128,7 @@ namespace BiliLite.Services
                 return DynSpaceRsp.Parser.ParseFrom(result.results);
             }
 
-            throw new Exception(result.message);
+            throw new GrpcRequestException(result);
         }
 
         public async Task<RepostListRsp> GetDynRepostList(string dynamicId, string offset = "")
@@ -148,7 +148,7 @@ namespace BiliLite.Services
                 return RepostListRsp.Parser.ParseFrom(result.results);
             }
 
-            throw new Exception(result.message);
+            throw new GrpcRequestException(result);
         }
 
         private static GrpcBiliUserInfo GetRequestUserInfo()
