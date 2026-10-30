@@ -16,6 +16,7 @@ in `bug_report.md` first.
 | probes | `plan/tests/<name>/run.sh` — c1 52 · c2 99 · c3 97 · d1 82 · d2 58 · g2 22 · g3 34 · g4 75 · g5 44 · stab 53 · smart1 160, all green |
 | build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump` (compile only) or without `-Fast` to package into `Z:\` |
 | sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-work.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
+| dependency plan | `plan/DEPENDENCY_UPGRADE.md` (batch 1 done, batch 2 = protobuf toolchain, batch 3 = migrations) |
 | review cache | `plan/REVIEW_LOG.md` |
 | bug device log | `bug_report.md`, `code_review.md` at the repo root |
 
@@ -49,6 +50,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | --- | --- | --- |
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence |
+| 3 | AI subtitle label (#1311) — partially mitigated | needs a sibling-supported discriminator |
 
 ## 1. Player session ownership
 
@@ -77,6 +79,16 @@ the player on every foreground return.
 
 This one has no device evidence behind it — only source reading. It needs the maintainer's
 observation (minimize vs tab switch, engine, crash details) before it is worth a refactor.
+
+## 3. AI subtitle label (#1311)
+
+Upstream issue #1311 asked for AI-generated subtitles (translated tracks with no language field) to be
+labelled as AI rather than shown as a normal language track. The shipped fix (`9443244`) keeps any
+language label the server does provide and honours the existing AI-marker heuristic, but **fully
+unmarked AI tracks and already-saved labels are unresolved**: the track carries no discriminator and
+the saved entries lost the discarded fields, so the app cannot tell them apart. Do not guess an API
+field to close it; it needs a sibling-supported signal or the subtitle manifest version that carries
+one. Nothing else in that 15-finding upstream series is open — the other 14 are fixed.
 
 ## Parked
 

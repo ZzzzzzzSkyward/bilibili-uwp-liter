@@ -1,0 +1,53 @@
+# Dependency upgrade plan
+
+The 2026-10-29 investigation (`PACKAGE_UPGRADE_REPORT.md`, now in history) was research only — it
+explicitly changed no package reference. Nothing was upgraded, and the report was deleted with the
+other finished documents. This file is the live plan; versions were re-checked against NuGet on
+2026-10-30.
+
+## Batch 1 — routine servicing (done, restored + built clean)
+
+Same major line, no API change expected; one build proves it.
+
+| Package | From | To |
+| --- | --- | --- |
+| `Microsoft.UI.Xaml` | 2.8.4 | 2.8.7 |
+| `Newtonsoft.Json` (UWP + WebApi) | 13.0.3 | 13.0.4 |
+| `NLog` | 5.3.4 | 5.5.1 |
+| `Microsoft.Web.WebView2` | 1.0.3079-prerelease | 1.0.4314.35 (first stable pin) |
+
+Applied on 2026-10-30; `obj/project.assets.json` shows `Microsoft.UI.Xaml/2.8.7`, `Microsoft.Web.WebView2/1.0.4314.35`, `NLog/5.5.1`, `Newtonsoft.Json/13.0.4`, and `build-release-x64.ps1 -Fast -Restore` finished 0 errors.
+
+Not taken: NLog 6 (file/archive behaviour changes, feature package splits) and
+`Microsoft.NETCore.UniversalWindowsPlatform` (6.2.14 is the final release of that line).
+
+## Batch 2 — protobuf toolchain
+
+`Google.Protobuf` 3.29.3 → 3.36.2 and `Grpc.Tools` 2.69.0 → 2.85.0, in **both** `BiliLite.gRPC` and
+`BiliLite.UWP` (the app regenerates the same protos). Runtime and generator must move together: the
+generated code of 2.85 may require a newer runtime, and an older generator against the new runtime can
+emit code that no longer compiles. Verify by regenerating and building both projects; if the generated
+code breaks, pin the pair back rather than mixing.
+
+## Batch 3 — migrations that need their own session
+
+- **FFmpegInteropX 2.0.0-pre7 → 2.1.0.81200.** The stable line reorganized native packages
+  (`FFmpegInteropX.UWP.Lib` + `FFmpegInteropX.UWP.FFmpeg`) and moved to C++/WinRT. Integration spans
+  `App.xaml.cs`, `Controls/Player.xaml.cs`, `Controls/PlayerControl.xaml.cs` and the live player.
+- **Community Toolkit 7.1.3 → 8.x.** Six `Microsoft.Toolkit.Uwp*` packages split and renamed; types
+  move to `CommunityToolkit.WinUI.*` namespaces across many XAML controls.
+- **NLog 6.2.2.** Separate migration with behaviour changes and feature package splits.
+- **FFMpegCore 5.1.0 → 5.5.0** (export helper), **SharpCompress 0.39.0 → 0.50.7** (archive extraction;
+  avoid the 0.51 beta), **RestSharp 112.1.1-alpha → 112.1.0** (keep the alpha line's API, the
+  multipart upload in `SendDynamicVM.UploadImage` uses `RestClient` directly).
+- **Not planned:** converting Newtonsoft to `System.Text.Json`; replacing the hand-rolled gRPC
+  transport with `Grpc.Net.Client` (no UWP support statement); dropping `SYEngine.uwp` (still the
+  FLV fallback) or `NSDanmaku` (already latest).
+
+## Ground rules
+
+- One batch per commit; the UWP build (`build-release-x64.ps1 -Fast -NoVersionBump`) and the gRPC
+  build are the gate. A package update is not evidence of a behaviour fix — Bilibili's server
+  changes are not addressed by a version bump.
+- `NLog.Config` 4.7.15 is likely unnecessary (`NLog.Config` is an NLog namespace, not a package
+  requirement); drop it only with a build that proves nothing references the package assets.
