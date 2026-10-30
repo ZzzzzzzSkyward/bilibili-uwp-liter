@@ -27,6 +27,10 @@ Newest first; every one of these is device-accepted per the policy above.
   `Services/PlayerToastService.cs`, keyed overlays (volume, brightness, seek, message, acceleration,
   speed) replacing the central `ToolTip` label, one service per `PlayerControl`, timers stopped in
   `Dispose`; build 0 errors.
+- **Release tooling:** `build-release-x64.ps1` now captures the whole `-> … .msix` path (spaces
+  included), derives the two expected package paths from `OutputDir` + version, refuses to continue
+  when neither `BiliLite.UWP_*` nor `BiliLite.Packages_*` is found, and names the `CS2012` holders
+  through Restart Manager before retrying. Verified with a full packaging run into `H:\uwp\pkg diag`.
 - **BR-16 — quiet load-more:** `e5c97e1`, `261317f` — silent page-2 failure, legacy text in the only
   toast, gRPC cursor preserved so the retry resumes.
 - **API-SMART-01:** `797dc3a`, `26d4e57`, `3665bdb` — adaptive gRPC/legacy selection for six dynamic
@@ -45,7 +49,6 @@ Newest first; every one of these is device-accepted per the policy above.
 | --- | --- | --- |
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence |
-| 3 | `build-release-x64.ps1` MSIX artifact path regex | not started |
 
 ## 1. Player session ownership
 
@@ -74,13 +77,6 @@ the player on every foreground return.
 
 This one has no device evidence behind it — only source reading. It needs the maintainer's
 observation (minimize vs tab switch, engine, crash details) before it is worth a refactor.
-
-## 3. Release tooling — MSIX artifact path regex
-
-`build-release-x64.ps1` matches artifacts with `->\s+(\S+\.msix)$`, which drops paths containing
-spaces and can silently skip the package-layout validation. Capture the whole path, or derive it from
-`OutputDir`/version, and never treat a missing artifact as success. Keep the layout checks and the
-`CS2012` retry (the retry names its file holders through Restart Manager and waits for them).
 
 ## Parked
 

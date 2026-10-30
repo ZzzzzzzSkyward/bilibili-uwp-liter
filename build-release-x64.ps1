@@ -298,13 +298,25 @@ if ($Fast) {
     return
 }
 
-$packages = $buildOutput | ForEach-Object {
-    if ($_ -match '->\s+(\S+\.msix)$') { $Matches[1] }
-} | Select-Object -Unique
+# 产物路径里可能带空格（自定义 OutputDir），所以匹配整行末尾而不是 \S+；
+# 再按「输出目录 + 版本 + 项目名」的约定路径兜底，确保两个包都被检查到。
+$builtVersion = if ($NoVersionBump) { $current.ToString() } else { $next.ToString() }
+$packages = @()
+foreach ($line in $buildOutput) {
+    if ($line -match '->\s+(.+\.msix)\s*$') { $packages += $Matches[1].Trim() }
+}
+foreach ($name in @('BiliLite.UWP', 'BiliLite.Packages')) {
+    $expected = Join-Path $OutputDir ("{0}_{1}_x64_Test\{0}_{1}_x64.msix" -f $name, $builtVersion)
+    if (Test-Path -LiteralPath $expected) { $packages += $expected }
+}
+$packages = @($packages | Select-Object -Unique)
 if ($packages) {
     Write-Host ''
     Write-Host '生成产物：'
     $packages | ForEach-Object { Write-Host "  $_" }
+}
+else {
+    throw "生成成功，但在 $OutputDir 里没有找到任何 MSIX（版本 $builtVersion）。不要交付空结果。"
 }
 
 # ---------- 打包布局校验 ----------
@@ -352,6 +364,9 @@ function Test-FullPackageLayout {
 
 $uwpPackage = $packages | Where-Object { $_ -match 'BiliLite\.UWP_.*\.msix$' } | Select-Object -First 1
 $fullPackage = $packages | Where-Object { $_ -match 'BiliLite\.Packages_.*\.msix$' } | Select-Object -First 1
+if (-not $uwpPackage -and -not $fullPackage) {
+    throw "找到的 MSIX 里没有 BiliLite.UWP_* 或 BiliLite.Packages_*（$($packages -join '; ')），布局无法校验，不要交付。"
+}
 if ($uwpPackage) {
     $problem = Test-UwpPackageLayout -Path $uwpPackage
     if ($problem) {
