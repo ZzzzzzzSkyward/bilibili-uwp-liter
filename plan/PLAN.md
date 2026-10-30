@@ -18,32 +18,35 @@ in `bug_report.md` first.
 | review cache | `plan/REVIEW_LOG.md` |
 | bug device log | `bug_report.md`, `code_review.md` at the repo root |
 
+## Done
+
+Newest first; every one of these is device-accepted per the policy above.
+
+- **N1 — player overlay toasts:** `312fa23` — `Controls/PlayerToast.xaml(.cs)` and
+  `Services/PlayerToastService.cs`, keyed overlays (volume, brightness, seek, message, acceleration,
+  speed) replacing the central `ToolTip` label, one service per `PlayerControl`, timers stopped in
+  `Dispose`; build 0 errors.
+- **BR-16 — quiet load-more:** `e5c97e1`, `261317f` — silent page-2 failure, legacy text in the only
+  toast, gRPC cursor preserved so the retry resumes.
+- **API-SMART-01:** `797dc3a`, `26d4e57`, `3665bdb` — adaptive gRPC/legacy selection for six dynamic
+  paths, persisted `dynamic-api-history.v1.json`.
+- **C1/C2/C3:** `92ecd6a`, `34ec312`, `c735a73` (+`18f71dc`) — collections, playlist paging, playlist
+  links and continuation.
+- **D1/D2:** `5e36ec2`, `e94c843` — danmaku list with copy/like, filter import/export.
+- **G1–G5:** `cfcd3de`/`75e8ecb`, `914d32f`, `d4c6345`(+`6ae1981`), `65d5e8c`(+`4fca416`),
+  `b39739a`(+`9fb3d16`).
+- **Stability 1/3/4:** `96de3fc`, `0668875`, `546b409`.
+- **Home-feed REST fallback (BR-13):** `5881dbb`.
+
 ## Open
 
 | # | Item | State |
 | --- | --- | --- |
-| 1 | N1 — player overlay toasts | in progress |
-| 2 | Player open/replace/close session ownership | not started |
-| 3 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence |
-| 4 | `build-release-x64.ps1` MSIX artifact path regex | not started |
+| 1 | Player open/replace/close session ownership | not started |
+| 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence |
+| 3 | `build-release-x64.ps1` MSIX artifact path regex | not started |
 
-## 1. N1 — player overlay toasts
-
-Replace the single central label (`PlayerControl.xaml` → `ToolTip`/`TxtToolTip`) with per-action
-overlays so volume, brightness, seek, message, held acceleration and speed stop overwriting each
-other, and held speed stays visible until release.
-
-- New `Controls/PlayerToast.xaml(.cs)` + `Services/PlayerToastService.cs`; one service per
-  `PlayerControl`, no DI container. Keys: Volume, Brightness, Progress, Msg, Accelerating, Speed.
-- `Show(key, text)` replaces that key's text and restarts its timeout; a hold API keeps
-  Accelerating/held Speed up until release; ordinary keys auto-hide after ~1.5 s.
-- The slide/keyboard handlers and the held-speed handler call the service instead of writing the
-  central label, keeping every existing step calculation; one action produces one overlay.
-- Position from the current player size. Stop all timers and clear overlays in `Dispose`.
-- Omit SponsorBlock/skip-segment types; leave the generic `MessageToast` alone; add the `Compile`/
-  `Page` entries.
-
-## 2. Player session ownership
+## 1. Player session ownership
 
 `PlayerControl` opens media in several paths (native DASH, FFmpeg DASH, quality change, engine
 fallback) and mutates shared player fields across `await`s. Closing the tab or switching video while
@@ -56,7 +59,7 @@ Fix shape: one session id per open, new resources kept local until the session i
 opens invalidated on close/replacement, resources of an obsolete session disposed, callbacks from
 obsolete players rejected. Do not rewrite the player.
 
-## 3. Background playback ownership
+## 2. Background playback ownership
 
 `backgroundMediaPlayback` is declared in both manifests and `PlayerControl` wires Play/Pause and
 status, so missing permissions are not the issue. The gap is ownership: system media controls are
@@ -71,7 +74,7 @@ the player on every foreground return.
 This one has no device evidence behind it — only source reading. It needs the maintainer's
 observation (minimize vs tab switch, engine, crash details) before it is worth a refactor.
 
-## 4. Release tooling — MSIX artifact path regex
+## 3. Release tooling — MSIX artifact path regex
 
 `build-release-x64.ps1` matches artifacts with `->\s+(\S+\.msix)$`, which drops paths containing
 spaces and can silently skip the package-layout validation. Capture the whole path, or derive it from
