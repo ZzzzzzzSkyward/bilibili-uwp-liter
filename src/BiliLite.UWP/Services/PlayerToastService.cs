@@ -40,7 +40,9 @@ namespace BiliLite.Services
             _host = host;
             _stack = new StackPanel
             {
-                HorizontalAlignment = HorizontalAlignment.Center,
+                // 铺满宿主宽度：栈宽不再由最宽的一条浮层决定，
+                // 一条浮层折叠/换文本时其他浮层不会被重新居中，正在淡出的那条也不会跟着平移
+                HorizontalAlignment = HorizontalAlignment.Stretch,
                 VerticalAlignment = VerticalAlignment.Top,
                 IsHitTestVisible = false
             };

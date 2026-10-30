@@ -483,7 +483,7 @@ namespace BiliLite.Controls
                         }
                         else
                         {
-                            playerToasts.Show(PlayerToastService.Volume, "音量:" + Player.Volume.ToString("P"));
+                            playerToasts.Show(PlayerToastService.Volume, PlayerToastOverlay.FormatVolume(Player.Volume));
                         }
                     }
                     break;
@@ -2425,7 +2425,7 @@ namespace BiliLite.Controls
                 Player.Volume = volume;
                 //slider_V.Value += d;
             }
-            playerToasts.Show(PlayerToastService.Volume, "音量:" + Player.Volume.ToString("P"));
+            playerToasts.Show(PlayerToastService.Volume, PlayerToastOverlay.FormatVolume(Player.Volume));
             //Utils.ShowMessageToast("音量:" +  mediaElement.MediaPlayer.Volume.ToString("P"), 3000);
         }
 
