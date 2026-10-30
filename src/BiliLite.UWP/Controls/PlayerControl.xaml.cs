@@ -3,6 +3,7 @@ using BiliLite.Helpers;
 using BiliLite.Modules;
 using BiliLite.Modules.Player;
 using BiliLite.Modules.Player.Playurl;
+using BiliLite.Models.Common;
 using BiliLite.Models.LocalMedia;
 using BiliLite.Services.LocalMedia;
 using Microsoft.Graphics.Canvas;
@@ -250,6 +251,7 @@ namespace BiliLite.Controls
             settingVM = new SettingVM();
 
             danmakuParse = new NSDanmaku.Helper.DanmakuParse();
+            DanmakuListButton.Owner = this;
             //每过2秒就设置焦点
             timer_focus = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(2) };
             timer_focus.Tick += Timer_focus_Tick;
@@ -1617,6 +1619,48 @@ namespace BiliLite.Controls
         private double _position = 0;
         private bool _autoPlay = false;
         private bool _hasPlayedCurrentItem = false;
+
+        /// <summary>
+        /// The comments the player already holds, oldest first, for the danmaku list. Reads the
+        /// loaded pool only: opening the list never fetches anything.
+        /// </summary>
+        public IReadOnlyList<DanmakuListRow> GetDanmakuListSnapshot(DanmakuListMode mode)
+        {
+            var pool = danmakuPool;
+            var loaded = new List<DanmakuListRow>();
+            if (pool != null)
+            {
+                foreach (var group in pool)
+                {
+                    foreach (var danmaku in group.Value)
+                    {
+                        if (danmaku == null) continue;
+                        loaded.Add(new DanmakuListRow()
+                        {
+                            RowId = danmaku.rowID,
+                            SendId = danmaku.sendID,
+                            Text = danmaku.text,
+                            Time = danmaku.time,
+                        });
+                    }
+                }
+            }
+            return DanmakuListSnapshot.Build(loaded, Player.Position, mode, CanLikeDanmakuRows());
+        }
+
+        /// <summary>
+        /// A like reaches the server only for online playback, with an account, and only for rows
+        /// that carry a server id; downloaded, manifest and local XML comments stay copy-only.
+        /// </summary>
+        private bool CanLikeDanmakuRows()
+        {
+            var item = CurrentPlayItem;
+            if (item == null) return false;
+            if (item.play_mode == VideoPlayType.Download || item.play_mode == VideoPlayType.LoaclFile) return false;
+            if (item.LocalPlayInfo != null) return false;
+            if (string.IsNullOrEmpty(item.cid)) return false;
+            return SettingHelper.Account.Logined;
+        }
 
         private async Task SetDanmaku(bool update = false)
         {

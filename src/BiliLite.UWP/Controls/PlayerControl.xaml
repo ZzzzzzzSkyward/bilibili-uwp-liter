@@ -636,6 +636,7 @@
                   <Button x:Name="TopBtnCloseDanmaku" Click="TopBtnCloseDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay}" Background="Transparent" Padding="0" Width="48" Height="48">
                     <Image Width="28" Height="28" Source="/Assets/Icon/icon_danmaku_close.png"/>
                   </Button>
+                  <local:DanmakuListControl x:Name="DanmakuListButton"/>
                   <!--<HyperlinkButton x:Name="BottomBtnSendDanmaku" Foreground="White" Padding="8" Width="48" Height="48">
                                     <fa:FontAwesome Icon="Solid_Comments" FontSize="20"></fa:FontAwesome>
                                 </HyperlinkButton>-->

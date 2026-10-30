@@ -168,6 +168,7 @@
     <Compile Include="Api\SeasonIndexAPI.cs" />
     <Compile Include="Api\User\DynamicAPI.cs" />
     <Compile Include="Services\GrpcService.cs" />
+    <Compile Include="Services\DynamicApiSelector.cs" />
     <Compile Include="Services\MediaListService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaLibraryService.cs" />
@@ -197,6 +198,9 @@
     <Compile Include="Controls\Carousel\CarouselPanel.Members.cs" />
     <Compile Include="Controls\CommentControl.xaml.cs">
       <DependentUpon>CommentControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\DanmakuListControl.xaml.cs">
+      <DependentUpon>DanmakuListControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\FontAwesome5\ControlExtensions.cs" />
     <Compile Include="Controls\FontAwesome5\EFontAwesomeIcon.cs" />
@@ -307,6 +311,7 @@
     <Compile Include="Models\ApiModel.cs" />
     <Compile Include="Models\Common.cs" />
     <Compile Include="Models\Common\User\SubmitVideoItemModel.cs" />
+    <Compile Include="Models\Common\Danmaku\DanmakuListSnapshot.cs" />
     <Compile Include="Models\LocalMedia\LocalMediaItem.cs" />
     <Compile Include="Models\LocalMedia\LocalMediaManifest.cs" />
     <Compile Include="Models\LocalMedia\LocalMediaTrack.cs" />
@@ -637,6 +642,10 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="Controls\CommentControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\DanmakuListControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

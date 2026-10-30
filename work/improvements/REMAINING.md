@@ -9,8 +9,8 @@ State of the branch when this was written:
 | --- | --- |
 | `origin/work` head | `c735a73 Open remote playlist links and continue playback across pages` (all work below is pushed) |
 | Local commits ahead | none — `## work...origin/work` |
-| Shipped | G1, G2, G3 (+ both review rounds), G4, G5 (+ its review fix), D2, C1, C2, C3, home-feed REST fallback, space `LocalTime`, repost fallback replacement, stability items 1 (tab Share), 3 (audio detach), 4 (WebPage close) |
-| Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `g2` 22 · `g3` 34 · `g4` 57 · `g5` 65 · `d2` 58 · `stab` 31 — all `PASS`, exit 0 |
+| Shipped | G1, G2, G3 (+ both review rounds), G4, G5 (+ its review fix), D2, C1, C2, C3, home-feed REST fallback, space `LocalTime`, repost fallback replacement, stability items 1 (tab Share), 3 (audio detach), 4 (WebPage close), D1 |
+| Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `d1` 82 · `g2` 22 · `g3` 34 · `g4` 57 · `g5` 65 · `d2` 58 · `stab` 51 — all `PASS` on the D1 head, exit 0 |
 | Buildable here | `src/BiliLite.gRPC` only (0/0). No UWP workload, so no UWP build, no launch, no live API call |
 | Uncommitted in tree | only the maintainer's two `Package.appxmanifest` version bumps (1.0.9.15) — not part of any batch |
 
@@ -23,7 +23,9 @@ State of the branch when this was written:
 
 ---
 
-## 1. D1 — Danmaku list and actions (feature, unstarted)
+## 1. D1 — Danmaku list and actions (feature, DONE — needs a device check)
+
+**Status: implemented (commit `Add the loaded-danmaku list with copy and like actions`, probe `d1` 82).** `Controls/DanmakuListControl.xaml(.cs)` puts the flyout in the player toolbar, `PlayerControl.GetDanmakuListSnapshot` reads the existing pool, `Models/Common/Danmaku/DanmakuListSnapshot.cs` holds the window/order/action rules, and the csproj has the Compile/Page entries. Like/cancel reuse `DanmakuApi.Like(rowID, cid, 1|2)`, so only online rows with a server id offer them. The on-device pass (flyout, mode switch, copy, like + cancel, copy-only local rows) is still open; details in `IMPROVEMENT_PROGRESS.md`.
 
 - **Goal:** browse the comment pool in a flyout (last 10 s / whole loaded pool), copy text, like an
   online comment; new locally-sent comments get copy only.
@@ -162,7 +164,7 @@ extra auth/API variants, local-library expansion. Not scheduled; each needs its 
    one that can be tested by execution offline.
 2. Stability item 1 (closed-tab `Share` subscriptions), then item 2 only if a session-ownership
    refactor is wanted.
-3. D1, then N1 (both touch `PlayerControl`; one at a time).
+3. N1 (D1 is done; both touch `PlayerControl`, so it cannot run beside N1).
 4. C1 → C2 → C3 (done).
 5. Item 6 whenever a packaging change is wanted.
 

@@ -114,6 +114,8 @@ Finish one usable batch at a time. D1, D2 and N1 can be implemented independentl
 
 ## D1 — Danmaku list and actions
 
+**Status: implemented (commit `Add the loaded-danmaku list with copy and like actions`; probe `d1` 82 assertions).** `Controls/DanmakuListControl.xaml(.cs)` hosts the flyout in the `PlayerControl` toolbar, `PlayerControl.GetDanmakuListSnapshot` reads the existing `danmakuPool`, the rules live in the WinRT-free `Models/Common/Danmaku/DanmakuListSnapshot.cs`, and the csproj carries the explicit Compile/Page entries. Verification and the device check are recorded in `IMPROVEMENT_PROGRESS.md`.
+
 **Already done:** `Models/Requests/Api/DanmakuApi.cs::Like(dmid, oid, op)` constructs the cookie/CSRF request. `Modules/Player/PlayerVM.cs::GetDanmaku` already maps server IDs into NSDanmaku `rowID` and author hashes into `sendID`.
 
 **Sibling:** `Controls/Common/DanmakuListControl.xaml(.cs)`, `ViewModels/Common/DanmakuListViewModel.cs`, `Services/NsDanmakuController.cs::FindDanmakus`, and `Models/Common/Danmaku/`.
