@@ -8,9 +8,9 @@ State of the branch when this was written:
 | Fact | Value |
 | --- | --- |
 | `origin/work` head | `c735a73 Open remote playlist links and continue playback across pages` (all work below is pushed) |
-| Local commits ahead | none — `## work...origin/work` |
-| Shipped | G1, G2, G3 (+ both review rounds), G4, G5 (+ its review fix), D2, C1, C2, C3, home-feed REST fallback, space `LocalTime`, repost fallback replacement, stability items 1 (tab Share), 3 (audio detach), 4 (WebPage close), D1 |
-| Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `d1` 82 · `g2` 22 · `g3` 34 · `g4` 57 · `g5` 65 · `d2` 58 · `stab` 51 — all `PASS` on the D1 head, exit 0 |
+| Local commits ahead | API-SMART-01 batches `797dc3a`, `26d4e57`, `Persist and report the adaptive source history` — local only, not pushed |
+| Shipped | G1, G2, G3 (+ both review rounds), G4, G5 (+ its review fix), D2, C1, C2, C3, home-feed REST fallback, space `LocalTime`, repost fallback replacement, stability items 1 (tab Share), 3 (audio detach), 4 (WebPage close), D1, API-SMART-01 |
+| Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `d1` 82 · `g2` 22 · `g3` 34 · `g4` 57 · `g5` 65 · `d2` 58 · `stab` 51 · `smart1` 160 — all `PASS`, exit 0 |
 | Buildable here | `src/BiliLite.gRPC` only (0/0). No UWP workload, so no UWP build, no launch, no live API call |
 | Uncommitted in tree | only the maintainer's two `Package.appxmanifest` version bumps (1.0.9.15) — not part of any batch |
 
@@ -156,6 +156,21 @@ extra auth/API variants, local-library expansion. Not scheduled; each needs its 
 - Two `Package.appxmanifest` version bumps (`1.0.9.15`) sit uncommitted in the working tree; they are
   the maintainer's, not part of any batch here.
 
+## 10. API-SMART-01 — Adaptive dynamic API selection (DONE — device check open)
+
+- **State:** all three batches are implemented and committed locally: selector core `797dc3a`
+  (`Services/DynamicApiSelector.cs`), VM wiring `26d4e57` (`Services/DynamicApiSelection.cs` plus the
+  three dynamic VMs), persistence and diagnostics `Persist and report the adaptive source history`
+  (`Services/DynamicApiHistoryFileStore.cs`, app-local `dynamic-api-history.v1.json`, 32-bucket LRU,
+  two-second coalesced writes). Probe `plan/tests/smart1/run.sh` → 160 assertions `PASS`.
+- **Detail:** `ADAPTIVE_PLAN.md` (spec and acceptance scenarios); `PLAN.md` →
+  `## API-SMART-01 — Adaptive dynamic API selection` (three-batch ledger, snapshot shape, log lines).
+- **Remaining work:** none found in source. Nothing was deferred, and no follow-up is invented here.
+- **Why it is still listed:** no UWP workload on this machine, so device behaviour is unverified. The
+  maintainer's pass has to cover cold start, repeat-rejection preference persistence across a restart,
+  recovery to gRPC, symmetric legacy-first fallback, valid empty pages, refresh keeping learned history,
+  independent histories per account/app key, and the persisted file surviving an app restart.
+
 ---
 
 ## Suggested next order
@@ -167,6 +182,7 @@ extra auth/API variants, local-library expansion. Not scheduled; each needs its 
 3. N1 (D1 is done; both touch `PlayerControl`, so it cannot run beside N1).
 4. C1 → C2 → C3 (done).
 5. Item 6 whenever a packaging change is wanted.
+6. Item 10 (API-SMART-01) needs no more source work — only the maintainer's device pass.
 
 Sources: `plan/PLAN.md`, `IMPROVEMENT_PROGRESS.md`, `code_review.md`, `bug_report.md`,
 `LOGGING_PROGRESS.md`, `plan/bug-fixes/dynamic-feed-mapper.md`,

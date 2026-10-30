@@ -359,9 +359,10 @@ namespace Smart1Probe
             cooling.Selector.Record(initial.Attempt, DynamicApiOutcome.Success, TimeSpan.FromMilliseconds(50));
             cooling.Record(ctx, op, DynamicApiSource.Legacy, DynamicApiOutcome.EndpointRejection, 0);
             cooling.Record(ctx, op, DynamicApiSource.Legacy, DynamicApiOutcome.EndpointRejection, 0);
-            cooling.Clock.Advance(TimeSpan.FromMinutes(30) + TimeSpan.FromSeconds(1));
+            // Two endpoint rejections are the 5-minute ladder step, so stay inside that window.
+            cooling.Clock.Advance(TimeSpan.FromMinutes(4));
             var stillCooling = cooling.Selector.Choose(ctx, op);
-            Check(!stillCooling.IsRecoveryTrial, "trial: a source inside its 30-minute cooldown is not trialled");
+            Check(!stillCooling.IsRecoveryTrial, "trial: a source inside its 5-minute cooldown is not trialled");
             Check(stillCooling.LegacyInCooldown, "trial: the ladder cooldown is still active");
         }
 
@@ -547,8 +548,8 @@ namespace Smart1Probe
 
             // The signed-in account changes while the request is still in flight.
             var switched = new DynamicApiContext(2002, "login", "android");
-            env.Selector.Record(decision.AttemptFor(DynamicApiSource.Legacy), DynamicApiOutcome.Success,
-                TimeSpan.FromMilliseconds(40));
+            // The next request captures its own bucket; an attempt never inherits someone else's context.
+            env.Record(switched, DynamicApiOperation.Reposts, DynamicApiSource.Legacy, DynamicApiOutcome.Success, 40);
             env.Selector.Record(captured, DynamicApiOutcome.TransportFailure, TimeSpan.Zero);
 
             Check(SampleCount(env, account, DynamicApiOperation.Reposts, DynamicApiSource.Grpc) == 1,

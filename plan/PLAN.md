@@ -46,6 +46,7 @@ Useful implementation landmarks: LM commits `87b3480`, `e939a6b`, `1bc25b6`, `90
 | N1 | Keyed player overlays for volume, brightness, seek and held speed | Existing player handlers |
 | ~~G5~~ | ~~Add gRPC repost listing using the existing detail/repost UI~~ — **done**, commit `Load dynamic reposts through the gRPC list with REST fallback`; report `IMPROVEMENT_PROGRESS.md` | G3's reusable card conversion |
 | C1–C3 | Display Bilibili video collections and remote playlists, with selection and continued playback — C1 **done**, commit `Show the source UGC collection on the video detail page`; C2 **done**, commit `Load remote playlists with paging on the video detail page`; C3 **done**, commit `Open remote playlist links and continue playback across pages` | Existing video detail, medialist builders and playlist UI; independent of gRPC |
+| ~~API-SMART-01~~ | ~~Adaptive gRPC/legacy source selection for the six paired dynamic paths~~ — **done** in three batches: selector core `797dc3a`, VM wiring `26d4e57`, persistence/diagnostics `Persist and report the adaptive source history`; probe `smart1` 160 assertions | Existing dynamic VMs, `GrpcService` transport and REST fallbacks; spec `ADAPTIVE_PLAN.md` |
 
 Finish one usable batch at a time. D1, D2 and N1 can be implemented independently of the gRPC sequence; avoid simultaneous edits to `PlayerControl.xaml(.cs)`. For each batch, the implementation handoff should name changed files, describe the resulting behavior, update the relevant progress note, and report only the permitted formatting check. Do not append a testing or hardening phase.
 
@@ -246,3 +247,23 @@ This rewrite is the deliverable for the current turn. No feature, packaging fix,
 **Result:** a supported Bilibili playlist link opens a visible, playable remote queue; choosing a row and reaching a page boundary both continue through the existing player.
 
 **Sequence and scope:** implement C1 first for collection display directly from a normal video, then C2 and C3 for remote lists. These batches are independent of G1–G5. All behavior references remain the pinned sibling. This addition is planning only; perform no live API calls, tests, builds or validation, and use only `git diff --check` for formatting.
+
+## API-SMART-01 — Adaptive dynamic API selection
+
+**Requested feature:** pick gRPC or legacy per dynamic request from recent observed results, remember it across restarts, and fall back symmetrically. Six paired paths (home feed, user all feed, user video feed, space feed, dynamic detail, reposts) keep separate histories. Full spec and acceptance scenarios: `ADAPTIVE_PLAN.md`.
+
+**Status: implemented in three batches; device behaviour unverified.** Nothing here can be launched on this machine (no UWP workload), so the batches are source-reviewed and probe-asserted only. The maintainer's on-device pass is still open.
+
+| Batch | Deliverable | State |
+| --- | --- | --- |
+| 1 | `Services/DynamicApiSelector.cs`: six operations, weighted reliability `(1+wins)/(2+attempts)` with a 30-minute half-life and 24-hour expiry, preference thresholds `0.10` reliability / `0.20` latency with three successful measurements, 2/5/15/30-minute rejection ladder, two-transient-failure one-minute cooldown, atomic recovery-trial reservation, two-source cap, structured outcome classifiers, injectable clock and store | **Done** — commit `797dc3a` |
+| 2 | `Services/DynamicApiSelection.cs` host (context capture before `await`, choose/attempt/record, classification, fallback and exhaustion logs) wired into `Modules/Home/DynamicVM.cs`, `Modules/User/DynamicVM.cs`, `Modules/User/DynamicRepostVM.cs`; source pinned per feed lifetime, unused cursors never transferred | **Done** — commit `26d4e57` |
+| 3 | `Services/DynamicApiHistoryFileStore.cs`: versioned snapshot in app-local `dynamic-api-history.v1.json`, 32-bucket LRU, two-second coalesced serialized writes, lazy load, fresh start on a missing/incompatible/unreadable file, in-memory fallback when the disk write fails; hosted by `DynamicApiSelection` | **Done** — commit `Persist and report the adaptive source history` |
+
+**Persistence shape:** one JSON document `{ Version: 1, Buckets: [...] }`. Each bucket keeps the operation, account id and both app keys (so the key can be rebuilt), the preferred source, the last attempt/use timestamps, and per source the last-8 scored samples (time, success, duration), last outcome, last business code and cooldown/streak state. Attempt ids and trial reservations stay in memory. Snapshots are taken under the store lock at `Write` time, so later mutations of the live bucket cannot corrupt a pending flush; the flush itself is serialized on a second lock and rewrites a temp file before replacing the target. Any parse failure, version mismatch, or undefined operation discards the document and logs one `stage=discard` line; a failed write re-arms the dirty flag and logs one `stage=persist-write-failed` line.
+
+**Diagnostics:** `stage=choose` per boundary carries operation, chosen source, reason, both reliability scores, preferred latencies, the fallback source and the trial flag; `stage=record` (DEBUG) carries operation, source, outcome, duration and business code once per attempt; `stage=fallback` and `stage=sources-exhausted` close each request. Pagination attempts are not logged, so a feed produces one choose line per boundary rather than one per row.
+
+**Probe:** `plan/tests/smart1` compiles the real selector and asserts 160 expectations, including the cooldown ladder and captured-context isolation (both corrected in batch 3 to match the spec: two rejections are the 5-minute step, and a bucket only ever comes from the context an attempt was created with).
+
+**Result:** selection keeps its default gRPC-first order on a fresh install, prefers the more reliable source after learning, excludes a rejected source for the ladder cooldown, probes an idle alternative once every five minutes, and survives a restart with its learned history — subject to the maintainer's device pass. No new UI or setting was added.

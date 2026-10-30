@@ -11,8 +11,10 @@ namespace BiliLite.Services
     /// </summary>
     internal static class DynamicApiSelection
     {
-        //六个操作共用一份历史:桶键里带着操作,所以首页视频流与用户视频流不会互相串
-        private static readonly DynamicApiSelector Selector = DynamicApiSelector.CreateInMemory();
+        //六个操作共用一份历史:桶键里带着操作,所以首页视频流与用户视频流不会互相串。
+        //历史落在应用本地的版本化快照里(最多 32 个桶),读不出来就当没有;写盘失败不影响内存里的选择。
+        private static readonly DynamicApiSelector Selector =
+            new DynamicApiSelector(new DynamicApiHistoryFileStore(), null);
 
         /// <summary>
         /// 捕获桶键需要的上下文:账号、登录 app key、旧版 Android app key。

@@ -303,7 +303,7 @@ namespace BiliLite.Services
     }
 
     /// <summary>
-    /// 历史存储适配器。本批次只提供进程内实现,持久化在后续批次接到同一个接口后面。
+    /// 历史存储适配器。进程内实现用于探针/测试,应用侧挂的是应用本地的版本化文件快照。
     /// </summary>
     public interface IDynamicApiHistoryStore
     {
@@ -508,12 +508,6 @@ namespace BiliLite.Services
         {
             _store = store ?? new InMemoryDynamicApiHistoryStore();
             _clock = clock ?? DefaultClock;
-        }
-
-        /// <summary>进程内历史,等价于挂一个内存存储</summary>
-        public static DynamicApiSelector CreateInMemory()
-        {
-            return new DynamicApiSelector(null, null);
         }
 
         private static DateTimeOffset DefaultClock()
