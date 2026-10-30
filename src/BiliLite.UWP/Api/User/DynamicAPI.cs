@@ -167,13 +167,17 @@ namespace BiliLite.Api.User
             };
         }
 
+        /// <summary>
+        /// web 聚合动态流。type 取 all/video/article；offset 是上一页响应的 data.offset，null 表示第一页。
+        /// timezone_offset 是客户端时区（分钟，东八区为 -480），服务端用它算 pub_time 文案，与 web 端一致。
+        /// </summary>
         public ApiModel ArticleV2(int page = 1, string offset = null, string type = "article")
         {
             var api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = "https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/all",
-                parameter = $"type={type}&page={page}" +
+                parameter = $"type={type}&page={page}&timezone_offset=-480" +
                     "&features=itemOpusStyle,listOnlyfans,opusBigCover,onlyfansVote,decorationCard,onlyfansAssetsV2,forwardListHidden,ugcDelete,onlyfansQaCard,commentsNewVersion,avatarAutoTheme,sunflowerStyle,cardsEnhance,eva3CardOpus,eva3CardVideo,eva3CardComment",
                 need_cookie = true,
             };

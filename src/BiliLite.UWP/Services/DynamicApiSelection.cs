@@ -6,6 +6,18 @@ using BiliLite.Helpers;
 namespace BiliLite.Services
 {
     /// <summary>
+    /// 动态流实际取数的那一路。选择器只给 gRPC 与旧 REST 打分；
+    /// web 聚合流（x/polymer/web-dynamic）是另一条 Cookie 鉴权的路子，固定排在两者之间或之前，不参与评分。
+    /// </summary>
+    public enum DynamicFeedSource
+    {
+        /// <summary>web 聚合动态流，游标是响应里的 data.offset</summary>
+        Polymer = 0,
+        Grpc = 1,
+        Legacy = 2,
+    }
+
+    /// <summary>
     /// 选择器的应用侧接线:进程级的共享实例、上下文捕获、结果分类、记录与诊断日志。
     /// 选择器本身只认操作与上下文,不知道账号从哪来,也不知道 HTTP 结果长什么样。
     /// </summary>
@@ -110,6 +122,12 @@ namespace BiliLite.Services
         public static DynamicApiSource Opposite(DynamicApiSource source)
         {
             return source == DynamicApiSource.Grpc ? DynamicApiSource.Legacy : DynamicApiSource.Grpc;
+        }
+
+        /// <summary>选择器决定的 gRPC/旧 REST 首选，转成取数来源</summary>
+        public static DynamicFeedSource ToFeedSource(DynamicApiSource source)
+        {
+            return source == DynamicApiSource.Legacy ? DynamicFeedSource.Legacy : DynamicFeedSource.Grpc;
         }
     }
 

@@ -138,6 +138,12 @@ namespace BiliLite.Api.User
         {
             return new ApiModel();
         }
+
+        /// <summary>web 聚合动态流（feed/all）的替身：探针只关心模型闭包能编译，这里恒返回空结果。</summary>
+        public ApiModel ArticleV2(int page = 1, string offset = null, string type = "article")
+        {
+            return new ApiModel();
+        }
     }
 }
 

@@ -4,6 +4,7 @@ using System.IO;
 using Bilibili.App.Dynamic.V2;
 using BiliLite.Helpers;
 using Google.Protobuf;
+using Newtonsoft.Json.Linq;
 
 namespace G3Probe
 {
@@ -34,6 +35,7 @@ namespace G3Probe
             DrawCardUsesPhotoObjectId();
             UnsupportedCardTypeStaysUnrenderable();
             DetailOnlyAcceptsRenderableCards();
+            WebFeedItemsMapThroughTheSameCardModel();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -182,6 +184,194 @@ namespace G3Probe
                 "mapper reports DYNAMIC_TYPE_UNSUPPORTED for a type it cannot render");
             Check(cards[0].basic.rid_str == "712345678901237",
                 "unsupported card falls back to the dynamic id for its oid");
+        }
+
+        /// <summary>
+        /// BR-17: the web feed (x/polymer/web-dynamic) is mapped into the same 2024 card model the
+        /// renderer already draws. Field names come from a real feed/all item; anything the mapper
+        /// does not know must still produce one card (the renderer shows it as unsupported).
+        /// </summary>
+        private static void WebFeedItemsMapThroughTheSameCardModel()
+        {
+            var feed = new JArray
+            {
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943123",
+                    ["type"] = "DYNAMIC_TYPE_AV",
+                    ["basic"] = new JObject { ["rid_str"] = "117451568191221", ["comment_type"] = 1, ["comment_id_str"] = "117451568191221" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_author"] = new JObject { ["mid"] = 546195, ["name"] = "up", ["face"] = "http://face", ["pub_time"] = "10月17日", ["pub_ts"] = "1792207804" },
+                        ["module_stat"] = new JObject
+                        {
+                            ["comment"] = new JObject { ["count"] = 2214 },
+                            ["forward"] = new JObject { ["count"] = 301 },
+                            ["like"] = new JObject { ["count"] = 186067, ["status"] = false },
+                        },
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["type"] = "MAJOR_TYPE_ARCHIVE",
+                                ["archive"] = new JObject
+                                {
+                                    ["aid"] = "117451568191221",
+                                    ["bvid"] = "BV1gKJ86JEuP",
+                                    ["cover"] = "http://cover",
+                                    ["jump_url"] = "//www.bilibili.com/video/BV1gKJ86JEuP",
+                                    ["duration_text"] = "24:02",
+                                    ["title"] = "我是人类",
+                                    ["desc"] = "游戏",
+                                    ["stat"] = new JObject { ["play"] = "475.6万", ["danmaku"] = "7738" },
+                                },
+                            },
+                        },
+                    },
+                },
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943124",
+                    ["type"] = "DYNAMIC_TYPE_WORD",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504943124", ["comment_type"] = 17 },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["desc"] = new JObject
+                            {
+                                ["text"] = "纯文本",
+                                ["rich_text_nodes"] = new JArray
+                                {
+                                    new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_TEXT", ["text"] = "纯文本", ["orig_text"] = "纯文本" },
+                                },
+                            },
+                        },
+                    },
+                },
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943125",
+                    ["type"] = "DYNAMIC_TYPE_DRAW",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504943125" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["type"] = "MAJOR_TYPE_DRAW",
+                                ["draw"] = new JObject
+                                {
+                                    ["id"] = "1248889675504943125",
+                                    ["items"] = new JArray
+                                    {
+                                        new JObject { ["src"] = "http://pic1", ["width"] = 1200, ["height"] = 800 },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943126",
+                    ["type"] = "DYNAMIC_TYPE_FORWARD",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504943126", ["comment_type"] = 17 },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["desc"] = new JObject { ["text"] = "转发理由" },
+                        },
+                    },
+                    ["orig"] = new JObject
+                    {
+                        ["id_str"] = "1248889675504943127",
+                        ["type"] = "DYNAMIC_TYPE_OPUS",
+                        ["basic"] = new JObject { ["rid_str"] = "1248889675504943127" },
+                        ["modules"] = new JObject
+                        {
+                            ["module_dynamic"] = new JObject
+                            {
+                                ["major"] = new JObject
+                                {
+                                    ["type"] = "MAJOR_TYPE_OPUS",
+                                    ["opus"] = new JObject
+                                    {
+                                        ["title"] = "图文标题",
+                                        ["summary"] = new JObject { ["text"] = "图文正文" },
+                                        ["jump_url"] = "//www.bilibili.com/opus/1248889675504943127",
+                                        ["pics"] = new JArray { new JObject { ["url"] = "http://opus-pic" } },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943128",
+                    ["type"] = "DYNAMIC_TYPE_COURSES",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504943128" },
+                },
+            };
+
+            var cards = DynamicGrpcMapper.MapToUserFeedCards(feed);
+            Check(cards.Count == 5, "a web feed page maps to one card per item (cards=" + cards.Count + ")");
+
+            var archive = cards[0];
+            Check(archive.type == "DYNAMIC_TYPE_AV" && archive.id_str == "1248889675504943123",
+                "an AV item keeps its card type and dynamic id");
+            Check(archive.modules.module_dynamic.major.archive.aid == "117451568191221"
+                  && archive.modules.module_dynamic.major.archive.title == "我是人类",
+                "an AV item maps major.archive aid/title");
+            Check(archive.modules.module_dynamic.major.archive.jump_url == "https://www.bilibili.com/video/BV1gKJ86JEuP",
+                "a protocol-relative archive url is completed");
+            Check(archive.modules.module_author.pub_ts == 1792207804L
+                  && archive.modules.module_author.name == "up",
+                "the web author block (string pub_ts) maps onto the card author");
+            Check(archive.modules.module_stat.like.count == 186067,
+                "the web module_stat maps onto the card counters");
+
+            var word = cards[1];
+            Check(word.type == "DYNAMIC_TYPE_WORD"
+                  && word.modules.module_dynamic.desc.text == "纯文本"
+                  && word.modules.module_dynamic.desc.rich_text_nodes.Count == 1,
+                "a word item keeps its text and rich text nodes");
+
+            var draw = cards[2];
+            Check(draw.type == "DYNAMIC_TYPE_DRAW"
+                  && draw.modules.module_dynamic.major.draw.items.Count == 1
+                  && draw.modules.module_dynamic.major.draw.items[0].src == "http://pic1",
+                "a draw item maps its pictures");
+
+            var forward = cards[3];
+            Check(forward.type == "DYNAMIC_TYPE_FORWARD" && forward.orig != null,
+                "a forward item maps its original dynamic");
+            Check(forward.orig.type == "DYNAMIC_TYPE_ARTICLE"
+                  && forward.orig.modules.module_dynamic.major.article.title == "图文标题"
+                  && forward.orig.modules.module_dynamic.major.article.covers.Count == 1,
+                "an opus original maps to the article card the renderer draws");
+
+            Check(cards[4].type == "DYNAMIC_TYPE_UNSUPPORTED"
+                  && cards[4].basic.rid_str == "1248889675504943128",
+                "an unknown web type still yields an unsupported card instead of being dropped");
+
+            Check(DynamicGrpcMapper.MapToUserFeedCards(null).Count == 0,
+                "a null web feed maps to an empty list");
+
+            var noOrig = new JArray
+            {
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943129",
+                    ["type"] = "DYNAMIC_TYPE_FORWARD",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504943129" },
+                },
+            };
+            Check(DynamicGrpcMapper.MapToUserFeedCards(noOrig)[0].orig.type == "DYNAMIC_TYPE_NONE",
+                "a forward without an original falls back to the placeholder card");
         }
 
         private static void DetailOnlyAcceptsRenderableCards()

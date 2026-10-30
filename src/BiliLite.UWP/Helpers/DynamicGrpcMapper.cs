@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Bilibili.App.Dynamic.V2;
 using BiliLite.Modules;
@@ -204,15 +205,20 @@ namespace BiliLite.Helpers
             return result;
         }
 
-        public static List<DynamicCardModel2024> MapToUserArticleCards(JArray articleItems)
+        /// <summary>
+        /// web 聚合动态流（x/polymer/web-dynamic/v1/feed/all）的卡片映射。字段名与 gRPC 的
+        /// DynamicItem/Module* 一一对应，所以逐类填进同一套 2024 卡片模型，渲染层不必区分来源。
+        /// 不认识的类型也给一张"不支持"的卡：一页动态不能因为多了一种卡片类型就整体失败。
+        /// </summary>
+        public static List<DynamicCardModel2024> MapToUserFeedCards(JArray feedItems)
         {
             var result = new List<DynamicCardModel2024>();
-            if (articleItems == null)
+            if (feedItems == null)
             {
                 return result;
             }
 
-            foreach (var token in articleItems)
+            foreach (var token in feedItems)
             {
                 var source = token as JObject;
                 if (source == null)
@@ -220,67 +226,447 @@ namespace BiliLite.Helpers
                     continue;
                 }
 
-                var basic = source["basic"] as JObject;
-                var author = source["modules"]?["module_author"] as JObject;
-                var opus = source["modules"]?["module_dynamic"]?["major"]?["opus"] as JObject;
-                var id = source["id_str"]?.ToString() ?? "";
-                var rid = basic?["rid_str"]?.ToString() ?? id;
-                var pics = new List<string>();
-                var sourcePics = opus?["pics"] as JArray;
-                if (sourcePics != null)
+                result.Add(MapWebCard(source));
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// 首页视频动态：这条流只认投稿视频（desc.type=8），其它类型没有对应的模板，由调用方跳过。
+        /// </summary>
+        public static List<DynamicItemModel> MapToHomeVideoItems(JArray feedItems)
+        {
+            var result = new List<DynamicItemModel>();
+            if (feedItems == null)
+            {
+                return result;
+            }
+
+            foreach (var token in feedItems)
+            {
+                var source = token as JObject;
+                if (source == null || source["type"]?.ToString() != "DYNAMIC_TYPE_AV")
                 {
-                    pics.AddRange(sourcePics
-                        .Select(x => x?["url"]?.ToString())
-                        .Where(x => !string.IsNullOrEmpty(x)));
+                    continue;
                 }
 
-                result.Add(new DynamicCardModel2024
+                var author = source["modules"]?["module_author"] as JObject;
+                var archive = source["modules"]?["module_dynamic"]?["major"]?["archive"] as JObject;
+                if (archive == null)
                 {
-                    type = "DYNAMIC_TYPE_ARTICLE",
-                    id_str = id,
-                    visible = true,
-                    basic = new DynamicCardModel2024_basic
+                    continue;
+                }
+
+                var id = source["id_str"]?.ToString() ?? "";
+                var play = ParseCount(archive["stat"]?["play"]?.ToString());
+                result.Add(new DynamicItemModel
+                {
+                    desc = new DynamicDescModel
                     {
-                        comment_id_str = basic?["comment_id_str"]?.ToString() ?? id,
-                        comment_type = ToInt(basic?["comment_type"]?.ToString()),
-                        rid_str = rid,
+                        uid = author?["mid"]?.ToString() ?? "",
+                        dynamic_id = id,
+                        dynamic_id_str = id,
+                        time_text = author?["pub_time"]?.ToString() ?? "",
+                        type = 8,
+                        rid = archive["aid"]?.ToString() ?? "",
+                        view = play,
                     },
-                    modules = new DynamicCardModel2024_modules
+                    Video = new DynamicVideoCardModel
                     {
-                        module_author = new DynamicCardModel2024_author
+                        aid = archive["aid"]?.ToString() ?? "",
+                        duration = ParseDuration(archive["duration_text"]?.ToString()),
+                        pic = archive["cover"]?.ToString() ?? "",
+                        title = archive["title"]?.ToString() ?? "",
+                        desc = archive["desc"]?.ToString() ?? "",
+                        jump_url = NormalizeWebUrl(archive["jump_url"]?.ToString()),
+                        owner = new DynamicVideoCardOwnerModel
                         {
-                            mid = ToLong(author?["mid"]?.ToString()),
-                            name = author?["name"]?.ToString() ?? "",
                             face = author?["face"]?.ToString() ?? "",
-                            pub_time = author?["pub_time"]?.ToString() ?? "",
-                            official_verify = new DynamicCardModel2024_off
-                            {
-                                type = ToInt(author?["official_verify"]?["type"]?.ToString()),
-                            },
-                            vip = new DynamicCardModel2024_vip
-                            {
-                                status = ToInt(author?["vip"]?["status"]?.ToString()),
-                            },
+                            mid = author?["mid"]?.ToString() ?? "",
+                            name = author?["name"]?.ToString() ?? "",
                         },
-                        module_stat = new DynamicCardModel2024_stat(),
-                        module_dynamic = new DynamicCardModel2024_dynamic
+                        stat = new DynamicVideoCardStatModel
                         {
-                            major = new DynamicCardModel2024_major
-                            {
-                                article = new DynamicCardModel2024_article
-                                {
-                                    id = ToInt(rid),
-                                    title = opus?["title"]?.ToString() ?? "",
-                                    jump_url = opus?["jump_url"]?.ToString() ?? basic?["jump_url"]?.ToString() ?? "",
-                                    covers = pics,
-                                }
-                            }
-                        }
-                    }
+                            view = play,
+                            danmaku = ParseCount(archive["stat"]?["danmaku"]?.ToString()),
+                        },
+                    },
                 });
             }
 
             return result;
+        }
+
+        private static DynamicCardModel2024 MapWebCard(JObject source)
+        {
+            var id = source["id_str"]?.ToString() ?? "";
+            var itemType = source["type"]?.ToString() ?? "";
+            var basic = source["basic"] as JObject;
+            var modules = source["modules"] as JObject;
+            var major = modules?["module_dynamic"]?["major"] as JObject;
+            var cardType = MapWebCardType(itemType);
+            if (cardType == "DYNAMIC_TYPE_UNSUPPORTED")
+            {
+                LogHelper.Log("Dynamic feed mapping stage=unsupported-type type=" + itemType + " dynamicId=" + id, LogType.DEBUG);
+            }
+
+            var card = new DynamicCardModel2024
+            {
+                type = cardType,
+                id_str = id,
+                visible = true,
+                basic = new DynamicCardModel2024_basic
+                {
+                    comment_id_str = basic?["comment_id_str"]?.ToString() ?? id,
+                    comment_type = ToInt(basic?["comment_type"]?.ToString()),
+                    rid_str = basic?["rid_str"]?.ToString() ?? id,
+                },
+                modules = new DynamicCardModel2024_modules
+                {
+                    module_author = MapWebAuthor(modules?["module_author"] as JObject),
+                    module_stat = MapWebStat(modules?["module_stat"] as JObject),
+                    module_dynamic = new DynamicCardModel2024_dynamic
+                    {
+                        desc = MapWebDescription(modules?["module_dynamic"]?["desc"] as JObject),
+                        major = MapWebMajor(major),
+                    },
+                },
+            };
+
+            if (itemType == "DYNAMIC_TYPE_FORWARD")
+            {
+                // 原动态可能是任何类型，映射不出来时用占位卡，父卡片照样可读
+                var orig = source["orig"] as JObject;
+                card.orig = orig == null ? MissingCard(card.basic.rid_str) : MapWebCard(orig);
+            }
+
+            return card;
+        }
+
+        private static DynamicCardModel2024_author MapWebAuthor(JObject source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            return new DynamicCardModel2024_author
+            {
+                mid = ToLong(source["mid"]?.ToString()),
+                name = source["name"]?.ToString() ?? "",
+                face = source["face"]?.ToString() ?? "",
+                pub_time = source["pub_time"]?.ToString() ?? "",
+                // web 下发的 pub_ts 是字符串，卡片的时间显示与排序都靠它
+                pub_ts = ToLong(source["pub_ts"]?.ToString()),
+                vip = source["vip"] == null ? null : new DynamicCardModel2024_vip
+                {
+                    status = ToInt(source["vip"]?["status"]?.ToString()),
+                    type = ToInt(source["vip"]?["type"]?.ToString()),
+                    theme_type = ToInt(source["vip"]?["theme_type"]?.ToString()),
+                    nickname_color = source["vip"]?["nickname_color"]?.ToString(),
+                },
+                official_verify = source["official_verify"] == null ? null : new DynamicCardModel2024_off
+                {
+                    type = ToInt(source["official_verify"]?["type"]?.ToString()),
+                    desc = source["official_verify"]?["desc"]?.ToString() ?? "",
+                },
+                pendant = source["pendant"] == null ? null : new DynamicCardModel2024_pendant
+                {
+                    pid = ToLong(source["pendant"]?["pid"]?.ToString()),
+                    name = source["pendant"]?["name"]?.ToString() ?? "",
+                    image = source["pendant"]?["image"]?.ToString() ?? "",
+                    expire = ToInt(source["pendant"]?["expire"]?.ToString()),
+                },
+            };
+        }
+
+        private static DynamicCardModel2024_stat MapWebStat(JObject source)
+        {
+            if (source == null)
+            {
+                return new DynamicCardModel2024_stat();
+            }
+
+            return new DynamicCardModel2024_stat
+            {
+                comment = new DynamicCardModel2024_comment
+                {
+                    count = ToInt(source["comment"]?["count"]?.ToString()),
+                    forbidden = ToBool(source["comment"]?["forbidden"]),
+                },
+                forward = new DynamicCardModel2024_forward
+                {
+                    count = ToInt(source["forward"]?["count"]?.ToString()),
+                    forbidden = ToBool(source["forward"]?["forbidden"]),
+                },
+                like = new DynamicCardModel2024_like
+                {
+                    count = ToInt(source["like"]?["count"]?.ToString()),
+                    status = ToBool(source["like"]?["status"]),
+                },
+            };
+        }
+
+        private static DynamicCardModel2024_desc MapWebDescription(JObject source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            var nodes = new List<DynamicCardModel2024_node>();
+            var richNodes = source["rich_text_nodes"] as JArray;
+            if (richNodes != null)
+            {
+                foreach (var token in richNodes)
+                {
+                    var node = token as JObject;
+                    if (node == null)
+                    {
+                        continue;
+                    }
+                    nodes.Add(new DynamicCardModel2024_node
+                    {
+                        text = node["text"]?.ToString() ?? "",
+                        orig_text = node["orig_text"]?.ToString() ?? "",
+                        type = MapDescriptionType(node["type"]?.ToString()),
+                        jump_url = node["jump_url"]?.ToString() ?? "",
+                        icon_name = node["icon_name"]?.ToString() ?? "",
+                        rid = node["rid"]?.ToString() ?? "",
+                        emoji = node["emoji"] == null ? null : new DynamicCardModel2024_emojiinfo
+                        {
+                            icon_url = node["emoji"]?["icon_url"]?.ToString() ?? node["icon_url"]?.ToString() ?? "",
+                            text = node["emoji"]?["text"]?.ToString() ?? "",
+                            size = ToInt(node["emoji"]?["size"]?.ToString()),
+                            type = ToInt(node["emoji"]?["type"]?.ToString()),
+                        },
+                    });
+                }
+            }
+
+            var text = source["text"]?.ToString() ?? "";
+            if (nodes.Count == 0 && !string.IsNullOrEmpty(text))
+            {
+                nodes.Add(new DynamicCardModel2024_node
+                {
+                    text = text,
+                    orig_text = text,
+                    type = "RICH_TEXT_NODE_TYPE_TEXT",
+                });
+            }
+
+            return new DynamicCardModel2024_desc
+            {
+                text = text,
+                rich_text_nodes = nodes,
+            };
+        }
+
+        /// <summary>
+        /// web 的 major 是"字段全在、只有一个非空"的结构，与 gRPC 的 ModuleDynamic 一一对应，
+        /// 所以这里按同样的优先级挑出非空的那一路。
+        /// </summary>
+        private static DynamicCardModel2024_major MapWebMajor(JObject major)
+        {
+            var result = new DynamicCardModel2024_major();
+            if (major == null)
+            {
+                return result;
+            }
+
+            var archive = major["archive"] as JObject;
+            if (archive != null)
+            {
+                result.archive = new DynamicCardModel2024_archive
+                {
+                    aid = archive["aid"]?.ToString() ?? "",
+                    bvid = archive["bvid"]?.ToString() ?? "",
+                    cover = archive["cover"]?.ToString() ?? "",
+                    desc = archive["desc"]?.ToString() ?? "",
+                    duration_text = archive["duration_text"]?.ToString() ?? "",
+                    jump_url = NormalizeWebUrl(archive["jump_url"]?.ToString()),
+                    title = archive["title"]?.ToString() ?? "",
+                    stat = new DynamicCardModel2024_astat
+                    {
+                        play = archive["stat"]?["play"]?.ToString() ?? "",
+                        danmaku = archive["stat"]?["danmaku"]?.ToString() ?? "",
+                    },
+                };
+                return result;
+            }
+
+            var pgc = major["pgc"] as JObject;
+            if (pgc != null)
+            {
+                result.pgc = new DynamicCardModel2024_season
+                {
+                    aid = pgc["aid"]?.ToString(),
+                    cover = pgc["cover"]?.ToString() ?? "",
+                    epid = ToInt(pgc["epid"]?.ToString()),
+                    season_id = ToInt(pgc["season_id"]?.ToString()),
+                    sub_type = ToInt(pgc["sub_type"]?.ToString()),
+                    jump_url = NormalizeWebUrl(pgc["jump_url"]?.ToString()),
+                    title = pgc["title"]?.ToString() ?? "",
+                    stat = new DynamicCardModel2024_astat
+                    {
+                        play = pgc["stat"]?["play"]?.ToString() ?? "",
+                        danmaku = pgc["stat"]?["danmaku"]?.ToString() ?? "",
+                    },
+                };
+                return result;
+            }
+
+            var draw = major["draw"] as JObject;
+            if (draw != null)
+            {
+                var pics = new List<DynamicCardModel2024_pic>();
+                var drawItems = draw["items"] as JArray;
+                if (drawItems != null)
+                {
+                    foreach (var token in drawItems)
+                    {
+                        var pic = token as JObject;
+                        if (pic == null)
+                        {
+                            continue;
+                        }
+                        pics.Add(new DynamicCardModel2024_pic
+                        {
+                            src = pic["src"]?.ToString() ?? "",
+                            width = ToInt(pic["width"]?.ToString()),
+                            height = ToInt(pic["height"]?.ToString()),
+                        });
+                    }
+                }
+                result.draw = new DynamicCardModel2024_draw
+                {
+                    id = ToLong(draw["id"]?.ToString()),
+                    items = pics,
+                };
+                return result;
+            }
+
+            var article = major["article"] as JObject;
+            if (article != null)
+            {
+                result.article = new DynamicCardModel2024_article
+                {
+                    id = ToInt(article["id"]?.ToString()),
+                    covers = ReadStringArray(article["covers"] as JArray),
+                    desc = article["desc"]?.ToString() ?? "",
+                    jump_url = NormalizeWebUrl(article["jump_url"]?.ToString()),
+                    label = article["label"]?.ToString() ?? "",
+                    title = article["title"]?.ToString() ?? "",
+                };
+                return result;
+            }
+
+            var opus = major["opus"] as JObject;
+            if (opus != null)
+            {
+                // 图文（OPUS）在渲染层就是专栏那张卡：封面取首图，正文取 summary.text
+                var covers = new List<string>();
+                var opusPics = opus["pics"] as JArray;
+                if (opusPics != null)
+                {
+                    covers.AddRange(opusPics
+                        .Select(x => x?["url"]?.ToString())
+                        .Where(x => !string.IsNullOrEmpty(x)));
+                }
+                result.article = new DynamicCardModel2024_article
+                {
+                    covers = covers,
+                    desc = opus["summary"]?["text"]?.ToString() ?? "",
+                    jump_url = NormalizeWebUrl(opus["jump_url"]?.ToString()),
+                    title = opus["title"]?.ToString() ?? "",
+                };
+                return result;
+            }
+
+            var live = major["live"] as JObject;
+            if (live != null)
+            {
+                result.live = new DynamicCardModel2024_live
+                {
+                    id = live["id"]?.ToString() ?? "",
+                    cover = live["cover"]?.ToString() ?? "",
+                    title = live["title"]?.ToString() ?? "",
+                    desc_first = live["area_name"]?.ToString() ?? "",
+                    desc_second = live["watched_show"]?["text_large"]?.ToString() ?? "",
+                    jump_url = NormalizeWebUrl(live["jump_url"]?.ToString()),
+                    live_state = ToInt(live["live_state"]?.ToString()),
+                };
+                return result;
+            }
+
+            var liveRcmd = major["live_rcmd"] as JObject;
+            if (liveRcmd != null)
+            {
+                var content = liveRcmd["content"]?.ToString() ?? "";
+                result.live_rcmd = new DynamicCardModel2024_live_rcmd
+                {
+                    content = content,
+                };
+                try
+                {
+                    var playInfo = JObject.Parse(content)?["live_play_info"];
+                    result.live = new DynamicCardModel2024_live
+                    {
+                        id = playInfo?["room_id"]?.ToString() ?? "",
+                        cover = playInfo?["cover"]?.ToString() ?? "",
+                        title = playInfo?["title"]?.ToString() ?? "",
+                        desc_first = playInfo?["area_name"]?.ToString() ?? "",
+                        desc_second = playInfo?["watched_show"]?["text_large"]?.ToString() ?? "",
+                        jump_url = playInfo?["room_id"] == null
+                            ? ""
+                            : "https://live.bilibili.com/" + playInfo["room_id"],
+                    };
+                }
+                catch
+                {
+                    // 推荐直播的 content 是嵌套的 JSON 字符串：解不开就只留原样内容给占位卡
+                }
+                return result;
+            }
+
+            var music = major["music"] as JObject;
+            if (music != null)
+            {
+                // 音乐卡借的是专栏那张卡，与 gRPC 的 DynMusic 映射一致
+                result.article = new DynamicCardModel2024_article
+                {
+                    id = ToInt(music["id"]?.ToString()),
+                    covers = new List<string> { music["cover"]?.ToString() ?? "" },
+                    label = music["label"]?.ToString() ?? "",
+                    jump_url = NormalizeWebUrl(music["jump_url"]?.ToString()),
+                    title = music["title"]?.ToString() ?? "",
+                };
+                return result;
+            }
+
+            return result;
+        }
+
+        private static string MapWebCardType(string itemType)
+        {
+            switch (itemType)
+            {
+                case "DYNAMIC_TYPE_WORD": return "DYNAMIC_TYPE_WORD";
+                case "DYNAMIC_TYPE_FORWARD": return "DYNAMIC_TYPE_FORWARD";
+                case "DYNAMIC_TYPE_DRAW": return "DYNAMIC_TYPE_DRAW";
+                case "DYNAMIC_TYPE_AV": return "DYNAMIC_TYPE_AV";
+                case "DYNAMIC_TYPE_MUSIC": return "DYNAMIC_TYPE_MUSIC";
+                case "DYNAMIC_TYPE_LIVE": return "DYNAMIC_TYPE_LIVE";
+                case "DYNAMIC_TYPE_LIVE_RCMD": return "DYNAMIC_TYPE_LIVE_RCMD";
+                case "DYNAMIC_TYPE_NONE": return "DYNAMIC_TYPE_NONE";
+                case "DYNAMIC_TYPE_PGC":
+                case "DYNAMIC_TYPE_PGC_UNION": return "DYNAMIC_TYPE_PGC_UNION";
+                case "DYNAMIC_TYPE_ARTICLE": return "DYNAMIC_TYPE_ARTICLE";
+                // 渲染层没有 OPUS 这个类型：专栏与图文在它眼里是同一张卡
+                case "DYNAMIC_TYPE_OPUS": return "DYNAMIC_TYPE_ARTICLE";
+                default: return "DYNAMIC_TYPE_UNSUPPORTED";
+            }
         }
 
         private static DynamicCardModel2024 MapUserCard(DynamicItem source)
@@ -699,6 +1085,85 @@ namespace BiliLite.Helpers
         {
             long result;
             return long.TryParse(value, out result) ? result : 0;
+        }
+
+        private static bool ToBool(JToken token)
+        {
+            return token != null && token.Type == JTokenType.Boolean && token.Value<bool>();
+        }
+
+        private static List<string> ReadStringArray(JArray source)
+        {
+            if (source == null)
+            {
+                return new List<string>();
+            }
+            return source
+                .Select(x => x?.ToString())
+                .Where(x => !string.IsNullOrEmpty(x))
+                .ToList();
+        }
+
+        /// <summary>把 "475.6万" / "1.2亿" 这类紧凑计数还原成整数；解析不出来就是 0。</summary>
+        private static int ParseCount(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return 0;
+            }
+
+            double multiplier = 1;
+            var digits = text;
+            if (text.EndsWith("万", StringComparison.Ordinal))
+            {
+                multiplier = 10000;
+                digits = text.Substring(0, text.Length - 1);
+            }
+            else if (text.EndsWith("亿", StringComparison.Ordinal))
+            {
+                multiplier = 100000000;
+                digits = text.Substring(0, text.Length - 1);
+            }
+
+            double value;
+            if (!double.TryParse(digits, NumberStyles.Float, CultureInfo.InvariantCulture, out value))
+            {
+                return 0;
+            }
+
+            var count = value * multiplier;
+            return count > int.MaxValue ? int.MaxValue : (int)count;
+        }
+
+        /// <summary>把 "24:02" / "1:02:03" 还原成秒数；解析不出来就是 0。</summary>
+        private static int ParseDuration(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return 0;
+            }
+
+            var seconds = 0;
+            foreach (var part in text.Split(':'))
+            {
+                int value;
+                if (!int.TryParse(part, out value))
+                {
+                    return 0;
+                }
+                seconds = seconds * 60 + value;
+            }
+            return seconds;
+        }
+
+        /// <summary>web 卡片的跳转地址是协议相对的（//www.bilibili.com/...），补成完整地址。</summary>
+        private static string NormalizeWebUrl(string url)
+        {
+            if (string.IsNullOrEmpty(url))
+            {
+                return "";
+            }
+            return url.StartsWith("//", StringComparison.Ordinal) ? "https:" + url : url;
         }
 
         private static DynamicCardModel2024 MissingCard(string dynamicId)

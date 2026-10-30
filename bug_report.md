@@ -85,6 +85,63 @@ Fix (`e5c97e1`, `Modules/Home/DynamicVM.cs`):
 Builds clean (`build-release-x64.ps1 -Fast -NoVersionBump`, 0 errors). Device confirmation is still open:
 trigger a 404 on `dynamic_history` and check that only the ERROR log line appears.
 
+## BR-17 — 动态 list stops at the first 20 items (reported 2026-10-30)
+
+Symptom from the maintainer: "动态拉到底下不继续加载" — the list stops after the first screen and
+scrolling to the bottom loads nothing.
+
+Log evidence (`LocalState/log/20261030.log`, sessions `cfe242a2`, `1a4d50e5`, `edcee1d5`):
+
+- Primary `动态` (全部), `Modules/User/DynamicVM`:
+  `request-start` → gRPC `Dynamic/DynAll`/`DynVideo` rejected
+  (`grpc-status=2; grpc-message=-663; bili-status-code=-663`, `responseBytes=0`) →
+  `rest-fallback` → `feed-rest-request page=1 offset=` (`dynamic_new`, `type_list=268435455`) →
+  `feed-items-published source=rest page=1 count=20 hasMore=False offset=`.
+  `CanContinuePaging` sees `has_more=false` and an empty cursor, so `CanLoadMore=false` and the grid
+  never asks for page 2. Reproduced three times in one session.
+- `视频动态` (`Modules/Home/DynamicVM`):
+  page 2 `dynamic_history` → HTTP 404 → gRPC fallback to page 1 → `sources-exhausted` →
+  `feed-failed page=2` (BR-16 behaviour: quiet, no rows touched).
+
+So both feed tabs are capped at 20 items because **no available source can paginate any more**:
+
+- `dynamic_svr/v1/dynamic_svr/dynamic_history` is gone (HTTP 404),
+- `dynamic_new` succeeds but returns `has_more=0` and no `offset` for the all-types `type_list`,
+- the app-key gRPC feed (`DynAll`/`DynVideo`) is refused by the server with `-663` on this account,
+  and that happens on the first page too, so it cannot serve paging either.
+
+Fix direction: use the cookie-authenticated web feed
+`x/polymer/web-dynamic/v1/feed/all?type=all|video&offset=…` as the paginated source (the 专栏 tab
+already pages through the same endpoint with `type=article`), mapping its `items[]`
+(`basic` / `modules.module_author` / `modules.module_dynamic.major`) into the existing
+`DynamicCardModel2024` renderer. Device confirmation required: the first log after the fix must show a
+page-2 `polymer` request with a non-empty `offset` and a growing `count`.
+
+## BR-18 — player overlay toast: rightward shift on fade, clipped icon, volume shown as a fraction
+
+Three reports on the same overlay (N1, `312fa23`/`14995ab`), all from the maintainer on device:
+
+1. "音量弹窗在淡出时向右偏移" — during the hide the toast moves right.
+2. "速度弹窗的图标下方被遮挡了约20%" — the speed glyph (`Solid_TachometerAlt`) loses its bottom ~20%.
+3. "音量条需要展示百分比0-100而不是一个小数" — the volume overlay must read as an integer percentage.
+
+Cause candidates: `PlayerToast.xaml` animates `ToastRoot.Visibility` through Toolkit implicit animations while the
+`PlayerToast` stretches inside the code-created centered `StackPanel` (`Services/PlayerToastService.cs`), so any
+width change re-centers a fading element; the glyph is clipped because the FontAwesome line box is shorter than the
+glyph ink; the volume text is built with `Player.Volume.ToString("P")` at `PlayerControl.xaml.cs:486` and `:2428`
+although `Player.Volume` is 0–1 (`Controls/Player.xaml.cs:151`).
+
+## BR-19 — white borders on the player's own buttons
+
+"播放器内的按钮不需要白色边框": twelve `Background="Transparent"` buttons in `Controls/PlayerControl.xaml` still
+carry the default `Button` border, which renders as a light outline over the video.
+
+## BR-20 — two top-right player buttons do the same thing
+
+"播放器右上角两个按钮功能冗余": `TopBtnSettingDanmaku_Click` selects the danmaku pivot and opens the settings
+`SplitView`; `TopBtnMore_Click` opens the *same* `SplitView` on the player/other pivot. One of the two is a
+duplicate entry point to the same pane.
+
 ## Status
 
 | ID | State |
@@ -94,6 +151,10 @@ trigger a 404 on `dynamic_history` and check that only the ERROR log line appear
 | BR-14 | done — UTF-8 build output, documented + skilled method |
 | BR-15 | resolved — splash crash was the non-bootable MSIX layout; layout is now validated |
 | BR-16 | fixed in `e5c97e1` — load-more failures are silent, the toast carries the legacy message; device check open |
+| BR-17 | in progress — 动态 feeds stop after 20 items; every source that could paginate is dead or refused |
+| BR-18 | in progress — toast fade shift, clipped icon, volume percentage |
+| BR-19 | queued — remove the default button border in the player UI |
+| BR-20 | queued — drop the duplicate danmaku-settings shortcut (More opens the same pane) |
 
 ## Verification this turn
 

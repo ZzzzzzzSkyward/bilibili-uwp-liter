@@ -124,13 +124,21 @@ namespace BiliLite.Api.User
             public string Endpoint { get; set; }
             public UserDynamicType Type { get; set; }
             public string Cursor { get; set; }
+            public int Page { get; set; }
+            /// <summary>feed/all 的 type 参数（all/video/article），其它端点为空。</summary>
+            public string FeedType { get; set; }
+            public bool IsFeed { get { return Endpoint == "feed_all"; } }
         }
 
         // 夹具：REST 动态流不触网，由探针按 (endpoint, cursor) 返回固定的 JSON
         public static readonly List<RestCall> Calls = new List<RestCall>();
         public static Func<RestCall, string> Fixture = call => "{\"code\":0,\"data\":{\"cards\":[]}}";
+        /// <summary>web 聚合流的夹具。默认给业务码拒绝：单元用例只关心它是不是被跳过。</summary>
+        public static Func<RestCall, string> FeedFixture = call => "{\"code\":-663,\"message\":\"Rejected\"}";
         /// <summary>让下一次 REST 调用像 HTTP 404 一样失败（status=false, code=404）。</summary>
         public static bool FailNextRequest;
+        /// <summary>让下一次 web 聚合流调用像 HTTP 404 一样失败（status=false, code=404）。</summary>
+        public static bool FailNextFeedRequest;
 
         public ApiModel DyanmicNew(UserDynamicType type, string offset = null)
         {
@@ -142,6 +150,11 @@ namespace BiliLite.Api.User
             return Build(new RestCall { Endpoint = "dynamic_history", Type = type, Cursor = dynamic_id });
         }
 
+        public ApiModel ArticleV2(int page = 1, string offset = null, string type = "article")
+        {
+            return Build(new RestCall { Endpoint = "feed_all", Page = page, Cursor = offset, FeedType = type });
+        }
+
         private static ApiModel Build(RestCall call)
         {
             Calls.Add(call);
@@ -150,9 +163,17 @@ namespace BiliLite.Api.User
             {
                 Handler = () =>
                 {
-                    if (FailNextRequest)
+                    var fail = captured.IsFeed ? FailNextFeedRequest : FailNextRequest;
+                    if (captured.IsFeed)
+                    {
+                        FailNextFeedRequest = false;
+                    }
+                    else
                     {
                         FailNextRequest = false;
+                    }
+                    if (fail)
+                    {
                         return Task.FromResult(new BiliLite.Helpers.HttpResults
                         {
                             status = false,
@@ -165,7 +186,7 @@ namespace BiliLite.Api.User
                     {
                         status = true,
                         message = "0",
-                        results = Fixture(captured),
+                        results = captured.IsFeed ? FeedFixture(captured) : Fixture(captured),
                     });
                 },
             };

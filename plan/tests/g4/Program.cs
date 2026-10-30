@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
 using Bilibili.App.Dynamic.V2;
@@ -42,6 +43,7 @@ namespace G4Probe
             HomeFeedFallsBackToRestWhenGrpcIsRejected();
             AppendFailureKeepsTheGrpcCursor();
             LoadMoreFailureStaysQuiet();
+            PolymerPagesAppend();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -267,6 +269,7 @@ namespace G4Probe
         /// </summary>
         private static void AppendFailureKeepsTheGrpcCursor()
         {
+            ResetFixtures();
             ResetSourceHistory();
             LogHelper.Entries.Clear();
             DynamicAPI.Calls.Clear();
@@ -315,6 +318,7 @@ namespace G4Probe
         /// </summary>
         private static void LoadMoreFailureStaysQuiet()
         {
+            ResetFixtures();
             ResetSourceHistory();
             LogHelper.Entries.Clear();
             DynamicAPI.Calls.Clear();
@@ -337,7 +341,7 @@ namespace G4Probe
             DynamicAPI.FailNextRequest = true;
             vm.GetDynamicItems(2).GetAwaiter().GetResult();
 
-            Check(DynamicAPI.Calls.Count == 2 && DynamicAPI.Calls[1].Endpoint == "dynamic_history",
+            Check(LegacyCalls().Count == 2 && LegacyCalls()[1].Endpoint == "dynamic_history",
                 "quiet load-more: page 2 still asks the legacy history endpoint");
             Check(GrpcService.DynVideoCalls == grpcCallsAfterPage1,
                 "quiet load-more: a failed load-more never restarts the feed from gRPC page 1");
@@ -371,6 +375,7 @@ namespace G4Probe
         /// </summary>
         private static void HomeFeedFallsBackToRestWhenGrpcIsRejected()
         {
+            ResetFixtures();
             ResetSourceHistory();
             LogHelper.Entries.Clear();
             DynamicAPI.Calls.Clear();
@@ -387,10 +392,12 @@ namespace G4Probe
             // 这里只断言换源真的发生(REST endpoint 被调用、卡片发布),行为才算数。
             Check(vm.Items != null && vm.Items.Count > 0,
                 "home fallback: the rejected page still publishes rows");
-            Check(DynamicAPI.Calls.Count == 1
-                  && DynamicAPI.Calls[0].Endpoint == "dynamic_new"
-                  && DynamicAPI.Calls[0].Cursor == null,
+            Check(LegacyCalls().Count == 1
+                  && LegacyCalls()[0].Endpoint == "dynamic_new"
+                  && LegacyCalls()[0].Cursor == null,
                 "home fallback: page 1 switches to the REST newest feed (dynamic_new, no cursor)");
+            Check(DynamicAPI.Calls[0].Endpoint == "feed_all",
+                "home fallback: the web feed is tried between gRPC and the legacy feed");
             Check(vm.Items != null && vm.Items.Count == 2,
                 "home fallback: the rejected gRPC page still publishes the REST cards");
             Check(vm.Items[1].card.Contains("rest-700000000000011"),
@@ -404,11 +411,11 @@ namespace G4Probe
 
             Check(GrpcService.DynVideoCalls == 1,
                 "home fallback: the mode is sticky, so the next page never calls DynVideo again");
-            Check(DynamicAPI.Calls.Count == 2 && DynamicAPI.Calls[1].Endpoint == "dynamic_history",
+            Check(LegacyCalls().Count == 2 && LegacyCalls()[1].Endpoint == "dynamic_history",
                 "home fallback: later pages use the legacy history feed");
-            Check(DynamicAPI.Calls[1].Cursor == "700000000000011",
+            Check(LegacyCalls()[1].Cursor == "700000000000011",
                 "home fallback: the history cursor is the last published card's desc.dynamic_id");
-            Check(DynamicAPI.Calls[1].Cursor != "offset-returned-page1",
+            Check(LegacyCalls()[1].Cursor != "offset-returned-page1",
                 "home fallback: the REST cursor is not the response's data.offset");
             Check(vm.Items.Count == 3,
                 "home fallback: later REST pages append instead of replacing");
@@ -428,12 +435,179 @@ namespace G4Probe
             // 所以刷新后仍然从 REST 第一页取,并且是替换而不是追加。
             Check(GrpcService.DynVideoCalls == 1,
                 "home fallback: Refresh does not retry the source that rejected the page");
-            Check(DynamicAPI.Calls.Count == 1
-                  && DynamicAPI.Calls[0].Endpoint == "dynamic_new"
-                  && DynamicAPI.Calls[0].Cursor == null,
+            Check(LegacyCalls().Count == 1
+                  && LegacyCalls()[0].Endpoint == "dynamic_new"
+                  && LegacyCalls()[0].Cursor == null,
                 "home fallback: Refresh restarts the legacy feed at page 1 instead of reusing a cursor");
             Check(vm.Items != null && vm.Items.Count == 1,
                 "home fallback: Refresh replaces the list instead of appending to it");
+        }
+
+        /// <summary>
+        /// BR-17: 首页视频动态的 web 聚合流（feed/all?type=video）。gRPC 被拒之后它接手，
+        /// 游标是响应里的 data.offset：第二页带着上一页的 offset 追加，翻页失败时行不动、不提示。
+        /// </summary>
+        private static void PolymerPagesAppend()
+        {
+            ResetSourceHistory();
+            ResetFixtures();
+            LogHelper.Entries.Clear();
+            DynamicAPI.Calls.Clear();
+            Utils.Toasts.Clear();
+            GrpcService.DynVideoCalls = 0;
+            GrpcService.RejectDynVideo = true;
+            DynamicAPI.Fixture = call => RestFixture("offset-legacy-page1", "700000000000201");
+            DynamicAPI.FeedFixture = call => PolymerFixture("polymer-offset-1", true, 20, "polymer1");
+
+            var vm = new DynamicVM();
+            vm.GetDynamicItems(1).GetAwaiter().GetResult();
+
+            Check(DynamicAPI.Calls.Count == 1 && DynamicAPI.Calls[0].Endpoint == "feed_all",
+                "polymer: a rejected gRPC page goes to the web feed before the legacy newest feed");
+            Check(DynamicAPI.Calls[0].Cursor == null && DynamicAPI.Calls[0].Page == 1,
+                "polymer: page 1 carries no offset");
+            Check(DynamicAPI.Calls[0].FeedType == "video",
+                "polymer: the home feed asks feed/all for type=video");
+            Check(vm.Items != null && vm.Items.Count == 20,
+                "polymer: page 1 publishes the 20 rows of the web feed (items=" + (vm.Items == null ? -1 : vm.Items.Count) + ")");
+            Check(vm.CanLoadMore,
+                "polymer: has_more plus an advanced offset keeps paging enabled");
+            var first = vm.Items[0];
+            Check(first.desc.type == 8 && first.desc.time_text == "刚刚",
+                "polymer: an AV item maps to the flat video card the home grid renders");
+            Check(first.video.title == "polymer1-0" && first.video.aid == "117451568191200",
+                "polymer: the video card keeps the archive aid and title (aid=" + (first.video.aid ?? "null") + ")");
+            Check(first.video.stat.view == 4756000 && first.video.duration == 1442,
+                "polymer: the compact play count and duration text are parsed (view=" +
+                (first.video.stat == null ? "null" : first.video.stat.view.ToString()) + ")");
+            Check(first.video.owner != null && first.video.owner.name == "probe-up",
+                "polymer: the author of the item becomes the card owner");
+            Check(first.video.jump_url == "https://www.bilibili.com/video/BV1gKJ86JEuP",
+                "polymer: a protocol-relative jump url is completed (" + (first.video.jump_url ?? "null") + ")");
+
+            DynamicAPI.FeedFixture = call => PolymerFixture("polymer-offset-2", true, 20, "polymer2");
+            vm.GetDynamicItems(2).GetAwaiter().GetResult();
+
+            Check(DynamicAPI.Calls.Count == 2 && DynamicAPI.Calls[1].Endpoint == "feed_all",
+                "polymer: page 2 stays on the web feed");
+            Check(DynamicAPI.Calls[1].Cursor == "polymer-offset-1" && DynamicAPI.Calls[1].Page == 2,
+                "polymer: page 2 sends the offset the previous page returned (offset=" +
+                (DynamicAPI.Calls[1].Cursor ?? "null") + ")");
+            Check(vm.Items != null && vm.Items.Count == 40,
+                "polymer: page 2 appends instead of replacing (items=" + (vm.Items == null ? -1 : vm.Items.Count) + ")");
+            Check(!DynamicAPI.Calls.Exists(call => call.Endpoint == "dynamic_history"),
+                "polymer: paging inside the web feed never touches the dead legacy history endpoint");
+
+            // 第三页失败：行不动、翻页停下、不提示（BR-16 的镜像）
+            DynamicAPI.FailNextFeedRequest = true;
+            vm.GetDynamicItems(3).GetAwaiter().GetResult();
+
+            Check(DynamicAPI.Calls.Count(call => call.IsFeed) == 3,
+                "polymer: the failed append still goes to the web feed");
+            Check(vm.Items != null && vm.Items.Count == 40,
+                "polymer: the rows already on screen survive the failed append");
+            Check(!vm.CanLoadMore,
+                "polymer: a failed append stops paging");
+            Check(Utils.Toasts.Count == 0,
+                "polymer: a failed append stays quiet");
+            Check(LogHelper.Entries.Exists(entry => entry.Contains("stage=feed-failed page=3")),
+                "polymer: the failure is logged with its page number");
+            Check(GrpcService.DynVideoCalls == 1,
+                "polymer: a failed append never restarts the gRPC feed from page 1");
+
+            // 重试：游标属于上一次成功的那一页，不能因为失败被抹掉
+            DynamicAPI.FeedFixture = call => PolymerFixture("polymer-offset-3", false, 20, "polymer3");
+            vm.GetDynamicItems(3).GetAwaiter().GetResult();
+
+            Check(DynamicAPI.Calls.Last().IsFeed && DynamicAPI.Calls.Last().Cursor == "polymer-offset-2",
+                "polymer: the retry resends the cursor of the last good page (offset=" +
+                (DynamicAPI.Calls.Last().Cursor ?? "null") + ")");
+            Check(vm.Items != null && vm.Items.Count == 60,
+                "polymer: the retry appends the third page (items=" + (vm.Items == null ? -1 : vm.Items.Count) + ")");
+            Check(!vm.CanLoadMore,
+                "polymer: has_more=false from the last page stops paging");
+        }
+
+        /// <summary>探针夹具是静态的：每个用例开头都恢复到默认值，用例之间不互相影响。</summary>
+        private static void ResetFixtures()
+        {
+            DynamicAPI.Fixture = call => RestFixture("");
+            DynamicAPI.FeedFixture = call => "{\"code\":-663,\"message\":\"Rejected\"}";
+            DynamicAPI.FailNextRequest = false;
+            DynamicAPI.FailNextFeedRequest = false;
+        }
+
+        /// <summary>只统计 legacy 两个端点的调用：web 聚合流是另外一路，混在一起数会把断言变成巧合。</summary>
+        private static List<DynamicAPI.RestCall> LegacyCalls()
+        {
+            return DynamicAPI.Calls.Where(call => !call.IsFeed).ToList();
+        }
+
+        /// <summary>web 聚合流的响应：items[] 与真实响应同形（AV × n、has_more、offset）。</summary>
+        private static string PolymerFixture(string offset, bool hasMore, int count, string titlePrefix)
+        {
+            var items = new JArray();
+            for (var i = 0; i < count; i++)
+            {
+                items.Add(new JObject
+                {
+                    ["id_str"] = "73000000000" + i.ToString("D4"),
+                    ["type"] = "DYNAMIC_TYPE_AV",
+                    ["basic"] = new JObject
+                    {
+                        ["rid_str"] = "1174515681912" + i.ToString("D2"),
+                        ["comment_type"] = 1,
+                        ["comment_id_str"] = "1174515681912" + i.ToString("D2"),
+                    },
+                    ["modules"] = new JObject
+                    {
+                        ["module_author"] = new JObject
+                        {
+                            ["mid"] = 546195,
+                            ["name"] = "probe-up",
+                            ["face"] = "http://i0.hdslb.com/bfs/face/probe.jpg",
+                            ["pub_time"] = "刚刚",
+                            ["pub_ts"] = "1792207804",
+                        },
+                        ["module_stat"] = new JObject
+                        {
+                            ["comment"] = new JObject { ["count"] = 2214, ["forbidden"] = false },
+                            ["forward"] = new JObject { ["count"] = 301 },
+                            ["like"] = new JObject { ["count"] = 186067, ["status"] = false },
+                        },
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["type"] = "MAJOR_TYPE_ARCHIVE",
+                                ["archive"] = new JObject
+                                {
+                                    ["aid"] = "1174515681912" + i.ToString("D2"),
+                                    ["bvid"] = "BV1gKJ86JEuP",
+                                    ["cover"] = "http://i2.hdslb.com/bfs/archive/probe.jpg",
+                                    ["jump_url"] = "//www.bilibili.com/video/BV1gKJ86JEuP",
+                                    ["duration_text"] = "24:02",
+                                    ["title"] = titlePrefix + "-" + i,
+                                    ["desc"] = "probe",
+                                    ["stat"] = new JObject { ["play"] = "475.6万", ["danmaku"] = "7738" },
+                                },
+                            },
+                        },
+                    },
+                });
+            }
+
+            return new JObject
+            {
+                ["code"] = 0,
+                ["message"] = "0",
+                ["data"] = new JObject
+                {
+                    ["items"] = items,
+                    ["has_more"] = hasMore,
+                    ["offset"] = offset,
+                },
+            }.ToString(Formatting.None);
         }
 
         /// <summary>REST fixture shaped like dynamic_svr: cards[] plus a data.offset the product must not use as a cursor.</summary>
