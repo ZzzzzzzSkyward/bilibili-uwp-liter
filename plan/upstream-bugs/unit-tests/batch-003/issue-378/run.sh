@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../../.." && pwd)"
+repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../../../.." && pwd)"
 tools="${UPSTREAM_UNIT_TOOLS:-/workspace/work/upstream-unit-tools}"
 scratch="$(mktemp -d /tmp/issue-378.XXXXXX)"
 trap 'rm -rf "$scratch"' EXIT

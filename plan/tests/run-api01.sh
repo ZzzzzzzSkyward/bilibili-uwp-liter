@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)"
+repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 tools="${UPSTREAM_UNIT_TOOLS:-/workspace/work/upstream-unit-tools}"
 sdk="$tools/dotnet/sdk/8.0.427"
 refs="$tools/dotnet/packs/Microsoft.NETCore.App.Ref/8.0.33/ref/net8.0"
