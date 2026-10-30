@@ -9,6 +9,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -59,8 +60,11 @@ namespace BiliLite.Modules.User
         private string articleOffset;
         //REST 动态流的翻页游标（data.offset），与 gRPC 的 historyOffset/updateBaseline 分属两套，互不传递
         private string restOffset;
-        //gRPC 动态接口被拒后粘滞到实例的兜底开关：置位后同一分类的后续页都走 REST，直到 Refresh 重新试一次 gRPC
-        private bool restFeedMode;
+        //本次全部/视频动态流固定的来源：刷新/切分类时由选择器重新决定，翻页沿用；
+        //只有同一次请求里首选失败、备用来源成功时才改到这一路
+        private DynamicApiSource? pinnedFeedSource;
+        //切到 REST 后仍没内容时用来解释空列表的那句拒绝文案
+        private string feedFallbackReason;
         private bool lastPageFailed;
         //每次刷新/切分类都递增，只有持有一致代号的请求才能发布结果
         private int requestGeneration;
@@ -76,9 +80,9 @@ namespace BiliLite.Modules.User
         //既不与全部/视频动态流的 historyOffset/updateBaseline 共享，也不与 SpaceHistory 的 REST 游标（idx）互传
         private int spacePage = 1;
         private string spaceOffset;
-        //Space 的 REST 兜底粘滞到实例：gRPC 被拒后后续页都走 SpaceHistory，直到刷新或换用户
-        private bool spaceRestMode;
-        //spacePage/spaceOffset/spaceRestMode 属于哪个用户；Uid 变了这组状态必须作废
+        //本次个人空间动态固定的来源：刷新/换用户时由选择器重新决定，翻页沿用
+        private DynamicApiSource? pinnedSpaceSource;
+        //spacePage/spaceOffset/pinnedSpaceSource 属于哪个用户；Uid 变了这组状态必须作废
         private string spaceUid;
         public DynamicVM()
         {
@@ -180,16 +184,11 @@ namespace BiliLite.Modules.User
             articleOffset = null;
             restOffset = null;
             consecutiveEmptyPages = 0;
-            //兜底开关不跨刷新继承：刷新时回到 gRPC 再试一次（每次请求最多一次尝试，失败即在同一次请求内改走 REST，不会循环）
-            if (restFeedMode)
-            {
-                restFeedMode = false;
-                LogHelper.Log("User dynamic VM stage=refresh-source grpc-retry restFeedMode reset generation=" + requestGeneration + " itemType=" + UserDynamicType, LogType.INFO);
-            }
-            else
-            {
-                LogHelper.Log("User dynamic VM stage=refresh-source grpc generation=" + requestGeneration + " itemType=" + UserDynamicType, LogType.DEBUG);
-            }
+            //固定的来源不跨刷新继承：刷新就是新的一屏边界，交回选择器重新决定（单次请求仍最多两路）
+            pinnedFeedSource = null;
+            pinnedSpaceSource = null;
+            feedFallbackReason = null;
+            LogHelper.Log("User dynamic VM stage=refresh-source generation=" + requestGeneration + " itemType=" + UserDynamicType, LogType.DEBUG);
             if (feedRequestInFlight)
             {
                 //请求进行中，由它的 finally 丢弃结果后启动本次刷新（最新分类胜出）
@@ -458,7 +457,7 @@ namespace BiliLite.Modules.User
         {
             spacePage = 1;
             spaceOffset = null;
-            spaceRestMode = false;
+            pinnedSpaceSource = null;
             spaceUid = Uid;
         }
         public async Task GetDynamicItems(string idx = "", bool loadMore = false)
@@ -538,146 +537,11 @@ namespace BiliLite.Modules.User
                     string nextOffset = null;
                     string nextBaseline = null;
 
-                    //全部/视频的动态流由 gRPC 提供；专栏/番剧的取数来源保持原样，不受兜底开关影响
+                    //全部/视频的动态流由选择器在每一屏边界决定来源；专栏/番剧的取数来源保持原样
                     var usesGrpcFeed = requestItemType == UserDynamicType.All || requestItemType == UserDynamicType.Video;
-                    var serveRestFeed = usesGrpcFeed && restFeedMode;
-                    //gRPC 被拒的原因（含 bili-status-code=-663 的说明），REST 兜底页也空时作为可见错误，不让页面无声空白
-                    string restFallbackMessage = null;
-                    if (usesGrpcFeed && !restFeedMode)
+                    if (usesGrpcFeed)
                     {
-                        try
-                        {
-                            if (requestItemType == UserDynamicType.All)
-                            {
-                                var reply = await grpcService.GetDynAll(page, loadMore ? historyOffset : null);
-                                if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
-                                {
-                                    LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
-                                    return;
-                                }
-                                if (reply?.DynamicList == null)
-                                {
-                                    throw new InvalidOperationException("DynAll returned no dynamic list");
-                                }
-                                grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
-                                hasMore = reply.DynamicList.HasMore;
-                                nextOffset = reply.DynamicList.HistoryOffset;
-                            }
-                            else
-                            {
-                                var reply = await grpcService.GetDynVideo(page, loadMore ? historyOffset : null, loadMore ? updateBaseline : null);
-                                if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
-                                {
-                                    LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
-                                    return;
-                                }
-                                if (reply == null)
-                                {
-                                    throw new InvalidOperationException("DynVideo returned no reply");
-                                }
-                                if (reply.DynamicList == null)
-                                {
-                                    throw new InvalidOperationException("DynVideo returned no dynamic list");
-                                }
-                                grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
-                                hasMore = reply.DynamicList.HasMore;
-                                nextOffset = reply.DynamicList.HistoryOffset;
-                                nextBaseline = reply.DynamicList.UpdateBaseline;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
-                            {
-                                LogHelper.Log("User dynamic VM stage=" + stage + " discarded generation=" + generation, LogType.DEBUG, ex);
-                                return;
-                            }
-                            //接口拒绝（200 + 空体 + bili-status-code=-663 等）：错误文本进日志，同时把它当作切到 REST 动态流的触发条件
-                            LogHelper.Log("User dynamic VM stage=rest-fallback reason=" + ex.Message + " itemType=" + requestItemType + " loadMore=" + loadMore + " generation=" + generation, LogType.INFO);
-                            restFeedMode = true;
-                            restFallbackMessage = DescribeFeedFailure("动态请求失败", ex.Message);
-                            //gRPC 游标属于另一套分页，换源前清空，绝不会把 historyOffset/update_baseline 传给 REST
-                            historyOffset = null;
-                            updateBaseline = null;
-                            //gRPC 页序号无法映射成 REST 游标：从 REST 第一页重新取游标，本页按首页发布
-                            restOffset = null;
-                            serveRestFeed = true;
-                        }
-                    }
-
-                    if (serveRestFeed)
-                    {
-                        var restLoadMore = loadMore && !string.IsNullOrEmpty(restOffset);
-                        var restPage = restLoadMore ? feedPage + 1 : 1;
-                        var restCursor = restLoadMore ? restOffset : null;
-                        stage = "rest-feed-request";
-                        LogHelper.Log("User dynamic VM stage=rest-feed-request page=" + restPage + " offset=" + (restCursor ?? "") + " generation=" + generation, LogType.DEBUG);
-                        var restApi = dynamicAPI.DyanmicNew(requestItemType, restCursor);
-                        var restResponse = await restApi.Request();
-                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
-                        {
-                            LogHelper.Log("User dynamic VM stage=rest-feed-request discarded generation=" + generation, LogType.DEBUG);
-                            return;
-                        }
-                        if (!restResponse.status)
-                        {
-                            throw new InvalidOperationException(restResponse.message);
-                        }
-                        var restData = restResponse.GetJObject();
-                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
-                        {
-                            LogHelper.Log("User dynamic VM stage=rest-feed-request discarded generation=" + generation, LogType.DEBUG);
-                            return;
-                        }
-                        if (restData == null || restData["code"] == null || restData["code"].ToInt32() != 0 || restData["data"] == null)
-                        {
-                            throw new InvalidOperationException(restData?["message"]?.ToString() ?? restResponse.message);
-                        }
-                        stage = "rest-feed-card-convert";
-                        var restCards = JsonConvert.DeserializeObject<List<DynamicCardModel>>(restData["data"]["cards"]?.ToString() ?? "[]", jsonSerializerSettings) ?? new List<DynamicCardModel>();
-                        var restHasMore = ReadHasMoreFlag(restData["data"]);
-                        var nextRestOffset = restData["data"]["offset"]?.ToString();
-                        var restMapped = new ObservableCollection<DynamicItemDisplayModel>();
-                        foreach (var card in restCards)
-                        {
-                            if (card?.desc == null)
-                            {
-                                continue;
-                            }
-                            restMapped.Add(ConvertToDisplay(card));
-                        }
-                        stage = "rest-feed-items-publish";
-                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
-                        {
-                            LogHelper.Log("User dynamic VM stage=rest-feed-items-publish discarded generation=" + generation, LogType.DEBUG);
-                            return;
-                        }
-                        if (restLoadMore && Items != null)
-                        {
-                            foreach (var item in restMapped)
-                            {
-                                Items.Add(item);
-                            }
-                        }
-                        else
-                        {
-                            Items = restMapped;
-                        }
-                        feedPage = restPage;
-                        restOffset = nextRestOffset;
-                        //停止条件统一在 CanContinuePaging 里：服务端没有更多、游标没前进、连续空页到上限都停
-                        var restCursorAdvanced = !string.IsNullOrEmpty(nextRestOffset) && !string.Equals(nextRestOffset, restCursor, StringComparison.Ordinal);
-                        CanLoadMore = CanContinuePaging(restHasMore, restCursorAdvanced, restMapped.Count, requestItemType, generation);
-                        lastPageFailed = false;
-                        ShowError = false;
-                        ErrorMsg = "";
-                        LogHelper.Log("User dynamic VM stage=rest-feed-items-published page=" + feedPage + " count=" + restMapped.Count + " hasMore=" + restHasMore + " offset=" + (nextRestOffset ?? "") + " generation=" + generation, LogType.INFO);
-                        if (!CanLoadMore && (Items == null || Items.Count == 0))
-                        {
-                            //分页已经停下，而且累积下来一张都没有：保留 gRPC 的拒绝说明，而不是显示一个无解释的空列表。
-                            //游标还在前进时第一页为空只说明这一页没内容，继续翻页。
-                            PublishFeedError(restFallbackMessage ?? "动态请求失败");
-                        }
+                        await ServeUserFeedAsync(generation, requestDynamicType, requestItemType, loadMore);
                         return;
                     }
 
@@ -773,91 +637,19 @@ namespace BiliLite.Modules.User
                     return;
                 }
 
-                //个人空间动态：先走 gRPC 的 DynSpace（自带 has_more 与 history_offset），被拒则在本次请求内改走
-                //SpaceHistory 的 REST 分页；兜底开关（spaceRestMode）粘滞到实例，直到刷新或换用户
+                //个人空间动态：每一屏边界由选择器决定来源，翻页沿用；首选失败只再试另一路一次，
+                //换源从第一页重新开始并由成功的那一页顶替已发布的行，失败则保留现有行
                 if (requestDynamicType == DynamicType.Space)
                 {
-                    //换用户的请求按第一页重新发布，不能续在上一用户的列表后面
-                    var spaceLoadMore = loadMore && !spaceStateReset;
-                    if (!spaceRestMode)
-                    {
-                        stage = "space-feed-request";
-                        try
-                        {
-                            var reply = await grpcService.GetDynSpace(long.Parse(Uid), page: spacePage, offset: spaceLoadMore ? spaceOffset : null);
-                            if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
-                            {
-                                LogHelper.Log("User dynamic VM stage=space-feed-request discarded generation=" + generation, LogType.DEBUG);
-                                return;
-                            }
-                            if (reply == null)
-                            {
-                                throw new InvalidOperationException("DynSpace returned no reply");
-                            }
-                            var spaceCards = DynamicGrpcMapper.MapToUserCards(reply.List);
-                            stage = "space-card-convert";
-                            var spaceMapped = new ObservableCollection<DynamicItemDisplayModel>();
-                            foreach (var card in spaceCards)
-                            {
-                                spaceMapped.Add(ConvertToDisplay2024(card));
-                            }
-                            stage = "space-items-publish";
-                            if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
-                            {
-                                LogHelper.Log("User dynamic VM stage=space-items-publish discarded generation=" + generation, LogType.DEBUG);
-                                return;
-                            }
-                            if (spaceLoadMore && spacePage > 1 && Items != null)
-                            {
-                                foreach (var item in spaceMapped)
-                                {
-                                    Items.Add(item);
-                                }
-                            }
-                            else
-                            {
-                                Items = spaceMapped;
-                            }
-                            spaceOffset = reply.HistoryOffset;
-                            spacePage++;
-                            //停止条件只认服务端的 has_more：本页即使被过滤成 0 张卡片也不代表没有下一页
-                            CanLoadMore = reply.HasMore;
-                            lastPageFailed = false;
-                            ShowError = false;
-                            ErrorMsg = "";
-                            LogHelper.Log("User dynamic VM stage=space-items-published page=" + (spacePage - 1) + " count=" + spaceMapped.Count + " hasMore=" + reply.HasMore + " offset=" + (spaceOffset ?? "") + " generation=" + generation, LogType.INFO);
-                            return;
-                        }
-                        catch (Exception ex)
-                        {
-                            if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
-                            {
-                                LogHelper.Log("User dynamic VM stage=" + stage + " discarded generation=" + generation, LogType.DEBUG, ex);
-                                return;
-                            }
-                            //兜底本身只记一条 INFO：错误留给 REST 的结果说话，不额外弹提示
-                            LogHelper.Log("User dynamic VM stage=space-rest-fallback reason=" + ex.Message + " loadMore=" + loadMore + " generation=" + generation, LogType.INFO);
-                            spaceRestMode = true;
-                            //gRPC 已渲染的页作废，页序号/游标清空：本次请求从 REST 第一页重新取（空 idx），
-                            //SpaceHistory 的 idx 与 DynSpace 的 history_offset 分属两套，绝不互相传递
-                            spacePage = 1;
-                            spaceOffset = null;
-                            Items = null;
-                            idx = "";
-                            loadMore = false;
-                            stage = "space-rest-fallback";
-                        }
-                    }
+                    await ServeSpaceFeedAsync(generation, requestDynamicType, requestItemType, idx, loadMore, spaceStateReset);
+                    return;
                 }
 
                 var api = dynamicAPI.DyanmicNew(requestItemType);
                 switch (requestDynamicType)
                 {
-                    //UserDynamic 的所有分类都已在上面按来源（gRPC / REST 动态流 / 专栏 / 番剧）取数并返回
+                    //UserDynamic 与 Space 的所有分类都已在上面按来源取数并返回，这里只剩话题动态
                     case DynamicType.Topic:
-                        break;
-                    case DynamicType.Space:
-                        api = dynamicAPI.SpaceHistory(Uid, idx);
                         break;
                     default:
                         break;
@@ -961,6 +753,503 @@ namespace BiliLite.Modules.User
                 }
             }
         }
+
+        private static DynamicApiOperation FeedOperation(UserDynamicType itemType)
+        {
+            return itemType == UserDynamicType.Video ? DynamicApiOperation.UserVideoFeed : DynamicApiOperation.UserAllFeed;
+        }
+
+        //全部/视频动态流：来源在每一屏边界由选择器决定，翻页沿用；一个逻辑请求最多两路，
+        //首选失败只再试另一路一次，两路都失败才回到原有的错误呈现
+        private async Task ServeUserFeedAsync(int generation, DynamicType dynamicType, UserDynamicType itemType, bool loadMore)
+        {
+            var operation = FeedOperation(itemType);
+            //上下文在第一个 await 之前捕获：中途换账号也只记到这次请求的桶里
+            var context = DynamicApiSelection.CaptureContext();
+            var boundary = !loadMore || !pinnedFeedSource.HasValue;
+            var decision = boundary
+                ? DynamicApiSelection.Choose(context, operation, true, "user-feed itemType=" + itemType)
+                : null;
+            var source = boundary ? decision.Source : pinnedFeedSource.Value;
+            bool retired;
+            string failureMessage;
+            var outcome = source == DynamicApiSource.Grpc
+                ? await TryUserFeedGrpcAsync(generation, dynamicType, itemType, loadMore, context, out retired, out failureMessage)
+                : await TryUserFeedRestAsync(generation, dynamicType, itemType, loadMore, context, out retired, out failureMessage);
+            if (retired)
+            {
+                return;
+            }
+            if (outcome == DynamicApiOutcome.Success)
+            {
+                feedFallbackReason = null;
+                pinnedFeedSource = source;
+                return;
+            }
+            var alternative = DynamicApiSelection.Opposite(source);
+            DynamicApiSelection.LogFallback(operation, source, alternative, outcome, "user-feed itemType=" + itemType);
+            feedFallbackReason = DescribeFeedFailure("动态请求失败", failureMessage);
+            //换源不传递游标：另一路一律从第一页重新取，成功的那一页整体顶替已发布的行，失败就保留现有行
+            var fallbackOutcome = alternative == DynamicApiSource.Grpc
+                ? await TryUserFeedGrpcAsync(generation, dynamicType, itemType, false, context, out retired, out failureMessage)
+                : await TryUserFeedRestAsync(generation, dynamicType, itemType, false, context, out retired, out failureMessage);
+            if (retired)
+            {
+                return;
+            }
+            if (fallbackOutcome == DynamicApiOutcome.Success)
+            {
+                pinnedFeedSource = alternative;
+                return;
+            }
+            DynamicApiSelection.LogExhausted(operation, outcome, fallbackOutcome, "user-feed itemType=" + itemType);
+            if (!IsCurrentRequest(generation, dynamicType, itemType))
+            {
+                return;
+            }
+            LogHelper.Log("User dynamic VM stage=feed-failed itemType=" + itemType + " first=" + outcome
+                + " second=" + fallbackOutcome + " message=" + (failureMessage ?? ""), LogType.ERROR);
+            PublishFeedError(DescribeFeedFailure("动态请求失败", failureMessage));
+        }
+
+        /// <summary>
+        /// 全部/视频动态流的 gRPC 一路。loadMore 为 false 表示这是换源重启：按第一页取并整体顶替已发布的页。
+        /// </summary>
+        private async Task<DynamicApiOutcome> TryUserFeedGrpcAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
+            bool loadMore, DynamicApiContext context, out bool retired, out string failureMessage)
+        {
+            retired = false;
+            failureMessage = null;
+            var operation = FeedOperation(itemType);
+            var attempt = DynamicApiSelection.CreateAttempt(context, operation, DynamicApiSource.Grpc);
+            var stopwatch = Stopwatch.StartNew();
+            var page = loadMore ? feedPage + 1 : 1;
+            //本页请求所用的游标：发布时与返回值比较，判断游标是否真的前进
+            var requestCursor = loadMore ? historyOffset : null;
+            List<DynamicCardModel2024> grpcCards = null;
+            var hasMore = false;
+            string nextOffset = null;
+            string nextBaseline = null;
+            const string stage = "feed-grpc-request";
+            try
+            {
+                if (itemType == UserDynamicType.All)
+                {
+                    var reply = await grpcService.GetDynAll(page, loadMore ? historyOffset : null);
+                    if (!IsCurrentRequest(generation, dynamicType, itemType))
+                    {
+                        DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
+                        retired = true;
+                        return DynamicApiOutcome.IgnoredFailure;
+                    }
+                    if (reply == null || reply.DynamicList == null)
+                    {
+                        DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage);
+                        failureMessage = "DynAll returned no dynamic list";
+                        return DynamicApiOutcome.MalformedResponse;
+                    }
+                    grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
+                    hasMore = reply.DynamicList.HasMore;
+                    nextOffset = reply.DynamicList.HistoryOffset;
+                }
+                else
+                {
+                    var reply = await grpcService.GetDynVideo(page, loadMore ? historyOffset : null, loadMore ? updateBaseline : null);
+                    if (!IsCurrentRequest(generation, dynamicType, itemType))
+                    {
+                        DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
+                        retired = true;
+                        return DynamicApiOutcome.IgnoredFailure;
+                    }
+                    if (reply == null || reply.DynamicList == null)
+                    {
+                        DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage);
+                        failureMessage = "DynVideo returned no dynamic list";
+                        return DynamicApiOutcome.MalformedResponse;
+                    }
+                    grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
+                    hasMore = reply.DynamicList.HasMore;
+                    nextOffset = reply.DynamicList.HistoryOffset;
+                    nextBaseline = reply.DynamicList.UpdateBaseline;
+                }
+            }
+            catch (Exception ex)
+            {
+                var failed = DynamicApiSelection.ClassifyRequestFailure(ex);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
+                if (failed == DynamicApiOutcome.IgnoredFailure)
+                {
+                    //原因与端点可用性无关（取消/未知异常）：交回原有错误呈现
+                    throw;
+                }
+                //gRPC 游标属于另一套分页，换源前清空，绝不会把 historyOffset/update_baseline 传给 REST
+                historyOffset = null;
+                updateBaseline = null;
+                failureMessage = ex.Message;
+                return failed;
+            }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
+
+            var mapped = new ObservableCollection<DynamicItemDisplayModel>();
+            foreach (var card in grpcCards)
+            {
+                mapped.Add(ConvertToDisplay2024(card));
+            }
+            if (!IsCurrentRequest(generation, dynamicType, itemType))
+            {
+                retired = true;
+                return DynamicApiOutcome.IgnoredFailure;
+            }
+            if (loadMore && Items != null)
+            {
+                foreach (var item in mapped)
+                {
+                    Items.Add(item);
+                }
+            }
+            else
+            {
+                Items = mapped;
+            }
+            feedPage = page;
+            historyOffset = nextOffset;
+            updateBaseline = nextBaseline;
+            //gRPC 动态流只认 history_offset：缺失或重复都说明下一页拿不到（空 offset 会让下一页回到不带 History 的首页）
+            var cursorAdvanced = !string.IsNullOrEmpty(nextOffset) && !string.Equals(nextOffset, requestCursor, StringComparison.Ordinal);
+            CanLoadMore = CanContinuePaging(hasMore, cursorAdvanced, mapped.Count, itemType, generation);
+            lastPageFailed = false;
+            ShowError = false;
+            ErrorMsg = "";
+            var firstId = grpcCards.FirstOrDefault()?.id_str ?? "";
+            LogHelper.Log("User dynamic VM stage=feed-items-published source=grpc page=" + feedPage + " count=" + mapped.Count
+                + " hasMore=" + hasMore + " firstDynamicId=" + firstId + " generation=" + generation, LogType.INFO);
+            return DynamicApiOutcome.Success;
+        }
+
+        /// <summary>
+        /// 全部/视频动态流的 REST 一路。分页游标是 data.offset，只在这一路内部流转。
+        /// </summary>
+        private async Task<DynamicApiOutcome> TryUserFeedRestAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
+            bool loadMore, DynamicApiContext context, out bool retired, out string failureMessage)
+        {
+            retired = false;
+            failureMessage = null;
+            var operation = FeedOperation(itemType);
+            var attempt = DynamicApiSelection.CreateAttempt(context, operation, DynamicApiSource.Legacy);
+            var stopwatch = Stopwatch.StartNew();
+            var restLoadMore = loadMore && !string.IsNullOrEmpty(restOffset);
+            var restPage = restLoadMore ? feedPage + 1 : 1;
+            var restCursor = restLoadMore ? restOffset : null;
+            const string stage = "feed-rest-request";
+            HttpResults restResponse;
+            try
+            {
+                LogHelper.Log("User dynamic VM stage=" + stage + " page=" + restPage + " offset=" + (restCursor ?? "")
+                    + " generation=" + generation, LogType.DEBUG);
+                var restApi = dynamicAPI.DyanmicNew(itemType, restCursor);
+                restResponse = await restApi.Request();
+            }
+            catch (Exception ex)
+            {
+                var failed = DynamicApiSelection.ClassifyRequestFailure(ex);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
+                if (failed == DynamicApiOutcome.IgnoredFailure)
+                {
+                    throw;
+                }
+                failureMessage = ex.Message;
+                return failed;
+            }
+            if (!IsCurrentRequest(generation, dynamicType, itemType))
+            {
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
+                retired = true;
+                return DynamicApiOutcome.IgnoredFailure;
+            }
+            if (!restResponse.status)
+            {
+                //HTTP 状态在 code 里：4xx/5xx 与传输失败分开归类
+                var failed = DynamicApiSelection.ClassifyLegacy(restResponse, null);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
+                failureMessage = restResponse.message;
+                return failed;
+            }
+            var restData = restResponse.GetJObject();
+            var businessCode = restData == null || restData["code"] == null ? (int?)null : restData["code"].ToInt32();
+            var envelope = DynamicApiSelection.ClassifyLegacy(restResponse, businessCode);
+            if (envelope != DynamicApiOutcome.Success || restData["data"] == null)
+            {
+                var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, businessCode ?? 0);
+                failureMessage = restData?["message"]?.ToString() ?? restResponse.message;
+                return failed;
+            }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
+
+            var restCards = JsonConvert.DeserializeObject<List<DynamicCardModel>>(restData["data"]["cards"]?.ToString() ?? "[]", jsonSerializerSettings)
+                ?? new List<DynamicCardModel>();
+            var restHasMore = ReadHasMoreFlag(restData["data"]);
+            var nextRestOffset = restData["data"]["offset"]?.ToString();
+            var restMapped = new ObservableCollection<DynamicItemDisplayModel>();
+            foreach (var card in restCards)
+            {
+                if (card?.desc == null)
+                {
+                    continue;
+                }
+                restMapped.Add(ConvertToDisplay(card));
+            }
+            if (!IsCurrentRequest(generation, dynamicType, itemType))
+            {
+                retired = true;
+                return DynamicApiOutcome.IgnoredFailure;
+            }
+            if (restLoadMore && Items != null)
+            {
+                foreach (var item in restMapped)
+                {
+                    Items.Add(item);
+                }
+            }
+            else
+            {
+                Items = restMapped;
+            }
+            feedPage = restPage;
+            restOffset = nextRestOffset;
+            //停止条件统一在 CanContinuePaging 里：服务端没有更多、游标没前进、连续空页到上限都停
+            var restCursorAdvanced = !string.IsNullOrEmpty(nextRestOffset) && !string.Equals(nextRestOffset, restCursor, StringComparison.Ordinal);
+            CanLoadMore = CanContinuePaging(restHasMore, restCursorAdvanced, restMapped.Count, itemType, generation);
+            lastPageFailed = false;
+            ShowError = false;
+            ErrorMsg = "";
+            LogHelper.Log("User dynamic VM stage=feed-items-published source=rest page=" + feedPage + " count=" + restMapped.Count
+                + " hasMore=" + restHasMore + " offset=" + (nextRestOffset ?? "") + " generation=" + generation, LogType.INFO);
+            if (!CanLoadMore && (Items == null || Items.Count == 0))
+            {
+                //分页已经停下，而且一张都没有：把换源时那条拒绝说明摆出来，不让页面无声空白
+                PublishFeedError(feedFallbackReason ?? "动态请求失败");
+            }
+            return DynamicApiOutcome.Success;
+        }
+
+        //个人空间动态：来源在每一屏边界由选择器决定，翻页沿用；换源从第一页重新开始，失败保留现有行
+        private async Task ServeSpaceFeedAsync(int generation, DynamicType dynamicType, UserDynamicType itemType, string idx, bool loadMore, bool spaceStateReset)
+        {
+            var context = DynamicApiSelection.CaptureContext();
+            var spaceLoadMore = loadMore && !spaceStateReset;
+            var boundary = !spaceLoadMore || !pinnedSpaceSource.HasValue;
+            var decision = boundary
+                ? DynamicApiSelection.Choose(context, DynamicApiOperation.SpaceFeed, true, "space-feed uid=" + (Uid ?? ""))
+                : null;
+            var source = boundary ? decision.Source : pinnedSpaceSource.Value;
+            bool retired;
+            string failureMessage;
+            var outcome = source == DynamicApiSource.Grpc
+                ? await TrySpaceGrpcAsync(generation, dynamicType, itemType, spaceLoadMore, context, out retired, out failureMessage)
+                : await TrySpaceRestAsync(generation, dynamicType, itemType, spaceLoadMore, spaceLoadMore ? idx : "", context, out retired, out failureMessage);
+            if (retired)
+            {
+                return;
+            }
+            if (outcome == DynamicApiOutcome.Success)
+            {
+                pinnedSpaceSource = source;
+                return;
+            }
+            var alternative = DynamicApiSelection.Opposite(source);
+            DynamicApiSelection.LogFallback(DynamicApiOperation.SpaceFeed, source, alternative, outcome, "space-feed");
+            //换源不传递游标：gRPC 从第一页、SpaceHistory 从空 idx 重新开始，成功的一页顶替已发布的行
+            var fallbackOutcome = alternative == DynamicApiSource.Grpc
+                ? await TrySpaceGrpcAsync(generation, dynamicType, itemType, false, context, out retired, out failureMessage)
+                : await TrySpaceRestAsync(generation, dynamicType, itemType, false, "", context, out retired, out failureMessage);
+            if (retired)
+            {
+                return;
+            }
+            if (fallbackOutcome == DynamicApiOutcome.Success)
+            {
+                pinnedSpaceSource = alternative;
+                return;
+            }
+            DynamicApiSelection.LogExhausted(DynamicApiOperation.SpaceFeed, outcome, fallbackOutcome, "space-feed");
+            if (!IsCurrentRequest(generation, dynamicType, itemType))
+            {
+                return;
+            }
+            LogHelper.Log("User dynamic VM stage=space-feed-failed first=" + outcome + " second=" + fallbackOutcome
+                + " message=" + (failureMessage ?? ""), LogType.ERROR);
+            PublishFeedError(DescribeFeedFailure("动态请求失败", failureMessage));
+        }
+
+        private async Task<DynamicApiOutcome> TrySpaceGrpcAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
+            bool spaceLoadMore, DynamicApiContext context, out bool retired, out string failureMessage)
+        {
+            retired = false;
+            failureMessage = null;
+            var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.SpaceFeed, DynamicApiSource.Grpc);
+            var stopwatch = Stopwatch.StartNew();
+            if (!spaceLoadMore)
+            {
+                //换源/换用户：DynSpace 的页序号与 history_offset 从第一页重新开始
+                spacePage = 1;
+                spaceOffset = null;
+            }
+            const string stage = "space-grpc-request";
+            List<DynamicCardModel2024> spaceCards;
+            bool hasMore;
+            string nextOffset;
+            try
+            {
+                var reply = await grpcService.GetDynSpace(long.Parse(Uid), page: spacePage, offset: spaceLoadMore ? spaceOffset : null);
+                if (!IsCurrentRequest(generation, dynamicType, itemType))
+                {
+                    DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
+                    retired = true;
+                    return DynamicApiOutcome.IgnoredFailure;
+                }
+                if (reply == null)
+                {
+                    DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage);
+                    failureMessage = "DynSpace returned no reply";
+                    return DynamicApiOutcome.MalformedResponse;
+                }
+                spaceCards = DynamicGrpcMapper.MapToUserCards(reply.List);
+                hasMore = reply.HasMore;
+                nextOffset = reply.HistoryOffset;
+            }
+            catch (Exception ex)
+            {
+                var failed = DynamicApiSelection.ClassifyRequestFailure(ex);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
+                if (failed == DynamicApiOutcome.IgnoredFailure)
+                {
+                    throw;
+                }
+                //SpaceHistory 的 idx 与 DynSpace 的 history_offset 分属两套，换源前清空
+                spacePage = 1;
+                spaceOffset = null;
+                failureMessage = ex.Message;
+                return failed;
+            }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
+
+            var spaceMapped = new ObservableCollection<DynamicItemDisplayModel>();
+            foreach (var card in spaceCards)
+            {
+                spaceMapped.Add(ConvertToDisplay2024(card));
+            }
+            if (!IsCurrentRequest(generation, dynamicType, itemType))
+            {
+                retired = true;
+                return DynamicApiOutcome.IgnoredFailure;
+            }
+            if (spaceLoadMore && spacePage > 1 && Items != null)
+            {
+                foreach (var item in spaceMapped)
+                {
+                    Items.Add(item);
+                }
+            }
+            else
+            {
+                Items = spaceMapped;
+            }
+            spaceOffset = nextOffset;
+            spacePage++;
+            //停止条件只认服务端的 has_more：本页即使被过滤成 0 张卡片也不代表没有下一页
+            CanLoadMore = hasMore;
+            lastPageFailed = false;
+            ShowError = false;
+            ErrorMsg = "";
+            LogHelper.Log("User dynamic VM stage=space-items-published source=grpc page=" + (spacePage - 1) + " count="
+                + spaceMapped.Count + " hasMore=" + hasMore + " generation=" + generation, LogType.INFO);
+            return DynamicApiOutcome.Success;
+        }
+
+        private async Task<DynamicApiOutcome> TrySpaceRestAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
+            bool spaceLoadMore, string cursor, DynamicApiContext context, out bool retired, out string failureMessage)
+        {
+            retired = false;
+            failureMessage = null;
+            var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.SpaceFeed, DynamicApiSource.Legacy);
+            var stopwatch = Stopwatch.StartNew();
+            const string stage = "space-rest-request";
+            HttpResults results;
+            try
+            {
+                results = await dynamicAPI.SpaceHistory(Uid, cursor).Request();
+            }
+            catch (Exception ex)
+            {
+                var failed = DynamicApiSelection.ClassifyRequestFailure(ex);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
+                if (failed == DynamicApiOutcome.IgnoredFailure)
+                {
+                    throw;
+                }
+                failureMessage = ex.Message;
+                return failed;
+            }
+            if (!IsCurrentRequest(generation, dynamicType, itemType))
+            {
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
+                retired = true;
+                return DynamicApiOutcome.IgnoredFailure;
+            }
+            if (!results.status)
+            {
+                var failed = DynamicApiSelection.ClassifyLegacy(results, null);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
+                failureMessage = results.message;
+                return failed;
+            }
+            var data = results.GetJObject();
+            var businessCode = data == null || data["code"] == null ? (int?)null : data["code"].ToInt32();
+            var envelope = DynamicApiSelection.ClassifyLegacy(results, businessCode);
+            if (envelope != DynamicApiOutcome.Success || data["data"] == null)
+            {
+                var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, businessCode ?? 0);
+                failureMessage = data?["message"]?.ToString() ?? results.message;
+                return failed;
+            }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
+
+            var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["cards"]?.ToString() ?? "[]", jsonSerializerSettings)
+                ?? new List<DynamicCardModel>();
+            var mapped = new ObservableCollection<DynamicItemDisplayModel>();
+            foreach (var item in items)
+            {
+                mapped.Add(ConvertToDisplay(item));
+            }
+            if (!IsCurrentRequest(generation, dynamicType, itemType))
+            {
+                retired = true;
+                return DynamicApiOutcome.IgnoredFailure;
+            }
+            if (spaceLoadMore && Items != null)
+            {
+                foreach (var item in mapped)
+                {
+                    Items.Add(item);
+                }
+            }
+            else
+            {
+                Items = mapped;
+            }
+            //SpaceHistory 的下一页游标是上一页最后一张卡的动态 ID，本页没有卡片就没有下一页
+            CanLoadMore = mapped.Count > 0;
+            lastPageFailed = false;
+            ShowError = false;
+            ErrorMsg = "";
+            LogHelper.Log("User dynamic VM stage=space-items-published source=rest count=" + mapped.Count
+                + " cursor=" + (cursor ?? "") + " generation=" + generation, LogType.INFO);
+            return DynamicApiOutcome.Success;
+        }
+
+
         private bool IsCurrentRequest(int generation, DynamicType dynamicType, UserDynamicType itemType)
         {
             return generation == requestGeneration && dynamicType == this.DynamicType && itemType == this.UserDynamicType;
@@ -1044,49 +1333,27 @@ namespace BiliLite.Modules.User
             {
                 CanLoadMore = false;
                 Loading = true;
-                //优先走 gRPC 详情，复用动态流同一套映射；映射不出唯一一张卡片就回落到下面的 REST 详情
-                try
+                //详情是独立的一屏：来源与上下文都在第一个 await 之前定下来
+                var context = DynamicApiSelection.CaptureContext();
+                var decision = DynamicApiSelection.Choose(context, DynamicApiOperation.DynamicDetail, true, "detail id=" + id);
+                string failureMessage;
+                var outcome = decision.Source == DynamicApiSource.Grpc
+                    ? await TryDetailGrpcAsync(id, context, out failureMessage)
+                    : await TryDetailRestAsync(id, context, out failureMessage);
+                if (outcome == DynamicApiOutcome.Success)
                 {
-                    var detail = await grpcService.GetDynDetail(id);
-                    var detailCards = DynamicGrpcMapper.MapToUserCards(new[] { detail?.Item });
-                    if (detailCards.Count == 1)
-                    {
-                        var display = ConvertToDisplay2024(detailCards[0]);
-                        //未支持的类型和转换失败都会退化成 Other 占位卡片，这类结果要留给 REST 详情
-                        if (display.Type != DynamicDisplayType.Other)
-                        {
-                            Items = new ObservableCollection<DynamicItemDisplayModel> { display };
-                            return;
-                        }
-                        LogHelper.Log("User dynamic VM stage=detail-grpc-unusable type=" + detailCards[0].type + " dynamicId=" + id, LogType.INFO);
-                    }
+                    return;
                 }
-                catch (Exception ex)
+                //一个逻辑请求最多两路：首选失败（含映射不出可用卡片）只再试另一路一次
+                var alternative = DynamicApiSelection.Opposite(decision.Source);
+                DynamicApiSelection.LogFallback(DynamicApiOperation.DynamicDetail, decision.Source, alternative, outcome, "detail id=" + id);
+                var fallbackOutcome = alternative == DynamicApiSource.Grpc
+                    ? await TryDetailGrpcAsync(id, context, out failureMessage)
+                    : await TryDetailRestAsync(id, context, out failureMessage);
+                if (fallbackOutcome != DynamicApiOutcome.Success)
                 {
-                    LogHelper.Log("User dynamic VM stage=detail-grpc-fallback id=" + id + " reason=" + ex.Message, LogType.INFO, ex);
-                }
-                var api = dynamicAPI.DynamicDetail(id);
-
-                var results = await api.Request();
-                if (results.status)
-                {
-                    var data = results.GetJObject();
-                    if (data["code"].ToInt32() == 0)
-                    {
-                        var item = JsonConvert.DeserializeObject<DynamicCardModel>(data["data"]?.ToString() ?? "{}", jsonSerializerSettings);
-                        ObservableCollection<DynamicItemDisplayModel> _ls = new ObservableCollection<DynamicItemDisplayModel>();
-                        _ls.Add(ConvertToDisplay(item));
-                        Items = _ls;
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data["message"].ToString());
-                    }
-                }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
-
+                    DynamicApiSelection.LogExhausted(DynamicApiOperation.DynamicDetail, outcome, fallbackOutcome, "detail id=" + id);
+                    Utils.ShowMessageToast(failureMessage ?? "动态加载失败");
                 }
             }
             catch (Exception ex)
@@ -1100,6 +1367,104 @@ namespace BiliLite.Modules.User
 
             }
         }
+
+        /// <summary>
+        /// gRPC 详情。映射不出唯一一张可用卡片属于内容/本地转换问题，不降低端点可用性，
+        /// 但本次仍然交给 REST 详情报一次错。
+        /// </summary>
+        private async Task<DynamicApiOutcome> TryDetailGrpcAsync(string id, DynamicApiContext context, out string failureMessage)
+        {
+            failureMessage = null;
+            var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.DynamicDetail, DynamicApiSource.Grpc);
+            var stopwatch = Stopwatch.StartNew();
+            const string stage = "detail-grpc-request";
+            ObservableCollection<DynamicItemDisplayModel> mapped = null;
+            string failureDetail = null;
+            DynamicApiOutcome outcome;
+            try
+            {
+                var detail = await grpcService.GetDynDetail(id);
+                var detailCards = DynamicGrpcMapper.MapToUserCards(new[] { detail?.Item });
+                if (detailCards.Count == 1)
+                {
+                    var display = ConvertToDisplay2024(detailCards[0]);
+                    //未支持的类型和转换失败都会退化成 Other 占位卡片，这类结果要留给 REST 详情
+                    if (display.Type != DynamicDisplayType.Other)
+                    {
+                        mapped = new ObservableCollection<DynamicItemDisplayModel> { display };
+                    }
+                    else
+                    {
+                        failureDetail = "unsupported type=" + detailCards[0].type;
+                    }
+                }
+                else
+                {
+                    failureDetail = "mapping produced " + detailCards.Count + " cards";
+                }
+                outcome = mapped != null ? DynamicApiOutcome.Success : DynamicApiOutcome.IgnoredFailure;
+            }
+            catch (Exception ex)
+            {
+                //映射/转换失败与请求失败都落到 REST 详情，与原先的兜底一致：本地转换问题不降低端点可用性
+                outcome = DynamicApiSelection.ClassifyRequestFailure(ex);
+                failureDetail = ex.Message;
+            }
+            DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
+            if (outcome != DynamicApiOutcome.Success)
+            {
+                LogHelper.Log("User dynamic VM stage=detail-grpc-unusable id=" + id + " outcome=" + outcome
+                    + " detail=" + (failureDetail ?? ""), LogType.INFO);
+                failureMessage = failureDetail;
+                return outcome;
+            }
+            Items = mapped;
+            return DynamicApiOutcome.Success;
+        }
+
+        private async Task<DynamicApiOutcome> TryDetailRestAsync(string id, DynamicApiContext context, out string failureMessage)
+        {
+            failureMessage = null;
+            var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.DynamicDetail, DynamicApiSource.Legacy);
+            var stopwatch = Stopwatch.StartNew();
+            const string stage = "detail-rest-request";
+            HttpResults results;
+            try
+            {
+                results = await dynamicAPI.DynamicDetail(id).Request();
+            }
+            catch (Exception ex)
+            {
+                var failed = DynamicApiSelection.ClassifyRequestFailure(ex);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
+                failureMessage = ex.Message;
+                return failed;
+            }
+            if (!results.status)
+            {
+                var failed = DynamicApiSelection.ClassifyLegacy(results, null);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
+                failureMessage = results.message;
+                return failed;
+            }
+            var data = results.GetJObject();
+            var businessCode = data == null || data["code"] == null ? (int?)null : data["code"].ToInt32();
+            var envelope = DynamicApiSelection.ClassifyLegacy(results, businessCode);
+            if (envelope != DynamicApiOutcome.Success || data["data"] == null)
+            {
+                var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, businessCode ?? 0);
+                failureMessage = data?["message"]?.ToString() ?? results.message;
+                return failed;
+            }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
+            var item = JsonConvert.DeserializeObject<DynamicCardModel>(data["data"]?.ToString() ?? "{}", jsonSerializerSettings);
+            Items = new ObservableCollection<DynamicItemDisplayModel> { ConvertToDisplay(item) };
+            LogHelper.Log("User dynamic VM stage=detail-items-published source=rest id=" + id, LogType.INFO);
+            return DynamicApiOutcome.Success;
+        }
+
+
         private DynamicItemDisplayModel ConvertToDisplay(DynamicCardModel item)
         {
             try

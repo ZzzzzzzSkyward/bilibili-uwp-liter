@@ -8,6 +8,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -52,22 +53,66 @@ namespace BiliLite.Modules.User
         // gRPC 与 REST 的分页游标互不相干：一个回包里的 offset 不能拿去请求另一个接口。
         string grpcOffset = "";
         string restOffset = "";
-        // 本列表一旦回退到 REST 就固定下来，直到 Refresh/Clear，避免每页都先失败一次。
-        bool useRestFallback = false;
-        // 换源时已展示的 gRPC 条目必须让位给第一条 REST 页，否则同一批转发会重复出现。
-        bool replaceListOnRestPage = false;
+        // 本次转发列表固定的来源：刷新/清空时由选择器重新决定，翻页沿用；
+        // 只有同一次请求里首选失败、备用来源成功时才改到这一路
+        DynamicApiSource? pinnedSource;
+        // 每次刷新/清空都递增，只有持有一致代号的请求才能发布结果
+        int requestGeneration;
 
         public async Task GetDynamicItems()
         {
+            var generation = ++requestGeneration;
             try
             {
                 CanLoadMore = false;
                 Loading = true;
-                if (!useRestFallback && await TryLoadGrpcPage())
+                // 上下文与来源都在第一个 await 之前定下来
+                var context = DynamicApiSelection.CaptureContext();
+                var boundary = !pinnedSource.HasValue;
+                var decision = boundary
+                    ? DynamicApiSelection.Choose(context, DynamicApiOperation.Reposts, true, "reposts")
+                    : null;
+                var source = boundary ? decision.Source : pinnedSource.Value;
+                bool served;
+                DynamicApiOutcome outcome;
+                string failureMessage;
+                if (source == DynamicApiSource.Grpc)
+                {
+                    served = await TryLoadGrpcPage(grpcOffset, false, context, generation, out outcome, out failureMessage);
+                }
+                else
+                {
+                    served = await LoadRestPage(restOffset, false, context, generation, out outcome, out failureMessage);
+                }
+                if (served)
+                {
+                    pinnedSource = source;
+                    return;
+                }
+                var firstOutcome = outcome;
+                // 一个逻辑请求最多两路：首选失败只再试另一路一次
+                var alternative = DynamicApiSelection.Opposite(source);
+                DynamicApiSelection.LogFallback(DynamicApiOperation.Reposts, source, alternative, outcome, "reposts");
+                // 换源不传游标：另一路从第一页重新取，第一条成功的页整体顶替已发布的行
+                if (alternative == DynamicApiSource.Grpc)
+                {
+                    served = await TryLoadGrpcPage("", true, context, generation, out outcome, out failureMessage);
+                }
+                else
+                {
+                    served = await LoadRestPage("", true, context, generation, out outcome, out failureMessage);
+                }
+                if (served)
+                {
+                    pinnedSource = alternative;
+                    return;
+                }
+                if (generation != requestGeneration)
                 {
                     return;
                 }
-                await LoadRestPage();
+                DynamicApiSelection.LogExhausted(DynamicApiOperation.Reposts, firstOutcome, outcome, "reposts");
+                Utils.ShowMessageToast(failureMessage ?? "转发列表加载失败");
             }
             catch (Exception ex)
             {
@@ -81,78 +126,128 @@ namespace BiliLite.Modules.User
         }
 
         /// <summary>
-        /// 返回 false 表示本页没有可用的 gRPC 数据，调用方应改走 REST。
+        /// gRPC 转发列表。served 为 false 表示本页没有可用的条目（接口拒绝或这一页是空的），
+        /// 由调用方在本次请求内改试 REST；空页本身仍然算一次有效响应，不降低端点可用性。
         /// </summary>
-        private async Task<bool> TryLoadGrpcPage()
+        private async Task<bool> TryLoadGrpcPage(string offset, bool replaceRows, DynamicApiContext context, int generation,
+            out DynamicApiOutcome outcome, out string failureMessage)
         {
+            failureMessage = null;
+            var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.Reposts, DynamicApiSource.Grpc);
+            var stopwatch = Stopwatch.StartNew();
+            const string stage = "reposts-grpc-request";
+            Bilibili.App.Dynamic.V2.RepostListRsp rsp;
             try
             {
-                var rsp = await grpcService.GetDynRepostList(ID, grpcOffset);
-                var displays = DynamicRepostMapper.ToDisplayList(
-                    DynamicGrpcMapper.MapToUserCards(rsp?.List),
-                    UserCommand);
-                if (displays.Count > 0)
-                {
-                    Append(displays);
-                    grpcOffset = rsp?.Offset ?? "";
-                    CanLoadMore = rsp?.HasMore ?? false;
-                    return true;
-                }
-                LogHelper.Log("Dynamic repost VM stage=repost-grpc-unusable dynamicId=" + ID + " offset=" + grpcOffset, LogType.INFO);
+                rsp = await grpcService.GetDynRepostList(ID, offset);
             }
             catch (Exception ex)
             {
-                LogHelper.Log("Dynamic repost VM stage=repost-grpc-failed dynamicId=" + ID + " offset=" + grpcOffset + " message=" + ex.Message, LogType.INFO);
+                outcome = DynamicApiSelection.ClassifyRequestFailure(ex);
+                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
+                if (outcome == DynamicApiOutcome.IgnoredFailure)
+                {
+                    throw;
+                }
+                failureMessage = ex.Message;
+                return false;
             }
-
-            replaceListOnRestPage = true;
-            useRestFallback = true;
-            return false;
+            if (generation != requestGeneration)
+            {
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
+                outcome = DynamicApiOutcome.IgnoredFailure;
+                return false;
+            }
+            var displays = DynamicRepostMapper.ToDisplayList(
+                DynamicGrpcMapper.MapToUserCards(rsp?.List),
+                UserCommand);
+            outcome = DynamicApiOutcome.Success;
+            DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
+            if (displays.Count == 0)
+            {
+                LogHelper.Log("Dynamic repost VM stage=repost-grpc-unusable dynamicId=" + ID + " offset=" + offset, LogType.INFO);
+                return false;
+            }
+            if (replaceRows && Items != null)
+            {
+                Items.Clear();
+            }
+            Append(displays);
+            grpcOffset = rsp?.Offset ?? "";
+            // 换到 gRPC 之后 REST 游标作废：两套分页不互传
+            restOffset = "";
+            CanLoadMore = rsp?.HasMore ?? false;
+            return true;
         }
 
-        private async Task LoadRestPage()
+        private async Task<bool> LoadRestPage(string offset, bool replaceRows, DynamicApiContext context, int generation,
+            out DynamicApiOutcome outcome, out string failureMessage)
         {
-            var api = dynamicAPI.DynamicRepost(ID, restOffset);
-
-            var results = await api.Request();
-            if (results.status)
+            failureMessage = null;
+            var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.Reposts, DynamicApiSource.Legacy);
+            var stopwatch = Stopwatch.StartNew();
+            const string stage = "reposts-rest-request";
+            HttpResults results;
+            try
             {
-                var data = results.GetJObject();
-                if (data["code"].ToInt32() == 0)
-                {
-                    var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["items"]?.ToString() ?? "[]");
-
-                    var displays = new List<DynamicItemDisplayModel>();
-                    foreach (var item in items)
-                    {
-                        displays.Add(ConvertToDisplayRepost(item));
-                    }
-                    // 从 gRPC 换到 REST 时，之前的条目整体作废：第一条成功的 REST 页顶替它们，
-                    // 之后各 REST 页照旧追加，这样既不会把同一批转发显示两次，分页也能继续往后走。
-                    if (replaceListOnRestPage)
-                    {
-                        replaceListOnRestPage = false;
-                        if (Items != null)
-                        {
-                            Items.Clear();
-                        }
-                    }
-                    Append(displays);
-                    // 上一版把 has_more 当成 offset 回传，第二页会重复第一页；这里推进真正的 offset，
-                    // 并要求 has_more 与 offset 同时有效，否则分页会在第一页打转。
-                    var hasMore = (data["data"]?["has_more"]?.ToInt32() ?? 0) == 1;
-                    restOffset = data["data"]?["offset"]?.ToString() ?? "";
-                    CanLoadMore = hasMore && !string.IsNullOrEmpty(restOffset);
-                }
-                else
-                {
-                    Utils.ShowMessageToast(data["message"].ToString());
-                }
+                results = await dynamicAPI.DynamicRepost(ID, offset).Request();
             }
-            else
+            catch (Exception ex)
             {
-                Utils.ShowMessageToast(results.message);
+                outcome = DynamicApiSelection.ClassifyRequestFailure(ex);
+                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
+                if (outcome == DynamicApiOutcome.IgnoredFailure)
+                {
+                    throw;
+                }
+                failureMessage = ex.Message;
+                return false;
             }
+            if (generation != requestGeneration)
+            {
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
+                outcome = DynamicApiOutcome.IgnoredFailure;
+                return false;
+            }
+            if (!results.status)
+            {
+                outcome = DynamicApiSelection.ClassifyLegacy(results, null);
+                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
+                failureMessage = results.message;
+                return false;
+            }
+            var data = results.GetJObject();
+            var businessCode = data == null || data["code"] == null ? (int?)null : data["code"].ToInt32();
+            var envelope = DynamicApiSelection.ClassifyLegacy(results, businessCode);
+            if (envelope != DynamicApiOutcome.Success || data["data"] == null)
+            {
+                outcome = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
+                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage, businessCode ?? 0);
+                failureMessage = data?["message"]?.ToString() ?? results.message;
+                return false;
+            }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage, businessCode ?? 0);
+            outcome = DynamicApiOutcome.Success;
+            var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["items"]?.ToString() ?? "[]");
+            var displays = new List<DynamicItemDisplayModel>();
+            foreach (var item in items)
+            {
+                displays.Add(ConvertToDisplayRepost(item));
+            }
+            // 换源时已展示的条目让位给第一条成功的 REST 页，之后各页照旧追加，同一批转发不会出现两次
+            if (replaceRows && Items != null)
+            {
+                Items.Clear();
+            }
+            Append(displays);
+            // 上一版把 has_more 当成 offset 回传，第二页会重复第一页；这里推进真正的 offset，
+            // 并要求 has_more 与 offset 同时有效，否则分页会在第一页打转
+            var hasMore = (data["data"]?["has_more"]?.ToInt32() ?? 0) == 1;
+            restOffset = data["data"]?["offset"]?.ToString() ?? "";
+            // 换到 REST 之后 gRPC 游标作废
+            grpcOffset = "";
+            CanLoadMore = hasMore && !string.IsNullOrEmpty(restOffset);
+            return true;
         }
 
         private void Append(IEnumerable<DynamicItemDisplayModel> displays)
@@ -176,8 +271,9 @@ namespace BiliLite.Modules.User
             }
             grpcOffset = "";
             restOffset = "";
-            useRestFallback = false;
-            replaceListOnRestPage = false;
+            // 刷新就是新的一屏边界：交回选择器重新决定来源，代号递增让在途请求作废
+            pinnedSource = null;
+            requestGeneration++;
             Items = null;
             await GetDynamicItems();
         }
@@ -256,8 +352,8 @@ namespace BiliLite.Modules.User
         {
             grpcOffset = "";
             restOffset = "";
-            useRestFallback = false;
-            replaceListOnRestPage = false;
+            pinnedSource = null;
+            requestGeneration++;
             Items = null;
 
         }

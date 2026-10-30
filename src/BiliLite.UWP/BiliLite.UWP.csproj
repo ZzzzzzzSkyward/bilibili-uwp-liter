@@ -169,6 +169,7 @@
     <Compile Include="Api\User\DynamicAPI.cs" />
     <Compile Include="Services\GrpcService.cs" />
     <Compile Include="Services\DynamicApiSelector.cs" />
+    <Compile Include="Services\DynamicApiSelection.cs" />
     <Compile Include="Services\MediaListService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaLibraryService.cs" />

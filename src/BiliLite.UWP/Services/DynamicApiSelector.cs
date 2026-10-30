@@ -565,8 +565,8 @@ namespace BiliLite.Services
                     var reason = only == preferred
                         ? (hasHistory ? DynamicApiDecisionReason.PreferenceRetained : DynamicApiDecisionReason.DefaultGrpcFirst)
                         : DynamicApiDecisionReason.PreferredSourceInCooldown;
-                    if (only != preferred)
-                        bucket.PreferredSource = only;
+                    //冷却只是"临时排除"这一路:不据此改写偏好,否则冷却一结束首选就再也回不到原来的来源,
+                    //只能靠一次恢复试用才回来。偏好仍然只由可靠性/延迟判断改写。
                     decision = BuildDecision(bucket, context, operation, only, reason, false, now);
                 }
                 else if (hasHistory && allowRecoveryTrial && TryReserveTrial(bucket, Opposite(preferred), now))
@@ -612,6 +612,22 @@ namespace BiliLite.Services
 
             bucket.PreferredSource = preferred;
             return BuildDecision(bucket, context, operation, preferred, DynamicApiDecisionReason.PreferenceRetained, false, now);
+        }
+
+        /// <summary>
+        /// 为已固定的来源生成一次尝试。分页沿用初始加载选中的来源时用它:
+        /// 不重新打分、不动偏好,但上下文仍在这一刻捕获(await 之前)。
+        /// </summary>
+        public DynamicApiAttempt CreateAttempt(DynamicApiContext context, DynamicApiOperation operation, DynamicApiSource source)
+        {
+            if (context == null)
+                throw new ArgumentNullException("context");
+            return new DynamicApiAttempt(NextAttemptId(), context, operation, source);
+        }
+
+        private long NextAttemptId()
+        {
+            return System.Threading.Interlocked.Increment(ref _attemptCounter);
         }
 
         /// <summary>
@@ -751,7 +767,7 @@ namespace BiliLite.Services
                 WeightedLatency(bucket.Legacy, now),
                 InCooldown(bucket.Grpc, now),
                 InCooldown(bucket.Legacy, now),
-                s => new DynamicApiAttempt(++_attemptCounter, context, operation, s));
+                s => new DynamicApiAttempt(NextAttemptId(), context, operation, s));
         }
 
         private static DynamicApiSource Opposite(DynamicApiSource source)
