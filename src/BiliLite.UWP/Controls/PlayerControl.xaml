@@ -183,6 +183,7 @@
         </Setter.Value>
       </Setter>
     </Style>
+
     <convert:ProgressToTimeConverter x:Key="progress"/>
     <convert:ColorConvert x:Key="color"/>
     <convert:DanmakuStyleConvert x:Key="styleConvert"/>
@@ -573,16 +574,13 @@
               <TextBlock x:Name="TopTitle" VerticalAlignment="Center" Foreground="White" FontSize="18" Margin="12 0" TextTrimming="CharacterEllipsis">第一集</TextBlock>
               <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <TextBlock x:Name="TopOnline" Foreground="White" FontSize="16" VerticalAlignment="Center" Margin="12 0"/>
-                <Button x:Name="TopBtnSettingDanmaku" Click="TopBtnSettingDanmaku_Click" Background="Transparent" Padding="0" Width="48" Height="48">
-                  <Image Width="28" Height="28" Source="/Assets/Icon/icon_danmaku_setting.png"/>
-                </Button>
-                <Button x:Name="TopBtnScreenshot" Click="TopBtnScreenshot_Click" Background="Transparent" Padding="0" Width="48" Height="48">
+                <Button x:Name="TopBtnScreenshot" Click="TopBtnScreenshot_Click" BorderThickness="0" Background="Transparent" Padding="0" Width="48" Height="48">
                   <Button.KeyboardAccelerators>
                     <KeyboardAccelerator Key="F10"/>
                   </Button.KeyboardAccelerators>
                   <Image Width="28" Height="28" Source="/Assets/Icon/icon_screenshot.png"/>
                 </Button>
-                <Button x:Name="TopBtnMore" Click="TopBtnMore_Click" Background="Transparent" Padding="0" Width="48" Height="48">
+                <Button x:Name="TopBtnMore" Click="TopBtnMore_Click" BorderThickness="0" Background="Transparent" Padding="0" Width="48" Height="48">
                   <Image Width="28" Height="28" Source="/Assets/Icon/icon_more.png"/>
                 </Button>
               </StackPanel>
@@ -617,13 +615,13 @@
                     <fa:FontAwesome Icon="Solid_StepForward" FontSize="18"/>
                   </HyperlinkButton>
                   <TextBlock x:Name="BottomTextPostion" VerticalAlignment="Center" Foreground="White" Margin="8 0" FontSize="18"><Run Text="{Binding ElementName=Player,Path=Position,Mode=OneWay,Converter={StaticResource progress}}"/> / <Run Text="{Binding ElementName=Player,Path=Duration,Mode=OneWay,Converter={StaticResource progress}}"/></TextBlock>
-                  <Button x:Name="BottomBtnSelctSubtitle" Visibility="Collapsed" Foreground="White" Background="Transparent" Padding="8" Width="48" Height="48">
+                  <Button x:Name="BottomBtnSelctSubtitle" Visibility="Collapsed" Foreground="White" BorderThickness="0" Background="Transparent" Padding="8" Width="48" Height="48">
                     <fa:FontAwesome Icon="Solid_ClosedCaptioning" FontSize="20"/>
                   </Button>
-                  <Button x:Name="TopBtnOpenDanmaku" Click="TopBtnOpenDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay,Converter={StaticResource display}}" Background="Transparent" Padding="0" Width="48" Height="48">
+                  <Button x:Name="TopBtnOpenDanmaku" Click="TopBtnOpenDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay,Converter={StaticResource display}}" BorderThickness="0" Background="Transparent" Padding="0" Width="48" Height="48">
                     <Image Width="28" Height="28" Source="/Assets/Icon/icon_danmaku_open.png"/>
                   </Button>
-                  <Button x:Name="TopBtnCloseDanmaku" Click="TopBtnCloseDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay}" Background="Transparent" Padding="0" Width="48" Height="48">
+                  <Button x:Name="TopBtnCloseDanmaku" Click="TopBtnCloseDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay}" BorderThickness="0" Background="Transparent" Padding="0" Width="48" Height="48">
                     <Image Width="28" Height="28" Source="/Assets/Icon/icon_danmaku_close.png"/>
                   </Button>
                   <local:DanmakuListControl x:Name="DanmakuListButton"/>
@@ -633,7 +631,7 @@
                 </StackPanel>
                 <Grid x:Name="BottomBtnSendDanmakuWide" Grid.Column="1" Margin="12 0" MaxWidth="400">
                   <TextBox x:Name="SendDanmakuTextBox" TabIndex="999" KeyDown="SendDanmakuTextBox_KeyDown" Padding="40 8 56 8" BorderThickness="0" Foreground="White" Background="#66FFFFFF" VerticalAlignment="Center" PlaceholderText="发个友善的弹幕见证当下"/>
-                  <Button Width="40" Background="Transparent">
+                  <Button Width="40" BorderThickness="0" Background="Transparent">
                     <fa:FontAwesome Icon="Solid_Palette" Foreground="#FFC7C5C5" FontSize="18"/>
                     <Button.Flyout>
                       <Flyout>
@@ -680,7 +678,7 @@
                                 </Border>
                             </HyperlinkButton>-->
                 <StackPanel Orientation="Horizontal" Grid.Column="2">
-                  <Button x:Name="BottomBtnVolume" Background="Transparent" Foreground="White" Padding="8" Width="48" Height="48">
+                  <Button x:Name="BottomBtnVolume" BorderThickness="0" Background="Transparent" Foreground="White" Padding="8" Width="48" Height="48">
                     <fa:FontAwesome x:Name="BottomBtnVolumeIcon" Icon="Solid_VolumeUp" FontSize="20"/>
                     <Button.Flyout>
                       <Flyout>
@@ -705,10 +703,10 @@
                       <ComboBoxItem Content="0.5x"/>
                     </ComboBox.Items>
                   </ComboBox>
-                  <Button x:Name="BottomBtnList" Click="BottomBtnList_Click" Visibility="{x:Bind ShowPlaylistButton,Mode=OneWay}" ToolTipService.ToolTip="选集" Background="Transparent" Foreground="White" Padding="12" Height="48">
+                  <Button x:Name="BottomBtnList" Click="BottomBtnList_Click" Visibility="{x:Bind ShowPlaylistButton,Mode=OneWay}" ToolTipService.ToolTip="选集" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
                     <TextBlock VerticalAlignment="Center" FontSize="18">选集</TextBlock>
                   </Button>
-                  <Button x:Name="BottomBtnNode" Click="BottomBtnNode_Click" Visibility="{x:Bind ShowPlayNodeButton,Mode=OneWay}" ToolTipService.ToolTip="选集" Background="Transparent" Foreground="White" Padding="12" Height="48">
+                  <Button x:Name="BottomBtnNode" Click="BottomBtnNode_Click" Visibility="{x:Bind ShowPlayNodeButton,Mode=OneWay}" ToolTipService.ToolTip="选集" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
                     <TextBlock VerticalAlignment="Center" FontSize="18">节点</TextBlock>
                   </Button>
                   <HyperlinkButton x:Name="BottomBtnMiniWindows" Click="BottomBtnMiniWindows_Click" ToolTipService.ToolTip="小窗置顶" Foreground="White" Padding="8" Width="48" Height="48">
@@ -744,10 +742,10 @@
               <HyperlinkButton Click="BottomBtnPlay_Click" Visibility="{Binding ElementName=BottomBtnPlay,Path=Visibility,Mode=OneWay}" Foreground="White" Padding="8" Width="48" Height="48">
                 <fa:FontAwesome Icon="Solid_Play" FontSize="20"/>
               </HyperlinkButton>
-              <Button Click="TopBtnOpenDanmaku_Click" ToolTipService.ToolTip="打开弹幕" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay,Converter={StaticResource display}}" Background="Transparent" Padding="0" Width="48" Height="48">
+              <Button Click="TopBtnOpenDanmaku_Click" ToolTipService.ToolTip="打开弹幕" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay,Converter={StaticResource display}}" BorderThickness="0" Background="Transparent" Padding="0" Width="48" Height="48">
                 <Image Width="28" Height="28" Source="/Assets/Icon/icon_danmaku_open.png"/>
               </Button>
-              <Button Click="TopBtnCloseDanmaku_Click" ToolTipService.ToolTip="关闭弹幕" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay}" Background="Transparent" Padding="0" Width="48" Height="48">
+              <Button Click="TopBtnCloseDanmaku_Click" ToolTipService.ToolTip="关闭弹幕" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay}" BorderThickness="0" Background="Transparent" Padding="0" Width="48" Height="48">
                 <Image Width="28" Height="28" Source="/Assets/Icon/icon_danmaku_close.png"/>
               </Button>
               <HyperlinkButton x:Name="BottomBtnExitMiniWindows" VerticalAlignment="Bottom" Click="BottomBtnExitMiniWindows_Click" ToolTipService.ToolTip="退出小窗置顶" Foreground="White" Padding="8" Width="48" Height="48">

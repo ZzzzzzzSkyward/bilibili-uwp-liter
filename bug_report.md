@@ -142,6 +142,26 @@ carry the default `Button` border, which renders as a light outline over the vid
 `SplitView`; `TopBtnMore_Click` opens the *same* `SplitView` on the player/other pivot. One of the two is a
 duplicate entry point to the same pane.
 
+## BR-21 — memory usage keeps growing while the app runs (reported 2026-10-31)
+
+Maintainer: memory use grows over time during a session. No log evidence and no measurement yet — this is the
+report, not a diagnosis.
+
+Where the growth is most likely to come from, from what the code already does:
+
+- the player keeps one live `PlayerControl` per opened item, and each holds a `PlayerToastService` plus an engine
+  (`Player.xaml.cs`, native DASH / FFmpegInterop DASH / SYEngine swap paths) — sessions are only released through
+  the existing `Completed`/`SetPlayItem`/`OnUnload` paths;
+- `Home`/`User` dynamic feeds now page indefinitely through the polymer source (BR-17), so the item collections and
+  per-item `RichTextBlock`/image state grow with scroll depth;
+- every response goes through `HttpResults`, which keeps the deserialized `JObject` alive as long as anything holds
+  its `HttpResults`;
+- `Modules/Home/DynamicVM` and `Modules/User/DynamicVM` hold `ObservableCollection` items that are never trimmed.
+
+Getting an actionable report needs numbers, not guesses: the size of the working set after N minutes with a
+specific journey (feed paging only / video playback only / danmaku on), plus whether the process is managed-heap
+bound or native bound. Without that split the "memory budget" plan item (plan/PLAN.md § 2) cannot be scoped.
+
 ## Status
 
 | ID | State |
@@ -151,10 +171,11 @@ duplicate entry point to the same pane.
 | BR-14 | done — UTF-8 build output, documented + skilled method |
 | BR-15 | resolved — splash crash was the non-bootable MSIX layout; layout is now validated |
 | BR-16 | fixed in `e5c97e1` — load-more failures are silent, the toast carries the legacy message; device check open |
-| BR-17 | in progress — 动态 feeds stop after 20 items; every source that could paginate is dead or refused |
-| BR-18 | in progress — toast fade shift, clipped icon, volume percentage |
-| BR-19 | queued — remove the default button border in the player UI |
-| BR-20 | queued — drop the duplicate danmaku-settings shortcut (More opens the same pane) |
+| BR-17 | fixed in `0940c6d` — polymer web feed is the paginating source for 全部/视频, cursor per source; device log check open |
+| BR-18 | fixed in `1f22ec1` — fade collapses only after opacity reaches 0 (stack stretches), glyph moved to a `TextBlock` with `TextLineBounds="Full"`, volume through `PlayerToastOverlay.FormatVolume` |
+| BR-19 | fixed in the same commit — `BorderThickness="0"` on the 11 chrome buttons (no shared style: an explicit `Style` without a template is not worth the risk in UWP) |
+| BR-20 | fixed in the same commit — `TopBtnSettingDanmaku` and its handler removed; 弹幕 is pivot 2, reachable from More |
+| BR-21 | recorded — memory grows over time; needs a measured journey (feed paging / playback / danmaku) |
 
 ## Verification this turn
 

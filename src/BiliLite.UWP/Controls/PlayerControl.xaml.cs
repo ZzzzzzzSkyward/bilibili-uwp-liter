@@ -2628,12 +2628,6 @@ namespace BiliLite.Controls
             SplitView.IsPaneOpen = true;
         }
 
-        private void TopBtnSettingDanmaku_Click(object sender, RoutedEventArgs e)
-        {
-            SettingPivot.SelectedIndex = 2;
-            SplitView.IsPaneOpen = true;
-        }
-
         private void TopBtnMore_Click(object sender, RoutedEventArgs e)
         {
             SettingPivot.SelectedIndex = CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true ? 1 : 3;
