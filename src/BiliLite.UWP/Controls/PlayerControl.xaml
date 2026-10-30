@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:convert="using:BiliLite.Converters" xmlns:danmaku="using:NSDanmaku.Controls" xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls" xmlns:fa="using:FontAwesome5" xmlns:player="using:BiliLite.Modules.Player" xmlns:ani="using:Microsoft.Toolkit.Uwp.UI.Animations" x:Class="BiliLite.Controls.PlayerControl" mc:Ignorable="d" d:DesignHeight="800" d:DesignWidth="1000">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:convert="using:BiliLite.Converters" xmlns:danmaku="using:NSDanmaku.Controls" xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls" xmlns:fa="using:FontAwesome5" xmlns:player="using:BiliLite.Modules.Player" x:Class="BiliLite.Controls.PlayerControl" mc:Ignorable="d" d:DesignHeight="800" d:DesignWidth="1000">
   <UserControl.Resources>
     <SolidColorBrush x:Key="HyperlinkButtonForegroundPointerOver" Color="{ThemeResource HighLightColor}"/>
     <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{ThemeResource HighLightColor}"/>
@@ -514,18 +514,8 @@
         </Grid>
         <!--亮度-->
         <Grid x:Name="BrightnessShield" Tapped="Grid_Tapped" Background="#99000000" Opacity="0"/>
-        <Border x:Name="ToolTip" Visibility="Collapsed" VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="8" Padding="16" Background="#CCFFFFFF">
-          <TextBlock x:Name="TxtToolTip" Foreground="Black" FontSize="20" Text=""/>
-          <ani:Implicit.ShowAnimations>
-            <ani:OpacityAnimation Duration="0:0:0.5" From="0.0" To="1.0" EasingMode="EaseOut">
-                        </ani:OpacityAnimation>
-          </ani:Implicit.ShowAnimations>
-          <ani:Implicit.HideAnimations>
-            <ani:OpacityAnimation Duration="0:0:0.5" To="0" EasingMode="EaseOut"/>
-          </ani:Implicit.HideAnimations>
-          <ani:Implicit.Animations>
-                    </ani:Implicit.Animations>
-        </Border>
+        <!--播放器浮层提示-->
+        <Grid x:Name="ToastHost" IsHitTestVisible="False"/>
         <Grid>
           <StackPanel VerticalAlignment="Center" Visibility="{Binding ElementName=Player,Path=Buffering,Mode=OneWay}" x:Name="GridBuffering">
             <ProgressRing IsActive="True" Width="36" Height="36" Foreground="{ThemeResource HighLightColor}"/>

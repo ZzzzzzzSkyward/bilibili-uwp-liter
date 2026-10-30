@@ -5,7 +5,9 @@ using BiliLite.Modules.Player;
 using BiliLite.Modules.Player.Playurl;
 using BiliLite.Models.Common;
 using BiliLite.Models.LocalMedia;
+using BiliLite.Services;
 using BiliLite.Services.LocalMedia;
+using FontAwesome5;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.Geometry;
 using Microsoft.Graphics.Canvas.Text;
@@ -237,6 +239,8 @@ namespace BiliLite.Controls
         private string CurrentSubtitleName { get; set; } = "无";
         private int _playItemGeneration;
         private int _subtitleTicket;
+        private readonly PlayerToastService playerToasts;
+
         private readonly LocalMediaAsyncLoadGuard _subtitleLoadGuard = new LocalMediaAsyncLoadGuard();
         private readonly LocalMediaAsyncLoadGuard _danmakuLoadGuard = new LocalMediaAsyncLoadGuard();
         private readonly HashSet<string> _enabledManifestDanmaku = new HashSet<string>(StringComparer.Ordinal);
@@ -246,6 +250,7 @@ namespace BiliLite.Controls
         public PlayerControl()
         {
             this.InitializeComponent();
+            playerToasts = new PlayerToastService(ToastHost);
             dispRequest = new DisplayRequest();
             playerHelper = new PlayerVM();
             settingVM = new SettingVM();
@@ -461,10 +466,7 @@ namespace BiliLite.Controls
                             }
                             if (step >= 1)
                             {
-                                TxtToolTip.Text = "进度:" + TimeSpan.FromSeconds(Player.Position).ToString(@"hh\:mm\:ss");
-                                ToolTip.Visibility = Visibility.Visible;
-                                await Task.Delay(2000);
-                                ToolTip.Visibility = Visibility.Collapsed;
+                                playerToasts.Show(PlayerToastService.Progress, "进度:" + TimeSpan.FromSeconds(Player.Position).ToString(@"hh\:mm\:ss"));
                             }
                         }
                     }
@@ -477,15 +479,12 @@ namespace BiliLite.Controls
                         Player.Volume += args.VirtualKey == Windows.System.VirtualKey.Up ? 0.1 : -0.1;
                         if (Player.Volume == 0)
                         {
-                            TxtToolTip.Text = "静音";
+                            playerToasts.Show(PlayerToastService.Volume, "静音", EFontAwesomeIcon.Solid_VolumeMute);
                         }
                         else
                         {
-                            TxtToolTip.Text = "音量:" + Player.Volume.ToString("P");
+                            playerToasts.Show(PlayerToastService.Volume, "音量:" + Player.Volume.ToString("P"));
                         }
-                        ToolTip.Visibility = Visibility.Visible;
-                        await Task.Delay(2000);
-                        ToolTip.Visibility = Visibility.Collapsed;
                     }
                     break;
 
@@ -528,10 +527,7 @@ namespace BiliLite.Controls
                                 _position = Player.Duration;
                             }
                             Player.Position = _position;
-                            TxtToolTip.Text = "跳过OP(快进90秒)";
-                            ToolTip.Visibility = Visibility.Visible;
-                            await Task.Delay(2000);
-                            ToolTip.Visibility = Visibility.Collapsed;
+                            playerToasts.Show(PlayerToastService.Msg, "跳过OP(快进90秒)");
                         }
                     }
                     break;
@@ -832,6 +828,10 @@ namespace BiliLite.Controls
             {
                 SettingHelper.SetValue<double>(SettingHelper.Player.DEFAULT_VIDEO_SPEED, SettingHelper.Player.VideoSpeed[BottomCBSpeed.SelectedIndex]);
                 Player.SetRate(SettingHelper.Player.VideoSpeed[BottomCBSpeed.SelectedIndex]);
+                if (Player.PlayState == PlayState.Playing || Player.PlayState == PlayState.Pause)
+                {
+                    playerToasts.Show(PlayerToastService.Speed, SettingHelper.Player.VideoSpeed[BottomCBSpeed.SelectedIndex].ToString("0.##") + "x");
+                }
             });
 
             _autoPlay = SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_PLAY, false);
@@ -2403,7 +2403,7 @@ namespace BiliLite.Controls
                 pos = Player.Duration;
             //txt_Post.Text = ts.Hours.ToString("00") + ":" + ts.Minutes.ToString("00") + ":" + ts.Seconds.ToString("00") + "/" + mediaElement.MediaPlayer.PlaybackSession.NaturalDuration.TimeSpan.Hours.ToString("00") + ":" + mediaElement.MediaPlayer.PlaybackSession.NaturalDuration.TimeSpan.Minutes.ToString("00") + ":" + mediaElement.MediaPlayer.PlaybackSession.NaturalDuration.TimeSpan.Seconds.ToString("00");
 
-            TxtToolTip.Text = TimeSpan.FromSeconds(pos).ToString(@"hh\:mm\:ss");
+            playerToasts.Show(PlayerToastService.Progress, TimeSpan.FromSeconds(pos).ToString(@"hh\:mm\:ss"));
             //Utils.ShowMessageToast(ts.Hours.ToString("00") + ":" + ts.Minutes.ToString("00") + ":" + ts.Seconds.ToString("00"), 3000);
         }
 
@@ -2424,7 +2424,7 @@ namespace BiliLite.Controls
                 Player.Volume = volume;
                 //slider_V.Value += d;
             }
-            TxtToolTip.Text = "音量:" + Player.Volume.ToString("P");
+            playerToasts.Show(PlayerToastService.Volume, "音量:" + Player.Volume.ToString("P"));
             //Utils.ShowMessageToast("音量:" +  mediaElement.MediaPlayer.Volume.ToString("P"), 3000);
         }
 
@@ -2439,7 +2439,7 @@ namespace BiliLite.Controls
             {
                 Brightness = Math.Max(Brightness - dd, 0);
             }
-            TxtToolTip.Text = "亮度:" + Math.Abs(Brightness - 1).ToString("P");
+            playerToasts.Show(PlayerToastService.Brightness, "亮度:" + Math.Abs(Brightness - 1).ToString("P"));
         }
 
         private double _brightness = 0;
@@ -2475,7 +2475,7 @@ namespace BiliLite.Controls
             gestureRecognizer.ManipulationCompleted += OnManipulationCompleted;
         }
 
-        private async void OnHolding(GestureRecognizer sender, HoldingEventArgs args)
+        private void OnHolding(GestureRecognizer sender, HoldingEventArgs args)
         {
             if (Player.PlayState != PlayState.Playing)
                 return;
@@ -2485,24 +2485,21 @@ namespace BiliLite.Controls
                 case HoldingState.Started:
                     {
                         HandlingHolding = true;
-                        TxtToolTip.Text = "3x";
-                        ToolTip.Visibility = Visibility.Visible;
+                        playerToasts.KeepStart(PlayerToastService.Accelerating, "3x");
                         Player.SetRate(3.0d);
-                        await Task.Delay(3000);
-                        ToolTip.Visibility = Visibility.Collapsed;
                         break;
                     }
                 case HoldingState.Completed:
                     {
                         HandlingHolding = false;
-                        ToolTip.Visibility = Visibility.Collapsed;
+                        playerToasts.KeepClose(PlayerToastService.Accelerating);
                         Player.SetRate(SettingHelper.GetValue<double>(SettingHelper.Player.DEFAULT_VIDEO_SPEED, 1.0d));
                         break;
                     }
                 case HoldingState.Canceled:
                     {
                         HandlingHolding = false;
-                        ToolTip.Visibility = Visibility.Collapsed;
+                        playerToasts.KeepClose(PlayerToastService.Accelerating);
                         Player.SetRate(SettingHelper.GetValue<double>(SettingHelper.Player.DEFAULT_VIDEO_SPEED, 1.0d));
                         break;
                     }
@@ -2512,8 +2509,6 @@ namespace BiliLite.Controls
         private void OnManipulationStarted(object sender, ManipulationStartedEventArgs e)
         {
             ssValue = 0;
-            //TxtToolTip.Text = "";
-            ToolTip.Visibility = Visibility.Visible;
 
             if (e.Position.X < this.ActualWidth / 2)
                 ManipulatingBrightness = true;
@@ -2573,7 +2568,6 @@ namespace BiliLite.Controls
             {
                 Player.Position = Player.Position + ssValue;
             }
-            ToolTip.Visibility = Visibility.Collapsed;
         }
 
         private void Grid_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -3043,6 +3037,7 @@ namespace BiliLite.Controls
 
         public async void Dispose()
         {
+            playerToasts.Dispose();
             _subtitleLoadGuard.Invalidate();
             _danmakuLoadGuard.Invalidate();
             _playItemGeneration++;

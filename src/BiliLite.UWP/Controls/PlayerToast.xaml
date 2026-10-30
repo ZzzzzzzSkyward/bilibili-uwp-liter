@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:fa="using:FontAwesome5" xmlns:ani="using:Microsoft.Toolkit.Uwp.UI.Animations" x:Class="BiliLite.Controls.PlayerToast" mc:Ignorable="d" IsHitTestVisible="False">
+  <Border x:Name="ToastRoot" Visibility="Collapsed" Background="#B3000000" CornerRadius="8" Padding="16,8">
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+      <fa:FontAwesome x:Name="IconGlyph" Foreground="White" FontSize="20" VerticalAlignment="Center" Margin="0,0,10,0"/>
+      <TextBlock x:Name="TxtToast" Foreground="White" FontSize="20" VerticalAlignment="Center" TextWrapping="NoWrap" Text=""/>
+    </StackPanel>
+    <ani:Implicit.ShowAnimations>
+      <ani:OpacityAnimation Duration="0:0:0.15" From="0.0" To="1.0" EasingMode="EaseOut"/>
+    </ani:Implicit.ShowAnimations>
+    <ani:Implicit.HideAnimations>
+      <ani:OpacityAnimation Duration="0:0:0.25" To="0" EasingMode="EaseIn"/>
+    </ani:Implicit.HideAnimations>
+  </Border>
+</UserControl>

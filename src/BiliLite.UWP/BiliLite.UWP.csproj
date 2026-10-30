@@ -172,6 +172,7 @@
     <Compile Include="Services\DynamicApiSelection.cs" />
     <Compile Include="Services\DynamicApiHistoryFileStore.cs" />
     <Compile Include="Services\MediaListService.cs" />
+    <Compile Include="Services\PlayerToastService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaLibraryService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaPlaybackAdapter.cs" />
@@ -261,6 +262,9 @@
     </Compile>
     <Compile Include="Controls\PlayerControl.xaml.cs">
       <DependentUpon>PlayerControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\PlayerToast.xaml.cs">
+      <DependentUpon>PlayerToast.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\RoundButton\RoundButton.cs" />
     <Compile Include="Controls\ScrollGridView\ScrollGridView.cs" />
@@ -704,6 +708,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\PlayerControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\PlayerToast.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
