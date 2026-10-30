@@ -112,4 +112,54 @@ namespace BiliLite.Services
             return source == DynamicApiSource.Grpc ? DynamicApiSource.Legacy : DynamicApiSource.Grpc;
         }
     }
+
+    /// <summary>
+    /// 一路来源取数的返回：分类结果、是否中途作废、本页是否已经发布，以及失败说明。
+    /// 模型层的取数方法都在 await 之后才需要这三样，所以不走 out 参数（async 方法不允许）。
+    /// </summary>
+    public struct DynamicApiSourceResult
+    {
+        public DynamicApiSourceResult(DynamicApiOutcome outcome, string failureMessage, bool retired, bool served)
+        {
+            Outcome = outcome;
+            FailureMessage = failureMessage;
+            Retired = retired;
+            Served = served;
+        }
+
+        public DynamicApiOutcome Outcome { get; }
+
+        /// <summary>给用户看的失败说明（传输层的原文），成功时为 null</summary>
+        public string FailureMessage { get; }
+
+        /// <summary>请求已被更新的一次刷新取代：调用方直接放弃，不再换源</summary>
+        public bool Retired { get; }
+
+        /// <summary>本页已经发布。转发列表的空页是 Success 但没发布，所以换源判断看它而不看 Outcome</summary>
+        public bool Served { get; }
+
+        /// <summary>成功且已发布</summary>
+        public static DynamicApiSourceResult Published()
+        {
+            return new DynamicApiSourceResult(DynamicApiOutcome.Success, null, false, true);
+        }
+
+        /// <summary>成功但本页没有可发布的条目</summary>
+        public static DynamicApiSourceResult Unpublished()
+        {
+            return new DynamicApiSourceResult(DynamicApiOutcome.Success, null, false, false);
+        }
+
+        /// <summary>请求被取代</summary>
+        public static DynamicApiSourceResult Superseded()
+        {
+            return new DynamicApiSourceResult(DynamicApiOutcome.IgnoredFailure, null, true, false);
+        }
+
+        /// <summary>失败：保留分类与失败说明，交给调用方换源</summary>
+        public static DynamicApiSourceResult Failed(DynamicApiOutcome outcome, string failureMessage)
+        {
+            return new DynamicApiSourceResult(outcome, failureMessage, false, false);
+        }
+    }
 }

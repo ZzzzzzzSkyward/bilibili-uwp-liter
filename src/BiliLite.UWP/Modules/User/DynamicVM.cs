@@ -771,15 +771,15 @@ namespace BiliLite.Modules.User
                 ? DynamicApiSelection.Choose(context, operation, true, "user-feed itemType=" + itemType)
                 : null;
             var source = boundary ? decision.Source : pinnedFeedSource.Value;
-            bool retired;
-            string failureMessage;
-            var outcome = source == DynamicApiSource.Grpc
-                ? await TryUserFeedGrpcAsync(generation, dynamicType, itemType, loadMore, context, out retired, out failureMessage)
-                : await TryUserFeedRestAsync(generation, dynamicType, itemType, loadMore, context, out retired, out failureMessage);
-            if (retired)
+            var result = source == DynamicApiSource.Grpc
+                ? await TryUserFeedGrpcAsync(generation, dynamicType, itemType, loadMore, context)
+                : await TryUserFeedRestAsync(generation, dynamicType, itemType, loadMore, context);
+            if (result.Retired)
             {
                 return;
             }
+            var outcome = result.Outcome;
+            var failureMessage = result.FailureMessage;
             if (outcome == DynamicApiOutcome.Success)
             {
                 feedFallbackReason = null;
@@ -790,13 +790,15 @@ namespace BiliLite.Modules.User
             DynamicApiSelection.LogFallback(operation, source, alternative, outcome, "user-feed itemType=" + itemType);
             feedFallbackReason = DescribeFeedFailure("动态请求失败", failureMessage);
             //换源不传递游标：另一路一律从第一页重新取，成功的那一页整体顶替已发布的行，失败就保留现有行
-            var fallbackOutcome = alternative == DynamicApiSource.Grpc
-                ? await TryUserFeedGrpcAsync(generation, dynamicType, itemType, false, context, out retired, out failureMessage)
-                : await TryUserFeedRestAsync(generation, dynamicType, itemType, false, context, out retired, out failureMessage);
-            if (retired)
+            var fallback = alternative == DynamicApiSource.Grpc
+                ? await TryUserFeedGrpcAsync(generation, dynamicType, itemType, false, context)
+                : await TryUserFeedRestAsync(generation, dynamicType, itemType, false, context);
+            if (fallback.Retired)
             {
                 return;
             }
+            var fallbackOutcome = fallback.Outcome;
+            failureMessage = fallback.FailureMessage;
             if (fallbackOutcome == DynamicApiOutcome.Success)
             {
                 pinnedFeedSource = alternative;
@@ -815,11 +817,10 @@ namespace BiliLite.Modules.User
         /// <summary>
         /// 全部/视频动态流的 gRPC 一路。loadMore 为 false 表示这是换源重启：按第一页取并整体顶替已发布的页。
         /// </summary>
-        private async Task<DynamicApiOutcome> TryUserFeedGrpcAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
-            bool loadMore, DynamicApiContext context, out bool retired, out string failureMessage)
+        private async Task<DynamicApiSourceResult> TryUserFeedGrpcAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
+            bool loadMore, DynamicApiContext context)
         {
-            retired = false;
-            failureMessage = null;
+            string failureMessage = null;
             var operation = FeedOperation(itemType);
             var attempt = DynamicApiSelection.CreateAttempt(context, operation, DynamicApiSource.Grpc);
             var stopwatch = Stopwatch.StartNew();
@@ -839,14 +840,13 @@ namespace BiliLite.Modules.User
                     if (!IsCurrentRequest(generation, dynamicType, itemType))
                     {
                         DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
-                        retired = true;
-                        return DynamicApiOutcome.IgnoredFailure;
+                        return DynamicApiSourceResult.Superseded();
                     }
                     if (reply == null || reply.DynamicList == null)
                     {
                         DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage);
                         failureMessage = "DynAll returned no dynamic list";
-                        return DynamicApiOutcome.MalformedResponse;
+                        return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, failureMessage);
                     }
                     grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
                     hasMore = reply.DynamicList.HasMore;
@@ -858,14 +858,13 @@ namespace BiliLite.Modules.User
                     if (!IsCurrentRequest(generation, dynamicType, itemType))
                     {
                         DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
-                        retired = true;
-                        return DynamicApiOutcome.IgnoredFailure;
+                        return DynamicApiSourceResult.Superseded();
                     }
                     if (reply == null || reply.DynamicList == null)
                     {
                         DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage);
                         failureMessage = "DynVideo returned no dynamic list";
-                        return DynamicApiOutcome.MalformedResponse;
+                        return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, failureMessage);
                     }
                     grpcCards = DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List);
                     hasMore = reply.DynamicList.HasMore;
@@ -886,7 +885,7 @@ namespace BiliLite.Modules.User
                 historyOffset = null;
                 updateBaseline = null;
                 failureMessage = ex.Message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
@@ -897,8 +896,7 @@ namespace BiliLite.Modules.User
             }
             if (!IsCurrentRequest(generation, dynamicType, itemType))
             {
-                retired = true;
-                return DynamicApiOutcome.IgnoredFailure;
+                return DynamicApiSourceResult.Superseded();
             }
             if (loadMore && Items != null)
             {
@@ -923,17 +921,16 @@ namespace BiliLite.Modules.User
             var firstId = grpcCards.FirstOrDefault()?.id_str ?? "";
             LogHelper.Log("User dynamic VM stage=feed-items-published source=grpc page=" + feedPage + " count=" + mapped.Count
                 + " hasMore=" + hasMore + " firstDynamicId=" + firstId + " generation=" + generation, LogType.INFO);
-            return DynamicApiOutcome.Success;
+            return DynamicApiSourceResult.Published();
         }
 
         /// <summary>
         /// 全部/视频动态流的 REST 一路。分页游标是 data.offset，只在这一路内部流转。
         /// </summary>
-        private async Task<DynamicApiOutcome> TryUserFeedRestAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
-            bool loadMore, DynamicApiContext context, out bool retired, out string failureMessage)
+        private async Task<DynamicApiSourceResult> TryUserFeedRestAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
+            bool loadMore, DynamicApiContext context)
         {
-            retired = false;
-            failureMessage = null;
+            string failureMessage = null;
             var operation = FeedOperation(itemType);
             var attempt = DynamicApiSelection.CreateAttempt(context, operation, DynamicApiSource.Legacy);
             var stopwatch = Stopwatch.StartNew();
@@ -958,13 +955,12 @@ namespace BiliLite.Modules.User
                     throw;
                 }
                 failureMessage = ex.Message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             if (!IsCurrentRequest(generation, dynamicType, itemType))
             {
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
-                retired = true;
-                return DynamicApiOutcome.IgnoredFailure;
+                return DynamicApiSourceResult.Superseded();
             }
             if (!restResponse.status)
             {
@@ -972,7 +968,7 @@ namespace BiliLite.Modules.User
                 var failed = DynamicApiSelection.ClassifyLegacy(restResponse, null);
                 DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
                 failureMessage = restResponse.message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             var restData = restResponse.GetJObject();
             var businessCode = restData == null || restData["code"] == null ? (int?)null : restData["code"].ToInt32();
@@ -982,7 +978,7 @@ namespace BiliLite.Modules.User
                 var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
                 DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, businessCode ?? 0);
                 failureMessage = restData?["message"]?.ToString() ?? restResponse.message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
@@ -1001,8 +997,7 @@ namespace BiliLite.Modules.User
             }
             if (!IsCurrentRequest(generation, dynamicType, itemType))
             {
-                retired = true;
-                return DynamicApiOutcome.IgnoredFailure;
+                return DynamicApiSourceResult.Superseded();
             }
             if (restLoadMore && Items != null)
             {
@@ -1030,7 +1025,7 @@ namespace BiliLite.Modules.User
                 //分页已经停下，而且一张都没有：把换源时那条拒绝说明摆出来，不让页面无声空白
                 PublishFeedError(feedFallbackReason ?? "动态请求失败");
             }
-            return DynamicApiOutcome.Success;
+            return DynamicApiSourceResult.Published();
         }
 
         //个人空间动态：来源在每一屏边界由选择器决定，翻页沿用；换源从第一页重新开始，失败保留现有行
@@ -1043,15 +1038,15 @@ namespace BiliLite.Modules.User
                 ? DynamicApiSelection.Choose(context, DynamicApiOperation.SpaceFeed, true, "space-feed uid=" + (Uid ?? ""))
                 : null;
             var source = boundary ? decision.Source : pinnedSpaceSource.Value;
-            bool retired;
-            string failureMessage;
-            var outcome = source == DynamicApiSource.Grpc
-                ? await TrySpaceGrpcAsync(generation, dynamicType, itemType, spaceLoadMore, context, out retired, out failureMessage)
-                : await TrySpaceRestAsync(generation, dynamicType, itemType, spaceLoadMore, spaceLoadMore ? idx : "", context, out retired, out failureMessage);
-            if (retired)
+            var result = source == DynamicApiSource.Grpc
+                ? await TrySpaceGrpcAsync(generation, dynamicType, itemType, spaceLoadMore, context)
+                : await TrySpaceRestAsync(generation, dynamicType, itemType, spaceLoadMore, spaceLoadMore ? idx : "", context);
+            if (result.Retired)
             {
                 return;
             }
+            var outcome = result.Outcome;
+            var failureMessage = result.FailureMessage;
             if (outcome == DynamicApiOutcome.Success)
             {
                 pinnedSpaceSource = source;
@@ -1060,13 +1055,15 @@ namespace BiliLite.Modules.User
             var alternative = DynamicApiSelection.Opposite(source);
             DynamicApiSelection.LogFallback(DynamicApiOperation.SpaceFeed, source, alternative, outcome, "space-feed");
             //换源不传递游标：gRPC 从第一页、SpaceHistory 从空 idx 重新开始，成功的一页顶替已发布的行
-            var fallbackOutcome = alternative == DynamicApiSource.Grpc
-                ? await TrySpaceGrpcAsync(generation, dynamicType, itemType, false, context, out retired, out failureMessage)
-                : await TrySpaceRestAsync(generation, dynamicType, itemType, false, "", context, out retired, out failureMessage);
-            if (retired)
+            var fallback = alternative == DynamicApiSource.Grpc
+                ? await TrySpaceGrpcAsync(generation, dynamicType, itemType, false, context)
+                : await TrySpaceRestAsync(generation, dynamicType, itemType, false, "", context);
+            if (fallback.Retired)
             {
                 return;
             }
+            var fallbackOutcome = fallback.Outcome;
+            failureMessage = fallback.FailureMessage;
             if (fallbackOutcome == DynamicApiOutcome.Success)
             {
                 pinnedSpaceSource = alternative;
@@ -1082,11 +1079,10 @@ namespace BiliLite.Modules.User
             PublishFeedError(DescribeFeedFailure("动态请求失败", failureMessage));
         }
 
-        private async Task<DynamicApiOutcome> TrySpaceGrpcAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
-            bool spaceLoadMore, DynamicApiContext context, out bool retired, out string failureMessage)
+        private async Task<DynamicApiSourceResult> TrySpaceGrpcAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
+            bool spaceLoadMore, DynamicApiContext context)
         {
-            retired = false;
-            failureMessage = null;
+            string failureMessage = null;
             var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.SpaceFeed, DynamicApiSource.Grpc);
             var stopwatch = Stopwatch.StartNew();
             if (!spaceLoadMore)
@@ -1105,14 +1101,13 @@ namespace BiliLite.Modules.User
                 if (!IsCurrentRequest(generation, dynamicType, itemType))
                 {
                     DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
-                    retired = true;
-                    return DynamicApiOutcome.IgnoredFailure;
+                    return DynamicApiSourceResult.Superseded();
                 }
                 if (reply == null)
                 {
                     DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage);
                     failureMessage = "DynSpace returned no reply";
-                    return DynamicApiOutcome.MalformedResponse;
+                    return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, failureMessage);
                 }
                 spaceCards = DynamicGrpcMapper.MapToUserCards(reply.List);
                 hasMore = reply.HasMore;
@@ -1130,7 +1125,7 @@ namespace BiliLite.Modules.User
                 spacePage = 1;
                 spaceOffset = null;
                 failureMessage = ex.Message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
@@ -1141,8 +1136,7 @@ namespace BiliLite.Modules.User
             }
             if (!IsCurrentRequest(generation, dynamicType, itemType))
             {
-                retired = true;
-                return DynamicApiOutcome.IgnoredFailure;
+                return DynamicApiSourceResult.Superseded();
             }
             if (spaceLoadMore && spacePage > 1 && Items != null)
             {
@@ -1164,14 +1158,13 @@ namespace BiliLite.Modules.User
             ErrorMsg = "";
             LogHelper.Log("User dynamic VM stage=space-items-published source=grpc page=" + (spacePage - 1) + " count="
                 + spaceMapped.Count + " hasMore=" + hasMore + " generation=" + generation, LogType.INFO);
-            return DynamicApiOutcome.Success;
+            return DynamicApiSourceResult.Published();
         }
 
-        private async Task<DynamicApiOutcome> TrySpaceRestAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
-            bool spaceLoadMore, string cursor, DynamicApiContext context, out bool retired, out string failureMessage)
+        private async Task<DynamicApiSourceResult> TrySpaceRestAsync(int generation, DynamicType dynamicType, UserDynamicType itemType,
+            bool spaceLoadMore, string cursor, DynamicApiContext context)
         {
-            retired = false;
-            failureMessage = null;
+            string failureMessage = null;
             var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.SpaceFeed, DynamicApiSource.Legacy);
             var stopwatch = Stopwatch.StartNew();
             const string stage = "space-rest-request";
@@ -1189,20 +1182,19 @@ namespace BiliLite.Modules.User
                     throw;
                 }
                 failureMessage = ex.Message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             if (!IsCurrentRequest(generation, dynamicType, itemType))
             {
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
-                retired = true;
-                return DynamicApiOutcome.IgnoredFailure;
+                return DynamicApiSourceResult.Superseded();
             }
             if (!results.status)
             {
                 var failed = DynamicApiSelection.ClassifyLegacy(results, null);
                 DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
                 failureMessage = results.message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             var data = results.GetJObject();
             var businessCode = data == null || data["code"] == null ? (int?)null : data["code"].ToInt32();
@@ -1212,7 +1204,7 @@ namespace BiliLite.Modules.User
                 var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
                 DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, businessCode ?? 0);
                 failureMessage = data?["message"]?.ToString() ?? results.message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
@@ -1225,8 +1217,7 @@ namespace BiliLite.Modules.User
             }
             if (!IsCurrentRequest(generation, dynamicType, itemType))
             {
-                retired = true;
-                return DynamicApiOutcome.IgnoredFailure;
+                return DynamicApiSourceResult.Superseded();
             }
             if (spaceLoadMore && Items != null)
             {
@@ -1246,7 +1237,7 @@ namespace BiliLite.Modules.User
             ErrorMsg = "";
             LogHelper.Log("User dynamic VM stage=space-items-published source=rest count=" + mapped.Count
                 + " cursor=" + (cursor ?? "") + " generation=" + generation, LogType.INFO);
-            return DynamicApiOutcome.Success;
+            return DynamicApiSourceResult.Published();
         }
 
 
@@ -1336,10 +1327,11 @@ namespace BiliLite.Modules.User
                 //详情是独立的一屏：来源与上下文都在第一个 await 之前定下来
                 var context = DynamicApiSelection.CaptureContext();
                 var decision = DynamicApiSelection.Choose(context, DynamicApiOperation.DynamicDetail, true, "detail id=" + id);
-                string failureMessage;
-                var outcome = decision.Source == DynamicApiSource.Grpc
-                    ? await TryDetailGrpcAsync(id, context, out failureMessage)
-                    : await TryDetailRestAsync(id, context, out failureMessage);
+                var result = decision.Source == DynamicApiSource.Grpc
+                    ? await TryDetailGrpcAsync(id, context)
+                    : await TryDetailRestAsync(id, context);
+                var outcome = result.Outcome;
+                var failureMessage = result.FailureMessage;
                 if (outcome == DynamicApiOutcome.Success)
                 {
                     return;
@@ -1347,9 +1339,11 @@ namespace BiliLite.Modules.User
                 //一个逻辑请求最多两路：首选失败（含映射不出可用卡片）只再试另一路一次
                 var alternative = DynamicApiSelection.Opposite(decision.Source);
                 DynamicApiSelection.LogFallback(DynamicApiOperation.DynamicDetail, decision.Source, alternative, outcome, "detail id=" + id);
-                var fallbackOutcome = alternative == DynamicApiSource.Grpc
-                    ? await TryDetailGrpcAsync(id, context, out failureMessage)
-                    : await TryDetailRestAsync(id, context, out failureMessage);
+                var fallback = alternative == DynamicApiSource.Grpc
+                    ? await TryDetailGrpcAsync(id, context)
+                    : await TryDetailRestAsync(id, context);
+                var fallbackOutcome = fallback.Outcome;
+                failureMessage = fallback.FailureMessage;
                 if (fallbackOutcome != DynamicApiOutcome.Success)
                 {
                     DynamicApiSelection.LogExhausted(DynamicApiOperation.DynamicDetail, outcome, fallbackOutcome, "detail id=" + id);
@@ -1372,9 +1366,9 @@ namespace BiliLite.Modules.User
         /// gRPC 详情。映射不出唯一一张可用卡片属于内容/本地转换问题，不降低端点可用性，
         /// 但本次仍然交给 REST 详情报一次错。
         /// </summary>
-        private async Task<DynamicApiOutcome> TryDetailGrpcAsync(string id, DynamicApiContext context, out string failureMessage)
+        private async Task<DynamicApiSourceResult> TryDetailGrpcAsync(string id, DynamicApiContext context)
         {
-            failureMessage = null;
+            string failureMessage = null;
             var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.DynamicDetail, DynamicApiSource.Grpc);
             var stopwatch = Stopwatch.StartNew();
             const string stage = "detail-grpc-request";
@@ -1416,15 +1410,15 @@ namespace BiliLite.Modules.User
                 LogHelper.Log("User dynamic VM stage=detail-grpc-unusable id=" + id + " outcome=" + outcome
                     + " detail=" + (failureDetail ?? ""), LogType.INFO);
                 failureMessage = failureDetail;
-                return outcome;
+                return DynamicApiSourceResult.Failed(outcome, failureMessage);
             }
             Items = mapped;
-            return DynamicApiOutcome.Success;
+            return DynamicApiSourceResult.Published();
         }
 
-        private async Task<DynamicApiOutcome> TryDetailRestAsync(string id, DynamicApiContext context, out string failureMessage)
+        private async Task<DynamicApiSourceResult> TryDetailRestAsync(string id, DynamicApiContext context)
         {
-            failureMessage = null;
+            string failureMessage = null;
             var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.DynamicDetail, DynamicApiSource.Legacy);
             var stopwatch = Stopwatch.StartNew();
             const string stage = "detail-rest-request";
@@ -1438,14 +1432,14 @@ namespace BiliLite.Modules.User
                 var failed = DynamicApiSelection.ClassifyRequestFailure(ex);
                 DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
                 failureMessage = ex.Message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             if (!results.status)
             {
                 var failed = DynamicApiSelection.ClassifyLegacy(results, null);
                 DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
                 failureMessage = results.message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             var data = results.GetJObject();
             var businessCode = data == null || data["code"] == null ? (int?)null : data["code"].ToInt32();
@@ -1455,13 +1449,13 @@ namespace BiliLite.Modules.User
                 var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
                 DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, businessCode ?? 0);
                 failureMessage = data?["message"]?.ToString() ?? results.message;
-                return failed;
+                return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
             var item = JsonConvert.DeserializeObject<DynamicCardModel>(data["data"]?.ToString() ?? "{}", jsonSerializerSettings);
             Items = new ObservableCollection<DynamicItemDisplayModel> { ConvertToDisplay(item) };
             LogHelper.Log("User dynamic VM stage=detail-items-published source=rest id=" + id, LogType.INFO);
-            return DynamicApiOutcome.Success;
+            return DynamicApiSourceResult.Published();
         }
 
 
