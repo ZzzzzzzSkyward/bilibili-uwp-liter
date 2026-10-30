@@ -1046,6 +1046,7 @@ namespace BiliLite.Controls
 
         private async Task SetPlayItem(int index)
         {
+            ReleaseAcceleratingOverlay();
             if (PlayInfos == null || PlayInfos.Count == 0)
             {
                 return;
@@ -2477,32 +2478,38 @@ namespace BiliLite.Controls
 
         private void OnHolding(GestureRecognizer sender, HoldingEventArgs args)
         {
-            if (Player.PlayState != PlayState.Playing)
-                return;
-
             switch (args.HoldingState)
             {
                 case HoldingState.Started:
                     {
+                        if (Player.PlayState != PlayState.Playing)
+                            return;
                         HandlingHolding = true;
                         playerToasts.KeepStart(PlayerToastService.Accelerating, "3x");
                         Player.SetRate(3.0d);
                         break;
                     }
                 case HoldingState.Completed:
-                    {
-                        HandlingHolding = false;
-                        playerToasts.KeepClose(PlayerToastService.Accelerating);
-                        Player.SetRate(SettingHelper.GetValue<double>(SettingHelper.Player.DEFAULT_VIDEO_SPEED, 1.0d));
-                        break;
-                    }
                 case HoldingState.Canceled:
                     {
-                        HandlingHolding = false;
-                        playerToasts.KeepClose(PlayerToastService.Accelerating);
-                        Player.SetRate(SettingHelper.GetValue<double>(SettingHelper.Player.DEFAULT_VIDEO_SPEED, 1.0d));
+                        ReleaseAcceleratingOverlay();
                         break;
                     }
+            }
+        }
+
+        /// <summary>
+        /// 释放常显的倍速浮层。手势结束时、播放结束、切换分P时都调用，
+        /// 保证被打断的手势不会留下浮层或残留倍速。
+        /// </summary>
+        private void ReleaseAcceleratingOverlay()
+        {
+            var wasHolding = HandlingHolding;
+            HandlingHolding = false;
+            playerToasts.KeepClose(PlayerToastService.Accelerating);
+            if (wasHolding)
+            {
+                Player.SetRate(SettingHelper.GetValue<double>(SettingHelper.Player.DEFAULT_VIDEO_SPEED, 1.0d));
             }
         }
 
@@ -2803,6 +2810,7 @@ namespace BiliLite.Controls
 
         private async void Player_PlayMediaEnded(object sender, EventArgs e)
         {
+            ReleaseAcceleratingOverlay();
             if (CurrentPlayItem.is_interaction)
             {
                 if (interactionVideoVM.Info.is_leaf == 1)
