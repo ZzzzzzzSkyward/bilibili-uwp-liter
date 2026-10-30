@@ -39,6 +39,35 @@ Fixes:
 
 That is byte-for-byte the sequence that preceded the `MeasureOverride` `ArgumentException` in 1.0.9.10. App still alive 15 s later, zero Event 1000 entries since 00:09, no `ArgumentException` in the log. The double-parented `RichTextBlock` path is closed for both owners.
 
+### BR-16 — a rejected gRPC page still puts its raw message in front of the user
+
+Reported by the maintainer from a live session (`20261030.log`, session `1a4d50e5…`). Loading page 2 of the
+video dynamics feed ended in a toast carrying the gRPC rejection text:
+
+```
+22:13:19.5845  Home dynamics stage=home-feed page=2 rpc=dynamic_history page=2 cursor=1264756646249234435
+22:13:19.8065  HTTP requestId=http-000012 ... dynamic_history status=404
+22:13:19.8065  Dynamic api stage=record where=home-feed page=2 src=legacy outcome=EndpointRejection ms=219
+22:13:19.8065  Dynamic api stage=fallback where=home-feed page=2 from=legacy to=grpc outcome=EndpointRejection
+22:13:19.8705  Dynamic api stage=record where=home-grpc-fallback src=grpc outcome=EndpointRejection ms=62
+22:13:19.8705  ERROR Home dynamics stage=feed-failed page=2 | InvalidOperationException: 请求失败,HTTP 200,服务端拒绝:
+               grpc-status=2; grpc-message=-663; bili-status-code=-663,responseBytes=0
+```
+
+Page 1 of the same session shows the intended behaviour (`grpc` rejected → `home-rest-fallback` → published
+20 cards, no toast). What went wrong on page 2:
+
+- The gRPC rejection is silent on its own — that part works.
+- `RequestGrpcSourceAsync` writes `_lastFailureMessage = ex.Message` for the *gRPC* attempt, and because the
+  gRPC retry runs **after** the legacy attempt, the gRPC text overwrites the legacy failure text. The toast
+  therefore shows `-663` — a server-side code the user cannot act on — even though the path that mattered
+  (legacy `dynamic_history`, HTTP 404) is what failed first.
+- Falling back from a failed load-more page to gRPC *page 1* is not an alternative page: a success would
+  replace the 20 rows already on screen. On `page > 1` the loaded rows must survive a failed append.
+
+Wanted behaviour (maintainer): the raw source error must never be shown; a prompt is allowed only when the
+legacy source also failed, and it must describe the legacy failure.
+
 ## Status
 
 | ID | State |
@@ -46,7 +75,8 @@ That is byte-for-byte the sequence that preceded the `MeasureOverride` `Argument
 | BR-01…BR-12 | resolved in earlier rounds (mapping, pagination, transport status, REST fallback, leaks) |
 | BR-13 | resolved — single owner for `Content`; verified on device through the `-663` fallback |
 | BR-14 | done — UTF-8 build output, documented + skilled method |
-| BR-15 | resolved this turn — splash crash was the non-bootable MSIX layout; layout is now validated |
+| BR-15 | resolved — splash crash was the non-bootable MSIX layout; layout is now validated |
+| BR-16 | open — page-2 toast shows the gRPC rejection; load-more must stay silent unless the legacy source failed |
 
 ## Verification this turn
 

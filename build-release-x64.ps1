@@ -24,7 +24,10 @@ param(
     [string]$OutputDir = 'Z:\',
     [switch]$NoVersionBump,
     [switch]$Fast,
-    [switch]$Restore
+    [switch]$Restore,
+    # CS2012（中间产物被占用）时的等待上限与重试前的额外停顿，秒
+    [int]$LockWaitSeconds = 90,
+    [int]$LockRetryDelay = 3
 )
 
 # Windows PowerShell 5.1 按控制台代码页(本机 936/GBK)写标准输出, 被 MSYS/git-bash 等按 UTF-8 读取时中文会变成乱码。
@@ -140,22 +143,122 @@ $buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platfor
 if (-not $Fast) {
     $buildArgs += "-p:AppxPackageDir=$OutputDir"
 }
+# ---------- CS2012：谁开着 intermediatexaml\BiliLiter.exe ----------
+# 实测现场: 同一次生成里 csc 正在写这个文件, 父 MSBuild 进程还握着上一轮打开的句柄,
+# 于是后到的写入方拿到 CS2012。重试之所以有效, 是因为失败的进程此时已经退出。
+# 用 Restart Manager 问出真实持有者（不依赖 handle.exe），再等它退出：
+# 单纯固定 sleep 挡不住 4MB 文件的写入与杀软扫描, 但等句柄确实消失可以。
+$restartManagerSource = @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+
+public static class FileLockProbe
+{
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RM_UNIQUE_PROCESS
+    {
+        public int dwProcessId;
+        public System.Runtime.InteropServices.ComTypes.FILETIME ProcessStartTime;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct RM_PROCESS_INFO
+    {
+        public RM_UNIQUE_PROCESS Process;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)] public string strAppName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)] public string strServiceShortName;
+        public int ApplicationType;
+        public uint AppStatus;
+        public uint TSSessionId;
+        [MarshalAs(UnmanagedType.Bool)] public bool bRestartable;
+    }
+
+    [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
+    private static extern int RmStartSession(out uint pSessionHandle, int dwSessionFlags, string strSessionKey);
+    [DllImport("rstrtmgr.dll")]
+    private static extern int RmEndSession(uint pSessionHandle);
+    [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
+    private static extern int RmRegisterResources(uint pSessionHandle, uint nFiles, string[] rgsFilenames, uint nApplications, RM_UNIQUE_PROCESS[] rgApplications, uint nServices, string[] rgsServiceNames);
+    [DllImport("rstrtmgr.dll")]
+    private static extern int RmGetList(uint dwSessionHandle, out uint pnProcInfoNeeded, ref uint pnProcInfo, [In, Out] RM_PROCESS_INFO[] rgAffectedApps, ref uint lpdwRebootReasons);
+
+    public static string[] Who(string path)
+    {
+        uint session;
+        string key = Guid.NewGuid().ToString();
+        if (RmStartSession(out session, 0, key) != 0) return new string[0];
+        try
+        {
+            if (RmRegisterResources(session, 1, new[] { path }, 0, null, 0, null) != 0) return new string[0];
+            uint needed = 0, count = 0, reasons = 0;
+            int rc = RmGetList(session, out needed, ref count, null, ref reasons);
+            if (rc != 234 || needed == 0) return new string[0];
+            var infos = new RM_PROCESS_INFO[needed];
+            count = needed;
+            if (RmGetList(session, out needed, ref count, infos, ref reasons) != 0) return new string[0];
+            var result = new string[count];
+            for (int i = 0; i < count; i++)
+                result[i] = infos[i].Process.dwProcessId + " " + infos[i].strAppName;
+            return result;
+        }
+        finally
+        {
+            RmEndSession(session);
+        }
+    }
+}
+'@
+if (-not ('FileLockProbe' -as [type])) {
+    try { Add-Type -TypeDefinition $restartManagerSource -Language CSharp -ErrorAction Stop }
+    catch { Write-Warning "无法启用句柄查询（$($_.Exception.Message)），退回只按独占打开判断。" }
+}
+
+function Get-FileHolders {
+    param([string]$Path)
+    if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return @() }
+    if (-not ('FileLockProbe' -as [type])) { return @() }
+    return @([FileLockProbe]::Who($Path))
+}
+
 # 打开失败说明还有进程持有句柄；等到真正能独占打开再重试，比固定 sleep 可靠
 function Wait-FileReleased {
-    param([string]$Path, [int]$TimeoutSeconds = 30)
+    param([string]$Path, [int]$TimeoutSeconds = 90)
     if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return $true }
     $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $script:LastHolders = @()
     while ((Get-Date) -lt $deadline) {
+        $script:LastHolders = @(Get-FileHolders -Path $Path)
         try {
             $stream = [System.IO.File]::Open($Path, 'Open', 'ReadWrite', 'None')
             $stream.Dispose()
-            return $true
+            if ($script:LastHolders.Count -eq 0) { return $true }
         }
         catch {
-            Start-Sleep -Milliseconds 500
+            if ($script:LastHolders.Count -eq 0) { $script:LastHolders = @('(独占打开仍失败，持有者进程名未知)') }
         }
+        Start-Sleep -Milliseconds 500
     }
     return $false
+}
+
+# 只清理本次生成可能遗留的构建工具，不碰用户自己的 MSBuild/VS 实例
+$toolchain = @('MSBuild', 'VBCSCompiler', 'csc', 'XamlCompiler', 'MSBuildTaskHost')
+function Stop-Holders {
+    param([string[]]$Holders)
+    $killed = @()
+    foreach ($holder in $Holders) {
+        if ($holder -notmatch '^(\d+)\s+(.+)$') { continue }
+        $holderPid = [int]$Matches[1]
+        $holderName = $Matches[2]
+        if ($toolchain -notcontains $holderName) { continue }
+        try {
+            Stop-Process -Id $holderPid -Force -ErrorAction Stop
+            $killed += "$holderName($holderPid)"
+        }
+        catch { }
+    }
+    return $killed
 }
 
 $buildOutput = @()
@@ -170,11 +273,17 @@ for ($attempt = 1; $attempt -le 2; $attempt++) {
     if ($cs2012 -match '“([^”]+\.exe)”') { $locked = $Matches[1] }
     elseif ($cs2012 -match '"([^"]+\.exe)"') { $locked = $Matches[1] }
     if (-not $locked) { $locked = Join-Path $root 'src\BiliLite.UWP\obj\x64\Release\intermediatexaml\BiliLiter.exe' }
-    Write-Warning "检测到 CS2012（$(Split-Path -Leaf $locked) 被占用），清理编译器进程后用 Rebuild 重试（第 $attempt 次）。"
-    Get-Process MSBuild, VBCSCompiler, csc -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
-    if (-not (Wait-FileReleased -Path $locked -TimeoutSeconds 30)) {
-        Write-Warning '等不到文件释放，直接重试。'
+    $holders = @(Get-FileHolders -Path $locked)
+    Write-Warning "检测到 CS2012（$(Split-Path -Leaf $locked) 被占用），持有者：$(if ($holders) { $holders -join '；' } else { '（Restart Manager 未报出进程，可能在扫描/映射）' })。先等它退出，超时再清理构建工具，然后 Rebuild 重试（第 $attempt 次）。"
+    if (-not (Wait-FileReleased -Path $locked -TimeoutSeconds $LockWaitSeconds)) {
+        $killed = Stop-Holders -Holders $script:LastHolders
+        if ($killed) { Write-Warning "等不到释放，已结束：$($killed -join '、')。" }
+        if (-not (Wait-FileReleased -Path $locked -TimeoutSeconds 15)) {
+            Write-Warning "仍被占用（$(@($script:LastHolders) -join '；')），带延迟直接重试。"
+        }
     }
+    # 句柄刚消失时文件仍可能被杀软/索引器接着扫；留一点余量比立刻抢写安全
+    if ($LockRetryDelay -gt 0) { Start-Sleep -Seconds $LockRetryDelay }
     $retryArgs = $buildArgs | ForEach-Object { if ($_ -eq "-t:$target") { '-t:Rebuild' } else { $_ } }
     $buildOutput = @()
     & $msbuild @retryArgs | Tee-Object -Variable buildOutput
