@@ -1,11 +1,11 @@
-# Review — `1dcf688bd1ab0171a7df707261b606767fc9df27`
+# Review — `5e36ec21b4c80fa75cabadd06bf63274902c207b`
 
-Read `bug_report.md` and reviewed all source changes since `96de3fc673eb5cd03194156657fcfdf97f32e82d` (review commit `bf03273`), using GPT-6-luna reviewers. Static source inspection only; no tests, builds, application execution, package inspection, or other validation.
+Read the current `bug_report.md` and reviewed all source changes since `1dcf688bd1ab0171a7df707261b606767fc9df27` (completed review `465aa556`), using GPT-6-luna reviewers. Static source inspection only; no tests, builds, application execution, or other validation. The bug report's earlier device/build results were not rerun here.
 
-## Closing a remote playlist during page loading can crash on continuation
+## The project now compiles a source file that is missing from Git
 
-`src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs:1027-1030`: let the last loaded queue item finish, then close its tab while the automatic next-page request is pending. `ClosePage()` disposes the player, but a successful response resumes `AdvancePlaylistAsync()`, selects the next row, and calls `InitializeVideo()` on the closed page. There is no check that the tab is still open. The player cleanup sets `dispRequest = null` (`Controls/PlayerControl.xaml.cs:3025-3028`), while the next `InitializePlayInfo()` immediately calls `dispRequest.RequestActive()` (`923-926`). If the subsequent video-detail request succeeds, this produces a null-reference exception through the async selection handler. A direct remote-playlist navigation without a preloaded first page has the same missing close check at `VideoDetailPage.xaml.cs:546-562`.
+`src/BiliLite.UWP/BiliLite.UWP.csproj:171` adds `<Compile Include="Services\DynamicApiSelector.cs" />`, but the reviewed Git tree contains no such file. A clean checkout cannot compile the UWP application because this explicit source item is missing. This entry arrived with the danmaku-list commit, independently of the new control's own project entries.
 
-Record a closed flag or request generation in the page, invalidate it in `ClosePage()`, and stop stale continuations after loading a remote page and after loading video detail, before changing selection or initializing playback. This should cover both the initial fetch and automatic next-page continuation; cancelling the underlying HTTP request is optional.
+Remove the stale `Compile` entry if it was included accidentally, or commit the intended source file with it. This conclusion comes from the project and Git tree; no build was run.
 
-The previous repost fallback finding is fixed: the first successful REST page replaces the gRPC rows, and later REST pages append normally. No other worthwhile issue found in the playlist models/service, route parsing, or ordinary queue/collection continuation. The bug report still describes the earlier packaging/device round; its reported results were not rerun here.
+The previous playlist continuation finding is resolved: closing the tab sets the closed flag before player disposal, and both remote paging and video-detail continuations check it before selecting or starting playback. No other worthwhile issue found in the new loaded-danmaku list or the changed continuation paths.
