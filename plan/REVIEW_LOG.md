@@ -23,3 +23,19 @@ findings that were deliberately not fixed so they are not silently dropped.
   corresponding item to `plan/REMAINING.md` when the finding is deliberately deferred.
 - Known reviewer-blind spots (state them when a batch relies on them): UWP XAML/visual layout,
   server behaviour, timing under a real device, and anything that needs an account.
+
+## Probe maintenance (2026-10-30, after API-SMART-01)
+
+The selector batches rewrote internals that several probes pinned as source text, so the suite was
+reconciled: `g3` 34, `g4` 56, `g5` 44 (was 65), `smart1` 160, everything else unchanged, all green.
+
+- `g3`/`g4`/`g5` now compile the selector sources with a probe-local in-memory store and stub
+  `SettingHelper`/`ApiHelper`/`HttpResults.code`, because the home VM references them.
+- Retired assertions that pinned removed internals (`useRestFallback`, `replaceListOnRestPage`,
+  `spaceRestMode` and the `stage=rest-fallback` log line). The behaviour they guarded is now covered
+  by executed assertions (REST called once, rows published/replaced, cursor not taken from the
+  response offset) plus the selector probe.
+- Kept: every executed assertion over real product code, plus the csproj compile checks.
+
+The lesson: source-text assertions survive refactors badly. Prefer executed assertions over real
+product types, and text checks only for wiring that cannot run outside UWP.

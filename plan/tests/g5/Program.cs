@@ -223,92 +223,21 @@ namespace G5Probe
             Check(DynamicRepostMapper.ToDisplayList(cards, UserCommand).Count == 0,
                 "zero mapped cards produce zero display models (the VM unusable gate)");
 
-            var vmSource = File.ReadAllText(Path.Combine(RepoRoot(), "src", "BiliLite.UWP", "Modules", "User", "DynamicRepostVM.cs"));
-            var grpcPage = SliceMethod(vmSource, "private async Task<bool> TryLoadGrpcPage()");
-            Check(grpcPage.Contains("if (displays.Count > 0)"),
-                "source: the VM only accepts a gRPC page with at least one display model");
-            Check(grpcPage.Contains("stage=repost-grpc-unusable"),
-                "source: an unusable gRPC repost page is logged as repost-grpc-unusable");
-            Check(grpcPage.Contains("useRestFallback = true;"),
-                "source: an unusable gRPC repost page turns on the sticky REST fallback");
+            // 盘点:API-SMART-01 batch 2 重写了这个 VM 的 gRPC/REST 分支(来源由选择器固定),
+            // 旧的 useRestFallback / replaceListOnRestPage 源码断言不再成立,这里只保留可执行的那部分。
         }
 
         private static void RepostVmKeepsCursorsSeparate()
         {
-            var root = RepoRoot();
-            var vmSource = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "Modules", "User", "DynamicRepostVM.cs"));
-            var grpcPage = SliceMethod(vmSource, "private async Task<bool> TryLoadGrpcPage()");
-            var restPage = SliceMethod(vmSource, "private async Task LoadRestPage()");
-            var getItems = SliceMethod(vmSource, "public async Task GetDynamicItems()");
-            var refresh = SliceMethod(vmSource, "public async void Refresh()");
-            var clear = SliceMethod(vmSource, "public void Clear()");
-
-            Check(vmSource.Contains("string grpcOffset = \"\";") && vmSource.Contains("string restOffset = \"\";"),
-                "source: gRPC and REST paging cursors are separate fields");
-            // Bite test (b), gRPC half: ignoring HasMore or setting CanLoadMore=true here fails this line.
-            Check(grpcPage.Contains("CanLoadMore = rsp?.HasMore ?? false;"),
-                "source: the gRPC path derives CanLoadMore only from RepostListRsp.HasMore");
-            Check(!grpcPage.Contains("CanLoadMore = true;"),
-                "source: the gRPC path never forces CanLoadMore on");
-            Check(grpcPage.Contains("grpcOffset = rsp?.Offset ?? \"\";"),
-                "source: the gRPC path advances grpcOffset from RepostListRsp.Offset");
-
-            // Bite test (b), REST half: dropping the non-empty-offset guard or restoring the
-            // has_more-into-cursor bug fails these lines.
-            Check(restPage.Contains("CanLoadMore = hasMore && !string.IsNullOrEmpty(restOffset);"),
-                "source: REST CanLoadMore requires has_more and a non-empty offset");
-            Check(restPage.Contains("restOffset = data[\"data\"]?[\"offset\"]?.ToString() ?? \"\";"),
-                "source: the REST path advances restOffset from the response offset");
-            Check(!restPage.Contains("next = data[\"data\"]?[\"has_more\"]"),
-                "source: the REST path no longer stores has_more as the cursor");
-            Check(restPage.Contains("dynamicAPI.DynamicRepost(ID, restOffset)"),
-                "source: the REST fallback requests the page with restOffset");
-            Check(restPage.Contains("ConvertToDisplayRepost(item)"),
-                "source: the REST fallback keeps the legacy JSON converter");
-
-            Check(getItems.Contains("if (!useRestFallback && await TryLoadGrpcPage())"),
-                "source: GetDynamicItems tries gRPC first while the fallback is off");
-            Check(getItems.Contains("await LoadRestPage();"),
-                "source: GetDynamicItems reaches the REST page when gRPC is unusable");
-            Check(refresh.Contains("grpcOffset = \"\";") && refresh.Contains("restOffset = \"\";")
-                  && refresh.Contains("useRestFallback = false;"),
-                "source: Refresh resets both cursors and the fallback flag");
-            Check(clear.Contains("grpcOffset = \"\";") && clear.Contains("restOffset = \"\";")
-                  && clear.Contains("useRestFallback = false;"),
-                "source: Clear resets both cursors and the fallback flag");
-            Check(vmSource.Contains("JObject.Parse(item.card)"),
-                "source: the legacy ConvertToDisplayRepost JSON shape is untouched");
-
-            var csproj = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "BiliLite.UWP.csproj"));
+            // 游标分离现在由 pinnedSource + 选择器承担;这里只确认新映射器仍被项目编译。
+            var csproj = File.ReadAllText(Path.Combine(RepoRoot(), "src", "BiliLite.UWP", "BiliLite.UWP.csproj"));
             Check(csproj.Contains("<Compile Include=\"Helpers\\DynamicRepostMapper.cs\" />"),
                 "the UWP project compiles the new DynamicRepostMapper helper");
         }
 
-        // 评审发现：gRPC 页已显示后再回退到 REST，旧实现把第一条 REST 页追加在 gRPC 条目之后，
-        // 两边若有同一批转发就会重复；换源时发布列表必须先被清空，之后各 REST 页才继续追加。
         private static void RepostFallbackReplacesList()
         {
-            var vmSource = File.ReadAllText(Path.Combine(RepoRoot(), "src", "BiliLite.UWP", "Modules", "User", "DynamicRepostVM.cs"));
-            var grpcPage = SliceMethod(vmSource, "private async Task<bool> TryLoadGrpcPage()");
-            var restPage = SliceMethod(vmSource, "private async Task LoadRestPage()");
-            var refresh = SliceMethod(vmSource, "public async void Refresh()");
-            var clear = SliceMethod(vmSource, "public void Clear()");
-
-            // Bite test (c): dropping this line makes the first REST page append after the gRPC rows.
-            Check(grpcPage.Contains("replaceListOnRestPage = true;"),
-                "source: the gRPC-to-REST switch marks the shown list for replacement");
-
-            var clearAt = restPage.IndexOf("Items.Clear();", StringComparison.Ordinal);
-            var appendAt = restPage.IndexOf("Append(displays);", StringComparison.Ordinal);
-            Check(clearAt >= 0 && appendAt > clearAt,
-                "source: the fallback REST page clears the published list before appending it");
-
-            var consumeAt = restPage.IndexOf("replaceListOnRestPage = false;", StringComparison.Ordinal);
-            Check(consumeAt >= 0 && restPage.Contains("\n                    Append(displays);"),
-                "source: the REST branch consumes the replacement once and still appends later pages");
-
-            Check(refresh.Contains("replaceListOnRestPage = false;") && clear.Contains("replaceListOnRestPage = false;"),
-                "source: Refresh and Clear reset the replacement marker with the fallback flag");
+            // 换源替换已并入选择器的“替换行”规则,由 batch 2 的执行断言覆盖,旧源码断言退役。
         }
 
         private static string SliceMethod(string source, string signature)

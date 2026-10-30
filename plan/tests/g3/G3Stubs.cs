@@ -97,6 +97,7 @@ namespace BiliLite.Helpers
     {
         public bool status { get; set; }
         public string message { get; set; }
+        public int code { get; set; }
 
         public Newtonsoft.Json.Linq.JObject GetJObject()
         {
@@ -137,5 +138,53 @@ namespace BiliLite.Api.User
         {
             return new ApiModel();
         }
+    }
+}
+
+namespace BiliLite.Services
+{
+    /// <summary>
+    /// 探针替身:真实实现写应用本地的动态来源历史快照(Windows.Storage),探针里只保留内存语义。
+    /// </summary>
+    internal sealed class DynamicApiHistoryFileStore : IDynamicApiHistoryStore
+    {
+        private readonly InMemoryDynamicApiHistoryStore _inner = new InMemoryDynamicApiHistoryStore();
+
+        public DynamicApiBucketState Read(string bucketKey)
+        {
+            return _inner.Read(bucketKey);
+        }
+
+        public void Write(DynamicApiBucketState bucket)
+        {
+            _inner.Write(bucket);
+        }
+    }
+}
+
+namespace BiliLite.Helpers
+{
+    /// <summary>探针替身:选择器接线读取当前账号与 app key,这里给出匿名只读实现。</summary>
+    public static class SettingHelper
+    {
+        public static class Account
+        {
+            public static bool Logined { get { return false; } }
+            public static long UserID { get { return 0L; } }
+            public static string AccessKey { get { return ""; } }
+        }
+    }
+
+    /// <summary>探针替身:选择器接线读取两个 app key。</summary>
+    public static class ApiHelper
+    {
+        public sealed class Key
+        {
+            public string Appkey { get; set; }
+            public Key(string appkey) { Appkey = appkey; }
+        }
+
+        public static Key LoginKey { get { return new Key("probe-login"); } }
+        public static Key AndroidKey { get { return new Key("probe-android"); } }
     }
 }

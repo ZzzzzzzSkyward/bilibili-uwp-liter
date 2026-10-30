@@ -19,6 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelector.cs" Link="DynamicApiSelector.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelection.cs" Link="DynamicApiSelection.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\DynamicGrpcMapper.cs" Link="DynamicGrpcMapper.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Modules\Home\DynamicVM.cs" Link="HomeDynamicVM.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Modules\IModules.cs" Link="IModules.cs" />

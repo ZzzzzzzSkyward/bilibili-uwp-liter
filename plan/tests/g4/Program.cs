@@ -209,7 +209,7 @@ namespace G4Probe
             var source = File.ReadAllText(Path.Combine(RepoRoot(), "src", "BiliLite.UWP", "Modules", "User", "DynamicVM.cs"));
             Check(source.Contains("private int spacePage = 1;"), "space paging has its own page counter");
             Check(source.Contains("private string spaceOffset;"), "space paging has its own history offset");
-            Check(source.Contains("private bool spaceRestMode;"), "space REST fallback is a sticky instance flag");
+            Check(source.Contains("private DynamicApiSource? pinnedSpaceSource;"), "space source is pinned for the feed lifetime");
             Check(source.Contains("private string spaceUid;"), "space paging state remembers which uid it belongs to");
             Check(Regex.Matches(source, "ResetSpaceFeed\\(\\);").Count == 2,
                 "space paging state is reset on !loadMore and on a uid change");
@@ -217,14 +217,14 @@ namespace G4Probe
                 "the space feed requests DynSpace with its own page/offset");
             Check(source.Contains("DynamicGrpcMapper.MapToUserCards(reply.List)"),
                 "the space feed maps DynSpaceRsp.List through the shared user-card mapper");
-            Check(source.Contains("spaceOffset = reply.HistoryOffset;") && source.Contains("spacePage++;"),
+            Check(source.Contains("spaceOffset = nextOffset;") && source.Contains("spacePage++;"),
                 "the space feed stores history_offset and advances its page counter");
-            Check(source.Contains("CanLoadMore = reply.HasMore;"),
+            Check(source.Contains("CanLoadMore = hasMore;"),
                 "the space feed stops only on the server has_more flag");
-            Check(source.Contains("stage=space-rest-fallback"), "a failed DynSpace call logs the REST fallback");
-            Check(source.Contains("spaceRestMode = true;") && source.Contains("Items = null;") && source.Contains("idx = \"\";"),
-                "the fallback engages sticky REST, drops the gRPC page and restarts with an empty SpaceHistory idx");
-            Check(source.Contains("api = dynamicAPI.SpaceHistory(Uid, idx);"),
+            // 换源改由选择器固定来源(API-SMART-01 batch 2),原来的 sticky bool 字段已不存在
+            Check(source.Contains("pinnedSpaceSource = source;") || source.Contains("pinnedSpaceSource = alternative;"),
+                "the space feed pins the source it switched to for the feed lifetime");
+            Check(source.Contains("dynamicAPI.SpaceHistory(Uid, cursor)") || source.Contains("dynamicAPI.SpaceHistory(Uid, idx)"),
                 "SpaceHistory stays the REST source for Space");
         }
 
@@ -246,9 +246,10 @@ namespace G4Probe
 
             Check(GrpcService.DynVideoCalls == 1,
                 "home fallback: the rejected page spent exactly one DynVideo call");
-            Check(LogHelper.Entries.Exists(e => e.StartsWith("Home dynamics stage=rest-fallback reason=", StringComparison.Ordinal)
-                    && e.Contains("grpc-message=-663") && e.Contains("rpc=Dynamic/DynVideo")),
-                "home fallback: the rejection is logged as stage=rest-fallback with the server reason before switching");
+            // 诊断日志由 API-SMART-01 的选择器统一输出,探针不再钉具体日志文本;
+            // 这里只断言换源真的发生(REST endpoint 被调用、卡片发布),行为才算数。
+            Check(vm.Items != null && vm.Items.Count > 0,
+                "home fallback: the rejected page still publishes rows");
             Check(DynamicAPI.Calls.Count == 1
                   && DynamicAPI.Calls[0].Endpoint == "dynamic_new"
                   && DynamicAPI.Calls[0].Cursor == null,
@@ -286,12 +287,16 @@ namespace G4Probe
             DynamicAPI.Fixture = call => RestFixture("offset-returned-refresh", "700000000000031");
             vm.Refresh();
             WaitIdle(vm);
-            Check(GrpcService.DynVideoCalls == 2,
-                "home fallback: Refresh clears the sticky mode so the next attempt is gRPC");
-            Check(DynamicAPI.Calls.Count == 0,
-                "home fallback: after Refresh the REST feed is not touched");
-            Check(vm.Items != null && vm.Items.Count == 0,
-                "home fallback: Refresh replaces the list with the gRPC page instead of appending to it");
+            // Refresh 重新打分但不重置已学到的历史:上一页的端点拒绝让 gRPC 进入冷却,
+            // 所以刷新后仍然从 REST 第一页取,并且是替换而不是追加。
+            Check(GrpcService.DynVideoCalls == 1,
+                "home fallback: Refresh does not retry the source that rejected the page");
+            Check(DynamicAPI.Calls.Count == 1
+                  && DynamicAPI.Calls[0].Endpoint == "dynamic_new"
+                  && DynamicAPI.Calls[0].Cursor == null,
+                "home fallback: Refresh restarts the legacy feed at page 1 instead of reusing a cursor");
+            Check(vm.Items != null && vm.Items.Count == 1,
+                "home fallback: Refresh replaces the list instead of appending to it");
         }
 
         /// <summary>REST fixture shaped like dynamic_svr: cards[] plus a data.offset the product must not use as a cursor.</summary>
