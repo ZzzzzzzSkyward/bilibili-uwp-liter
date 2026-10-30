@@ -57,7 +57,9 @@ namespace BiliLite.Services
 
         /// <summary>
         /// gRPC 请求失败:只看结构化状态码与失败类型,不解析 message 文本。
-        /// 返回 IgnoredFailure 表示原因与端点可用性无关(取消/未知异常),调用方应交回原有错误呈现。
+        /// 返回 IgnoredFailure 只表示取消:与端点可用性无关,调用方应交回原有错误呈现。
+        /// 没有结构化结果的其他异常同样意味着这一路这次没拿到页,按传输失败计入,
+        /// 这样同一次逻辑请求仍会换到另一路试一次(与换源前的行为一致)。
         /// </summary>
         public static DynamicApiOutcome ClassifyRequestFailure(Exception exception)
         {
@@ -68,7 +70,7 @@ namespace BiliLite.Services
                 return DynamicApiOutcome.IgnoredFailure;
             if (exception is Google.Protobuf.InvalidProtocolBufferException)
                 return DynamicApiOutcome.MalformedResponse;
-            return DynamicApiOutcome.IgnoredFailure;
+            return DynamicApiOutcome.TransportFailure;
         }
 
         /// <summary>

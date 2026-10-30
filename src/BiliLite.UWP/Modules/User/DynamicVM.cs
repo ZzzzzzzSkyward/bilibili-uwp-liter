@@ -879,7 +879,7 @@ namespace BiliLite.Modules.User
                 DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
                 if (failed == DynamicApiOutcome.IgnoredFailure)
                 {
-                    //原因与端点可用性无关（取消/未知异常）：交回原有错误呈现
+                    //原因与端点可用性无关（取消）：交回原有错误呈现
                     throw;
                 }
                 //gRPC 游标属于另一套分页，换源前清空，绝不会把 historyOffset/update_baseline 传给 REST
