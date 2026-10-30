@@ -24,6 +24,11 @@ The bootable layout is the packaging project's: an 8 KB launcher at the root dis
 Fixes:
 - `build-release-x64.ps1` validates both packages after packaging: the UWP package must have `entrypoint/BiliLiter.exe` and a root `BiliLiter.exe` under 64 KB; the Packages package must additionally contain `BiliLite.Win32Tools` and `fullTrustProcess`. On a bad UWP layout it re-runs the packaging project's `-t:Package` once, re-checks, and then **fails the build instead of handing over a package that cannot start**.
 - The `CS2012` retry now uses `-t:Rebuild` and waits for the file to be openable exclusively, so a half-written `intermediatexaml` cannot be packaged. The previous fixed `Start-Sleep 3` had already failed twice this session against two different processes.
+  The holders are now **named** instead of guessed: a Restart Manager probe caught the build's own `csc.exe`
+  writing `obj\x64\Release\intermediatexaml\BiliLiter.exe` while the parent `MSBuild.exe` still held the
+  previous copy. The script waits for those handles (`-LockWaitSeconds`, default 90 s), kills only build tools
+  if the wait times out, then pauses `-LockRetryDelay` (default 3 s) before the `-t:Rebuild` retry.
+  Details: `plan/build-tooling.md`.
 - `App()` now initialises logging **before** `InitializeComponent()` and wraps it in `try/catch` that logs to the app log. A future startup failure will leave a stack trace instead of a silent exit.
 
 ### BR-13 — verified on the device
@@ -68,6 +73,18 @@ Page 1 of the same session shows the intended behaviour (`grpc` rejected → `ho
 Wanted behaviour (maintainer): the raw source error must never be shown; a prompt is allowed only when the
 legacy source also failed, and it must describe the legacy failure.
 
+Fix (`e5c97e1`, `Modules/Home/DynamicVM.cs`):
+
+- per-source failure text (`_lastLegacyFailureMessage` / `_lastGrpcFailureMessage`) instead of one shared
+  field, so a gRPC rejection can no longer overwrite the legacy message;
+- `page > 1` never crosses sources — no gRPC restart from page 1 (that would replace the rows already on
+  screen), no toast, `CanLoadMore = false`, rows left untouched;
+- `page == 1` keeps the single two-source attempt; the toast fires only when the legacy attempt failed and
+  carries the legacy text; `HandelError` no longer feeds the exception text into the toast.
+
+Builds clean (`build-release-x64.ps1 -Fast -NoVersionBump`, 0 errors). Device confirmation is still open:
+trigger a 404 on `dynamic_history` and check that only the ERROR log line appears.
+
 ## Status
 
 | ID | State |
@@ -76,7 +93,7 @@ legacy source also failed, and it must describe the legacy failure.
 | BR-13 | resolved — single owner for `Content`; verified on device through the `-663` fallback |
 | BR-14 | done — UTF-8 build output, documented + skilled method |
 | BR-15 | resolved — splash crash was the non-bootable MSIX layout; layout is now validated |
-| BR-16 | open — page-2 toast shows the gRPC rejection; load-more must stay silent unless the legacy source failed |
+| BR-16 | fixed in `e5c97e1` — load-more failures are silent, the toast carries the legacy message; device check open |
 
 ## Verification this turn
 

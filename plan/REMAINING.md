@@ -3,52 +3,50 @@
 Compiled 2026-10-30 for branch `work`. One entry per open item, each pointing at the markdown
 that owns its detail. Read this file first; open the referenced section only when you start the item.
 
-## Next session: build the UWP app
+## Next session: device verification, not more source work
 
-Nothing in this repository has ever been compiled as UWP on this machine (no UWP workload), so the
-next step is a real build, not more source edits:
+The UWP app **builds on this machine** (`build-release-x64.ps1`, VS2022 Community, x64):
 
 ```powershell
-# from the repo root, in a VS2022 dev prompt with the UWP workload installed
-msbuild src/BiliLite.UWP/BiliLite.UWP.csproj /p:Configuration=Debug /p:Platform=x64
-# or the packaging route that produces an installable MSIX
-powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump   # compile only, ~60 s
+powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1                        # compile + MSIX into Z:\
 ```
 
-The two `Package.appxmanifest` files already carry a `1.0.9.15` version bump in the working tree
-(uncommitted, the maintainer's). Expect the first build to surface UWP-only compile errors from the
-recent page/XAML batches (C1–C3, D1, stability fixes) — they were written without a compiler.
-Check after install: home dynamics (should fall back to REST on `-663`), playlist link handling,
-collection tab, danmaku list flyout, and the selector's `Dynamic api stage=choose` log lines.
+So the next step is checking the shipped batches on the device rather than writing more code. The
+queue that has never been device-verified:
+
+1. **BR-16** — scroll a feed whose `dynamic_history` returns 404: page 2 must log
+   `stage=feed-failed page=2 … source=legacy` with no toast (see `bug_report.md`).
+2. **API-SMART-01** — the selector's `Dynamic api stage=choose/record/fallback` lines should appear for
+   home, user, space, detail and repost; a rejected gRPC page must fall back silently and the pinned
+   source must hold for later pages.
+3. **C1–C3** — collection tab on a video with `ugc_season`, playlist deep link
+   (`bilibili://music/playlist/playpage/<id>`), and playlist continuation past the first page.
+4. **D1** — danmaku flyout: window switch, copy, like/cancel on an online row, copy-only on a local row.
+5. **Stability items 1/3/4** — closing media tabs, audio detach, WebPage close race.
 
 State of the branch when this was written:
 
 | Fact | Value |
 | --- | --- |
-| `origin/work` head | `709ecf8 Record the current plan state and make the UWP build the next step` |
+| `origin/work` head | `765be46 Name the CS2012 holder and wait for it before retrying; record BR-16` |
 | Local commits ahead | none |
 | Shipped | G1–G5 (+ review rounds), D1, D2, C1, C2, C3, API-SMART-01 (3 batches: selector, VM wiring, persistence), stability items 1/3/4, home-feed REST fallback, space `LocalTime`, repost fallback replacement, `plan/` consolidation + review log |
-| Open review findings | none outstanding: the async `out`-parameter finding is fixed in `058c899`; earlier findings are logged in `plan/REVIEW_LOG.md` |
+| Open review findings | none outstanding: latest review (`3b95659`, of `3665bdb`) is fixed in `058c899`; `code_review.md` is empty since then. Earlier findings are logged in `plan/REVIEW_LOG.md` |
 | Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `d1` 82 · `d2` 58 · `g2` 22 · `g3` 34 · `g4` 56 · `g5` 44 · `stab` 53 · `smart1` 160 — all green |
-| Buildable here | `src/BiliLite.gRPC` only (0/0). No UWP build, no launch, no live API call |
+| Buildable here | **the UWP app now builds** (`build-release-x64.ps1 -Fast -NoVersionBump`, 0 errors, ~60–100 s); packaging to MSIX also works (`-OutputDir`). No live-API verification from here |
 | Uncommitted in tree | the maintainer's two `Package.appxmanifest` version bumps only |
 
---- | --- |
-| `origin/work` head | `c735a73 Open remote playlist links and continue playback across pages` (all work below is pushed) |
-| Local commits ahead | API-SMART-01 batches `797dc3a`, `26d4e57`, `Persist and report the adaptive source history` — local only, not pushed |
-| Shipped | G1, G2, G3 (+ both review rounds), G4, G5 (+ its review fix), D2, C1, C2, C3, home-feed REST fallback, space `LocalTime`, repost fallback replacement, stability items 1 (tab Share), 3 (audio detach), 4 (WebPage close), D1, API-SMART-01 |
-| Offline probes | `c1` 52 · `c2` 99 · `c3` 97 · `d1` 82 · `g2` 22 · `g3` 34 · `g4` 57 · `g5` 65 · `d2` 58 · `stab` 51 · `smart1` 160 — all `PASS`, exit 0 |
-| Buildable here | `src/BiliLite.gRPC` only (0/0). No UWP workload, so no UWP build, no launch, no live API call |
-| Uncommitted in tree | only the maintainer's two `Package.appxmanifest` version bumps (1.0.9.15) — not part of any batch |
-
---- | --- |
-| `origin/work` head | `96c26cd Review origin/work 6ae19816…` (reviewer) |
-| Local commits ahead | G5 `b39739a`, space-timezone review fix `4fca416` |
-| Shipped this cycle | G1, G2, G3 (+ its review fixes), G4, D2, G5 |
-| Offline probes | `plan/tests/{g2,g3,g4,d2,g5}/run.sh` → 22 / 34 / 57 / 58 / 61 assertions |
-| Buildable here | `src/BiliLite.gRPC` only (0/0). No UWP workload, so no UWP build, no launch, no live API call |
-
 ---
+
+## BR-16 — load-more must stay silent (fixed in `e5c97e1`, device check open)
+
+A rejected gRPC page used to hand its raw `grpc-message=-663` text to the toast on a failed page 2.
+The home feed now keeps per-source failure text (the legacy message wins), does not cross to the other
+source on `page > 1` (a gRPC restart would replace rows already on screen), and only shows a toast when
+the legacy attempt itself failed on page 1. Evidence and the exact device sequence are in
+`bug_report.md` § BR-16. Device check: scroll a feed whose `dynamic_history` answers 404 — the log must
+show `stage=feed-failed page=2 … source=legacy` and no toast.
 
 ## 1. D1 — Danmaku list and actions (feature, DONE — needs a device check)
 
@@ -157,14 +155,17 @@ the active page. Item 2's shape is a session id per open — do not attempt it i
   never treat a missing required artifact as success, keep the CS2012 retry.
 - **Context on why layout matters:** `bug_report.md` → BR-15 (1.0.9.12 shipped a non-bootable root
   `BiliLiter.exe`).
+- **CS2012 / file-in-use:** measured, not guessed, in `plan/build-tooling.md` — the holder is the
+  build's own `csc.exe` child plus the parent `MSBuild.exe`; the script now names the holders, waits for
+  them (default 90 s), and only then kills build tools before retrying with a 3 s settle delay.
 
 ## 7. Review loop — nothing open
 
-- Latest review: `code_review.md` at `96c26cd`, covering `6ae1981`. Its single finding
-  (`DynSpaceReq.LocalTime` unset while `DynAllReq`/`DynVideoReq` send 8) is fixed in `4fca416`, with g4
-  pinning all three assignments (41 assertions); both earlier detail findings were confirmed addressed by that same review.
-- Earlier reviews and their resolutions: `code_review.md` history (`22f3a63`, `d68fe0a`, `96c26cd`),
-  `IMPROVEMENT_PROGRESS.md` sections for API-01 and G3–G5.
+- Latest review: `3b95659`, covering `3665bdb`. Its finding (eight async helpers declared `out`
+  parameters, CS1988) is fixed in `058c899`. `code_review.md` has been empty since that commit, so the
+  reviewer has not yet seen `e5c97e1`/`765be46`.
+- Earlier findings and their fixes: `plan/REVIEW_LOG.md` (detail selection, home fallback, repost page-1
+  duplication, playlist continuation, `DynSpaceReq.LocalTime`).
 
 ## 8. Parked / explicitly out of scope
 

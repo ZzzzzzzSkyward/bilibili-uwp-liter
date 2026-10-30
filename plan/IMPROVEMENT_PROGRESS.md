@@ -1,5 +1,18 @@
 # Improvement series progress
 
+## 2026-10-30 late cycle — first UWP build, one live bug
+
+| Item | Commit | Notes |
+| --- | --- | --- |
+| Async helpers | `058c899` | eight `async` methods lost their `out` parameters (CS1988) — the reviewer's finding, fixed with a `DynamicApiSourceResult` struct |
+| Plan state | `709ecf8`, `8980e00` | the index points at the head and names the next step |
+| BR-16 | `e5c97e1` | load-more failures stay silent; the toast carries the legacy message, never the gRPC rejection text |
+| Build tooling | `765be46` | CS2012 holders are named via Restart Manager and waited for; `plan/build-tooling.md` records the measurement |
+
+The app finally builds here (`build-release-x64.ps1 -Fast -NoVersionBump`, 0 errors), so the open work is
+device verification of the shipped batches, listed at the top of `plan/REMAINING.md`, not more source changes.
+Probes after this cycle: `g3` 34 · `g4` 56 · `g5` 44 green; the untouched ones keep their counts.
+
 ## 2026-10-30 evening cycle — adaptive source selection and the plan tree
 
 | Batch | Commit | Notes |
