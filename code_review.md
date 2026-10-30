@@ -1,11 +1,11 @@
-# Review — `5e36ec21b4c80fa75cabadd06bf63274902c207b`
+# Review — `797dc3a75addda681e11e6dc16d03796cb8592cd`
 
-Read the current `bug_report.md` and reviewed all source changes since `1dcf688bd1ab0171a7df707261b606767fc9df27` (completed review `465aa556`), using GPT-6-luna reviewers. Static source inspection only; no tests, builds, application execution, or other validation. The bug report's earlier device/build results were not rerun here.
+Read the current `bug_report.md` and reviewed all source changes since `5e36ec21b4c80fa75cabadd06bf63274902c207b` (completed review `df790a4`), using GPT-6-luna reviewers. Static source inspection only; no tests, builds, application execution, or other validation. The bug report's earlier device/build results were not rerun here.
 
-## The project now compiles a source file that is missing from Git
+## Selecting another video during a detail request can block all later selections
 
-`src/BiliLite.UWP/BiliLite.UWP.csproj:171` adds `<Compile Include="Services\DynamicApiSelector.cs" />`, but the reviewed Git tree contains no such file. A clean checkout cannot compile the UWP application because this explicit source item is missing. This entry arrived with the danmaku-list commit, independently of the new control's own project entries.
+`src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs:284-286`: while video A's detail request is pending, select a different queue or UGC item B. Both selection handlers can call `InitializeVideo()` during loading. It assigns `_id = B` before checking `flag` (`268-269`), then returns because A is still loading. When A finishes, the new `_id != id` guard returns without clearing `flag`. Neither request reaches playback initialization, and every subsequent selection returns at the same loading check. The tab cannot load another video until it is closed and reopened.
 
-Remove the stale `Compile` entry if it was included accidentally, or commit the intended source file with it. This conclusion comes from the project and Git tree; no build was run.
+If selections during loading should be ignored, check `flag` before assigning `_id`, so a rejected selection cannot invalidate the active request. If the newest selection should replace the old one, use a request generation and make loading-flag cleanup belong to the active generation; each accepted selection must actually start a request.
 
-The previous playlist continuation finding is resolved: closing the tab sets the closed flag before player disposal, and both remote paging and video-detail continuations check it before selecting or starting playback. No other worthwhile issue found in the new loaded-danmaku list or the changed continuation paths.
+The previous missing-source finding is resolved: `Services/DynamicApiSelector.cs` is now committed. The selector currently has no production callers, so it does not yet change feed routing. No other worthwhile issue found in its algorithms or the structured gRPC outcome changes.
