@@ -6,33 +6,21 @@
 
 ## 更新说明
 
-使用VS2022，Win10 x64 21H2版本升级了所有依赖。最低版本18362，但是17763可能也行。
+使用VS2022，Win10 x64 21H2版本升级了所有依赖。最低版本18362。
 
-启用亚克力背景。
+使用亚克力背景。
 
-签名换了一个，到2024年过期。
+签名到2026年过期。
 
 包名换了一个，版本号改了。
 
-## 已知bug
-
-- 无法使用密码、手机登录。所以只能二维码登录或者手动在浏览器里登录。
-
-- 无法合并视频，因为升级之后原来的包没法编译了，可以使用ffmpeg自己操作。
-
 ## 下载
 
-看release
+https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/releases
 
 ## 其他fork
 
 https://github.com/ywmoyue/biliuwp-lite
-
-提供17763版本 https://github.com/ZzzzzzzSkyward/biliuwp-lite-fix
-
-## 功能建议
-
-去[ywmoyue](https://github.com/ywmoyue/biliuwp-lite)那边提交
 
 ## 预览
 
