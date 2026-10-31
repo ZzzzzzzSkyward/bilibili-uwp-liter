@@ -10,7 +10,7 @@
       <Setter Property="IsTabStop" Value="False"/>
     </Style>
   </UserControl.Resources>
-  <Button x:Name="BtnOpenDanmakuList" Width="48" Height="48" Padding="0" Background="Transparent" ToolTipService.ToolTip="弹幕列表">
+  <Button x:Name="BtnOpenDanmakuList" Width="48" Height="48" Padding="0" BorderThickness="0" Background="Transparent" ToolTipService.ToolTip="弹幕列表">
     <fa:FontAwesome Icon="Solid_List" FontSize="20" Foreground="White"/>
     <Button.Flyout>
       <Flyout Placement="Top" Opening="DanmakuListFlyout_Opening">
@@ -22,7 +22,7 @@
           </Grid.RowDefinitions>
           <Grid>
             <TextBlock x:Name="TxtTitle" VerticalAlignment="Center" FontWeight="SemiBold"/>
-            <Button x:Name="BtnReplaceShowMode" HorizontalAlignment="Right" Background="Transparent" Padding="4" ToolTipService.ToolTip="切换范围" Click="BtnReplaceShowMode_Click">
+            <Button x:Name="BtnReplaceShowMode" HorizontalAlignment="Right" BorderThickness="0" Background="Transparent" Padding="4" ToolTipService.ToolTip="切换范围" Click="BtnReplaceShowMode_Click">
               <fa:FontAwesome Icon="Solid_ExchangeAlt" FontSize="14"/>
             </Button>
           </Grid>

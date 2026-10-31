@@ -235,9 +235,9 @@
                   <TextBlock Margin="0,16,0,8" Text="音频轨道" />
                   <ComboBox x:Name="LocalAudioTrackSelector" DisplayMemberPath="Label" SelectionChanged="LocalAudioTrackSelector_SelectionChanged" />
                   <TextBlock Margin="0,16,0,8" Text="字幕轨道" />
-                  <Button x:Name="LocalSubtitleTracksButton" Content="选择字幕" Click="LocalSubtitleTracksButton_Click" />
+                  <Button x:Name="LocalSubtitleTracksButton" BorderThickness="0" Content="选择字幕" Click="LocalSubtitleTracksButton_Click" />
                   <TextBlock Margin="0,16,0,8" Text="弹幕轨道" />
-                  <Button x:Name="LocalDanmakuTracksButton" Content="弹幕轨道开关" Click="LocalDanmakuTracksButton_Click" />
+                  <Button x:Name="LocalDanmakuTracksButton" BorderThickness="0" Content="弹幕轨道开关" Click="LocalDanmakuTracksButton_Click" />
                 </StackPanel>
               </ScrollViewer>
             </PivotItem>
@@ -248,10 +248,10 @@
               <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
                   <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
-                    <Button x:Name="DanmuSettingUpdateDanmaku" Click="DanmuSettingUpdateDanmaku_Click" Grid.Column="1" Foreground="White">更新弹幕</Button>
+                    <Button x:Name="DanmuSettingUpdateDanmaku" BorderThickness="0" Click="DanmuSettingUpdateDanmaku_Click" Grid.Column="1" Foreground="White">更新弹幕</Button>
                     <TextBlock VerticalAlignment="Center" Margin="8 0 0 0">弹幕数量:<Run x:Name="TxtDanmuCount"/></TextBlock>
                   </StackPanel>
-                  <Button x:Name="ImportDanmaku" Click="ImportDanmaku_Click" Foreground="White" Margin="0 8 0 0">导入弹幕</Button>
+                  <Button x:Name="ImportDanmaku" BorderThickness="0" Click="ImportDanmaku_Click" Foreground="White" Margin="0 8 0 0">导入弹幕</Button>
                   <Grid Margin="0 8 0 0">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition/>
@@ -339,8 +339,8 @@
                       <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     <TextBox x:Name="DanmuSettingTxtWord" PlaceholderText="输入关键词"/>
-                    <Button x:Name="DanmuSettingAddWord" Click="DanmuSettingAddWord_Click" Grid.Column="1" Foreground="White" Margin="8 0 0 0">添加</Button>
-                    <Button x:Name="DanmuSettingSyncWords" Click="DanmuSettingSyncWords_Click" Grid.Column="2" Foreground="White" Margin="8 0 0 0">同步</Button>
+                    <Button x:Name="DanmuSettingAddWord" BorderThickness="0" Click="DanmuSettingAddWord_Click" Grid.Column="1" Foreground="White" Margin="8 0 0 0">添加</Button>
+                    <Button x:Name="DanmuSettingSyncWords" BorderThickness="0" Click="DanmuSettingSyncWords_Click" Grid.Column="2" Foreground="White" Margin="8 0 0 0">同步</Button>
                   </Grid>
                   <ItemsControl Margin="0 8 0 0" x:Name="DanmuSettingWords">
                     <ItemsControl.ItemsPanel>
@@ -414,8 +414,8 @@
                     </ToggleSwitch.Header>
                   </ToggleSwitch>
                   <StackPanel Orientation="Horizontal" Margin="0 8 0 0">
-                    <Button x:Name="PlayerSettingABPlaySetPointA" Click="PlayerSettingABPlaySetPointA_Click" Grid.Column="1" Foreground="White" Margin="0 0 8 0" Visibility="Collapsed">设置A点</Button>
-                    <Button x:Name="PlayerSettingABPlaySetPointB" Click="PlayerSettingABPlaySetPointB_Click" Grid.Column="1" Foreground="White" Visibility="Collapsed">设置B点</Button>
+                    <Button x:Name="PlayerSettingABPlaySetPointA" BorderThickness="0" Click="PlayerSettingABPlaySetPointA_Click" Grid.Column="1" Foreground="White" Margin="0 0 8 0" Visibility="Collapsed">设置A点</Button>
+                    <Button x:Name="PlayerSettingABPlaySetPointB" BorderThickness="0" Click="PlayerSettingABPlaySetPointB_Click" Grid.Column="1" Foreground="White" Visibility="Collapsed">设置B点</Button>
                   </StackPanel>
                   <TextBlock TextWrapping="Wrap" x:Name="txtInfo"/>
                 </StackPanel>
@@ -427,7 +427,7 @@
               </PivotItem.Header>
               <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel>
-                  <Button x:Name="ImportSubtitle" Click="ImportSubtitle_Click" Margin="0 0 8 0">导入字幕</Button>
+                  <Button x:Name="ImportSubtitle" BorderThickness="0" Click="ImportSubtitle_Click" Margin="0 0 8 0">导入字幕</Button>
                   <TextBlock Margin="0 8">字幕加粗</TextBlock>
                   <ToggleSwitch x:Name="SubtitleSettingBold" OnContent="开启" OffContent="关闭"/>
                   <TextBlock Margin="0 8">字幕颜色</TextBlock>

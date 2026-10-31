@@ -251,15 +251,17 @@ namespace BiliLite.Helpers
                     continue;
                 }
 
-                var author = source["modules"]?["module_author"] as JObject;
-                var archive = source["modules"]?["module_dynamic"]?["major"]?["archive"] as JObject;
+                var modules = Obj(source["modules"]);
+                var author = Obj(modules?["module_author"]);
+                var major = Obj(Obj(modules?["module_dynamic"])?["major"]);
+                var archive = Obj(major?["archive"]);
                 if (archive == null)
                 {
                     continue;
                 }
 
                 var id = source["id_str"]?.ToString() ?? "";
-                var play = ParseCount(archive["stat"]?["play"]?.ToString());
+                var play = ParseCount(Obj(archive["stat"])?["play"]?.ToString());
                 result.Add(new DynamicItemModel
                 {
                     desc = new DynamicDescModel
@@ -289,7 +291,7 @@ namespace BiliLite.Helpers
                         stat = new DynamicVideoCardStatModel
                         {
                             view = play,
-                            danmaku = ParseCount(archive["stat"]?["danmaku"]?.ToString()),
+                            danmaku = ParseCount(Obj(archive["stat"])?["danmaku"]?.ToString()),
                         },
                     },
                 });
@@ -298,13 +300,23 @@ namespace BiliLite.Helpers
             return result;
         }
 
+        /// <summary>
+        /// 服务端下发的字段类型并不稳（emoji 可能是字符串、modules 可能是字符串、major.archive 可能是数组）。
+        /// JToken 的索引器遇到 JValue 会直接抛异常，`x?["a"]` 里的 `?.` 只挡 null，所以嵌套取值一律先过这里。
+        /// </summary>
+        private static JObject Obj(JToken token)
+        {
+            return token as JObject;
+        }
+
         private static DynamicCardModel2024 MapWebCard(JObject source)
         {
             var id = source["id_str"]?.ToString() ?? "";
             var itemType = source["type"]?.ToString() ?? "";
-            var basic = source["basic"] as JObject;
-            var modules = source["modules"] as JObject;
-            var major = modules?["module_dynamic"]?["major"] as JObject;
+            var basic = Obj(source["basic"]);
+            var modules = Obj(source["modules"]);
+            var moduleDynamic = Obj(modules?["module_dynamic"]);
+            var major = Obj(moduleDynamic?["major"]);
             var cardType = MapWebCardType(itemType);
             if (cardType == "DYNAMIC_TYPE_UNSUPPORTED")
             {
@@ -324,11 +336,11 @@ namespace BiliLite.Helpers
                 },
                 modules = new DynamicCardModel2024_modules
                 {
-                    module_author = MapWebAuthor(modules?["module_author"] as JObject),
-                    module_stat = MapWebStat(modules?["module_stat"] as JObject),
+                    module_author = MapWebAuthor(Obj(modules?["module_author"])),
+                    module_stat = MapWebStat(Obj(modules?["module_stat"])),
                     module_dynamic = new DynamicCardModel2024_dynamic
                     {
-                        desc = MapWebDescription(modules?["module_dynamic"]?["desc"] as JObject),
+                        desc = MapWebDescription(Obj(moduleDynamic?["desc"])),
                         major = MapWebMajor(major),
                     },
                 },
@@ -337,7 +349,7 @@ namespace BiliLite.Helpers
             if (itemType == "DYNAMIC_TYPE_FORWARD")
             {
                 // 原动态可能是任何类型，映射不出来时用占位卡，父卡片照样可读
-                var orig = source["orig"] as JObject;
+                var orig = Obj(source["orig"]);
                 card.orig = orig == null ? MissingCard(card.basic.rid_str) : MapWebCard(orig);
             }
 
@@ -351,6 +363,9 @@ namespace BiliLite.Helpers
                 return null;
             }
 
+            var vip = Obj(source["vip"]);
+            var officialVerify = Obj(source["official_verify"]);
+            var pendant = Obj(source["pendant"]);
             return new DynamicCardModel2024_author
             {
                 mid = ToLong(source["mid"]?.ToString()),
@@ -359,24 +374,24 @@ namespace BiliLite.Helpers
                 pub_time = source["pub_time"]?.ToString() ?? "",
                 // web 下发的 pub_ts 是字符串，卡片的时间显示与排序都靠它
                 pub_ts = ToLong(source["pub_ts"]?.ToString()),
-                vip = source["vip"] == null ? null : new DynamicCardModel2024_vip
+                vip = vip == null ? null : new DynamicCardModel2024_vip
                 {
-                    status = ToInt(source["vip"]?["status"]?.ToString()),
-                    type = ToInt(source["vip"]?["type"]?.ToString()),
-                    theme_type = ToInt(source["vip"]?["theme_type"]?.ToString()),
-                    nickname_color = source["vip"]?["nickname_color"]?.ToString(),
+                    status = ToInt(vip["status"]?.ToString()),
+                    type = ToInt(vip["type"]?.ToString()),
+                    theme_type = ToInt(vip["theme_type"]?.ToString()),
+                    nickname_color = vip["nickname_color"]?.ToString(),
                 },
-                official_verify = source["official_verify"] == null ? null : new DynamicCardModel2024_off
+                official_verify = officialVerify == null ? null : new DynamicCardModel2024_off
                 {
-                    type = ToInt(source["official_verify"]?["type"]?.ToString()),
-                    desc = source["official_verify"]?["desc"]?.ToString() ?? "",
+                    type = ToInt(officialVerify["type"]?.ToString()),
+                    desc = officialVerify["desc"]?.ToString() ?? "",
                 },
-                pendant = source["pendant"] == null ? null : new DynamicCardModel2024_pendant
+                pendant = pendant == null ? null : new DynamicCardModel2024_pendant
                 {
-                    pid = ToLong(source["pendant"]?["pid"]?.ToString()),
-                    name = source["pendant"]?["name"]?.ToString() ?? "",
-                    image = source["pendant"]?["image"]?.ToString() ?? "",
-                    expire = ToInt(source["pendant"]?["expire"]?.ToString()),
+                    pid = ToLong(pendant["pid"]?.ToString()),
+                    name = pendant["name"]?.ToString() ?? "",
+                    image = pendant["image"]?.ToString() ?? "",
+                    expire = ToInt(pendant["expire"]?.ToString()),
                 },
             };
         }
@@ -388,22 +403,25 @@ namespace BiliLite.Helpers
                 return new DynamicCardModel2024_stat();
             }
 
+            var comment = Obj(source["comment"]);
+            var forward = Obj(source["forward"]);
+            var like = Obj(source["like"]);
             return new DynamicCardModel2024_stat
             {
                 comment = new DynamicCardModel2024_comment
                 {
-                    count = ToInt(source["comment"]?["count"]?.ToString()),
-                    forbidden = ToBool(source["comment"]?["forbidden"]),
+                    count = ToInt(comment?["count"]?.ToString()),
+                    forbidden = ToBool(comment?["forbidden"]),
                 },
                 forward = new DynamicCardModel2024_forward
                 {
-                    count = ToInt(source["forward"]?["count"]?.ToString()),
-                    forbidden = ToBool(source["forward"]?["forbidden"]),
+                    count = ToInt(forward?["count"]?.ToString()),
+                    forbidden = ToBool(forward?["forbidden"]),
                 },
                 like = new DynamicCardModel2024_like
                 {
-                    count = ToInt(source["like"]?["count"]?.ToString()),
-                    status = ToBool(source["like"]?["status"]),
+                    count = ToInt(like?["count"]?.ToString()),
+                    status = ToBool(like?["status"]),
                 },
             };
         }
@@ -421,11 +439,13 @@ namespace BiliLite.Helpers
             {
                 foreach (var token in richNodes)
                 {
-                    var node = token as JObject;
+                    var node = Obj(token);
                     if (node == null)
                     {
                         continue;
                     }
+                    // emoji 有时是字符串（老版本动态）：守不住就是整页 InvalidOperationException
+                    var emoji = Obj(node["emoji"]);
                     nodes.Add(new DynamicCardModel2024_node
                     {
                         text = node["text"]?.ToString() ?? "",
@@ -434,12 +454,12 @@ namespace BiliLite.Helpers
                         jump_url = node["jump_url"]?.ToString() ?? "",
                         icon_name = node["icon_name"]?.ToString() ?? "",
                         rid = node["rid"]?.ToString() ?? "",
-                        emoji = node["emoji"] == null ? null : new DynamicCardModel2024_emojiinfo
+                        emoji = emoji == null ? null : new DynamicCardModel2024_emojiinfo
                         {
-                            icon_url = node["emoji"]?["icon_url"]?.ToString() ?? node["icon_url"]?.ToString() ?? "",
-                            text = node["emoji"]?["text"]?.ToString() ?? "",
-                            size = ToInt(node["emoji"]?["size"]?.ToString()),
-                            type = ToInt(node["emoji"]?["type"]?.ToString()),
+                            icon_url = emoji?["icon_url"]?.ToString() ?? node["icon_url"]?.ToString() ?? "",
+                            text = emoji?["text"]?.ToString() ?? "",
+                            size = ToInt(emoji?["size"]?.ToString()),
+                            type = ToInt(emoji?["type"]?.ToString()),
                         },
                     });
                 }
@@ -475,7 +495,7 @@ namespace BiliLite.Helpers
                 return result;
             }
 
-            var archive = major["archive"] as JObject;
+            var archive = Obj(major["archive"]);
             if (archive != null)
             {
                 result.archive = new DynamicCardModel2024_archive
@@ -489,14 +509,14 @@ namespace BiliLite.Helpers
                     title = archive["title"]?.ToString() ?? "",
                     stat = new DynamicCardModel2024_astat
                     {
-                        play = archive["stat"]?["play"]?.ToString() ?? "",
-                        danmaku = archive["stat"]?["danmaku"]?.ToString() ?? "",
+                        play = Obj(archive["stat"])?["play"]?.ToString() ?? "",
+                        danmaku = Obj(archive["stat"])?["danmaku"]?.ToString() ?? "",
                     },
                 };
                 return result;
             }
 
-            var pgc = major["pgc"] as JObject;
+            var pgc = Obj(major["pgc"]);
             if (pgc != null)
             {
                 result.pgc = new DynamicCardModel2024_season
@@ -510,14 +530,14 @@ namespace BiliLite.Helpers
                     title = pgc["title"]?.ToString() ?? "",
                     stat = new DynamicCardModel2024_astat
                     {
-                        play = pgc["stat"]?["play"]?.ToString() ?? "",
-                        danmaku = pgc["stat"]?["danmaku"]?.ToString() ?? "",
+                        play = Obj(pgc["stat"])?["play"]?.ToString() ?? "",
+                        danmaku = Obj(pgc["stat"])?["danmaku"]?.ToString() ?? "",
                     },
                 };
                 return result;
             }
 
-            var draw = major["draw"] as JObject;
+            var draw = Obj(major["draw"]);
             if (draw != null)
             {
                 var pics = new List<DynamicCardModel2024_pic>();
@@ -526,7 +546,7 @@ namespace BiliLite.Helpers
                 {
                     foreach (var token in drawItems)
                     {
-                        var pic = token as JObject;
+                        var pic = Obj(token);
                         if (pic == null)
                         {
                             continue;
@@ -547,7 +567,7 @@ namespace BiliLite.Helpers
                 return result;
             }
 
-            var article = major["article"] as JObject;
+            var article = Obj(major["article"]);
             if (article != null)
             {
                 result.article = new DynamicCardModel2024_article
@@ -562,7 +582,7 @@ namespace BiliLite.Helpers
                 return result;
             }
 
-            var opus = major["opus"] as JObject;
+            var opus = Obj(major["opus"]);
             if (opus != null)
             {
                 // 图文（OPUS）在渲染层就是专栏那张卡：封面取首图，正文取 summary.text
@@ -571,20 +591,20 @@ namespace BiliLite.Helpers
                 if (opusPics != null)
                 {
                     covers.AddRange(opusPics
-                        .Select(x => x?["url"]?.ToString())
+                        .Select(x => Obj(x)?["url"]?.ToString())
                         .Where(x => !string.IsNullOrEmpty(x)));
                 }
                 result.article = new DynamicCardModel2024_article
                 {
                     covers = covers,
-                    desc = opus["summary"]?["text"]?.ToString() ?? "",
+                    desc = Obj(opus["summary"])?["text"]?.ToString() ?? "",
                     jump_url = NormalizeWebUrl(opus["jump_url"]?.ToString()),
                     title = opus["title"]?.ToString() ?? "",
                 };
                 return result;
             }
 
-            var live = major["live"] as JObject;
+            var live = Obj(major["live"]);
             if (live != null)
             {
                 result.live = new DynamicCardModel2024_live
@@ -593,14 +613,14 @@ namespace BiliLite.Helpers
                     cover = live["cover"]?.ToString() ?? "",
                     title = live["title"]?.ToString() ?? "",
                     desc_first = live["area_name"]?.ToString() ?? "",
-                    desc_second = live["watched_show"]?["text_large"]?.ToString() ?? "",
+                    desc_second = Obj(live["watched_show"])?["text_large"]?.ToString() ?? "",
                     jump_url = NormalizeWebUrl(live["jump_url"]?.ToString()),
                     live_state = ToInt(live["live_state"]?.ToString()),
                 };
                 return result;
             }
 
-            var liveRcmd = major["live_rcmd"] as JObject;
+            var liveRcmd = Obj(major["live_rcmd"]);
             if (liveRcmd != null)
             {
                 var content = liveRcmd["content"]?.ToString() ?? "";
@@ -610,14 +630,14 @@ namespace BiliLite.Helpers
                 };
                 try
                 {
-                    var playInfo = JObject.Parse(content)?["live_play_info"];
+                    var playInfo = Obj(JObject.Parse(content)?["live_play_info"]);
                     result.live = new DynamicCardModel2024_live
                     {
                         id = playInfo?["room_id"]?.ToString() ?? "",
                         cover = playInfo?["cover"]?.ToString() ?? "",
                         title = playInfo?["title"]?.ToString() ?? "",
                         desc_first = playInfo?["area_name"]?.ToString() ?? "",
-                        desc_second = playInfo?["watched_show"]?["text_large"]?.ToString() ?? "",
+                        desc_second = Obj(playInfo?["watched_show"])?["text_large"]?.ToString() ?? "",
                         jump_url = playInfo?["room_id"] == null
                             ? ""
                             : "https://live.bilibili.com/" + playInfo["room_id"],
@@ -630,7 +650,7 @@ namespace BiliLite.Helpers
                 return result;
             }
 
-            var music = major["music"] as JObject;
+            var music = Obj(major["music"]);
             if (music != null)
             {
                 // 音乐卡借的是专栏那张卡，与 gRPC 的 DynMusic 映射一致

@@ -51,6 +51,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 3 | AI subtitle label (#1311) — partially mitigated | needs a sibling-supported discriminator |
+| 4 | Response-evidence workflow (shapes, drift, bundle, fixture import) | designed in `plan/DIAGNOSTICS_WORKFLOW.md`, P1 not started |
 
 ## 1. Player session ownership
 

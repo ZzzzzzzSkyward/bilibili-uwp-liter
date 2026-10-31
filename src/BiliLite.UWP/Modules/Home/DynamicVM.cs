@@ -202,10 +202,25 @@ namespace BiliLite.Modules
             }
 
             var feedData = data["data"];
-            var items = feedData["items"] as JArray;
-            var mappedItems = DynamicGrpcMapper.MapToHomeVideoItems(items);
-            var hasMore = feedData["has_more"]?.Value<bool>() ?? false;
-            var nextOffset = feedData["offset"]?.ToString();
+            JArray items = null;
+            List<DynamicItemModel> mappedItems;
+            bool hasMore;
+            string nextOffset;
+            try
+            {
+                //信封合法不代表字段都合规：少一层对象或多一个字符串，解码/映射里任何一步都可能抛。
+                //这一路只算"没拿到有效页"，交给换源链决定下一步，异常绝不掀掉整个请求
+                items = feedData["items"] as JArray;
+                mappedItems = DynamicGrpcMapper.MapToHomeVideoItems(items);
+                hasMore = feedData["has_more"]?.Value<bool>() ?? false;
+                nextOffset = feedData["offset"]?.ToString();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Home dynamics stage=feed-polymer-failed page=" + requestPage
+                    + " message=" + ex.Message, LogType.ERROR, ex);
+                return DynamicApiOutcome.MalformedResponse;
+            }
             LogHelper.Log("Home dynamics stage=items-mapped page=" + requestPage + " sourceCount=" + (items?.Count ?? 0)
                 + " mappedCount=" + mappedItems.Count + " hasMore=" + hasMore, LogType.DEBUG);
             if (requestPage == 1 || replaceRows || Items == null)

@@ -162,6 +162,26 @@ Getting an actionable report needs numbers, not guesses: the size of the working
 specific journey (feed paging only / video playback only / danmaku on), plus whether the process is managed-heap
 bound or native bound. Without that split the "memory budget" plan item (plan/PLAN.md § 2) cannot be scoped.
 
+## BR-17 follow-up — the tab failed completely after the polymer switch (device log 2026-10-31 08:20)
+
+The log proved the direction was right and the mapper was not:
+
+```
+stage=feed-polymer-request page=1 offset= generation=1
+stage=feed-request failed | System.InvalidOperationException: Cannot access child value on Newtonsoft.Json.Linq.JValue.
+   at DynamicGrpcMapper.MapWebDescription(JObject source) → MapWebCard → MapToUserFeedCards → TryUserFeedPolymerAsync
+```
+
+`feed/all` returned the feed; `MapWebDescription` did `node["emoji"]?["icon_url"]` and the real payload carries `emoji` as a
+string, so the indexer itself threw (`?.` only guards the result). Because the mapping call sat outside the leg's `try`,
+the exception escaped `ServeUserFeedAsync` and the tab retried forever with no rows.
+
+Fixed together: the whole web mapping path now routes nested lookups through one `JObject`-casting accessor (author, stat,
+description, major/archive/pgc/draw/opus/live, home-video items), and any polymer-leg failure (decode, map, convert)
+returns `Failed(MalformedResponse)` so the chain falls through on page 1 and stops quietly on page > 1. Probes: g3 63
+(hostile-field-type fixture, the device payload shape) and g4 114 (failed leg ⇒ fall-through, quiet page-2 stop). The g3
+fixture was run against the `f9e27df` mapper and throws the same exception as the device stack.
+
 ## Status
 
 | ID | State |
@@ -171,9 +191,9 @@ bound or native bound. Without that split the "memory budget" plan item (plan/PL
 | BR-14 | done — UTF-8 build output, documented + skilled method |
 | BR-15 | resolved — splash crash was the non-bootable MSIX layout; layout is now validated |
 | BR-16 | fixed in `e5c97e1` — load-more failures are silent, the toast carries the legacy message; device check open |
-| BR-17 | fixed in `0940c6d` — polymer web feed is the paginating source for 全部/视频, cursor per source; device log check open |
+| BR-17 | fixed across `0940c6d` + the mapper-totality commit — device proved `feed/all` returns items but `MapWebDescription` threw on a string `emoji`, so the whole tab failed; the web mapper is now total and a failed polymer leg falls through instead of ending the request |
 | BR-18 | fixed in `1f22ec1` — fade collapses only after opacity reaches 0 (stack stretches), glyph moved to a `TextBlock` with `TextLineBounds="Full"`, volume through `PlayerToastOverlay.FormatVolume` |
-| BR-19 | fixed in the same commit — `BorderThickness="0"` on the 11 chrome buttons (no shared style: an explicit `Style` without a template is not worth the risk in UWP) |
+| BR-19 | fixed in two passes — 11 chrome buttons, then the 9 settings-pane buttons, `BtnOpenDanmakuList` and `BtnReplaceShowMode` once the maintainer reported 弹幕按钮仍有白边 |
 | BR-20 | fixed in the same commit — `TopBtnSettingDanmaku` and its handler removed; 弹幕 is pivot 2, reachable from More |
 | BR-21 | recorded — memory grows over time; needs a measured journey (feed paging / playback / danmaku) |
 

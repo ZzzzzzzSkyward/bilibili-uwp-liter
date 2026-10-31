@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -44,6 +44,7 @@ namespace G4Probe
             AppendFailureKeepsTheGrpcCursor();
             LoadMoreFailureStaysQuiet();
             PolymerPagesAppend();
+            PolymerLegFailureIsAFailedLeg();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -526,6 +527,106 @@ namespace G4Probe
                 "polymer: the retry appends the third page (items=" + (vm.Items == null ? -1 : vm.Items.Count) + ")");
             Check(!vm.CanLoadMore,
                 "polymer: has_more=false from the last page stops paging");
+        }
+
+        /// <summary>
+        /// 设备日志 2026-10-31 的第二个缺陷：聚合流的信封合法、字段却对不上时，解码/映射里抛出的异常
+        /// 从腿上逃出去，整个请求就此结束（页面空白加重试）。这一路失败只能算"没拿到有效页"：
+        /// 第一页照旧换下一条源，第二页安静停下、已上屏的行不动。
+        /// </summary>
+        private static void PolymerLegFailureIsAFailedLeg()
+        {
+            ResetSourceHistory();
+            ResetFixtures();
+            LogHelper.Entries.Clear();
+            DynamicAPI.Calls.Clear();
+            Utils.Toasts.Clear();
+            GrpcService.DynVideoCalls = 0;
+            GrpcService.RejectDynVideo = true;
+            // 形状合法、字段不合法：data 是数组，"data".items 这一步就会抛
+            DynamicAPI.FeedFixture = call => "{\"code\":0,\"message\":\"0\",\"data\":[{\"items\":[]}]}";
+            DynamicAPI.Fixture = call => RestFixture("offset-after-polymer-failure", "700000000000301");
+
+            var vm = new DynamicVM();
+            vm.GetDynamicItems(1).GetAwaiter().GetResult();
+
+            Check(DynamicAPI.Calls.Count > 0 && DynamicAPI.Calls[0].IsFeed,
+                "polymer failure: page 1 still asks the web feed first");
+            Check(LegacyCalls().Count == 1 && LegacyCalls()[0].Endpoint == "dynamic_new",
+                "polymer failure: the failed leg falls through to the REST newest feed");
+            Check(vm.Items != null && vm.Items.Count == 1,
+                "polymer failure: page 1 publishes the next source instead of ending the request (items=" +
+                (vm.Items == null ? -1 : vm.Items.Count) + ")");
+            Check(LogHelper.Entries.Exists(entry => entry.Contains("stage=feed-polymer-failed page=1")),
+                "polymer failure: the leg logs its own failure stage instead of stage=feed-failed");
+            Check(Utils.Toasts.Count == 0,
+                "polymer failure: a page the fallback served shows no toast");
+
+            // 第二页：来源已经固定成聚合流，失败只能安静停下
+            ResetFixtures();
+            ResetSourceHistory();
+            LogHelper.Entries.Clear();
+            DynamicAPI.Calls.Clear();
+            Utils.Toasts.Clear();
+            GrpcService.DynVideoCalls = 0;
+            GrpcService.RejectDynVideo = true;
+            DynamicAPI.FeedFixture = call => PolymerFixture("polymer-offset-guard-1", true, 3, "guardpolymer");
+
+            var pinned = new DynamicVM();
+            pinned.GetDynamicItems(1).GetAwaiter().GetResult();
+            Check(pinned.Items != null && pinned.Items.Count == 3 && pinned.CanLoadMore,
+                "polymer failure: the good page pins the web feed (items=" +
+                (pinned.Items == null ? -1 : pinned.Items.Count) + ")");
+
+            DynamicAPI.FeedFixture = call => "{\"code\":0,\"message\":\"0\",\"data\":[{\"items\":[]}]}";
+            var legacyCallsBefore = LegacyCalls().Count;
+            pinned.GetDynamicItems(2).GetAwaiter().GetResult();
+
+            Check(LegacyCalls().Count == legacyCallsBefore,
+                "polymer failure: a page-2 failure never switches source");
+            Check(pinned.Items != null && pinned.Items.Count == 3,
+                "polymer failure: a page-2 failure leaves the published rows alone");
+            Check(!pinned.CanLoadMore,
+                "polymer failure: a page-2 failure stops paging");
+            Check(Utils.Toasts.Count == 0,
+                "polymer failure: a page-2 failure stays quiet");
+            Check(LogHelper.Entries.Exists(entry => entry.Contains("stage=feed-failed page=2")),
+                "polymer failure: the quiet stop is still logged with its page number");
+
+            // 结构契约：User/DynamicVM.cs 的聚合流腿不能被编译进探针，只断言它把映射包在同一个失败分支里
+            var root = RepoRoot();
+            var homeSource = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "Modules", "Home", "DynamicVM.cs"));
+            var homeLeg = Between(homeSource,
+                "private async Task<DynamicApiOutcome> RequestPolymerSourceAsync",
+                "private void ClearGrpcCursorOnRestart");
+            var homeGuard = Between(homeLeg, "var feedData = data[\"data\"];", "return DynamicApiOutcome.MalformedResponse;");
+            Check(homeGuard.Contains("MapToHomeVideoItems("),
+                "home polymer leg maps inside the same guard that owns its failed outcome");
+            Check(homeGuard.Contains("catch (Exception ex)") && homeGuard.Contains("stage=feed-polymer-failed"),
+                "home polymer leg logs stage=feed-polymer-failed before reporting a malformed response");
+
+            var userSource = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "Modules", "User", "DynamicVM.cs"));
+            var userLeg = Between(userSource,
+                "private async Task<DynamicApiSourceResult> TryUserFeedPolymerAsync",
+                "private async Task<DynamicApiSourceResult> TryUserFeedGrpcAsync");
+            var userGuard = Between(userLeg, "var feedData = data[\"data\"];", "DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, ex.Message)");
+            Check(userGuard.Contains("MapToUserFeedCards("),
+                "user polymer leg maps inside the same guard that owns its failed outcome");
+            Check(userGuard.Contains("catch (Exception ex)") && userGuard.Contains("stage=feed-polymer-failed"),
+                "user polymer leg logs stage=feed-polymer-failed before reporting MalformedResponse");
+        }
+
+        /// <summary>两段标记之间的源码；找不到就返回空串，避免断言因为 IndexOf 的 -1 而假通过。</summary>
+        private static string Between(string source, string startMarker, string endMarker)
+        {
+            var start = source.IndexOf(startMarker, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                return "";
+            }
+            start += startMarker.Length;
+            var end = source.IndexOf(endMarker, start, StringComparison.Ordinal);
+            return end < 0 ? "" : source.Substring(start, end - start);
         }
 
         /// <summary>探针夹具是静态的：每个用例开头都恢复到默认值，用例之间不互相影响。</summary>

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using Bilibili.App.Dynamic.V2;
@@ -36,6 +36,7 @@ namespace G3Probe
             UnsupportedCardTypeStaysUnrenderable();
             DetailOnlyAcceptsRenderableCards();
             WebFeedItemsMapThroughTheSameCardModel();
+            WebFeedSurvivesHostileFieldTypes();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -372,6 +373,212 @@ namespace G3Probe
             };
             Check(DynamicGrpcMapper.MapToUserFeedCards(noOrig)[0].orig.type == "DYNAMIC_TYPE_NONE",
                 "a forward without an original falls back to the placeholder card");
+        }
+
+        /// <summary>
+        /// 设备日志 2026-10-31 08:20 的回归：真实 feed/all 响应里 rich_text_nodes[].emoji 是纯字符串，
+        /// 旧代码在 node["emoji"]?["icon_url"] 上抛 InvalidOperationException（JValue 没有子节点），
+        /// 整页动态因此变成空白加重试。web 映射路径对任何合法 JSON 都必须给出卡片，不能抛。
+        /// </summary>
+        private static void WebFeedSurvivesHostileFieldTypes()
+        {
+            var feed = new JArray
+            {
+                // 1) 触发设备崩溃的那一形：emoji 是字符串，正文仍需照常显示
+                new JObject
+                {
+                    ["id_str"] = "1248889675504950001",
+                    ["type"] = "DYNAMIC_TYPE_WORD",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504950001", ["comment_type"] = 17 },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["desc"] = new JObject
+                            {
+                                ["text"] = "[大笑]正文",
+                                ["rich_text_nodes"] = new JArray
+                                {
+                                    new JObject
+                                    {
+                                        ["type"] = "RICH_TEXT_NODE_TYPE_EMOJI",
+                                        ["text"] = "[大笑]",
+                                        ["orig_text"] = "[大笑]",
+                                        ["emoji"] = "https://i0.hdslb.com/bfs/emote/probe.png",
+                                    },
+                                    new JObject
+                                    {
+                                        ["type"] = "RICH_TEXT_NODE_TYPE_TEXT",
+                                        ["text"] = "正文",
+                                        ["orig_text"] = "正文",
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                // 2) 整个 modules 是字符串
+                new JObject
+                {
+                    ["id_str"] = "1248889675504950002",
+                    ["type"] = "DYNAMIC_TYPE_AV",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504950002" },
+                    ["modules"] = "collapsed-by-server",
+                },
+                // 3) module_dynamic 是数字，作者块整体类型也乱（vip 字符串、official_verify 数字、pendant 数组）
+                new JObject
+                {
+                    ["id_str"] = "1248889675504950003",
+                    ["type"] = "DYNAMIC_TYPE_AV",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504950003" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_author"] = new JObject
+                        {
+                            ["mid"] = 546195,
+                            ["name"] = "up3",
+                            ["vip"] = "none",
+                            ["official_verify"] = 0,
+                            ["pendant"] = new JArray(),
+                        },
+                        ["module_dynamic"] = 0,
+                    },
+                },
+                // 4) major.archive 是数组，统计块里 comment 是字符串、count 是数字
+                new JObject
+                {
+                    ["id_str"] = "1248889675504950004",
+                    ["type"] = "DYNAMIC_TYPE_DRAW",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504950004" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_stat"] = new JObject
+                        {
+                            ["comment"] = "disabled",
+                            ["forward"] = new JObject { ["count"] = 301 },
+                            ["like"] = new JObject { ["count"] = 186067, ["status"] = false },
+                        },
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["type"] = "MAJOR_TYPE_ARCHIVE",
+                                ["archive"] = new JArray
+                                {
+                                    new JObject { ["aid"] = "117451568191299", ["title"] = "不会出现的投稿" },
+                                },
+                            },
+                        },
+                    },
+                },
+                // 5) 转发卡被服务端收成字符串
+                new JObject
+                {
+                    ["id_str"] = "1248889675504950005",
+                    ["type"] = "DYNAMIC_TYPE_FORWARD",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504950005" },
+                    ["orig"] = "gone",
+                },
+                // 6) 推荐直播：content 不是 JSON
+                new JObject
+                {
+                    ["id_str"] = "1248889675504950006",
+                    ["type"] = "DYNAMIC_TYPE_LIVE_RCMD",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504950006" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["live_rcmd"] = new JObject { ["content"] = "{not json" },
+                            },
+                        },
+                    },
+                },
+                // 7) 直播卡：watched_show 是字符串
+                new JObject
+                {
+                    ["id_str"] = "1248889675504950007",
+                    ["type"] = "DYNAMIC_TYPE_LIVE",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504950007" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["live"] = new JObject
+                                {
+                                    ["id"] = "7001",
+                                    ["title"] = "直播",
+                                    ["watched_show"] = "很多人看过",
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+
+            var cards = DynamicGrpcMapper.MapToUserFeedCards(feed);
+            Check(cards.Count == 7,
+                "hostile types: every item still maps to a card (cards=" + cards.Count + ")");
+
+            var emoji = cards[0];
+            Check(emoji.type == "DYNAMIC_TYPE_WORD" && emoji.modules.module_dynamic.desc.text == "[大笑]正文",
+                "hostile types: a string emoji keeps the node text (text=" +
+                (emoji.modules.module_dynamic.desc == null ? "null" : emoji.modules.module_dynamic.desc.text) + ")");
+            Check(emoji.modules.module_dynamic.desc.rich_text_nodes.Count == 2
+                  && emoji.modules.module_dynamic.desc.rich_text_nodes[0].text == "[大笑]",
+                "hostile types: the emoji node survives as a text node");
+            Check(emoji.modules.module_dynamic.desc.rich_text_nodes[0].emoji == null,
+                "hostile types: a string emoji degrades to no emoji info instead of throwing");
+
+            var stringModules = cards[1];
+            Check(stringModules.type == "DYNAMIC_TYPE_AV" && stringModules.basic.rid_str == "1248889675504950002",
+                "hostile types: a string modules block keeps the card basic info");
+            Check(stringModules.modules.module_author == null && stringModules.modules.module_dynamic.desc == null,
+                "hostile types: a string modules block maps to empty module blocks");
+
+            var numberDynamic = cards[2];
+            Check(numberDynamic.modules.module_dynamic.desc == null
+                  && numberDynamic.modules.module_dynamic.major != null
+                  && numberDynamic.modules.module_dynamic.major.archive == null,
+                "hostile types: a numeric module_dynamic maps to an empty dynamic block");
+            Check(numberDynamic.modules.module_author.name == "up3"
+                  && numberDynamic.modules.module_author.mid == 546195,
+                "hostile types: the author survives a numeric module_dynamic sibling");
+            Check(numberDynamic.modules.module_author.vip == null
+                  && numberDynamic.modules.module_author.official_verify == null
+                  && numberDynamic.modules.module_author.pendant == null,
+                "hostile types: vip/official_verify/pendant of the wrong JSON type degrade to null");
+
+            var arrayArchive = cards[3];
+            Check(arrayArchive.modules.module_dynamic.major.archive == null,
+                "hostile types: an array major.archive degrades to a missing archive");
+            Check(arrayArchive.modules.module_stat.like.count == 186067,
+                "hostile types: a numeric stat count still maps (count=" +
+                arrayArchive.modules.module_stat.like.count + ")");
+            Check(arrayArchive.modules.module_stat.comment.count == 0
+                  && arrayArchive.modules.module_stat.forward.count == 301,
+                "hostile types: a string stat block degrades to zero without taking the sibling down");
+
+            Check(cards[4].type == "DYNAMIC_TYPE_FORWARD"
+                  && cards[4].orig != null
+                  && cards[4].orig.type == "DYNAMIC_TYPE_NONE",
+                "hostile types: a string orig falls back to the placeholder card");
+
+            Check(cards[5].modules.module_dynamic.major.live_rcmd.content == "{not json"
+                  && cards[5].modules.module_dynamic.major.live == null,
+                "hostile types: unparsable live_rcmd content keeps the raw payload and no live card");
+            Check(cards[6].modules.module_dynamic.major.live.title == "直播"
+                  && cards[6].modules.module_dynamic.major.live.desc_second == "",
+                "hostile types: a string watched_show degrades to an empty description");
+
+            // 整页都是垃圾类型时也只能得到占位/空卡，不能抛
+            var allScalars = new JArray { 1, "two", new JArray(), new JObject() };
+            Check(DynamicGrpcMapper.MapToUserFeedCards(allScalars).Count == 1,
+                "hostile types: scalar items are skipped and the lone object still yields one card");
         }
 
         private static void DetailOnlyAcceptsRenderableCards()
