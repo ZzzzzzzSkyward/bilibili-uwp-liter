@@ -52,6 +52,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. Remaining: apply the same boundaries to comments, video/season detail, playlists and account responses, then delete what the migration left unused |
+| 5 | Collection and playlist navigation / UI | planned — [COLLECTION_PLAYLIST_UX.md](COLLECTION_PLAYLIST_UX.md): full-screen directory, visible continuation source, consistent next/previous, honest counts, and loading/retry feedback |
 
 ## 1. Player session ownership
 
