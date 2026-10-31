@@ -432,16 +432,15 @@ namespace G4Probe
             DynamicAPI.Fixture = call => RestFixture("offset-returned-refresh", "700000000000031");
             vm.Refresh();
             WaitIdle(vm);
-            // Refresh 重新打分但不重置已学到的历史:上一页的端点拒绝让 gRPC 进入冷却,
-            // 所以刷新后仍然从 REST 第一页取,并且是替换而不是追加。
-            Check(GrpcService.DynVideoCalls == 1,
-                "home fallback: Refresh does not retry the source that rejected the page");
-            Check(LegacyCalls().Count == 1
-                  && LegacyCalls()[0].Endpoint == "dynamic_new"
-                  && LegacyCalls()[0].Cursor == null,
-                "home fallback: Refresh restarts the legacy feed at page 1 instead of reusing a cursor");
-            Check(vm.Items != null && vm.Items.Count == 1,
-                "home fallback: Refresh replaces the list instead of appending to it");
+            // 刷新重新决定来源：旧 REST 永远排在还能翻页的来源之后，
+            // 所以 gRPC 一旦恢复,刷新就回到 gRPC,不会继续钉在只能取第一页的 legacy 上。
+            Check(GrpcService.DynVideoCalls == 2,
+                "home fallback: Refresh retries the paginating source before the legacy feed");
+            Check(LegacyCalls().Count == 0,
+                "home fallback: Refresh never touches the legacy feed while gRPC works");
+            // gRPC 替身只回游标不回卡片，所以“被替换”的表现是 REST 的行全没了，而不是又追加了 REST 的行
+            Check(vm.Items == null || vm.Items.Count == 0,
+                "home fallback: Refresh replaces the REST rows with the gRPC page instead of appending");
         }
 
         /// <summary>

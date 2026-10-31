@@ -13,8 +13,16 @@ namespace BiliLite.Services
         /// </summary>
         public static string FormatVolume(double volume)
         {
+            return "音量:" + FormatPercent(volume);
+        }
+
+        /// <summary>
+        /// 0-1 音量显示为整数百分比文本（0-100，四舍五入，.5 远离零）。
+        /// </summary>
+        public static string FormatPercent(double volume)
+        {
             var percent = Math.Round(ClampVolume(volume) * 100, MidpointRounding.AwayFromZero);
-            return "音量:" + percent.ToString("0", CultureInfo.InvariantCulture) + "%";
+            return percent.ToString("0", CultureInfo.InvariantCulture) + "%";
         }
 
         private static double ClampVolume(double volume)

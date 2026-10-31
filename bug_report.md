@@ -182,6 +182,15 @@ returns `Failed(MalformedResponse)` so the chain falls through on page 1 and sto
 (hostile-field-type fixture, the device payload shape) and g4 114 (failed leg ⇒ fall-through, quiet page-2 stop). The g3
 fixture was run against the `f9e27df` mapper and throws the same exception as the device stack.
 
+## Reviewer finding — the legacy feed must never outrank a paginating source
+
+Review of `92e544d`: when the selector preferred `Legacy`, both chains were `Polymer → Legacy → gRPC`, so a temporary
+polymer failure let `dynamic_new` win and pin the screen to a source that cannot paginate (`dynamic_history` is 404),
+hiding a recovered gRPC. Fixed: both chains now keep `Legacy` **last** and only let the selector order gRPC vs polymer
+(`Grpc → Polymer → Legacy` or `Polymer → Grpc → Legacy`). The g4 refresh scenario was re-expressed for the new contract
+— after a rejected page, a Refresh retries the paginating chain (gRPC asked again, zero legacy calls) instead of
+staying on the legacy feed.
+
 ## Status
 
 | ID | State |
@@ -192,7 +201,7 @@ fixture was run against the `f9e27df` mapper and throws the same exception as th
 | BR-15 | resolved — splash crash was the non-bootable MSIX layout; layout is now validated |
 | BR-16 | fixed in `e5c97e1` — load-more failures are silent, the toast carries the legacy message; device check open |
 | BR-17 | fixed across `0940c6d` + the mapper-totality commit — device proved `feed/all` returns items but `MapWebDescription` threw on a string `emoji`, so the whole tab failed; the web mapper is now total and a failed polymer leg falls through instead of ending the request |
-| BR-18 | fixed in `1f22ec1` — fade collapses only after opacity reaches 0 (stack stretches), glyph moved to a `TextBlock` with `TextLineBounds="Full"`, volume through `PlayerToastOverlay.FormatVolume` |
+| BR-18 | fixed in `1f22ec1` — fade collapses only after opacity reaches 0 (stack stretches), glyph moved to a `TextBlock` with `TextLineBounds="Full"`, volume through `PlayerToastOverlay.FormatVolume`; the slider tooltips now use `FormatPercent` through `VolumePercentConverter` |
 | BR-19 | fixed in two passes — 11 chrome buttons, then the 9 settings-pane buttons, `BtnOpenDanmakuList` and `BtnReplaceShowMode` once the maintainer reported 弹幕按钮仍有白边 |
 | BR-20 | fixed in the same commit — `TopBtnSettingDanmaku` and its handler removed; 弹幕 is pivot 2, reachable from More |
 | BR-21 | recorded — memory grows over time; needs a measured journey (feed paging / playback / danmaku) |

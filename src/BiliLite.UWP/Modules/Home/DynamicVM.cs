@@ -153,7 +153,7 @@ namespace BiliLite.Modules
         {
             return preferred == DynamicFeedSource.Grpc
                 ? new[] { DynamicFeedSource.Grpc, DynamicFeedSource.Polymer, DynamicFeedSource.Legacy }
-                : new[] { DynamicFeedSource.Polymer, DynamicFeedSource.Legacy, DynamicFeedSource.Grpc };
+                : new[] { DynamicFeedSource.Polymer, DynamicFeedSource.Grpc, DynamicFeedSource.Legacy };
         }
 
         private Task<DynamicApiOutcome> RequestFromAsync(DynamicFeedSource source, int page, bool replaceRows, DynamicApiContext context, string stage)

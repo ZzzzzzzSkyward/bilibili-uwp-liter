@@ -834,12 +834,13 @@ namespace BiliLite.Modules.User
         /// <summary>
         /// 全部/视频动态的取数顺序：web 聚合流 → 选择器首选 → 另一路。
         /// 聚合流排在前面：它是这套账号下唯一还会返回游标的动态源（gRPC 被 -663 拒，旧接口没有游标）。
+        /// 旧 REST 永远排最后：它只能取到第一页，成功一次就会把这一屏钉死在翻不了页的源上。
         /// </summary>
         private static DynamicFeedSource[] UserFeedChain(DynamicFeedSource preferred)
         {
             return preferred == DynamicFeedSource.Grpc
-                ? new[] { DynamicFeedSource.Polymer, DynamicFeedSource.Grpc, DynamicFeedSource.Legacy }
-                : new[] { DynamicFeedSource.Polymer, DynamicFeedSource.Legacy, DynamicFeedSource.Grpc };
+                ? new[] { DynamicFeedSource.Grpc, DynamicFeedSource.Polymer, DynamicFeedSource.Legacy }
+                : new[] { DynamicFeedSource.Polymer, DynamicFeedSource.Grpc, DynamicFeedSource.Legacy };
         }
 
         private Task<DynamicApiSourceResult> TryUserFeedSourceAsync(DynamicFeedSource source, int generation, DynamicType dynamicType,

@@ -17,6 +17,7 @@ namespace OVProbe
             VolumeClampsAtBothEnds();
             VolumeRoundsHalfAwayFromZero();
             VolumeTextHasNoFraction();
+            SliderTooltipUsesPercent();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -59,6 +60,16 @@ namespace OVProbe
         }
 
 
+
+        private static void SliderTooltipUsesPercent()
+        {
+            // 音量滑块的气泡走同一个 0-1 → 整数百分比规则，但不带“音量:”前缀
+            AssertEqual("0%", PlayerToastOverlay.FormatPercent(0), "slider 0");
+            AssertEqual("50%", PlayerToastOverlay.FormatPercent(0.5), "slider 0.5");
+            AssertEqual("100%", PlayerToastOverlay.FormatPercent(1), "slider 1");
+            AssertEqual("100%", PlayerToastOverlay.FormatPercent(1.5), "slider above range");
+            AssertEqual("13%", PlayerToastOverlay.FormatPercent(0.125), "slider half rounds up");
+        }
 
         private static void Assert(bool condition, string what)
         {

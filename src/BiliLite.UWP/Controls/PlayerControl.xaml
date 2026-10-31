@@ -185,6 +185,7 @@
     </Style>
 
     <convert:ProgressToTimeConverter x:Key="progress"/>
+    <convert:VolumePercentConverter x:Key="volumePercent"/>
     <convert:ColorConvert x:Key="color"/>
     <convert:DanmakuStyleConvert x:Key="styleConvert"/>
     <SolidColorBrush x:Key="ListViewItemForegroundPointerOver" Color="{ThemeResource HighLightColor}"/>
@@ -684,7 +685,7 @@
                       <Flyout>
                         <StackPanel>
                           <TextBlock>音量</TextBlock>
-                          <Slider x:Name="SliderVolume" Value="{x:Bind Path=Player.Volume,Mode=TwoWay}" Width="200" Minimum="0" Maximum="1" StepFrequency="0.1"/>
+                          <Slider x:Name="SliderVolume" Value="{x:Bind Path=Player.Volume,Mode=TwoWay}" ThumbToolTipValueConverter="{StaticResource volumePercent}" Width="200" Minimum="0" Maximum="1" StepFrequency="0.1"/>
                         </StackPanel>
                       </Flyout>
                     </Button.Flyout>

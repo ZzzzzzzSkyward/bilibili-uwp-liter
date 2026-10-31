@@ -291,6 +291,7 @@
     <Compile Include="Converters\ImageSourceConvert.cs" />
     <Compile Include="Converters\NumberToStringConvert.cs" />
     <Compile Include="Converters\ProgressToTimeConverter.cs" />
+    <Compile Include="Converters\VolumePercentConverter.cs" />
     <Compile Include="Converters\RankColorConvert.cs" />
     <Compile Include="Converters\TimeSpanToDoubleConvert.cs" />
     <Compile Include="Dialogs\LoginDialog.xaml.cs">
