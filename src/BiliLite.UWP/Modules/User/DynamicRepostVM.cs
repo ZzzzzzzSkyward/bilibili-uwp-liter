@@ -204,15 +204,16 @@ namespace BiliLite.Modules.User
                 failureMessage = parsed.Message;
                 return DynamicApiSourceResult.Failed(outcome, failureMessage);
             }
-            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage, parsed.BusinessCode);
             outcome = DynamicApiOutcome.Success;
             var repostPage = parsed.Value;
             List<DynamicCardModel> items;
             if (!LegacyDynamicFeedParser.TryDeserialize(repostPage.Items, null, out items))
             {
+                //一条尝试只记一条结论：先记成功再补失败会被忽略
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
                 return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, "转发列表解析失败");
             }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage, parsed.BusinessCode);
             var displays = new List<DynamicItemDisplayModel>();
             foreach (var item in items)
             {

@@ -357,14 +357,15 @@ namespace BiliLite.Modules
                 _lastLegacyFailureMessage = string.IsNullOrEmpty(parsed.Message) ? "动态请求失败" : parsed.Message;
                 return outcome;
             }
-            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
-
             List<DynamicItemModel> cards;
             if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value.Cards, null, out cards))
             {
+                //卡片解不动也是这一路这次没拿到页，而且只记这一条
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
                 _lastLegacyFailureMessage = "动态卡片解析失败";
                 return DynamicApiOutcome.MalformedResponse;
             }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
             var restCards = new ObservableCollection<DynamicItemModel>(cards);
             if (replaceRows && Items != null)
             {

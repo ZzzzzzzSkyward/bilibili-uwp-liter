@@ -47,6 +47,7 @@ namespace G4Probe
             LoadMoreFailureStaysQuiet();
             PolymerPagesAppend();
             PolymerLegFailureIsAFailedLeg();
+            MalformedLegacyCardsRecordOneOutcome();
             WebFeedParserClassifiesFailures();
             LegacyFeedParserClassifiesFailures();
 
@@ -626,6 +627,37 @@ namespace G4Probe
                 "user polymer leg reports parser failures through its own stage and the shared outcome mapping");
         }
 
+        /// <summary>
+        /// 一次尝试只能记一条结论（评审 2026-10-31）：先记成功再补失败会被选择器按 id 忽略，
+        /// 于是"卡片解不动"会被永久当成 legacy 可用。这里断言那条记录是 MalformedResponse。
+        /// </summary>
+        private static void MalformedLegacyCardsRecordOneOutcome()
+        {
+            ResetSourceHistory();
+            ResetFixtures();
+            LogHelper.Entries.Clear();
+            DynamicAPI.Calls.Clear();
+            Utils.Toasts.Clear();
+            GrpcService.DynVideoCalls = 0;
+            GrpcService.RejectDynVideo = true;
+            // 信封合法、cards 是数组，但元素不是卡片模型：反序列化必然失败
+            DynamicAPI.Fixture = call => "{\"code\":0,\"message\":\"0\",\"data\":{\"cards\":[{\"desc\":\"not-a-card\"}]}}";
+
+            var vm = new DynamicVM();
+            vm.GetDynamicItems(1).GetAwaiter().GetResult();
+
+            var legacyRecords = LogHelper.Entries
+                .Where(entry => entry.Contains("src=legacy"))
+                .ToList();
+            Check(legacyRecords.Count > 0,
+                "outcome recording: the legacy attempt is recorded at all");
+            Check(legacyRecords.Exists(entry => entry.Contains("outcome=MalformedResponse")),
+                "outcome recording: a card that cannot deserialize is recorded as malformed (" + string.Join(" | ", legacyRecords) + ")");
+            Check(!legacyRecords.Exists(entry => entry.Contains("outcome=Success")),
+                "outcome recording: the same attempt is never recorded as a success first");
+            Check(vm.Items == null || vm.Items.Count == 0,
+                "outcome recording: nothing is published for the unusable page");
+        }
         /// <summary>两段标记之间的源码；找不到就返回空串，避免断言因为 IndexOf 的 -1 而假通过。</summary>
         private static string Between(string source, string startMarker, string endMarker)
         {

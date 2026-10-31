@@ -1126,17 +1126,17 @@ namespace BiliLite.Modules.User
                 failureMessage = parsed.Message;
                 return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
-            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
-
             var parsedFeed = parsed.Value;
             List<DynamicCardModel> restCards;
             if (!LegacyDynamicFeedParser.TryDeserialize(parsedFeed.Cards, jsonSerializerSettings, out restCards))
             {
-                //信封与 cards 的形状都对，卡片本身还是解不动：这一路这次就不算拿到页
+                //信封与 cards 的形状都对，卡片本身还是解不动：这一路这次就不算拿到页，
+                //而且这一次尝试只记一条结论——先记成功再补失败会被选择器按 id 忽略掉
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
                 failureMessage = "动态卡片解析失败";
                 return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, failureMessage);
             }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
             var restHasMore = parsedFeed.HasMore;
             var nextRestOffset = parsedFeed.NextCursor;
             var restMapped = new ObservableCollection<DynamicItemDisplayModel>();
@@ -1350,15 +1350,15 @@ namespace BiliLite.Modules.User
                 failureMessage = parsed.Message;
                 return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
-            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
-
             List<DynamicCardModel> items;
             if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value.Cards, jsonSerializerSettings, out items))
             {
+                //同一条尝试只记一条结论：先成功再补失败不会生效
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
                 failureMessage = "动态卡片解析失败";
                 return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, failureMessage);
             }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
             var mapped = new ObservableCollection<DynamicItemDisplayModel>();
             foreach (var item in items)
             {

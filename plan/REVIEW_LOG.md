@@ -44,3 +44,24 @@ the append-retry cursor contract (`AppendFailureKeepsTheGrpcCursor`).
 
 The lesson: source-text assertions survive refactors badly. Prefer executed assertions over real
 product types, and text checks only for wiring that cannot run outside UWP.
+
+## 2026-10-31 — diagnostic bundle + REST parser extraction
+
+Two review rounds, four findings, all fixed in the same day:
+
+- **Replacing an existing zip left the old tail** (`SettingPage.xaml.cs`): the destination was opened
+  `ReadWrite` without truncation, so a smaller new archive kept the previous central directory. Fixed
+  by `stream.Size = 0; stream.Seek(0);` before creating the `ZipArchive`; `cap` asserts the order
+  (truncate before create) because the write itself only runs in UWP.
+- **An unpacked bundle could not be imported** (`tools/import-capture.ps1`): only the zip path
+  selected `api/`. Both inputs now go through `Select-CaptureDir`; verified by running the tool on an
+  unpacked bundle directory.
+- **A card-deserialization failure could not update the selector** (`Modules/User/DynamicVM.cs`,
+  `Modules/Home/DynamicVM.cs`, `Modules/User/DynamicRepostVM.cs`): the legs recorded `Success` before
+  `TryDeserialize`, and the selector ignores a second record for the same attempt, so a legacy source
+  that only produced unreadable cards still learned "success". Fixed by deserializing first and
+  recording exactly one outcome; `g4` asserts the single record is `MalformedResponse` (it fails on
+  the old ordering, proven by temporarily reverting the home leg).
+
+The lesson: when a helper decides an attempt's verdict, the call that *uses* the payload must sit
+inside the verdict, not after it.
