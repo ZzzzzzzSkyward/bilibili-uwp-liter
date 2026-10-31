@@ -1,8 +1,7 @@
 # Plan — open work only
 
-Updated 2026-10-31 for `work`. Everything shipped is one line in the commit history; the offline
-probe suite lives in `plan/tests/` and is green. Finished plan documents, reports and progress logs
-were removed on purpose — `git log` has them.
+Updated 2026-10-31 for `work`. Everything shipped is one line in the commit history. Finished plan
+documents, reports and progress logs were removed on purpose — `git log` has them.
 
 **Verification policy:** the maintainer's device pass counts as passed. A shipped item stays closed
 until the maintainer reports an actual bug; only such a report reopens it, and then it is written up
@@ -13,10 +12,9 @@ in `bug_report.md` first.
 | Fact | Value |
 | --- | --- |
 | branch | `work`, in sync with `origin/work` |
-| probes | `plan/tests/<name>/run.sh` — c1 52 · cap 38 · c2 99 · c3 97 · d1 82 · d2 58 · g2 22 · g3 73 · g4 131 · g5 44 · ov 29 · stab 53 · smart1 160, all green |
 | build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump` (compile only) or without `-Fast` to package into `Z:\` |
 | sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-work.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
-| dependency plan | `plan/DEPENDENCY_UPGRADE.md` (batch 1 done, batch 2 = protobuf toolchain, batch 3 = migrations) |
+| dependency plan | `plan/DEPENDENCY_UPGRADE.md` — open migrations only (toolkit 8.x, NLog 6, FFMpegCore, SharpCompress, RestSharp) |
 | review cache | `plan/REVIEW_LOG.md` |
 | bug device log | `bug_report.md`, `code_review.md` at the repo root |
 
@@ -24,6 +22,9 @@ in `bug_report.md` first.
 
 Newest first; every one of these is device-accepted per the policy above.
 
+- **Response-evidence workflow:** capture of response shapes and drift behind two diagnostics toggles,
+  redacted opt-in samples, one-click zip bundle with `manifest.json`, and `tools/import-capture.ps1`
+  turning a bundle into probe fixtures. Finished plans and their references were removed.
 - **N1 — player overlay toasts:** `312fa23` — `Controls/PlayerToast.xaml(.cs)` and
   `Services/PlayerToastService.cs`, keyed overlays (volume, brightness, seek, message, acceleration,
   speed) replacing the central `ToolTip` label, one service per `PlayerControl`, timers stopped in
@@ -50,8 +51,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | --- | --- | --- |
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
-| 3 | Response-evidence workflow (shapes, drift, bundle, fixture import) | done — capture (shapes/drift, redaction, two toggles), one-click zip bundle with `manifest.json`, and `tools/import-capture.ps1` turning a bundle into probe fixtures; only real-bundle fixture drops remain |
-| 4 | API parsing structure: names, fields, and parsing methods | P0–P3 done — `ApiEnvelope` is the single REST envelope reader, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own every dynamic source (feed, space, detail, topic, reposts), gRPC mapping stays protobuf-only and the now-unused `ClassifyLegacy` is gone; P4 other features next |
+| 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. Remaining: apply the same boundaries to comments, video/season detail, playlists and account responses, then delete what the migration left unused |
 
 ## 1. Player session ownership
 
@@ -176,18 +176,16 @@ endpoint-specific aliases, units and defaults inside that endpoint's parser.
 
 | Batch | Work | Complete when |
 | --- | --- | --- |
-| P0 — inventory **(done, `plan/API_PARSING_INVENTORY.md`)** | List the dynamic all/video/article, detail, space and repost endpoints, request builders, envelopes, field tables, parsers, mappers and callers. Identify shared rules versus source-specific rules. | Each active response path has a named owner; no existing source or paging cursor is omitted. |
+| P0 — inventory **(done)** | List the dynamic all/video/article, detail, space and repost endpoints, request builders, envelopes, field tables, parsers, mappers and callers. Identify shared rules versus source-specific rules. | Each active response path has a named owner; no existing source or paging cursor is omitted. |
 | P1 — minimal contract **(done)** | Define `ApiParseResult<T>` and only the field readers needed by the first feature. Preserve existing callers through adapters. | Success, business rejection, malformed envelope and valid empty payload have distinct, documented results; parsers perform no UI work. |
 | P2 — web dynamics **(web half done)** | Extract the web JSON part of `DynamicGrpcMapper` into the web parser/mapper, rename the general feed builder through a compatibility wrapper, and remove direct web-field parsing from the two feed VMs. | All/video/article retain their current rendering and source-bound cursors; the recorded string-emoji failure is handled; malformed pages reach source fallback without partial publication. |
 | P3 — other dynamic sources **(done)** | Separate gRPC mapping from legacy REST parsing, reusing the existing application card model. Migrate detail, space and repost callers one path at a time. | Source differences remain explicit; comments, links, empty pages and failed-append retry semantics are preserved. |
 | P4 — other features | Apply the same structure to comments, video/season detail, playlists and account responses in separate batches, driven by actual callers. | Each migrated feature has one documented parsing entry point and field contract; untouched features continue through their existing adapters. |
 | P5 — retire duplicates **(started: `ClassifyLegacy` removed)** | Remove old parsing wrappers/model aliases only after their callers are gone; update the inventory and field tables. | Source inspection shows no parallel parser for the same response contract or transport/UI work hidden inside a parser. |
 
-Use existing `plan/tests/g3`, `g4`, `g5`, `smart1` fixtures and captured device evidence as the
-behaviour reference for implementation review. Acceptance includes large IDs, optional/mistyped
-nested fields, unknown cards, empty pages, separate source cursors, failed append/retry and refresh
-replacement. This is a plan only: no application code, fixtures, tests, builds or execution are
-part of this addition, and it makes no new validation claim.
+Acceptance for each migrated feature: large IDs, optional or mistyped nested fields, unknown cards,
+empty pages, separate source cursors, failed append/retry and refresh replacement behave as they do
+today.
 
 ## Parked
 

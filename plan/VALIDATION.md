@@ -27,6 +27,3 @@ starts that.
 | BR-15 packaging layout | `build-release-x64.ps1` | already device-verified: install `BiliLite.Packages_*` (root 8 KB launcher + `entrypoint/BiliLiter.exe`), boots |
 | N1 player overlays | `312fa23` | one overlay per action (volume, brightness, seek, message, acceleration, speed); held speed stays until release; no duplicate central-label feedback; no leaked timers after closing the player |
 
-Offline coverage behind these items: `plan/tests/<name>/run.sh` per feature (`g2` 22 · `g3` 34 · `g4`
-75 · `g5` 44 · `d1` 82 · `d2` 58 · `c1` 52 · `c2` 99 · `c3` 97 · `stab` 53 · `smart1` 160), plus the
-build `build-release-x64.ps1 -Fast -NoVersionBump` (0 errors). None of that replaces a device run.
