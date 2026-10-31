@@ -178,6 +178,8 @@
     <Compile Include="Services\MediaListService.cs" />
     <Compile Include="Helpers\DynamicImageRules.cs" />
     <Compile Include="Parsing\ApiParseResult.cs" />
+    <Compile Include="Parsing\ApiEnvelope.cs" />
+    <Compile Include="Parsing\Dynamic\LegacyDynamicFeedParser.cs" />
     <Compile Include="Parsing\Dynamic\WebDynamicFeedParser.cs" />
     <Compile Include="Parsing\Dynamic\WebDynamicFeedMapper.cs" />
     <Compile Include="Parsing\Dynamic\WireScalars.cs" />

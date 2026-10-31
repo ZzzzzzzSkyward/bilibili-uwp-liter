@@ -50,9 +50,8 @@ Newest first; every one of these is device-accepted per the policy above.
 | --- | --- | --- |
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
-| 3 | AI subtitle label (#1311) — partially mitigated | needs a sibling-supported discriminator |
-| 4 | Response-evidence workflow (shapes, drift, bundle, fixture import) | done — capture (shapes/drift, redaction, two toggles), one-click zip bundle with `manifest.json`, and `tools/import-capture.ps1` turning a bundle into probe fixtures; only real-bundle fixture drops remain |
-| 5 | API parsing structure: names, fields, and parsing methods | P0 inventory done; P1 (`ApiParseResult<T>` + web parser) and the web half of P2 (`WebDynamicFeedMapper`, `WireScalars`, `WebDynamicFeedApi.CreateFeedRequest`) done; P3 gRPC/legacy separation next |
+| 3 | Response-evidence workflow (shapes, drift, bundle, fixture import) | done — capture (shapes/drift, redaction, two toggles), one-click zip bundle with `manifest.json`, and `tools/import-capture.ps1` turning a bundle into probe fixtures; only real-bundle fixture drops remain |
+| 4 | API parsing structure: names, fields, and parsing methods | P0 inventory, P1 contract, P2 web half and the P3 legacy half are done — `ApiEnvelope` is the single REST envelope reader, `LegacyDynamicFeedParser` owns the four old-endpoint legs, gRPC mapping stays protobuf-only; P4 other features next |
 
 ## 1. Player session ownership
 
@@ -82,17 +81,7 @@ the player on every foreground return.
 This one has no device evidence behind it — only source reading. It needs the maintainer's
 observation (minimize vs tab switch, engine, crash details) before it is worth a refactor.
 
-## 3. AI subtitle label (#1311)
-
-Upstream issue #1311 asked for AI-generated subtitles (translated tracks with no language field) to be
-labelled as AI rather than shown as a normal language track. The shipped fix (`9443244`) keeps any
-language label the server does provide and honours the existing AI-marker heuristic, but **fully
-unmarked AI tracks and already-saved labels are unresolved**: the track carries no discriminator and
-the saved entries lost the discarded fields, so the app cannot tell them apart. Do not guess an API
-field to close it; it needs a sibling-supported signal or the subtitle manifest version that carries
-one. Nothing else in that 15-finding upstream series is open — the other 14 are fixed.
-
-## 5. API parsing structure — names, fields, and methods
+## 4. API parsing structure — names, fields, and methods
 
 **Goal:** give each API response a clear route from transport to an application model. A caller should
 know which endpoint produced a field, what that field means, and which method parses it. Start with
@@ -180,7 +169,7 @@ endpoint-specific aliases, units and defaults inside that endpoint's parser.
    to fall back; the VM alone decides what to publish and which user message to show. Publish rows
    and new paging state only after the page is accepted and its request generation is still current.
 5. Attach a logical endpoint/source, stage, field path, expected/actual token type and available
-   request ID to parse failures. Reuse the response-evidence workflow in item 4 for captured shapes
+   request ID to parse failures. Reuse the response-evidence workflow in item 3 for captured shapes
    and fixtures rather than creating another diagnostics system.
 
 ### Implementation batches and completion criteria

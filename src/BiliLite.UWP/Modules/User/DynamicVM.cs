@@ -1119,30 +1119,27 @@ namespace BiliLite.Modules.User
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
                 return DynamicApiSourceResult.Superseded();
             }
-            if (!restResponse.status)
+            var parsed = LegacyDynamicFeedParser.Parse(restResponse);
+            if (!parsed.IsSuccess)
             {
-                //HTTP 状态在 code 里：4xx/5xx 与传输失败分开归类
-                var failed = DynamicApiSelection.ClassifyLegacy(restResponse, null);
-                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
-                failureMessage = restResponse.message;
-                return DynamicApiSourceResult.Failed(failed, failureMessage);
-            }
-            var restData = restResponse.GetJObject();
-            var businessCode = restData == null || restData["code"] == null ? (int?)null : restData["code"].ToInt32();
-            var envelope = DynamicApiSelection.ClassifyLegacy(restResponse, businessCode);
-            if (envelope != DynamicApiOutcome.Success || restData["data"] == null)
-            {
-                var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
-                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, businessCode ?? 0);
-                failureMessage = restData?["message"]?.ToString() ?? restResponse.message;
+                var failed = DynamicApiSelection.ToOutcome(parsed);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, parsed.BusinessCode);
+                failureMessage = parsed.Message;
                 return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
-            var restCards = JsonConvert.DeserializeObject<List<DynamicCardModel>>(restData["data"]["cards"]?.ToString() ?? "[]", jsonSerializerSettings)
-                ?? new List<DynamicCardModel>();
-            var restHasMore = ReadHasMoreFlag(restData["data"]);
-            var nextRestOffset = restData["data"]["offset"]?.ToString();
+            var parsedFeed = parsed.Value;
+            List<DynamicCardModel> restCards;
+            if (!LegacyDynamicFeedParser.TryDeserialize(parsedFeed, jsonSerializerSettings, out restCards))
+            {
+                //信封与 cards 的形状都对，卡片本身还是解不动：这一路这次就不算拿到页
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
+                failureMessage = "动态卡片解析失败";
+                return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, failureMessage);
+            }
+            var restHasMore = parsedFeed.HasMore;
+            var nextRestOffset = parsedFeed.NextCursor;
             var restMapped = new ObservableCollection<DynamicItemDisplayModel>();
             foreach (var card in restCards)
             {
@@ -1346,27 +1343,23 @@ namespace BiliLite.Modules.User
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
                 return DynamicApiSourceResult.Superseded();
             }
-            if (!results.status)
+            var parsed = LegacyDynamicFeedParser.Parse(results);
+            if (!parsed.IsSuccess)
             {
-                var failed = DynamicApiSelection.ClassifyLegacy(results, null);
-                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
-                failureMessage = results.message;
-                return DynamicApiSourceResult.Failed(failed, failureMessage);
-            }
-            var data = results.GetJObject();
-            var businessCode = data == null || data["code"] == null ? (int?)null : data["code"].ToInt32();
-            var envelope = DynamicApiSelection.ClassifyLegacy(results, businessCode);
-            if (envelope != DynamicApiOutcome.Success || data["data"] == null)
-            {
-                var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
-                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, businessCode ?? 0);
-                failureMessage = data?["message"]?.ToString() ?? results.message;
+                var failed = DynamicApiSelection.ToOutcome(parsed);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, parsed.BusinessCode);
+                failureMessage = parsed.Message;
                 return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
-            var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["cards"]?.ToString() ?? "[]", jsonSerializerSettings)
-                ?? new List<DynamicCardModel>();
+            List<DynamicCardModel> items;
+            if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value, jsonSerializerSettings, out items))
+            {
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
+                failureMessage = "动态卡片解析失败";
+                return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, failureMessage);
+            }
             var mapped = new ObservableCollection<DynamicItemDisplayModel>();
             foreach (var item in items)
             {
@@ -1445,13 +1438,6 @@ namespace BiliLite.Modules.User
             return true;
         }
         //REST 动态流的 has_more 可能是 true/false，也可能是 0/1
-        private static bool ReadHasMoreFlag(JToken data)
-        {
-            var token = data?["has_more"];
-            if (token == null || token.Type == JTokenType.Null)
-                return false;
-            return token.Type == JTokenType.Boolean ? token.Value<bool>() : token.ToInt32() != 0;
-        }
         private static readonly Regex BiliStatusCodePattern = new Regex(@"bili-status-code=(-?\d+)", RegexOptions.Compiled);
         private static readonly Regex GrpcMessageCodePattern = new Regex(@"grpc-message=(-?\d+)", RegexOptions.Compiled);
         //传输层把服务端码写在异常文本里，取出来给用户一个能对上的说法
@@ -1591,25 +1577,16 @@ namespace BiliLite.Modules.User
                 failureMessage = ex.Message;
                 return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
-            if (!results.status)
+            var parsed = LegacyDynamicFeedParser.ParseDetail(results);
+            if (!parsed.IsSuccess)
             {
-                var failed = DynamicApiSelection.ClassifyLegacy(results, null);
-                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage);
-                failureMessage = results.message;
-                return DynamicApiSourceResult.Failed(failed, failureMessage);
-            }
-            var data = results.GetJObject();
-            var businessCode = data == null || data["code"] == null ? (int?)null : data["code"].ToInt32();
-            var envelope = DynamicApiSelection.ClassifyLegacy(results, businessCode);
-            if (envelope != DynamicApiOutcome.Success || data["data"] == null)
-            {
-                var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
-                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, businessCode ?? 0);
-                failureMessage = data?["message"]?.ToString() ?? results.message;
+                var failed = DynamicApiSelection.ToOutcome(parsed);
+                DynamicApiSelection.Record(attempt, failed, stopwatch.Elapsed, stage, parsed.BusinessCode);
+                failureMessage = parsed.Message;
                 return DynamicApiSourceResult.Failed(failed, failureMessage);
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
-            var item = JsonConvert.DeserializeObject<DynamicCardModel>(data["data"]?.ToString() ?? "{}", jsonSerializerSettings);
+            var item = JsonConvert.DeserializeObject<DynamicCardModel>(parsed.Value.ToString(), jsonSerializerSettings);
             Items = new ObservableCollection<DynamicItemDisplayModel> { ConvertToDisplay(item) };
             LogHelper.Log("User dynamic VM stage=detail-items-published source=rest id=" + id, LogType.INFO);
             return DynamicApiSourceResult.Published();

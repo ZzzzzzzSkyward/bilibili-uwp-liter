@@ -349,29 +349,23 @@ namespace BiliLite.Modules
                 _lastLegacyFailureMessage = ex.Message;
                 return outcome;
             }
-            if (!restResponse.status)
+            var parsed = LegacyDynamicFeedParser.Parse(restResponse);
+            if (!parsed.IsSuccess)
             {
-                //HTTP 状态在 code 里：4xx/5xx 与传输失败分开归类
-                var outcome = DynamicApiSelection.ClassifyLegacy(restResponse, null);
-                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
-                _lastLegacyFailureMessage = string.IsNullOrEmpty(restResponse.message) ? "动态请求失败" : restResponse.message;
-                return outcome;
-            }
-            var restData = restResponse.GetJObject();
-            var businessCode = restData == null || restData["code"] == null ? (int?)null : restData["code"].ToInt32();
-            var envelope = DynamicApiSelection.ClassifyLegacy(restResponse, businessCode);
-            if (envelope != DynamicApiOutcome.Success || restData["data"] == null)
-            {
-                //信封合法但没有数据，或者业务码本身不是 0：都算这次没拿到有效页
-                var outcome = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
-                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage, businessCode ?? 0);
-                _lastLegacyFailureMessage = restData?["message"]?.ToString() ?? restResponse.message ?? "动态请求失败";
+                var outcome = DynamicApiSelection.ToOutcome(parsed);
+                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage, parsed.BusinessCode);
+                _lastLegacyFailureMessage = string.IsNullOrEmpty(parsed.Message) ? "动态请求失败" : parsed.Message;
                 return outcome;
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
-            var restCards = JsonConvert.DeserializeObject<ObservableCollection<DynamicItemModel>>(restData["data"]["cards"]?.ToString() ?? "[]")
-                ?? new ObservableCollection<DynamicItemModel>();
+            List<DynamicItemModel> cards;
+            if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value, null, out cards))
+            {
+                _lastLegacyFailureMessage = "动态卡片解析失败";
+                return DynamicApiOutcome.MalformedResponse;
+            }
+            var restCards = new ObservableCollection<DynamicItemModel>(cards);
             if (replaceRows && Items != null)
             {
                 Items.Clear();

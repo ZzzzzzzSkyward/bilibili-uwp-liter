@@ -57,6 +57,19 @@ namespace BiliLite.Parsing
             };
         }
 
+        /// <summary>信封层的结果换个值类型继续往下传：失败信息原样保留。</summary>
+        public static ApiParseResult<T> FromFailure<TSource>(ApiParseResult<TSource> source)
+        {
+            if (source == null)
+            {
+                return Fail(ApiParseFailure.Transport, "transport", "没有响应");
+            }
+            if (source.IsSuccess)
+            {
+                throw new InvalidOperationException("a successful result has no failure to copy");
+            }
+            return Fail(source.Failure, source.Stage, source.Message, source.BusinessCode, source.HttpStatus);
+        }
         public static ApiParseResult<T> Fail(ApiParseFailure failure, string stage, string message)
         {
             return Fail(failure, stage, message, 0, 0);

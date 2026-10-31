@@ -1,7 +1,7 @@
-# API parsing inventory (plan item 5, batch P0)
+# API parsing inventory (plan item 4, batch P0)
 
 Read-only inventory of the dynamic-feed response paths, produced before any parser is moved.
-Purpose per `plan/PLAN.md` § 5: **each active response path has a named owner, and no source or
+Purpose per `plan/PLAN.md` § 4: **each active response path has a named owner, and no source or
 paging cursor is omitted.** Destinations (`Parsing/...`) are proposals; nothing has moved yet.
 
 ## Envelope and result types in play
@@ -87,9 +87,10 @@ envelope check, and they must not gain a payload parser.
 
 | Rule | Duplicated in | Target |
 | --- | --- | --- |
-| `response == null → transport`, `!status → HTTP status class`, missing `code → malformed` | `Services/DynamicApiSelection.ClassifyLegacy`, plus inline in both polymer legs | keep `ClassifyLegacy` as the single transport classifier; the parser reports `Transport`/`Envelope` and the VM maps through `ClassifyLegacy` |
-| `code != 0 → business rejection` | `ClassifyLegacy` + both polymer legs | parser reports `Rejected` with the code; VM maps via `DynamicApiOutcomeClassifier.FromBilibiliCode` |
-| `data`/`items` shape checks and `has_more`/`offset` reads | `Modules/User/DynamicVM.TryUserFeedPolymerAsync`, `Modules/Home/DynamicVM.RequestPolymerSourceAsync` | one `WebDynamicFeedParser` |
+| `response == null → transport`, `!status → HTTP status class`, missing `code → malformed` | was inline in both polymer legs and three legacy legs | done — `Parsing/ApiEnvelope.cs` reads transport/envelope/code/data once; VMs map the failure through `DynamicApiSelection.ToOutcome` |
+| `code != 0 → business rejection` | was `ClassifyLegacy` + the inline legs | done — `ApiEnvelope` reports `Rejected` with the code; `DynamicApiSelection.ToOutcome` maps via `DynamicApiOutcomeClassifier.FromBilibiliCode` |
+| `data`/`items` shape checks and `has_more`/`offset` reads | was both polymer legs | done — `WebDynamicFeedParser` |
+| `data.cards` shape, `has_more` as bool or 0/1, `offset` cursor, card deserialization | was three legacy legs in `Modules/User/DynamicVM.cs` plus `Modules/Home/DynamicVM.cs` | done — `LegacyDynamicFeedParser` (`Parse`, `ParseDetail`, `TryDeserialize`) |
 | "mapping threw ⇒ this leg did not get a page" | both polymer legs (`stage=feed-polymer-failed`) | stays in the VM (mapping is a mapper concern), but the page object it maps comes from the parser |
 
 ## P1/P2 first slice (next implementation batch)

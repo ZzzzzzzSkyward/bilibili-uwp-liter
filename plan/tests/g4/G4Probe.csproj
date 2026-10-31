@@ -21,6 +21,8 @@
   <ItemGroup>
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelector.cs" Link="DynamicApiSelector.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelection.cs" Link="DynamicApiSelection.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiEnvelope.cs" Link="ApiEnvelope.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Dynamic\LegacyDynamicFeedParser.cs" Link="LegacyDynamicFeedParser.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Dynamic\WebDynamicFeedMapper.cs" Link="WebDynamicFeedMapper.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Dynamic\WireScalars.cs" Link="WireScalars.cs" />

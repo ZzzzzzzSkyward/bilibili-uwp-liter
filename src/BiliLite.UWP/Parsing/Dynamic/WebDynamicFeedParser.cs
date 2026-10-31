@@ -26,55 +26,13 @@ namespace BiliLite.Parsing.Dynamic
     {
         public static ApiParseResult<WebDynamicFeedPage> Parse(HttpResults response)
         {
-            if (response == null)
+            //传输、JSON、业务码、data 对象这一层两种来源一样，交给 ApiEnvelope 统一判断
+            var envelope = ApiEnvelope.Read(response);
+            if (!envelope.IsSuccess)
             {
-                return ApiParseResult<WebDynamicFeedPage>.Fail(ApiParseFailure.Transport, "transport", "没有响应");
+                return ApiParseResult<WebDynamicFeedPage>.FromFailure(envelope);
             }
-            if (!response.status)
-            {
-                return ApiParseResult<WebDynamicFeedPage>.Fail(ApiParseFailure.Transport, "transport.status",
-                    response.message, 0, response.code);
-            }
-
-            var body = response.GetJObject();
-            if (body == null)
-            {
-                return ApiParseResult<WebDynamicFeedPage>.Fail(ApiParseFailure.Envelope, "envelope.json",
-                    "响应正文不是 JSON 对象");
-            }
-
-            var codeToken = body["code"];
-            if (codeToken == null || codeToken.Type != JTokenType.Integer)
-            {
-                //缺 code 或 code 不是数字都算信封无效：不能把"没拿到业务码"当成成功
-                return ApiParseResult<WebDynamicFeedPage>.Fail(ApiParseFailure.Envelope, "envelope.code",
-                    "响应没有可用的业务码");
-            }
-            var code = codeToken.Value<int>();
-            if (code != 0)
-            {
-                var message = body["message"]?.ToString();
-                if (string.IsNullOrEmpty(message))
-                {
-                    message = body["msg"]?.ToString();
-                }
-                return ApiParseResult<WebDynamicFeedPage>.Fail(ApiParseFailure.Rejected, "envelope.code",
-                    message, code, 0);
-            }
-
-            var dataToken = body["data"];
-            if (dataToken == null || dataToken.Type == JTokenType.Null)
-            {
-                return ApiParseResult<WebDynamicFeedPage>.Fail(ApiParseFailure.Envelope, "data",
-                    "响应里没有 data");
-            }
-            if (dataToken.Type != JTokenType.Object)
-            {
-                return ApiParseResult<WebDynamicFeedPage>.Fail(ApiParseFailure.Payload, "data",
-                    "data 不是对象（实际是 " + dataToken.Type + "）");
-            }
-            var data = (JObject)dataToken;
-
+            var data = envelope.Value;
             //items 缺失或为 null 是一个合法的空页；给了别的类型才是形状问题
             var itemsToken = data["items"];
             JArray items;

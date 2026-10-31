@@ -48,6 +48,7 @@ namespace G4Probe
             PolymerPagesAppend();
             PolymerLegFailureIsAFailedLeg();
             WebFeedParserClassifiesFailures();
+            LegacyFeedParserClassifiesFailures();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -792,6 +793,59 @@ namespace G4Probe
                 "parser: a numeric offset becomes the cursor string unchanged");
         }
 
+        /// <summary>
+        /// 旧 REST 动态接口（dynamic_new / dynamic_history / space_history / 详情）的解析契约：
+        /// 信封与 web 聚合流共用 ApiEnvelope，这里钉住 cards / has_more / offset 三个字段的规则。
+        /// </summary>
+        private static void LegacyFeedParserClassifiesFailures()
+        {
+            var rejected = LegacyDynamicFeedParser.Parse(RestEnvelope("{\"code\":-663,\"message\":\"被拒绝\"}"));
+            Check(rejected.Failure == ApiParseFailure.Rejected && rejected.BusinessCode == -663,
+                "legacy parser: a business rejection keeps its code");
+            Check(DynamicApiSelection.ToOutcome(rejected) == DynamicApiOutcome.EndpointRejection,
+                "legacy parser: -663 maps to the endpoint rejection outcome");
+
+            var noCode = LegacyDynamicFeedParser.Parse(RestEnvelope("{\"code\":null,\"data\":{}}"));
+            Check(noCode.Failure == ApiParseFailure.Envelope && noCode.Stage == "envelope.code",
+                "legacy parser: a null business code is not a success");
+
+            var noData = LegacyDynamicFeedParser.Parse(RestEnvelope("{\"code\":0,\"message\":\"ok\"}"));
+            Check(noData.Failure == ApiParseFailure.Envelope && noData.Stage == "data",
+                "legacy parser: a missing data object is an envelope failure");
+
+            var stringCards = LegacyDynamicFeedParser.Parse(RestEnvelope("{\"code\":0,\"data\":{\"cards\":\"none\"}}"));
+            Check(stringCards.Failure == ApiParseFailure.Payload && stringCards.Stage == "data.cards",
+                "legacy parser: cards that are not an array report the field path");
+
+            var emptyPage = LegacyDynamicFeedParser.Parse(RestEnvelope("{\"code\":0,\"data\":{}}"));
+            Check(emptyPage.IsSuccess && emptyPage.Value.Cards.Count == 0 && !emptyPage.Value.HasMore
+                  && emptyPage.Value.NextCursor == null,
+                "legacy parser: a page without cards is a valid empty page");
+
+            var numericHasMore = LegacyDynamicFeedParser.Parse(
+                RestEnvelope("{\"code\":0,\"data\":{\"cards\":[],\"has_more\":1,\"offset\":123456}}"));
+            Check(numericHasMore.IsSuccess && numericHasMore.Value.HasMore
+                  && numericHasMore.Value.NextCursor == "123456",
+                "legacy parser: has_more accepts 0/1 and the numeric offset becomes the cursor");
+
+            var falseHasMore = LegacyDynamicFeedParser.Parse(
+                RestEnvelope("{\"code\":0,\"data\":{\"cards\":[],\"has_more\":0}}"));
+            Check(falseHasMore.IsSuccess && !falseHasMore.Value.HasMore,
+                "legacy parser: has_more 0 means no more pages");
+
+            var detail = LegacyDynamicFeedParser.ParseDetail(RestEnvelope("{\"code\":0,\"data\":{\"card\":{\"desc\":{}}}}"));
+            Check(detail.IsSuccess && detail.Value["card"] != null,
+                "legacy detail: the data object carries the card");
+            var detailArray = LegacyDynamicFeedParser.ParseDetail(RestEnvelope("{\"code\":0,\"data\":[]}"));
+            Check(detailArray.Failure == ApiParseFailure.Payload && detailArray.Stage == "data",
+                "legacy detail: an array where the card object belongs is a payload failure");
+
+            var page = emptyPage.Value;
+            page.Cards = (JArray)JToken.Parse("[{\"a\":1}]");
+            List<int> wrongShape;
+            Check(!LegacyDynamicFeedParser.TryDeserialize(page, null, out wrongShape),
+                "legacy parser: cards that do not fit the model fail the page instead of throwing");
+        }
         /// <summary>把 JSON 正文裹进一个 HTTP 成功的结果，供解析层用例使用。</summary>
         private static BiliLite.Helpers.HttpResults RestEnvelope(string json)
         {
