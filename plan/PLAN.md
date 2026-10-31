@@ -102,13 +102,15 @@ the dynamic feeds implicated in BR-17; migrate working features incrementally.
 
 The first implementation batch should inventory the existing paths before moving anything:
 
-- `Api/` and `Models/Requests/Api/` both contain request builders; `ArticleV2` now builds the general
-  web dynamic feed, not just articles.
-- `HttpResults.GetJson/GetJObject/GetData/GetResult` in `Helpers/HttpHelper.cs` decode responses,
-  recover JSON and sometimes show toasts; `ApiDataModel<T>` and `ApiResultModel<T>` describe two
-  different response envelopes.
-- `Helpers/DynamicGrpcMapper.cs` now maps both protobuf replies and web JSON. VMs also deserialize
-  legacy responses and convert cards into display models.
+- `Api/` holds request builders. The general web dynamic feed now lives in
+  `Api/User/WebDynamicFeedApi.CreateFeedRequest`, so the old `ArticleV2` name is gone.
+- `HttpResults.GetJson/GetJObject/GetData/GetResult` in `Helpers/HttpHelper.cs` still decode responses
+  and sometimes show toasts; `ApiDataModel<T>` and `ApiResultModel<T>` describe two different
+  response envelopes, and neither is the parse result.
+- `Helpers/DynamicGrpcMapper.cs` is protobuf-only again: the web half moved to
+  `Parsing/Dynamic/WebDynamicFeedMapper.cs` with the shared scalar readers in `WireScalars.cs`.
+  The two feed VMs decode through `Parsing/Dynamic/WebDynamicFeedParser.cs`; legacy REST responses are
+  still deserialized inline, which is what P3 separates.
 
 Use these boundaries for migrated features; the paths are proposed destinations, not files added
 by this planning change:
@@ -185,9 +187,9 @@ endpoint-specific aliases, units and defaults inside that endpoint's parser.
 
 | Batch | Work | Complete when |
 | --- | --- | --- |
-| P0 — inventory | List the dynamic all/video/article, detail, space and repost endpoints, request builders, envelopes, field tables, parsers, mappers and callers. Identify shared rules versus source-specific rules. | Each active response path has a named owner; no existing source or paging cursor is omitted. |
-| P1 — minimal contract | Define `ApiParseResult<T>` and only the field readers needed by the first feature. Preserve existing callers through adapters. | Success, business rejection, malformed envelope and valid empty payload have distinct, documented results; parsers perform no UI work. |
-| P2 — web dynamics | Extract the web JSON part of `DynamicGrpcMapper` into the web parser/mapper, rename the general feed builder through a compatibility wrapper, and remove direct web-field parsing from the two feed VMs. | All/video/article retain their current rendering and source-bound cursors; the recorded string-emoji failure is handled; malformed pages reach source fallback without partial publication. |
+| P0 — inventory **(done, `plan/API_PARSING_INVENTORY.md`)** | List the dynamic all/video/article, detail, space and repost endpoints, request builders, envelopes, field tables, parsers, mappers and callers. Identify shared rules versus source-specific rules. | Each active response path has a named owner; no existing source or paging cursor is omitted. |
+| P1 — minimal contract **(done)** | Define `ApiParseResult<T>` and only the field readers needed by the first feature. Preserve existing callers through adapters. | Success, business rejection, malformed envelope and valid empty payload have distinct, documented results; parsers perform no UI work. |
+| P2 — web dynamics **(web half done)** | Extract the web JSON part of `DynamicGrpcMapper` into the web parser/mapper, rename the general feed builder through a compatibility wrapper, and remove direct web-field parsing from the two feed VMs. | All/video/article retain their current rendering and source-bound cursors; the recorded string-emoji failure is handled; malformed pages reach source fallback without partial publication. |
 | P3 — other dynamic sources | Separate gRPC mapping from legacy REST parsing, reusing the existing application card model. Migrate detail, space and repost callers one path at a time. | Source differences remain explicit; comments, links, empty pages and failed-append retry semantics are preserved. |
 | P4 — other features | Apply the same structure to comments, video/season detail, playlists and account responses in separate batches, driven by actual callers. | Each migrated feature has one documented parsing entry point and field contract; untouched features continue through their existing adapters. |
 | P5 — retire duplicates | Remove old parsing wrappers/model aliases only after their callers are gone; update the inventory and field tables. | Source inspection shows no parallel parser for the same response contract or transport/UI work hidden inside a parser. |
