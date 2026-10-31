@@ -1,15 +1,13 @@
-# Review origin/work aec8dd2493e1434f2dc107ee279299ae11a5db81
+# Review origin/work cdfc3ba691835b80efe93d9ddd61372976ffc456
 
-Reviewed the new ZIP export and capture importer since `33c254252f7fdf0c688756ac0424232776df3a94`, and read the current `bug_report.md`. Two worthwhile issues; source inspection only, with no tests, builds, or application execution.
+Read the current `bug_report.md` and compared the REST-parser extraction with its callers. One worthwhile incomplete failure-handling issue; source inspection only, with no tests, builds, or application execution.
 
-## 1. Overwriting an existing ZIP leaves its old tail behind
+## Card-deserialization failures cannot update the selector's outcome
 
-`src/BiliLite.UWP/Pages/SettingPage.xaml.cs:1126-1127` opens the selected destination with `ReadWrite` and creates a ZIP without truncating the stream. If the user chooses an existing, larger ZIP and the new bundle is smaller, bytes beyond the new archive remain, including potentially the previous ZIP's central directory. Readers can reject the bundle or read stale archive metadata even though the UI reports success.
+`src/BiliLite.UWP/Modules/User/DynamicVM.cs:1130-1139` records `Success` before `TryDeserialize`, then tries to record `MalformedResponse` if a card cannot be deserialized. `DynamicApiSelector.Record` ignores a second record with the same attempt ID (`Services/DynamicApiSelector.cs:653`), so that failure record never changes the saved success. The space leg has the same ordering; Home records success first and returns malformed without a failure record (`Modules/Home/DynamicVM.cs:360-366`).
 
-Suggested fix: set the destination stream's size to zero and seek to position zero before constructing `ZipArchive`, so replacing a file writes exactly one complete new archive.
+Trigger: a valid `code:0` envelope and `cards` array whose elements cannot deserialize to the caller's card model. The current request now returns a failure into the fallback chain, but the persisted selector still learns that Legacy succeeded, clears its failure state, and can prefer the unusable source again on a later space refresh.
 
-## 2. An unpacked exported bundle cannot be imported from its root
+The success-before-deserialization ordering predates this extraction; the new failure-return handling leaves that classification problem unresolved. This is an incomplete handling path, rather than a newly introduced scoring regression.
 
-`tools/import-capture.ps1:36-46` handles ZIP inputs by selecting their `api/` subfolder, but folder inputs keep the bundle root. The exporter puts NDJSON files under `api/`, so passing an already-unpacked bundle directory (an advertised input) finds no root-level NDJSON and exits with `no *.ndjson capture found` instead of producing fixtures.
-
-Suggested fix: normalize both ZIP and directory inputs through the same folder-selection step: use `<bundle root>/api` when present, otherwise keep the root for flat capture folders.
+Suggested fix: deserialize first, then record exactly one outcome for the attempt. Record `MalformedResponse` once on failure in all three legs, and record success only after the page is usable.
