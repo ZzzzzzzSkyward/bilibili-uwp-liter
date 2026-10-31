@@ -118,7 +118,7 @@ namespace BiliLite.Helpers
                     if (!response.IsSuccessStatusCode)
                     {
                         LogRequest(requestId, "GET", endpoint, "HTTP failure status=" + (int)response.StatusCode + " " + response.StatusCode);
-                        return new HttpResults()
+                        var failedGet = new HttpResults()
                         {
                             code = (int)response.StatusCode,
                             status = false,
@@ -127,6 +127,8 @@ namespace BiliLite.Helpers
                             Method = "GET",
                             Endpoint = endpoint
                         };
+                        ApiCapture.Record(failedGet, stopwatch.ElapsedMilliseconds);
+                        return failedGet;
                     }
 
                     //response.EnsureSuccessStatusCode();
@@ -143,6 +145,7 @@ namespace BiliLite.Helpers
                         message = "",
                     };
                     LogApiFailure(requestId, "GET", endpoint, httpResults.results);
+                    ApiCapture.Record(httpResults, stopwatch.ElapsedMilliseconds);
                     return httpResults;
                 }
             }
@@ -411,7 +414,7 @@ namespace BiliLite.Helpers
                     if (!response.IsSuccessStatusCode)
                     {
                         LogRequest(requestId, "POST", endpoint, "HTTP failure status=" + (int)response.StatusCode + " " + response.StatusCode);
-                        return new HttpResults()
+                        var failedPost = new HttpResults()
                         {
                             code = (int)response.StatusCode,
                             status = false,
@@ -420,6 +423,8 @@ namespace BiliLite.Helpers
                             Method = "POST",
                             Endpoint = endpoint
                         };
+                        ApiCapture.Record(failedPost, stopwatch.ElapsedMilliseconds);
+                        return failedPost;
                     }
                     var buffer = await response.Content.ReadAsBufferAsync();
                     var byteArray = buffer.ToArray();
@@ -435,6 +440,7 @@ namespace BiliLite.Helpers
                         message = ""
                     };
                     LogApiFailure(requestId, "POST", endpoint, httpResults.results);
+                    ApiCapture.Record(httpResults, stopwatch.ElapsedMilliseconds);
                     return httpResults;
                 }
             }

@@ -259,6 +259,23 @@ namespace BiliLite.Pages
                 });
             });
 
+            swApiCapture.IsOn = SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE, false);
+            swApiCapture.Loaded += new RoutedEventHandler((sender, e) =>
+            {
+                swApiCapture.Toggled += new RoutedEventHandler((obj, args) =>
+                {
+                    SettingHelper.SetValue(SettingHelper.Diagnostics.API_CAPTURE, swApiCapture.IsOn);
+                });
+            });
+            swApiCaptureSamples.IsOn = SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, false);
+            swApiCaptureSamples.Loaded += new RoutedEventHandler((sender, e) =>
+            {
+                swApiCaptureSamples.Toggled += new RoutedEventHandler((obj, args) =>
+                {
+                    SettingHelper.SetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, swApiCaptureSamples.IsOn);
+                });
+            });
+
             gridHomeCustom.ItemsSource = SettingHelper.GetValue(UI.HOEM_ORDER, HomeVM.GetAllNavItems());
             ExceptHomeNavItems();
 

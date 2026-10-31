@@ -121,3 +121,21 @@ stops being an excuse for shipping a mapping guess.
 - No remote upload, no telemetry endpoint, no background reporting.
 - No bodyspam: shapes by default, samples on request, bounded totals.
 - Not a substitute for the device: the bundle narrows a hypothesis to a fact; it does not run the app.
+
+## P1 状态（2026-10-31）
+
+已落地：
+
+- `Services/ApiShape.cs` —— 路径 → 类型名（`$.data.items[].emoji:object`），深度 8、每对象 64 键、
+  数组按元素类型各取一个样本；`Diff` 报新增/消失/类型变化；`Render` 给一行紧凑形状。
+- `Services/ApiCapture.cs` —— 每次响应一行 NDJSON（`ts/ep/method/request/status/code/ms/bytes`，
+  首次见到写形状并落基线，之后只记漂移那一行），落在 `LocalState/log/api/yyyyMMdd.ndjson`
+  与 `baseline-<ep>.json`；单日上限 512 KB；写盘走一个信号量串行，失败一律吞掉。
+- `Services/HttpLogSanitizer.RedactBody` —— 名字像凭据的字段替换成 `<redacted>`，再按字节预算截断。
+- `Helpers/HttpHelper.cs` —— GET/POST 的成功与 HTTP 失败返回都调用 `ApiCapture.Record`，
+  正文为空也记（状态码本身是证据）。
+- `Pages/SettingPage.xaml(.cs)` —— 两个开关：记录形状、记录脱敏样本（默认都关）。
+- 探针 `plan/tests/cap`（29 条）：形状、上限、数组、漂移、渲染、脱敏、截断，以及接线契约。
+
+仍未做（原计划的 P2/P3）：一次点击导出 zip + `manifest.json`，以及 `tools/import-capture.ps1`
+把导出包变成 `plan/tests/g3/fixtures/<name>.json` 回放夹具。

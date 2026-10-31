@@ -146,6 +146,8 @@
     <Compile Include="Models\Requests\Api\DanmakuApi.cs" />
     <Compile Include="Services\CookieService.cs" />
     <Compile Include="Services\HttpLogSanitizer.cs" />
+    <Compile Include="Services\ApiShape.cs" />
+    <Compile Include="Services\ApiCapture.cs" />
     <Compile Include="Services\PasswordLoginSession.cs" />
     <Compile Include="Services\IsolatedPasswordLoginTransport.cs" />
     <Compile Include="Services\WbiKeyService.cs" />

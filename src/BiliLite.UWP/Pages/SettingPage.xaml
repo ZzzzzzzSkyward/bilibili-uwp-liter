@@ -195,6 +195,16 @@
                 <TextBlock Margin="0 8" FontSize="16">动态页显示背景</TextBlock>
                 <ToggleSwitch x:Name="swShowBGOnDynamic"/>
               </StackPanel>
+              <StackPanel Margin="0 0 0 8">
+                <TextBlock Margin="0 8" FontSize="16">记录 API 响应形状（排障用）</TextBlock>
+                <TextBlock Margin="0 0 0 4" FontSize="12" Opacity="0.7">写入 LocalState\log\api，只记字段路径与类型，第一份形状作为基线，之后字段变化会记成一次漂移</TextBlock>
+                <ToggleSwitch x:Name="swApiCapture"/>
+              </StackPanel>
+              <StackPanel Margin="0 0 0 8">
+                <TextBlock Margin="0 8" FontSize="16">同时记录脱敏正文样本（排障用）</TextBlock>
+                <TextBlock Margin="0 0 0 4" FontSize="12" Opacity="0.7">每份响应最多 4 KB，名字像凭据的字段会被替换，需要先打开上一项</TextBlock>
+                <ToggleSwitch x:Name="swApiCaptureSamples"/>
+              </StackPanel>
             </StackPanel>
           </StackPanel>
         </ScrollViewer>
