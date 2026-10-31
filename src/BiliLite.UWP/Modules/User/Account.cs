@@ -1,6 +1,7 @@
 ﻿using BiliLite.Api;
 using BiliLite.Helpers;
 using BiliLite.Models;
+using BiliLite.Services;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -11,6 +12,7 @@ using System.Threading.Tasks;
 using Windows.Security.Cryptography.Core;
 using Windows.Storage.Streams;
 using Windows.Web.Http.Filters;
+using System.Linq;
 
 namespace BiliLite.Modules
 {
@@ -357,7 +359,176 @@ namespace BiliLite.Modules
             }
         }
 
+        public bool CommitCookieLogin(PasswordLoginSession session)
+        {
+            return PasswordLoginSessionCommitter.TryCommit(session, () => CaptureCookieLoginSnapshot(session),
+                ApplyCookieLogin, RestoreCookieLoginSnapshot,
+                message => LogHelper.Log(message, LogType.ERROR));
+        }
+
+        public async Task FinishCookieLoginAsync(PasswordLoginSession session)
+        {
+            MyProfileModel profile = null;
+            try { profile = await FetchProfileAsync(); }
+            catch (Exception ex) { LogHelper.Log("Cookie login profile fetch failed. exceptionType=" + ex.GetType().FullName, LogType.ERROR); }
+            if (session == null || SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L) != session.UserId ||
+                !string.Equals(SettingHelper.Account.AccessKey, session.AccessKey, StringComparison.Ordinal)) return;
+            if (profile != null && profile.mid == session.UserId)
+            {
+                try { SettingHelper.SetValue(SettingHelper.Account.USER_PROFILE, profile); }
+                catch (Exception ex) { LogHelper.Log("Cookie login profile persistence failed. exceptionType=" + ex.GetType().FullName, LogType.ERROR); }
+            }
+            try { MessageCenter.SendLogined(); }
+            catch (Exception ex) { LogHelper.Log("Cookie login notification failed. exceptionType=" + ex.GetType().FullName, LogType.ERROR); }
+        }
+
+        private static CookieLoginSnapshot CaptureCookieLoginSnapshot(PasswordLoginSession session)
+        {
+            var filter = new HttpBaseProtocolFilter();
+            var origins = CookieLoginOrigins();
+            var cookies = new Dictionary<string, Windows.Web.Http.HttpCookie>(StringComparer.OrdinalIgnoreCase);
+            foreach (var origin in origins)
+                foreach (var cookie in filter.CookieManager.GetCookies(origin))
+                {
+                    var key = CookieKey(cookie.Name, cookie.Domain, cookie.Path);
+                    if (!cookies.ContainsKey(key)) cookies.Add(key, cookie);
+                }
+
+            return new CookieLoginSnapshot
+            {
+                Cookies = cookies.Values.ToList(),
+                StagedCookieKeys = new HashSet<string>(session.Cookies.Select(x => CookieKey(x.Name, x.Domain, x.Path)), StringComparer.OrdinalIgnoreCase),
+                AccessKey = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY, ""),
+                UserId = SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L),
+                Expiry = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue),
+                OAuthRefreshToken = SettingHelper.GetValue(SettingHelper.Account.REFRESH_KEY, ""),
+                CookieRefreshToken = SettingHelper.GetValue("CookieRefreshToken", ""),
+                CookieSession = SettingHelper.GetValue("CookieSESSDATA", ""),
+                CookieCsrf = SettingHelper.GetValue("CookieCSRF", ""),
+                Profile = SettingHelper.GetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, null)
+            };
+        }
+
+        private static void ApplyCookieLogin(PasswordLoginSession session)
+        {
+            var filter = new HttpBaseProtocolFilter();
+            var origins = CookieLoginOrigins();
+            var replacedNames = CookieLoginReplacedNames();
+            foreach (var origin in origins)
+                foreach (var current in filter.CookieManager.GetCookies(origin).ToList())
+                    if (replacedNames.Contains(current.Name)) filter.CookieManager.DeleteCookie(current);
+
+            foreach (var cookie in session.Cookies)
+            {
+                var staged = new Windows.Web.Http.HttpCookie(cookie.Name, cookie.Domain, cookie.Path)
+                {
+                    Value = cookie.Value,
+                    HttpOnly = cookie.HttpOnly,
+                    Secure = cookie.Secure
+                };
+                if (cookie.Expires.HasValue) staged.Expires = cookie.Expires.Value.UtcDateTime;
+                if (!filter.CookieManager.SetCookie(staged))
+                    throw new InvalidOperationException("Windows rejected a staged Bilibili session cookie.");
+            }
+
+            var sessdata = session.Cookies.First(x => x.Name == "SESSDATA").Value;
+            var csrf = session.Cookies.First(x => x.Name == "bili_jct").Value;
+            SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY, session.AccessKey);
+            SettingHelper.SetValue(SettingHelper.Account.USER_ID, session.UserId);
+            // Browser-cookie refresh tokens are separate from the target's OAuth refresh token.
+            SettingHelper.SetValue(SettingHelper.Account.REFRESH_KEY, "");
+            SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.Now.AddHours(240));
+            SettingHelper.SetValue("CookieRefreshToken", session.CookieRefreshToken);
+            SettingHelper.SetValue("CookieSESSDATA", sessdata);
+            SettingHelper.SetValue("CookieCSRF", csrf);
+            SettingHelper.SetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, null);
+        }
+
+        private static void RestoreCookieLoginSnapshot(CookieLoginSnapshot snapshot)
+        {
+            var filter = new HttpBaseProtocolFilter();
+            var failures = new List<string>();
+            var origins = CookieLoginOrigins();
+            var stagedNames = CookieLoginReplacedNames();
+            try
+            {
+                foreach (var origin in origins)
+                    foreach (var current in filter.CookieManager.GetCookies(origin).ToList())
+                        if (stagedNames.Contains(current.Name) || snapshot.StagedCookieKeys.Contains(CookieKey(current.Name, current.Domain, current.Path)))
+                            filter.CookieManager.DeleteCookie(current);
+            }
+            catch (Exception ex) { failures.Add("cookie-delete=" + ex.GetType().FullName); }
+
+            foreach (var cookie in snapshot.Cookies)
+            {
+                try
+                {
+                    if (!filter.CookieManager.SetCookie(cookie)) failures.Add("cookie-restore-rejected");
+                }
+                catch (Exception ex) { failures.Add("cookie-restore=" + ex.GetType().FullName); }
+            }
+
+            RestoreSetting(SettingHelper.Account.ACCESS_KEY, snapshot.AccessKey, failures);
+            RestoreSetting(SettingHelper.Account.USER_ID, snapshot.UserId, failures);
+            RestoreSetting(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, snapshot.Expiry, failures);
+            RestoreSetting(SettingHelper.Account.REFRESH_KEY, snapshot.OAuthRefreshToken, failures);
+            RestoreSetting("CookieRefreshToken", snapshot.CookieRefreshToken, failures);
+            RestoreSetting("CookieSESSDATA", snapshot.CookieSession, failures);
+            RestoreSetting("CookieCSRF", snapshot.CookieCsrf, failures);
+            RestoreSetting(SettingHelper.Account.USER_PROFILE, snapshot.Profile, failures);
+            if (failures.Count > 0) throw new InvalidOperationException("Cookie login rollback had incomplete steps: " + string.Join(",", failures));
+        }
+
+        private static void RestoreSetting<T>(string key, T value, List<string> failures)
+        {
+            try { SettingHelper.SetValue(key, value); }
+            catch (Exception ex) { failures.Add("setting-" + key + "=" + ex.GetType().FullName); }
+        }
+
+        private static List<Uri> CookieLoginOrigins() => new[]
+        {
+            "https://bilibili.com/", "https://www.bilibili.com/",
+            "https://passport.bilibili.com/", "https://api.bilibili.com/"
+        }.Select(x => new Uri(x)).ToList();
+
+        private static HashSet<string> CookieLoginReplacedNames() => new HashSet<string>(new[]
+        {
+            "SESSDATA", "bili_jct", "DedeUserID", "DedeUserID__ckMd5", "sid", "sid_guard", "ac_time_value"
+        }, StringComparer.OrdinalIgnoreCase);
+
+        private static string CookieKey(string name, string domain, string path) =>
+            (name ?? "") + "\n" + (domain ?? "") + "\n" + (path ?? "/");
+
+        private sealed class CookieLoginSnapshot
+        {
+            public List<Windows.Web.Http.HttpCookie> Cookies { get; set; }
+            public HashSet<string> StagedCookieKeys { get; set; }
+            public string AccessKey { get; set; }
+            public long UserId { get; set; }
+            public DateTime Expiry { get; set; }
+            public string OAuthRefreshToken { get; set; }
+            public string CookieRefreshToken { get; set; }
+            public string CookieSession { get; set; }
+            public string CookieCsrf { get; set; }
+            public MyProfileModel Profile { get; set; }
+        }
+
         public async Task<MyProfileModel> GetProfile()
+        {
+            try
+            {
+                var profile = await FetchProfileAsync();
+                if (profile != null) SettingHelper.SetValue(SettingHelper.Account.USER_PROFILE, profile);
+                return profile;
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("读取个人资料失败", LogType.ERROR, ex);
+                return null;
+            }
+        }
+
+        private async Task<MyProfileModel> FetchProfileAsync()
         {
             try
             {
@@ -365,9 +536,7 @@ namespace BiliLite.Modules
                 var obj = req.GetJObject();
                 if (req.status && obj["code"].ToInt32() == 0)
                 {
-                    var data = JsonConvert.DeserializeObject<MyProfileModel>(obj["data"].ToString());
-                    SettingHelper.SetValue(SettingHelper.Account.USER_PROFILE, data);
-                    return data;
+                    return JsonConvert.DeserializeObject<MyProfileModel>(obj["data"].ToString());
                 }
                 else
                 {

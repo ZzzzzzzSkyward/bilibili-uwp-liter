@@ -1,4 +1,5 @@
-﻿using BiliLite.Helpers;
+﻿using BiliLite.Controls;
+using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Modules;
 using System;
@@ -29,8 +30,6 @@ namespace BiliLite.Pages.Home
             {
                 this.NavigationCacheMode = NavigationCacheMode.Disabled;
             }
-            MessageCenter.LoginedEvent += MessageCenter_LoginedEvent;
-            MessageCenter.LogoutedEvent += MessageCenter_LogoutedEvent;
         }
         private void MessageCenter_LogoutedEvent(object sender, EventArgs e)
         {
@@ -45,11 +44,50 @@ namespace BiliLite.Pages.Home
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            SubscribeMessageCenter();
             if (e.NavigationMode == NavigationMode.New&& cinemaVM.HomeData==null)
             {
                 await LoadData();
             }
+        }
 
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            base.OnNavigatedFrom(e);
+            UnsubscribeMessageCenter();
+        }
+
+        private void SubscribeMessageCenter()
+        {
+            MessageCenter.LoginedEvent -= MessageCenter_LoginedEvent;
+            MessageCenter.LoginedEvent += MessageCenter_LoginedEvent;
+            MessageCenter.LogoutedEvent -= MessageCenter_LogoutedEvent;
+            MessageCenter.LogoutedEvent += MessageCenter_LogoutedEvent;
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= Frame_ClosedPage;
+                frame.ClosedPage += Frame_ClosedPage;
+            }
+        }
+
+        private void UnsubscribeMessageCenter()
+        {
+            MessageCenter.LoginedEvent -= MessageCenter_LoginedEvent;
+            MessageCenter.LogoutedEvent -= MessageCenter_LogoutedEvent;
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= Frame_ClosedPage;
+            }
+        }
+
+        private void Frame_ClosedPage(object sender, EventArgs e)
+        {
+            if (sender is MyFrame frame)
+            {
+                frame.ClosedPage -= Frame_ClosedPage;
+            }
+            MessageCenter.LoginedEvent -= MessageCenter_LoginedEvent;
+            MessageCenter.LogoutedEvent -= MessageCenter_LogoutedEvent;
         }
         private async Task LoadData()
         {

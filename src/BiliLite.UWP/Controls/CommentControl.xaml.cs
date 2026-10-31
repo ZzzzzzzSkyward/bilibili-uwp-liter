@@ -153,6 +153,7 @@ namespace BiliLite.Controls
                 closeRepost.Visibility = Visibility.Collapsed;
                 //ls_hot.ItemsSource = null;
                 ls_new.ItemsSource = null;
+                cursor = null;
             }
             try
             {
@@ -163,7 +164,16 @@ namespace BiliLite.Controls
                 ObservableCollection<CommentModel> ls = new ObservableCollection<CommentModel>();
 
 
-                var re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page, _loadCommentInfo.CommentMode, offset: _page).Request();
+                var isCursorApiResponse = true;
+                var api = await commentApi.CommentV2(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page,
+                    _loadCommentInfo.CommentMode, offsetStr: cursor?.PaginationReply?.NextOffset);
+                var re = await api.Request();
+                var errorCheck = await re.GetData<object>();
+                if (!re.status || (errorCheck != null && errorCheck.code < 0))
+                {
+                    isCursorApiResponse = false;
+                    re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page, _loadCommentInfo.CommentMode).Request();
+                }
                 if (re.status)
                 {
                     dataCommentModel m;
@@ -179,30 +189,42 @@ namespace BiliLite.Controls
                     if (m.code == 0)
                     {
 
-                        if (m.data.replies != null && m.data.replies.Count != 0)
+                        if (m.data.replies == null)
                         {
-
+                            m.data.replies = new ObservableCollection<CommentModel>();
+                        }
+                        var hasPinnedReplies = _page == 1 &&
+                            ((m.data.upper != null && m.data.upper.top != null) ||
+                            (m.data.topReplies != null && m.data.topReplies.Count != 0));
+                        if (m.data.replies.Count != 0 || hasPinnedReplies)
+                        {
                             if (_page == 1)
                             {
-                                if (m.data.upper.top != null)
+                                var displayedReplies = new ObservableCollection<CommentModel>();
+                                if (m.data.upper != null && m.data.upper.top != null)
                                 {
                                     m.data.upper.top.showTop = Visibility.Visible;
-                                    m.data.replies.RemoveAt(0);
-                                    m.data.replies.Insert(0, m.data.upper.top);
+                                    displayedReplies.Add(m.data.upper.top);
                                 }
-                                /*if (m.data.topReplies != null)
+                                if (m.data.topReplies != null)
                                 {
-                                    foreach(var t in m.data.topReplies)
+                                    foreach (var item in m.data.topReplies)
                                     {
-                                        t.showTop = true;
-                                        var c = t.ToCommentModel();
-
-
-                                        m.data.replies.Insert(0, c);
+                                        item.showTop = Visibility.Visible;
+                                        if (!displayedReplies.Any(reply => reply.rpid == item.rpid))
+                                        {
+                                            displayedReplies.Add(item);
+                                        }
                                     }
-                                }*/
-                                //ls_hot.ItemsSource = m.data.hots;
-                                ls_new.ItemsSource = m.data.replies;
+                                }
+                                foreach (var item in m.data.replies)
+                                {
+                                    if (!displayedReplies.Any(reply => reply.rpid == item.rpid))
+                                    {
+                                        displayedReplies.Add(item);
+                                    }
+                                }
+                                ls_new.ItemsSource = displayedReplies;
                             }
                             else
                             {
@@ -213,11 +235,11 @@ namespace BiliLite.Controls
                             }
                             _page++;
 
-                            if (m.data.replies.Count >= 10)
+                            cursor=m.data.cursor;
+                            if (m.data.replies.Count >= 10 && (!isCursorApiResponse || cursor?.PaginationReply?.NextOffset != null))
                             {
                                 btn_LoadMore.Visibility = Visibility.Visible;
                             }
-                            cursor=m.data.cursor;
                         }
                         else
                         {
@@ -726,8 +748,8 @@ namespace BiliLite.Controls
         public dataCommentModel upper { get; set; }
         public CommentModel top { get; set; }
 
-        //[JsonProperty("top_replies")]
-        //public List<CommentItem> topReplies { get; set; }
+        [JsonProperty("top_replies")]
+        public List<CommentModel> topReplies { get; set; }
 
     }
     public class CommentModel : INotifyPropertyChanged

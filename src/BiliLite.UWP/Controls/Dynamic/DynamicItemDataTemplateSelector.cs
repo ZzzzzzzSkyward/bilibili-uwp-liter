@@ -29,6 +29,11 @@ namespace BiliLite.Controls.Dynamic
                     return TextTemplate;
                 case Dynamic.DynamicDisplayType.Photo:
                     {
+                        // 一张图都没有的图片动态按纯文字渲染，别让模板里的 ImagesInfo[0] 绑定抛异常
+                        if (model.ImagesInfo == null || model.ImagesInfo.Count == 0)
+                        {
+                            return TextTemplate;
+                        }
                         if (model.ImagesInfo.Count <= 1)
                         {
                             return Photo1x1Template;
@@ -50,6 +55,7 @@ namespace BiliLite.Controls.Dynamic
                 case Dynamic.DynamicDisplayType.Live:
                 case Dynamic.DynamicDisplayType.LiveShare:
                 case Dynamic.DynamicDisplayType.MediaList:
+                case Dynamic.DynamicDisplayType.CustomSeason:
                 case Dynamic.DynamicDisplayType.Cheese:
                     return OneRowTemplate;
                 case DynamicDisplayType.Miss:

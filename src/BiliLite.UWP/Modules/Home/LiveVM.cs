@@ -87,7 +87,10 @@ namespace BiliLite.Modules
                         {
                             Banners = await Utils.DeserializeJson<ObservableCollection<LiveHomeBannerModel>>(data.data["banner"][0]["list"].ToString());
                         }
-                        Areas = await Utils.DeserializeJson<ObservableCollection<LiveHomeAreaModel>>(data.data["area_entrance_v2"][0]["list"].ToString());
+                        if (data.data["area_entrance_v2"].Count() > 0)
+                        {
+                            Areas = await Utils.DeserializeJson<ObservableCollection<LiveHomeAreaModel>>(data.data["area_entrance_v2"][0]["list"].ToString());
+                        }
                         await GetLiveHomeItems();
                     }
                     else

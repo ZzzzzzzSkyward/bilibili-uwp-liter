@@ -3,6 +3,8 @@ using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Modules;
 using BiliLite.Modules.User;
+using System.IO;
+using BiliLite.Services;
 using Microsoft.Toolkit.Uwp.Helpers;
 using Microsoft.Toolkit.Uwp.UI;
 using Microsoft.UI.Xaml.Controls;
@@ -256,6 +258,23 @@ namespace BiliLite.Pages
                 swShowBGOnDynamic.Toggled += new RoutedEventHandler((obj, args) =>
                 {
                     SettingHelper.SetValue("showbgondynamic", swShowBGOnDynamic.IsOn);
+                });
+            });
+
+            swApiCapture.IsOn = SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE, false);
+            swApiCapture.Loaded += new RoutedEventHandler((sender, e) =>
+            {
+                swApiCapture.Toggled += new RoutedEventHandler((obj, args) =>
+                {
+                    SettingHelper.SetValue(SettingHelper.Diagnostics.API_CAPTURE, swApiCapture.IsOn);
+                });
+            });
+            swApiCaptureSamples.IsOn = SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, false);
+            swApiCaptureSamples.Loaded += new RoutedEventHandler((sender, e) =>
+            {
+                swApiCaptureSamples.Toggled += new RoutedEventHandler((obj, args) =>
+                {
+                    SettingHelper.SetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, swApiCaptureSamples.IsOn);
                 });
             });
 
@@ -892,6 +911,57 @@ FallbackColor=""#ffffff"" />
             await settingVM.SyncDanmuFilter();
         }
 
+        private async void DanmuSettingExportFilter_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var picker = new FileSavePicker();
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.SuggestedFileName = "bilibili.block";
+                picker.FileTypeChoices.Add("JSON文件", new List<string> { ".json" });
+                var file = await picker.PickSaveFileAsync();
+                if (file == null)
+                    return;
+
+                await FileIO.WriteTextAsync(file, settingVM.ExportDanmuFilterJson());
+                Utils.ShowMessageToast("弹幕屏蔽规则已导出");
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("导出弹幕屏蔽规则失败", LogType.ERROR, ex);
+                Utils.ShowMessageToast("导出弹幕屏蔽规则失败", ex.Message);
+            }
+        }
+
+        private async void DanmuSettingImportFilter_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var picker = new FileOpenPicker();
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.FileTypeFilter.Add(".json");
+                var file = await picker.PickSingleFileAsync();
+                if (file == null)
+                    return;
+
+                var text = await FileIO.ReadTextAsync(file);
+                var added = settingVM.ImportDanmuFilterJson(text);
+                if (added > 0)
+                {
+                    Utils.ShowMessageToast("已导入" + added + "条弹幕屏蔽规则");
+                }
+                else
+                {
+                    Utils.ShowMessageToast("没有可导入的新规则");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("导入弹幕屏蔽规则失败", LogType.ERROR, ex);
+                Utils.ShowMessageToast("导入弹幕屏蔽规则失败", ex.Message);
+            }
+        }
+
         private void RemoveDanmuWord_Click(object sender, RoutedEventArgs e)
         {
             var word = (sender as AppBarButton).DataContext as string;
@@ -939,7 +1009,7 @@ FallbackColor=""#ffffff"" />
                 return;
             }
             settingVM.ShieldUsers.Add(DanmuSettingTxtUser.Text);
-            SettingHelper.SetValue(VideoDanmaku.SHIELD_WORD, settingVM.ShieldUsers);
+            SettingHelper.SetValue(VideoDanmaku.SHIELD_USER, settingVM.ShieldUsers);
             var result = await settingVM.AddDanmuFilterItem(DanmuSettingTxtUser.Text, 2);
             DanmuSettingTxtUser.Text = "";
             if (!result)
@@ -961,6 +1031,152 @@ FallbackColor=""#ffffff"" />
                 await Utils.LaunchUri(new Uri(e.Link));
             }
 
+        }
+
+        private async void ExportLogs_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                LogHelper.Flush();
+
+                var logFolder = await ApplicationData.Current.LocalFolder.CreateFolderAsync("log", CreationCollisionOption.OpenIfExists);
+                var logFiles = (await logFolder.GetFilesAsync())
+                    .Where(file => file.FileType.Equals(".log", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(file => file.Name)
+                    .ToList();
+                var recentLogs = logFiles.Skip(Math.Max(0, logFiles.Count - 7)).ToList();
+                var export = new StringBuilder();
+                var version = Windows.ApplicationModel.Package.Current.Id.Version;
+                export.AppendLine("BiliLite diagnostic log export");
+                export.AppendLine("Exported: " + DateTimeOffset.Now.ToString("o"));
+                export.AppendLine("Session ID: " + LogHelper.SessionId);
+                export.AppendLine("App version: " + version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision);
+                export.AppendLine("Included log files: " + recentLogs.Count + " (latest 7)");
+                export.AppendLine();
+
+                foreach (var logFile in recentLogs)
+                {
+                    export.AppendLine("===== " + logFile.Name + " =====");
+                    export.AppendLine(await FileIO.ReadTextAsync(logFile));
+                    export.AppendLine();
+                }
+
+                var picker = new FileSavePicker();
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.SuggestedFileName = "BiliLite-diagnostics-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                picker.FileTypeChoices.Add("文本文件", new List<string> { ".txt" });
+                var destination = await picker.PickSaveFileAsync();
+                if (destination == null)
+                    return;
+
+                await FileIO.WriteTextAsync(destination, export.ToString());
+                Utils.ShowMessageToast("诊断日志已导出");
+            }
+            catch (Exception ex)
+            {
+                Utils.ShowMessageToast("导出日志失败", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 一次点击拿到可分享的包：最近 7 个日志 + 响应形状/基线 + manifest。
+        /// 采集是开关控制的，所以包里有什么取决于当时开了什么，manifest 里写着。
+        /// </summary>
+        private async void ExportBundle_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var logFolder = await ApplicationData.Current.LocalFolder.CreateFolderAsync("log", CreationCollisionOption.OpenIfExists);
+                var logFiles = (await logFolder.GetFilesAsync())
+                    .Where(file => file.FileType.Equals(".log", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(file => file.Name)
+                    .ToList();
+                var recentLogs = logFiles.Skip(Math.Max(0, logFiles.Count - 7)).ToList();
+                var apiFolder = await logFolder.TryGetItemAsync("api") as StorageFolder;
+                var apiFiles = apiFolder == null
+                    ? new List<StorageFile>()
+                    : (await apiFolder.GetFilesAsync()).OrderBy(file => file.Name).ToList();
+
+                var entries = new List<Tuple<string, StorageFile>>();
+                foreach (var file in recentLogs)
+                {
+                    entries.Add(Tuple.Create(DiagnosticBundle.EntryPath("logs", file.Name), file));
+                }
+                foreach (var file in apiFiles)
+                {
+                    entries.Add(Tuple.Create(DiagnosticBundle.EntryPath("api", file.Name), file));
+                }
+
+                var version = Windows.ApplicationModel.Package.Current.Id.Version;
+                var manifest = DiagnosticBundle.BuildManifest(
+                    version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision,
+                    LogHelper.SessionId, DateTimeOffset.Now,
+                    SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE, false),
+                    SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, false),
+                    entries.Select(entry => entry.Item1).Concat(new[] { DiagnosticBundle.ManifestName }));
+
+                var picker = new FileSavePicker();
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.SuggestedFileName = "BiliLite-diagnostics-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                picker.FileTypeChoices.Add("压缩包", new List<string> { ".zip" });
+                var destination = await picker.PickSaveFileAsync();
+                if (destination == null)
+                    return;
+
+                using (var stream = await destination.OpenAsync(FileAccessMode.ReadWrite))
+                {
+                    //选中的是已有文件时必须先截断：否则旧的归档尾部会留在新包后面，读出来是坏包
+                    stream.Size = 0;
+                    stream.Seek(0);
+                    using (var archive = new System.IO.Compression.ZipArchive(stream.AsStreamForWrite(), System.IO.Compression.ZipArchiveMode.Create))
+                    {
+                        var manifestEntry = archive.CreateEntry(DiagnosticBundle.ManifestName);
+                        using (var writer = new StreamWriter(manifestEntry.Open()))
+                        {
+                            await writer.WriteAsync(manifest);
+                        }
+                        foreach (var entry in entries)
+                        {
+                            var zipEntry = archive.CreateEntry(entry.Item1);
+                            using (var target = zipEntry.Open())
+                            using (var source = await entry.Item2.OpenStreamForReadAsync())
+                            {
+                                await source.CopyToAsync(target);
+                            }
+                        }
+                    }
+                }
+                Utils.ShowMessageToast("诊断包已导出（" + (entries.Count + 1) + " 个文件）");
+            }
+            catch (Exception ex)
+            {
+                Utils.ShowMessageToast("导出诊断包失败", ex.Message);
+            }
+        }
+        private async void MarkProblem_Click(object sender, RoutedEventArgs e)
+        {
+            var noteBox = new TextBox
+            {
+                AcceptsReturn = true,
+                Height = 100,
+                PlaceholderText = "可选：简单描述刚才的操作或现象"
+            };
+            var dialog = new ContentDialog
+            {
+                Title = "标记问题发生时刻",
+                Content = noteBox,
+                PrimaryButtonText = "记录",
+                SecondaryButtonText = "取消"
+            };
+
+            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                return;
+
+            var note = (noteBox.Text ?? string.Empty).Replace("\r", " ").Replace("\n", " ").Trim();
+            LogHelper.Log("User marked a problem; time=" + DateTimeOffset.Now.ToString("o")
+                + "; sessionId=" + LogHelper.SessionId + "; note=" + note, LogType.INFO);
+            LogHelper.Flush();
+            Utils.ShowMessageToast("已在日志中标记问题时刻");
         }
 
         private void LiveDanmuSettingAddWord_Click(object sender, RoutedEventArgs e)

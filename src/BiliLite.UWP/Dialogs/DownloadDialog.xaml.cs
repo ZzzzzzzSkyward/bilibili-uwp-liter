@@ -115,7 +115,7 @@ namespace BiliLite.Dialogs
                         {
                             downloadInfo.Subtitles.Add(new DownloadSubtitleInfo()
                             {
-                                Name = subtitleItem.lan_doc,
+                                Name = $"{subtitleItem.lan_doc}({subtitleItem.lan})",
                                 Url = subtitleItem.subtitle_url
                             });
                         }

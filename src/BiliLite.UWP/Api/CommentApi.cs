@@ -56,25 +56,46 @@ namespace BiliLite.Api
         /// <param name="sort">1=最新，2=最热</param>
         /// <param name="pn">页数</param>
         /// <param name="type">类型，1=视频，17=动态，11=图片，5=小视频，19=歌单，14=歌曲</param>
-        /// <param name="ps">每页数量1-20</param>
-        /// <param name="nohot">不显示热评01</param>
+        /// <param name="ps">每页数量</param>
         /// <returns></returns>
-        public ApiModel Comment(string oid, CommentSort sort,int pn, int type, int ps = 20,int offset=0)
+        public ApiModel Comment(string oid, CommentSort sort, int pn, int type, int ps = 30)
         {
-            var mode = sort == CommentSort.Hot ? 1 : 0;
-            var nohot = offset > 0 ? 1 : 0;
-            ApiModel api = new ApiModel()
+            return new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}{ApiHelper.readcomment_old}",
-                parameter = $"oid={oid}&ps={ps}&sort={mode}&type={type}&pn={offset}&nohot={nohot}",
-                need_cookie = true//!ApiHelper.need_refresh_cookie
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/v2/reply",
+                parameter = $"oid={oid}&plat=2&pn={pn}&ps={ps}&sort={(int)sort}&type={type}",
+                need_cookie = true
             };
-            //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
-            return api;
+        }
+
+        /// <summary>
+        /// 读取评论V2接口
+        /// </summary>
+        public async System.Threading.Tasks.Task<ApiModel> CommentV2(string oid, CommentSort sort, int pn, int type, int ps = 30, string offsetStr = null, bool login = true)
+        {
+            var mode = sort == CommentSort.Hot ? 3 : 2;
+            var pagination = new { offset = offsetStr };
+            var paginationStr = JsonConvert.SerializeObject(pagination);
+            var parameters = $"oid={oid}&ps={ps}&mode={mode}&type={type}&pagination_str={paginationStr}";
+
+            if (login)
+            {
+                parameters += $"&csrf={ApiHelper.GetCSRF()}";
+            }
+
+            parameters = await ApiHelper.GetWbiSign(parameters);
+
+            return new ApiModel
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/v2/reply/wbi/main",
+                parameter = parameters,
+                need_cookie = login,
+            };
         }
         //<param>ps:1-20</param>
-        public ApiModel Reply(string oid,string root, int pn, int type, int ps = 20)
+        public ApiModel Reply(string oid, string root, int pn, int type, int ps = 30, bool login = true)
         {
             //string csrf = ApiHelper.GetCSRF(true);
             ApiModel api = new ApiModel()
@@ -82,7 +103,7 @@ namespace BiliLite.Api
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}{ApiHelper.replyreply}",
                 parameter = $"oid={oid}&plat=2&pn={pn}&ps={ps}&root={root}&type={type}",
-                need_cookie=true
+                need_cookie = login
             };
             //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;

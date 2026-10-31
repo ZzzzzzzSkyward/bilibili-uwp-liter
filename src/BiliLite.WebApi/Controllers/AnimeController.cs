@@ -239,7 +239,7 @@ namespace BiliLite.WebApi.Controllers
             try
             {
                 var http = client.CreateClient("http");
-                var results = await http.GetStringAsync($"https://api.bilibili.com/pgc/season/index/result?st=1&order=2&season_version=-1&area=-1&is_finish=-1&copyright=-1&season_status=-1&season_month=-1&year=-1&style_id=-1&sort=0&page=1&season_type={ type }&pagesize=20&type=1");
+                var results = await http.GetStringAsync($"https://api.bilibili.com/pgc/season/index/result?st=1&order=2&season_version=-1&area=-1&is_finish=-1&copyright=-1&season_status=-1&season_month=-1&year=-1&style_id=-1&sort=0&page=1&season_type={type}&pagesize=20&type=1");
                 var obj = JObject.Parse(results);
                 List<AnimeRank> ranks = new List<AnimeRank>();
                 foreach (var item in obj["data"]["list"].Take(20))
@@ -330,7 +330,7 @@ namespace BiliLite.WebApi.Controllers
                     return JsonConvert.DeserializeObject<List<FallItemModel>>(value);
                 }
                 var http = client.CreateClient("http");
-                var results = await http.GetStringAsync($"https://bangumi.bilibili.com/api/fall?appkey=1d8b6e7d45233436&build=5442100&cursor={ cursor}&mobi_app=android&pagesize=4&platform=android&ts={ Utils.GetTimestampS()}&wid={wid}");
+                var results = await http.GetStringAsync($"https://bangumi.bilibili.com/api/fall?appkey=1d8b6e7d45233436&build=5442100&cursor={cursor}&mobi_app=android&pagesize=4&platform=android&ts={Utils.GetTimestampS()}&wid={wid}");
                 var obj = JObject.Parse(results);
                 List<FallItemModel> list = new List<FallItemModel>();
                 foreach (var item in obj["result"])
@@ -368,7 +368,7 @@ namespace BiliLite.WebApi.Controllers
     {
         public bool Equals(BannerModel x, BannerModel y)
         {
-            return x.url==y.url ;
+            return x.url == y.url;
         }
         public int GetHashCode(BannerModel obj)
         {

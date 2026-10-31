@@ -1,4 +1,4 @@
-﻿using BiliLite.Helpers;
+using BiliLite.Helpers;
 using BiliLite.Models;
 using Newtonsoft.Json.Linq;
 using System;
@@ -231,7 +231,8 @@ namespace BiliLite.Modules
                 ShowLoadMore = false;
                 Loading = true;
                 Nothing = false;
-                var results = await searchAPI.WebSearchVideo(Keyword, Page, SelectOrder.value, SelectDuration.value, SelectRegion.value,Area).Request();
+                var api = await searchAPI.WebSearchVideo(Keyword, Page, SelectOrder.value, SelectDuration.value, SelectRegion.value, Area);
+                var results = await api.Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<JObject>>();
@@ -353,7 +354,8 @@ namespace BiliLite.Modules
                 ShowLoadMore = false;
                 Loading = true;
                 Nothing = false;
-                var results = await searchAPI.WebSearchArticle(Keyword, Page, SelectOrder.value, SelectRegion.value, Area).Request();
+                var api = await searchAPI.WebSearchArticle(Keyword, Page, SelectOrder.value, SelectRegion.value, Area);
+                var results = await api.Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<JObject>>();
@@ -434,10 +436,10 @@ namespace BiliLite.Modules
                 ShowLoadMore = false;
                 Loading = true;
                 Nothing = false;
-                var api = searchAPI.WebSearchAnime(Keyword, Page, Area);
+                var api = await searchAPI.WebSearchAnime(Keyword, Page, Area);
                 if (this.SearchType == SearchType.Movie)
                 {
-                    api = searchAPI.WebSearchMovie(Keyword, Page, Area);
+                    api = await searchAPI.WebSearchMovie(Keyword, Page, Area);
                 }
                 var results = await api.Request();
                 if (results.status)
@@ -555,7 +557,8 @@ namespace BiliLite.Modules
                 ShowLoadMore = false;
                 Loading = true;
                 Nothing = false;
-                var results = await searchAPI.WebSearchUser(Keyword, Page, SelectOrder.value, SelectType.value, Area).Request();
+                var api = await searchAPI.WebSearchUser(Keyword, Page, SelectOrder.value, SelectType.value, Area);
+                var results = await api.Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<JObject>>();
@@ -637,7 +640,8 @@ namespace BiliLite.Modules
                 Loading = true;
                 Nothing = false;
 
-                var results = await searchAPI.WebSearchLive(Keyword, Page, Area).Request();
+                var api = await searchAPI.WebSearchLive(Keyword, Page, Area);
+                var results = await api.Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<JObject>>();
@@ -719,7 +723,8 @@ namespace BiliLite.Modules
                 ShowLoadMore = false;
                 Loading = true;
                 Nothing = false;
-                var results = await searchAPI.WebSearchTopic(Keyword, Page, Area).Request();
+                var api = await searchAPI.WebSearchTopic(Keyword, Page, Area);
+                var results = await api.Request();
                 if (results.status)
                 {
                     var data = await results.GetJson<ApiDataModel<JObject>>();

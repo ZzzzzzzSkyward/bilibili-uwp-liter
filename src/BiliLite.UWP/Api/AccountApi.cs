@@ -1,11 +1,14 @@
 ﻿using BiliLite.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace BiliLite.Api
 {
     public class AccountApi
     {   
+        private static string FormValue(string value) => Uri.EscapeDataString(value ?? "");
+
         /// <summary>
         /// 读取登录密码加密信息
         /// </summary>
@@ -187,6 +190,168 @@ namespace BiliLite.Api
             api.body += ApiHelper.GetSign(api.body, ApiHelper.LoginKey);
             return api;
         }
+
+        /// <summary>Get the captcha challenge used by password-login secondary verification.</summary>
+        public ApiModel GeetestCaptcha()
+        {
+            return new ApiModel
+            {
+                method = RestSharp.Method.Post,
+                baseUrl = "https://passport.bilibili.com/x/safecenter/captcha/pre",
+                body = ""
+            };
+        }
+
+        /// <summary>Look up the masked phone number for a pending password login.</summary>
+        public ApiModel FetchHideTel(string tmpToken)
+        {
+            return new ApiModel
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = "https://api.bilibili.com/x/safecenter/user/info",
+                parameter = "tmp_code=" + FormValue(tmpToken)
+            };
+        }
+
+        /// <summary>Request an SMS code for a pending password login.</summary>
+        public ApiModel SendVerifySMS(string tmpToken, string recaptchaToken, string geeChallenge,
+            string geeGt, string geetestValidate, string geetestSeccode)
+        {
+            return new ApiModel
+            {
+                method = RestSharp.Method.Post,
+                baseUrl = "https://passport.bilibili.com/x/safecenter/common/sms/send",
+                body = "sms_type=loginTelCheck&tmp_code=" + FormValue(tmpToken) +
+                    "&recaptcha_token=" + FormValue(recaptchaToken) +
+                    "&gee_challenge=" + FormValue(geeChallenge) +
+                    "&gee_gt=" + FormValue(geeGt) +
+                    "&gee_validate=" + FormValue(geetestValidate) +
+                    "&gee_seccode=" + FormValue(geetestSeccode)
+            };
+        }
+
+        /// <summary>Submit the SMS code for a pending password login.</summary>
+        public ApiModel SubmitPwdLoginSMSCheck(string code, string tmpToken, string requestId, string captchaKey)
+        {
+            return new ApiModel
+            {
+                method = RestSharp.Method.Post,
+                baseUrl = "https://passport.bilibili.com/x/safecenter/login/tel/verify",
+                body = "type=loginTelCheck&code=" + FormValue(code) +
+                    "&tmp_code=" + FormValue(tmpToken) +
+                    "&request_id=" + FormValue(requestId) +
+                    "&captcha_key=" + FormValue(captchaKey)
+            };
+        }
+
+        /// <summary>
+        /// Build the verified password-login cookie-exchange request. Do not route this through the
+        /// default request transport for login integration until Set-Cookie capture can be isolated
+        /// and committed only after the API response has been validated.
+        /// </summary>
+        public ApiModel PwdLoginExchangeCookie(string code)
+        {
+            return new ApiModel
+            {
+                method = RestSharp.Method.Post,
+                baseUrl = "https://passport.bilibili.com/x/passport-login/web/exchange_cookie",
+                body = "code=" + FormValue(code)
+            };
+        }
+
+        /// <summary>Build the cookie-authenticated request that starts browser-cookie to app-token conversion.</summary>
+        public ApiModel GetCookieToAccessKey(ApiKeyInfo appKey)
+        {
+            if (appKey == null || string.IsNullOrWhiteSpace(appKey.Appkey))
+                throw new ArgumentException("A login app key is required.", nameof(appKey));
+            const string signedApiParameter = "api=http://link.acg.tv/forum.php";
+            var wireApiParameter = "api=" + FormValue("http://link.acg.tv/forum.php");
+            return new ApiModel
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = "https://passport.bilibili.com/login/app/third",
+                parameter = "appkey=" + FormValue(appKey.Appkey) + "&" + wireApiParameter + ApiHelper.GetSign(signedApiParameter, appKey),
+                need_cookie = true
+            };
+        }
+
+        /// <summary>Build the cookie-authenticated confirmation request used for app-token conversion.</summary>
+        public ApiModel GetCookieToAccessKey(string confirmUrl)
+        {
+            Uri uri;
+            if (!Uri.TryCreate(confirmUrl, UriKind.Absolute, out uri) || !string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.OrdinalIgnoreCase) ||
+                !uri.IsDefaultPort || !string.IsNullOrEmpty(uri.UserInfo) || !string.IsNullOrEmpty(uri.Fragment) ||
+                !(uri.Host.Equals("bilibili.com", StringComparison.OrdinalIgnoreCase) || uri.Host.EndsWith(".bilibili.com", StringComparison.OrdinalIgnoreCase)))
+                throw new ArgumentException("The cookie confirmation URL must be an HTTPS Bilibili URL.", nameof(confirmUrl));
+            return new ApiModel { method = RestSharp.Method.Get, baseUrl = uri.AbsoluteUri, need_cookie = true };
+        }
+
+        /// <summary>Read account cookie refresh state using the existing login cookie.</summary>
+        public ApiModel CheckCookies()
+        {
+            return CheckCookies(ApiHelper.Cookie.GetCSRF());
+        }
+
+        public ApiModel CheckCookies(string csrf)
+        {
+            return new ApiModel
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = "https://passport.bilibili.com/x/passport-login/web/cookie/info",
+                parameter = "csrf=" + FormValue(csrf),
+                need_cookie = true
+            };
+        }
+
+        /// <summary>Fetch the refresh CSRF page for the account cookie.</summary>
+        public ApiModel RefreshCsrf(string correspondPath)
+        {
+            if (string.IsNullOrEmpty(correspondPath) || !Regex.IsMatch(correspondPath, "\\A[a-fA-F0-9]{256}\\z"))
+                throw new ArgumentException("The cookie refresh path must be a 256-character hexadecimal value.", nameof(correspondPath));
+            return new ApiModel
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = "https://www.bilibili.com/correspond/1/" + correspondPath,
+                need_cookie = true
+            };
+        }
+
+        /// <summary>Refresh the account cookie with the new refresh CSRF value.</summary>
+        public ApiModel RefreshCookie(string refreshCsrf, string refreshToken)
+        {
+            return RefreshCookie(ApiHelper.Cookie.GetCSRF(), refreshCsrf, refreshToken);
+        }
+
+        public ApiModel RefreshCookie(string csrf, string refreshCsrf, string refreshToken)
+        {
+            return new ApiModel
+            {
+                method = RestSharp.Method.Post,
+                baseUrl = "https://passport.bilibili.com/x/passport-login/web/cookie/refresh",
+                body = "csrf=" + FormValue(csrf) +
+                    "&refresh_csrf=" + FormValue(refreshCsrf) +
+                    "&source=main_web&refresh_token=" + FormValue(refreshToken),
+                need_cookie = true
+            };
+        }
+
+        /// <summary>Confirm that a cookie refresh completed successfully.</summary>
+        public ApiModel ConfirmRefreshCookie(string refreshToken)
+        {
+            return ConfirmRefreshCookie(ApiHelper.Cookie.GetCSRF(), refreshToken);
+        }
+
+        public ApiModel ConfirmRefreshCookie(string csrf, string refreshToken)
+        {
+            return new ApiModel
+            {
+                method = RestSharp.Method.Post,
+                baseUrl = "https://passport.bilibili.com/x/passport-login/web/confirm/refresh",
+                body = "csrf=" + FormValue(csrf) +
+                    "&refresh_token=" + FormValue(refreshToken),
+                need_cookie = true
+            };
+        }
         /// <summary>
         /// SSO
         /// </summary>
@@ -270,16 +435,15 @@ namespace BiliLite.Api
             return api;
         }
 
-        public ApiModel History(int pn=1,int ps=24)
+        public ApiModel HistoryWbi(long max = 0, long viewAt = 0)
         {
-            ApiModel api = new ApiModel()
+            return new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}/history",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&pn={pn}&ps={ps}"
+                baseUrl = $"{ApiHelper.API_BASE_URL}/x/web-interface/history/cursor",
+                parameter = $"max={max}&view_at={viewAt}&business=",
+                need_cookie = true
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
-            return api;
         }
         public ApiModel DelHistory(string id)
         {

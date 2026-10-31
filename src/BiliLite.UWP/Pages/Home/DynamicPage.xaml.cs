@@ -47,7 +47,7 @@ namespace BiliLite.Pages.Home
         private void AdaptiveGridView_ItemClick(object sender, ItemClickEventArgs e)
         {
            var item= e.ClickedItem as DynamicItemModel;
-            if (item.desc.type==8)
+            if (item.desc.type == 8 || item.desc.type == 4310)
             {
                 MessageCenter.NavigateToPage(this, new NavigationInfo() { 
                     icon= Symbol.Play,

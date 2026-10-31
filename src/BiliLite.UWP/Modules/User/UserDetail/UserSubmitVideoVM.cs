@@ -1,7 +1,9 @@
 ﻿using BiliLite.Api.User;
 using BiliLite.Helpers;
+using BiliLite.Services;
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -15,9 +17,12 @@ namespace BiliLite.Modules.User.UserDetail
     {
         public string mid { get; set; }
         private readonly UserDetailAPI userDetailAPI;
+        private readonly GrpcService grpcService;
+        private bool? _searchThroughArchiveGrpc;
         public UserSubmitVideoVM()
         {
             userDetailAPI = new UserDetailAPI();
+            grpcService = new GrpcService();
             RefreshSubmitVideoCommand = new RelayCommand(Refresh);
             LoadMoreSubmitVideoCommand = new RelayCommand(LoadMore);
             Tlist = new ObservableCollection<SubmitVideoTlistItemModel>() {
@@ -86,11 +91,40 @@ namespace BiliLite.Modules.User.UserDetail
         {
             try
             {
-                await Api.ApiHelper.LoadWbiKey();
+                if (SubmitVideoPage == 1)
+                {
+                    _searchThroughArchiveGrpc = null;
+                }
                 Nothing = false;
                 SubmitVideoCanLoadMore = false;
                 LoadingSubmitVideo = true;
-                var api = userDetailAPI.SubmitVideosWbi(mid, SubmitVideoPage, keyword: Keyword, tid: SelectTid.tid, order: (SubmitVideoOrder)SelectOrder);
+
+                if (_searchThroughArchiveGrpc != false && IsArchiveSearch())
+                {
+                    _searchThroughArchiveGrpc = true;
+                    CurrentTid = SelectTid.tid;
+                    try
+                    {
+                        var reply = await grpcService.SearchSpaceArchive(mid, SubmitVideoPage, keyword: Keyword);
+                        AttachArchiveItems(SpaceArchiveGrpcMapper.MapArchiveItems(reply.Archives), reply.Total);
+                        return;
+                    }
+                    catch (Exception)
+                    {
+                        // 搜索接口不可用时从第一页改用 REST 重新请求，该次查询的后续分页也继续走 REST
+                        _searchThroughArchiveGrpc = false;
+                        SubmitVideoPage = 1;
+                        SubmitVideoItems = null;
+                        Nothing = false;
+                    }
+                }
+                else
+                {
+                    _searchThroughArchiveGrpc = false;
+                }
+
+                await Api.ApiHelper.LoadWbiKey();
+                var api = await userDetailAPI.SubmitVideosWbi(mid, SubmitVideoPage, keyword: Keyword, tid: SelectTid.tid, order: (SubmitVideoOrder)SelectOrder);
                 CurrentTid = SelectTid.tid;
                 var results = await api.Request();
                 if (results.status)
@@ -164,6 +198,40 @@ namespace BiliLite.Modules.User.UserDetail
                 LoadingSubmitVideo = false;
             }
         }
+
+        private bool IsArchiveSearch()
+        {
+            return !string.IsNullOrEmpty(Keyword) && SelectTid.tid == 0 && SelectOrder == 0;
+        }
+
+        private void AttachArchiveItems(List<SubmitVideoItemModel> items, long total)
+        {
+            if (SubmitVideoItems == null)
+            {
+                SubmitVideoItems = new ObservableCollection<SubmitVideoItemModel>(items);
+            }
+            else
+            {
+                foreach (var item in items)
+                {
+                    SubmitVideoItems.Add(item);
+                }
+            }
+            if (SubmitVideoPage == 1 && SubmitVideoItems.Count == 0)
+            {
+                Nothing = true;
+            }
+            if (SubmitVideoItems.Count >= total)
+            {
+                SubmitVideoCanLoadMore = false;
+            }
+            else
+            {
+                SubmitVideoCanLoadMore = true;
+                SubmitVideoPage++;
+            }
+        }
+
         public async void Refresh()
         {
             if (LoadingSubmitVideo)
@@ -192,20 +260,6 @@ namespace BiliLite.Modules.User.UserDetail
         public int tid { get; set; }
         public string name { get; set; }
         public int count { get; set; }
-    }
-    public class SubmitVideoItemModel
-    {
-        public int comment { get; set; }
-        public string play { get; set; }
-
-        public string pic { get; set; }
-        public string description { get; set; }
-        public string title { get; set; }
-        public string author { get; set; }
-        public string length { get; set; }
-        public string aid { get; set; }
-        public long created { get; set; }
-        public int video_review { get; set; }
     }
 
 }

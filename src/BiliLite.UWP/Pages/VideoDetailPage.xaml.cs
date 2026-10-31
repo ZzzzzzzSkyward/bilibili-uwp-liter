@@ -1,17 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Globalization;
 using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Navigation;
 using BiliLite.Modules;
+using BiliLite.Models.Common;
 using Microsoft.UI.Xaml.Controls;
 using BiliLite.Helpers;
 using Windows.ApplicationModel.DataTransfer;
 using BiliLite.Controls;
 using Windows.System;
 using BiliLite.Dialogs;
+using BiliLite.Services;
 using System.Threading.Tasks;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -21,7 +25,21 @@ namespace BiliLite.Pages
     public class VideoPlaylist
     {
         public int Index { get; set; }
-        public List<VideoPlaylistItem> Playlist { get; set; }
+        public IList<VideoPlaylistItem> Playlist { get; set; }
+        /// <summary>
+        /// 非空表示这是远程 medialist,列表内容由 MediaListService 分页读取
+        /// </summary>
+        public string MediaListId { get; set; }
+        public int MediaListType { get; set; } = MediaListService.DefaultMediaListType;
+        /// <summary>
+        /// 远程播放列表的翻页状态。启动器链接进来的会带上已取好的首页,
+        /// 页面直接复用,不重复请求;为空时页面自己建一份。
+        /// </summary>
+        public MediaListPagingState MediaListState { get; set; }
+        /// <summary>
+        /// 导航来源给出的标题,没有就用通用标题
+        /// </summary>
+        public string Title { get; set; }
     }
     public class VideoPlaylistItem
     {
@@ -29,6 +47,15 @@ namespace BiliLite.Pages
         public string Author { get; set; }
         public string Cover { get; set; }
         public string Title { get; set; }
+        public string Duration { get; set; }
+    }
+    public class VideoUgcSeasonEpisodeView
+    {
+        public string Aid { get; set; }
+        public string Title { get; set; }
+        public string Author { get; set; }
+        public string Cover { get; set; }
+        public string Duration { get; set; }
     }
     public sealed partial class VideoDetailPage : PlayPage
     {
@@ -59,8 +86,6 @@ namespace BiliLite.Pages
             NavigationCacheMode = NavigationCacheMode.Enabled;
             videoDetailVM = new VideoDetailVM();
             this.DataContext = videoDetailVM;
-            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
-            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
             this.RightInfo.Width = new GridLength(SettingHelper.GetValue<double>(SettingHelper.UI.RIGHT_DETAIL_WIDTH, 320), GridUnitType.Pixel);
 
         }
@@ -97,12 +122,36 @@ namespace BiliLite.Pages
         {
             Window.Current.CoreWindow.KeyDown -= CoreWindow_KeyDown;
             Window.Current.CoreWindow.KeyDown += CoreWindow_KeyDown;
-            if (this.Parent is MyFrame)
-            {
-                (this.Parent as MyFrame).ClosedPage -= VideoDetailPage_ClosedPage;
-                (this.Parent as MyFrame).ClosedPage += VideoDetailPage_ClosedPage;
-            }
+            SubscribeClosedPage();
+        }
 
+        private void SubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= VideoDetailPage_ClosedPage;
+                frame.ClosedPage += VideoDetailPage_ClosedPage;
+            }
+        }
+
+        private void UnsubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= VideoDetailPage_ClosedPage;
+            }
+        }
+
+        private void SubscribeShare()
+        {
+            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
+            dataTransferManager.DataRequested -= DataTransferManager_DataRequested;
+            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
+        }
+
+        private void ReleaseShare()
+        {
+            DataTransferManager.GetForCurrentView().DataRequested -= DataTransferManager_DataRequested;
         }
 
         private void VideoDetailPage_ClosedPage(object sender, EventArgs e)
@@ -112,12 +161,19 @@ namespace BiliLite.Pages
         }
         private void ClosePage()
         {
+            // 页签已经关掉,播放器马上释放:先立标记,还在路上的请求回来后按它收手
+            _isClosed = true;
+            // 详情请求可能还在路上,下一次进入本页(页面是缓存的同一实例)要能重新取
+            flag = false;
+            UnsubscribeClosedPage();
+            ReleaseShare();
             if (videoDetailVM != null)
             {
                 videoDetailVM.Loaded = false;
                 videoDetailVM.Loading = true;
                 videoDetailVM.VideoInfo = null;
             }
+            RemoveUgcSeason();
             changedFlag = true;
             player?.FullScreen(false);
             player?.MiniWidnows(false);
@@ -130,11 +186,30 @@ namespace BiliLite.Pages
             request.Data.SetWebLink(new Uri(videoDetailVM.VideoInfo.short_link));
         }
         VideoPlaylist playlist;
+        PivotItem playlistPivotItem;
+        PivotItem ugcSeasonPivotItem;
+        readonly List<ListView> ugcSeasonEpisodeLists = new List<ListView>();
+        string ugcSeasonAid;
+        // 远程 medialist 播放列表:行、翻页状态和页签内容都由这里持有
+        readonly MediaListService mediaListService = new MediaListService();
+        MediaListPagingState mediaListState;
+        ObservableCollection<VideoPlaylistItem> mediaListRows;
+        ListView mediaListListView;
+        TextBlock mediaListCountText;
+        Button mediaListLoadMoreButton;
         bool flag = false;
+        // 页签关闭后页面上的一切续作都要收手:关闭路径先立标记,晚到的请求按它放弃
+        bool _isClosed;
         string _id = "";
+        // 当前视频是从合集分集打开的:连播跟着合集顺序走,不去动打开时的队列
+        bool playFromUgcSeason;
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            // 重新进入本页时整页重建,上一次关闭留下的标记不能拦住这次播放
+            _isClosed = false;
+            SubscribeClosedPage();
+            SubscribeShare();
 
             if (e.NavigationMode == NavigationMode.New)
             {
@@ -150,11 +225,18 @@ namespace BiliLite.Pages
                 if (e.Parameter is VideoPlaylist)
                 {
                     playlist = e.Parameter as VideoPlaylist;
+                    playFromUgcSeason = false;
+                    // 带 medialist ID 的是远程播放列表:先取首页再播放,不走内存列表
+                    if (!string.IsNullOrEmpty(playlist.MediaListId))
+                    {
+                        await InitializeMediaListPlaylist();
+                        return;
+                    }
 
-                  
                     var element = PlayListTpl.GetElement(new Windows.UI.Xaml.ElementFactoryGetArgs()) as PivotItem;
                     element.DataContext = playlist;
                  
+                    playlistPivotItem = element;
                     pivot.Items.Insert(0, element);
                     pivot.SelectedIndex = 0;
                     await InitializeVideo(playlist.Playlist[playlist.Index].ID);
@@ -173,88 +255,435 @@ namespace BiliLite.Pages
             }
 
         }
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            ReleaseShare();
+            UnsubscribeClosedPage();
+            base.OnNavigatedFrom(e);
+        }
         private async Task InitializeVideo(string id)
         {
-            _id = id;
+            // 页签已关:既不取详情也不换标题、不起播
+            if (_isClosed) return;
+            // 上一次取详情还在路上:这次选择整条丢掉,不改 _id,免得在途请求的对账条件被顶替
             if (flag) return;
+            _id = id;
             flag = true;
-            if (long.TryParse(id, out var aid))
+            try
             {
-                avid = id;
-                is_bvid = false;
-            }
-            else
-            {
-                bvid = id;
-                is_bvid = true;
-            }
-            await videoDetailVM.LoadVideoDetail(id, is_bvid);
-            if (this.VideoCover != null)
-            {
-                this.VideoCover.Visibility = SettingHelper.GetValue<bool>(SettingHelper.UI.SHOW_DETAIL_COVER, true) ? Visibility.Visible : Visibility.Collapsed;
-            }
-            if (SettingHelper.GetValue<bool>("一键三连提示", true))
-            {
-                SettingHelper.SetValue("一键三连提示", false);
-                Utils.ShowMessageToast("右键或长按点赞按钮可以一键三连哦~", 5);
-            }
-            if (videoDetailVM.VideoInfo != null)
-            {
-                avid = videoDetailVM.VideoInfo.aid;
-                var desc = ControlHelper.StringToRichText(videoDetailVM.VideoInfo.desc, null);
+                if (long.TryParse(id, out var aid))
+                {
+                    avid = id;
+                    is_bvid = false;
+                }
+                else
+                {
+                    bvid = id;
+                    is_bvid = true;
+                }
+                await videoDetailVM.LoadVideoDetail(id, is_bvid);
+                // 详情回来时页签已经关掉,或者这次请求已被下一次进入本页的取详情顶替:
+                // 都不要再改 VM 和播放器(播放器可能已经释放)
+                if (_isClosed || _id != id)
+                {
+                    return;
+                }
+                if (this.VideoCover != null)
+                {
+                    this.VideoCover.Visibility = SettingHelper.GetValue<bool>(SettingHelper.UI.SHOW_DETAIL_COVER, true) ? Visibility.Visible : Visibility.Collapsed;
+                }
+                if (SettingHelper.GetValue<bool>("一键三连提示", true))
+                {
+                    SettingHelper.SetValue("一键三连提示", false);
+                    Utils.ShowMessageToast("右键或长按点赞按钮可以一键三连哦~", 5);
+                }
+                if (videoDetailVM.VideoInfo != null)
+                {
+                    avid = videoDetailVM.VideoInfo.aid;
+                    var desc = ControlHelper.StringToRichText(videoDetailVM.VideoInfo.desc, null);
 
-                contentDesc.Content = desc;
-                ChangeTitle(videoDetailVM.VideoInfo.title);
-                CreateQR();
-                if (!string.IsNullOrEmpty(videoDetailVM.VideoInfo.redirect_url))
-                {
-                    var result = await MessageCenter.HandelSeasonID(videoDetailVM.VideoInfo.redirect_url);
-                    if (!string.IsNullOrEmpty(result))
+                    contentDesc.Content = desc;
+                    ChangeTitle(videoDetailVM.VideoInfo.title);
+                    CreateQR();
+                    if (!string.IsNullOrEmpty(videoDetailVM.VideoInfo.redirect_url))
                     {
-                        this.Frame.Navigate(typeof(SeasonDetailPage), result);
-                        //从栈中移除当前页面的历史
-                        this.Frame.BackStack.Remove(this.Frame.BackStack.FirstOrDefault(x => x.SourcePageType == this.GetType()));
-                        return;
+                        var result = await MessageCenter.HandelSeasonID(videoDetailVM.VideoInfo.redirect_url);
+                        if (!string.IsNullOrEmpty(result))
+                        {
+                            this.Frame.Navigate(typeof(SeasonDetailPage), result);
+                            //从栈中移除当前页面的历史
+                            this.Frame.BackStack.Remove(this.Frame.BackStack.FirstOrDefault(x => x.SourcePageType == this.GetType()));
+                            return;
+                        }
                     }
-                }
-                List<PlayInfo> playInfos = new List<PlayInfo>();
-                int i = 0;
-                foreach (var item in videoDetailVM.VideoInfo.pages)
-                {
-                    playInfos.Add(new PlayInfo()
+                    List<PlayInfo> playInfos = new List<PlayInfo>();
+                    int i = 0;
+                    foreach (var item in videoDetailVM.VideoInfo.pages)
                     {
-                        avid = videoDetailVM.VideoInfo.aid,
-                        cid = item.cid,
-                        duration = item.duration,
-                        is_interaction = videoDetailVM.VideoInfo.interaction != null,
-                        order = i,
-                        play_mode = VideoPlayType.Video,
-                        title = "P" + item.page + " " + item.part,
-                        area = Utils.ParseArea(videoDetailVM.VideoInfo.title,videoDetailVM.VideoInfo.owner.mid)
+                        playInfos.Add(new PlayInfo()
+                        {
+                            avid = videoDetailVM.VideoInfo.aid,
+                            cid = item.cid,
+                            duration = item.duration,
+                            is_interaction = videoDetailVM.VideoInfo.interaction != null,
+                            order = i,
+                            play_mode = VideoPlayType.Video,
+                            title = "P" + item.page + " " + item.part,
+                            area = Utils.ParseArea(videoDetailVM.VideoInfo.title,videoDetailVM.VideoInfo.owner.mid)
+                        });
+                        i++;
+                    }
+                    var index = 0;
+                    if (videoDetailVM.VideoInfo.history != null)
+                    {
+                        var history = videoDetailVM.VideoInfo.pages.FirstOrDefault(x => x.cid.Equals(videoDetailVM.VideoInfo.history.cid));
+                        if (history != null)
+                        {
+                            SettingHelper.SetValue<double>(history.cid, Convert.ToDouble(videoDetailVM.VideoInfo.history.progress));
+                            index = videoDetailVM.VideoInfo.pages.IndexOf(history);
+                            //player.InitializePlayInfo(playInfos, );
+                        }
+                    }
+                    player.InitializePlayInfo(playInfos, index);
+                    comment.LoadComment(new LoadCommentInfo()
+                    {
+                        CommentMode = (int)Api.CommentApi.CommentType.Video,
+                        CommentSort = Api.CommentApi.CommentSort.Hot,
+                        Oid = videoDetailVM.VideoInfo.aid
                     });
-                    i++;
                 }
-                var index = 0;
-                if (videoDetailVM.VideoInfo.history != null)
+                ApplyUgcSeason();
+            }
+            finally
+            {
+                // 在途标记只归发起这次请求的一方:关页后重新进入再发起的请求不能被这里放开
+                if (_id == id) flag = false;
+            }
+        }
+
+        /// <summary>
+        /// 合集信息就在详情响应里，这里只刷新页签，不再单独请求
+        /// </summary>
+        private void ApplyUgcSeason()
+        {
+            var info = videoDetailVM.VideoInfo;
+            if (info == null || !info.showUgcSeason)
+            {
+                RemoveUgcSeason();
+                return;
+            }
+
+            // 用详情里的 aid 选中当前视频，按BV打开时也能选中同一行
+            ugcSeasonAid = info.aid;
+            ugcSeasonEpisodeLists.Clear();
+
+            var panel = new StackPanel();
+            panel.Children.Add(new TextBlock
+            {
+                Text = info.UgcSeason.Title,
+                FontSize = 20,
+                FontWeight = Windows.UI.Text.FontWeights.SemiBold,
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(12, 12, 12, 0),
+            });
+            if (!string.IsNullOrEmpty(info.UgcSeason.Intro))
+            {
+                panel.Children.Add(new TextBlock
                 {
-                    var history = videoDetailVM.VideoInfo.pages.FirstOrDefault(x => x.cid.Equals(videoDetailVM.VideoInfo.history.cid));
-                    if (history != null)
-                    {
-                        SettingHelper.SetValue<double>(history.cid, Convert.ToDouble(videoDetailVM.VideoInfo.history.progress));
-                        index = videoDetailVM.VideoInfo.pages.IndexOf(history);
-                        //player.InitializePlayInfo(playInfos, );
-                    }
-                }
-                player.InitializePlayInfo(playInfos, index);
-                comment.LoadComment(new LoadCommentInfo()
-                {
-                    CommentMode = (int)Api.CommentApi.CommentType.Video,
-                    CommentSort = Api.CommentApi.CommentSort.Hot,
-                    Oid = videoDetailVM.VideoInfo.aid
+                    Text = info.UgcSeason.Intro,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(12, 8, 12, 0),
                 });
             }
-            flag = false;
+
+            foreach (var section in info.UgcSeason.Sections)
+            {
+                if (section?.Episodes == null || section.Episodes.Count == 0) continue;
+
+                var header = new TextBlock
+                {
+                    Text = section.Title,
+                    FontSize = 16,
+                    FontWeight = Windows.UI.Text.FontWeights.SemiBold,
+                    TextWrapping = TextWrapping.Wrap,
+                    Margin = new Thickness(12, 16, 12, 4),
+                };
+                panel.Children.Add(header);
+
+                var listView = new ListView()
+                {
+                    ItemsSource = section.Episodes.Select(ToUgcSeasonEpisodeView).ToList(),
+                    ItemTemplate = (DataTemplate)Resources["UgcSeasonEpisodeTpl"],
+                    ItemContainerStyle = (Style)Resources["UgcSeasonEpisodeItemStyle"],
+                    SelectionMode = ListViewSelectionMode.Single,
+                };
+                // 分集列表整体滚动，不要各自滚动
+                ScrollViewer.SetVerticalScrollMode(listView, ScrollMode.Disabled);
+                ScrollViewer.SetVerticalScrollBarVisibility(listView, ScrollBarVisibility.Disabled);
+                listView.SelectionChanged += UgcSeasonEpisode_SelectionChanged;
+                panel.Children.Add(listView);
+                ugcSeasonEpisodeLists.Add(listView);
+            }
+
+            if (ugcSeasonEpisodeLists.Count == 0)
+            {
+                RemoveUgcSeason();
+                return;
+            }
+
+            if (ugcSeasonPivotItem == null)
+            {
+                ugcSeasonPivotItem = new PivotItem()
+                {
+                    Margin = new Thickness(0),
+                    Header = new TextBlock() { Text = "合集", FontSize = 18 },
+                };
+            }
+            ugcSeasonPivotItem.Content = new ScrollViewer()
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                Content = panel,
+            };
+
+            // 已经有合集页签时只换内容，避免刷新、切换视频后出现重复页签
+            if (!pivot.Items.Contains(ugcSeasonPivotItem))
+            {
+                var selectedItem = pivot.SelectedItem;
+                pivot.Items.Insert(0, ugcSeasonPivotItem);
+                if (selectedItem != null) pivot.SelectedItem = selectedItem;
+            }
+
+            SelectUgcSeasonEpisode();
         }
+
+        private void SelectUgcSeasonEpisode()
+        {
+            foreach (var listView in ugcSeasonEpisodeLists)
+            {
+                var episodes = listView.ItemsSource as List<VideoUgcSeasonEpisodeView>;
+                listView.SelectedItem = episodes?.FirstOrDefault(x => x.Aid == ugcSeasonAid && !string.IsNullOrEmpty(x.Aid));
+            }
+        }
+
+        private void RemoveUgcSeason()
+        {
+            ugcSeasonAid = null;
+            ugcSeasonEpisodeLists.Clear();
+            if (ugcSeasonPivotItem == null) return;
+            ugcSeasonPivotItem.Content = null;
+            if (pivot.Items.Contains(ugcSeasonPivotItem))
+            {
+                pivot.Items.Remove(ugcSeasonPivotItem);
+            }
+        }
+
+        private async void UgcSeasonEpisode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // 页签已关:选中事件不再换集,播放器已经释放
+            if (_isClosed) return;
+            // 详情还在路上:这次选中整条丢掉,不换高亮也不改连播来源
+            if (flag) return;
+            var listView = sender as ListView;
+            var item = listView?.SelectedItem as VideoUgcSeasonEpisodeView;
+            // 选中当前播放的视频时不重新加载，只换一个分集时才播放并清掉其它分区的高亮
+            if (item == null || item.Aid == ugcSeasonAid) return;
+            if (string.IsNullOrEmpty(item.Aid)) return;
+            foreach (var other in ugcSeasonEpisodeLists)
+            {
+                if (!ReferenceEquals(other, listView)) other.SelectedItem = null;
+            }
+            // 从合集分集点进来:连播跟合集顺序,打开时的队列原样留着
+            playFromUgcSeason = true;
+            await InitializeVideo(item.Aid);
+        }
+
+        private static VideoUgcSeasonEpisodeView ToUgcSeasonEpisodeView(VideoUgcSeasonSectionEpisode episode)
+        {
+            return new VideoUgcSeasonEpisodeView()
+            {
+                Aid = episode.Aid,
+                Title = episode.Title,
+                Author = episode.Author?.Name,
+                Cover = episode.Cover,
+                Duration = FormatDuration(episode.Page?.Duration ?? 0),
+            };
+        }
+
+        private static string FormatDuration(long seconds)
+        {
+            if (seconds < 0) seconds = 0;
+            var duration = TimeSpan.FromSeconds(seconds);
+            return seconds >= 3600 ? duration.ToString(@"hh\:mm\:ss") : duration.ToString(@"mm\:ss");
+        }
+
+        /// <summary>
+        /// 远程播放列表:建页签、取首页、播放第一行。翻页只追加到同一个列表。
+        /// </summary>
+        private async Task InitializeMediaListPlaylist()
+        {
+            // 启动器链接已经取过首页,直接复用同一份状态;内存里传来的链接自己建一份
+            mediaListState = playlist.MediaListState ?? new MediaListPagingState(playlist.MediaListId, playlist.MediaListType, MediaListSourceKind.MediaList, playlist.Title);
+            playlist.MediaListState = mediaListState;
+            playlist.MediaListId = mediaListState.MediaListId;
+            playlist.MediaListType = mediaListState.MediaListType;
+            mediaListRows = new ObservableCollection<VideoPlaylistItem>();
+            AppendMediaListRows(0);
+            playlist.Playlist = mediaListRows;
+            playlist.Index = Math.Max(0, playlist.Index);
+            playFromUgcSeason = false;
+
+            mediaListCountText = new TextBlock()
+            {
+                FontSize = 12,
+            };
+            mediaListLoadMoreButton = new Button()
+            {
+                Content = "加载更多",
+                Margin = new Thickness(0, 8, 0, 0),
+            };
+            mediaListLoadMoreButton.Click += MediaListLoadMore_Click;
+
+            var header = new StackPanel() { Margin = new Thickness(12, 4, 12, 4) };
+            header.Children.Add(mediaListCountText);
+            header.Children.Add(mediaListLoadMoreButton);
+
+            mediaListListView = new ListView()
+            {
+                Header = header,
+                ItemsSource = mediaListRows,
+                ItemTemplate = (DataTemplate)Resources["MediaListRowTpl"],
+                ItemContainerStyle = (Style)Resources["UgcSeasonEpisodeItemStyle"],
+                SelectionMode = ListViewSelectionMode.Single,
+            };
+            mediaListListView.SelectionChanged += ListView_SelectionChanged;
+
+            // 页签内容是 ListView,播放结束的自动连播照旧按引用取 playList 页签
+            var element = new PivotItem()
+            {
+                Margin = new Thickness(0),
+                Header = new TextBlock() { Text = mediaListState.Title, FontSize = 18 },
+                Content = mediaListListView,
+            };
+            playlistPivotItem = element;
+            pivot.Items.Insert(0, element);
+            pivot.SelectedIndex = 0;
+            // 首页可能已经在状态里:先把计数和"加载更多"按已有行显示出来
+            RefreshMediaListChrome();
+
+            // 启动器链接进来时首页已经在状态里,不要再请求一次
+            if (mediaListState.LoadedCount == 0 && !await LoadMediaListPage())
+            {
+                // 取首页期间页签被关掉:不再刷新已拆掉的页面
+                if (_isClosed) return;
+                // 失败已由服务提示,页签保留并显示已加载 0,不会留下一个空白页签
+                RefreshMediaListChrome();
+                return;
+            }
+
+            // 首页在取的过程中页签被关掉:不选行也不起播
+            if (_isClosed)
+            {
+                return;
+            }
+            // 详情还在路上:不选行也不起播,等在途请求自己回来
+            if (flag) return;
+
+            if (mediaListRows.Count == 0)
+            {
+                Utils.ShowMessageToast("播放列表是空的");
+                RefreshMediaListChrome();
+                return;
+            }
+            var index = Math.Min(playlist.Index, mediaListRows.Count - 1);
+            playlist.Index = index;
+            mediaListListView.SelectedIndex = index;
+            await InitializeVideo(mediaListRows[index].ID);
+        }
+
+        private async void MediaListLoadMore_Click(object sender, RoutedEventArgs e)
+        {
+            // 页签已关:按钮不再取页
+            if (_isClosed) return;
+            // 失败后按钮就是重试入口,不受 HasMore 限制
+            if (mediaListState == null) return;
+            if (!mediaListState.HasMore && !mediaListState.LastLoadFailed) return;
+            mediaListLoadMoreButton.IsEnabled = false;
+            await LoadMediaListPage();
+            // 取页期间页签被关掉:不再碰已拆掉的页面状态
+            if (_isClosed) return;
+            RefreshMediaListChrome();
+        }
+
+        /// <summary>
+        /// 取一页并追加。游标来自 MediaListPagingState 记录的上一页最后一条 aid,
+        /// 与当前选中的播放行无关;服务层已按返回的 ID 去重。
+        /// </summary>
+        private async Task<bool> LoadMediaListPage()
+        {
+            if (mediaListState == null) return false;
+            var page = mediaListState.IsFirstPage
+                ? await mediaListService.GetMediaList(mediaListState.MediaListId, mediaListState.MediaListType)
+                : await mediaListService.LoadMoreMediaList(mediaListState);
+            // 页签已关:这一页只当没取到,不追加行、也不把状态记成失败
+            if (_isClosed) return false;
+            // 失败已经由服务按现有提示方式上报,这里保留已加载的行和"加载更多"
+            if (page == null)
+            {
+                mediaListState.MarkLoadFailed();
+                return false;
+            }
+
+            var loaded = mediaListState.LoadedCount;
+            mediaListState.Append(page);
+            AppendMediaListRows(loaded);
+            RefreshMediaListChrome();
+            return true;
+        }
+
+        /// <summary>
+        /// 把状态里从第 loaded 条起的新行补到绑定的集合上,已加载的行不重建
+        /// </summary>
+        private void AppendMediaListRows(int loaded)
+        {
+            for (var i = loaded; i < mediaListState.LoadedCount; i++)
+            {
+                mediaListRows.Add(ToPlaylistItem(mediaListState.Rows[i]));
+            }
+        }
+
+        private void RefreshMediaListChrome()
+        {
+            if (mediaListState == null) return;
+            if (mediaListCountText != null)
+            {
+                mediaListCountText.Text = "已加载 " + mediaListState.CountText;
+            }
+            if (mediaListLoadMoreButton != null)
+            {
+                mediaListLoadMoreButton.IsEnabled = mediaListState.HasMore;
+                mediaListLoadMoreButton.Visibility = mediaListState.HasMore ? Visibility.Visible : Visibility.Collapsed;
+                // 取失败过时按钮就是重试入口,即使这一页之后没有更多也要留着
+                if (mediaListState.LastLoadFailed)
+                {
+                    mediaListLoadMoreButton.IsEnabled = true;
+                    mediaListLoadMoreButton.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        private static VideoPlaylistItem ToPlaylistItem(MediaListItem item)
+        {
+            return new VideoPlaylistItem()
+            {
+                // 列表资源ID就是视频的 aid
+                ID = item.Id.ToString(CultureInfo.InvariantCulture),
+                Title = item.Title,
+                Cover = item.Cover,
+                Author = item.Upper?.Name,
+                Duration = FormatDuration(item.Duration),
+            };
+        }
+
         private void CreateQR()
         {
             try
@@ -461,6 +890,16 @@ namespace BiliLite.Pages
             player.ChangePlayIndex(listEpisode.SelectedIndex);
         }
 
+        private void listEpisode_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void listEpisode_PreviewKeyUp(object sender, KeyRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
         private void btnOpenUser_Click(object sender, RoutedEventArgs e)
         {
             var data = (sender as HyperlinkButton).DataContext;
@@ -550,27 +989,143 @@ namespace BiliLite.Pages
 
         private async void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            
+            // 页签已关:晚到的选中不再起播
+            if (_isClosed) return;
+            // 详情还在路上:这次选中整条丢掉,不动队列游标
+            if (flag) return;
             var liveView = sender as ListView;
             if (liveView.SelectedItem == null ) return;
             var item = liveView.SelectedItem as VideoPlaylistItem;
            
             playlist.Index = playlist.Playlist.IndexOf(item);
+            // 从队列里选行:连播回到队列,队列和选中行都不换
+            playFromUgcSeason = false;
             await InitializeVideo(item.ID);
 
         }
 
-        private void player_AllMediaEndEvent(object sender, EventArgs e)
+        /// <summary>
+        /// 当前视频自己的分P播完后才会到这里:先从合集分集打开的就按分区/分集顺序走,
+        /// 否则走打开时的队列。远程队列停在最后一行且还有下一页时先取下一页,取不到就
+        /// 把"加载更多"留作重试,不跳过任何一行也不当成播完。
+        /// </summary>
+        private async void player_AllMediaEndEvent(object sender, EventArgs e)
         {
-
-            if(playlist==null||playlist.Index== playlist.Playlist.Count - 1)
+            // 页签已关:播放器已释放,播放结束事件不再续播
+            if (_isClosed) return;
+            // 详情还在路上:续播这一拍丢掉,不让它顶掉在途请求
+            if (flag) return;
+            if (playFromUgcSeason)
             {
+                // 跟着合集走:合集播完就结束,不跳回打开时的队列
+                if (await AdvanceUgcSeasonAsync()) return;
+                if (_isClosed) return;
                 Utils.ShowMessageToast("播放完毕");
                 return;
             }
-            var listView= (pivot.Items[0] as PivotItem).Content as ListView;
-         
-            listView.SelectedIndex = playlist.Index + 1; 
+
+            if (playlist != null && playlist.Playlist != null && playlist.Playlist.Count > 0)
+            {
+                await AdvancePlaylistAsync();
+                return;
+            }
+
+            // 没有队列时,详情里的合集就是顺序源
+            if (await AdvanceUgcSeasonAsync()) return;
+            if (_isClosed) return;
+            Utils.ShowMessageToast("播放完毕");
+        }
+
+        private async Task<bool> AdvanceUgcSeasonAsync()
+        {
+            // 页签已关:不再按合集顺序选下一集
+            if (_isClosed) return false;
+            var next = VideoUgcSeasonOrder.NextAid(videoDetailVM?.VideoInfo?.UgcSeason, ugcSeasonAid);
+            if (string.IsNullOrEmpty(next)) return false;
+
+            foreach (var listView in ugcSeasonEpisodeLists)
+            {
+                var episodes = listView.ItemsSource as List<VideoUgcSeasonEpisodeView>;
+                var row = episodes?.FirstOrDefault(x => x.Aid == next);
+                if (row == null) continue;
+                if (!ReferenceEquals(listView.SelectedItem, row))
+                {
+                    // 交给已有的分集选择处理,合集页签和当前队列都不动
+                    listView.SelectedItem = row;
+                    return true;
+                }
+                break;
+            }
+
+            playFromUgcSeason = true;
+            await InitializeVideo(next);
+            // 关闭后这一集没有真正起播,调用方不必再提示播放完毕
+            return !_isClosed;
+        }
+
+        private async Task AdvancePlaylistAsync()
+        {
+            // 页签已关:队列不再往前推
+            if (_isClosed) return;
+            // 一页可能全是已加载的行,取完再判定一次;上限只是防止服务端反复返回 has_more
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                var action = MediaListQueue.NextAction(
+                    playlist.Index,
+                    playlist.Playlist.Count,
+                    mediaListState != null && mediaListState.HasMore,
+                    mediaListState != null && mediaListState.LastLoadFailed);
+
+                switch (action)
+                {
+                    case MediaListNextAction.PlayNextRow:
+                        await SelectPlaylistRowAsync(playlist.Index + 1);
+                        return;
+                    case MediaListNextAction.LoadNextPage:
+                        if (await LoadMediaListPage())
+                        {
+                            // 取页期间页签被关掉:新行留在状态里,但不选行也不起播
+                            if (_isClosed) return;
+                            // 新行已经追加到同一个列表,重新判定再走
+                            continue;
+                        }
+                        // 页签已关:失败也不再改计数、不再提示重试
+                        if (_isClosed) return;
+                        // 失败:已加载行不动,"加载更多"仍然可见,就是重试入口
+                        RefreshMediaListChrome();
+                        Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
+                        return;
+                    case MediaListNextAction.RetryNextPage:
+                        RefreshMediaListChrome();
+                        Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
+                        return;
+                    default:
+                        Utils.ShowMessageToast("播放完毕");
+                        return;
+                }
+            }
+
+            Utils.ShowMessageToast("播放列表没有更多可播放的内容");
+        }
+
+        private async Task SelectPlaylistRowAsync(int index)
+        {
+            // 页签已关:不换选中行,也不起播
+            if (_isClosed) return;
+            // 详情还在路上:这次换行丢掉,队列游标不动
+            if (flag) return;
+            if (index < 0 || index >= playlist.Playlist.Count) return;
+
+            // 远程和内存列表的页签内容都是这个 ListView,选中会走已有的行选择处理
+            var listView = playlistPivotItem?.Content as ListView;
+            if (listView != null && listView.SelectedIndex != index)
+            {
+                listView.SelectedIndex = index;
+                return;
+            }
+
+            playlist.Index = index;
+            await InitializeVideo(playlist.Playlist[index].ID);
         }
 
         private async void btnDownload_Click(object sender, RoutedEventArgs e)

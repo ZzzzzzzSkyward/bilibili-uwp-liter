@@ -1,4 +1,4 @@
-﻿namespace BiliLite.Api
+namespace BiliLite.Api
 {
     public class SeasonIndexAPI
     {
@@ -13,9 +13,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/pgc/season/index/condition",//$"https://bangumi.bilibili.com/media/api/search/v2/condition",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, false) + $"&season_type={season_type}&type=0"
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, false) + $"&season_type={season_type}&type=0"
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
 
@@ -33,9 +33,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/pgc/season/index/result",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, false) + condition+ $"&page={page}&pagesize={pagesize}&season_type={season_type}&type=0"
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, false) + condition + $"&page={page}&pagesize={pagesize}&season_type={season_type}&type=0"
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
 

@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>G4Probe</AssemblyName>
+    <RootNamespace>G4Probe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\BiliLite.gRPC\BiliLite.gRPC.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelector.cs" Link="DynamicApiSelector.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelection.cs" Link="DynamicApiSelection.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiEnvelope.cs" Link="ApiEnvelope.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Dynamic\LegacyDynamicFeedParser.cs" Link="LegacyDynamicFeedParser.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Dynamic\WebDynamicFeedMapper.cs" Link="WebDynamicFeedMapper.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Dynamic\WireScalars.cs" Link="WireScalars.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Dynamic\WebDynamicFeedParser.cs" Link="WebDynamicFeedParser.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\DynamicGrpcMapper.cs" Link="DynamicGrpcMapper.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\Home\DynamicVM.cs" Link="HomeDynamicVM.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\IModules.cs" Link="IModules.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\RelayCommand.cs" Link="RelayCommand.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\ReturnModel.cs" Link="ReturnModel.cs" />
+  </ItemGroup>
+
+</Project>

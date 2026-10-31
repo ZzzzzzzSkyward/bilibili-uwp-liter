@@ -1,4 +1,7 @@
-﻿namespace BiliLite.Api
+using BiliLite.Helpers;
+using System.Threading.Tasks;
+
+namespace BiliLite.Api
 {
     public class RankAPI
     {
@@ -17,7 +20,7 @@
         /// <param name="rid">分区ID</param>
         /// <param name="type">all=全站，origin=原创，rookie=新人</param>
         /// <returns></returns>
-        public ApiModel Rank(int rid,string type)
+        public async Task<ApiModel> Rank(int rid, string type)
         {
             ApiModel api = new ApiModel()
             {
@@ -25,6 +28,11 @@
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/web-interface/ranking/v2",
                 parameter = $"rid={rid}&type={type}"
             };
+            if (SettingHelper.Account.Logined)
+            {
+                api.need_cookie = true;
+            }
+            api.parameter = await ApiHelper.GetWbiSign(api.parameter);
             return api;
         }
 

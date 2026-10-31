@@ -3,6 +3,7 @@ using BiliLite.Models;
 using BiliLite.Modules.Player.Playurl;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace BiliLite.Api
 {
@@ -22,39 +23,15 @@ namespace BiliLite.Api
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{baseUrl}/x/player/wbi/playurl",
-                parameter = $"avid={aid}&cid={cid}&qn={qn}&type=&otype=json",
+                baseUrl = $"{baseUrl}/x/player/playurl",
+                parameter = $"avid={aid}&cid={cid}&qn={qn}&type=&otype=json&mid={(SettingHelper.Account.Logined ? SettingHelper.Account.Profile.mid.ToString() : "")}",
                 need_cookie = true,
                 headers = VideoHeader,
             };
-            var fnval = 0;
-            if (dash)
-            {
-                fnval += 16;//dash
-                fnval += 128;//4k as fourk
-                var CodecMode = (PlayUrlCodecMode)SettingHelper.GetValue<int>(SettingHelper.Player.DEFAULT_VIDEO_TYPE, 1);
-                if (CodecMode == PlayUrlCodecMode.DASH_AV1)
-                {
-                    fnval += 2048;//av1
-                }
-            }
-            else
-            {
-                fnval += 1;//mp4
-            }
-            api.parameter += $"&fourk=1&fnver=0&fnval={fnval}";
-            if (SettingHelper.Account.Logined)
-            {
-                //api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile.mid}";
-            }
+            api.parameter += "&fourk=1&fnver=0&fnval=4048";
             if (proxy)
             {
                 api.parameter += $"&area={area}";
-            }
-            else
-            {
-                //api.parameter += ApiHelper.GetSign(api.parameter,ApiHelper.AndroidKey);
-                api.parameter += ApiHelper.GetWbiSign(api.parameter);
             }
             return api;
         }
@@ -78,15 +55,16 @@ namespace BiliLite.Api
             {
                 api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile.mid}";
             }
-            if (dash)
-            {
-                api.parameter += "&fourk=1&fnver=0&fnval=4048";
-            }
+            api.parameter += "&fourk=1&fnver=0&fnval=12240";
 
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.WebVideoKey);
             if (proxy)
             {
                 api.parameter += $"&area={area}";
+                api.headers = new Dictionary<string, string>()
+                {
+                    {"referer", "https://www.bilibili.com"}
+                };
             }
             return api;
         }
@@ -102,10 +80,7 @@ namespace BiliLite.Api
             {
                 api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile.mid}";
             }
-            if (dash)
-            {
-                api.parameter += "&fourk=1&fnver=0&fnval=4048";
-            }
+            api.parameter += "&fourk=1&fnver=0&fnval=4048";
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.WebVideoKey);
             return api;
         }
@@ -168,7 +143,8 @@ namespace BiliLite.Api
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo",
-                parameter = $"room_id={room_id}&qn={qn}&protocol={protocolstr}&format={videostr}&codec={codecstr}"
+                parameter = $"room_id={room_id}&qn={qn}&protocol={protocolstr}&format={videostr}&codec={codecstr}",
+                need_cookie = true
             };
             return api;
         }
@@ -180,7 +156,7 @@ namespace BiliLite.Api
         /// <param name="graph_version"></param>
         /// <param name="edge_id"></param>
         /// <returns></returns>
-        public ApiModel InteractionEdgeInfo(string aid,int graph_version,long edge_id=0)
+        public ApiModel InteractionEdgeInfo(string aid, int graph_version, long edge_id = 0)
         {
             ApiModel api = new ApiModel()
             {
@@ -242,7 +218,7 @@ namespace BiliLite.Api
         /// <param name="aid">AV</param>
         /// <param name="cid">CID</param>
         /// <returns></returns>
-        public ApiModel GetPlayerInfo(string aid, string cid,string bvid)
+        public async Task<ApiModel> GetPlayerInfo(string aid, string cid, string bvid)
         {
             ApiModel api = new ApiModel()
             {
@@ -251,7 +227,7 @@ namespace BiliLite.Api
                 parameter = $"cid={cid}&aid={aid}&bvid={bvid}",
                 need_cookie=true,
             };
-            api.parameter += ApiHelper.GetWbiSign(api.parameter);
+            api.parameter = await ApiHelper.GetWbiSign(api.parameter);
             return api;
         }
         /// <summary>
@@ -314,9 +290,10 @@ namespace BiliLite.Api
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"http://api.bilibili.com{ApiHelper.api2}/dm/list/seg.so",
-                parameter = $"type=1&oid={oid}&segment_index={segment_index}"
+                baseUrl = $"http://api.bilibili.com/x/v2/dm/list/seg.so",
+                parameter = $"type=1&oid={oid}&segment_index={segment_index}&{ApiHelper.MustParameter(ApiHelper.AndroidKey, true)}",
             };
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
         }
 

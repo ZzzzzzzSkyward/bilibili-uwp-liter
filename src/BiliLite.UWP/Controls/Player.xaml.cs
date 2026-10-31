@@ -51,6 +51,16 @@ namespace BiliLite.Controls
     //TODO 写得太复杂了，需要重写
     public sealed partial class Player : UserControl, IDisposable, INotifyPropertyChanged
     {
+        private void LogPlaybackDiagnostic(string stage, string detail, Exception ex = null)
+        {
+            var elapsed = stage == "MediaOpened" || stage == "MediaFailed" || stage == "OpenFailed"
+                ? " elapsedMs=" + (DateTime.UtcNow - _playbackOpenStartedAt).TotalMilliseconds.ToString("F0")
+                : "";
+            var message = "Playback stage=" + stage + " engine=" + current_engine + " mediaType=" + PlayMediaType + elapsed + " " + detail;
+            LogHelper.Log(message, ex == null ? LogType.DEBUG : LogType.ERROR, ex);
+        }
+        private DateTime _playbackOpenStartedAt;
+
         public event PropertyChangedEventHandler PropertyChanged;
         private void DoPropertyChanged(string name)
         {
@@ -257,6 +267,8 @@ namespace BiliLite.Controls
                 current_engine = PlayEngine.Native;
                 PlayMediaType = PlayMediaType.Dash;
                 //加载中
+                _playbackOpenStartedAt = DateTime.UtcNow;
+                LogPlaybackDiagnostic("OpenRequested", "playback source initialization started");
                 PlayState = PlayState.Loading;
                 PlayStateChanged?.Invoke(this, PlayState);
                 ClosePlay();
@@ -278,6 +290,7 @@ namespace BiliLite.Controls
                 }
                 if (mediaSource == null&&mediaSource2==null)
                 {
+                    LogPlaybackDiagnostic("OpenFailed", "MediaSource creation returned null");
                     return new PlayerOpenResult()
                     {
                         result = false,
@@ -299,6 +312,7 @@ namespace BiliLite.Controls
                         Buffering = false;
                         if(_playerVideo!=null)
                         Duration = _playerVideo.PlaybackSession.NaturalDuration.TotalSeconds;
+                        LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
 
                         ////设置进度
@@ -329,6 +343,7 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
                         ChangeEngine?.Invoke(this, new ChangePlayerEngine()
@@ -400,6 +415,7 @@ namespace BiliLite.Controls
             catch (Exception ex)
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
+                LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -427,6 +443,8 @@ namespace BiliLite.Controls
                 current_engine = PlayEngine.Native;
                 PlayMediaType = PlayMediaType.Dash;
                 //加载中
+                _playbackOpenStartedAt = DateTime.UtcNow;
+                LogPlaybackDiagnostic("OpenRequested", "playback source initialization started");
                 PlayState = PlayState.Loading;
                 PlayStateChanged?.Invoke(this, PlayState);
                 ClosePlay();
@@ -450,6 +468,7 @@ namespace BiliLite.Controls
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
                         Duration = _playerVideo.PlaybackSession.NaturalDuration.TotalSeconds;
+                        LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
 
                         ////设置进度
@@ -480,6 +499,7 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
                         ChangeEngine?.Invoke(this, new ChangePlayerEngine()
@@ -551,6 +571,7 @@ namespace BiliLite.Controls
             catch (Exception ex)
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
+                LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -581,6 +602,8 @@ namespace BiliLite.Controls
 
                 PlayMediaType = PlayMediaType.Dash;
                 //加载中
+                _playbackOpenStartedAt = DateTime.UtcNow;
+                LogPlaybackDiagnostic("OpenRequested", "playback source initialization started");
                 PlayState = PlayState.Loading;
                 PlayStateChanged?.Invoke(this, PlayState);
                 //关闭正在播放的视频
@@ -589,11 +612,11 @@ namespace BiliLite.Controls
                 if (isLocal)
                 {
 
-                    var videoFile = await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Video.Url);
+                    var videoFile = dashPlayUrlInfo.Video.file ?? await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Video.Url);
                     _ffmpegMSSVideo = await FFmpegMediaSource.CreateFromStreamAsync(await videoFile.OpenAsync(FileAccessMode.Read), _ffmpegConfig);
                     if (dashPlayUrlInfo.Audio != null)
                     {
-                        var audioFile = await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Audio.Url);
+                        var audioFile = dashPlayUrlInfo.Audio.file ?? await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Audio.Url);
                         _ffmpegMSSAudio = await FFmpegMediaSource.CreateFromStreamAsync(await audioFile.OpenAsync(FileAccessMode.Read), _ffmpegConfig);
                     }
                 }
@@ -635,6 +658,7 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
                     });
                 });
@@ -659,6 +683,7 @@ namespace BiliLite.Controls
                     if (_playerVideo == null || _playerVideo.Source == null) return;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
                         ChangeEngine?.Invoke(this, new ChangePlayerEngine()
@@ -765,6 +790,7 @@ namespace BiliLite.Controls
             catch (Exception ex)
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
+                LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -791,6 +817,8 @@ namespace BiliLite.Controls
 
                 PlayMediaType = PlayMediaType.Single;
                 //加载中
+                _playbackOpenStartedAt = DateTime.UtcNow;
+                LogPlaybackDiagnostic("OpenRequested", "playback source initialization started");
                 PlayState = PlayState.Loading;
                 PlayStateChanged?.Invoke(this, PlayState);
                 //关闭正在播放的视频
@@ -812,6 +840,7 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
                     });
                 });
@@ -835,6 +864,7 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
                         ChangeEngine?.Invoke(this, new ChangePlayerEngine()
@@ -907,6 +937,7 @@ namespace BiliLite.Controls
             catch (Exception ex)
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
+                LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -934,6 +965,8 @@ namespace BiliLite.Controls
 
                 PlayMediaType = PlayMediaType.Single;
                 //加载中
+                _playbackOpenStartedAt = DateTime.UtcNow;
+                LogPlaybackDiagnostic("OpenRequested", "playback source initialization started");
                 PlayState = PlayState.Loading;
                 PlayStateChanged?.Invoke(this, PlayState);
                 //关闭正在播放的视频
@@ -955,6 +988,7 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
                     });
                 });
@@ -978,6 +1012,7 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
                         ChangeEngine?.Invoke(this, new ChangePlayerEngine()
@@ -1050,6 +1085,7 @@ namespace BiliLite.Controls
             catch (Exception ex)
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
+                LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -1077,6 +1113,8 @@ namespace BiliLite.Controls
                 current_engine = PlayEngine.SYEngine;
                 PlayMediaType = PlayMediaType.Single;
                 //加载中
+                _playbackOpenStartedAt = DateTime.UtcNow;
+                LogPlaybackDiagnostic("OpenRequested", "playback source initialization started");
                 PlayState = PlayState.Loading;
                 PlayStateChanged?.Invoke(this, PlayState);
                 //关闭正在播放的视频
@@ -1099,6 +1137,7 @@ namespace BiliLite.Controls
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
                         Duration = _playerVideo.PlaybackSession.NaturalDuration.TotalSeconds;
+                        LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
 
                     });
@@ -1124,6 +1163,7 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
                         ChangeEngine?.Invoke(this, new ChangePlayerEngine()
@@ -1197,6 +1237,7 @@ namespace BiliLite.Controls
             catch (Exception ex)
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
+                LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -1223,6 +1264,8 @@ namespace BiliLite.Controls
                 //vlcVideoView.Visibility = Visibility.Collapsed;
                 Opening = false;
                 //加载中
+                _playbackOpenStartedAt = DateTime.UtcNow;
+                LogPlaybackDiagnostic("OpenRequested", "playback source initialization started");
                 PlayState = PlayState.Loading;
                 PlayStateChanged?.Invoke(this, PlayState);
                 ClosePlay();
@@ -1264,6 +1307,7 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
                     });
                 });
@@ -1287,6 +1331,7 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
                         ChangeEngine?.Invoke(this, new ChangePlayerEngine()
@@ -1359,6 +1404,7 @@ namespace BiliLite.Controls
             }
             catch (Exception ex)
             {
+                LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -1508,7 +1554,7 @@ namespace BiliLite.Controls
             }
             if (mediaPlayerAudio.MediaPlayer != null)
             {
-                mediaPlayerVideo.SetMediaPlayer(null);
+                mediaPlayerAudio.SetMediaPlayer(null);
             }
             if (_ffmpegMSSVideo != null)
             {

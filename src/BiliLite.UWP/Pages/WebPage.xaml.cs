@@ -18,6 +18,8 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class WebPage : BasePage
     {
+        private bool _isClosed;
+
         public WebPage()
         {
             this.InitializeComponent();
@@ -26,12 +28,12 @@ namespace BiliLite.Pages
         }
         private async void WebPage_Loaded(object sender, RoutedEventArgs e)
         {
-            if (this.Parent is MyFrame)
-            {
-                (this.Parent as MyFrame).ClosedPage -= WebPage_ClosedPage;
-                (this.Parent as MyFrame).ClosedPage += WebPage_ClosedPage;
-            }
+            SubscribeClosedPage();
             await webView.EnsureCoreWebView2Async();
+            if (_isClosed || webView == null || webView.CoreWebView2 == null)
+            {
+                return;
+            }
             webView.CoreWebView2.Settings.AreBrowserAcceleratorKeysEnabled = true;
             webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
             webView.CoreWebView2.Settings.IsGeneralAutofillEnabled = true;
@@ -43,19 +45,58 @@ namespace BiliLite.Pages
             webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
         }
 
+        private void SubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= WebPage_ClosedPage;
+                frame.ClosedPage += WebPage_ClosedPage;
+            }
+        }
+
+        private void UnsubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= WebPage_ClosedPage;
+            }
+        }
+
         private void WebPage_ClosedPage(object sender, EventArgs e)
         {
-            webView.NavigateToString("");
-            (this.Content as Grid).Children.Remove(webView);
+            if (_isClosed)
+            {
+                return;
+            }
+            _isClosed = true;
+            UnsubscribeClosedPage();
+            var view = webView;
+            if (view != null)
+            {
+                if (view.CoreWebView2 != null)
+                {
+                    view.NavigateToString("");
+                    view.Close();
+                }
+                (this.Content as Grid)?.Children.Remove(view);
+            }
             webView = null;
-            GC.Collect();
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            if (_isClosed)
+            {
+                return;
+            }
+            SubscribeClosedPage();
             if (e.NavigationMode == NavigationMode.New)
             {
+                if (webView == null)
+                {
+                    return;
+                }
                 var uri = e.Parameter.ToString();
                 if (uri.Contains("h5/vlog"))
                 {
@@ -68,15 +109,24 @@ namespace BiliLite.Pages
                     webView.Visibility = Visibility.Collapsed;
                 }
                 await webView.EnsureCoreWebView2Async();
+                if (_isClosed || webView == null || webView.CoreWebView2 == null)
+                {
+                    return;
+                }
                 webView.CoreWebView2.Navigate(uri);
                 UrlBox.Text = uri;
 
             }
 
         }
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            UnsubscribeClosedPage();
+            base.OnNavigatedFrom(e);
+        }
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
-            if (e.NavigationMode == NavigationMode.Back || e.SourcePageType == typeof(BlankPage))
+            if (!_isClosed && webView != null && (e.NavigationMode == NavigationMode.Back || e.SourcePageType == typeof(BlankPage)))
             {
                 NavigationCacheMode = NavigationCacheMode.Disabled;
                 webView.NavigateToString("");

@@ -39,10 +39,23 @@ namespace BiliLite.Pages
 
         private void LocalPlayerPage_Loaded(object sender, RoutedEventArgs e)
         {
-            if (this.Parent is MyFrame)
+            SubscribeClosedPage();
+        }
+
+        private void SubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
             {
-                (this.Parent as MyFrame).ClosedPage -= LocalPlayerPage_ClosedPage;
-                (this.Parent as MyFrame).ClosedPage += LocalPlayerPage_ClosedPage;
+                frame.ClosedPage -= LocalPlayerPage_ClosedPage;
+                frame.ClosedPage += LocalPlayerPage_ClosedPage;
+            }
+        }
+
+        private void UnsubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= LocalPlayerPage_ClosedPage;
             }
         }
 
@@ -57,6 +70,7 @@ namespace BiliLite.Pages
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            SubscribeClosedPage();
             if (e.NavigationMode == NavigationMode.New)
             {
                 if (SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_FULL_SCREEN, false))
@@ -70,6 +84,11 @@ namespace BiliLite.Pages
                 var data = e.Parameter as LocalPlayInfo;
                 player.InitializePlayInfo(data.PlayInfos, data.Index);
             }
+        }
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            UnsubscribeClosedPage();
+            base.OnNavigatedFrom(e);
         }
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {

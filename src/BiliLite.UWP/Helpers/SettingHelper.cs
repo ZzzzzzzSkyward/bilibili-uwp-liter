@@ -24,6 +24,17 @@ namespace BiliLite.Helpers
         {
             storageHelper.Save<string>(key, JsonConvert.SerializeObject(value));
         }
+        /// <summary>
+        /// 诊断开关：默认全关，采集只在排障时打开。
+        /// </summary>
+        public class Diagnostics
+        {
+            /// <summary>把每次响应的形状与漂移写成 NDJSON bool</summary>
+            public const string API_CAPTURE = "apiCapture";
+
+            /// <summary>额外记录脱敏后的正文样本 bool</summary>
+            public const string API_CAPTURE_SAMPLES = "apiCaptureSamples";
+        }
         public class UI
         {
             /// <summary>

@@ -1,31 +1,61 @@
-﻿using BiliLite.Helpers;
+﻿using BiliLite.Api.User;
+using BiliLite.Helpers;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using BiliLite.Parsing.Dynamic;
+using BiliLite.Services;
 namespace BiliLite.Modules
 {
     public class DynamicVM : IModules
     {
-        readonly Api.User.DynamicAPI dynamicAPI;
+        private readonly GrpcService _grpcService;
+        private readonly Api.User.DynamicAPI _dynamicAPI;
+        private int _page = 1;
+        private string _historyOffset;
+        private string _updateBaseline;
+        //web 聚合动态流自己的翻页游标（data.offset）：与 gRPC 的 historyOffset/updateBaseline、
+        //旧 REST 卡的 desc.dynamic_id 分属三套，互不传递
+        private string _polymerOffset;
+        //本次动态流固定的来源：初始加载/刷新时由选择器与固定顺序共同决定，之后本页及后续页都沿用它，
+        //只有同一次请求里前面几路都失败、后面某一路成功时才改到这一路，直到下一次刷新
+        private DynamicFeedSource? _pinnedSource;
+        //两路各自的失败文本分开存：gRPC 的 grpc-message 只进日志，
+        //用户看到的提示只取 REST 那一路的业务/HTTP 信息，且不会被后跑的那一路覆盖
+        private string _lastLegacyFailureMessage;
+        private string _lastGrpcFailureMessage;
+        //REST 动态流自己的翻页游标：上一页最后一张卡的 desc.dynamic_id，
+        //与 gRPC 的 historyOffset/updateBaseline 分属两套，互不传递
+        private string _restCursor;
         public DynamicVM()
         {
-            dynamicAPI = new Api.User.DynamicAPI();
+            _grpcService = new GrpcService();
+            _dynamicAPI = new Api.User.DynamicAPI();
             dynamicItemDataTemplateSelector = new DynamicItemDataTemplateSelector();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
         }
         public DynamicItemDataTemplateSelector dynamicItemDataTemplateSelector { get; set; }
         private bool _loading = true;
+        private bool _canLoadMore;
+        private bool _lastPageFailed;
         public bool Loading
         {
             get { return _loading; }
             set { _loading = value; DoPropertyChanged("Loading"); }
+        }
+        public bool CanLoadMore
+        {
+            get { return _canLoadMore; }
+            set { _canLoadMore = value; DoPropertyChanged("CanLoadMore"); }
         }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
@@ -37,56 +67,334 @@ namespace BiliLite.Modules
             set { _Items = value; DoPropertyChanged("Items"); }
         }
 
-        public async Task GetDynamicItems(string idx = "")
+        public async Task GetDynamicItems(int page = 1)
         {
             try
             {
                 Loading = true;
-                var api = dynamicAPI.DyanmicNew(Api.User.DynamicAPI.UserDynamicType.Video);
-                if (idx != "")
+                CanLoadMore = false;
+                _lastPageFailed = false;
+                _lastLegacyFailureMessage = null;
+                _lastGrpcFailureMessage = null;
+                if (page == 1)
                 {
-                    api = dynamicAPI.HistoryDynamic(idx, Api.User.DynamicAPI.UserDynamicType.Video);
+                    _historyOffset = null;
+                    _updateBaseline = null;
+                    _polymerOffset = null;
                 }
-                var results = await api.Request();
-                if (results.status)
+                //来源与上下文都在第一个 await 之前定下来：一次请求只记到这个账号的桶里，
+                //中途换账号也不影响已经在途的这次
+                var context = DynamicApiSelection.CaptureContext();
+                var boundary = page == 1 || !_pinnedSource.HasValue;
+                var decision = boundary
+                    ? DynamicApiSelection.Choose(context, DynamicApiOperation.HomeVideoFeed, true, "home-feed page=" + page)
+                    : null;
+                //一屏之内的取数顺序由 HomeFeedChain 决定：gRPC 可用时排第一，否则聚合流第一，旧 REST 永远垫底。
+                //翻页只认固定下来的那一路，绝不换源：换源会从第一页重来，成功后就顶替掉已上屏的行
+                var chain = boundary
+                    ? HomeFeedChain(DynamicApiSelection.ToFeedSource(decision.Source))
+                    : new[] { _pinnedSource.Value };
+                DynamicApiOutcome firstOutcome = DynamicApiOutcome.Success;
+                DynamicApiOutcome lastOutcome = DynamicApiOutcome.Success;
+                for (var i = 0; i < chain.Length; i++)
                 {
-                    var data = results.GetJObject();
-                    if (data["code"].ToInt32() == 0)
+                    var source = chain[i];
+                    //换过来的那一路一律从第一页重新取，并整体顶替已发布的页
+                    var legPage = i == 0 ? page : 1;
+                    var outcome = await RequestFromAsync(source, legPage, i > 0, context, "home-feed page=" + page);
+                    if (outcome == DynamicApiOutcome.Success)
                     {
-                        var items = JsonConvert.DeserializeObject<ObservableCollection<DynamicItemModel>>(data["data"]["items"].ToString());
-                        if (Items == null)
-                        {
-                            Items = items;
-                        }
-                        else
-                        {
-                            foreach (var item in items)
-                            {
-                                Items.Add(item);
-                            }
-                        }
+                        //来源在本次动态流的生命周期内固定：后续翻页不再因分数高低而改源
+                        _pinnedSource = source;
+                        return;
                     }
-                    else
+                    if (i == 0)
                     {
-                        Utils.ShowMessageToast(data["message"].ToString());
+                        firstOutcome = outcome;
                     }
+                    lastOutcome = outcome;
+                    LogHelper.Log("Home dynamics stage=feed-source-failed page=" + legPage + " source=" + source
+                        + " outcome=" + outcome, LogType.DEBUG);
                 }
-                else
+                DynamicApiSelection.LogExhausted(DynamicApiOperation.HomeVideoFeed, firstOutcome, lastOutcome, "home-feed page=" + page);
+                if (page > 1)
                 {
-                    Utils.ShowMessageToast(results.message);
-
+                    //翻页失败绝不换源：gRPC 兜底会从第一页重来，成功后就顶替掉已上屏的行；
+                    //用户正在看的内容也不该被一条错误提示打断，所以这里只记日志
+                    CanLoadMore = false;
+                    _lastPageFailed = true;
+                    LogHelper.Log("Home dynamics stage=feed-failed page=" + page + " source=" + chain[0]
+                        + " outcome=" + lastOutcome, LogType.ERROR);
+                    return;
                 }
+                //第一页全部失败：异常文本（只进日志）优先取 REST 那一路，gRPC 的 grpc-message 不参与
+                throw new InvalidOperationException(_lastLegacyFailureMessage ?? _lastGrpcFailureMessage ?? "动态请求失败");
             }
             catch (Exception ex)
             {
-                var handel = HandelError<AnimeHomeModel>(ex);
-                Utils.ShowMessageToast(handel.message);
+                CanLoadMore = false;
+                _lastPageFailed = true;
+                LogHelper.Log("Home dynamics stage=feed-failed page=" + page, LogType.ERROR, ex);
+                //只有第一页且 REST 那一路确实失败过才提示：提示内容来自 REST 的业务/HTTP 信息
+                if (page == 1 && !string.IsNullOrEmpty(_lastLegacyFailureMessage))
+                {
+                    Utils.ShowMessageToast(_lastLegacyFailureMessage);
+                }
             }
             finally
             {
                 Loading = false;
             }
         }
+
+        /// <summary>
+        /// 首页视频动态的取数顺序：聚合流永远排在旧 REST 之前（旧接口已经没有游标，翻不了页），
+        /// 选择器只决定 gRPC 与聚合流谁先试——gRPC 可用时更快，被拒时（或还在冷却里）直接走聚合流。
+        /// </summary>
+        private static DynamicFeedSource[] HomeFeedChain(DynamicFeedSource preferred)
+        {
+            return preferred == DynamicFeedSource.Grpc
+                ? new[] { DynamicFeedSource.Grpc, DynamicFeedSource.Polymer, DynamicFeedSource.Legacy }
+                : new[] { DynamicFeedSource.Polymer, DynamicFeedSource.Grpc, DynamicFeedSource.Legacy };
+        }
+
+        private Task<DynamicApiOutcome> RequestFromAsync(DynamicFeedSource source, int page, bool replaceRows, DynamicApiContext context, string stage)
+        {
+            switch (source)
+            {
+                case DynamicFeedSource.Polymer:
+                    return RequestPolymerSourceAsync(page, replaceRows);
+                case DynamicFeedSource.Grpc:
+                    return RequestGrpcSourceAsync(page, replaceRows, context, stage);
+                default:
+                    return RequestLegacySourceAsync(page == 1 ? null : _restCursor, replaceRows, page, context, stage);
+            }
+        }
+
+        /// <summary>
+        /// web 聚合动态流（x/polymer/web-dynamic/v1/feed/all?type=video）：Cookie 鉴权，
+        /// 游标是响应里的 data.offset，只在这一路里传递。
+        /// </summary>
+        private async Task<DynamicApiOutcome> RequestPolymerSourceAsync(int page, bool replaceRows)
+        {
+            var loadMore = page > 1 && !string.IsNullOrEmpty(_polymerOffset);
+            var requestPage = loadMore ? page : 1;
+            var cursor = loadMore ? _polymerOffset : null;
+            LogHelper.Log("Home dynamics stage=feed-polymer-request page=" + requestPage + " offset=" + (cursor ?? ""), LogType.DEBUG);
+            HttpResults response;
+            try
+            {
+                response = await WebDynamicFeedApi.CreateFeedRequest(requestPage, cursor, "video").Request();
+            }
+            catch (Exception ex)
+            {
+                var outcome = DynamicApiSelection.ClassifyRequestFailure(ex);
+                if (outcome == DynamicApiOutcome.IgnoredFailure)
+                    throw;
+                return outcome;
+            }
+            //信封、字段形状与这一路自己的游标都在解析层；失败的类别在这里翻译成换源结论
+            var parsed = WebDynamicFeedParser.Parse(response);
+            if (!parsed.IsSuccess)
+            {
+                LogHelper.Log("Home dynamics stage=feed-polymer-failed page=" + requestPage
+                    + " failure=" + parsed.Failure + " field=" + parsed.Stage + " message=" + parsed.Message, LogType.ERROR);
+                //游标属于"上一次成功"的状态，失败只让翻页停下，不能把它抹掉
+                return DynamicApiSelection.ToOutcome(parsed);
+            }
+
+            var feedPage = parsed.Value;
+            JArray items = feedPage.Items;
+            List<DynamicItemModel> mappedItems;
+            bool hasMore = feedPage.HasMore;
+            string nextOffset = feedPage.NextCursor;
+            try
+            {
+                //形状合法不代表每条都能映射：少一层对象或多一个字符串，映射里任何一步都可能抛。
+                //这一路只算"没拿到有效页"，交给换源链决定下一步，异常绝不掀掉整个请求
+                mappedItems = WebDynamicFeedMapper.MapToHomeVideoItems(items);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Home dynamics stage=feed-polymer-failed page=" + requestPage
+                    + " message=" + ex.Message, LogType.ERROR, ex);
+                return DynamicApiOutcome.MalformedResponse;
+            }
+            LogHelper.Log("Home dynamics stage=items-mapped page=" + requestPage + " sourceCount=" + (items?.Count ?? 0)
+                + " mappedCount=" + mappedItems.Count + " hasMore=" + hasMore, LogType.DEBUG);
+            if (requestPage == 1 || replaceRows || Items == null)
+            {
+                Items = new ObservableCollection<DynamicItemModel>(mappedItems);
+            }
+            else
+            {
+                foreach (var item in mappedItems)
+                {
+                    Items.Add(item);
+                }
+            }
+            _polymerOffset = nextOffset;
+            //换到聚合流之后另外两套游标作废：三种分页不互传
+            _historyOffset = null;
+            _updateBaseline = null;
+            _restCursor = null;
+            _page = requestPage;
+            //只有服务端说还有下一页、游标真的前进了、而且本页确实取到了行，才继续翻
+            var cursorAdvanced = !string.IsNullOrEmpty(nextOffset) && !string.Equals(nextOffset, cursor, StringComparison.Ordinal);
+            CanLoadMore = hasMore && cursorAdvanced && mappedItems.Count > 0;
+            LogHelper.Log("Home dynamics stage=items-published source=polymer page=" + _page + " count=" + Items.Count
+                + " hasMore=" + hasMore + " offset=" + (nextOffset ?? "") + " canLoadMore=" + CanLoadMore, LogType.DEBUG);
+            return DynamicApiOutcome.Success;
+        }
+
+        /// <summary>
+        /// 只有从第一页重来、或者整批换掉行（换源）时才作废 gRPC 游标。
+        /// 追加（page > 1 且不替换行）失败必须留住上一次成功页的 historyOffset/updateBaseline，
+        /// 否则 footer 重试会把 null 塞进 protobuf 的字符串字段，那一页再也接不上。
+        /// </summary>
+        private void ClearGrpcCursorOnRestart(int page, bool replaceRows)
+        {
+            if (page > 1 && !replaceRows)
+            {
+                return;
+            }
+            _historyOffset = null;
+            _updateBaseline = null;
+        }
+
+        /// <summary>
+        /// gRPC 视频动态流：游标是 historyOffset/updateBaseline。
+        /// 这套游标只在本路里传递，REST 侧绝不会收到它们。
+        /// </summary>
+        private async Task<DynamicApiOutcome> RequestGrpcSourceAsync(int page, bool replaceRows, DynamicApiContext context, string stage)
+        {
+            ClearGrpcCursorOnRestart(page, replaceRows);
+            var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.HomeVideoFeed, DynamicApiSource.Grpc);
+            var stopwatch = Stopwatch.StartNew();
+            Bilibili.App.Dynamic.V2.DynVideoReply reply;
+            try
+            {
+                LogHelper.Log("Home dynamics stage=" + stage + " rpc=Dynamic/DynVideo page=" + page
+                    + " hasHistoryOffset=" + !string.IsNullOrEmpty(_historyOffset)
+                    + " hasUpdateBaseline=" + !string.IsNullOrEmpty(_updateBaseline), LogType.DEBUG);
+                reply = await _grpcService.GetDynVideo(page, _historyOffset, _updateBaseline);
+            }
+            catch (Exception ex)
+            {
+                var outcome = DynamicApiSelection.ClassifyRequestFailure(ex);
+                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
+                if (outcome == DynamicApiOutcome.IgnoredFailure)
+                    throw;
+                ClearGrpcCursorOnRestart(page, replaceRows);
+                _lastGrpcFailureMessage = ex.Message;
+                return outcome;
+            }
+            if (reply == null || reply.DynamicList == null)
+            {
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage);
+                ClearGrpcCursorOnRestart(page, replaceRows);
+                _lastGrpcFailureMessage = "动态请求失败：响应无法解析";
+                return DynamicApiOutcome.MalformedResponse;
+            }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
+
+            var dynamicList = reply.DynamicList;
+            var mappedItems = DynamicGrpcMapper.MapToHomeItems(dynamicList.List);
+            LogHelper.Log("Home dynamics stage=items-mapped page=" + page + " sourceCount=" + dynamicList.List.Count
+                + " mappedCount=" + mappedItems.Count + " hasMore=" + dynamicList.HasMore, LogType.DEBUG);
+            if (page == 1 || replaceRows || Items == null)
+            {
+                Items = new ObservableCollection<DynamicItemModel>(mappedItems);
+            }
+            else
+            {
+                foreach (var item in mappedItems)
+                {
+                    Items.Add(item);
+                }
+            }
+            _historyOffset = dynamicList.HistoryOffset;
+            _updateBaseline = dynamicList.UpdateBaseline;
+            //换回 gRPC 之后 REST 游标作废：两套分页不互传
+            _restCursor = null;
+            _page = page;
+            CanLoadMore = dynamicList.HasMore;
+            LogHelper.Log("Home dynamics stage=items-published source=grpc page=" + _page + " count=" + Items.Count, LogType.DEBUG);
+            return DynamicApiOutcome.Success;
+        }
+
+        /// <summary>
+        /// REST 兜底：第一页取 dynamic_new，后续页取 dynamic_history 并带上上一页最后一张卡的 desc.dynamic_id。
+        /// </summary>
+        private async Task<DynamicApiOutcome> RequestLegacySourceAsync(string cursor, bool replaceRows, int page, DynamicApiContext context, string stage)
+        {
+            var attempt = DynamicApiSelection.CreateAttempt(context, DynamicApiOperation.HomeVideoFeed, DynamicApiSource.Legacy);
+            var stopwatch = Stopwatch.StartNew();
+            HttpResults restResponse;
+            try
+            {
+                LogHelper.Log("Home dynamics stage=" + stage + " rpc=" + (string.IsNullOrEmpty(cursor) ? "dynamic_new" : "dynamic_history")
+                    + " page=" + page + " cursor=" + (cursor ?? ""), LogType.DEBUG);
+                var restApi = string.IsNullOrEmpty(cursor)
+                    ? _dynamicAPI.DyanmicNew(Api.User.DynamicAPI.UserDynamicType.Video)
+                    : _dynamicAPI.HistoryDynamic(cursor, Api.User.DynamicAPI.UserDynamicType.Video);
+                restResponse = await restApi.Request();
+            }
+            catch (Exception ex)
+            {
+                var outcome = DynamicApiSelection.ClassifyRequestFailure(ex);
+                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
+                if (outcome == DynamicApiOutcome.IgnoredFailure)
+                    throw;
+                _lastLegacyFailureMessage = ex.Message;
+                return outcome;
+            }
+            var parsed = LegacyDynamicFeedParser.Parse(restResponse);
+            if (!parsed.IsSuccess)
+            {
+                var outcome = DynamicApiSelection.ToOutcome(parsed);
+                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage, parsed.BusinessCode);
+                _lastLegacyFailureMessage = string.IsNullOrEmpty(parsed.Message) ? "动态请求失败" : parsed.Message;
+                return outcome;
+            }
+            List<DynamicItemModel> cards;
+            if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value.Cards, null, out cards))
+            {
+                //卡片解不动也是这一路这次没拿到页，而且只记这一条
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
+                _lastLegacyFailureMessage = "动态卡片解析失败";
+                return DynamicApiOutcome.MalformedResponse;
+            }
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
+            var restCards = new ObservableCollection<DynamicItemModel>(cards);
+            if (replaceRows && Items != null)
+            {
+                Items.Clear();
+            }
+            if (Items == null)
+            {
+                Items = restCards;
+            }
+            else
+            {
+                foreach (var item in restCards)
+                {
+                    Items.Add(item);
+                }
+            }
+            var lastRestCard = restCards.Count > 0 ? restCards[restCards.Count - 1] : null;
+            _restCursor = lastRestCard?.desc?.dynamic_id;
+            //换源时 gRPC 游标已清空，这里再清一次，保证 REST 页面不会带着 historyOffset
+            _historyOffset = null;
+            _updateBaseline = null;
+            _page = page;
+            //只有真的取到卡片、且最后一张卡带着可用的 desc.dynamic_id 时才有下一页可翻
+            CanLoadMore = restCards.Count > 0 && !string.IsNullOrEmpty(_restCursor);
+            LogHelper.Log("Home dynamics stage=items-published source=rest page=" + _page + " count=" + restCards.Count
+                + " cursor=" + (_restCursor ?? "") + " canLoadMore=" + CanLoadMore, LogType.DEBUG);
+            return DynamicApiOutcome.Success;
+        }
+
         public async void Refresh()
         {
             if (Loading)
@@ -94,7 +402,18 @@ namespace BiliLite.Modules
                 return;
             }
             Items = null;
-            await GetDynamicItems();
+            CanLoadMore = false;
+            _lastPageFailed = false;
+            _lastLegacyFailureMessage = null;
+            _lastGrpcFailureMessage = null;
+            _page = 1;
+            _historyOffset = null;
+            _updateBaseline = null;
+            _polymerOffset = null;
+            //刷新回到选择器重新决定来源：固定的来源与粘滞兜底都在这里作废，三套游标随新的动态流一起作废
+            _pinnedSource = null;
+            _restCursor = null;
+            await GetDynamicItems(1);
         }
         public async void LoadMore()
         {
@@ -102,12 +421,11 @@ namespace BiliLite.Modules
             {
                 return;
             }
-            if (Items == null || Items.Count == 0)
+            if (Items == null || Items.Count == 0 || (!CanLoadMore && !_lastPageFailed))
             {
                 return;
             }
-            var last = Items.LastOrDefault();
-            await GetDynamicItems(last.desc.dynamic_id);
+            await GetDynamicItems(_page + 1);
         }
 
 
@@ -123,18 +441,49 @@ namespace BiliLite.Modules
         /// <summary>
         /// json字符串,根据desc里的type，获得数据
         /// </summary>
-        public string card { get; set; }
+        private string _card;
+        private DynamicVideoCardModel _video;
+        public DynamicVideoCardModel Video
+        {
+            get { return _video; }
+            set { _video = value; }
+        }
+        public DynamicSeasonCardModel Season { get; set; }
+        public string card
+        {
+            get { return _card; }
+            set
+            {
+                _card = value;
+                _video = null;
+                Season = null;
+            }
+        }
         public DynamicDescModel desc { get; set; }
-        public DynamicCardModel2024 video
+        public DynamicVideoCardModel video
         {
             get
             {
-                if (desc != null && desc.type == 8)
+                if (desc != null && (desc.type == 8 || desc.type == 4310))
                 {
-                    return Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicCardModel2024>(card);
+                    if (_video == null)
+                    {
+                        try
+                        {
+                            _video = Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicVideoCardModel>(card);
+                            LogHelper.Log("Home dynamics stage=video-card-converted type=" + desc.type + " dynamicId=" + desc.dynamic_id + " hasOwner=" + (_video?.owner != null) + " hasStats=" + (_video?.stat != null), LogType.DEBUG);
+                        }
+                        catch (Exception ex)
+                        {
+                            LogHelper.Log("Home dynamics stage=video-card-conversion-failed type=" + desc.type + " dynamicId=" + desc.dynamic_id, LogType.ERROR, ex);
+                            throw;
+                        }
+                    }
+                    return _video;
                 }
                 return null;
             }
+            set { _video = value; }
         }
         public DynamicSeasonCardModel season
         {
@@ -142,10 +491,11 @@ namespace BiliLite.Modules
             {
                 if (desc != null && desc.type == 512)
                 {
-                    return Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicSeasonCardModel>(card);
+                    return Season ?? Newtonsoft.Json.JsonConvert.DeserializeObject<DynamicSeasonCardModel>(card);
                 }
                 return null;
             }
+            set { Season = value; }
         }
     }
     public class DynamicItemDataTemplateSelector : DataTemplateSelector
@@ -154,7 +504,8 @@ namespace BiliLite.Modules
         protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
         {
             var card = item as DynamicItemModel;
-            if (card.desc.type == 8)
+            LogHelper.Log("Home dynamics stage=template-select type=" + (card?.desc == null ? "null" : card.desc.type.ToString()) + " dynamicId=" + (card?.desc?.dynamic_id ?? ""), LogType.DEBUG);
+            if (card.desc.type == 8 || card.desc.type == 4310)
             {
                 return resource["DynamicVideo"] as DataTemplate;
             }
@@ -167,8 +518,9 @@ namespace BiliLite.Modules
     public class DynamicDescModel
     {
         public string uid { get; set; }
+        public string time_text { get; set; }
         /// <summary>
-        /// 8=视频，512=番剧
+        /// 8=视频，512=番剧，4310=用户投稿合集
         /// </summary>
         public int type { get; set; }
         public string rid { get; set; }
@@ -196,6 +548,8 @@ namespace BiliLite.Modules
         public long pubdate { get; set; }
         public string title { get; set; }
         public DynamicVideoCardStatModel stat { get; set; }
+        public string viewtext { get { return stat == null ? "0" : stat.view.ToString(); } }
+        public string danmakutext { get { return stat == null ? "0" : stat.danmaku.ToString(); } }
     }
     public class DynamicVideoCardStatModel
     {
@@ -256,6 +610,8 @@ namespace BiliLite.Modules
                   ??
                   modules?.module_dynamic?.major?.ugc_season?.title
                   ??
+                  modules?.module_dynamic?.major?.medialist?.title
+                  ??
                   modules?.module_dynamic?.major?.pgc?.title
                   ??
                   modules?.module_dynamic?.additional?.title
@@ -272,6 +628,7 @@ namespace BiliLite.Modules
                     modules?.module_dynamic?.major?.article?.jump_url ??
                     modules?.module_dynamic?.major?.pgc?.jump_url ??
                     modules?.module_dynamic?.major?.ugc_season?.jump_url ??
+                    modules?.module_dynamic?.major?.medialist?.jump_url ??
                     modules?.module_dynamic?.major?.live?.jump_url ??
                      "";
                 if (url.Length == 0) return url;
@@ -318,9 +675,10 @@ namespace BiliLite.Modules
                 return
                   modules?.module_dynamic?.major?.archive?.cover ??
                   modules?.module_dynamic?.major?.live?.cover ??
-                  modules?.module_dynamic?.major?.article?.covers?[0] ??
+                  modules?.module_dynamic?.major?.article?.covers?.FirstOrDefault() ??
                   modules?.module_dynamic?.major?.pgc?.cover ??
                   modules?.module_dynamic?.major?.ugc_season?.cover ??
+                  modules?.module_dynamic?.major?.medialist?.cover ??
                   "";
             }
         }
@@ -330,6 +688,7 @@ namespace BiliLite.Modules
             {
                 return
                   modules?.module_dynamic?.major?.archive?.aid ??
+                  modules?.module_dynamic?.major?.pgc?.aid ??
                   modules?.module_dynamic?.major?.pgc?.season_id_string ??
                   modules?.module_dynamic?.major?.live?.id ??
                   basic.rid_str ??
@@ -716,6 +1075,7 @@ namespace BiliLite.Modules
         public DynamicCardModel2024_article article { get; set; }
         public DynamicCardModel2024_season pgc { get; set; }
         public DynamicCardModel2024_list ugc_season { get; set; }
+        public DynamicCardModel2024_list medialist { get; set; }
         public DynamicCardModel2024_live_rcmd live_rcmd { get; set; }
         public string type { get; set; }
     }
@@ -735,6 +1095,7 @@ namespace BiliLite.Modules
     public class DynamicCardModel2024_season
     {
         //public object badge{ get; set; }
+        public string aid { get; set; }
         public string cover { get; set; }
         public int epid { get; set; }
         public int season_id { get; set; }
@@ -760,6 +1121,8 @@ namespace BiliLite.Modules
     }
     public class DynamicCardModel2024_list
     {
+        // 播单 ID；合集卡片没有该字段（0）。
+        public long id { get; set; }
         public long aid { get; set; }
         //public object badge{ get; set; }
         public string cover { get; set; }

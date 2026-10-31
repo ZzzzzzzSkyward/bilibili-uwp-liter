@@ -26,7 +26,7 @@
     <AppxBundle>Never</AppxBundle>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
-    <PackageCertificateThumbprint>B96203FBC1EFAEDCC332A14E4AF52E0A2721DDF5</PackageCertificateThumbprint>
+    <PackageCertificateThumbprint>3F95D7B0B185635BA827AF4A3E82E31EC3675FCF</PackageCertificateThumbprint>
     <PackageCertificateKeyFile>
     </PackageCertificateKeyFile>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
@@ -141,6 +141,17 @@
     <Compile Include="Api\ApiHelper.cs" />
     <Compile Include="Api\CommentApi.cs" />
     <Compile Include="Api\EmoteApi.cs" />
+    <Compile Include="Models\Requests\Api\BaseApi.cs" />
+    <Compile Include="Models\Requests\Api\EmoteApi.cs" />
+    <Compile Include="Models\Requests\Api\DanmakuApi.cs" />
+    <Compile Include="Services\CookieService.cs" />
+    <Compile Include="Services\HttpLogSanitizer.cs" />
+    <Compile Include="Services\ApiShape.cs" />
+    <Compile Include="Services\ApiCapture.cs" />
+    <Compile Include="Services\DiagnosticBundle.cs" />
+    <Compile Include="Services\PasswordLoginSession.cs" />
+    <Compile Include="Services\IsolatedPasswordLoginTransport.cs" />
+    <Compile Include="Services\WbiKeyService.cs" />
     <Compile Include="Api\GitApi.cs" />
     <Compile Include="Api\Home\AnimeAPI.cs" />
     <Compile Include="Api\Home\ChannelAPI.cs" />
@@ -159,6 +170,30 @@
     <Compile Include="Api\SeasonApi.cs" />
     <Compile Include="Api\SeasonIndexAPI.cs" />
     <Compile Include="Api\User\DynamicAPI.cs" />
+    <Compile Include="Api\User\WebDynamicFeedApi.cs" />
+    <Compile Include="Services\GrpcService.cs" />
+    <Compile Include="Services\DynamicApiSelector.cs" />
+    <Compile Include="Services\DynamicApiSelection.cs" />
+    <Compile Include="Services\DynamicApiHistoryFileStore.cs" />
+    <Compile Include="Services\MediaListService.cs" />
+    <Compile Include="Helpers\DynamicImageRules.cs" />
+    <Compile Include="Parsing\ApiParseResult.cs" />
+    <Compile Include="Parsing\ApiEnvelope.cs" />
+    <Compile Include="Parsing\Dynamic\LegacyDynamicFeedParser.cs" />
+    <Compile Include="Parsing\Dynamic\WebDynamicFeedParser.cs" />
+    <Compile Include="Parsing\Dynamic\WebDynamicFeedMapper.cs" />
+    <Compile Include="Parsing\Dynamic\WireScalars.cs" />
+    <Compile Include="Services\PlayerToastOverlay.cs" />
+    <Compile Include="Services\PlayerToastService.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaLibraryService.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaPlaybackAdapter.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaTrackSelection.cs" />
+    <Compile Include="Services\LocalMedia\SubtitleTrackParser.cs" />
+    <Compile Include="Services\LocalMedia\DanmakuTrackLoader.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaTrackLoadException.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaAsyncLoadGuard.cs" />
+    <Compile Include="Services\LocalMedia\LocalMediaValidator.cs" />
     <Compile Include="Api\User\FavoriteAPI.cs" />
     <Compile Include="Api\User\FollowAPI.cs" />
     <Compile Include="Api\User\AtAPI.cs" />
@@ -178,6 +213,9 @@
     <Compile Include="Controls\Carousel\CarouselPanel.Members.cs" />
     <Compile Include="Controls\CommentControl.xaml.cs">
       <DependentUpon>CommentControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\DanmakuListControl.xaml.cs">
+      <DependentUpon>DanmakuListControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\FontAwesome5\ControlExtensions.cs" />
     <Compile Include="Controls\FontAwesome5\EFontAwesomeIcon.cs" />
@@ -237,6 +275,9 @@
     <Compile Include="Controls\PlayerControl.xaml.cs">
       <DependentUpon>PlayerControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\PlayerToast.xaml.cs">
+      <DependentUpon>PlayerToast.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\RoundButton\RoundButton.cs" />
     <Compile Include="Controls\ScrollGridView\ScrollGridView.cs" />
     <Compile Include="Dialogs\SendCommentDialog.xaml.cs">
@@ -261,6 +302,7 @@
     <Compile Include="Converters\ImageSourceConvert.cs" />
     <Compile Include="Converters\NumberToStringConvert.cs" />
     <Compile Include="Converters\ProgressToTimeConverter.cs" />
+    <Compile Include="Converters\VolumePercentConverter.cs" />
     <Compile Include="Converters\RankColorConvert.cs" />
     <Compile Include="Converters\TimeSpanToDoubleConvert.cs" />
     <Compile Include="Dialogs\LoginDialog.xaml.cs">
@@ -272,6 +314,9 @@
     <Compile Include="Helpers\ControlHelper.cs" />
     <Compile Include="Helpers\DownloadHelper.cs" />
     <Compile Include="Helpers\ExceptionHandler.cs" />
+    <Compile Include="Helpers\DynamicGrpcMapper.cs" />
+    <Compile Include="Helpers\DynamicRepostMapper.cs" />
+    <Compile Include="Helpers\SpaceArchiveGrpcMapper.cs" />
     <Compile Include="Helpers\HttpHelper.cs" />
     <Compile Include="Helpers\LogHelper.cs" />
     <Compile Include="Helpers\MessageCenter.cs" />
@@ -284,12 +329,19 @@
     </Compile>
     <Compile Include="Models\ApiModel.cs" />
     <Compile Include="Models\Common.cs" />
+    <Compile Include="Models\Common\User\SubmitVideoItemModel.cs" />
+    <Compile Include="Models\Common\Danmaku\DanmakuListSnapshot.cs" />
+    <Compile Include="Models\LocalMedia\LocalMediaItem.cs" />
+    <Compile Include="Models\LocalMedia\LocalMediaManifest.cs" />
+    <Compile Include="Models\LocalMedia\LocalMediaTrack.cs" />
     <Compile Include="Models\Dynamic\DynamicModel.cs" />
     <Compile Include="Models\Dynamic\DynamicUserProfileModel.cs" />
     <Compile Include="Models\GenerateMPDModel.cs" />
     <Compile Include="Models\PageEntranceModel.cs" />
     <Compile Include="Models\ReturnModel.cs" />
     <Compile Include="Models\UserModels.cs" />
+    <Compile Include="Models\VideoCollections.cs" />
+    <Compile Include="Models\MediaListResources.cs" />
     <Compile Include="Modules\Detail\FavoriteDetailVM.cs" />
     <Compile Include="Modules\DownloadVM.cs" />
     <Compile Include="Modules\EmoteVM.cs" />
@@ -506,6 +558,7 @@
     <Content Include="Assets\Image\2233login.png" />
     <Content Include="Assets\Image\DefaultImage.png" />
     <Content Include="Assets\JiYan\极验.htm" />
+    <Content Include="Assets\Auth\PasswordLoginCaptcha.html" />
     <Content Include="Assets\JiYan\极验_files\fullpage.0.0.0.js" />
     <Content Include="Assets\JiYan\极验_files\gt.js" />
     <Content Include="Assets\LargeTile.scale-100.png" />
@@ -611,6 +664,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Controls\DanmakuListControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Dialogs\CommentDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -664,6 +721,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\PlayerControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\PlayerToast.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -862,16 +923,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX">
-      <Version>2.0.0-pre7</Version>
+      <Version>2.1.0.81200</Version>
     </PackageReference>
-    <PackageReference Include="FFmpegInteropX.FFmpegUWP">
-      <Version>5.1.100</Version>
-    </PackageReference>
-    <PackageReference Include="gfoidl.Base64">
-      <Version>1.1.2</Version>
+    <PackageReference Include="FFmpegInteropX.UWP.FFmpeg">
+      <Version>8.1.2</Version>
     </PackageReference>
     <PackageReference Include="Google.Protobuf">
-      <Version>3.29.3</Version>
+      <Version>3.36.2</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.NETCore.UniversalWindowsPlatform">
       <Version>6.2.14</Version>
@@ -891,38 +949,32 @@
     <PackageReference Include="Microsoft.Toolkit.Uwp.UI.Controls">
       <Version>7.1.3</Version>
     </PackageReference>
-    <PackageReference Include="Microsoft.Toolkit.Uwp.UI.Media">
-      <Version>7.1.3</Version>
-    </PackageReference>
     <PackageReference Include="Microsoft.UI.Xaml">
-      <Version>2.8.4</Version>
+      <Version>2.8.7</Version>
     </PackageReference>
     <PackageReference Include="Microsoft.Web.WebView2">
-      <Version>1.0.3079-prerelease</Version>
+      <Version>1.0.4314.35</Version>
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>13.0.3</Version>
+      <Version>13.0.4</Version>
     </PackageReference>
     <PackageReference Include="NLog">
-      <Version>5.3.4</Version>
-    </PackageReference>
-    <PackageReference Include="NLog.Config">
-      <Version>4.7.15</Version>
+      <Version>5.5.1</Version>
     </PackageReference>
     <PackageReference Include="NSDanmaku">
       <Version>2.2.0</Version>
     </PackageReference>
     <PackageReference Include="OpenCCNET">
-      <Version>1.0.2</Version>
+      <Version>1.1.0</Version>
     </PackageReference>
     <PackageReference Include="RestSharp">
-      <Version>112.1.1-alpha.0.4</Version>
+      <Version>114.1.0</Version>
     </PackageReference>
     <PackageReference Include="SYEngine.uwp">
       <Version>1.0.7</Version>
     </PackageReference>
     <PackageReference Include="ZXing.Net">
-      <Version>0.16.9</Version>
+      <Version>0.16.11</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>

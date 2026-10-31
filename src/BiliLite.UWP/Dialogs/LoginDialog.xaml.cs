@@ -19,11 +19,13 @@ namespace BiliLite.Dialogs
         JSBridge.biliapp _biliapp = new JSBridge.biliapp();
         JSBridge.secure _secure = new JSBridge.secure();
         private LoginVM loginVM;
+        private bool passwordCaptchaActive;
         public LoginDialog()
         {
             this.InitializeComponent();
             this.Loaded += SMSLoginDialog_Loaded;
             loginVM=new LoginVM();
+            this.Closed += (_, __) => loginVM.EndLoginDialog();
             loginVM.OpenWebView += LoginVM_OpenWebView;
             loginVM.CloseDialog += LoginVM_CloseDialog;
             loginVM.SetWebViewVisibility += LoginVM_SetWebViewVisibility;
@@ -40,6 +42,7 @@ namespace BiliLite.Dialogs
         private void LoginVM_SetWebViewVisibility(object sender, bool e)
         {
             webView.Visibility = e ? Visibility.Visible : Visibility.Collapsed;
+            if (!e) passwordCaptchaActive = false;
         }
 
         private void _biliapp_CloseBrowserEvent(object sender, string e)
@@ -48,11 +51,13 @@ namespace BiliLite.Dialogs
         }
         private  void _biliapp_ValidateLoginEvent(object sender, string e)
         {
+            if (loginVM.IsPasswordLoginDialogClosed || passwordCaptchaActive || loginVM.IsPasswordVerificationFlow || loginVM.PasswordVerificationCaptchaActive || loginVM.PasswordVerificationPending) return;
             loginVM.ValidateLogin(JObject.Parse(e));
 
         }
         private void LoginVM_OpenWebView(object sender, Uri e)
         {
+            passwordCaptchaActive = e.AbsoluteUri.StartsWith("ms-appx-web:///Assets/Auth/PasswordLoginCaptcha.html", StringComparison.OrdinalIgnoreCase);
             webView.Source=e;
         }
 
@@ -74,7 +79,9 @@ namespace BiliLite.Dialogs
 
         private void ContentDialog_SecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
         {
-            if(webView.Visibility == Visibility.Visible)
+            var captchaVisible = webView.Visibility == Visibility.Visible;
+            loginVM.CancelPasswordVerification();
+            if(captchaVisible)
             {
                 webView.Visibility=Visibility.Collapsed;
                 args.Cancel = true;
@@ -134,36 +141,85 @@ namespace BiliLite.Dialogs
         }
         private async void webView_NavigationStarting(WebView sender, WebViewNavigationStartingEventArgs args)
         {
+            if (loginVM.IsPasswordLoginDialogClosed)
+            {
+                args.Cancel = true;
+                return;
+            }
             if (args.Uri.AbsoluteUri.Contains("access_key="))
             {
+                if (passwordCaptchaActive || loginVM.IsPasswordVerificationFlow || loginVM.PasswordVerificationCaptchaActive || loginVM.PasswordVerificationPending)
+                {
+                    args.Cancel = true;
+                    return;
+                }
                 var access = Regex.Match(args.Uri.AbsoluteUri, "access_key=(.*?)&").Groups[1].Value;
                 var mid = Regex.Match(args.Uri.AbsoluteUri, "mid=(.*?)&").Groups[1].Value;
                 await loginVM.account.SaveLogin(access, "", 1000000, long.Parse(mid),null,null);
                 this.Hide();
                 return;
             }
-            if (args.Uri.AbsoluteUri.Contains("geetest.result"))
+            if (string.Equals(args.Uri.Host, "geetest.result", StringComparison.OrdinalIgnoreCase))
             {
-                var success = (Regex.Match(args.Uri.AbsoluteUri, @"success=(\d)&").Groups[1].Value).ToInt32();
+                args.Cancel = true;
+                var operationValue = QueryValue(args.Uri, "operation");
+                if (!string.IsNullOrEmpty(operationValue))
+                {
+                    long callbackOperation;
+                    if (!long.TryParse(operationValue, out callbackOperation) ||
+                        callbackOperation != loginVM.PasswordVerificationOperation ||
+                        !loginVM.PasswordVerificationCaptchaActive ||
+                        !string.Equals(args.Uri.Scheme, "http", StringComparison.OrdinalIgnoreCase)) return;
+                    var secondarySuccess = QueryValue(args.Uri, "success").ToInt32();
+                    if (secondarySuccess == 1)
+                    {
+                        loginVM.CompletePasswordVerificationCaptcha(
+                            QueryValue(args.Uri, "geetest_challenge"),
+                            QueryValue(args.Uri, "geetest_validate"),
+                            QueryValue(args.Uri, "geetest_seccode"),
+                            QueryValue(args.Uri, "recaptcha_token"), callbackOperation);
+                    }
+                    else
+                    {
+                        loginVM.CancelPasswordVerification();
+                        if (secondarySuccess == 0) Utils.ShowMessageToast("安全验证失败，请重新登录");
+                    }
+                    return;
+                }
+                if (passwordCaptchaActive)
+                {
+                    return;
+                }
+
+                // A delayed callback without an operation nonce is from the legacy
+                // captcha flow. Never let it start a fresh login after cancellation.
+                if (loginVM.IsPasswordLoginDialogClosed || loginVM.IsPasswordVerificationFlow ||
+                    loginVM.PasswordVerificationCaptchaActive || loginVM.PasswordVerificationPending)
+                {
+                    return;
+                }
+
+                var success = QueryValue(args.Uri, "success").ToInt32();
                 if (success == 0)
                 {
-                    //验证失败
                     webView.Visibility = Visibility.Collapsed;
                     Utils.ShowMessageToast("验证失败");
                 }
                 else if (success == 1)
                 {
                     webView.Visibility = Visibility.Collapsed;
-                    //验证成功
                     TryRelogin(args.Uri.AbsoluteUri);
                 }
                 else if (success == 2)
                 {
-                    //关闭验证码
                     IsPrimaryButtonEnabled = true;
-                   
                     webView.Visibility = Visibility.Collapsed;
                 }
+                return;
+            }
+            if (passwordCaptchaActive || loginVM.IsPasswordVerificationFlow || loginVM.PasswordVerificationCaptchaActive || loginVM.PasswordVerificationPending || loginVM.IsPasswordLoginDialogClosed)
+            {
+                args.Cancel = true;
                 return;
             }
             try
@@ -180,6 +236,7 @@ namespace BiliLite.Dialogs
 
         private async void WebView_NavigationCompleted(WebView sender, WebViewNavigationCompletedEventArgs args)
         {
+            if (passwordCaptchaActive || loginVM.IsPasswordVerificationFlow || loginVM.PasswordVerificationCaptchaActive || loginVM.IsPasswordLoginDialogClosed) return;
             //await webView.AddScriptToExecuteOnDocumentCreatedAsync("window.chrome.webview.postMessage({'command': 'trustAllCertificates'})");
             if (args.Uri.AbsoluteUri == "https://passport.bilibili.com/ajax/miniLogin/redirect" || args.Uri.AbsoluteUri == "https://www.bilibili.com/")
             {
@@ -196,8 +253,28 @@ namespace BiliLite.Dialogs
                 return;
             }
         }
+
+        private static string QueryValue(Uri uri, string key)
+        {
+            foreach (var pair in uri.Query.TrimStart('?').Split('&'))
+            {
+                var separator = pair.IndexOf('=');
+                if (separator < 0) continue;
+                var name = Uri.UnescapeDataString(pair.Substring(0, separator).Replace('+', ' '));
+                if (string.Equals(name, key, StringComparison.Ordinal))
+                    return Uri.UnescapeDataString(pair.Substring(separator + 1).Replace('+', ' '));
+            }
+            return "";
+        }
         private void WebView_NavigationFailed(object sender, WebViewNavigationFailedEventArgs e)
         {
+            if (passwordCaptchaActive || loginVM.PasswordVerificationCaptchaActive || loginVM.IsPasswordVerificationFlow)
+            {
+                loginVM.CancelPasswordVerification();
+                LogHelper.Log("Password login captcha navigation failed. status=" + e.WebErrorStatus, LogType.ERROR);
+                Utils.ShowMessageToast("安全验证页面加载失败，请重试");
+                return;
+            }
             string errorMessage = $"Navigation to {e.Uri} failed with error {e.WebErrorStatus}";
             Utils.ShowMessageToast(errorMessage);
         }

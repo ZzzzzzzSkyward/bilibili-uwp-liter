@@ -8,9 +8,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://api.live.bilibili.com/room/v1/Area/getList",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&actionKey=appkey&need_entrance=1&parent_id=0"
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true) + $"&actionKey=appkey&need_entrance=1&parent_id=0"
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
         public ApiModel LiveAreaRoomList(int area_id=0,int parent_area_id=0, int page = 1, string sort_type = "online")
@@ -19,9 +19,9 @@
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://api.live.bilibili.com/room/v3/Area/getRoomList",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&actionKey=appkey&area_id={area_id}&cate_id=0&parent_area_id={parent_area_id}&page={page}&page_size=36&sort_type={sort_type}"
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true) + $"&actionKey=appkey&area_id={area_id}&cate_id=0&parent_area_id={parent_area_id}&page={page}&page_size=36&sort_type={sort_type}"
             };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
         }
     }

@@ -73,7 +73,7 @@ namespace BiliLite.Modules
             var playerInfo = new PlayerInfo();
             try
             {
-                var api = PlayerAPI.GetPlayerInfo(aid: aid, cid: cid, "");
+                var api = await PlayerAPI.GetPlayerInfo(aid: aid, cid: cid, "");
                 var result = await api.Request();
                 if (result.status)
                 {
@@ -128,7 +128,7 @@ namespace BiliLite.Modules
                 sw.Start();
 
                 var data = await HttpHelper.GetStream(PlayerAPI.SegDanmaku(cid, segment_index).url);
-                var result = Proto.Reply.DmSegMobileReply.Parser.ParseFrom(data);
+                var result = Bilibili.Tv.Interfaces.Dm.V1.DmSegMobileReply.Parser.ParseFrom(data);
                 foreach (var item in result.Elems)
                 {
                     NSDanmaku.Model.DanmakuLocation location = NSDanmaku.Model.DanmakuLocation.Scroll;
@@ -246,7 +246,29 @@ namespace BiliLite.Modules
         /// 互动视频信息
         /// </summary>
         public InteractionModel interaction { get; set; }
+
+        /// <summary>
+        /// 章节看点信息
+        /// </summary>
+        [JsonProperty("view_points")]
+        public List<PlayerInfoViewPoint> ViewPoints { get; set; }
     }
+
+    public class PlayerInfoViewPoint
+    {
+        public int Type { get; set; }
+
+        public long From { get; set; }
+
+        public long To { get; set; }
+
+        public string Content { get; set; }
+
+        public string ImgUrl { get; set; }
+
+        public string LogoUrl { get; set; }
+    }
+
     public class PlayerOnlineInfo
     {
         public string total { get; set; }

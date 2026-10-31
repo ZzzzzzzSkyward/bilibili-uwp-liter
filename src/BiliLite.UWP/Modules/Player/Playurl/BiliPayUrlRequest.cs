@@ -10,8 +10,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Threading;
 using BiliLite.gRPC.Api;
-using Proto.Reply;
+using Bilibili.App.Playurl.V1;
 
 namespace BiliLite.Modules.Player.Playurl
 {
@@ -25,9 +26,31 @@ namespace BiliLite.Modules.Player.Playurl
     }
     class BiliPlayUrlRequest
     {
+        private static int _requestCounter;
+        protected static string NewRequestId()
+        {
+            return "playurl-" + Interlocked.Increment(ref _requestCounter).ToString("D6");
+        }
+
+        private static string DescribeEndpoint(string url)
+        {
+            Uri uri;
+            if (Uri.TryCreate(url, UriKind.Absolute, out uri))
+                return uri.GetLeftPart(UriPartial.Path);
+            return "stream-url";
+        }
+
+        protected void LogPlayurl(PlayInfo playInfo, string requestId, string stage, int quality, string detail, Exception ex = null)
+        {
+            var message = "Playurl requestId=" + requestId + " stage=" + stage
+                + " aid=" + playInfo?.avid + " cid=" + playInfo?.cid + " epId=" + playInfo?.ep_id
+                + " quality=" + quality + " codecMode=" + CodecMode + " download=" + IsDownload + " " + detail;
+            LogHelper.Log(message, ex == null ? LogType.DEBUG : LogType.ERROR, ex);
+        }
+
         protected bool IsDownload { get; set; } = false;
         protected readonly PlayerAPI playerAPI = new PlayerAPI();
-        protected readonly gRPC.Api.PlayURL playUrlApi = new PlayURL();
+        protected readonly gRPC.Api.PlayURL playUrlApi = new gRPC.Api.PlayURL();
         /// <summary>
         /// 是否开启替换CDN选项
         /// </summary>
@@ -59,6 +82,7 @@ namespace BiliLite.Modules.Player.Playurl
         public BiliPlayUrlRequest(bool isDownload)
         {
             IsDownload = isDownload;
+            gRPC.GrpcRequest.DiagnosticLogger = (message, ex) => LogHelper.Log(message, ex == null ? LogType.DEBUG : LogType.ERROR, ex);
             //PriorityAkamaiCDN = SettingHelper.GetValue<bool>(SettingHelper.Roaming.AKAMAI_CDN, false);
             ReplaceCDNMode = SettingHelper.GetValue<int>(SettingHelper.Player.REPLACE_CDN, 3);
             CDN = SettingHelper.GetValue<string>(SettingHelper.Player.CDN_SERVER, "upos-sz-mirrorhwo1.bilivideo.com");
@@ -71,6 +95,9 @@ namespace BiliLite.Modules.Player.Playurl
         }
         protected async Task<bool> CheckUrlAvailable(string url, string userAgent, string referer)
         {
+            var requestId = NewRequestId();
+            var endpoint = DescribeEndpoint(url);
+            var stopwatch = Stopwatch.StartNew();
             using (HttpClient client = new HttpClient() { Timeout = TimeSpan.FromSeconds(2) })
             {
                 try
@@ -85,11 +112,13 @@ namespace BiliLite.Modules.Player.Playurl
                     }
                     client.DefaultRequestHeaders.Add("Range", "bytes=0-9");
                     var response = await client.GetAsync(url);
+                    LogHelper.Log("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " purpose=CDN-check status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds, LogType.DEBUG);
                     response.EnsureSuccessStatusCode();
                     return true;
                 }
                 catch (Exception ex)
                 {
+                    LogHelper.Log("HTTP requestId=" + requestId + " method=GET endpoint=" + endpoint + " purpose=CDN-check failed durationMs=" + stopwatch.ElapsedMilliseconds, LogType.ERROR, ex);
                     Debug.WriteLine(ex.Message);
                     return false;
                 }
@@ -111,7 +140,7 @@ namespace BiliLite.Modules.Player.Playurl
             }
         }
 
-        protected async Task<BiliPlayUrlQualitesInfo> ParseJson(int quality, JObject obj, string userAgent, string referer, bool isProxy)
+        protected async Task<BiliPlayUrlQualitesInfo> ParseJson(int quality, JObject obj, string userAgent, string referer, bool isProxy, PlayInfo playInfo = null, string requestId = null)
         {
             try
             {
@@ -259,18 +288,19 @@ namespace BiliLite.Modules.Player.Playurl
             }
             catch (Exception ex)
             {
+                LogHelper.Log("Playurl requestId=" + requestId + " JSON parse failed aid=" + playInfo?.avid + " cid=" + playInfo?.cid + " epId=" + playInfo?.ep_id + " quality=" + quality, LogType.ERROR, ex);
                 return BiliPlayUrlQualitesInfo.Failure(ex.Message);
             }
 
         }
-        protected async Task<BiliPlayUrlQualitesInfo> ParseGrpc(int quality, PlayViewReply obj, string userAgent, string referer)
+        protected async Task<BiliPlayUrlQualitesInfo> ParseGrpc(int quality, PlayViewReply obj, string userAgent, string referer, PlayInfo playInfo = null, string requestId = null)
         {
             try
             {
                 BiliPlayUrlQualitesInfo info = new BiliPlayUrlQualitesInfo();
                 info.Qualites = new List<BiliPlayUrlInfo>();
 
-                var timeLength = obj.VideoInfo.Timelength;
+                var timeLength = (long)obj.VideoInfo.Timelength;
 
                 foreach (var item in obj.VideoInfo.StreamList)
                 {
@@ -278,7 +308,7 @@ namespace BiliLite.Modules.Player.Playurl
                     {
                         UserAgent = userAgent,
                         Referer = referer,
-                        QualityID = item.StreamInfo.Quality,
+                        QualityID = (int)item.StreamInfo.Quality,
                         QualityName = item.StreamInfo.NewDescription,
                         Timelength = timeLength,
                         HasPlayUrl = false,
@@ -316,10 +346,10 @@ namespace BiliLite.Modules.Player.Playurl
                         {
                             backupUrl = item.DashVideo.BackupUrl.ToList(),
                             baseUrl = item.DashVideo.BaseUrl,
-                            bandwidth = item.DashVideo.Bandwidth,
-                            codecid = item.DashVideo.Codecid,
+                            bandwidth = (int)item.DashVideo.Bandwidth,
+                            codecid = (int)item.DashVideo.Codecid,
                             mimeType = "video/mp4",
-                            id = item.StreamInfo.Quality,
+                            id = (int)item.StreamInfo.Quality,
                             startWithSap = 1,
                             sar = "",
                             codecs = codecs,
@@ -338,10 +368,10 @@ namespace BiliLite.Modules.Player.Playurl
                         {
                             backupUrl = item.BackupUrl.ToList(),
                             baseUrl = item.BaseUrl,
-                            bandwidth = item.Bandwidth,
-                            codecid = item.Codecid,
+                            bandwidth = (int)item.Bandwidth,
+                            codecid = (int)item.Codecid,
                             mimeType = "audio/mp4",
-                            id = item.Id,
+                            id = (int)item.Id,
                             codecs = "mp4a.40.2",
                             startWithSap = 0,
                             SegmentBase = new SegmentBase()
@@ -455,9 +485,9 @@ namespace BiliLite.Modules.Player.Playurl
                         durl.Add(new FlvDurlModel()
                         {
                             backup_url = item.BackupUrl.ToList(),
-                            length = item.Length,
-                            order = item.Order,
-                            size = item.Size,
+                            length = (int)item.Length,
+                            order = (int)item.Order,
+                            size = (int)item.Size,
                             url = item.Url
                         });
 
@@ -489,6 +519,7 @@ namespace BiliLite.Modules.Player.Playurl
             }
             catch (Exception ex)
             {
+                LogHelper.Log("Playurl requestId=" + requestId + " gRPC parse failed aid=" + playInfo?.avid + " cid=" + playInfo?.cid + " epId=" + playInfo?.ep_id + " quality=" + quality, LogType.ERROR, ex);
                 return BiliPlayUrlQualitesInfo.Failure(ex.Message);
             }
 
@@ -579,6 +610,9 @@ namespace BiliLite.Modules.Player.Playurl
 
         private async Task<BiliPlayUrlQualitesInfo> GetPlayUrlUseWebApi(PlayInfo playInfo, int qualityID)
         {
+            var requestId = NewRequestId();
+            var stopwatch = Stopwatch.StartNew();
+            LogPlayurl(playInfo, requestId, "web-api", qualityID, "started");
             try
             {
                 var refresh = await ApiHelper.NeedRefreshCookie();
@@ -587,36 +621,47 @@ namespace BiliLite.Modules.Player.Playurl
                     ApiHelper.RefreshCookie();
                 }
                 var webApiResult = await (playerAPI.VideoPlayUrl(aid: playInfo.avid, cid: playInfo.cid, qn: qualityID, dash: CodecMode != PlayUrlCodecMode.FLV, false, playInfo.area)).Request();
+                LogPlayurl(playInfo, requestId, "web-api", qualityID, "status=" + webApiResult.code + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 if (!webApiResult.status)
                 {
+                    LogPlayurl(playInfo, requestId, "web-api", qualityID, "transport failure message=" + webApiResult.message);
                     return BiliPlayUrlQualitesInfo.Failure(webApiResult.message);
                 }
                 var data = await webApiResult.GetData<JObject>();
                 if (data.code != 0)
                 {
+                    LogPlayurl(playInfo, requestId, "web-api", qualityID, "API failure code=" + data.code + " message=" + data.message);
                     return BiliPlayUrlQualitesInfo.Failure(data.message);
                 }
-                var jsonResult = await ParseJson(qualityID, data.data, WebUserAgent, WebReferer, false);
+                var jsonResult = await ParseJson(qualityID, data.data, WebUserAgent, WebReferer, false, playInfo, requestId);
+                LogPlayurl(playInfo, requestId, "web-api", qualityID, "parsed success=" + jsonResult.Success + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 return jsonResult;
             }
             catch (Exception ex)
             {
+                LogPlayurl(playInfo, requestId, "web-api", qualityID, "failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return BiliPlayUrlQualitesInfo.Failure(ex.ToString());
             }
         }
         private async Task<BiliPlayUrlQualitesInfo> GetPlayUrlUseGrpc(PlayInfo playInfo, int qualityID)
         {
+            var requestId = NewRequestId();
+            var stopwatch = Stopwatch.StartNew();
+            LogPlayurl(playInfo, requestId, "grpc-api", qualityID, "started");
             try
             {
-                Proto.Request.CodeType codec = CodecMode == PlayUrlCodecMode.DASH_H265 ? Proto.Request.CodeType.Code265 : Proto.Request.CodeType.Code264;
+                CodeType codec = CodecMode == PlayUrlCodecMode.DASH_H265 ? CodeType.Code265 : CodeType.Code264;
 
-                var playViewReply = await playUrlApi.VideoPlayView(Convert.ToInt64(playInfo.avid), Convert.ToInt64(playInfo.cid), qualityID, 16, codec, SettingHelper.Account.AccessKey);
+                var userInfo = new GrpcBiliUserInfo(SettingHelper.Account.AccessKey, SettingHelper.Account.UserID, ApiHelper.LoginKey.Appkey);
+                var playViewReply = await playUrlApi.VideoPlayView(Convert.ToInt64(playInfo.avid), Convert.ToInt64(playInfo.cid), qualityID, 16, codec, userInfo);
 
-                var grpcResult = await ParseGrpc(qualityID, playViewReply, AndroidUserAgent, "");
+                var grpcResult = await ParseGrpc(qualityID, playViewReply, AndroidUserAgent, "", playInfo, requestId);
+                LogPlayurl(playInfo, requestId, "grpc-api", qualityID, "parsed success=" + grpcResult.Success + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 return grpcResult;
             }
             catch (Exception ex)
             {
+                LogPlayurl(playInfo, requestId, "grpc-api", qualityID, "failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return BiliPlayUrlQualitesInfo.Failure(ex.ToString());
             }
 
@@ -680,43 +725,55 @@ namespace BiliLite.Modules.Player.Playurl
 
         private async Task<BiliPlayUrlQualitesInfo> GetPlayUrlUseWebApi(PlayInfo playInfo, int qualityID, string area = "")
         {
+            var requestId = NewRequestId();
+            var stopwatch = Stopwatch.StartNew();
+            LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " started");
             try
             {
                 var webApiResult = await (playerAPI.SeasonPlayUrl(aid: playInfo.avid, cid: playInfo.cid, ep_id: playInfo.ep_id, qn: qualityID, season_type: playInfo.season_type, dash: CodecMode != PlayUrlCodecMode.FLV, area != "", area)).Request();
+                LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " status=" + webApiResult.code + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 if (!webApiResult.status)
                 {
+                    LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " transport failure message=" + webApiResult.message);
                     return BiliPlayUrlQualitesInfo.Failure(webApiResult.message);
                 }
                 var data = await webApiResult.GetResult<JObject>();
                 if (data.code != 0)
                 {
+                    LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " API failure code=" + data.code + " message=" + data.message);
                     return BiliPlayUrlQualitesInfo.Failure(data.message);
                 }
-                var jsonResult = await ParseJson(qualityID, data.result, WebUserAgent, WebReferer, area != "");
+                var jsonResult = await ParseJson(qualityID, data.result, WebUserAgent, WebReferer, area != "", playInfo, requestId);
+                LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " parsed success=" + jsonResult.Success + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 return jsonResult;
             }
             catch (Exception ex)
             {
-
+                LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return BiliPlayUrlQualitesInfo.Failure(ex.Message);
             }
 
         }
         private async Task<BiliPlayUrlQualitesInfo> GetPlayUrlUseGrpc(PlayInfo playInfo, int qualityID)
         {
+            var requestId = NewRequestId();
+            var stopwatch = Stopwatch.StartNew();
+            LogPlayurl(playInfo, requestId, "season-grpc-api", qualityID, "started");
             try
             {
 
-                Proto.Request.CodeType codec = CodecMode == PlayUrlCodecMode.DASH_H265 ? Proto.Request.CodeType.Code265 : Proto.Request.CodeType.Code264;
+                CodeType codec = CodecMode == PlayUrlCodecMode.DASH_H265 ? CodeType.Code265 : CodeType.Code264;
 
-                var playViewReply = await playUrlApi.BangumiPlayView(Convert.ToInt64(playInfo.ep_id), Convert.ToInt64(playInfo.cid), qualityID, 0, codec, SettingHelper.Account.AccessKey);
+                var userInfo = new GrpcBiliUserInfo(SettingHelper.Account.AccessKey, SettingHelper.Account.UserID, ApiHelper.LoginKey.Appkey);
+                var playViewReply = await playUrlApi.BangumiPlayView(Convert.ToInt64(playInfo.ep_id), Convert.ToInt64(playInfo.cid), qualityID, 0, codec, userInfo);
 
-                var grpcResult = await ParseGrpc(qualityID, playViewReply, AndroidUserAgent, "");
+                var grpcResult = await ParseGrpc(qualityID, playViewReply, AndroidUserAgent, "", playInfo, requestId);
+                LogPlayurl(playInfo, requestId, "season-grpc-api", qualityID, "parsed success=" + grpcResult.Success + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 return grpcResult;
             }
             catch (Exception ex)
             {
-
+                LogPlayurl(playInfo, requestId, "season-grpc-api", qualityID, "failed durationMs=" + stopwatch.ElapsedMilliseconds, ex);
                 return BiliPlayUrlQualitesInfo.Failure(ex.Message);
             }
         }

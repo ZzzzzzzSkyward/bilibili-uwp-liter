@@ -1,5 +1,6 @@
-﻿using BiliLite.Helpers;
+using BiliLite.Helpers;
 using System;
+using System.Collections.Generic;
 
 namespace BiliLite.Api.Live
 {
@@ -247,16 +248,21 @@ namespace BiliLite.Api.Live
         /// <param name="rank_type"></param>
         /// <param name="next_offset">gold-rank=金瓜子排行，today-rank=今日礼物排行，seven-rank=7日礼物排行</param>
         /// <returns></returns>
-        public ApiModel RoomRankList(long ruid, int roomId,string rank_type,int next_offset=0)
+        public ApiModel RoomRankList(long ruid, int roomId, string rankType, string switchType)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"https://api.live.bilibili.com/rankdb/v1/RoomRank/tabRanks",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&actionKey=appkey&next_offset={next_offset}&room_id={roomId}&ruid={ruid}&rank_type={rank_type}",
+                baseUrl = $"https://api.live.bilibili.com/xlive/general-interface/v1/rank/queryContributionRank",
+                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&actionKey=appkey&room_id={roomId}&ruid={ruid}&type={rankType}&switch={switchType}",
             };
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
             return api;
+        }
+
+        public ApiModel RoomRankList(long ruid, int roomId, string rank_type, int next_offset = 0)
+        {
+            return RoomRankList(ruid, roomId, "online_rank", "contribution_rank");
         }
 
         /// <summary>
@@ -264,15 +270,33 @@ namespace BiliLite.Api.Live
         /// </summary>
         /// <param name="roomId"></param>
         /// <returns></returns>
-        public ApiModel RoomLotteryInfo(int roomId)
+        public ApiModel RoomLotteryInfo(int roomId, string buvid3)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"https://api.live.bilibili.com/xlive/lottery-interface/v1/lottery/getLotteryInfo",
                 parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&actionKey=appkey&roomid={roomId}",
+                need_cookie = true,
             };
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", buvid3 } };
+            return api;
+        }
+
+        public ApiModel RoomLotteryInfo(int roomId)
+        {
+            return RoomLotteryInfo(roomId, ApiHelper.Cookie.ReadCookie("buvid3", ""));
+        }
+
+        public ApiModel GetBuvid()
+        {
+            ApiModel api = new ApiModel()
+            {
+                method = RestSharp.Method.Get,
+                baseUrl = "https://api.bilibili.com/x/frontend/finger/spi",
+                need_cookie = true
+            };
             return api;
         }
 

@@ -1,4 +1,4 @@
-﻿using BiliLite.Helpers;
+using BiliLite.Helpers;
 using System;
 
 namespace BiliLite.Api
@@ -8,31 +8,42 @@ namespace BiliLite.Api
        
         public ApiModel Detail(string season_id,bool proxy=false)
         {
-            var baseUrl = ApiHelper.API_BASE_URL;
-
-            ApiModel api = new ApiModel()
-            {
-                method = RestSharp.Method.Get,
-                baseUrl = $"{baseUrl}/pgc/view/app/season",
-                parameter = ApiHelper.MustParameter(ApiHelper.AndroidKey, true) + $"&season_id={season_id}"
-            };
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
-            return api;
-       
+            return Detail(season_id, SeasonIdType.SeasonId, proxy);
         }
-        
-        public ApiModel Detail_Web(string ep_id,bool proxy=false)
+
+        public ApiModel Detail(string id, SeasonIdType type, bool proxy = false)
         {
             var baseUrl = ApiHelper.API_BASE_URL;
 
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
-                baseUrl = $"{baseUrl}/pgc/view/web/season",
-                parameter = $"ep_id={ep_id}"
+                baseUrl = $"{baseUrl}/pgc/view/v2/app/season",
+                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true)
             };
-            //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
+            api.parameter += type == SeasonIdType.SeasonId ? $"&season_id={id}" : $"&ep_id={id}";
+            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
             return api;
+
+        }
+
+        public ApiModel EpList(string id, SeasonIdType type = SeasonIdType.SeasonId)
+        {
+            var baseUrl = ApiHelper.API_BASE_URL;
+
+            ApiModel api = new ApiModel()
+            {
+                method = RestSharp.Method.Get,
+                need_cookie = true,
+                baseUrl = $"{baseUrl}/pgc/view/web/ep/list"
+            };
+            api.parameter += type == SeasonIdType.SeasonId ? $"&season_id={id}" : $"&ep_id={id}";
+            return api;
+        }
+
+        public ApiModel Detail_Web(string ep_id, bool proxy = false)
+        {
+            return EpList(ep_id, SeasonIdType.EpId);
         }
         public ApiModel DetailWeb(string season_id)
         {
@@ -116,6 +127,12 @@ namespace BiliLite.Api
             return api;
         }
     }
+    public enum SeasonIdType
+    {
+        SeasonId,
+        EpId,
+    }
+
     public enum ReviewType
     {
         Long=1,

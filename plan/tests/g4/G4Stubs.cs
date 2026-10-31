@@ -1,0 +1,313 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using Bilibili.App.Dynamic.V2;
+using Newtonsoft.Json.Linq;
+
+// Minimal stand-ins for the UWP surface the home DynamicVM class needs. The mapper and
+// model closure under test (DynamicGrpcMapper.cs + Modules/Home/DynamicVM.cs) are real code.
+namespace Windows.UI.Xaml
+{
+    public class DependencyObject
+    {
+    }
+
+    public class ResourceDictionary
+    {
+        public object this[object key]
+        {
+            get { return null; }
+            set { }
+        }
+    }
+}
+
+namespace Windows.UI.Xaml.Controls
+{
+    public class DataTemplate : Windows.UI.Xaml.DependencyObject
+    {
+    }
+
+    public class DataTemplateSelector
+    {
+        protected virtual DataTemplate SelectTemplateCore(object item, Windows.UI.Xaml.DependencyObject container)
+        {
+            return null;
+        }
+    }
+}
+
+namespace BiliLite.Helpers
+{
+    public enum LogType
+    {
+        INFO,
+        DEBUG,
+        ERROR,
+        FATAL
+    }
+
+    public static class LogHelper
+    {
+        // 探针捕获日志文本，用于断言兜底那条 INFO 确实先于换源打出
+        public static readonly List<string> Entries = new List<string>();
+
+        public static void Log(string message, LogType type, Exception ex = null)
+        {
+            Entries.Add(message);
+        }
+
+        public static bool IsNetworkError(Exception ex)
+        {
+            return false;
+        }
+    }
+
+    public static class Utils
+    {
+        /// <summary>弹出过的提示文本，按顺序；探针用它判断哪些失败被展示给用户。</summary>
+        public static readonly List<string> Toasts = new List<string>();
+
+        public static void ShowMessageToast(string message, int seconds = 2)
+        {
+            Toasts.Add(message);
+        }
+
+        public static int ToInt32(this object obj)
+        {
+            if (obj == null) return 0;
+            return int.TryParse(obj.ToString(), out var value) ? value : 0;
+        }
+    }
+
+    /// <summary>REST reply stand-in: the probe hands the fixture JSON through <see cref="results"/>.</summary>
+    public sealed class HttpResults
+    {
+        public int code { get; set; }
+        public bool status { get; set; }
+        public string message { get; set; }
+        public string results { get; set; }
+
+        public JObject GetJObject() => JObject.Parse(string.IsNullOrEmpty(results) ? "{}" : results);
+    }
+}
+
+namespace BiliLite.Api
+{
+    /// <summary>REST request stand-in: product code only calls <see cref="Request"/>, the probe sets the handler.</summary>
+    public class ApiModel
+    {
+        public Func<Task<BiliLite.Helpers.HttpResults>> Handler;
+
+        public Task<BiliLite.Helpers.HttpResults> Request()
+        {
+            return Handler();
+        }
+    }
+}
+
+namespace BiliLite.Api.User
+{
+
+    /// <summary>产品代码里的请求构造是静态类，替身转发到 DynamicAPI 的寄存器。</summary>
+    public static class WebDynamicFeedApi
+    {
+        public static ApiModel CreateFeedRequest(int page = 1, string offset = null, string type = "all")
+        {
+            return DynamicAPI.BuildFeed(page, offset, type);
+        }
+    }
+    public class DynamicAPI
+    {
+        public enum UserDynamicType
+        {
+            All = 0,
+            Video = 1,
+            Season = 2,
+            Article = 3
+        }
+
+        /// <summary>One REST feed call the product code made, in order.</summary>
+        public sealed class RestCall
+        {
+            public string Endpoint { get; set; }
+            public UserDynamicType Type { get; set; }
+            public string Cursor { get; set; }
+            public int Page { get; set; }
+            /// <summary>feed/all 的 type 参数（all/video/article），其它端点为空。</summary>
+            public string FeedType { get; set; }
+            public bool IsFeed { get { return Endpoint == "feed_all"; } }
+        }
+
+        // 夹具：REST 动态流不触网，由探针按 (endpoint, cursor) 返回固定的 JSON
+        public static readonly List<RestCall> Calls = new List<RestCall>();
+        public static Func<RestCall, string> Fixture = call => "{\"code\":0,\"data\":{\"cards\":[]}}";
+        /// <summary>web 聚合流的夹具。默认给业务码拒绝：单元用例只关心它是不是被跳过。</summary>
+        public static Func<RestCall, string> FeedFixture = call => "{\"code\":-663,\"message\":\"Rejected\"}";
+        /// <summary>让下一次 REST 调用像 HTTP 404 一样失败（status=false, code=404）。</summary>
+        public static bool FailNextRequest;
+        /// <summary>让下一次 web 聚合流调用像 HTTP 404 一样失败（status=false, code=404）。</summary>
+        public static bool FailNextFeedRequest;
+
+        public ApiModel DyanmicNew(UserDynamicType type, string offset = null)
+        {
+            return Build(new RestCall { Endpoint = "dynamic_new", Type = type, Cursor = offset });
+        }
+
+        public ApiModel HistoryDynamic(string dynamic_id, UserDynamicType type)
+        {
+            return Build(new RestCall { Endpoint = "dynamic_history", Type = type, Cursor = dynamic_id });
+        }
+
+        /// <summary>产品代码走 WebDynamicFeedApi.CreateFeedRequest；替身只在这里登记一次 feed 调用。</summary>
+        internal static ApiModel BuildFeed(int page, string offset, string type)
+        {
+            return Build(new RestCall { Endpoint = "feed_all", Page = page, Cursor = offset, FeedType = type });
+        }
+
+        private static ApiModel Build(RestCall call)
+        {
+            Calls.Add(call);
+            var captured = call;
+            return new ApiModel
+            {
+                Handler = () =>
+                {
+                    var fail = captured.IsFeed ? FailNextFeedRequest : FailNextRequest;
+                    if (captured.IsFeed)
+                    {
+                        FailNextFeedRequest = false;
+                    }
+                    else
+                    {
+                        FailNextRequest = false;
+                    }
+                    if (fail)
+                    {
+                        return Task.FromResult(new BiliLite.Helpers.HttpResults
+                        {
+                            status = false,
+                            code = 404,
+                            message = "NotFound",
+                            results = string.Empty,
+                        });
+                    }
+                    return Task.FromResult(new BiliLite.Helpers.HttpResults
+                    {
+                        status = true,
+                        message = "0",
+                        results = captured.IsFeed ? FeedFixture(captured) : Fixture(captured),
+                    });
+                },
+            };
+        }
+    }
+}
+
+namespace BiliLite.Services
+{
+    public class GrpcService
+    {
+        public const string DynVideoRejectedMessage =
+            "请求失败,HTTP 200,服务端拒绝: grpc-status=2; grpc-message=-663; bili-status-code=-663,responseBytes=0";
+
+        // 探针控制位：首页动态的 gRPC 请求可以被拒，且调用次数/请求游标可断言
+        public static int DynVideoCalls;
+        public static bool RejectDynVideo;
+        public sealed class DynVideoCall
+        {
+            public int Page { get; set; }
+            public string HistoryOffset { get; set; }
+            public string UpdateBaseline { get; set; }
+        }
+
+        public static readonly List<DynVideoCall> DynVideoRequests = new List<DynVideoCall>();
+
+        public Task<DynVideoReply> GetDynVideo(int page, string historyOffset, string updateBaseline)
+        {
+            DynVideoCalls++;
+            DynVideoRequests.Add(new DynVideoCall { Page = page, HistoryOffset = historyOffset, UpdateBaseline = updateBaseline });
+            if (RejectDynVideo)
+            {
+                throw new Exception(DynVideoRejectedMessage);
+            }
+            // 真实的 protobuf string 属性不接受 null：翻页重试如果丢了游标，这里就该炸
+            if (page > 1 && historyOffset == null)
+            {
+                throw new ArgumentNullException(nameof(historyOffset));
+            }
+            // 真实的成功回复一定带 dynamic_list；空消息体会让产品代码在读 List 时失败
+            var reply = new DynVideoReply
+            {
+                DynamicList = new CardVideoDynList
+                {
+                    HistoryOffset = "hist-" + page,
+                    UpdateBaseline = "base-" + page,
+                },
+            };
+            return Task.FromResult(reply);
+        }
+
+        //Space 分支新增的取数入口：这里的替身只让 Home/DynamicVM.cs 的模型闭包可编译，
+        //真正的形状由 Program.cs 对 Services/GrpcService.cs 源码的断言约束。
+        public Task<DynSpaceRsp> GetDynSpace(long mid, string from = "space", int page = 1, string offset = null)
+        {
+            return Task.FromResult(new DynSpaceRsp());
+        }
+    }
+}
+
+namespace BiliLite.Modules
+{
+    public class AnimeHomeModel
+    {
+    }
+}
+
+namespace BiliLite.Services
+{
+    /// <summary>
+    /// 探针替身:真实实现写应用本地的动态来源历史快照(Windows.Storage),探针里只保留内存语义。
+    /// </summary>
+    internal sealed class DynamicApiHistoryFileStore : IDynamicApiHistoryStore
+    {
+        private readonly InMemoryDynamicApiHistoryStore _inner = new InMemoryDynamicApiHistoryStore();
+
+        public DynamicApiBucketState Read(string bucketKey)
+        {
+            return _inner.Read(bucketKey);
+        }
+
+        public void Write(DynamicApiBucketState bucket)
+        {
+            _inner.Write(bucket);
+        }
+    }
+}
+
+namespace BiliLite.Helpers
+{
+    /// <summary>探针替身:选择器接线读取当前账号与 app key,这里给出匿名只读实现。</summary>
+    public static class SettingHelper
+    {
+        public static class Account
+        {
+            public static bool Logined { get { return false; } }
+            public static long UserID { get { return 0L; } }
+            public static string AccessKey { get { return ""; } }
+        }
+    }
+
+    /// <summary>探针替身:选择器接线读取两个 app key。</summary>
+    public static class ApiHelper
+    {
+        public sealed class Key
+        {
+            public string Appkey { get; set; }
+            public Key(string appkey) { Appkey = appkey; }
+        }
+
+        public static Key LoginKey { get { return new Key("probe-login"); } }
+        public static Key AndroidKey { get { return new Key("probe-android"); } }
+    }
+}

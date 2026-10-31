@@ -38,18 +38,41 @@ namespace BiliLite.Pages
             NavigationCacheMode = NavigationCacheMode.Enabled;
             seasonDetailVM = new SeasonDetailVM();
             seasonReviewVM = new SeasonReviewVM();
-            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
-            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
             RightInfo.Width = new GridLength(SettingHelper.GetValue<double>(SettingHelper.UI.RIGHT_DETAIL_WIDTH, 320), GridUnitType.Pixel);
         }
 
         private void SeasonDetailPage_Loaded(object sender, RoutedEventArgs e)
         {
-            if (this.Parent is MyFrame)
+            SubscribeClosedPage();
+        }
+
+        private void SubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
             {
-                (this.Parent as MyFrame).ClosedPage -= SeasonDetailPage_ClosedPage;
-                (this.Parent as MyFrame).ClosedPage += SeasonDetailPage_ClosedPage;
+                frame.ClosedPage -= SeasonDetailPage_ClosedPage;
+                frame.ClosedPage += SeasonDetailPage_ClosedPage;
             }
+        }
+
+        private void UnsubscribeClosedPage()
+        {
+            if (this.Parent is MyFrame frame)
+            {
+                frame.ClosedPage -= SeasonDetailPage_ClosedPage;
+            }
+        }
+
+        private void SubscribeShare()
+        {
+            DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
+            dataTransferManager.DataRequested -= DataTransferManager_DataRequested;
+            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
+        }
+
+        private void ReleaseShare()
+        {
+            DataTransferManager.GetForCurrentView().DataRequested -= DataTransferManager_DataRequested;
         }
 
         private void SeasonDetailPage_ClosedPage(object sender, EventArgs e)
@@ -58,6 +81,8 @@ namespace BiliLite.Pages
         }
         private void ClosePage()
         {
+            UnsubscribeClosedPage();
+            ReleaseShare();
             if (seasonDetailVM != null)
             {
                 seasonDetailVM.Loaded = false;
@@ -79,6 +104,8 @@ namespace BiliLite.Pages
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            SubscribeClosedPage();
+            SubscribeShare();
 
             if (e.NavigationMode == NavigationMode.New)
             {
@@ -110,6 +137,12 @@ namespace BiliLite.Pages
                 MessageCenter.ChangeTitle(Title);
             }
 
+        }
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            ReleaseShare();
+            UnsubscribeClosedPage();
+            base.OnNavigatedFrom(e);
         }
 
         private async Task InitSeasonDetail()

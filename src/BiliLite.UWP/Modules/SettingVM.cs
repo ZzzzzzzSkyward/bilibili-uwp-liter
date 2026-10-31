@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 
 namespace BiliLite.Modules
 {
@@ -93,9 +94,109 @@ namespace BiliLite.Modules
 
             //正则关键词
             ShieldRegulars = SettingHelper.GetValue<ObservableCollection<string>>(SettingHelper.VideoDanmaku.SHIELD_REGULAR, new ObservableCollection<string>() { });
+            var validRegulars = ShieldRegulars.Where(IsValidDanmuRegex).ToList();
+            if (validRegulars.Count != ShieldRegulars.Count)
+            {
+                ShieldRegulars = new ObservableCollection<string>(validRegulars);
+                SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_REGULAR, ShieldRegulars);
+            }
 
             //用户
             ShieldUsers = SettingHelper.GetValue<ObservableCollection<string>>(SettingHelper.VideoDanmaku.SHIELD_USER, new ObservableCollection<string>() { });
+        }
+
+        /// <summary>
+        /// 把本地的弹幕屏蔽规则导出为JSON，格式与bilibili.block.json一致：只有type和filter两个字段
+        /// </summary>
+        public string ExportDanmuFilterJson()
+        {
+            var items = new List<DanmuFilterExchangeItem>();
+            AppendDanmuFilterItems(items, ShieldWords, 0);
+            AppendDanmuFilterItems(items, ShieldRegulars, 1);
+            AppendDanmuFilterItems(items, ShieldUsers, 2);
+            return JsonConvert.SerializeObject(items, Formatting.Indented);
+        }
+
+        private static void AppendDanmuFilterItems(List<DanmuFilterExchangeItem> items, IEnumerable<string> filters, int type)
+        {
+            if (filters == null)
+                return;
+            foreach (var filter in filters)
+            {
+                if (string.IsNullOrWhiteSpace(filter))
+                    continue;
+                items.Add(new DanmuFilterExchangeItem() { type = type, filter = filter });
+            }
+        }
+
+        /// <summary>
+        /// 导入弹幕屏蔽规则，返回新增的条数。不访问网络，也不走云端同步。
+        /// </summary>
+        public int ImportDanmuFilterJson(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                LogHelper.Log("导入弹幕屏蔽词失败：内容为空", LogType.ERROR);
+                return 0;
+            }
+
+            List<DanmuFilterExchangeItem> items;
+            try
+            {
+                items = JsonConvert.DeserializeObject<List<DanmuFilterExchangeItem>>(json);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("导入弹幕屏蔽词失败：格式错误", LogType.ERROR, ex);
+                return 0;
+            }
+
+            if (items == null)
+            {
+                LogHelper.Log("导入弹幕屏蔽词失败：格式错误", LogType.ERROR);
+                return 0;
+            }
+
+            if (ShieldWords == null)
+                ShieldWords = new ObservableCollection<string>();
+            if (ShieldRegulars == null)
+                ShieldRegulars = new ObservableCollection<string>();
+            if (ShieldUsers == null)
+                ShieldUsers = new ObservableCollection<string>();
+
+            var added = 0;
+            foreach (var item in items)
+            {
+                if (item == null || string.IsNullOrWhiteSpace(item.filter))
+                    continue;
+                switch (item.type)
+                {
+                    case 0:
+                        added += AddDanmuFilterValue(ShieldWords, item.filter);
+                        break;
+                    case 1:
+                        if (!IsValidDanmuRegex(item.filter))
+                            continue;
+                        added += AddDanmuFilterValue(ShieldRegulars, item.filter);
+                        break;
+                    case 2:
+                        added += AddDanmuFilterValue(ShieldUsers, item.filter);
+                        break;
+                }
+            }
+
+            SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_WORD, ShieldWords);
+            SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_REGULAR, ShieldRegulars);
+            SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_USER, ShieldUsers);
+            return added;
+        }
+
+        private static int AddDanmuFilterValue(ObservableCollection<string> filters, string value)
+        {
+            if (filters.Contains(value))
+                return 0;
+            filters.Add(value);
+            return 1;
         }
 
         public async Task SyncDanmuFilter()
@@ -124,7 +225,7 @@ namespace BiliLite.Modules
                     }
                     {
                         var users = items.Where(x => x.type == 1).Select(x => x.filter).ToList();
-                        var ls = ShieldRegulars.Union(users);
+                        var ls = ShieldRegulars.Union(users).Where(IsValidDanmuRegex).ToList();
                         ShieldRegulars.Clear();
                         foreach (var item in ls)
                         {
@@ -151,6 +252,21 @@ namespace BiliLite.Modules
             catch (Exception ex)
             {
                 LogHelper.Log("读取弹幕屏蔽词失败", LogType.ERROR, ex);
+            }
+        }
+
+        private static bool IsValidDanmuRegex(string pattern)
+        {
+            if (string.IsNullOrEmpty(pattern))
+                return false;
+            try
+            {
+                new Regex(pattern);
+                return true;
+            }
+            catch (ArgumentException)
+            {
+                return false;
             }
         }
 
@@ -239,6 +355,14 @@ namespace BiliLite.Modules
 
         //}
 
+    }
+    /// <summary>
+    /// 弹幕屏蔽规则的交换格式，只保留type和filter，兼容bilibili.block.json
+    /// </summary>
+    class DanmuFilterExchangeItem
+    {
+        public int type { get; set; }
+        public string filter { get; set; }
     }
     public class DanmuFilterItem
     {

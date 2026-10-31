@@ -20,50 +20,74 @@ namespace BiliLite.Pages.Home
         private bool IsStaggered { get; set; } =false;
         public UserDynamicPage()
         {
-            this.InitializeComponent();
-            dynamicVM = new DynamicVM();
-            dynamicVM.OpenCommentEvent += DynamicVM_OpenCommentEvent;
-            splitView.PaneClosed += SplitView_PaneClosed;
-            this.DataContext = dynamicVM;
-            if (SettingHelper.GetValue<bool>(SettingHelper.UI.CACHE_HOME, true))
+            var stage = "viewmodel-create";
+            LogHelper.Log("Main dynamics stage=constructor-start", LogType.INFO);
+            try
             {
-                this.NavigationCacheMode = NavigationCacheMode.Enabled;
+                dynamicVM = new DynamicVM();
+                LogHelper.Log("Main dynamics stage=viewmodel-created initialType=" + dynamicVM.UserDynamicType, LogType.DEBUG);
+                stage = "xaml-initialize";
+                this.InitializeComponent();
+                LogHelper.Log("Main dynamics stage=xaml-initialized", LogType.INFO);
+                dynamicVM.OpenCommentEvent += DynamicVM_OpenCommentEvent;
+                splitView.PaneClosed += SplitView_PaneClosed;
+                this.DataContext = dynamicVM;
+                if (SettingHelper.GetValue<bool>(SettingHelper.UI.CACHE_HOME, true))
+                {
+                    this.NavigationCacheMode = NavigationCacheMode.Enabled;
+                }
+                else
+                {
+                    this.NavigationCacheMode = NavigationCacheMode.Disabled;
+                }
+                SetBackground();
+                LogHelper.Log("Main dynamics stage=constructor-complete", LogType.INFO);
             }
-            else
+            catch (Exception ex)
             {
-                this.NavigationCacheMode = NavigationCacheMode.Disabled;
+                LogHelper.Log("Main dynamics stage=" + stage + " failed", LogType.ERROR, ex);
+                throw;
             }
-            SetBackground();
         }
 
         private async void SetBackground()
         {
             var canshow = SettingHelper.GetValue("showbgondynamic", false);
+            LogHelper.Log("Main dynamics stage=background-start enabled=" + canshow, LogType.DEBUG);
             if(!canshow) { return; }
-            var background = SettingHelper.GetValue(SettingHelper.UI.BACKGROUND_IMAGE, AppHelper.BACKGROUND_IAMGE_URL);
-            if (background == AppHelper.BACKGROUND_IAMGE_URL)
+            try
             {
-                BGImage.Source = new BitmapImage(new Uri(background));
+                var background = SettingHelper.GetValue(SettingHelper.UI.BACKGROUND_IMAGE, AppHelper.BACKGROUND_IAMGE_URL);
+                if (background == AppHelper.BACKGROUND_IAMGE_URL)
+                {
+                    BGImage.Source = new BitmapImage(new Uri(background));
+                }
+                else
+                {
+                    StorageFile file = null;
+                    try
+                    {
+                        file = await StorageFile.GetFileFromPathAsync(background);
+                    }
+                    catch
+                    {
+                        Utils.ShowMessageToast("请授予系统存储权限", 5);
+                    }
+                    if (file == null)
+                    {
+                        return;
+                    }
+                    var img = new BitmapImage();
+                    img.SetSource(await file.OpenReadAsync());
+                    BGImage.Source = img;
+                    BGImage.Visibility = Visibility.Visible;
+                }
+                LogHelper.Log("Main dynamics stage=background-complete", LogType.DEBUG);
             }
-            else
+            catch (Exception ex)
             {
-                StorageFile file = null;
-                try
-                {
-                    file = await StorageFile.GetFileFromPathAsync(background);
-                }
-                catch
-                {
-                    Utils.ShowMessageToast("请授予系统存储权限", 5);
-                }
-                if (file == null)
-                {
-                    return;
-                }
-                var img = new BitmapImage();
-                img.SetSource(await file.OpenReadAsync());
-                BGImage.Source = img;
-                BGImage.Visibility = Visibility.Visible;
+                LogHelper.Log("Main dynamics stage=background-failed", LogType.ERROR, ex);
+                throw;
             }
         }
 
@@ -107,7 +131,11 @@ namespace BiliLite.Pages.Home
                     break;
                 case Controls.Dynamic.DynamicDisplayType.MediaList:
                     if (e.OneRowInfo.Tag != "收藏夹")
+                    {
+                        if (e.OneRowInfo.Tag == "合集")
+                            id = e.OneRowInfo.AID;
                         commentType = Api.CommentApi.CommentType.Video;
+                    }
                     break;
                 default:
                     id = e.DynamicID;
@@ -125,17 +153,31 @@ namespace BiliLite.Pages.Home
 
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
-            base.OnNavigatedTo(e);
-
-            SetStaggered();
-            if (e.NavigationMode== NavigationMode.New && dynamicVM.Items == null)
+            var stage = "navigated-to";
+            LogHelper.Log("Main dynamics stage=navigated-to mode=" + e.NavigationMode + " hasItems=" + (dynamicVM.Items != null), LogType.INFO);
+            try
             {
-                await dynamicVM.GetDynamicItems();
-                if (SettingHelper.GetValue<bool>("动态切换提示", true) && SettingHelper.GetValue<int>(SettingHelper.UI.DYNAMIC_DISPLAY_MODE, 0) != 1)
+                base.OnNavigatedTo(e);
+                stage = "set-layout";
+                SetStaggered();
+                LogHelper.Log("Main dynamics stage=layout-set staggered=" + IsStaggered, LogType.DEBUG);
+                if (e.NavigationMode== NavigationMode.New && dynamicVM.Items == null)
                 {
-                    SettingHelper.SetValue("动态切换提示", false);
-                    Utils.ShowMessageToast("右下角可以切换成瀑布流显示哦~", 5);
+                    stage = "load-items";
+                    LogHelper.Log("Main dynamics stage=load-items-begin", LogType.INFO);
+                    await dynamicVM.GetDynamicItems();
+                    LogHelper.Log("Main dynamics stage=load-items-returned count=" + (dynamicVM.Items?.Count ?? 0), LogType.INFO);
+                    if (SettingHelper.GetValue<bool>("动态切换提示", true) && SettingHelper.GetValue<int>(SettingHelper.UI.DYNAMIC_DISPLAY_MODE, 0) != 1)
+                    {
+                        SettingHelper.SetValue("动态切换提示", false);
+                        Utils.ShowMessageToast("右下角可以切换成瀑布流显示哦~", 5);
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Main dynamics stage=" + stage + " failed", LogType.ERROR, ex);
+                throw;
             }
         }
 
@@ -158,10 +200,21 @@ namespace BiliLite.Pages.Home
 
         private void pivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if ((int)dynamicVM.UserDynamicType != pivot.SelectedIndex)
+            var stage = "pivot-selection";
+            try
             {
-                dynamicVM.UserDynamicType = (Api.User.DynamicAPI.UserDynamicType)pivot.SelectedIndex;
-                dynamicVM.Refresh();
+                LogHelper.Log("Main dynamics stage=pivot-selection index=" + pivot.SelectedIndex + " type=" + dynamicVM.UserDynamicType, LogType.DEBUG);
+                if ((int)dynamicVM.UserDynamicType != pivot.SelectedIndex)
+                {
+                    dynamicVM.UserDynamicType = (Api.User.DynamicAPI.UserDynamicType)pivot.SelectedIndex;
+                    LogHelper.Log("Main dynamics stage=pivot-type-changed type=" + dynamicVM.UserDynamicType, LogType.INFO);
+                    dynamicVM.Refresh();
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Main dynamics stage=" + stage + " failed", LogType.ERROR, ex);
+                throw;
             }
           
         }

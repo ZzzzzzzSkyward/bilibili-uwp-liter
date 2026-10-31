@@ -1,0 +1,388 @@
+﻿<#
+.SYNOPSIS
+  生成 BiliLite x64 Release 包（MSIX），默认输出到 Z:\（与 BiliLite.UWP.csproj 的 AppxPackageDir 一致）。
+  每次运行都会先把包版本号加一（修订号 +1，与清单保持同源），保证每个版本都能覆盖安装。
+.PARAMETER Clean
+  先清理再重新生成（Rebuild）。
+.PARAMETER OutputDir
+  MSIX 输出目录，默认 Z:\。
+.PARAMETER NoVersionBump
+  不递增版本号（用于调试/重复出包）。
+.PARAMETER Fast
+  只编译 BiliLite.UWP 项目，不生成 MSIX，用于改动后的快速编译校验（不含打包）。
+.PARAMETER Restore
+  -Fast 下仍然执行 NuGet 还原（默认跳过，因为包很少变化）。
+.EXAMPLE
+  .\build-release-x64.ps1
+.EXAMPLE
+  .\build-release-x64.ps1 -Clean
+.EXAMPLE
+  .\build-release-x64.ps1 -Fast -NoVersionBump
+#>
+param(
+    [switch]$Clean,
+    [string]$OutputDir = 'Z:\',
+    [switch]$NoVersionBump,
+    [switch]$Fast,
+    [switch]$Restore,
+    # CS2012（中间产物被占用）时的等待上限与重试前的额外停顿，秒
+    [int]$LockWaitSeconds = 90,
+    [int]$LockRetryDelay = 3
+)
+
+# Windows PowerShell 5.1 按控制台代码页(本机 936/GBK)写标准输出, 被 MSYS/git-bash 等按 UTF-8 读取时中文会变成乱码。
+# 显式改成无 BOM 的 UTF-8: 本脚本自己的 Write-Host, 以及管道下游的 iconv/grep 都能直接按 UTF-8 处理。
+try {
+    $utf8 = New-Object System.Text.UTF8Encoding($false)
+    [Console]::OutputEncoding = $utf8
+    [Console]::InputEncoding = $utf8
+    $OutputEncoding = $utf8
+}
+catch {
+    # 非交互宿主(例如无控制台句柄时)设置失败不影响构建, 继续走原来的编码
+}
+
+$ErrorActionPreference = 'Stop'
+$root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$solution = Join-Path $root 'BiliLite.sln'
+if (-not (Test-Path $solution)) {
+    throw "找不到解决方案：$solution"
+}
+if ($Fast) {
+    $buildItem = Join-Path $root 'src\BiliLite.UWP\BiliLite.UWP.csproj'
+    Write-Host '模式    : 快速编译（仅 BiliLite.UWP，不打包 MSIX）'
+}
+else {
+    $buildItem = $solution
+    if (-not (Test-Path $OutputDir)) {
+        throw "输出目录不存在：$OutputDir（可用 -OutputDir 指定其他路径）"
+    }
+    $OutputDir = (Resolve-Path $OutputDir).ProviderPath.TrimEnd('\') + '\'
+}
+
+# ---------- 版本号：递增后再生成，确保每个发布版本都更高 ----------
+$manifests = @(
+    (Join-Path $root 'src\BiliLite.UWP\Package.appxmanifest'),
+    (Join-Path $root 'src\BiliLite.Packages\Package.appxmanifest')
+)
+$versionPattern = '(?s)<Identity\b[^>]*?\bVersion="(\d+)\.(\d+)\.(\d+)\.(\d+)"'
+$versionReplace = '(?s)(<Identity\b[^>]*?\bVersion=")[^"]+(")'
+
+$texts = @{}
+$versions = @()
+foreach ($manifest in $manifests) {
+    if (-not (Test-Path $manifest)) {
+        throw "找不到包清单：$manifest"
+    }
+    $text = [System.IO.File]::ReadAllText($manifest)
+    if ($text -notmatch $versionPattern) {
+        throw "包清单里没有找到 Identity 的版本号：$manifest"
+    }
+    $texts[$manifest] = $text
+    $versions += [version]("{0}.{1}.{2}.{3}" -f $Matches[1], $Matches[2], $Matches[3], $Matches[4])
+}
+
+$current = ($versions | Sort-Object | Select-Object -Last 1)
+$next = $current
+if (-not $NoVersionBump) {
+    if ($current.Revision -lt 65535) {
+        $next = [version]::new($current.Major, $current.Minor, $current.Build, $current.Revision + 1)
+    }
+    elseif ($current.Build -lt 65535) {
+        $next = [version]::new($current.Major, $current.Minor, $current.Build + 1, 0)
+    }
+    else {
+        throw "版本号已达上限，无法递增：$current"
+    }
+
+    $utf8Bom = New-Object System.Text.UTF8Encoding($true)
+    foreach ($manifest in $manifests) {
+        $updated = $texts[$manifest] -replace $versionReplace, ('${1}' + $next.ToString() + '${2}')
+        [System.IO.File]::WriteAllText($manifest, $updated, $utf8Bom)
+    }
+}
+
+# 通过 vswhere 定位 Visual Studio 自带的 MSBuild
+$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+if (-not (Test-Path $vswhere)) {
+    throw "找不到 vswhere.exe，请安装 Visual Studio 2022（含 UWP 工作负载）：$vswhere"
+}
+$msbuild = & $vswhere -latest -prerelease -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+if (-not $msbuild) {
+    throw '找不到 MSBuild.exe，请安装 Visual Studio 2022（含 MSBuild 组件）。'
+}
+
+$target = if ($Clean) { 'Rebuild' } else { 'Build' }
+Write-Host "MSBuild : $msbuild"
+Write-Host "构建对象: $buildItem"
+Write-Host "配置    : Release|x64 ($target)"
+if (-not $Fast) {
+    Write-Host "输出目录: $OutputDir"
+}
+if ($NoVersionBump) {
+    Write-Host "包版本  : $current（未递增）"
+}
+else {
+    Write-Host "包版本  : $current -> $next（两个清单已更新）"
+}
+
+# 还原 NuGet 包：packages.config 与 PackageReference 两种项目都要覆盖
+if ($Fast -and -not $Restore) {
+    Write-Host '还原    : 已跳过（-Fast，需要时加 -Restore）'
+}
+else {
+    & $msbuild $solution -t:Restore -p:RestorePackagesConfig=true -v:m -nologo -nodeReuse:false
+    if ($LASTEXITCODE -ne 0) {
+        throw "NuGet 还原失败（退出码 $LASTEXITCODE）。"
+    }
+}
+
+# nodeReuse:false 与关闭编译服务器: 复用的 MSBuild 节点会持有 intermediatexaml\BiliLiter.exe,
+# 让紧随其后的第二次生成因 CS2012 失败
+$buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platform=x64', '-v:m', '-nologo', '-m', '-nodeReuse:false', '-p:UseSharedCompilation=false')
+if (-not $Fast) {
+    $buildArgs += "-p:AppxPackageDir=$OutputDir"
+}
+# ---------- CS2012：谁开着 intermediatexaml\BiliLiter.exe ----------
+# 实测现场: 同一次生成里 csc 正在写这个文件, 父 MSBuild 进程还握着上一轮打开的句柄,
+# 于是后到的写入方拿到 CS2012。重试之所以有效, 是因为失败的进程此时已经退出。
+# 用 Restart Manager 问出真实持有者（不依赖 handle.exe），再等它退出：
+# 单纯固定 sleep 挡不住 4MB 文件的写入与杀软扫描, 但等句柄确实消失可以。
+$restartManagerSource = @'
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+
+public static class FileLockProbe
+{
+    [StructLayout(LayoutKind.Sequential)]
+    public struct RM_UNIQUE_PROCESS
+    {
+        public int dwProcessId;
+        public System.Runtime.InteropServices.ComTypes.FILETIME ProcessStartTime;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    public struct RM_PROCESS_INFO
+    {
+        public RM_UNIQUE_PROCESS Process;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 256)] public string strAppName;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 64)] public string strServiceShortName;
+        public int ApplicationType;
+        public uint AppStatus;
+        public uint TSSessionId;
+        [MarshalAs(UnmanagedType.Bool)] public bool bRestartable;
+    }
+
+    [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
+    private static extern int RmStartSession(out uint pSessionHandle, int dwSessionFlags, string strSessionKey);
+    [DllImport("rstrtmgr.dll")]
+    private static extern int RmEndSession(uint pSessionHandle);
+    [DllImport("rstrtmgr.dll", CharSet = CharSet.Unicode)]
+    private static extern int RmRegisterResources(uint pSessionHandle, uint nFiles, string[] rgsFilenames, uint nApplications, RM_UNIQUE_PROCESS[] rgApplications, uint nServices, string[] rgsServiceNames);
+    [DllImport("rstrtmgr.dll")]
+    private static extern int RmGetList(uint dwSessionHandle, out uint pnProcInfoNeeded, ref uint pnProcInfo, [In, Out] RM_PROCESS_INFO[] rgAffectedApps, ref uint lpdwRebootReasons);
+
+    public static string[] Who(string path)
+    {
+        uint session;
+        string key = Guid.NewGuid().ToString();
+        if (RmStartSession(out session, 0, key) != 0) return new string[0];
+        try
+        {
+            if (RmRegisterResources(session, 1, new[] { path }, 0, null, 0, null) != 0) return new string[0];
+            uint needed = 0, count = 0, reasons = 0;
+            int rc = RmGetList(session, out needed, ref count, null, ref reasons);
+            if (rc != 234 || needed == 0) return new string[0];
+            var infos = new RM_PROCESS_INFO[needed];
+            count = needed;
+            if (RmGetList(session, out needed, ref count, infos, ref reasons) != 0) return new string[0];
+            var result = new string[count];
+            for (int i = 0; i < count; i++)
+                result[i] = infos[i].Process.dwProcessId + " " + infos[i].strAppName;
+            return result;
+        }
+        finally
+        {
+            RmEndSession(session);
+        }
+    }
+}
+'@
+if (-not ('FileLockProbe' -as [type])) {
+    try { Add-Type -TypeDefinition $restartManagerSource -Language CSharp -ErrorAction Stop }
+    catch { Write-Warning "无法启用句柄查询（$($_.Exception.Message)），退回只按独占打开判断。" }
+}
+
+function Get-FileHolders {
+    param([string]$Path)
+    if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return @() }
+    if (-not ('FileLockProbe' -as [type])) { return @() }
+    return @([FileLockProbe]::Who($Path))
+}
+
+# 打开失败说明还有进程持有句柄；等到真正能独占打开再重试，比固定 sleep 可靠
+function Wait-FileReleased {
+    param([string]$Path, [int]$TimeoutSeconds = 90)
+    if (-not $Path -or -not (Test-Path -LiteralPath $Path)) { return $true }
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $script:LastHolders = @()
+    while ((Get-Date) -lt $deadline) {
+        $script:LastHolders = @(Get-FileHolders -Path $Path)
+        try {
+            $stream = [System.IO.File]::Open($Path, 'Open', 'ReadWrite', 'None')
+            $stream.Dispose()
+            if ($script:LastHolders.Count -eq 0) { return $true }
+        }
+        catch {
+            if ($script:LastHolders.Count -eq 0) { $script:LastHolders = @('(独占打开仍失败，持有者进程名未知)') }
+        }
+        Start-Sleep -Milliseconds 500
+    }
+    return $false
+}
+
+# 只清理本次生成可能遗留的构建工具，不碰用户自己的 MSBuild/VS 实例
+$toolchain = @('MSBuild', 'VBCSCompiler', 'csc', 'XamlCompiler', 'MSBuildTaskHost')
+function Stop-Holders {
+    param([string[]]$Holders)
+    $killed = @()
+    foreach ($holder in $Holders) {
+        if ($holder -notmatch '^(\d+)\s+(.+)$') { continue }
+        $holderPid = [int]$Matches[1]
+        $holderName = $Matches[2]
+        if ($toolchain -notcontains $holderName) { continue }
+        try {
+            Stop-Process -Id $holderPid -Force -ErrorAction Stop
+            $killed += "$holderName($holderPid)"
+        }
+        catch { }
+    }
+    return $killed
+}
+
+$buildOutput = @()
+& $msbuild @buildArgs | Tee-Object -Variable buildOutput
+for ($attempt = 1; $attempt -le 2; $attempt++) {
+    if ($LASTEXITCODE -eq 0 -or -not ($buildOutput -match 'error CS2012')) { break }
+    # XAML 编译中间产物被正在退出的编译器进程占用（-nodeReuse:false 也挡不住）。
+    # 重试用 Rebuild 而不是 Build：失败的编译会留下半新的 intermediatexaml，
+    # 增量打包会把它们原样带进 MSIX，装上去就停在启动图。
+    $locked = $null
+    $cs2012 = $buildOutput | Where-Object { $_ -match 'CS2012' } | Select-Object -First 1
+    if ($cs2012 -match '“([^”]+\.exe)”') { $locked = $Matches[1] }
+    elseif ($cs2012 -match '"([^"]+\.exe)"') { $locked = $Matches[1] }
+    if (-not $locked) { $locked = Join-Path $root 'src\BiliLite.UWP\obj\x64\Release\intermediatexaml\BiliLiter.exe' }
+    $holders = @(Get-FileHolders -Path $locked)
+    Write-Warning "检测到 CS2012（$(Split-Path -Leaf $locked) 被占用），持有者：$(if ($holders) { $holders -join '；' } else { '（Restart Manager 未报出进程，可能在扫描/映射）' })。先等它退出，超时再清理构建工具，然后 Rebuild 重试（第 $attempt 次）。"
+    if (-not (Wait-FileReleased -Path $locked -TimeoutSeconds $LockWaitSeconds)) {
+        $killed = Stop-Holders -Holders $script:LastHolders
+        if ($killed) { Write-Warning "等不到释放，已结束：$($killed -join '、')。" }
+        if (-not (Wait-FileReleased -Path $locked -TimeoutSeconds 15)) {
+            Write-Warning "仍被占用（$(@($script:LastHolders) -join '；')），带延迟直接重试。"
+        }
+    }
+    # 句柄刚消失时文件仍可能被杀软/索引器接着扫；留一点余量比立刻抢写安全
+    if ($LockRetryDelay -gt 0) { Start-Sleep -Seconds $LockRetryDelay }
+    $retryArgs = $buildArgs | ForEach-Object { if ($_ -eq "-t:$target") { '-t:Rebuild' } else { $_ } }
+    $buildOutput = @()
+    & $msbuild @retryArgs | Tee-Object -Variable buildOutput
+}
+if ($LASTEXITCODE -ne 0) {
+    throw "生成失败（退出码 $LASTEXITCODE）。"
+}
+
+if ($Fast) {
+    Write-Host ''
+    Write-Host '快速编译完成（未生成 MSIX）。'
+    return
+}
+
+# 产物路径里可能带空格（自定义 OutputDir），所以匹配整行末尾而不是 \S+；
+# 再按「输出目录 + 版本 + 项目名」的约定路径兜底，确保两个包都被检查到。
+$builtVersion = if ($NoVersionBump) { $current.ToString() } else { $next.ToString() }
+$packages = @()
+foreach ($line in $buildOutput) {
+    if ($line -match '->\s+(.+\.msix)\s*$') { $packages += $Matches[1].Trim() }
+}
+foreach ($name in @('BiliLite.UWP', 'BiliLite.Packages')) {
+    $expected = Join-Path $OutputDir ("{0}_{1}_x64_Test\{0}_{1}_x64.msix" -f $name, $builtVersion)
+    if (Test-Path -LiteralPath $expected) { $packages += $expected }
+}
+$packages = @($packages | Select-Object -Unique)
+if ($packages) {
+    Write-Host ''
+    Write-Host '生成产物：'
+    $packages | ForEach-Object { Write-Host "  $_" }
+}
+else {
+    throw "生成成功，但在 $OutputDir 里没有找到任何 MSIX（版本 $builtVersion）。不要交付空结果。"
+}
+
+# ---------- 打包布局校验 ----------
+# 1.0.9.12 把 4MB 的托管主程序放在包根、且没有 entrypoint/，装上去就停在启动图闪退；
+# 能正常启动的布局是「根目录 8KB 启动器 + entrypoint\BiliLiter.exe」。
+# 两个打包工程都会往同一个目录写同名 MSIX，谁后写谁赢，所以最后一个文件不能直接交付。
+Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue | Out-Null
+
+function Read-AppxPackageLayout {
+    param([string]$Path)
+    $zip = [System.IO.Compression.ZipFile]::OpenRead($Path)
+    try {
+        $entries = @{}
+        foreach ($entry in $zip.Entries) { $entries[$entry.FullName] = $entry.Length }
+        $manifest = ''
+        $manifestEntry = $zip.GetEntry('AppxManifest.xml')
+        if ($manifestEntry) {
+            $reader = New-Object System.IO.StreamReader($manifestEntry.Open())
+            try { $manifest = $reader.ReadToEnd() } finally { $reader.Dispose() }
+        }
+        return [pscustomobject]@{ Entries = $entries; Manifest = $manifest }
+    }
+    finally {
+        $zip.Dispose()
+    }
+}
+
+function Test-UwpPackageLayout {
+    param([string]$Path)
+    $layout = Read-AppxPackageLayout -Path $Path
+    if (-not $layout.Entries.ContainsKey('entrypoint/BiliLiter.exe')) { return '缺少 entrypoint/BiliLiter.exe' }
+    if (-not $layout.Entries.ContainsKey('BiliLiter.exe')) { return '缺少根 BiliLiter.exe' }
+    if ($layout.Entries['BiliLiter.exe'] -ge 65536) { return "根 BiliLiter.exe 是 $($layout.Entries['BiliLiter.exe']) 字节的托管主程序，不是启动器" }
+    return $null
+}
+
+function Test-FullPackageLayout {
+    param([string]$Path)
+    $layout = Read-AppxPackageLayout -Path $Path
+    if (-not $layout.Entries.ContainsKey('entrypoint/BiliLiter.exe')) { return '缺少 entrypoint/BiliLiter.exe' }
+    if (-not $layout.Entries.ContainsKey('BiliLite.Win32Tools/BiliLite.Win32Tools.exe')) { return '缺少 BiliLite.Win32Tools' }
+    if ($layout.Manifest -notmatch 'fullTrustProcess') { return '清单里没有 fullTrustProcess 扩展' }
+    return $null
+}
+
+$uwpPackage = $packages | Where-Object { $_ -match 'BiliLite\.UWP_.*\.msix$' } | Select-Object -First 1
+$fullPackage = $packages | Where-Object { $_ -match 'BiliLite\.Packages_.*\.msix$' } | Select-Object -First 1
+if (-not $uwpPackage -and -not $fullPackage) {
+    throw "找到的 MSIX 里没有 BiliLite.UWP_* 或 BiliLite.Packages_*（$($packages -join '; ')），布局无法校验，不要交付。"
+}
+if ($uwpPackage) {
+    $problem = Test-UwpPackageLayout -Path $uwpPackage
+    if ($problem) {
+        # 另一个打包工程会把同名文件覆盖成正确布局：重跑它一次再检查
+        Write-Warning "UWP 包布局不对（$problem），重跑 BiliLite.Packages 打包修正。"
+        $wapproj = Join-Path $root 'src\BiliLite.Packages\BiliLite.Packages.wapproj'
+        & $msbuild $wapproj -t:Package '-p:Configuration=Release' '-p:Platform=x64' '-v:m' '-nologo' '-m' '-nodeReuse:false' "-p:AppxPackageDir=$OutputDir" | Out-Null
+        $problem = Test-UwpPackageLayout -Path $uwpPackage
+        if ($problem) {
+            throw "UWP 包布局仍然不对（$problem）：$uwpPackage。这个包装上去会停在启动图，不要交付。"
+        }
+    }
+}
+if ($fullPackage) {
+    $problem = Test-FullPackageLayout -Path $fullPackage
+    if ($problem) {
+        throw "完整包布局不对（$problem）：$fullPackage。"
+    }
+}
