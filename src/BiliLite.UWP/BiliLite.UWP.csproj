@@ -923,10 +923,10 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FFmpegInteropX">
-      <Version>2.0.0-pre7</Version>
+      <Version>2.1.0.81200</Version>
     </PackageReference>
-    <PackageReference Include="FFmpegInteropX.FFmpegUWP">
-      <Version>5.1.100</Version>
+    <PackageReference Include="FFmpegInteropX.UWP.FFmpeg">
+      <Version>8.1.2</Version>
     </PackageReference>
     <PackageReference Include="gfoidl.Base64">
       <Version>1.1.2</Version>
