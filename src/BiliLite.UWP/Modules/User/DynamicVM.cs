@@ -245,7 +245,17 @@ namespace BiliLite.Modules.User
 
         public void OpenImage(object data)
         {
-            DyanmicItemDisplayImageInfo info = data as DyanmicItemDisplayImageInfo;
+            var info = data as DyanmicItemDisplayImageInfo;
+            if (info == null || string.IsNullOrEmpty(info.ImageUrl))
+            {
+                return;
+            }
+            // 列表可能被过滤成空（服务端没给全 URL），这时至少把当前这张交给查看器
+            if (info.AllImages == null || info.AllImages.Count == 0)
+            {
+                MessageCenter.OpenImageViewer(new List<string> { info.ImageUrl }, 0);
+                return;
+            }
             MessageCenter.OpenImageViewer(info.AllImages, info.Index);
         }
         public async Task SaveImageAsync(object data)

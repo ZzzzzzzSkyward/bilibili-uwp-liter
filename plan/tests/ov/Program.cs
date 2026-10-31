@@ -1,4 +1,5 @@
 using System;
+using BiliLite.Helpers;
 using BiliLite.Services;
 
 namespace OVProbe
@@ -18,6 +19,7 @@ namespace OVProbe
             VolumeRoundsHalfAwayFromZero();
             VolumeTextHasNoFraction();
             SliderTooltipUsesPercent();
+            DynamicImageRulesDecideLongImages();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -71,6 +73,19 @@ namespace OVProbe
             AssertEqual("13%", PlayerToastOverlay.FormatPercent(0.125), "slider half rounds up");
         }
 
+        private static void DynamicImageRulesDecideLongImages()
+        {
+            // BR-22: 尺寸缺失的图不能被判成长图，否则每张图都会被请求 !header 头部裁切
+            Assert(!DynamicImageRules.IsLongImage(0, 2400), "no width is not a long image");
+            Assert(!DynamicImageRules.IsLongImage(1080, 0), "no height is not a long image");
+            Assert(DynamicImageRules.IsLongImage(1080, 2400), "1080x2400 is a long image");
+            Assert(!DynamicImageRules.IsLongImage(1080, 1400), "1080x1400 is not a long image");
+            AssertEqual("u@400w.jpg", DynamicImageRules.WithThumbnailParams("u", 0, 0), "unknown size keeps width only");
+            AssertEqual("u@240w_320h_!header.webp", DynamicImageRules.WithThumbnailParams("u", 1080, 2400), "long image uses the header crop");
+            AssertEqual("u@240w_320h_1e_1c.jpg", DynamicImageRules.WithThumbnailParams("u", 1080, 1500), "tall image keeps its own crop");
+            AssertEqual("u@400w.jpg", DynamicImageRules.WithThumbnailParams("u", 1920, 1080), "landscape image keeps width only");
+            Assert(DynamicImageRules.WithThumbnailParams(null, 1, 1) == null, "no url stays empty");
+        }
         private static void Assert(bool condition, string what)
         {
             if (!condition)

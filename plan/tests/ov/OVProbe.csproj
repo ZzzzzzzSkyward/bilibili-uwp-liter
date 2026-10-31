@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <Compile Include="Program.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\DynamicImageRules.cs" Link="DynamicImageRules.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\PlayerToastOverlay.cs" Link="PlayerToastOverlay.cs" />
   </ItemGroup>
 

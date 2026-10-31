@@ -421,29 +421,23 @@ namespace BiliLite.Controls.Dynamic
             }
             if (data.Type == DynamicDisplayType.Photo)
             {
-                var imgs = new List<string> { };
-                var objs = new List<DyanmicItemDisplayImageInfo>() { };
-                var imgsrc = item.modules?.module_dynamic?.major?.draw?.items;
-                var allImages = imgsrc?.Select(img => img.src).Where(src => !string.IsNullOrEmpty(src)).ToList()
-                    ?? new List<string>();
-                int i = 0;
-                if (imgsrc != null)
-                    foreach (var img in imgsrc)
+                // 没有 URL 的图片不能进 ImagesInfo：模板会把它渲染成一个点不开的占位格
+                var pictures = (item.modules?.module_dynamic?.major?.draw?.items ?? new List<DynamicCardModel2024_pic>())
+                    .Where(img => img != null && !string.IsNullOrEmpty(img.src))
+                    .ToList();
+                var allImages = pictures.Select(img => img.src).ToList();
+                var objs = new List<DyanmicItemDisplayImageInfo>();
+                for (var i = 0; i < pictures.Count; i++)
+                {
+                    objs.Add(new DyanmicItemDisplayImageInfo()
                     {
-                        if (img.src != null)
-                        {
-                            imgs.Add(img.src);
-                            objs.Add(new DyanmicItemDisplayImageInfo()
-                            {
-                                ImageUrl = img.src,
-                                Height = img.height,
-                                Width = img.width,
-                                Index = i,
-                                AllImages = allImages,
-                            });
-                        }
-                        i++;
-                    }
+                        ImageUrl = pictures[i].src,
+                        Height = pictures[i].height,
+                        Width = pictures[i].width,
+                        Index = i,
+                        AllImages = allImages,
+                    });
+                }
                 data.ImagesInfo = objs;
             }
 

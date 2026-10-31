@@ -317,10 +317,22 @@ namespace BiliLite.Helpers
             var modules = Obj(source["modules"]);
             var moduleDynamic = Obj(modules?["module_dynamic"]);
             var major = Obj(moduleDynamic?["major"]);
+            // 新版图文动态的图片在 major.opus.pics 里：拿到图片才算图片动态，没图就是纯文字
+            var opusPictures = ReadOpusPictures(Obj(major?["opus"]));
             var cardType = MapWebCardType(itemType);
+            if (itemType == "DYNAMIC_TYPE_OPUS")
+            {
+                cardType = opusPictures.Count > 0 ? "DYNAMIC_TYPE_DRAW" : "DYNAMIC_TYPE_WORD";
+            }
             if (cardType == "DYNAMIC_TYPE_UNSUPPORTED")
             {
                 LogHelper.Log("Dynamic feed mapping stage=unsupported-type type=" + itemType + " dynamicId=" + id, LogType.DEBUG);
+            }
+            // opus 动态没有 module_dynamic.desc，正文只在 major.opus.summary 里
+            var desc = MapWebDescription(Obj(moduleDynamic?["desc"]));
+            if (desc == null)
+            {
+                desc = MapWebDescription(Obj(Obj(major?["opus"])?["summary"]));
             }
 
             var card = new DynamicCardModel2024
@@ -340,8 +352,8 @@ namespace BiliLite.Helpers
                     module_stat = MapWebStat(Obj(modules?["module_stat"])),
                     module_dynamic = new DynamicCardModel2024_dynamic
                     {
-                        desc = MapWebDescription(Obj(moduleDynamic?["desc"])),
-                        major = MapWebMajor(major),
+                        desc = desc,
+                        major = MapWebMajor(major, opusPictures),
                     },
                 },
             };
@@ -484,10 +496,46 @@ namespace BiliLite.Helpers
         }
 
         /// <summary>
+        /// major.opus.pics 的字段是 url/width/height；拿不到 url 的条目直接丢掉，否则渲染层会得到一个点不开的空图。
+        /// </summary>
+        private static List<DynamicCardModel2024_pic> ReadOpusPictures(JObject opus)
+        {
+            var pictures = new List<DynamicCardModel2024_pic>();
+            var pics = opus?["pics"] as JArray;
+            if (pics == null)
+            {
+                return pictures;
+            }
+            foreach (var token in pics)
+            {
+                var pic = Obj(token);
+                if (pic == null)
+                {
+                    continue;
+                }
+                var src = pic["url"]?.ToString();
+                if (string.IsNullOrEmpty(src))
+                {
+                    src = pic["src"]?.ToString();
+                }
+                if (string.IsNullOrEmpty(src))
+                {
+                    continue;
+                }
+                pictures.Add(new DynamicCardModel2024_pic
+                {
+                    src = src,
+                    width = ToInt(pic["width"]?.ToString()),
+                    height = ToInt(pic["height"]?.ToString()),
+                });
+            }
+            return pictures;
+        }
+        /// <summary>
         /// web 的 major 是"字段全在、只有一个非空"的结构，与 gRPC 的 ModuleDynamic 一一对应，
         /// 所以这里按同样的优先级挑出非空的那一路。
         /// </summary>
-        private static DynamicCardModel2024_major MapWebMajor(JObject major)
+        private static DynamicCardModel2024_major MapWebMajor(JObject major, List<DynamicCardModel2024_pic> opusPictures)
         {
             var result = new DynamicCardModel2024_major();
             if (major == null)
@@ -583,9 +631,19 @@ namespace BiliLite.Helpers
             }
 
             var opus = Obj(major["opus"]);
+            if (opus != null && opusPictures != null && opusPictures.Count > 0)
+            {
+                // 新版图文动态的图片就是图片动态的图片：交给 draw 那套渲染，才有九宫格和点开查看
+                result.draw = new DynamicCardModel2024_draw
+                {
+                    id = ToLong(opus["id"]?.ToString()),
+                    items = opusPictures,
+                };
+                return result;
+            }
             if (opus != null)
             {
-                // 图文（OPUS）在渲染层就是专栏那张卡：封面取首图，正文取 summary.text
+                // 没有图片的图文当作专栏那张卡：封面取首图，正文取 summary.text
                 var covers = new List<string>();
                 var opusPics = opus["pics"] as JArray;
                 if (opusPics != null)

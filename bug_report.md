@@ -191,7 +191,34 @@ hiding a recovered gRPC. Fixed: both chains now keep `Legacy` **last** and only 
 — after a rejected page, a Refresh retries the paginating chain (gRPC asked again, zero legacy calls) instead of
 staying on the legacy feed.
 
+## BR-22 动态里的图片是一个灰色占位，点不开
+
+维持者报告并确认：动态流的图片位置只有灰色占位图（`PlaceholderSource`），点击没有任何反应。
+
+原因链（读代码就能闭环，不需要设备）：
+
+1. 渲染只用 `ImagesInfo`，它由 `Controls/Dynamic/DynamicParse.cs` 的 Photo 分支从
+   `modules.module_dynamic.major.draw.items[]`（`src`/`width`/`height`）填充；
+2. web 聚合流里图片动态的 major 现在是 `MAJOR_TYPE_OPUS`，图片在 `major.opus.pics[]`（`url`/`width`/`height`），
+   而 `DynamicGrpcMapper.MapWebMajor` 把 `opus` 映射成 `article`（只有封面 URL，没有尺寸），`draw` 始终为 null；
+3. 于是 `ImagesInfo` 是空列表 → `Photo1x1` 模板把 `ImagesInfo[0].ImageUrlWithPar` 绑到空值 → `ImageEx` 只剩占位图；
+   同一条绑定也让 `ImageCommand` 拿到 null 参数，点击自然什么都不发生；
+4. 同一个卡片的正文也一起丢了：`module_dynamic.desc` 在 opus 动态里是 null，正文只在 `major.opus.summary`。
+
+修复方向：opus 有图 → 映射成 `draw.items` 并给卡片类型 `DYNAMIC_TYPE_DRAW`（无图 → `DYNAMIC_TYPE_WORD`），
+`major.opus.summary` 回填 `module_dynamic.desc`；`src` 为空的图片直接跳过；
+`LongImage`/缩略图参数抽成 XAML 无关的规则函数，width/height 缺失时一律走 `@400w.jpg` 而不是 `!header` 头部裁切，
+并在模板选择器与 `OpenImage` 上加空值保护。
 ## Status
+## BR-22 状态：已修复
+
+`DynamicGrpcMapper` 现在把 `major.opus.pics` 映射成 `draw.items`（`url`→`src`，带 `width`/`height`），
+opus 动态的卡片类型按有没有图定成 `DYNAMIC_TYPE_DRAW` / `DYNAMIC_TYPE_WORD`，并把 `major.opus.summary` 回填到
+`module_dynamic.desc`（正文不再丢）。`src` 为空的图片条目在映射层就丢掉，`DynamicParse` 的 Photo 分支同样只收非空 URL，
+`Index`/`AllImages` 与过滤后的列表对齐；模板选择器把空 `ImagesInfo` 落到文字模板，`OpenImage` 在 `AllImages` 为空时用当前这张图兜底。
+长图判定与缩略图参数搬到 `Helpers/DynamicImageRules.cs`：宽高任一缺失一律 `@400w.jpg`，不会再被判成长图去请求 `!header` 头部裁切。
+
+探针：g3 73（新增 opus 图片/纯文字/空 URL 三条契约，旧映射会失败）、ov 29（尺寸规则）、g4/g5 不回归。
 
 | ID | State |
 |---|---|
@@ -205,6 +232,7 @@ staying on the legacy feed.
 | BR-19 | fixed in two passes — 11 chrome buttons, then the 9 settings-pane buttons, `BtnOpenDanmakuList` and `BtnReplaceShowMode` once the maintainer reported 弹幕按钮仍有白边 |
 | BR-20 | fixed in the same commit — `TopBtnSettingDanmaku` and its handler removed; 弹幕 is pivot 2, reachable from More |
 | BR-21 | recorded — memory grows over time; needs a measured journey (feed paging / playback / danmaku) |
+| BR-22 | fixed — opus-major image posts lost their pictures (`major.opus.pics` was mapped to an article cover list), so the photo card had no image and no click target; pictures now map to `draw.items`, the opus summary back-fills `desc`, and zero-size images no longer get the long-image crop |
 
 ## Verification this turn
 

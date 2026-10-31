@@ -37,6 +37,7 @@ namespace G3Probe
             DetailOnlyAcceptsRenderableCards();
             WebFeedItemsMapThroughTheSameCardModel();
             WebFeedSurvivesHostileFieldTypes();
+            OpusPicturesRenderAsPhotoCards();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -350,10 +351,12 @@ namespace G3Probe
             var forward = cards[3];
             Check(forward.type == "DYNAMIC_TYPE_FORWARD" && forward.orig != null,
                 "a forward item maps its original dynamic");
-            Check(forward.orig.type == "DYNAMIC_TYPE_ARTICLE"
-                  && forward.orig.modules.module_dynamic.major.article.title == "图文标题"
-                  && forward.orig.modules.module_dynamic.major.article.covers.Count == 1,
-                "an opus original maps to the article card the renderer draws");
+            Check(forward.orig.type == "DYNAMIC_TYPE_DRAW"
+                  && forward.orig.modules.module_dynamic.major.draw.items.Count == 1
+                  && forward.orig.modules.module_dynamic.major.draw.items[0].src == "http://opus-pic",
+                "an opus original with a picture maps to the photo card the renderer draws");
+            Check(forward.orig.modules.module_dynamic.desc.text == "图文正文",
+                "an opus original keeps its summary text as the card description");
 
             Check(cards[4].type == "DYNAMIC_TYPE_UNSUPPORTED"
                   && cards[4].basic.rid_str == "1248889675504943128",
@@ -375,6 +378,152 @@ namespace G3Probe
                 "a forward without an original falls back to the placeholder card");
         }
 
+        /// <summary>
+        /// BR-22: 图片动态的图片在 web 流里放在 major.opus.pics（url/width/height），
+        /// 以前被映射成只有封面的 article，渲染层因此拿到 0 张图（灰色占位 + 点不开）。
+        /// 这里钉住"有图就是图片卡、没图就是文字卡、正文不丢"这三条。
+        /// </summary>
+        private static void OpusPicturesRenderAsPhotoCards()
+        {
+            var feed = new JArray
+            {
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943201",
+                    ["type"] = "DYNAMIC_TYPE_DRAW",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504943201" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["type"] = "MAJOR_TYPE_OPUS",
+                                ["opus"] = new JObject
+                                {
+                                    ["summary"] = new JObject
+                                    {
+                                        ["text"] = "九宫格正文",
+                                        ["rich_text_nodes"] = new JArray
+                                        {
+                                            new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_TEXT", ["text"] = "九宫格正文", ["orig_text"] = "九宫格正文" },
+                                        },
+                                    },
+                                    ["pics"] = new JArray
+                                    {
+                                        new JObject { ["url"] = "http://opus-1", ["width"] = 1080, ["height"] = 1440 },
+                                        new JObject { ["url"] = "http://opus-2", ["width"] = 1080, ["height"] = 2400 },
+                                        new JObject { ["url"] = "http://opus-3", ["width"] = 1920, ["height"] = 1080 },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943202",
+                    ["type"] = "DYNAMIC_TYPE_OPUS",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504943202" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["type"] = "MAJOR_TYPE_OPUS",
+                                ["opus"] = new JObject
+                                {
+                                    ["summary"] = new JObject { ["text"] = "单图正文" },
+                                    ["pics"] = new JArray
+                                    {
+                                        new JObject { ["url"] = "http://opus-single", ["width"] = 1200, ["height"] = 800 },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943203",
+                    ["type"] = "DYNAMIC_TYPE_OPUS",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504943203" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["type"] = "MAJOR_TYPE_OPUS",
+                                ["opus"] = new JObject
+                                {
+                                    ["summary"] = new JObject { ["text"] = "纯文字图文" },
+                                },
+                            },
+                        },
+                    },
+                },
+                new JObject
+                {
+                    ["id_str"] = "1248889675504943204",
+                    ["type"] = "DYNAMIC_TYPE_OPUS",
+                    ["basic"] = new JObject { ["rid_str"] = "1248889675504943204" },
+                    ["modules"] = new JObject
+                    {
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["type"] = "MAJOR_TYPE_OPUS",
+                                ["opus"] = new JObject
+                                {
+                                    ["summary"] = new JObject { ["text"] = "缺图正文" },
+                                    ["pics"] = new JArray
+                                    {
+                                        new JObject { ["url"] = "", ["width"] = 100, ["height"] = 100 },
+                                        new JObject { ["width"] = 100, ["height"] = 100 },
+                                        new JObject { ["url"] = "http://opus-kept", ["width"] = 100, ["height"] = 100 },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+
+            var cards = DynamicGrpcMapper.MapToUserFeedCards(feed);
+            Check(cards.Count == 4, "opus feed: every item still yields a card (cards=" + cards.Count + ")");
+
+            var grid = cards[0];
+            Check(grid.type == "DYNAMIC_TYPE_DRAW",
+                "opus feed: a draw item with opus pictures stays a photo card (type=" + grid.type + ")");
+            Check(grid.modules.module_dynamic.major.draw != null
+                  && grid.modules.module_dynamic.major.draw.items.Count == 3,
+                "opus feed: all three opus pictures reach the photo card");
+            Check(grid.modules.module_dynamic.major.draw.items[1].src == "http://opus-2"
+                  && grid.modules.module_dynamic.major.draw.items[1].width == 1080
+                  && grid.modules.module_dynamic.major.draw.items[1].height == 2400,
+                "opus feed: picture url/size map onto the draw item");
+            Check(grid.modules.module_dynamic.desc != null
+                  && grid.modules.module_dynamic.desc.text == "九宫格正文"
+                  && grid.modules.module_dynamic.desc.rich_text_nodes.Count == 1,
+                "opus feed: the opus summary becomes the card description");
+
+            Check(cards[1].type == "DYNAMIC_TYPE_DRAW"
+                  && cards[1].modules.module_dynamic.major.draw.items.Count == 1
+                  && cards[1].modules.module_dynamic.major.draw.items[0].src == "http://opus-single",
+                "opus feed: a bare opus item with one picture becomes a single photo card");
+
+            Check(cards[2].type == "DYNAMIC_TYPE_WORD",
+                "opus feed: an opus item without pictures falls back to the text card (type=" + cards[2].type + ")");
+            Check(cards[2].modules.module_dynamic.desc.text == "纯文字图文",
+                "opus feed: a text-only opus keeps its summary");
+
+            Check(cards[3].modules.module_dynamic.major.draw.items.Count == 1
+                  && cards[3].modules.module_dynamic.major.draw.items[0].src == "http://opus-kept",
+                "opus feed: pictures without a url are dropped instead of rendering a dead cell");
+        }
         /// <summary>
         /// 设备日志 2026-10-31 08:20 的回归：真实 feed/all 响应里 rich_text_nodes[].emoji 是纯字符串，
         /// 旧代码在 node["emoji"]?["icon_url"] 上抛 InvalidOperationException（JValue 没有子节点），

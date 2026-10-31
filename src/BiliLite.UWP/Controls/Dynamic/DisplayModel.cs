@@ -337,24 +337,12 @@ namespace BiliLite.Controls.Dynamic
         public int Height { get; set; }
         public List<string> AllImages { get; set; }
         public ICommand ImageCommand { get; set; }
-        public bool LongImage { get { return Height > (Width * 2); } }
+        /// <summary>长图角标：宽高缺失时不算长图，否则每个拿不到尺寸的图都会被标成长图。</summary>
+        public bool LongImage { get { return DynamicImageRules.IsLongImage(Width, Height); } }
+        /// <summary>单图卡片的缩略图参数，规则集中在 Helpers/DynamicImageRules.cs。</summary>
         public string ImageUrlWithPar
         {
-            get
-            {
-                if (Height > (Width * 2))
-                {
-                    return ImageUrl + "@240w_320h_!header.webp";
-                }
-                else if (Height > (Width * 1.3))
-                {
-                    return ImageUrl + "@240w_320h_1e_1c.jpg";
-                }
-                else
-                {
-                    return ImageUrl + "@400w.jpg";
-                }
-            }
+            get { return DynamicImageRules.WithThumbnailParams(ImageUrl, Width, Height); }
         }
 
         public ICommand SaveImageCommand { get; internal set; }
