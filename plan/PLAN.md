@@ -51,7 +51,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 3 | AI subtitle label (#1311) — partially mitigated | needs a sibling-supported discriminator |
-| 4 | Response-evidence workflow (shapes, drift, bundle, fixture import) | P1+P2 shipped — shapes/drift capture, redaction, two toggles, and a one-click zip bundle with `manifest.json`; fixture import (`tools/import-capture.ps1`) still open |
+| 4 | Response-evidence workflow (shapes, drift, bundle, fixture import) | done — capture (shapes/drift, redaction, two toggles), one-click zip bundle with `manifest.json`, and `tools/import-capture.ps1` turning a bundle into probe fixtures; only real-bundle fixture drops remain |
 | 5 | API parsing structure: names, fields, and parsing methods | P0 inventory done; P1 (`ApiParseResult<T>` + web parser) and the web half of P2 (`WebDynamicFeedMapper`, `WireScalars`, `WebDynamicFeedApi.CreateFeedRequest`) done; P3 gRPC/legacy separation next |
 
 ## 1. Player session ownership

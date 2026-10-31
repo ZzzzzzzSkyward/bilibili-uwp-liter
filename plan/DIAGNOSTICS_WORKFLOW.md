@@ -141,5 +141,10 @@ stops being an excuse for shipping a mapping guess.
 设置页新增「导出诊断包」，一次点击把最近 7 个日志、`api/` 下的 NDJSON 与基线一起压成 zip（原有 txt 导出保留）。
 探针 `plan/tests/cap` 38 条。
 
-仍未做（原计划的 P3）：`tools/import-capture.ps1`
+P3 也补上了：`tools/import-capture.ps1 -Bundle <zip|文件夹> [-OutDir ...] [-Force]` 把导出包变成回放夹具——
+一个端点一份 `plan/tests/g3/fixtures/<endpoint-tail>.json`，含形状、漂移、抓到的响应数与最后一次状态码；
+带样本的包会把脱敏样本一起写进去；没有形状的端点会被跳过并说明原因。
+用一份合成的包实测过：`/x/polymer/web-dynamic/v1/feed/all` → `web-dynamic-v1-feed-all.json`，无 BOM。
+
+至此 P1/P2/P3 都落地，剩下的是"用真实的包把夹具补进探针"这种日常动作。
 把导出包变成 `plan/tests/g3/fixtures/<name>.json` 回放夹具。
