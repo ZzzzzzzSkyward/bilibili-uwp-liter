@@ -1,6 +1,6 @@
 # Plan — open work only
 
-Updated 2026-10-30 for `work`. Everything shipped is one line in the commit history; the offline
+Updated 2026-10-31 for `work`. Everything shipped is one line in the commit history; the offline
 probe suite lives in `plan/tests/` and is green. Finished plan documents, reports and progress logs
 were removed on purpose — `git log` has them.
 
@@ -52,6 +52,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 3 | AI subtitle label (#1311) — partially mitigated | needs a sibling-supported discriminator |
 | 4 | Response-evidence workflow (shapes, drift, bundle, fixture import) | designed in `plan/DIAGNOSTICS_WORKFLOW.md`, P1 not started |
+| 5 | API parsing structure: names, fields, and parsing methods | planned below; start with dynamic feeds, then migrate one feature at a time |
 
 ## 1. Player session ownership
 
@@ -90,6 +91,112 @@ unmarked AI tracks and already-saved labels are unresolved**: the track carries 
 the saved entries lost the discarded fields, so the app cannot tell them apart. Do not guess an API
 field to close it; it needs a sibling-supported signal or the subtitle manifest version that carries
 one. Nothing else in that 15-finding upstream series is open — the other 14 are fixed.
+
+## 5. API parsing structure — names, fields, and methods
+
+**Goal:** give each API response a clear route from transport to an application model. A caller should
+know which endpoint produced a field, what that field means, and which method parses it. Start with
+the dynamic feeds implicated in BR-17; migrate working features incrementally.
+
+### Responsibilities and locations
+
+The first implementation batch should inventory the existing paths before moving anything:
+
+- `Api/` and `Models/Requests/Api/` both contain request builders; `ArticleV2` now builds the general
+  web dynamic feed, not just articles.
+- `HttpResults.GetJson/GetJObject/GetData/GetResult` in `Helpers/HttpHelper.cs` decode responses,
+  recover JSON and sometimes show toasts; `ApiDataModel<T>` and `ApiResultModel<T>` describe two
+  different response envelopes.
+- `Helpers/DynamicGrpcMapper.cs` now maps both protobuf replies and web JSON. VMs also deserialize
+  legacy responses and convert cards into display models.
+
+Use these boundaries for migrated features; the paths are proposed destinations, not files added
+by this planning change:
+
+| Boundary | Responsibility | Proposed location |
+| --- | --- | --- |
+| Request | Endpoint, parameters, authentication/signing, request construction | `Api/<Feature>/` |
+| Transport | HTTP status/body or gRPC bytes/status; no interpretation of feature fields | Existing `HttpHelper` / `GrpcRequest` |
+| Wire DTO | One source's envelope and payload fields; explicit JSON names | `Models/Api/<Feature>/<Source>/` |
+| Parser | Decode and check the envelope/field shapes; return data or a parse failure | `Parsing/<Feature>/` |
+| Mapper | Convert a source DTO or generated protobuf reply into the existing application model | `Parsing/<Feature>/` |
+| Service / VM | Choose sources, own paging and request generations, publish rows and user messages | Existing services and VMs |
+
+Keep the current HTTP library, protobuf generator and renderer. Do not introduce a second transport,
+a dependency-injection framework, or a repository-wide rename to achieve these boundaries.
+
+### Naming contract
+
+| Kind | Convention | Dynamic-feed example |
+| --- | --- | --- |
+| Endpoint/request builder | `<Feature>Api`, with source named when variants coexist; builders are synchronous | `WebDynamicFeedApi.CreateFeedRequest(...)` |
+| Network operation | `Get...Async` / `Load...Async`; `Async` means actual asynchronous work | `GetFeedPageAsync(...)` |
+| Source DTO | `<Source><Feature><Payload>Dto`; C# properties use PascalCase and explicit wire-name attributes | `WebDynamicFeedItemDto`, `[JsonProperty("id_str")] DynamicId` |
+| JSON parsing | `Parse<Source><Payload>` returning `ApiParseResult<T>`; no network or UI work | `ParseWebDynamicFeed(...)` |
+| Conditional scalar read | `TryRead<Type>`; failure is distinguishable from a legitimate zero/false | `TryReadInt64`, `TryReadBoolean` |
+| Source mapping | `Map<Source><Payload>`; share domain helpers only after source differences are handled | `MapWebDynamicItem`, `MapGrpcDynamicItem` |
+| Normalized page | `FeedPage<TItem>` with `Items`, `NextCursor`, `HasMore` and source identity | Existing card models remain the items |
+
+`ApiParseResult<T>` is a proposed small result type containing the parsed value or a failure category
+and context. Do not treat `ApiDataModel<T>`, `ApiResultModel<T>`, `ReturnModel<T>` and
+`DynamicApiSourceResult` as interchangeable: wire envelopes, parsing results and source-selection
+results serve different purposes. Keep compatibility wrappers while callers migrate. Replace names
+such as `ArticleV2`, misspelled builders and source-ambiguous mapper methods when their feature is
+migrated; do not rename unrelated APIs in the same batch.
+
+### Field contract
+
+Maintain a compact field table beside each migrated parser: logical endpoint/source, wire path,
+wire type(s) actually observed, normalized property/type, required/optional status, missing/null
+behaviour, and conversion rule. Include the caller or fixture that establishes the rule.
+
+| Field family | Rule |
+| --- | --- |
+| Envelope | Explicitly select `data` or `result` for the endpoint. A missing or malformed `code` is not implicit success. Normalize `message`/`msg` at this boundary. |
+| IDs | Use descriptive names (`DynamicId`, `Aid`, `Cid`, `UserId`) and keep opaque IDs/cursors as strings. Convert to numeric IDs only where the endpoint contract requires it. |
+| Nested values | Check object/array shape at every boundary. Missing, JSON null and the wrong token type are distinct; `?.` alone does not make a `JValue` indexable. |
+| Numbers and flags | Centralize culture-independent readers. Accept numeric strings or `0`/`1` only where the endpoint's observed contract permits them; never turn a failed required parse into zero/false. |
+| Counts and time | Separate display text such as `1.2万` from a numeric count. State timestamp units and distinguish epoch times, durations and presentation labels. |
+| Optional content | Apply a documented default or preserve text when optional metadata is unusable, such as a string-valued `emoji`. Unknown card types should retain an existing unsupported-card placeholder. |
+| Paging | Keep web `offset`, legacy dynamic IDs and gRPC `historyOffset/updateBaseline` separate and source-bound. A failed append keeps the last successful cursor. Server `has_more`, cursor advancement and filtered rows are separate facts. |
+
+Use DTO deserialization for stable payloads and typed `JToken` readers for genuinely polymorphic
+fields. Neither method should require serializing a token back to text merely to parse it again.
+Add a shared `ReadObject`/`ReadArray`/scalar helper only when it replaces duplicated rules; keep
+endpoint-specific aliases, units and defaults inside that endpoint's parser.
+
+### Parsing and failure contract
+
+1. Transport reports HTTP/gRPC status independently of the response body.
+2. Decode once, check the endpoint's envelope, then parse its payload. Separate transport failure,
+   server/business rejection and malformed payload; cancellation or a superseded request is not a
+   parser failure. A valid empty page is not malformed.
+3. Map the source payload into the existing application model. Missing optional metadata may
+   degrade one card; a broken required envelope makes that source attempt fail. Record the policy
+   for a malformed item instead of silently dropping an entire page.
+4. Return the result without toasts or UI mutations. The source-selection service decides whether
+   to fall back; the VM alone decides what to publish and which user message to show. Publish rows
+   and new paging state only after the page is accepted and its request generation is still current.
+5. Attach a logical endpoint/source, stage, field path, expected/actual token type and available
+   request ID to parse failures. Reuse the response-evidence workflow in item 4 for captured shapes
+   and fixtures rather than creating another diagnostics system.
+
+### Implementation batches and completion criteria
+
+| Batch | Work | Complete when |
+| --- | --- | --- |
+| P0 — inventory | List the dynamic all/video/article, detail, space and repost endpoints, request builders, envelopes, field tables, parsers, mappers and callers. Identify shared rules versus source-specific rules. | Each active response path has a named owner; no existing source or paging cursor is omitted. |
+| P1 — minimal contract | Define `ApiParseResult<T>` and only the field readers needed by the first feature. Preserve existing callers through adapters. | Success, business rejection, malformed envelope and valid empty payload have distinct, documented results; parsers perform no UI work. |
+| P2 — web dynamics | Extract the web JSON part of `DynamicGrpcMapper` into the web parser/mapper, rename the general feed builder through a compatibility wrapper, and remove direct web-field parsing from the two feed VMs. | All/video/article retain their current rendering and source-bound cursors; the recorded string-emoji failure is handled; malformed pages reach source fallback without partial publication. |
+| P3 — other dynamic sources | Separate gRPC mapping from legacy REST parsing, reusing the existing application card model. Migrate detail, space and repost callers one path at a time. | Source differences remain explicit; comments, links, empty pages and failed-append retry semantics are preserved. |
+| P4 — other features | Apply the same structure to comments, video/season detail, playlists and account responses in separate batches, driven by actual callers. | Each migrated feature has one documented parsing entry point and field contract; untouched features continue through their existing adapters. |
+| P5 — retire duplicates | Remove old parsing wrappers/model aliases only after their callers are gone; update the inventory and field tables. | Source inspection shows no parallel parser for the same response contract or transport/UI work hidden inside a parser. |
+
+Use existing `plan/tests/g3`, `g4`, `g5`, `smart1` fixtures and captured device evidence as the
+behaviour reference for implementation review. Acceptance includes large IDs, optional/mistyped
+nested fields, unknown cards, empty pages, separate source cursors, failed append/retry and refresh
+replacement. This is a plan only: no application code, fixtures, tests, builds or execution are
+part of this addition, and it makes no new validation claim.
 
 ## Parked
 
