@@ -26,6 +26,8 @@ namespace CapProbe
             RedactionTruncatesByBytes();
             HttpHelperRecordsThroughApiCapture();
             BundleManifestNamesEveryFile();
+            ExportReplacesTheDestinationWhole();
+            ImportNormalizesBothInputs();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -172,6 +174,31 @@ namespace CapProbe
             AssertEqual("", BiliLite.Services.DiagnosticBundle.EntryPath("logs", ""), "an empty name has no entry");
         }
 
+        /// <summary>
+        /// 选中一个更大的旧 zip 时，必须先把目标截断，否则新包后面留着旧的归档尾部（评审 2026-10-31）。
+        /// 写包本身要在 UWP 里跑，所以这里钉住顺序：先截断/归零，再建 ZipArchive。
+        /// </summary>
+        private static void ExportReplacesTheDestinationWhole()
+        {
+            var page = File.ReadAllText(Path.Combine(RepoRoot(), "src", "BiliLite.UWP", "Pages", "SettingPage.xaml.cs"));
+            var truncate = page.IndexOf("stream.Size = 0;", StringComparison.Ordinal);
+            var create = page.IndexOf("ZipArchiveMode.Create", StringComparison.Ordinal);
+            Assert(truncate > 0, "the bundle export truncates the destination stream");
+            Assert(create > 0 && truncate < create, "truncation happens before the archive is created");
+            Assert(page.Contains("stream.Seek(0);"), "the stream is rewound before writing");
+        }
+
+        /// <summary>
+        /// 导出包解压后是一个目录，导入时必须和 zip 一样先选 api/ 子目录（评审 2026-10-31）。
+        /// </summary>
+        private static void ImportNormalizesBothInputs()
+        {
+            var tool = File.ReadAllText(Path.Combine(RepoRoot(), "tools", "import-capture.ps1"));
+            var helper = tool.IndexOf("function Select-CaptureDir", StringComparison.Ordinal);
+            Assert(helper > 0, "the importer has one folder-selection step");
+            Assert(tool.Contains("Select-CaptureDir $resolved.Path") && tool.Contains("Select-CaptureDir $workDir"),
+                "both the unpacked folder and the extracted zip go through the same step");
+        }
         private static string RepoRoot()
         {
             var dir = new DirectoryInfo(AppContext.BaseDirectory);

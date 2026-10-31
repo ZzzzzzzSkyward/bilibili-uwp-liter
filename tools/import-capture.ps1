@@ -27,20 +27,25 @@ if ([string]::IsNullOrWhiteSpace($OutDir)) {
     $OutDir = Join-Path $repo "plan\tests\g3\fixtures"
 }
 
+# the bundle keeps captures under api/; a flat folder of *.ndjson is accepted too
+function Select-CaptureDir([string]$root) {
+    $apiDir = Join-Path $root "api"
+    if (Test-Path $apiDir) { return $apiDir }
+    return $root
+}
+
 $resolved = Resolve-Path $Bundle
 $workDir = $null
-$sourceDir = $resolved.Path
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 if ((Get-Item $resolved.Path).PSIsContainer) {
-    $sourceDir = $resolved.Path
+    # an already-unpacked bundle goes through exactly the same selection as a zip
+    $sourceDir = Select-CaptureDir $resolved.Path
 } else {
     $workDir = Get-TempDir
     [System.IO.Compression.ZipFile]::ExtractToDirectory($resolved.Path, $workDir)
-    # the bundle puts captures under api/; accept a flat folder too
-    $apiDir = Join-Path $workDir "api"
-    $sourceDir = if (Test-Path $apiDir) { $apiDir } else { $workDir }
+    $sourceDir = Select-CaptureDir $workDir
 }
 
 $captureFiles = Get-ChildItem -Path $sourceDir -Filter "*.ndjson" -File -ErrorAction SilentlyContinue

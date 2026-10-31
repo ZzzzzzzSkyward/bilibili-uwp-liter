@@ -1124,20 +1124,25 @@ FallbackColor=""#ffffff"" />
                     return;
 
                 using (var stream = await destination.OpenAsync(FileAccessMode.ReadWrite))
-                using (var archive = new System.IO.Compression.ZipArchive(stream.AsStreamForWrite(), System.IO.Compression.ZipArchiveMode.Create))
                 {
-                    var manifestEntry = archive.CreateEntry(DiagnosticBundle.ManifestName);
-                    using (var writer = new StreamWriter(manifestEntry.Open()))
+                    //选中的是已有文件时必须先截断：否则旧的归档尾部会留在新包后面，读出来是坏包
+                    stream.Size = 0;
+                    stream.Seek(0);
+                    using (var archive = new System.IO.Compression.ZipArchive(stream.AsStreamForWrite(), System.IO.Compression.ZipArchiveMode.Create))
                     {
-                        await writer.WriteAsync(manifest);
-                    }
-                    foreach (var entry in entries)
-                    {
-                        var zipEntry = archive.CreateEntry(entry.Item1);
-                        using (var target = zipEntry.Open())
-                        using (var source = await entry.Item2.OpenStreamForReadAsync())
+                        var manifestEntry = archive.CreateEntry(DiagnosticBundle.ManifestName);
+                        using (var writer = new StreamWriter(manifestEntry.Open()))
                         {
-                            await source.CopyToAsync(target);
+                            await writer.WriteAsync(manifest);
+                        }
+                        foreach (var entry in entries)
+                        {
+                            var zipEntry = archive.CreateEntry(entry.Item1);
+                            using (var target = zipEntry.Open())
+                            using (var source = await entry.Item2.OpenStreamForReadAsync())
+                            {
+                                await source.CopyToAsync(target);
+                            }
                         }
                     }
                 }
