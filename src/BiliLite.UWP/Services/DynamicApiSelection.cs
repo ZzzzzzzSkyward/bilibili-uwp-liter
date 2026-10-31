@@ -2,6 +2,7 @@ using System;
 using BiliLite.Api;
 using BiliLite.gRPC;
 using BiliLite.Helpers;
+using BiliLite.Parsing;
 
 namespace BiliLite.Services
 {
@@ -98,6 +99,30 @@ namespace BiliLite.Services
             if (!businessCode.HasValue)
                 return DynamicApiOutcome.MalformedResponse;
             return DynamicApiOutcomeClassifier.FromBilibiliCode(businessCode.Value);
+        }
+
+        /// <summary>
+        /// 解析结论 → 换源结论。解析层只报失败的类别，哪些类别值得换一路由这里统一决定；
+        /// 取消/被取代不是解析失败，调用方在解析前就已经返回。
+        /// </summary>
+        public static DynamicApiOutcome ToOutcome<T>(ApiParseResult<T> parsed)
+        {
+            if (parsed == null)
+                return DynamicApiOutcome.TransportFailure;
+            switch (parsed.Failure)
+            {
+                case ApiParseFailure.Transport:
+                    return parsed.HttpStatus > 0
+                        ? DynamicApiOutcomeClassifier.FromHttpStatus(parsed.HttpStatus)
+                        : DynamicApiOutcome.TransportFailure;
+                case ApiParseFailure.Rejected:
+                    return DynamicApiOutcomeClassifier.FromBilibiliCode(parsed.BusinessCode);
+                case ApiParseFailure.Envelope:
+                case ApiParseFailure.Payload:
+                    return DynamicApiOutcome.MalformedResponse;
+                default:
+                    return DynamicApiOutcome.Success;
+            }
         }
 
         /// <summary>换源/备用来源的结论:一行,不含条目内容</summary>

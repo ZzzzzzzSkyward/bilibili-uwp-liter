@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using BiliLite.Parsing.Dynamic;
 using BiliLite.Services;
 namespace BiliLite.Modules
 {
@@ -191,29 +192,26 @@ namespace BiliLite.Modules
                     throw;
                 return outcome;
             }
-            var data = response != null && response.status ? response.GetJObject() : null;
-            var businessCode = data?["code"] == null ? (int?)null : data["code"].ToInt32();
-            var envelope = DynamicApiSelection.ClassifyLegacy(response, businessCode);
-            if (envelope != DynamicApiOutcome.Success || data["data"] == null)
+            //信封、字段形状与这一路自己的游标都在解析层；失败的类别在这里翻译成换源结论
+            var parsed = WebDynamicFeedParser.Parse(response);
+            if (!parsed.IsSuccess)
             {
-                //信封合法但没有数据，或者业务码本身不是 0：都算这次没拿到有效页。
+                LogHelper.Log("Home dynamics stage=feed-polymer-failed page=" + requestPage
+                    + " failure=" + parsed.Failure + " field=" + parsed.Stage + " message=" + parsed.Message, LogType.ERROR);
                 //游标属于"上一次成功"的状态，失败只让翻页停下，不能把它抹掉
-                return envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
+                return DynamicApiSelection.ToOutcome(parsed);
             }
 
-            var feedData = data["data"];
-            JArray items = null;
+            var feedPage = parsed.Value;
+            JArray items = feedPage.Items;
             List<DynamicItemModel> mappedItems;
-            bool hasMore;
-            string nextOffset;
+            bool hasMore = feedPage.HasMore;
+            string nextOffset = feedPage.NextCursor;
             try
             {
-                //信封合法不代表字段都合规：少一层对象或多一个字符串，解码/映射里任何一步都可能抛。
+                //形状合法不代表每条都能映射：少一层对象或多一个字符串，映射里任何一步都可能抛。
                 //这一路只算"没拿到有效页"，交给换源链决定下一步，异常绝不掀掉整个请求
-                items = feedData["items"] as JArray;
                 mappedItems = DynamicGrpcMapper.MapToHomeVideoItems(items);
-                hasMore = feedData["has_more"]?.Value<bool>() ?? false;
-                nextOffset = feedData["offset"]?.ToString();
             }
             catch (Exception ex)
             {

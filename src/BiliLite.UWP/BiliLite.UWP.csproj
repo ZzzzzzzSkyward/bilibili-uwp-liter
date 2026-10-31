@@ -173,6 +173,8 @@
     <Compile Include="Services\DynamicApiHistoryFileStore.cs" />
     <Compile Include="Services\MediaListService.cs" />
     <Compile Include="Helpers\DynamicImageRules.cs" />
+    <Compile Include="Parsing\ApiParseResult.cs" />
+    <Compile Include="Parsing\Dynamic\WebDynamicFeedParser.cs" />
     <Compile Include="Services\PlayerToastOverlay.cs" />
     <Compile Include="Services\PlayerToastService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />

@@ -7,6 +7,8 @@ using System.Text.RegularExpressions;
 using Bilibili.App.Dynamic.V2;
 using BiliLite.Api.User;
 using BiliLite.Helpers;
+using BiliLite.Parsing;
+using BiliLite.Parsing.Dynamic;
 using BiliLite.Modules;
 using BiliLite.Services;
 using Google.Protobuf;
@@ -45,6 +47,7 @@ namespace G4Probe
             LoadMoreFailureStaysQuiet();
             PolymerPagesAppend();
             PolymerLegFailureIsAFailedLeg();
+            WebFeedParserClassifiesFailures();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -598,21 +601,28 @@ namespace G4Probe
             var homeLeg = Between(homeSource,
                 "private async Task<DynamicApiOutcome> RequestPolymerSourceAsync",
                 "private void ClearGrpcCursorOnRestart");
-            var homeGuard = Between(homeLeg, "var feedData = data[\"data\"];", "return DynamicApiOutcome.MalformedResponse;");
+            // 解析层接手信封之后，腿里只剩"解析失败 → 报自己的阶段"与"映射失败 → MalformedResponse"两段
+            var homeGuard = Between(homeLeg, "var parsed = WebDynamicFeedParser.Parse(response);",
+                "return DynamicApiOutcome.MalformedResponse;");
             Check(homeGuard.Contains("MapToHomeVideoItems("),
                 "home polymer leg maps inside the same guard that owns its failed outcome");
             Check(homeGuard.Contains("catch (Exception ex)") && homeGuard.Contains("stage=feed-polymer-failed"),
                 "home polymer leg logs stage=feed-polymer-failed before reporting a malformed response");
+            Check(homeGuard.Contains("parsed.Failure") && homeGuard.Contains("ToOutcome(parsed)"),
+                "home polymer leg reports parser failures through its own stage and the shared outcome mapping");
 
             var userSource = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "Modules", "User", "DynamicVM.cs"));
             var userLeg = Between(userSource,
                 "private async Task<DynamicApiSourceResult> TryUserFeedPolymerAsync",
                 "private async Task<DynamicApiSourceResult> TryUserFeedGrpcAsync");
-            var userGuard = Between(userLeg, "var feedData = data[\"data\"];", "DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, ex.Message)");
+            var userGuard = Between(userLeg, "var parsed = WebDynamicFeedParser.Parse(response);",
+                "DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, ex.Message)");
             Check(userGuard.Contains("MapToUserFeedCards("),
                 "user polymer leg maps inside the same guard that owns its failed outcome");
             Check(userGuard.Contains("catch (Exception ex)") && userGuard.Contains("stage=feed-polymer-failed"),
                 "user polymer leg logs stage=feed-polymer-failed before reporting MalformedResponse");
+            Check(userGuard.Contains("parsed.Failure") && userGuard.Contains("ToOutcome(parsed)"),
+                "user polymer leg reports parser failures through its own stage and the shared outcome mapping");
         }
 
         /// <summary>两段标记之间的源码；找不到就返回空串，避免断言因为 IndexOf 的 -1 而假通过。</summary>
@@ -711,6 +721,87 @@ namespace G4Probe
         }
 
         /// <summary>REST fixture shaped like dynamic_svr: cards[] plus a data.offset the product must not use as a cursor.</summary>
+        /// <summary>
+        /// 解析层（Parsing/Dynamic/WebDynamicFeedParser）的类别契约：拿不到、被拒、信封无效、形状不对、
+        /// 以及一个合法的空页各有各的结论，换源语义由 DynamicApiSelection.ToOutcome 统一翻译。
+        /// </summary>
+        private static void WebFeedParserClassifiesFailures()
+        {
+            var missing = WebDynamicFeedParser.Parse(null);
+            Check(missing.Failure == ApiParseFailure.Transport && missing.Stage == "transport",
+                "parser: no response is a transport failure");
+            Check(DynamicApiSelection.ToOutcome(missing) == DynamicApiOutcome.TransportFailure,
+                "parser: a transport failure maps to the transport outcome");
+
+            var httpError = WebDynamicFeedParser.Parse(new BiliLite.Helpers.HttpResults
+            {
+                status = false,
+                code = 412,
+                message = "blocked",
+                results = "",
+            });
+            Check(httpError.Failure == ApiParseFailure.Transport && httpError.HttpStatus == 412,
+                "parser: an HTTP failure keeps its status for classification");
+            Check(DynamicApiSelection.ToOutcome(httpError) == DynamicApiOutcome.EndpointRejection,
+                "parser: an HTTP 4xx maps to the rejection outcome the selector records");
+
+            var rejected = WebDynamicFeedParser.Parse(RestEnvelope("{\"code\":-663,\"message\":\"被拒绝\"}"));
+            Check(rejected.Failure == ApiParseFailure.Rejected && rejected.BusinessCode == -663
+                  && rejected.Message == "被拒绝",
+                "parser: a business rejection keeps its code and message");
+            Check(DynamicApiSelection.ToOutcome(rejected) == DynamicApiOutcome.EndpointRejection,
+                "parser: -663 maps to the endpoint rejection outcome");
+
+            var noCode = WebDynamicFeedParser.Parse(RestEnvelope("{\"message\":\"no code\"}"));
+            Check(noCode.Failure == ApiParseFailure.Envelope && noCode.Stage == "envelope.code",
+                "parser: an envelope without a business code is not a success");
+            Check(DynamicApiSelection.ToOutcome(noCode) == DynamicApiOutcome.MalformedResponse,
+                "parser: a broken envelope maps to the malformed outcome");
+
+            var noData = WebDynamicFeedParser.Parse(RestEnvelope("{\"code\":0}"));
+            Check(noData.Failure == ApiParseFailure.Envelope && noData.Stage == "data",
+                "parser: a missing data object is an envelope failure");
+
+            var arrayData = WebDynamicFeedParser.Parse(RestEnvelope("{\"code\":0,\"data\":[{\"items\":[]}]}"));
+            Check(arrayData.Failure == ApiParseFailure.Payload && arrayData.Stage == "data",
+                "parser: data that is an array is a payload failure");
+
+            var stringItems = WebDynamicFeedParser.Parse(RestEnvelope("{\"code\":0,\"data\":{\"items\":\"none\"}}"));
+            Check(stringItems.Failure == ApiParseFailure.Payload && stringItems.Stage == "data.items",
+                "parser: items that are not an array report the field path");
+
+            var stringHasMore = WebDynamicFeedParser.Parse(
+                RestEnvelope("{\"code\":0,\"data\":{\"items\":[],\"has_more\":\"yes\"}}"));
+            Check(stringHasMore.Failure == ApiParseFailure.Payload && stringHasMore.Stage == "data.has_more",
+                "parser: a non-boolean has_more is rejected instead of guessed");
+
+            var emptyPage = WebDynamicFeedParser.Parse(
+                RestEnvelope("{\"code\":0,\"data\":{\"items\":[],\"has_more\":false}}"));
+            Check(emptyPage.IsSuccess && emptyPage.Value.Items.Count == 0 && !emptyPage.Value.HasMore
+                  && emptyPage.Value.NextCursor == null,
+                "parser: a valid empty page is a success, not a failure");
+
+            var missingItems = WebDynamicFeedParser.Parse(RestEnvelope("{\"code\":0,\"data\":{}}"));
+            Check(missingItems.IsSuccess && missingItems.Value.Items.Count == 0,
+                "parser: a missing items field reads as an empty page");
+
+            var numericCursor = WebDynamicFeedParser.Parse(
+                RestEnvelope("{\"code\":0,\"data\":{\"items\":[],\"has_more\":true,\"offset\":1264970784730775554}}"));
+            Check(numericCursor.IsSuccess && numericCursor.Value.HasMore
+                  && numericCursor.Value.NextCursor == "1264970784730775554",
+                "parser: a numeric offset becomes the cursor string unchanged");
+        }
+
+        /// <summary>把 JSON 正文裹进一个 HTTP 成功的结果，供解析层用例使用。</summary>
+        private static BiliLite.Helpers.HttpResults RestEnvelope(string json)
+        {
+            return new BiliLite.Helpers.HttpResults
+            {
+                status = true,
+                code = 200,
+                results = json,
+            };
+        }
         private static string RestFixture(string returnedOffset, params string[] dynamicIds)
         {
             var cards = new JArray();

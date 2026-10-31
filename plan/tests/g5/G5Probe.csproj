@@ -22,6 +22,8 @@
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelector.cs" Link="DynamicApiSelector.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelection.cs" Link="DynamicApiSelection.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\DynamicImageRules.cs" Link="DynamicImageRules.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Dynamic\WebDynamicFeedParser.cs" Link="WebDynamicFeedParser.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\DynamicGrpcMapper.cs" Link="DynamicGrpcMapper.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\DynamicRepostMapper.cs" Link="DynamicRepostMapper.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Modules\Home\DynamicVM.cs" Link="HomeDynamicVM.cs" />

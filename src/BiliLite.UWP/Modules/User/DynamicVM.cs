@@ -30,6 +30,7 @@ using System.Net;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using BiliLite.Modules;
+using BiliLite.Parsing.Dynamic;
 using BiliLite.Services;
 
 namespace BiliLite.Modules.User
@@ -898,28 +899,28 @@ namespace BiliLite.Modules.User
             {
                 return DynamicApiSourceResult.Superseded();
             }
-            var data = response != null && response.status ? response.GetJObject() : null;
-            var businessCode = data?["code"] == null ? (int?)null : data["code"].ToInt32();
-            var envelope = DynamicApiSelection.ClassifyLegacy(response, businessCode);
-            if (envelope != DynamicApiOutcome.Success || data["data"] == null)
+            //信封、字段形状与这一路自己的游标都在解析层，换源语义由 DynamicApiSelection 决定
+            var parsed = WebDynamicFeedParser.Parse(response);
+            if (!parsed.IsSuccess)
             {
-                //信封合法但没有数据，或者业务码本身不是 0：都算这次没拿到有效页
-                var failed = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
-                return DynamicApiSourceResult.Failed(failed, data?["message"]?.ToString() ?? response?.message);
+                //解析失败的定位跟着这条日志走：类别 + 字段路径，比"真的没页"更好定位
+                LogHelper.Log("User dynamic VM stage=feed-polymer-failed page=" + page + " generation=" + generation
+                    + " failure=" + parsed.Failure + " field=" + parsed.Stage + " message=" + parsed.Message,
+                    LogType.ERROR);
+                return DynamicApiSourceResult.Failed(DynamicApiSelection.ToOutcome(parsed), parsed.Message);
             }
 
-            var feedData = data["data"];
+            var parsedPage = parsed.Value;
             bool hasMore;
             string nextOffset;
             ObservableCollection<DynamicItemDisplayModel> mapped;
             try
             {
-                //信封合法不代表字段都合规：少一层对象或多一个字符串，解码/映射里任何一步都可能抛。
+                //形状合法不代表每条都能映射：少一层对象或多一个字符串，映射里任何一步都可能抛。
                 //这一路只算"没拿到有效页"，交给换源链决定下一步，异常绝不掀掉整个请求
-                var items = feedData["items"] as JArray;
-                var cards = DynamicGrpcMapper.MapToUserFeedCards(items);
-                hasMore = feedData["has_more"]?.Value<bool>() ?? false;
-                nextOffset = feedData["offset"]?.ToString();
+                var cards = DynamicGrpcMapper.MapToUserFeedCards(parsedPage.Items);
+                hasMore = parsedPage.HasMore;
+                nextOffset = parsedPage.NextCursor;
                 mapped = new ObservableCollection<DynamicItemDisplayModel>();
                 foreach (var card in cards)
                 {
