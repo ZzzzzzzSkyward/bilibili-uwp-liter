@@ -167,6 +167,7 @@
     <Compile Include="Api\SeasonApi.cs" />
     <Compile Include="Api\SeasonIndexAPI.cs" />
     <Compile Include="Api\User\DynamicAPI.cs" />
+    <Compile Include="Api\User\WebDynamicFeedApi.cs" />
     <Compile Include="Services\GrpcService.cs" />
     <Compile Include="Services\DynamicApiSelector.cs" />
     <Compile Include="Services\DynamicApiSelection.cs" />
@@ -175,6 +176,8 @@
     <Compile Include="Helpers\DynamicImageRules.cs" />
     <Compile Include="Parsing\ApiParseResult.cs" />
     <Compile Include="Parsing\Dynamic\WebDynamicFeedParser.cs" />
+    <Compile Include="Parsing\Dynamic\WebDynamicFeedMapper.cs" />
+    <Compile Include="Parsing\Dynamic\WireScalars.cs" />
     <Compile Include="Services\PlayerToastOverlay.cs" />
     <Compile Include="Services\PlayerToastService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />

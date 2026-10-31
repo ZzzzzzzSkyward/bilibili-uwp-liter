@@ -108,6 +108,15 @@ namespace BiliLite.Api
 
 namespace BiliLite.Api.User
 {
+
+    /// <summary>产品代码里的请求构造是静态类，替身转发到 DynamicAPI 的寄存器。</summary>
+    public static class WebDynamicFeedApi
+    {
+        public static ApiModel CreateFeedRequest(int page = 1, string offset = null, string type = "all")
+        {
+            return DynamicAPI.BuildFeed(page, offset, type);
+        }
+    }
     public class DynamicAPI
     {
         public enum UserDynamicType
@@ -150,7 +159,8 @@ namespace BiliLite.Api.User
             return Build(new RestCall { Endpoint = "dynamic_history", Type = type, Cursor = dynamic_id });
         }
 
-        public ApiModel ArticleV2(int page = 1, string offset = null, string type = "article")
+        /// <summary>产品代码走 WebDynamicFeedApi.CreateFeedRequest；替身只在这里登记一次 feed 调用。</summary>
+        internal static ApiModel BuildFeed(int page, string offset, string type)
         {
             return Build(new RestCall { Endpoint = "feed_all", Page = page, Cursor = offset, FeedType = type });
         }

@@ -52,7 +52,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 3 | AI subtitle label (#1311) — partially mitigated | needs a sibling-supported discriminator |
 | 4 | Response-evidence workflow (shapes, drift, bundle, fixture import) | designed in `plan/DIAGNOSTICS_WORKFLOW.md`, P1 not started |
-| 5 | API parsing structure: names, fields, and parsing methods | P0 done (`plan/API_PARSING_INVENTORY.md`), P1 first slice done — `Parsing/ApiParseResult.cs` + `Parsing/Dynamic/WebDynamicFeedParser.cs` serve both polymer legs; P2 next |
+| 5 | API parsing structure: names, fields, and parsing methods | P0 inventory done; P1 (`ApiParseResult<T>` + web parser) and the web half of P2 (`WebDynamicFeedMapper`, `WireScalars`, `WebDynamicFeedApi.CreateFeedRequest`) done; P3 gRPC/legacy separation next |
 
 ## 1. Player session ownership
 

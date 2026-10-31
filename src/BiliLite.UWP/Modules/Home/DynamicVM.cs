@@ -1,4 +1,5 @@
-﻿using BiliLite.Helpers;
+﻿using BiliLite.Api.User;
+using BiliLite.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -183,7 +184,7 @@ namespace BiliLite.Modules
             HttpResults response;
             try
             {
-                response = await _dynamicAPI.ArticleV2(requestPage, cursor, "video").Request();
+                response = await WebDynamicFeedApi.CreateFeedRequest(requestPage, cursor, "video").Request();
             }
             catch (Exception ex)
             {
@@ -211,7 +212,7 @@ namespace BiliLite.Modules
             {
                 //形状合法不代表每条都能映射：少一层对象或多一个字符串，映射里任何一步都可能抛。
                 //这一路只算"没拿到有效页"，交给换源链决定下一步，异常绝不掀掉整个请求
-                mappedItems = DynamicGrpcMapper.MapToHomeVideoItems(items);
+                mappedItems = WebDynamicFeedMapper.MapToHomeVideoItems(items);
             }
             catch (Exception ex)
             {

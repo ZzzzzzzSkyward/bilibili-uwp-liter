@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Bilibili.App.Dynamic.V2;
 using BiliLite.Helpers;
+using BiliLite.Parsing.Dynamic;
 using Google.Protobuf;
 using Newtonsoft.Json.Linq;
 
@@ -319,7 +320,7 @@ namespace G3Probe
                 },
             };
 
-            var cards = DynamicGrpcMapper.MapToUserFeedCards(feed);
+            var cards = WebDynamicFeedMapper.MapToUserFeedCards(feed);
             Check(cards.Count == 5, "a web feed page maps to one card per item (cards=" + cards.Count + ")");
 
             var archive = cards[0];
@@ -362,7 +363,7 @@ namespace G3Probe
                   && cards[4].basic.rid_str == "1248889675504943128",
                 "an unknown web type still yields an unsupported card instead of being dropped");
 
-            Check(DynamicGrpcMapper.MapToUserFeedCards(null).Count == 0,
+            Check(WebDynamicFeedMapper.MapToUserFeedCards(null).Count == 0,
                 "a null web feed maps to an empty list");
 
             var noOrig = new JArray
@@ -374,7 +375,7 @@ namespace G3Probe
                     ["basic"] = new JObject { ["rid_str"] = "1248889675504943129" },
                 },
             };
-            Check(DynamicGrpcMapper.MapToUserFeedCards(noOrig)[0].orig.type == "DYNAMIC_TYPE_NONE",
+            Check(WebDynamicFeedMapper.MapToUserFeedCards(noOrig)[0].orig.type == "DYNAMIC_TYPE_NONE",
                 "a forward without an original falls back to the placeholder card");
         }
 
@@ -492,7 +493,7 @@ namespace G3Probe
                 },
             };
 
-            var cards = DynamicGrpcMapper.MapToUserFeedCards(feed);
+            var cards = WebDynamicFeedMapper.MapToUserFeedCards(feed);
             Check(cards.Count == 4, "opus feed: every item still yields a card (cards=" + cards.Count + ")");
 
             var grid = cards[0];
@@ -669,7 +670,7 @@ namespace G3Probe
                 },
             };
 
-            var cards = DynamicGrpcMapper.MapToUserFeedCards(feed);
+            var cards = WebDynamicFeedMapper.MapToUserFeedCards(feed);
             Check(cards.Count == 7,
                 "hostile types: every item still maps to a card (cards=" + cards.Count + ")");
 
@@ -726,7 +727,7 @@ namespace G3Probe
 
             // 整页都是垃圾类型时也只能得到占位/空卡，不能抛
             var allScalars = new JArray { 1, "two", new JArray(), new JObject() };
-            Check(DynamicGrpcMapper.MapToUserFeedCards(allScalars).Count == 1,
+            Check(WebDynamicFeedMapper.MapToUserFeedCards(allScalars).Count == 1,
                 "hostile types: scalar items are skipped and the lone object still yields one card");
         }
 

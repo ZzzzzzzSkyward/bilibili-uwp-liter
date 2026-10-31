@@ -1,4 +1,5 @@
-﻿using BiliLite.Controls.Dynamic;
+﻿using BiliLite.Api.User;
+using BiliLite.Controls.Dynamic;
 using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Models.Dynamic;
@@ -511,7 +512,7 @@ namespace BiliLite.Modules.User
                 }
                 LogHelper.Log("User dynamic VM stage=request-start generation=" + generation + " dynamicType=" + requestDynamicType + " itemType=" + requestItemType + " history=" + (idx != ""), LogType.DEBUG);
 
-                //只有 gRPC 动态流（全部/视频/番剧）需要 app access key；专栏走 ArticleV2 的 Cookie 请求，
+                //只有 gRPC 动态流（全部/视频/番剧）需要 app access key；专栏走 WebDynamicFeedApi 的 Cookie 请求，
                 //未登录也要照常尝试（与源项目一致），不能因为没登录就不发请求
                 var feedRequiresAppLogin = requestItemType == UserDynamicType.All
                     || requestItemType == UserDynamicType.Video
@@ -562,7 +563,7 @@ namespace BiliLite.Modules.User
 
                     if (requestItemType == UserDynamicType.Article)
                     {
-                        var articleRequest = dynamicAPI.ArticleV2(page, loadMore ? articleOffset : null);
+                        var articleRequest = WebDynamicFeedApi.CreateFeedRequest(page, loadMore ? articleOffset : null, "article");
                         var response = await articleRequest.Request();
                         if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
                         {
@@ -585,7 +586,7 @@ namespace BiliLite.Modules.User
                         }
 
                         var articleItems = data.data["items"] as JArray;
-                        grpcCards = DynamicGrpcMapper.MapToUserFeedCards(articleItems);
+                        grpcCards = WebDynamicFeedMapper.MapToUserFeedCards(articleItems);
                         hasMore = data.data["has_more"]?.Value<bool>() ?? false;
                         nextOffset = data.data["offset"]?.ToString();
                     }
@@ -884,7 +885,7 @@ namespace BiliLite.Modules.User
             HttpResults response;
             try
             {
-                response = await dynamicAPI.ArticleV2(page, cursor, feedType).Request();
+                response = await WebDynamicFeedApi.CreateFeedRequest(page, cursor, feedType).Request();
             }
             catch (Exception ex)
             {
@@ -918,7 +919,7 @@ namespace BiliLite.Modules.User
             {
                 //形状合法不代表每条都能映射：少一层对象或多一个字符串，映射里任何一步都可能抛。
                 //这一路只算"没拿到有效页"，交给换源链决定下一步，异常绝不掀掉整个请求
-                var cards = DynamicGrpcMapper.MapToUserFeedCards(parsedPage.Items);
+                var cards = WebDynamicFeedMapper.MapToUserFeedCards(parsedPage.Items);
                 hasMore = parsedPage.HasMore;
                 nextOffset = parsedPage.NextCursor;
                 mapped = new ObservableCollection<DynamicItemDisplayModel>();
