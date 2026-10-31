@@ -25,6 +25,7 @@ namespace CapProbe
             RedactionDropsCredentialFields();
             RedactionTruncatesByBytes();
             HttpHelperRecordsThroughApiCapture();
+            BundleManifestNamesEveryFile();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -147,6 +148,28 @@ namespace CapProbe
             var capture = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "Services", "ApiCapture.cs"));
             Assert(capture.Contains("SettingHelper.Diagnostics.API_CAPTURE"), "capture is opt-in through its setting");
             Assert(capture.Contains("MaxDailyBytes"), "a daily byte budget bounds the file growth");
+        }
+
+        private static void BundleManifestNamesEveryFile()
+        {
+            var manifest = BiliLite.Services.DiagnosticBundle.BuildManifest(
+                "1.0.9.15", "abc123", new DateTimeOffset(2026, 10, 31, 10, 0, 0, TimeSpan.Zero),
+                true, false, new[] { "logs/20261031.log", "api/20261031.ndjson", "manifest.json" });
+            var json = JObject.Parse(manifest);
+
+            AssertEqual("1.0.9.15", json["appVersion"].ToString(), "manifest carries the app version");
+            AssertEqual("abc123", json["sessionId"].ToString(), "manifest carries the session id");
+            // JObject 会把 ISO 时间读成 DateTime，所以直接断原文，避免把格式问题当成内容问题
+            Assert(manifest.Contains("\"exportedAt\": \"2026-10-31T10:00:00"), "manifest carries the export time as ISO text");
+            Assert(json["apiCapture"].Value<bool>() && !json["apiCaptureSamples"].Value<bool>(),
+                "manifest records which capture switches were on");
+            AssertEqual(3, json["files"].Count(), "manifest lists every file in the bundle");
+            Assert(json["files"].ToObject<string[]>().Contains("api/20261031.ndjson"),
+                "the capture file is named with its folder inside the archive");
+
+            AssertEqual("logs/a.log", BiliLite.Services.DiagnosticBundle.EntryPath("logs", "a.log"), "foldered entry path");
+            AssertEqual("a.log", BiliLite.Services.DiagnosticBundle.EntryPath(null, "a.log"), "flat entry path");
+            AssertEqual("", BiliLite.Services.DiagnosticBundle.EntryPath("logs", ""), "an empty name has no entry");
         }
 
         private static string RepoRoot()

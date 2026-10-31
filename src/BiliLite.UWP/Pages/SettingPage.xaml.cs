@@ -3,6 +3,8 @@ using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Modules;
 using BiliLite.Modules.User;
+using System.IO;
+using BiliLite.Services;
 using Microsoft.Toolkit.Uwp.Helpers;
 using Microsoft.Toolkit.Uwp.UI;
 using Microsoft.UI.Xaml.Controls;
@@ -1076,6 +1078,76 @@ FallbackColor=""#ffffff"" />
             }
         }
 
+        /// <summary>
+        /// 一次点击拿到可分享的包：最近 7 个日志 + 响应形状/基线 + manifest。
+        /// 采集是开关控制的，所以包里有什么取决于当时开了什么，manifest 里写着。
+        /// </summary>
+        private async void ExportBundle_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var logFolder = await ApplicationData.Current.LocalFolder.CreateFolderAsync("log", CreationCollisionOption.OpenIfExists);
+                var logFiles = (await logFolder.GetFilesAsync())
+                    .Where(file => file.FileType.Equals(".log", StringComparison.OrdinalIgnoreCase))
+                    .OrderBy(file => file.Name)
+                    .ToList();
+                var recentLogs = logFiles.Skip(Math.Max(0, logFiles.Count - 7)).ToList();
+                var apiFolder = await logFolder.TryGetItemAsync("api") as StorageFolder;
+                var apiFiles = apiFolder == null
+                    ? new List<StorageFile>()
+                    : (await apiFolder.GetFilesAsync()).OrderBy(file => file.Name).ToList();
+
+                var entries = new List<Tuple<string, StorageFile>>();
+                foreach (var file in recentLogs)
+                {
+                    entries.Add(Tuple.Create(DiagnosticBundle.EntryPath("logs", file.Name), file));
+                }
+                foreach (var file in apiFiles)
+                {
+                    entries.Add(Tuple.Create(DiagnosticBundle.EntryPath("api", file.Name), file));
+                }
+
+                var version = Windows.ApplicationModel.Package.Current.Id.Version;
+                var manifest = DiagnosticBundle.BuildManifest(
+                    version.Major + "." + version.Minor + "." + version.Build + "." + version.Revision,
+                    LogHelper.SessionId, DateTimeOffset.Now,
+                    SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE, false),
+                    SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, false),
+                    entries.Select(entry => entry.Item1).Concat(new[] { DiagnosticBundle.ManifestName }));
+
+                var picker = new FileSavePicker();
+                picker.SuggestedStartLocation = PickerLocationId.DocumentsLibrary;
+                picker.SuggestedFileName = "BiliLite-diagnostics-" + DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                picker.FileTypeChoices.Add("压缩包", new List<string> { ".zip" });
+                var destination = await picker.PickSaveFileAsync();
+                if (destination == null)
+                    return;
+
+                using (var stream = await destination.OpenAsync(FileAccessMode.ReadWrite))
+                using (var archive = new System.IO.Compression.ZipArchive(stream.AsStreamForWrite(), System.IO.Compression.ZipArchiveMode.Create))
+                {
+                    var manifestEntry = archive.CreateEntry(DiagnosticBundle.ManifestName);
+                    using (var writer = new StreamWriter(manifestEntry.Open()))
+                    {
+                        await writer.WriteAsync(manifest);
+                    }
+                    foreach (var entry in entries)
+                    {
+                        var zipEntry = archive.CreateEntry(entry.Item1);
+                        using (var target = zipEntry.Open())
+                        using (var source = await entry.Item2.OpenStreamForReadAsync())
+                        {
+                            await source.CopyToAsync(target);
+                        }
+                    }
+                }
+                Utils.ShowMessageToast("诊断包已导出（" + (entries.Count + 1) + " 个文件）");
+            }
+            catch (Exception ex)
+            {
+                Utils.ShowMessageToast("导出诊断包失败", ex.Message);
+            }
+        }
         private async void MarkProblem_Click(object sender, RoutedEventArgs e)
         {
             var noteBox = new TextBox

@@ -15,6 +15,7 @@
     <Compile Include="Program.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\ApiShape.cs" Link="ApiShape.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\HttpLogSanitizer.cs" Link="HttpLogSanitizer.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\DiagnosticBundle.cs" Link="DiagnosticBundle.cs" />
   </ItemGroup>
 
   <ItemGroup>

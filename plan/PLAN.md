@@ -13,7 +13,7 @@ in `bug_report.md` first.
 | Fact | Value |
 | --- | --- |
 | branch | `work`, in sync with `origin/work` |
-| probes | `plan/tests/<name>/run.sh` — c1 52 · cap 29 · c2 99 · c3 97 · d1 82 · d2 58 · g2 22 · g3 73 · g4 131 · g5 44 · ov 29 · stab 53 · smart1 160, all green |
+| probes | `plan/tests/<name>/run.sh` — c1 52 · cap 38 · c2 99 · c3 97 · d1 82 · d2 58 · g2 22 · g3 73 · g4 131 · g5 44 · ov 29 · stab 53 · smart1 160, all green |
 | build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump` (compile only) or without `-Fast` to package into `Z:\` |
 | sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-work.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
 | dependency plan | `plan/DEPENDENCY_UPGRADE.md` (batch 1 done, batch 2 = protobuf toolchain, batch 3 = migrations) |
@@ -51,7 +51,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 3 | AI subtitle label (#1311) — partially mitigated | needs a sibling-supported discriminator |
-| 4 | Response-evidence workflow (shapes, drift, bundle, fixture import) | P1 shipped — `ApiShape`/`ApiCapture`/`RedactBody` + `HttpHelper` hook + two settings toggles + `plan/tests/cap`; bundle export and fixture import still open |
+| 4 | Response-evidence workflow (shapes, drift, bundle, fixture import) | P1+P2 shipped — shapes/drift capture, redaction, two toggles, and a one-click zip bundle with `manifest.json`; fixture import (`tools/import-capture.ps1`) still open |
 | 5 | API parsing structure: names, fields, and parsing methods | P0 inventory done; P1 (`ApiParseResult<T>` + web parser) and the web half of P2 (`WebDynamicFeedMapper`, `WireScalars`, `WebDynamicFeedApi.CreateFeedRequest`) done; P3 gRPC/legacy separation next |
 
 ## 1. Player session ownership

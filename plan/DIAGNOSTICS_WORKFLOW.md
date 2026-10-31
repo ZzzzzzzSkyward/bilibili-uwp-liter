@@ -137,5 +137,9 @@ stops being an excuse for shipping a mapping guess.
 - `Pages/SettingPage.xaml(.cs)` —— 两个开关：记录形状、记录脱敏样本（默认都关）。
 - 探针 `plan/tests/cap`（29 条）：形状、上限、数组、漂移、渲染、脱敏、截断，以及接线契约。
 
-仍未做（原计划的 P2/P3）：一次点击导出 zip + `manifest.json`，以及 `tools/import-capture.ps1`
+已补上 P2 的导出半边：`Services/DiagnosticBundle.cs` 生成 `manifest.json`（版本、会话、导出时刻、采集开关、包内文件清单），
+设置页新增「导出诊断包」，一次点击把最近 7 个日志、`api/` 下的 NDJSON 与基线一起压成 zip（原有 txt 导出保留）。
+探针 `plan/tests/cap` 38 条。
+
+仍未做（原计划的 P3）：`tools/import-capture.ps1`
 把导出包变成 `plan/tests/g3/fixtures/<name>.json` 回放夹具。

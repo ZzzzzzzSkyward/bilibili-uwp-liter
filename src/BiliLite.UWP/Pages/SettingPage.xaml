@@ -328,6 +328,7 @@
             <TextBox Visibility="{x:Bind EnableLog.IsOn}" x:Name="logTextBox" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True"/>
             <StackPanel Orientation="Horizontal" Margin="0 0 0 8">
               <Button Content="导出诊断日志" Click="ExportLogs_Click" Margin="0 0 8 0"/>
+              <Button Content="导出诊断包" Click="ExportBundle_Click" Margin="0 0 8 0"/>
               <Button Content="标记问题" Click="MarkProblem_Click"/>
             </StackPanel>
             <TextBlock Margin="0 0 0 16" TextWrapping="Wrap">复现问题后导出日志并反馈发生时间、操作步骤和界面错误。日志可能包含请求内容，请检查后再分享。</TextBlock>
