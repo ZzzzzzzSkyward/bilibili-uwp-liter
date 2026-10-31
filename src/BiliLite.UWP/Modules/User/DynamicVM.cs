@@ -31,6 +31,7 @@ using System.Net;
 using System.Globalization;
 using System.Text.RegularExpressions;
 using BiliLite.Modules;
+using BiliLite.Parsing;
 using BiliLite.Parsing.Dynamic;
 using BiliLite.Services;
 
@@ -677,68 +678,66 @@ namespace BiliLite.Modules.User
                     return;
                 }
                 stage = "response-received";
-                LogHelper.Log("User dynamic VM stage=response-received status=" + results.status + " generation=" + generation, LogType.DEBUG);
-                if (results.status)
+                //话题动态也走旧接口：信封与 cards 的形状由解析层判断，这里只决定发布什么
+                var parsed = LegacyDynamicFeedParser.Parse(results);
+                LogHelper.Log("User dynamic VM stage=response-received status=" + results.status
+                    + " failure=" + parsed.Failure + " field=" + parsed.Stage + " generation=" + generation, LogType.DEBUG);
+                //原来的两层判定换成解析结论：被拒时用信封里的文案，传输失败用响应文案
+                if (parsed.IsSuccess)
                 {
-                    var data = results.GetJObject();
-                    var responseCode = data == null ? -1 : data["code"].ToInt32();
-                    LogHelper.Log("User dynamic VM stage=response-parsed code=" + responseCode, LogType.DEBUG);
-                    if (data != null && responseCode == 0)
+                    stage = "cards-deserialize";
+                    List<DynamicCardModel> items;
+                    if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value.Cards, jsonSerializerSettings, out items))
                     {
-                        stage = "cards-deserialize";
-                        var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["cards"]?.ToString() ?? "[]", jsonSerializerSettings);
-                        var itemTypes = string.Join(",", items.Select(item => item.desc == null ? "null" : item.desc.type.ToString()).Distinct());
-                        LogHelper.Log("User dynamic VM stage=cards-deserialized count=" + items.Count + " types=" + itemTypes, LogType.DEBUG);
-                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                        LogHelper.Log("User dynamic VM stage=cards-failed generation=" + generation, LogType.ERROR);
+                        return;
+                    }
+                    var itemTypes = string.Join(",", items.Select(item => item.desc == null ? "null" : item.desc.type.ToString()).Distinct());
+                    LogHelper.Log("User dynamic VM stage=cards-deserialized count=" + items.Count + " types=" + itemTypes, LogType.DEBUG);
+                    if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                    {
+                        LogHelper.Log("User dynamic VM stage=items-publish discarded generation=" + generation, LogType.DEBUG);
+                        return;
+                    }
+                    if (items.Count > 0)
+                    {
+                        CanLoadMore = true;
+                    }
+                    ObservableCollection<DynamicItemDisplayModel> _ls = new ObservableCollection<DynamicItemDisplayModel>();
+                    stage = "card-convert";
+                    foreach (var item in items)
+                    {
+                        try
                         {
-                            LogHelper.Log("User dynamic VM stage=items-publish discarded generation=" + generation, LogType.DEBUG);
-                            return;
+                            _ls.Add(ConvertToDisplay(item));
                         }
-                        if (items.Count > 0)
+                        catch (Exception ex)
                         {
-                            CanLoadMore = true;
+                            LogHelper.Log("User dynamic VM stage=card-convert-failed type=" + (item?.desc == null ? "null" : item.desc.type.ToString()) + " dynamicId=" + (item?.desc?.dynamic_id ?? ""), LogType.ERROR, ex);
+                            throw;
                         }
-                        ObservableCollection<DynamicItemDisplayModel> _ls = new ObservableCollection<DynamicItemDisplayModel>();
-                        stage = "card-convert";
-                        foreach (var item in items)
-                        {
-                            try
-                            {
-                                _ls.Add(ConvertToDisplay(item));
-                            }
-                            catch (Exception ex)
-                            {
-                                LogHelper.Log("User dynamic VM stage=card-convert-failed type=" + (item?.desc == null ? "null" : item.desc.type.ToString()) + " dynamicId=" + (item?.desc?.dynamic_id ?? ""), LogType.ERROR, ex);
-                                throw;
-                            }
-                        }
-                        stage = "items-publish";
-                        if (Items == null)
-                        {
+                    }
+                    stage = "items-publish";
+                    if (Items == null)
+                    {
 
-                            Items = _ls;
-                        }
-                        else
-                        {
-                            foreach (var item in _ls)
-                            {
-                                Items.Add(item);
-                            }
-                        }
-                        LogHelper.Log("User dynamic VM stage=items-published count=" + Items.Count + " generation=" + generation, LogType.DEBUG);
-                        lastPageFailed = false;
-                        ShowError = false;
-                        ErrorMsg = "";
+                        Items = _ls;
                     }
                     else
                     {
-                        PublishFeedError(data["message"].ToString());
+                        foreach (var item in _ls)
+                        {
+                            Items.Add(item);
+                        }
                     }
+                    LogHelper.Log("User dynamic VM stage=items-published count=" + Items.Count + " generation=" + generation, LogType.DEBUG);
+                    lastPageFailed = false;
+                    ShowError = false;
+                    ErrorMsg = "";
                 }
                 else
                 {
-                    PublishFeedError(results.message);
-
+                    PublishFeedError(parsed.Failure == ApiParseFailure.Rejected ? parsed.Message : results.message);
                 }
             }
             catch (Exception ex)
@@ -1131,7 +1130,7 @@ namespace BiliLite.Modules.User
 
             var parsedFeed = parsed.Value;
             List<DynamicCardModel> restCards;
-            if (!LegacyDynamicFeedParser.TryDeserialize(parsedFeed, jsonSerializerSettings, out restCards))
+            if (!LegacyDynamicFeedParser.TryDeserialize(parsedFeed.Cards, jsonSerializerSettings, out restCards))
             {
                 //信封与 cards 的形状都对，卡片本身还是解不动：这一路这次就不算拿到页
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
@@ -1354,7 +1353,7 @@ namespace BiliLite.Modules.User
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
             List<DynamicCardModel> items;
-            if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value, jsonSerializerSettings, out items))
+            if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value.Cards, jsonSerializerSettings, out items))
             {
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
                 failureMessage = "动态卡片解析失败";

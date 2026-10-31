@@ -360,7 +360,7 @@ namespace BiliLite.Modules
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
             List<DynamicItemModel> cards;
-            if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value, null, out cards))
+            if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value.Cards, null, out cards))
             {
                 _lastLegacyFailureMessage = "动态卡片解析失败";
                 return DynamicApiOutcome.MalformedResponse;

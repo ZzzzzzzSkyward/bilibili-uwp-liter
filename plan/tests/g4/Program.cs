@@ -840,10 +840,24 @@ namespace G4Probe
             Check(detailArray.Failure == ApiParseFailure.Payload && detailArray.Stage == "data",
                 "legacy detail: an array where the card object belongs is a payload failure");
 
+            var reposts = LegacyDynamicFeedParser.ParseReposts(
+                RestEnvelope("{\"code\":0,\"data\":{\"items\":[{\"desc\":{}}],\"has_more\":1,\"offset\":\"o2\"}}"));
+            Check(reposts.IsSuccess && reposts.Value.Items.Count == 1 && reposts.Value.HasMore
+                  && reposts.Value.NextCursor == "o2",
+                "legacy reposts: items/has_more/offset map onto the repost page");
+            var repostsZero = LegacyDynamicFeedParser.ParseReposts(
+                RestEnvelope("{\"code\":0,\"data\":{\"items\":[],\"has_more\":0}}"));
+            Check(repostsZero.IsSuccess && !repostsZero.Value.HasMore && repostsZero.Value.NextCursor == "",
+                "legacy reposts: has_more 0 means the last page and an empty cursor");
+            var repostsString = LegacyDynamicFeedParser.ParseReposts(
+                RestEnvelope("{\"code\":0,\"data\":{\"items\":\"none\"}}"));
+            Check(repostsString.Failure == ApiParseFailure.Payload && repostsString.Stage == "data.items",
+                "legacy reposts: items that are not an array report the field path");
+
             var page = emptyPage.Value;
             page.Cards = (JArray)JToken.Parse("[{\"a\":1}]");
             List<int> wrongShape;
-            Check(!LegacyDynamicFeedParser.TryDeserialize(page, null, out wrongShape),
+            Check(!LegacyDynamicFeedParser.TryDeserialize(page.Cards, null, out wrongShape),
                 "legacy parser: cards that do not fit the model fail the page instead of throwing");
         }
         /// <summary>把 JSON 正文裹进一个 HTTP 成功的结果，供解析层用例使用。</summary>

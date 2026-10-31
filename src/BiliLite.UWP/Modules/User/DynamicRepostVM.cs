@@ -2,6 +2,7 @@
 using BiliLite.Helpers;
 using BiliLite.Models.Dynamic;
 using BiliLite.Pages;
+using BiliLite.Parsing.Dynamic;
 using BiliLite.Services;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -195,26 +196,23 @@ namespace BiliLite.Modules.User
                 DynamicApiSelection.Record(attempt, DynamicApiOutcome.IgnoredFailure, stopwatch.Elapsed, stage + " superseded");
                 return DynamicApiSourceResult.Superseded();
             }
-            if (!results.status)
+            var parsed = LegacyDynamicFeedParser.ParseReposts(results);
+            if (!parsed.IsSuccess)
             {
-                outcome = DynamicApiSelection.ClassifyLegacy(results, null);
-                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage);
-                failureMessage = results.message;
+                outcome = DynamicApiSelection.ToOutcome(parsed);
+                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage, parsed.BusinessCode);
+                failureMessage = parsed.Message;
                 return DynamicApiSourceResult.Failed(outcome, failureMessage);
             }
-            var data = results.GetJObject();
-            var businessCode = data == null || data["code"] == null ? (int?)null : data["code"].ToInt32();
-            var envelope = DynamicApiSelection.ClassifyLegacy(results, businessCode);
-            if (envelope != DynamicApiOutcome.Success || data["data"] == null)
-            {
-                outcome = envelope == DynamicApiOutcome.Success ? DynamicApiOutcome.MalformedResponse : envelope;
-                DynamicApiSelection.Record(attempt, outcome, stopwatch.Elapsed, stage, businessCode ?? 0);
-                failureMessage = data?["message"]?.ToString() ?? results.message;
-                return DynamicApiSourceResult.Failed(outcome, failureMessage);
-            }
-            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage, businessCode ?? 0);
+            DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage, parsed.BusinessCode);
             outcome = DynamicApiOutcome.Success;
-            var items = JsonConvert.DeserializeObject<List<DynamicCardModel>>(data["data"]?["items"]?.ToString() ?? "[]");
+            var repostPage = parsed.Value;
+            List<DynamicCardModel> items;
+            if (!LegacyDynamicFeedParser.TryDeserialize(repostPage.Items, null, out items))
+            {
+                DynamicApiSelection.Record(attempt, DynamicApiOutcome.MalformedResponse, stopwatch.Elapsed, stage + " cards");
+                return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, "转发列表解析失败");
+            }
             var displays = new List<DynamicItemDisplayModel>();
             foreach (var item in items)
             {
@@ -228,8 +226,8 @@ namespace BiliLite.Modules.User
             Append(displays);
             // 上一版把 has_more 当成 offset 回传，第二页会重复第一页；这里推进真正的 offset，
             // 并要求 has_more 与 offset 同时有效，否则分页会在第一页打转
-            var hasMore = (data["data"]?["has_more"]?.ToInt32() ?? 0) == 1;
-            restOffset = data["data"]?["offset"]?.ToString() ?? "";
+            var hasMore = repostPage.HasMore;
+            restOffset = repostPage.NextCursor ?? "";
             // 换到 REST 之后 gRPC 游标作废
             grpcOffset = "";
             CanLoadMore = hasMore && !string.IsNullOrEmpty(restOffset);

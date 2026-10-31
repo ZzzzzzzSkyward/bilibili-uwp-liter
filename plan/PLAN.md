@@ -51,7 +51,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 3 | Response-evidence workflow (shapes, drift, bundle, fixture import) | done — capture (shapes/drift, redaction, two toggles), one-click zip bundle with `manifest.json`, and `tools/import-capture.ps1` turning a bundle into probe fixtures; only real-bundle fixture drops remain |
-| 4 | API parsing structure: names, fields, and parsing methods | P0 inventory, P1 contract, P2 web half and the P3 legacy half are done — `ApiEnvelope` is the single REST envelope reader, `LegacyDynamicFeedParser` owns the four old-endpoint legs, gRPC mapping stays protobuf-only; P4 other features next |
+| 4 | API parsing structure: names, fields, and parsing methods | P0–P3 done — `ApiEnvelope` is the single REST envelope reader, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own every dynamic source (feed, space, detail, topic, reposts), gRPC mapping stays protobuf-only and the now-unused `ClassifyLegacy` is gone; P4 other features next |
 
 ## 1. Player session ownership
 
@@ -179,9 +179,9 @@ endpoint-specific aliases, units and defaults inside that endpoint's parser.
 | P0 — inventory **(done, `plan/API_PARSING_INVENTORY.md`)** | List the dynamic all/video/article, detail, space and repost endpoints, request builders, envelopes, field tables, parsers, mappers and callers. Identify shared rules versus source-specific rules. | Each active response path has a named owner; no existing source or paging cursor is omitted. |
 | P1 — minimal contract **(done)** | Define `ApiParseResult<T>` and only the field readers needed by the first feature. Preserve existing callers through adapters. | Success, business rejection, malformed envelope and valid empty payload have distinct, documented results; parsers perform no UI work. |
 | P2 — web dynamics **(web half done)** | Extract the web JSON part of `DynamicGrpcMapper` into the web parser/mapper, rename the general feed builder through a compatibility wrapper, and remove direct web-field parsing from the two feed VMs. | All/video/article retain their current rendering and source-bound cursors; the recorded string-emoji failure is handled; malformed pages reach source fallback without partial publication. |
-| P3 — other dynamic sources | Separate gRPC mapping from legacy REST parsing, reusing the existing application card model. Migrate detail, space and repost callers one path at a time. | Source differences remain explicit; comments, links, empty pages and failed-append retry semantics are preserved. |
+| P3 — other dynamic sources **(done)** | Separate gRPC mapping from legacy REST parsing, reusing the existing application card model. Migrate detail, space and repost callers one path at a time. | Source differences remain explicit; comments, links, empty pages and failed-append retry semantics are preserved. |
 | P4 — other features | Apply the same structure to comments, video/season detail, playlists and account responses in separate batches, driven by actual callers. | Each migrated feature has one documented parsing entry point and field contract; untouched features continue through their existing adapters. |
-| P5 — retire duplicates | Remove old parsing wrappers/model aliases only after their callers are gone; update the inventory and field tables. | Source inspection shows no parallel parser for the same response contract or transport/UI work hidden inside a parser. |
+| P5 — retire duplicates **(started: `ClassifyLegacy` removed)** | Remove old parsing wrappers/model aliases only after their callers are gone; update the inventory and field tables. | Source inspection shows no parallel parser for the same response contract or transport/UI work hidden inside a parser. |
 
 Use existing `plan/tests/g3`, `g4`, `g5`, `smart1` fixtures and captured device evidence as the
 behaviour reference for implementation review. Acceptance includes large IDs, optional/mistyped

@@ -90,7 +90,8 @@ envelope check, and they must not gain a payload parser.
 | `response == null → transport`, `!status → HTTP status class`, missing `code → malformed` | was inline in both polymer legs and three legacy legs | done — `Parsing/ApiEnvelope.cs` reads transport/envelope/code/data once; VMs map the failure through `DynamicApiSelection.ToOutcome` |
 | `code != 0 → business rejection` | was `ClassifyLegacy` + the inline legs | done — `ApiEnvelope` reports `Rejected` with the code; `DynamicApiSelection.ToOutcome` maps via `DynamicApiOutcomeClassifier.FromBilibiliCode` |
 | `data`/`items` shape checks and `has_more`/`offset` reads | was both polymer legs | done — `WebDynamicFeedParser` |
-| `data.cards` shape, `has_more` as bool or 0/1, `offset` cursor, card deserialization | was three legacy legs in `Modules/User/DynamicVM.cs` plus `Modules/Home/DynamicVM.cs` | done — `LegacyDynamicFeedParser` (`Parse`, `ParseDetail`, `TryDeserialize`) |
+| `data.cards` shape, `has_more` as bool or 0/1, `offset` cursor, card deserialization | was five legacy legs (`Modules/User/DynamicVM.cs` feed/space/detail/topic, `Modules/Home/DynamicVM.cs`, `Modules/User/DynamicRepostVM.cs`) | done — `LegacyDynamicFeedParser` (`Parse`, `ParseDetail`, `ParseReposts`, `TryDeserialize`); `DynamicApiSelection.ClassifyLegacy` deleted once nothing called it |
+| `data.items` with `has_more == 1` for reposts | `Modules/User/DynamicRepostVM.cs` | done — `LegacyDynamicFeedParser.ParseReposts`, same 0/1 rule as before |
 | "mapping threw ⇒ this leg did not get a page" | both polymer legs (`stage=feed-polymer-failed`) | stays in the VM (mapping is a mapper concern), but the page object it maps comes from the parser |
 
 ## P1/P2 first slice (next implementation batch)

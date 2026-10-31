@@ -87,21 +87,6 @@ namespace BiliLite.Services
         }
 
         /// <summary>
-        /// REST 请求结果:HTTP 状态与 JSON 业务码分开判断。
-        /// businessCode 传 null 表示 HTTP 成功但没拿到可用的业务码(信封无效)。
-        /// </summary>
-        public static DynamicApiOutcome ClassifyLegacy(HttpResults response, int? businessCode)
-        {
-            if (response == null)
-                return DynamicApiOutcome.TransportFailure;
-            if (!response.status)
-                return DynamicApiOutcomeClassifier.FromHttpStatus(response.code);
-            if (!businessCode.HasValue)
-                return DynamicApiOutcome.MalformedResponse;
-            return DynamicApiOutcomeClassifier.FromBilibiliCode(businessCode.Value);
-        }
-
-        /// <summary>
         /// 解析结论 → 换源结论。解析层只报失败的类别，哪些类别值得换一路由这里统一决定；
         /// 取消/被取代不是解析失败，调用方在解析前就已经返回。
         /// </summary>
