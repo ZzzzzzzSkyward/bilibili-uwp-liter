@@ -1,26 +1,19 @@
 ﻿using BiliLite.Api;
 using BiliLite.Helpers;
-using BiliLite.Models;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
+using BiliLite.Parsing.Season;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
-using System.Reflection;
 namespace BiliLite.Modules
 {
     public class SeasonDetailVM : IModules
     {
         readonly Api.SeasonApi seasonApi;
-        readonly PlayerAPI PlayerAPI;
-        readonly Api.User.FollowAPI followAPI;
         public SeasonDetailVM()
         {
             seasonApi = new Api.SeasonApi();
-            PlayerAPI = new PlayerAPI();
-            followAPI = new Api.User.FollowAPI();
             FollowCommand = new RelayCommand(DoFollow);
         }
         private SeasonDetailModel _Detail;
@@ -97,110 +90,30 @@ namespace BiliLite.Modules
                 Loaded = false;
                 Loading = true;
                 ShowError = false;
-                var api = seasonApi.EpList(ep_id, SeasonIdType.EpId);
-                var results = await api.Request();
-                ApiResultModel<SeasonDetailModel> data = null;
-                if (results.status)
+                var parsed = WebSeasonEpListParser.ParseWebSeasonEpList(
+                    await seasonApi.EpList(ep_id, SeasonIdType.EpId).Request());
+                if (!parsed.IsSuccess)
                 {
-                    data = await results.GetJson<ApiResultModel<SeasonDetailModel>>();
-                }
-                //尝试不兼容获取
-                /*if (data == null)
-                {
-                    var data3 = await results.GetJson<ApiResultModel<SeasonDetailModel_Web>>();
-                    if (data3 != null && data3.success)
-                    {
-                        data = new ApiResultModel<SeasonDetailModelWrapper>();
-                        data.result = new SeasonDetailModel();
-                        data.result.convert(data3.result);
-                        data.code = 0;
-                    }
-                }*/
-                //if (!data.success)
-                //{
-                //    var result_proxy = await seasonApi.Detail(season_id,true).Request();
-                //    if (result_proxy.status)
-                //    {
-                //        data = await result_proxy.GetJson<ApiResultModel<SeasonDetailModel>>();
-                //    }
-                //}
-                //代理访问失败，使用Web的Api访问
-                //尝试不兼容的备用方案
-                /*if (data == null)
-                {
-                    ApiResultModel<SeasonDetailModel_Web> data2 = null;
-                    data2 = await GetWebSeasonDetail(season_id);
-                    if (data2 == null || !data2.success)
-                    {
-                        return;
-                    }
-                    else
-                    {
-                        //复制过来
-                        data = new ApiResultModel<SeasonDetailModel>();
-                        data.result = new SeasonDetailModel();
-                        data.result.convert(data2.result);
-                        data.code = 0;
-                    }
-                }             */      
-                if (data!=null)
-                {
-                    if (data.result.total != 0)
-                    {
-                        try
-                        {
-                            //build 6235200
-                            /*if (data.result.episodes == null)
-                                data.result.episodes = JsonConvert.DeserializeObject<List<SeasonDetailEpisodeModel>>(data.result.modules.FirstOrDefault(x => x["style"].ToString() == "positive")?["data"]?["episodes"]?.ToString() ?? "[]");
-                            if (data.result.seasons == null)
-                                data.result.seasons = JsonConvert.DeserializeObject<List<SeasonDetailSeasonItemModel>>(data.result.modules.FirstOrDefault(x => x["style"].ToString() == "season")?["data"]?["seasons"]?.ToString() ?? "[]");
-                            var pv = JsonConvert.DeserializeObject<List<SeasonDetailEpisodeModel>>(data.result.modules.FirstOrDefault(x => x["style"].ToString() == "section")?["data"]?["episodes"]?.ToString() ?? "[]");
-                            foreach (var item in pv)
-                            {
-                                item.section_type = 1;
-                                data.result.episodes.Add(item);
-                            }
-                            */
-                        }
-                        catch
-                        {
-                        }
-                    }
-
-
-
-                    if (data.result.section != null)
-                    {
-                        foreach (var item in data.result.section)
-                        {
-                            foreach (var item2 in item.episodes)
-                            {
-                                item2.section_type = 1;
-                            }
-                            data.result.episodes.InsertRange(0, item.episodes);
-                            //data.result.episodes= data.result.episodes.Concat(item.episodes).ToList();
-                        }
-                    }
-                    Detail = data.result;
-
-                    Episodes = data.result.episodes.Where(x => !x.IsPreview).ToList();
-                    ShowEpisodes = Episodes.Count > 0;
-                    Previews = data.result.episodes.Where(x => x.IsPreview).ToList();
-                    ShowPreview = Previews.Count > 0;
-                    NothingPlay = !ShowEpisodes && !ShowPreview;
-                    Loaded = true;
-                }                
-                if(data==null)
-                {
-                    //Utils.ShowMessageToast(results.message);
+                    //解析层只给结论，用户看什么由这里定：错误面板，不弹 toast
                     ShowError = true;
-                    ErrorMsg = results.message;
+                    ErrorMsg = parsed.Message;
+                    return;
                 }
+
+                //通过解析才发布；空但合法的季照样发布，由页面显示空状态
+                var season = WebSeasonEpListMapper.MapWebSeasonEpList(parsed.Value);
+                Detail = season.Detail;
+                Episodes = season.Episodes;
+                ShowEpisodes = Episodes.Count > 0;
+                Previews = season.Previews;
+                ShowPreview = Previews.Count > 0;
+                NothingPlay = !ShowEpisodes && !ShowPreview;
+                Loaded = true;
             }
             catch (Exception ex)
             {
                 var handel = HandelError<AnimeHomeModel>(ex);
-                //Utils.ShowMessageToast(handel.message);
+                //异常只落到错误面板：解析路径不弹 toast
                 ShowError = true;
                 ErrorMsg = handel.message;
             }
@@ -210,34 +123,6 @@ namespace BiliLite.Modules
             }
         }
 
-        public async Task<ApiResultModel<SeasonDetailModel_Web>> GetWebSeasonDetail(string season_id)
-        {
-            var reulsts_web = await seasonApi.DetailWeb(season_id).Request();
-            if (reulsts_web.status)
-            {
-                var data= reulsts_web.GetJObject();
-                if (data["code"].ToInt32() == 0)
-                {
-                    var objText = data["result"].ToString();
-                    //处理下会出错的字段
-                    //objText = objText.Replace("\"staff\"", "staff1");
-                    var model= JsonConvert.DeserializeObject<SeasonDetailModel_Web>(objText);
-                    model.episodes = await Utils.DeserializeJson<List<SeasonDetailEpisodeModel>>(data["result"]["episodes"].ToString());
-                    /*model.user_status = new SeasonDetailUserStatusModel()
-                    {
-                        follow_status=0,
-                        follow=0
-                    };*/
-                    return new ApiResultModel<SeasonDetailModel_Web>() { code=0,message="",result=model,};
-                }
-            }
-            return new ApiResultModel<SeasonDetailModel_Web>() { 
-                code=-101,
-                message="无法读取内容"
-            };
-        }
-
-
         public async void DoFollow()
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
@@ -245,55 +130,6 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast("请先登录后再操作");
                 return;
             }
-            try
-            {
-                /*
-                var api = followAPI.FollowSeason(Detail.season_id.ToString());
-                if (Detail.user_status.follow == 1)
-                {
-                    api = followAPI.CancelFollowSeason(Detail.season_id.ToString());
-                }
-                var results = await api.Request();
-                if (results.status)
-                {
-                    var data = await results.GetJson<ApiResultModel<JObject>>();
-                    if (data.success)
-                    {
-                        if (Detail.user_status.follow == 1)
-                        {
-                            Detail.user_status.follow = 0;
-                        }
-                        else
-                        {
-                            Detail.user_status.follow = 1;
-                        }
-                        if (!string.IsNullOrEmpty(data.result["toast"]?.ToString()))
-                        {
-                            Utils.ShowMessageToast(data.result["toast"].ToString());
-                        }
-                        else
-                        {
-                            Utils.ShowMessageToast("操作成功");
-                        }
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
-                }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
-                }
-                **/
-            }
-            catch (Exception ex)
-            {
-                var handel = HandelError<object>(ex);
-                Utils.ShowMessageToast(handel.message);
-            }
-
-
         }
 
     }
@@ -308,7 +144,6 @@ namespace BiliLite.Modules
         public string evaluate { get; set; }
         public string alias { get; set; }
         public string badge { get; set; }
-        //public int badge_type { get; set; }
         public int status { get; set; }
         public string subtitle { get; set; }
         public bool show_badge { get { return !string.IsNullOrEmpty(badge); } }
@@ -317,10 +152,7 @@ namespace BiliLite.Modules
         public string square_cover { get; set; }
         public int media_id { get; set; }
         public int mode { get; set; }
-        //public JArray modules { get; set; }
         public SeasonDetailUpInfoModel up_info { get; set; }
-        //public SeasonDetailActorModel actor { get; set; }
-        //public SeasonDetailActorModel staff { get; set; }
         public List<SeasonDetailAreaItemModel> areas { get; set; }
         public string area
         {
@@ -341,9 +173,7 @@ namespace BiliLite.Modules
                 }
             }
         }
-        // public SeasonDetailNewEpModel new_ep { get; set; }
         public List<SeasonDetailEpisodeModel> episodes { get; set; }
-        //public string origin_name { get; set; }
         public SeasonDetailRatingModel rating { get; set; }
         public bool show_rating
         {
@@ -379,9 +209,6 @@ namespace BiliLite.Modules
         public SeasonDetailStatModel stat { get; set; }
         public int total { get; set; }
         public int type { get; set; }
-        //public string type_name { get; set; }
-        //public SeasonDetailUserStatusModel user_status { get; set; }
-        //public SeasonDetailLimitModel limit { get; set; }
         public List<SeasonDetailSectionItemModel> section { get; set; }
         public SeasonDetailPaymentModel payment { get; set; }
         public bool show_payment
@@ -391,69 +218,6 @@ namespace BiliLite.Modules
                 return payment != null && payment.dialog != null;
             }
         }
-        public void convert(SeasonDetailModel_Web sw)
-        {
-            //actor = new SeasonDetailActorModel();
-            //staff = new SeasonDetailActorModel();
-            //actor.title = "";
-            //actor.info = sw.actor;
-            //staff.title = "STAFF";
-            //staff.info = sw.staff;
-            //copy all keys to myself
-            sw.actor = null;
-            sw.staff = null;
-            this.episodes = sw.episodes;
-            this.rating = sw.rating;
-            this.publish = sw.publish;
-            this.seasons = sw.seasons;
-            this.stat = sw.stat;
-            //处理标签string->object
-            //this.styles = new List<SeasonDetailStyleItemModel>();
-            foreach(var item in sw.styles)
-            {
-                var sd = new SeasonDetailStyleItemModel();
-                sd.name = item;
-                sd.id = null;//标记该标签不可打开
-                sd.url = "";
-                //this.styles.Add(sd);    
-            }
-            var otherFields = this.GetType().GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
-            var allProperties = this.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
-            // Copy values of fields
-            foreach (var field in otherFields)
-            {
-                var value = field.GetValue(sw);
-                var thisField = this.GetType().GetField(field.Name, BindingFlags.Public | BindingFlags.Instance);
-                if (thisField == null && value != null)
-                {
-                    //Console.WriteLine(field + " is not null");
-                }
-                else if (thisField != null && value != null)
-                {
-                    thisField.SetValue(this, value);
-                }
-            }
-            foreach (var property in allProperties)
-            {
-                var value = property.GetValue(sw);
-                if (value != null)
-                {
-                    try
-                    {
-                        this.GetType().GetProperty(property.Name).SetValue(this, value);
-                    }
-                    catch(Exception e) {
-                        Console.WriteLine(e.ToString());
-                    }
-                }
-            }
-        }
-    }
-    public class SeasonDetailModel_Web : SeasonDetailModel
-    {
-        public new string actor { get; set; }
-        public new string staff { get; set; }
-        public new List<string> styles { get; set; }
     }
     public class SeasonDetailUpInfoModel
     {
@@ -586,11 +350,6 @@ namespace BiliLite.Modules
         public int last_ep_id { get; set; }
         public int last_time { get; set; }
     }
-    public class SeasonDetailLimitModel
-    {
-        public string content { get; set; }
-        public string image { get; set; }
-    }
     public class SeasonDetailStatModel
     {
         public int coins { get; set; }
@@ -601,12 +360,6 @@ namespace BiliLite.Modules
         public int reply { get; set; }
         public int share { get; set; }
         public int views { get; set; }
-    }
-    public class SeasonDetailNewEpModel
-    {
-        public string desc { get; set; }
-        public string id { get; set; }
-        public string title { get; set; }
     }
     public class SeasonDetailStyleItemModel
     {
@@ -642,11 +395,6 @@ namespace BiliLite.Modules
                 return score / 2;
             }
         }
-    }
-    public class SeasonDetailActorModel
-    {
-        public string title { get; set; }
-        public string info { get; set; }
     }
     public class SeasonDetailAreaItemModel
     {

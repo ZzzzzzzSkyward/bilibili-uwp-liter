@@ -573,31 +573,48 @@ namespace BiliLite.Helpers
             }
             return default(T);
         }
+        /// <summary>
+        /// 静默解码：正文不是 JSON 对象时返回 false，不弹提示、不记日志。
+        /// 解析层用这个，因为"正文解不出来"是解析结论，要不要提示由调用方决定。
+        /// </summary>
+        public bool TryGetJObject(out JObject value)
+        {
+            value = null;
+            if (string.IsNullOrEmpty(results))
+            {
+                return false;
+            }
+            try
+            {
+                value = JObject.Parse(results);
+                return true;
+            }
+            catch (Exception)
+            {
+                //不是整段 JSON，下面再试一次"取最长的合法片段"
+            }
+            try
+            {
+                value = FindLongestValidJsonString(results);
+                return value != null;
+            }
+            catch (Exception)
+            {
+                value = null;
+                return false;
+            }
+        }
         public JObject GetJObject()
         {
-            JObject obj = JObject.Parse("{}");
-            try
+            JObject obj;
+            if (TryGetJObject(out obj))
             {
-                obj = JObject.Parse(results);
-                var serialized = obj.ToString();
                 return obj;
             }
-            catch (Exception e)
-            {
-            }
-            try
-            {
-                obj = FindLongestValidJsonString(results);
-                var serialized = obj.ToString();
-                return obj;
-            }
-            catch (Exception e)
-            {
-                Utils.ShowMessageToast("解析json对象失败", e.ToString());
-                Console.WriteLine(obj.ToString());
-                Utils.AddALog("[JSON][FAIL]" + obj.ToString());
-                return null;
-            }
+            var message = "HTTP response parse failed requestId=" + RequestId + " endpoint=" + Endpoint;
+            Utils.ShowMessageToast("解析json对象失败", message);
+            Utils.AddALog("[JSON][FAIL]" + message);
+            return null;
         }
         public async Task<ApiDataModel<T>> GetData<T>()
         {

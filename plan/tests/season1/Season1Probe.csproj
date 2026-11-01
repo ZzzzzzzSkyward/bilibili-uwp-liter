@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Season1Probe</AssemblyName>
+    <RootNamespace>Season1Probe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiEnvelope.cs" Link="ApiEnvelope.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Season\WebSeasonEpListParser.cs" Link="WebSeasonEpListParser.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Season\WebSeasonEpListMapper.cs" Link="WebSeasonEpListMapper.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\Season\Web\WebSeasonEpListDto.cs" Link="WebSeasonEpListDto.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\ReturnModel.cs" Link="ReturnModel.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\IModules.cs" Link="IModules.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\RelayCommand.cs" Link="RelayCommand.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\Detail\SeasonDetailVM.cs" Link="SeasonDetailVM.cs" />
+  </ItemGroup>
+
+</Project>

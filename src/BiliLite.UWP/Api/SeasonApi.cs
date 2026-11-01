@@ -6,27 +6,6 @@ namespace BiliLite.Api
     public class SeasonApi
     {
        
-        public ApiModel Detail(string season_id,bool proxy=false)
-        {
-            return Detail(season_id, SeasonIdType.SeasonId, proxy);
-        }
-
-        public ApiModel Detail(string id, SeasonIdType type, bool proxy = false)
-        {
-            var baseUrl = ApiHelper.API_BASE_URL;
-
-            ApiModel api = new ApiModel()
-            {
-                method = RestSharp.Method.Get,
-                baseUrl = $"{baseUrl}/pgc/view/v2/app/season",
-                parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true)
-            };
-            api.parameter += type == SeasonIdType.SeasonId ? $"&season_id={id}" : $"&ep_id={id}";
-            api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.LoginKey);
-            return api;
-
-        }
-
         public ApiModel EpList(string id, SeasonIdType type = SeasonIdType.SeasonId)
         {
             var baseUrl = ApiHelper.API_BASE_URL;
@@ -41,21 +20,6 @@ namespace BiliLite.Api
             return api;
         }
 
-        public ApiModel Detail_Web(string ep_id, bool proxy = false)
-        {
-            return EpList(ep_id, SeasonIdType.EpId);
-        }
-        public ApiModel DetailWeb(string season_id)
-        {
-            ApiModel api = new ApiModel()
-            {
-                method = RestSharp.Method.Get,
-                baseUrl = $"https://bangumi.bilibili.com/view/web_api/season",
-                parameter = $"season_id={season_id}"
-            };
-           
-            return api;
-        }
         /// <summary>
         /// 短评
         /// </summary>
