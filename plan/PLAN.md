@@ -1,6 +1,6 @@
 # Plan — open work only
 
-Updated 2026-10-31 for `work`. Everything shipped is one line in the commit history. Finished plan
+Updated 2026-11-01 for `dev`. Everything shipped is one line in the commit history. Finished plan
 documents, reports and progress logs were removed on purpose — `git log` has them.
 
 **Verification policy:** the maintainer's device pass counts as passed. A shipped item stays closed
@@ -11,10 +11,10 @@ in `bug_report.md` first.
 
 | Fact | Value |
 | --- | --- |
-| branch | `work`, in sync with `origin/work` |
+| branch | `dev`, in sync with `origin/dev` |
 | build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (compile only; this machine's VS has no .NET SDK component, so the script evaluates the skipped SDK-style `BiliLite.gRPC` through the installed dotnet SDK) or without `-Fast` to package into `Z:\` |
 | probe checks | `sh plan/tests/<batch>/run.sh` — net8.0 probe projects under `plan/tests/` compile the real product sources and assert behavior; `bash` on this machine is the WSL stub, use `sh` |
-| sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-work.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
+| sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-dev.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
 | dependency plan | `plan/DEPENDENCY_UPGRADE.md` — open migrations only (toolkit 8.x, NLog 6, FFMpegCore, SharpCompress, RestSharp) |
 | review cache | `plan/REVIEW_LOG.md` |
 | bug device log | `bug_report.md`, `code_review.md` at the repo root |

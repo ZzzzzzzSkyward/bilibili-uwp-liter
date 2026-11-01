@@ -23,7 +23,7 @@
     每个网络动作的重试次数，默认 12 次 × 15 秒 ≈ 3 分钟。
 
 .EXAMPLE
-    powershell -NoProfile -ExecutionPolicy Bypass -File sync-work.ps1
+    powershell -NoProfile -ExecutionPolicy Bypass -File sync-dev.ps1
 #>
 param(
     [string]$Remote = 'origin',
@@ -101,7 +101,7 @@ try {
     $stashed = $false
     $dirty = @(& git status --porcelain -- $protected 2>$null) | Where-Object { $_ }
     if ($dirty.Count -gt 0) {
-        $stashArgs = @('stash', 'push', '--quiet', '-m', 'sync-work: protected manifests', '--') + $protected
+        $stashArgs = @('stash', 'push', '--quiet', '-m', 'sync-dev: protected manifests', '--') + $protected
         $stash = Invoke-Git -Arguments $stashArgs
         if ($stash.Code -ne 0) { throw "无法暂存包清单改动：$($stash.Output -join ' ')"; }
         $stashed = $true
