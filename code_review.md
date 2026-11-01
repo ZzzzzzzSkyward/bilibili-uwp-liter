@@ -1,17 +1,27 @@
-# Review origin/work 399807da3a10f7d44c6868c027b4829e270dd736
+# Review origin/work e9e5d2a1008f4ce16e8209feb52d0f9c4c16fac7
 
-Reviewed the complete source range since `70c1e2f29a903033baed756a6ca9711b0e065ff5` and read the current `bug_report.md`. The Watch Later identity and unknown-total fixes address BR-22/BR-23. Two worthwhile issues remain below. Source inspection with Luna reviewers only; no tests, builds, scripts, or application execution.
+Reviewed all new source since `399807da3a10f7d44c6868c027b4829e270dd736` and reread `bug_report.md`. The new drawer makes loaded collection/playlist rows reachable in full screen. Three worthwhile issues in its interaction remain. Source inspection with Luna reviewers only; no tests, builds, scripts, or application execution. The previous keyboard-index and SDK-restore findings are unchanged by this increment.
 
-## BR-24 remains incomplete after switching parts by keyboard
+## A stale playlist “playing” marker prevents returning from a collection
 
-`src/BiliLite.UWP/Controls/PlayerControl.xaml.cs:596–598` calls `SetPlayItem` directly using `EpisodeList.SelectedIndex`. That method updates `CurrentPlayIndex` at line 1114 but never updates the player's `EpisodeList.SelectedIndex`. The page's `ChangeEpisodeEvent` handler only synchronizes its separate `listEpisode` control (`Pages/VideoDetailPage.xaml.cs:901–908`).
+`src/BiliLite.UWP/Models/PlayDirectory.cs:242–260` marks the playlist's `Index` row as current, regardless of which video is actually playing. That index deliberately stays at the old queue position when a collection video is selected. `Pages/VideoDetailPage.xaml.cs:1370–1375` then treats any `row.IsCurrent` as a reason to ignore activation.
 
-Concrete case: start at P1 of a two-part video with another collection/playlist row after it, then press X. P2 plays, but the player's selected index is still 0. The new sequence preview correctly uses `CurrentPlayIndex` and advertises the next outer video. Clicking that now-visible next button at `PlayerControl.xaml.cs:2719–2725` still takes the stale “another part remains” branch and replays P2. Repeated keyboard-next also keeps replaying P2 rather than reaching the next video.
+Open playlist row A, choose a collection video X that is absent from that playlist, then browse the drawer's playlist tab. A is still marked “正在播放”; clicking it does nothing, so the user cannot return to A through the directory. The source-switch action also refuses while X is outside the playlist (`VideoDetailPage.xaml.cs:1423–1429`).
 
-The keyboard selection drift predates this increment; the new outer-next button and target preview expose it as an incomplete shared-navigation fix. Suggested fix: synchronize the player's selected index with the actual playing index, guarding `SelectionChanged` to prevent duplicate playback. Base next/previous boundary decisions on the same current index used by the sequence state, and route part changes through one consistent path.
+Suggested fix: build playlist current markers from the actual playing aid, separately from the saved queue cursor. Only suppress playback when the activated row's identity matches the actual playing item in the appropriate scope. If activating that item chooses a different continuation source, still perform the source switch without restarting playback.
 
-## SDK fallback is configured after the restore that needs it
+## Full-screen paging and retry still require leaving full screen
 
-`build-release-x64.ps1:163–183` discovers the standalone dotnet SDK and sets `MSBuildSDKsPath` for `-Fast -SkipProjectReferences`. But adding the documented `-Restore` switch runs solution restore at lines 149–158 before that setup. On the machine this fallback targets—VS MSBuild cannot resolve `Microsoft.NET.Sdk`, while a standalone dotnet SDK is installed—the solution restore still evaluates the SDK-style `BiliLite.gRPC` project and fails before reaching the fallback. Package changes therefore cannot be restored using this combination of switches.
+`src/BiliLite.UWP/Controls/PlayDirectoryControl.xaml:64–113` exposes rows and source actions, but no load-more/retry control. Its events and model also have no paging action/state. `Models/PlayDirectory.cs:240–291` supplies only the already-loaded playlist rows. The existing manual paging action remains in the detail-column list (`Pages/VideoDetailPage.xaml.cs:606–619`), which full-screen/full-window mode hides.
 
-Suggested fix: move SDK discovery and environment setup before the optional restore, keeping the build-only `BuildProjectReferences=false` argument separate. Alternatively, explicitly restore through the compatible dotnet SDK before invoking VS MSBuild. The SDK path must be available to both evaluations.
+For a remote list with 20 loaded rows and more available, a user cannot browse item 21 or later in the drawer. If boundary continuation fails, the message still tells them to click “加载更多”, but that button is outside the visible player. They must exit full screen to load or retry; automatic advancement is not a substitute for browsing.
+
+Suggested fix: expose the existing page-owned load-more/retry operation in the drawer, with loaded/loading/failed/exhausted state. Reuse `LoadMediaListPage` and the existing cursor, prevent duplicate requests, and refresh the open directory after loading without starting playback or changing the source.
+
+## Locate-current chooses a part even when the active list is the collection
+
+`src/BiliLite.UWP/Controls/PlayDirectoryControl.xaml.cs:167–178` returns the first `IsCurrent` row across all sections. The combined sections put Parts first (`Models/PlayDirectory.cs:302–305`), and both the current part and outer video retain their current markers. `LocateCurrent` then changes the browsed section to whichever row it found (lines 73–80).
+
+For a multipart video following a collection/playlist, opening the drawer immediately runs this locate action and switches to Parts rather than the active outer list. Clicking “定位正在播放” while viewing the collection repeats the jump. Separately, `SetModel` at lines 56–58 resets the browsed section to `model.ActiveKind` on every redraw, so a part change can pull the user out of another tab they were browsing.
+
+Suggested fix: locate the current row within the browsed section when it has one, otherwise use the active continuation section and its scoped current key. Preserve the browsed section across model refreshes while it still exists; apply the active-source default on a fresh open or when the old section disappears.
