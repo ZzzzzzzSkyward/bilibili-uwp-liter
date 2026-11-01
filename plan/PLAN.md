@@ -12,7 +12,7 @@ in `bug_report.md` first.
 | Fact | Value |
 | --- | --- |
 | branch | `dev`, in sync with `origin/dev` |
-| build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (compile only; this machine's VS has no .NET SDK component, so the script evaluates the skipped SDK-style `BiliLite.gRPC` through the installed dotnet SDK) or without `-Fast` to package into `Z:\` |
+| build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -SkipProjectReferences` (compile only; this machine's VS has no .NET SDK component, so the script evaluates the skipped SDK-style `BiliLite.gRPC` through the installed dotnet SDK) or without `-Fast` to package into `Z:\`. **Every build bumps the revision** (both `Package.appxmanifest` files, same source of truth); `-NoVersionBump` is for a throwaway repeated package, not for a batch that ships |
 | probe checks | `sh plan/tests/<batch>/run.sh` — net8.0 probe projects under `plan/tests/` compile the real product sources and assert behavior. The scripts expect a portable drop at `$UPSTREAM_UNIT_TOOLS/dotnet` with SDK 8.0.427; that drop is absent on this machine, the installed SDK is 10.0.302 with the 8.0.33 ref pack and an 8.0.33 runtime, so a batch either points `UPSTREAM_UNIT_TOOLS` at a directory containing a `dotnet` root or resolves the installed SDK. `sh` here is MSYS2 (Git Bash) |
 | sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-dev.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
 | review cache | `plan/REVIEW_LOG.md` |
@@ -24,6 +24,21 @@ Newest first; every one of these is device-accepted per the policy above, except
 device-confirmed, while P4 step 1, BR-45 and the second BR-43 attempt are compiled and probe-covered only — their
 device rows are still open in `plan/VALIDATION.md`.
 
+- **P4 step 5 — comments:** `2c2de3d` — `Models/Api/Comment/` DTOs + `Parsing/Comment/` (`WebCommentPageParser`,
+  `WebCommentActionParser`, `WebCommentPageMapper`). A body without a business code is an envelope failure
+  instead of `code = 0` success; the pinned-reply dedupe and the two cursor shapes (`cursor.next_offset` vs the
+  legacy `pn`) live in the mapper; `CommentControl` toasts by category and keeps `_page`/cursor source-bound.
+  Dead `dataCommentModel`, `CommentItem` and `Comment_New` deleted. `plan/tests/comments` (99 assertions).
+- **PLAN item 1 — player session ownership:** `ca0a0e1` — `Services/PlayerSessionState.cs` (Begin/Accept/
+  Invalidate/Hold/Release/IsCurrent) makes every open carry a session; resources sit in a per-session ledger
+  until accepted, an invalidated session releases once, and a resource born after invalidation is released on
+  the spot. All 12 open paths are bound, the quality change is awaited, the engine fallback is single in flight,
+  and stale continuations/`MediaOpened`/`MediaFailed` are rejected. `plan/tests/playersess` (69 checks).
+- **P4 step 2 — playlists:** `355e511` — `Parsing/MediaList/` parsers + mappers for medialist (signed/unsigned),
+  favorites and watch later; the service keeps source policy and single-flight but no longer decodes, toasts or
+  collapses failures. The toast moved to the publishers through `MediaListFailureText`; an absent `media_list` is
+  its own stage and the only case that spends the unsigned retry. `oid = last aid`, `has_more`, `HasKnownTotal`
+  and `MediaListPagingState.Append` untouched. `plan/tests/c2` 99→162, `c3` 97→117.
 - **P4 step 1 — season detail:** `ed9f248` — `pgc/view/web/ep/list` runs builder → `ApiEnvelope.ReadResult` →
   `Parsing/Season/WebSeasonEpListParser` → mapper, with the field table and the 正片/预告 dedupe rule in the
   parser. `HttpResults.TryGetJObject` is the silent body decode the envelope uses, so a non-JSON body is an
@@ -92,9 +107,9 @@ device rows are still open in `plan/VALIDATION.md`.
 
 | # | Item | State |
 | --- | --- | --- |
-| 1 | Player open/replace/close session ownership | not started |
+| 1 | Player open/replace/close session ownership | **done** — `ca0a0e1`; the device rows in `plan/VALIDATION.md` are what is left |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
-| 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. P4 step 1 (season detail) is **shipped** in `ed9f248`: `result` selector on `ApiEnvelope`, a silent body decode (`HttpResults.TryGetJObject`) so a non-JSON body is a parse failure rather than a toast, `Parsing/Season/`, `Models/Api/Season/Web/`, the dead web path deleted, probe `plan/tests/season1` (109 assertions). The review's four findings are closed in `0839615` (its evidence is in that commit's `code_review.md`, since the reviewer's later pass emptied the working file) and its pass on that head, `b7fb5bc`, returned no findings. Remaining order from `plan/P4_INVENTORY.md`: playlists → video detail → account → comments |
+| 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. P4 steps 1, 2 and 5 shipped: season detail `ed9f248`, playlists `355e511`, comments `2c2de3d` — each with a parser/mapper layer, DTOs under `Models/Api/`, a field table beside the parser and its own probe (`season1` 109, `c2` 162 + `c3` 117, `comments` 99). Remaining: **video detail** (step 3 — `view`+`related` first, then the four state reads; `relates: null` NRE and the `biliproxy.iill.moe` third-party fallback are the open decisions) and **account** (step 4, held back by the maintainer). Order and traps: `plan/P4_INVENTORY.md` §2 and §5 |
 | 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; the remaining checks are the device rows in `plan/VALIDATION.md` |
 
 ## 1. Player session ownership
