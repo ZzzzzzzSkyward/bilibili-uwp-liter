@@ -146,25 +146,10 @@ else {
     Write-Host "包版本  : $current -> $next（两个清单已更新）"
 }
 
-# 还原 NuGet 包：packages.config 与 PackageReference 两种项目都要覆盖
-if ($Fast -and -not $Restore) {
-    Write-Host '还原    : 已跳过（-Fast，需要时加 -Restore）'
-}
-else {
-    & $msbuild $solution -t:Restore -p:RestorePackagesConfig=true -v:m -nologo -nodeReuse:false
-    if ($LASTEXITCODE -ne 0) {
-        throw "NuGet 还原失败（退出码 $LASTEXITCODE）。"
-    }
-}
-
-# nodeReuse:false 与关闭编译服务器: 复用的 MSBuild 节点会持有 intermediatexaml\BiliLiter.exe,
-# 让紧随其后的第二次生成因 CS2012 失败
-$buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platform=x64', '-v:m', '-nologo', '-m', '-nodeReuse:false', '-p:UseSharedCompilation=false')
+# 依赖项目仍要被求值(取引用路径),所以 VS 里没有 Microsoft.NET.Sdk 时改用已安装的 dotnet SDK。
+# 必须赶在还原之前设置：SDK 风格的 gRPC 项目在 -t:Restore 时同样要解析 Microsoft.NET.Sdk，
+# 早先放在生成参数里时 -Fast -Restore 会先用 VS 的 MSBuild 还原、然后才轮到这个兜底，等于没兜住。
 if ($Fast -and $SkipProjectReferences) {
-    # 已单独生成过的 SDK 风格依赖不再参与本次生成；VS 自带的 MSBuild 解析不了 Microsoft.NET.Sdk 时靠它
-    $buildArgs += '-p:BuildProjectReferences=false'
-
-    # 依赖项目仍要被求值(取引用路径),所以 VS 里没有 Microsoft.NET.Sdk 时改用已安装的 dotnet SDK
     $vsSdks = Join-Path (Split-Path -Parent (Split-Path -Parent $msbuild)) 'Sdks\Microsoft.NET.Sdk'
     if (-not (Test-Path $vsSdks) -and -not $env:MSBuildSDKsPath) {
         $dotnetSdkRoot = Join-Path ${env:ProgramFiles} 'dotnet\sdk'
@@ -181,6 +166,25 @@ if ($Fast -and $SkipProjectReferences) {
             }
         }
     }
+}
+
+# 还原 NuGet 包：packages.config 与 PackageReference 两种项目都要覆盖
+if ($Fast -and -not $Restore) {
+    Write-Host '还原    : 已跳过（-Fast，需要时加 -Restore）'
+}
+else {
+    & $msbuild $solution -t:Restore -p:RestorePackagesConfig=true -v:m -nologo -nodeReuse:false
+    if ($LASTEXITCODE -ne 0) {
+        throw "NuGet 还原失败（退出码 $LASTEXITCODE）。"
+    }
+}
+
+# nodeReuse:false 与关闭编译服务器: 复用的 MSBuild 节点会持有 intermediatexaml\BiliLiter.exe,
+# 让紧随其后的第二次生成因 CS2012 失败
+$buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platform=x64', '-v:m', '-nologo', '-m', '-nodeReuse:false', '-p:UseSharedCompilation=false')
+if ($Fast -and $SkipProjectReferences) {
+    # 已单独生成过的 SDK 风格依赖不再参与本次生成（SDK 路径已在还原之前设好）
+    $buildArgs += '-p:BuildProjectReferences=false'
 }
 if (-not $Fast) {
     $buildArgs += "-p:AppxPackageDir=$OutputDir"

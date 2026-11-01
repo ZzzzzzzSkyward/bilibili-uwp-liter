@@ -32,6 +32,7 @@ namespace Ux1aProbe
             OnePartVideoInACollectionCanAdvance();
             IndexesStayInsideTheCounts();
             NextPartOnlyNeverLeavesTheVideo();
+            KeyboardNextLeavesNoStaleIndex();
             StateFeedOrder();
             PageSourceWiring();
             PlayerSourceWiring();
@@ -274,6 +275,18 @@ namespace Ux1aProbe
             Check(WatchSequenceOrder.NextPartOnly(null).Move == WatchSequenceMove.None, "no position has no next part");
         }
 
+        private static void KeyboardNextLeavesNoStaleIndex()
+        {
+            // 两分P视频外面还有五行队列:键盘从 P1 换到 P2 之后,播放器的当前下标是 1,
+            // 于是序列判定和"下一个"按钮都必须承认本视频的分P已经走完
+            var atSecondPart = Position(WatchSequenceSourceKind.Playlist, 1, 2, 0, 5);
+            var step = WatchSequenceOrder.Next(atSecondPart, false);
+            Check(step.Move == WatchSequenceMove.PlayRow && step.RowIndex == 1,
+                "the second part of two is the last part, so next leaves the video for the queue row");
+            Check(WatchSequenceOrder.Next(Position(WatchSequenceSourceKind.Playlist, 0, 2, 0, 5), false).Move
+                == WatchSequenceMove.PlayPart, "the first part of two still advances to the following part");
+        }
+
         private static void StateFeedOrder()
         {
             var state = new WatchSequenceState();
@@ -415,18 +428,58 @@ namespace Ux1aProbe
                 "source: the player raises the skip-remaining-parts request");
 
             var nextShortcut = Body(player, "case Windows.System.VirtualKey.X:");
-            Check(nextShortcut.Contains("await SetPlayItem(EpisodeList.SelectedIndex + 1);")
+            Check(nextShortcut.Contains("if (HasNextPart)") && nextShortcut.Contains("await SetPlayItem(CurrentPlayIndex + 1);")
                 && nextShortcut.Contains("NextOuterRequested?.Invoke(this, EventArgs.Empty);"),
-                "source: the next shortcut walks parts and asks the page at the last one");
+                "source: the next shortcut walks parts on the current index and asks the page at the last one");
+            Check(!nextShortcut.Contains("EpisodeList"),
+                "source: the next shortcut no longer branches on the list selection");
             var previousShortcut = Body(player, "case Windows.System.VirtualKey.Z:");
-            Check(previousShortcut.Contains("await SetPlayItem(EpisodeList.SelectedIndex - 1);")
+            Check(previousShortcut.Contains("if (HasPreviousPart)")
+                && previousShortcut.Contains("await SetPlayItem(CurrentPlayIndex - 1);")
                 && previousShortcut.Contains("PreviousOuterRequested?.Invoke(this, EventArgs.Empty);"),
-                "source: the previous shortcut walks parts and asks the page at the first one");
+                "source: the previous shortcut walks parts on the current index and asks the page at the first one");
+            Check(!previousShortcut.Contains("EpisodeList"),
+                "source: the previous shortcut no longer branches on the list selection");
 
-            var nextClick = Body(player, "private void BottomBtnNext_Click");
-            Check(nextClick.Contains("EpisodeList.SelectedIndex + 1;")
+            var nextClick = Body(player, "private async void BottomBtnNext_Click");
+            Check(nextClick.Contains("if (HasNextPart)") && nextClick.Contains("await SetPlayItem(CurrentPlayIndex + 1);")
                 && nextClick.Contains("NextOuterRequested?.Invoke(this, EventArgs.Empty);"),
-                "source: the next button walks parts and asks the page at the last one");
+                "source: the next button walks parts on the current index and asks the page at the last one");
+            Check(!nextClick.Contains("EpisodeList"),
+                "source: the next button does not read the list selection at all");
+
+            Check(Body(player, "private bool HasNextPart").Contains("CurrentPlayIndex < PlayInfos.Count - 1")
+                && Body(player, "private bool HasPreviousPart").Contains("CurrentPlayIndex > 0"),
+                "source: both part boundary rules read the playing index");
+
+            var setItem = Body(player, "private async Task SetPlayItem");
+            Check(setItem.Contains("CurrentPlayIndex = index;") && setItem.Contains("SyncEpisodeListSelection(index);"),
+                "source: the played part is assigned and the list selection mirrors it");
+            Check(CountOf(player, "CurrentPlayIndex = index;") == 1,
+                "source: exactly one place assigns the playing index");
+
+            var sync = Body(player, "private void SyncEpisodeListSelection");
+            Check(sync.Contains("if (EpisodeList.SelectedIndex == index)")
+                && sync.Contains("_syncingEpisodeSelection = true;") && sync.Contains("finally")
+                && sync.Contains("_syncingEpisodeSelection = false;"),
+                "source: the list selection is synced under a re-entrancy guard that is always released");
+
+            var changed = Body(player, "private async void EpisodeList_SelectionChanged");
+            Check(changed.Contains("if (_syncingEpisodeSelection)") && changed.Contains("return;"),
+                "source: the selection event raised by the sync does not start a second playback");
+            Check(changed.Contains("await SetPlayItem(EpisodeList.SelectedIndex);"),
+                "source: a user picking a part still goes through the same part switch");
+
+            Check(CountOf(player, "EpisodeList.SelectedIndex = index;") == 2
+                && Body(player, "public void InitializePlayInfo").Contains("EpisodeList.SelectedIndex = index;")
+                && sync.Contains("EpisodeList.SelectedIndex = index;"),
+                "source: the list selection is written only for the initial part and the mirror");
+
+            var changeIndex = Body(player, "public void ChangePlayIndex");
+            Check(changeIndex.Contains("_ = SetPlayItem(index);") && !changeIndex.Contains("EpisodeList.SelectedIndex"),
+                "source: a page-requested part change uses the same part switch as the shortcut");
+            Check(changeIndex.Contains("if (index == CurrentPlayIndex)"),
+                "source: a page request for the part already playing does not restart it");
 
             var update = Body(player, "public void UpdateSequenceInfo");
             Check(update.Contains("ToolTipService.SetToolTip(BottomBtnNext, nextName);")
@@ -434,7 +487,7 @@ namespace Ux1aProbe
                 "source: the reported target names the next button for pointer and screen reader users");
 
             var visibility = Body(player, "private void UpdateBottomBtnNextVisibility");
-            Check(visibility.Contains("hasPart || _hasOuterNextTarget"),
+            Check(visibility.Contains("HasNextPart || _hasOuterNextTarget"),
                 "source: the next button stays when a part remains or the page reported an outer target");
             Check(Body(player, "private async Task SetPlayItem").Contains("UpdateBottomBtnNextVisibility();"),
                 "source: the shared visibility rule is used when the played part changes");
@@ -473,7 +526,9 @@ namespace Ux1aProbe
 
         private static string ReadSource(string relativePath)
         {
-            return File.ReadAllText(Path.Combine(RepoRoot(), relativePath.Replace('\\', Path.DirectorySeparatorChar)));
+            var text = File.ReadAllText(Path.Combine(RepoRoot(), relativePath.Replace('\\', Path.DirectorySeparatorChar)));
+            //仓库里是 CRLF,而 Body 用 "\n        }" 找方法结尾:先把行尾统一,否则只会截到 4000 字符
+            return text.Replace("\r\n", "\n");
         }
 
         private static string RepoRoot()

@@ -61,6 +61,24 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 需要的修复：播放器里一个“目录”入口，在播放器内部打开覆盖层抽屉；普通窗口下则打开侧栏同一份列表。两个宿主
 共享同一份状态和同一套行模板，浏览抽屉不改变播放、也不改变连播来源。
 
+## BR-26 — 键盘换到下一P后，“下一个”按钮还在重播同一P（review 2026-11-01）
+
+`Controls/PlayerControl.xaml.cs:596-598` 的快捷键直接 `SetPlayItem(EpisodeList.SelectedIndex + 1)`：`SetPlayItem` 只更新
+`CurrentPlayIndex`（:1114），不同步 `EpisodeList.SelectedIndex`；而 `BottomBtnNext_Click`（:2719-2725）按
+`EpisodeList.SelectedIndex` 判断“还有没有下一P”。于是两分P 视频按 `X` 到 P2 后，按钮仍当成在 P1：点一次重播 P2，
+键盘反复按也到不了外层下一个视频，而预览文字已经写的是下一个视频。
+
+需要的修复：当前分P 只留一个来源；分P 变化时同步 `EpisodeList.SelectedIndex`（带重入保护，别触发第二次播放），
+按钮、快捷键、预览、可见性都用同一个当前下标。
+
+## BR-27 — `-Restore` 在 SDK 环境就绪之前运行（review 2026-11-01）
+
+`build-release-x64.ps1` 把自动还原放在 SDK 探测之前：带 `-Restore` 时还原仍走认不出 `Microsoft.NET.Sdk` 的 VS MSBuild，
+在设置 `MSBuildSDKsPath` 之前就失败，等于这组开关永远无法还原包变更。
+
+需要的修复：把 SDK 探测与 `MSBuildSDKsPath`/工作负载环境设置提前到可选还原之前；`BuildProjectReferences=false`
+仍然只留在快速编译分支。
+
 ## Notes
 
 - Install a `BiliLite.Packages_*` MSIX (root launcher ≈ 8 KB plus `entrypoint/BiliLiter.exe`). A

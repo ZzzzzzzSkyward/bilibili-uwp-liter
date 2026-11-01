@@ -237,6 +237,8 @@ namespace BiliLite.Controls
 
         // 页面报告的"下一个目标"文字;空表示外层没有下一个
         private bool _hasOuterNextTarget;
+        // 正在把 CurrentPlayIndex 同步到选集列表:由此产生的 SelectionChanged 不是用户选集,不能再播一次
+        private bool _syncingEpisodeSelection;
         // 页面报告的可跳过剩余分P:有外层来源且本视频还有分P没播完
         private bool _canSkipToNextVideo;
         // 页面报告了目录,以及目录抽屉当前是否打开
@@ -608,9 +610,9 @@ namespace BiliLite.Controls
                     if (NoMod())
                     {
                         //还有分P就回上一P;第一个分P上的上一个交给页面,它可能换到上一个视频
-                        if (EpisodeList.SelectedIndex > 0)
+                        if (HasPreviousPart)
                         {
-                            await SetPlayItem(EpisodeList.SelectedIndex - 1);
+                            await SetPlayItem(CurrentPlayIndex - 1);
                         }
                         else
                         {
@@ -625,9 +627,9 @@ namespace BiliLite.Controls
                     if (NoMod())
                     {
                         //还有分P就换下一P;最后一P的下一个交给页面,它可能换到下一个视频
-                        if (EpisodeList.SelectedIndex >= 0 && EpisodeList.SelectedIndex < EpisodeList.Items.Count - 1)
+                        if (HasNextPart)
                         {
-                            await SetPlayItem(EpisodeList.SelectedIndex + 1);
+                            await SetPlayItem(CurrentPlayIndex + 1);
                         }
                         else
                         {
@@ -1083,8 +1085,23 @@ namespace BiliLite.Controls
         private void UpdateBottomBtnNextVisibility()
         {
             if (BottomBtnNext == null) return;
-            var hasPart = PlayInfos != null && PlayInfos.Count >= 1 && CurrentPlayIndex != PlayInfos.Count - 1;
-            BottomBtnNext.Visibility = hasPart || _hasOuterNextTarget ? Visibility.Visible : Visibility.Collapsed;
+            BottomBtnNext.Visibility = HasNextPart || _hasOuterNextTarget ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// 还有下一P。判定只认当前播放的这一P;选集列表的下标是它的镜像,不反过来当依据。
+        /// </summary>
+        private bool HasNextPart
+        {
+            get { return PlayInfos != null && CurrentPlayIndex >= 0 && CurrentPlayIndex < PlayInfos.Count - 1; }
+        }
+
+        /// <summary>
+        /// 还有上一P。第一个分P的"上一个"属于外层来源。
+        /// </summary>
+        private bool HasPreviousPart
+        {
+            get { return PlayInfos != null && CurrentPlayIndex > 0; }
         }
 
         private async void DanmuTimer_Tick(object sender, object e)
@@ -1205,6 +1222,8 @@ namespace BiliLite.Controls
                 index = PlayInfos.Count - 1;
             }
             CurrentPlayIndex = index;
+            // 选集列表跟上当前播放的这一P;按钮和快捷键都从这里之后读同一个下标
+            SyncEpisodeListSelection(index);
             var selectedPlayItem = PlayInfos[index];
             if (CurrentPlayItem == null || CurrentPlayItem.season_id != selectedPlayItem.season_id ||
                 CurrentPlayItem.ep_id != selectedPlayItem.ep_id || CurrentPlayItem.cid != selectedPlayItem.cid)
@@ -1565,13 +1584,50 @@ namespace BiliLite.Controls
 
         public void ChangePlayIndex(int index)
         {
+            // 页面请求换P和快捷键换P走同一条路径:当前分P只由 SetPlayItem 认
             ClearSubTitle();
             DanmuControl.ClearAll();
-            EpisodeList.SelectedIndex = index;
+            //选集列表不接受的下标也不起播,和原来直接设 SelectedIndex 的越界表现一致
+            if (PlayInfos == null || index < 0 || index >= PlayInfos.Count)
+            {
+                return;
+            }
+            //选中的就是正在播的这一P:清掉字幕弹幕即可,不重播(与选集列表下标没变时不播一致)
+            if (index == CurrentPlayIndex)
+            {
+                return;
+            }
+            _ = SetPlayItem(index);
+        }
+
+        /// <summary>
+        /// 选集列表只是当前分P的镜像:换P之后把它的下标对齐。
+        /// 重入保护让这次赋值引起的 SelectionChanged 直接返回,不会播第二次。
+        /// </summary>
+        private void SyncEpisodeListSelection(int index)
+        {
+            if (EpisodeList.SelectedIndex == index)
+            {
+                return;
+            }
+            _syncingEpisodeSelection = true;
+            try
+            {
+                EpisodeList.SelectedIndex = index;
+            }
+            finally
+            {
+                _syncingEpisodeSelection = false;
+            }
         }
 
         private async void EpisodeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            //同步当前分P的下标不是用户选集:同一P已经在播,不能再起一次
+            if (_syncingEpisodeSelection)
+            {
+                return;
+            }
             if (EpisodeList.SelectedItem == null)
             {
                 return;
@@ -2815,12 +2871,14 @@ namespace BiliLite.Controls
             }
         }
 
-        private void BottomBtnNext_Click(object sender, RoutedEventArgs e)
+        private async void BottomBtnNext_Click(object sender, RoutedEventArgs e)
         {
             //还有分P就先换分P;最后一P把机会交给页面,它可能换到下一个视频
-            if (EpisodeList.SelectedIndex >= 0 && EpisodeList.SelectedIndex < EpisodeList.Items.Count - 1)
+            if (HasNextPart)
             {
-                EpisodeList.SelectedIndex = EpisodeList.SelectedIndex + 1;
+                //原来是借选集列表的事件换P,那里会先清掉上一P的弹幕;现在直接换,这一手照旧
+                DanmuControl.ClearAll();
+                await SetPlayItem(CurrentPlayIndex + 1);
                 return;
             }
             NextOuterRequested?.Invoke(this, EventArgs.Empty);
