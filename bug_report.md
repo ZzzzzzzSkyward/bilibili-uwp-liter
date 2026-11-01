@@ -102,3 +102,20 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 - 诊断 → 「记录 API 响应形状」 writes one NDJSON line per response (endpoint, status, timings, shape, and a
   drift line the first time a field changes type); 「导出诊断包」 collects the recent logs plus those
   captures and a `manifest.json` into one zip to attach to a report.
+
+## BR-46 — 连播到下一条视频后按空格切走了标签页（维护者 2026-11-01，真机）
+
+维护者：跳转到下一个播放视频之后再按空格想播放，结果激活了第一个标签页并切了过去；期望焦点留在当前视频上，空格应该播放。
+
+源码里能对上号的几处（真机现象为准，这里只是定位线索）：
+
+- Pivot 表头 `PivotHeaderItem` 自己处理 `Space` 并切页，键被控件吃掉，所以
+  `Controls/PlayerControl.xaml.cs:488` 的 `PlayerControl_KeyDown`（`VirtualKey.Space` 分支在 `:534`）
+  根本没被调用；
+- `PlayerControl` 里有一个"每 2 秒把焦点收回播放器"的 `Timer_focus_Tick`
+  (`PlayerControl.xaml.cs:355-362`)，但它的判断只认 `Button`/`AppBarButton`/`HyperlinkButton`/
+  `MenuFlyoutItem`，焦点落在页签表头上时不会纠正；
+- 页面自己的 `CoreWindow_KeyDown`（`Pages/VideoDetailPage.xaml.cs:79`）同样只处理没被控件吃掉的键。
+
+需要的修复：连播/下一个把当前视频换掉之后，把焦点还给播放器；只在焦点落在页签表头（而不是目录抽屉里的
+行、也不是输入框）时纠正，不要靠"定时抢焦点"去覆盖页签的键盘可达性。
