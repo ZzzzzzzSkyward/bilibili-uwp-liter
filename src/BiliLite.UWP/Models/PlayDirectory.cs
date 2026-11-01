@@ -872,6 +872,18 @@ namespace BiliLite.Models.Common
         }
 
         /// <summary>
+        /// 来源名要不要另起一行。页头自己带着来源(合集《X》、播放列表《X》)就不再写一遍;
+        /// 分P 的页头只有段名,行标题本来就在来源里,也不写;只有剧集页的段名不带剧名。
+        /// </summary>
+        public static bool ShowsSourceTitle(string headerText, string sourceTitle)
+        {
+            if (string.IsNullOrWhiteSpace(sourceTitle)) return false;
+            var header = headerText ?? "";
+            return string.Equals(header, SeasonEpisodesSectionTitle, StringComparison.Ordinal)
+                || string.Equals(header, SeasonPreviewsSectionTitle, StringComparison.Ordinal);
+        }
+
+        /// <summary>
         /// 把页头换成用户正在浏览的那一段。只改这一行字:行、当前标记、翻页状态都还是这一份;
         /// 那一段不在目录里时什么都不改。
         /// </summary>

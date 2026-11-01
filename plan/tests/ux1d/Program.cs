@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using BiliLite.Models.Common;
@@ -278,14 +278,14 @@ namespace Ux1dProbe
             Check(CountOf(xaml, "x:Name=\"TransitionPendingHost\"") == 1,
                 "source: the player owns one pending overlay");
 
-            var hide = Body(player, "public void HideDirectory()");
+            var hide = Body(player, "private void FinishHideDirectory()");
             Check(hide.Contains("BottomBtnDirectory.Focus(FocusState.Programmatic);"),
                 "source: closing the drawer returns focus to the 目录 button");
             var showDrawer = Body(player, "public void ShowDirectory(PlayDirectoryModel model)");
             Check(showDrawer.Contains("DirectoryDrawer.LocateCurrent();") && showDrawer.Contains("DirectoryDrawer.FocusRows();"),
                 "source: opening the drawer puts focus in its rows");
             Check(player.Contains("if (args.VirtualKey == Windows.System.VirtualKey.Escape)") 
-                && Body(player, "private async void PlayerControl_KeyDown").Contains("if (_directoryOpen)"),
+                && Body(player, "private async void PlayerControl_KeyDown").Contains("if (_directoryMotion.IsShown)"),
                 "source: Escape is handled by the drawer before the player shortcuts");
         }
 
@@ -371,8 +371,14 @@ namespace Ux1dProbe
                 "source: each row carries the automation name of its own state");
             Check(xaml.Contains("Visibility=\"{Binding IsPending, Converter={StaticResource pendingVisible}}\""),
                 "source: the pending row shows a ring");
-            var bar = Between(xaml, "Grid.Column=\"0\"", "Grid.Column=\"1\"");
-            Check(!bar.Contains("IsPending"), "source: the playing bar is still driven by the current row only");
+            // 正在播放的条:行模板里那个贴着当前行的 Border,占第一列(默认列,不写 Grid.Column),
+            // 排在序号的 TextBlock(Grid.Column="2")之前
+            var bar = Between(xaml, "<Border Background=\"{ThemeResource HighLightColor}\" Visibility=\"{Binding CurrentBadge", "Grid.Column=\"2\"");
+            Check(bar.Length > 0, "source: the row still draws the playing bar in the high-light colour on the current row");
+            Check(bar.Length > 0
+                && !bar.Contains("IsPending")
+                && bar.IndexOf("Grid.Column", StringComparison.Ordinal) < 0,
+                "source: the playing bar is still driven by the current row only and sits in the default first column before the ordinal");
             Check(xaml.Contains("AutomationProperties.Name=\"关闭播放目录\"")
                 && xaml.Contains("AutomationProperties.Name=\"定位正在播放\"")
                 && xaml.Contains("AutomationProperties.Name=\"按合集连播\"")

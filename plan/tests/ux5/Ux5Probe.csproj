@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>Ux5Probe</AssemblyName>
+    <RootNamespace>Ux5Probe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\DirectoryDrawerMotion.cs" Link="DirectoryDrawerMotion.cs" />
+  </ItemGroup>
+
+</Project>

@@ -88,8 +88,16 @@ namespace BiliLite.Controls
                 QueryBox.Text = "";
             }
             m_model = DisplayModel();
-            HeaderText.Text = model == null ? "" : model.HeaderText ?? "";
-            SourceTitleText.Text = model == null ? "" : model.SourceTitle ?? "";
+            // 页头只有这一行字,省略号之后要看得全,提示跟着同一份文本
+            var header = model == null ? "" : model.HeaderText ?? "";
+            HeaderText.Text = header;
+            ToolTipService.SetToolTip(HeaderText, string.IsNullOrEmpty(header) ? null : header);
+            // 来源名只在页头没带来源时另起一行
+            var sourceTitle = model == null ? "" : model.SourceTitle ?? "";
+            SourceTitleText.Text = sourceTitle;
+            SourceTitleText.Visibility = PlayDirectoryBuilder.ShowsSourceTitle(header, sourceTitle)
+                ? Visibility.Visible
+                : Visibility.Collapsed;
             SetPosition(model);
             Render(resetScope ? (PlayDirectorySectionKind?)null : m_activeKind);
         }
@@ -475,6 +483,23 @@ namespace BiliLite.Controls
         public object Convert(object value, Type targetType, object parameter, string language)
         {
             return value is bool && (bool)value ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
+        }
+    }
+
+    /// <summary>
+    /// 空字符串不给悬浮提示:绑到提示上的字段为空时不出空白提示框。
+    /// </summary>
+    public sealed class PlayDirectoryTooltipConvert : Windows.UI.Xaml.Data.IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            var text = value as string ?? "";
+            return text.Length == 0 ? null : text;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, string language)

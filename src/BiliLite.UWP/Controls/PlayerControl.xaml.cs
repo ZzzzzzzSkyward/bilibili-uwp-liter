@@ -39,6 +39,7 @@ using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 
 //https://go.microsoft.com/fwlink/?LinkId=234236 上介绍了“用户控件”项模板
@@ -261,9 +262,14 @@ namespace BiliLite.Controls
         private bool _syncingEpisodeSelection;
         // 页面报告的可跳过剩余分P:有外层来源且本视频还有分P没播完
         private bool _canSkipToNextVideo;
-        // 页面报告了目录,以及目录抽屉当前是否打开
+        // 页面报告了目录,以及目录抽屉的开关状态(关门动画在跑时仍算开着)
         private bool _directoryAvailable;
-        private bool _directoryOpen;
+        private readonly DirectoryDrawerMotion _directoryMotion = new DirectoryDrawerMotion(true);
+        private readonly UISettings _uiSettings = new UISettings();
+        // 当前在跑的抽屉故事板:换方向时先停掉,停掉的不会发完成回调
+        private Storyboard _directoryStoryboard;
+        // 这一次关门的令牌,完成回调拿着它回来认领
+        private int _directoryCloseToken;
         // 页面报告"正在换到某个目标":等待中"下一个"按钮变灰,提示仍然写着那个目标
         private bool _transitionPending;
         private string _pendingTargetText;
@@ -476,7 +482,7 @@ namespace BiliLite.Controls
             var ele = FocusManager.GetFocusedElement();
             // 目录抽屉开着:Esc 先清搜索框,词空了才关抽屉;方向键/回车留给列表浏览,
             // 其余键一概让路(焦点在搜索框里时,这段也要排在下面那个文本框判断之前)
-            if (_directoryOpen)
+            if (_directoryMotion.IsShown)
             {
                 if (args.VirtualKey == Windows.System.VirtualKey.Escape)
                 {
@@ -1121,14 +1127,24 @@ namespace BiliLite.Controls
 
         /// <summary>
         /// 在播放器内部打开目录抽屉。只装内容和显示抽屉:不停播、不跳进度、不改全屏/铺满。
+        /// 开门动画跑完之前抽屉就已经算打开,页面这期间推来的目录照样收得下。
         /// </summary>
         public void ShowDirectory(PlayDirectoryModel model)
         {
             if (model == null || !model.HasSections) return;
-            var wasOpen = _directoryOpen;
+            var wasOpen = _directoryMotion.IsShown;
+            var wasClosing = _directoryMotion.IsClosing;
             DirectoryDrawer.SetModel(model);
+            _directoryMotion.AnimationsEnabled = _uiSettings.AnimationsEnabled;
+            // BeginOpen 会把还没回来的那次关门作废:它的完成回调再也不能把抽屉藏掉
+            var slide = _directoryMotion.BeginOpen();
             DirectoryHost.Visibility = Visibility.Visible;
-            _directoryOpen = true;
+            DirectoryScrim.Visibility = Visibility.Visible;
+            SetDirectoryButtonActive(true);
+            // 已经开着的抽屉只是换内容(重画、翻页、换分段),不再滑一次
+            if (wasOpen && !wasClosing) return;
+            if (slide) StartDirectoryStoryboard(true);
+            else SnapDirectoryOpen();
             // 打开时定位一次;已经开着就只换内容,不抢滚动位置和焦点
             if (wasOpen) return;
             DirectoryDrawer.LocateCurrent();
@@ -1136,13 +1152,45 @@ namespace BiliLite.Controls
         }
 
         /// <summary>
-        /// 收起目录抽屉,焦点还给打开它的"目录"按钮
+        /// 收起目录抽屉:有动画就跑关门动画,动画结束的回调里才真的藏;
+        /// 系统关掉动画时当场收起。焦点还给打开它的"目录"按钮
         /// </summary>
         public void HideDirectory()
         {
-            if (!_directoryOpen) return;
-            _directoryOpen = false;
+            // 已经在关的路上:等同一个回调收尾,不重启关门动画
+            if (!_directoryMotion.IsShown || _directoryMotion.IsClosing) return;
+            _directoryMotion.AnimationsEnabled = _uiSettings.AnimationsEnabled;
+            SetDirectoryButtonActive(false);
+            _directoryCloseToken = _directoryMotion.BeginClose();
+            if (_directoryMotion.IsClosing)
+            {
+                StartDirectoryStoryboard(false);
+                return;
+            }
+            FinishHideDirectory();
+        }
+
+        /// <summary>
+        /// 目录抽屉是否打开。关门动画还在跑时它仍占着画面,这里也算打开;
+        /// 页面据此决定要不要把重建好的目录推进来。
+        /// </summary>
+        public bool IsDirectoryVisible
+        {
+            get { return _directoryMotion.IsShown; }
+        }
+
+        /// <summary>
+        /// 真的把抽屉收掉:换成当场收起和关门动画结束都走这一条,不再各写一份
+        /// </summary>
+        private void FinishHideDirectory()
+        {
+            StopDirectoryStoryboard();
             DirectoryHost.Visibility = Visibility.Collapsed;
+            DirectoryScrim.Visibility = Visibility.Collapsed;
+            DirectoryHostTranslate.TranslateX = DirectoryDrawerMotion.DrawerWidth;
+            DirectoryHost.Opacity = 0;
+            DirectoryScrim.Opacity = 0;
+            SetDirectoryButtonActive(false);
             if (BottomBtnDirectory != null && BottomBtnDirectory.Visibility == Visibility.Visible)
             {
                 BottomBtnDirectory.Focus(FocusState.Programmatic);
@@ -1150,11 +1198,154 @@ namespace BiliLite.Controls
         }
 
         /// <summary>
-        /// 目录抽屉是否打开。页面据此决定要不要把重建好的目录推进来。
+        /// 关掉系统动画时的打开:位置和透明度直接落到终点,不建故事板、不发令牌
         /// </summary>
-        public bool IsDirectoryVisible
+        private void SnapDirectoryOpen()
         {
-            get { return _directoryOpen; }
+            StopDirectoryStoryboard();
+            DirectoryHostTranslate.TranslateX = 0;
+            DirectoryHost.Opacity = 1;
+            DirectoryScrim.Opacity = 1;
+        }
+
+        /// <summary>
+        /// 滑入/滑出:抽屉从右边 380 像素外滑进来,遮罩同时淡入;
+        /// 时长和位移都取 DirectoryDrawerMotion 的常量,probe 只认那一份
+        /// </summary>
+        private void StartDirectoryStoryboard(bool open)
+        {
+            StopDirectoryStoryboard();
+            var duration = TimeSpan.FromMilliseconds(open
+                ? DirectoryDrawerMotion.OpenDurationMilliseconds
+                : DirectoryDrawerMotion.CloseDurationMilliseconds);
+            var storyboard = new Storyboard();
+            var slide = new DoubleAnimation
+            {
+                From = open ? DirectoryDrawerMotion.DrawerWidth : 0,
+                To = open ? 0 : DirectoryDrawerMotion.DrawerWidth,
+                Duration = duration,
+                EasingFunction = new CubicEase { EasingMode = open ? EasingMode.EaseOut : EasingMode.EaseIn },
+            };
+            Storyboard.SetTarget(slide, DirectoryHostTranslate);
+            Storyboard.SetTargetProperty(slide, "TranslateX");
+            storyboard.Children.Add(slide);
+            var fade = new DoubleAnimation
+            {
+                From = open ? 0 : 1,
+                To = open ? 1 : 0,
+                Duration = duration,
+            };
+            Storyboard.SetTarget(fade, DirectoryHost);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+            storyboard.Children.Add(fade);
+            var scrimFade = new DoubleAnimation
+            {
+                From = open ? 0 : 1,
+                To = open ? 1 : 0,
+                Duration = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ScrimFadeMilliseconds),
+            };
+            Storyboard.SetTarget(scrimFade, DirectoryScrim);
+            Storyboard.SetTargetProperty(scrimFade, "Opacity");
+            storyboard.Children.Add(scrimFade);
+            storyboard.FillBehavior = FillBehavior.HoldEnd;
+            _directoryStoryboard = storyboard;
+            if (open) storyboard.Completed += DirectoryOpenStoryboard_Completed;
+            else storyboard.Completed += DirectoryCloseStoryboard_Completed;
+            storyboard.Begin();
+        }
+
+        private void StopDirectoryStoryboard()
+        {
+            if (_directoryStoryboard == null) return;
+            _directoryStoryboard.Stop();
+            _directoryStoryboard.Completed -= DirectoryOpenStoryboard_Completed;
+            _directoryStoryboard.Completed -= DirectoryCloseStoryboard_Completed;
+            _directoryStoryboard = null;
+        }
+
+        private void DirectoryOpenStoryboard_Completed(object sender, object e)
+        {
+            // 开门途中又被关了:位置留给关门动画,这里别写回去
+            if (_directoryMotion.IsClosing) return;
+            DirectoryHostTranslate.TranslateX = 0;
+            DirectoryHost.Opacity = 1;
+            DirectoryScrim.Opacity = 1;
+        }
+
+        /// <summary>
+        /// 关门动画结束。只有"最近一次关门"的令牌能收掉抽屉:
+        /// 这期间用户又点开过,令牌就作废,抽屉留着。
+        /// </summary>
+        private void DirectoryCloseStoryboard_Completed(object sender, object e)
+        {
+            if (_directoryMotion.CompleteClose(_directoryCloseToken)) FinishHideDirectory();
+        }
+
+        /// <summary>
+        /// 抽屉开着时"目录"按钮挂底色,收起时摘掉
+        /// </summary>
+        private void SetDirectoryButtonActive(bool active)
+        {
+            if (BottomBtnDirectory == null) return;
+            var brush = Resources[active ? "DirectoryButtonActiveBrush" : "DirectoryButtonIdleBrush"] as SolidColorBrush;
+            if (brush != null) BottomBtnDirectory.Background = brush;
+        }
+
+        /// <summary>
+        /// "目录"按钮自己的按下反馈:缩放一下再弹回。点一次就闪一次,
+        /// 不受窗口模式影响,也不指望主题里的按下态在视频画面上看得出来
+        /// </summary>
+        private static readonly string[] DirectoryPressProperties = { "ScaleX", "ScaleY" };
+
+        private void PlayDirectoryButtonPress()
+        {
+            if (BottomBtnDirectoryPress == null) return;
+            var duration = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ButtonPressMilliseconds);
+            var half = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ButtonPressMilliseconds * 0.4);
+            var storyboard = new Storyboard { FillBehavior = FillBehavior.Stop };
+            foreach (var property in DirectoryPressProperties)
+            {
+                var scale = new DoubleAnimationUsingKeyFrames { Duration = duration };
+                scale.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 1 });
+                scale.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = half, Value = 0.88 });
+                scale.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = duration, Value = 1 });
+                Storyboard.SetTarget(scale, BottomBtnDirectoryPress);
+                Storyboard.SetTargetProperty(scale, property);
+                storyboard.Children.Add(scale);
+            }
+            var fade = new DoubleAnimationUsingKeyFrames { Duration = duration };
+            fade.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 1 });
+            fade.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = half, Value = 0.55 });
+            fade.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = duration, Value = 1 });
+            Storyboard.SetTarget(fade, BottomBtnDirectoryPress);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+            storyboard.Children.Add(fade);
+            storyboard.Begin();
+        }
+
+        /// <summary>
+        /// 遮罩上的点击只用来关抽屉,并且把这一下吃掉:
+        /// 底下的播放/暂停、双击全屏、显示控制条都收不到
+        /// </summary>
+        private void DirectoryScrim_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+            HideDirectory();
+        }
+
+        private void DirectoryScrim_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void DirectoryScrim_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void DirectoryScrim_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            e.Handled = true;
         }
 
         /// <summary>
@@ -2871,7 +3062,7 @@ namespace BiliLite.Controls
         {
             var pointerUpdateKind = e.GetCurrentPoint(sender as UIElement).Properties.PointerUpdateKind;
             // 后退键/中键先关目录抽屉,退出全屏等留给下一次按键
-            if (_directoryOpen
+            if (_directoryMotion.IsShown
                 && (pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.XButton1Released
                     || pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.MiddleButtonReleased))
             {
@@ -2997,6 +3188,8 @@ namespace BiliLite.Controls
         private void BottomBtnDirectory_Click(object sender, RoutedEventArgs e)
         {
             if (!_directoryAvailable) return;
+            // 点一次闪一次:这一下不管是开抽屉还是切详情页,按钮自己都有回应
+            PlayDirectoryButtonPress();
             DirectoryRequested?.Invoke(this, EventArgs.Empty);
         }
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using BiliLite.Models.Common;
@@ -477,7 +477,7 @@ namespace Ux1bProbe
                 "source: closing the drawer does not touch playback, full screen, full window or the settings pane");
 
             var keydown = Body(player, "private async void PlayerControl_KeyDown");
-            Check(keydown.Contains("if (_directoryOpen)") && keydown.Contains("HideDirectory();"),
+            Check(keydown.Contains("if (_directoryMotion.IsShown)") && keydown.Contains("HideDirectory();"),
                 "source: escape closes the drawer before the player treats it as exit full screen");
 
             Check(!player.Contains("RightTapped"),

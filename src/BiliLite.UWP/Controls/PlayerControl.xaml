@@ -3,6 +3,9 @@
   <UserControl.Resources>
     <SolidColorBrush x:Key="HyperlinkButtonForegroundPointerOver" Color="{ThemeResource HighLightColor}"/>
     <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{ThemeResource HighLightColor}"/>
+    <!--抽屉开着时"目录"按钮的底色,收起时换回透明-->
+    <SolidColorBrush x:Key="DirectoryButtonActiveBrush" Color="#33FFFFFF"/>
+    <SolidColorBrush x:Key="DirectoryButtonIdleBrush" Color="Transparent"/>
     <Style TargetType="ComboBox" x:Key="PlayerComboBoxStyle">
       <Setter Property="Padding" Value="8,0"/>
       <Setter Property="MinWidth" Value="{ThemeResource ComboBoxThemeMinWidth}"/>
@@ -718,7 +721,10 @@
                     </ComboBox.Items>
                   </ComboBox>
                   <Button x:Name="BottomBtnDirectory" Click="BottomBtnDirectory_Click" Visibility="Collapsed" ToolTipService.ToolTip="播放目录" AutomationProperties.Name="播放目录" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
-                    <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Horizontal" RenderTransformOrigin="0.5,0.5">
+                      <StackPanel.RenderTransform>
+                        <CompositeTransform x:Name="BottomBtnDirectoryPress"/>
+                      </StackPanel.RenderTransform>
                       <fa:FontAwesome Icon="Solid_ListUl" FontSize="18" VerticalAlignment="Center"/>
                       <TextBlock x:Name="BottomBtnDirectoryCaption" VerticalAlignment="Center" FontSize="18" Text="" Margin="8 0 0 0"/>
                     </StackPanel>
@@ -779,8 +785,15 @@
           <Image Source="ms-appx:///Assets/Icon/ic_play.png"/>
         </HyperlinkButton>
         <Button x:Name="BtnFoucs" Width="0" Height="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="-8 -8 0 0" Background="Transparent" BorderThickness="0"/>
+        <!--抽屉外的空白:点一下就收。摆在抽屉之前,抽屉的 380 像素盖在它上面,点抽屉不会被它抢走-->
+        <Grid x:Name="DirectoryScrim" Visibility="Collapsed" Opacity="0" Background="#66000000"
+              Tapped="DirectoryScrim_Tapped" DoubleTapped="DirectoryScrim_DoubleTapped"
+              PointerPressed="DirectoryScrim_PointerPressed" PointerReleased="DirectoryScrim_PointerReleased"/>
         <!--播放目录:播放器内部的全高抽屉。只盖住视频,不碰播放、全屏、铺满和设置面板-->
-        <Grid x:Name="DirectoryHost" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="380" BorderBrush="#33FFFFFF" BorderThickness="1 0 0 0">
+        <Grid x:Name="DirectoryHost" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="380" BorderBrush="#33FFFFFF" BorderThickness="1 0 0 0" Opacity="0">
+          <Grid.RenderTransform>
+            <CompositeTransform x:Name="DirectoryHostTranslate" TranslateX="380"/>
+          </Grid.RenderTransform>
           <local:PlayDirectoryControl x:Name="DirectoryDrawer" RowActivated="DirectoryDrawer_RowActivated" ContinuationSourceRequested="DirectoryDrawer_ContinuationSourceRequested" LoadMoreRequested="DirectoryDrawer_LoadMoreRequested" LoadAllRequested="DirectoryDrawer_LoadAllRequested" CancelLoadAllRequested="DirectoryDrawer_CancelLoadAllRequested" ScopeChanged="DirectoryDrawer_ScopeChanged" CloseRequested="DirectoryDrawer_CloseRequested"/>
         </Grid>
       </Grid>

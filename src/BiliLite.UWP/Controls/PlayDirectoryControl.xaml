@@ -1,7 +1,8 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:local="using:BiliLite.Controls" x:Class="BiliLite.Controls.PlayDirectoryControl" mc:Ignorable="d" RequestedTheme="Dark" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:local="using:BiliLite.Controls" xmlns:fa="using:FontAwesome5" x:Class="BiliLite.Controls.PlayDirectoryControl" mc:Ignorable="d" RequestedTheme="Dark" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
   <UserControl.Resources>
     <local:PlayDirectoryVisibleConvert x:Key="pendingVisible"/>
+    <local:PlayDirectoryTooltipConvert x:Key="tooltipText"/>
     <Style x:Key="DirectoryTabStyle" TargetType="Button">
       <Setter Property="Foreground" Value="#B3FFFFFF"/>
       <Setter Property="Background" Value="Transparent"/>
@@ -28,7 +29,7 @@
       <Setter Property="FontSize" Value="13"/>
     </Style>
   </UserControl.Resources>
-  <Grid x:Name="Root" TabFocusNavigation="Cycle" Background="#F21A1A1A" BorderBrush="#33FFFFFF" BorderThickness="1 0 0 0" PointerPressed="Root_PointerPressed" PointerReleased="Root_PointerReleased" Tapped="Root_Tapped" DoubleTapped="Root_DoubleTapped">
+  <Grid x:Name="Root" TabFocusNavigation="Cycle" Background="#F21A1A1A" BorderBrush="#33FFFFFF" BorderThickness="1 0 0 0" PointerPressed="Root_PointerPressed" PointerReleased="Root_PointerReleased" Tapped="Root_Tapped" DoubleTapped="Root_DoubleTapped" AutomationProperties.Name="播放目录">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
@@ -38,21 +39,18 @@
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
-    <!--标题和关闭-->
+    <!--页头只有一个标题:固定的「目录」不再写,抽屉的自动化名称留在 Root 上-->
     <Grid Padding="16 12 8 8" Background="#33000000">
       <Grid.ColumnDefinitions>
         <ColumnDefinition/>
         <ColumnDefinition Width="Auto"/>
       </Grid.ColumnDefinitions>
-      <StackPanel VerticalAlignment="Center">
-        <TextBlock Text="目录" FontSize="20" FontWeight="SemiBold" Foreground="White"/>
-        <TextBlock x:Name="HeaderText" FontSize="12" Foreground="#B3FFFFFF" TextWrapping="Wrap" MaxLines="2" Margin="0 4 0 0"/>
-      </StackPanel>
+      <TextBlock x:Name="HeaderText" VerticalAlignment="Center" FontSize="16" FontWeight="SemiBold" Foreground="White" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis"/>
       <Button x:Name="CloseButton" Grid.Column="1" Click="CloseButton_Click" VerticalAlignment="Top" Background="Transparent" BorderThickness="0" Padding="8" AutomationProperties.Name="关闭播放目录" ToolTipService.ToolTip="关闭目录">
         <TextBlock Text="关闭" FontSize="14" Foreground="White"/>
       </Button>
     </Grid>
-    <!--来源、位置、数量、定位-->
+    <!--来源名只在页头没带来源时出现(剧集页),位置和数量跟着它-->
     <Grid Grid.Row="1" Padding="16 10 16 4">
       <Grid.ColumnDefinitions>
         <ColumnDefinition/>
@@ -65,8 +63,12 @@
           <TextBlock x:Name="PositionCountText" FontSize="12" Foreground="#B3FFFFFF"/>
         </StackPanel>
       </StackPanel>
+      <!--图标表示对准,文字只说目标那一行:同一个意思不说两遍-->
       <Button x:Name="LocateButton" Grid.Column="1" Click="LocateButton_Click" Style="{StaticResource DirectoryActionStyle}" VerticalAlignment="Center" AutomationProperties.Name="定位正在播放" ToolTipService.ToolTip="滚动到正在播放的一行">
-        <TextBlock Text="定位正在播放" FontSize="13"/>
+        <StackPanel Orientation="Horizontal">
+          <fa:FontAwesome Icon="Solid_Crosshairs" FontSize="12" VerticalAlignment="Center"/>
+          <TextBlock Text="正在播放" FontSize="13" VerticalAlignment="Center" Margin="6 0 0 0"/>
+        </StackPanel>
       </Button>
     </Grid>
     <!--在已加载的行里搜索:输入归输入框,上下键进结果列表-->
@@ -91,21 +93,22 @@
           <Grid MinHeight="44">
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="3"/>
+              <ColumnDefinition Width="8"/>
               <ColumnDefinition Width="26"/>
               <ColumnDefinition Width="Auto"/>
               <ColumnDefinition/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             <Border Background="{ThemeResource HighLightColor}" Visibility="{Binding CurrentBadge, Converter={StaticResource display}}"/>
-            <TextBlock Grid.Column="1" Text="{Binding Ordinal}" FontSize="13" Foreground="#99FFFFFF" VerticalAlignment="Center"/>
-            <Border Grid.Column="2" Width="64" Height="36" CornerRadius="3" Background="#33FFFFFF">
+            <TextBlock Grid.Column="2" Text="{Binding Ordinal}" FontSize="13" Foreground="#99FFFFFF" VerticalAlignment="Center"/>
+            <Border Grid.Column="3" Width="64" Height="36" CornerRadius="3" Background="#33FFFFFF">
               <Image Source="{Binding Cover}" Stretch="UniformToFill"/>
             </Border>
-            <StackPanel Grid.Column="3" Margin="8 0" VerticalAlignment="Center">
-              <TextBlock Text="{Binding Title}" FontSize="14" Foreground="White" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
-              <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="#99FFFFFF" TextTrimming="CharacterEllipsis" MaxLines="1" Margin="0 2 0 0"/>
+            <StackPanel Grid.Column="4" Margin="8 0" VerticalAlignment="Center">
+              <TextBlock Text="{Binding Title}" FontSize="14" Foreground="White" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding Title, Converter={StaticResource tooltipText}}"/>
+              <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="#99FFFFFF" TextTrimming="CharacterEllipsis" MaxLines="1" Margin="0 2 0 0" ToolTipService.ToolTip="{Binding Subtitle, Converter={StaticResource tooltipText}}"/>
             </StackPanel>
-            <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="60">
+            <StackPanel Grid.Column="5" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="60">
               <!--等待这一行:只有转圈,没有"正在播放"的条和字-->
               <ProgressRing Width="16" Height="16" IsActive="{Binding IsPending}" Visibility="{Binding IsPending, Converter={StaticResource pendingVisible}}" HorizontalAlignment="Right" Margin="0 0 0 2" Foreground="{ThemeResource HighLightColor}" AutomationProperties.AccessibilityView="Raw"/>
               <TextBlock Text="{Binding CurrentBadge}" Visibility="{Binding CurrentBadge, Converter={StaticResource display}}" FontSize="11" Foreground="{ThemeResource HighLightColor}" HorizontalAlignment="Right"/>

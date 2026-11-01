@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using BiliLite.Models.Common;
@@ -339,7 +339,7 @@ namespace Ux2aProbe
             Check(keydown.Contains("if (DirectoryDrawer.HasQuery) DirectoryDrawer.SetQuery(\"\");")
                 && keydown.Contains("else HideDirectory();"),
                 "source: Escape clears a non-empty query first and only closes the drawer when the query is empty");
-            Check(keydown.IndexOf("if (_directoryOpen)", StringComparison.Ordinal)
+            Check(keydown.IndexOf("if (_directoryMotion.IsShown)", StringComparison.Ordinal)
                     < keydown.IndexOf("ele is TextBox", StringComparison.Ordinal),
                 "source: the drawer's Escape handling also applies while the search box has focus");
         }

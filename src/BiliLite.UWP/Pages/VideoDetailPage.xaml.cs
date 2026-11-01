@@ -6,6 +6,7 @@ using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
 using BiliLite.Modules;
 using BiliLite.Models.Common;
@@ -1752,6 +1753,18 @@ namespace BiliLite.Pages
         /// </summary>
         private bool SelectDetailDirectory()
         {
+            var before = pivot == null ? null : pivot.SelectedItem;
+            if (!SelectDetailTarget()) return false;
+            // 页签本来就停在目标页:切完看不出任何变化,给详情列一次可见的回应
+            if (before != null && ReferenceEquals(before, pivot.SelectedItem)) HighlightDetailColumn();
+            return true;
+        }
+
+        /// <summary>
+        /// 把详情列切到当前来源那一页并滚到当前行。返回 false 表示外层来源根本没有详情页
+        /// </summary>
+        private bool SelectDetailTarget()
+        {
             var source = sequence.Position.Source;
             if (source == WatchSequenceSourceKind.Playlist && playlistPivotItem != null && pivot.Items.Contains(playlistPivotItem))
             {
@@ -1781,6 +1794,43 @@ namespace BiliLite.Pages
                 return true;
             }
             return false;
+        }
+
+        // 详情列的那一次回应只挂一个覆盖层,重复点击换的只是它上面的动画
+        private Border _detailColumnHighlight;
+
+        /// <summary>
+        /// 页签已经停在目标页,切换不会带来任何变化:把整列详情闪一下,告诉用户这一下点到了
+        /// </summary>
+        private void HighlightDetailColumn()
+        {
+            var host = pivot == null ? null : pivot.Parent as Panel;
+            if (host == null) return;
+            if (_detailColumnHighlight == null || !ReferenceEquals(_detailColumnHighlight.Parent, host))
+            {
+                _detailColumnHighlight = new Border
+                {
+                    Name = "DetailColumnHighlight",
+                    IsHitTestVisible = false,
+                    Opacity = 0,
+                    Background = Utils.GetBrush("HighLightColor"),
+                };
+                host.Children.Add(_detailColumnHighlight);
+            }
+            var duration = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.HighlightMilliseconds);
+            var fade = new DoubleAnimationUsingKeyFrames { Duration = duration };
+            fade.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 0 });
+            fade.KeyFrames.Add(new LinearDoubleKeyFrame
+            {
+                KeyTime = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.HighlightMilliseconds * 0.35),
+                Value = 0.3,
+            });
+            fade.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = duration, Value = 0 });
+            Storyboard.SetTarget(fade, _detailColumnHighlight);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+            var storyboard = new Storyboard();
+            storyboard.Children.Add(fade);
+            storyboard.Begin();
         }
 
         /// <summary>
