@@ -526,13 +526,13 @@ namespace Ux1bProbe
                 "source: activation is decided by the playing identity in that section's scope, not by row.IsCurrent");
             Check(activate.Contains("AdoptDirectoryRowSource(kind, rowIndex);"),
                 "source: activating the row that already plays only adopts its source");
-            Check(activate.Contains("player.ChangePlayIndex(rowIndex);"),
+            Check(activate.Contains("player.ChangePlayIndex(rowIndex, PlayTargetStart.Resume);"),
                 "source: a part row goes through the player's own part switch");
             Check(activate.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);")
-                && activate.Contains("await PlayCollectionRowAsync(rowIndex);"),
+                && activate.Contains("await PlayCollectionRowAsync(rowIndex, PlayTargetStart.Resume);"),
                 "source: a collection row goes through the P1a sequence path");
             Check(activate.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);")
-                && activate.Contains("await SelectPlaylistRowAsync(rowIndex);"),
+                && activate.Contains("await SelectPlaylistRowAsync(rowIndex, PlayTargetStart.Resume);"),
                 "source: a queue row goes through the P1a sequence path");
 
             var playing = Body(page, "private bool IsPlayingDirectoryRow");
@@ -609,8 +609,9 @@ namespace Ux1bProbe
             Check(!control.Contains("InitializeVideo") && !control.Contains("ChangePlayIndex")
                 && !control.Contains("ShowMessageToast"),
                 "source: the drawer itself never starts playback");
-            Check(!control.Contains("MediaListService") && !control.Contains("LoadMore"),
-                "source: the drawer does not page or fetch (that is P2)");
+            Check(!control.Contains("MediaListService") && !control.Contains("GetMediaList")
+                && !control.Contains("LoadMoreMediaList") && !control.Contains("MediaListPagingState"),
+                "source: the drawer shows paging but never fetches a page itself");
         }
 
         private static void ProjectEntries()

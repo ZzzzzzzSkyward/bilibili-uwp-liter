@@ -149,8 +149,8 @@ namespace C1Probe
             Check(page.Contains("FirstOrDefault(x => x.Aid == ugcSeasonAid"), "source: the entry matching that aid is selected");
             Check(page.Contains("if (!pivot.Items.Contains(ugcSeasonPivotItem))"),
                 "source: refreshes reuse the existing collection tab instead of adding another");
-            Check(page.Contains("await InitializeVideo(item.Aid);"),
-                "source: clicking an episode plays it through InitializeVideo(aid)");
+            Check(page.Contains("await InitializeVideo(item.Aid, PlayTargetStart.Resume);"),
+                "source: clicking an episode plays it through InitializeVideo with the user's resume");
             Check(page.Contains("if (item == null || item.Aid == ugcSeasonAid) return;"),
                 "source: programmatic selection of the current video does not reload it");
             Check(page.Contains("new TextBlock() { Text = \"合集\", FontSize = 18 }"), "source: the collection is its own pivot tab");

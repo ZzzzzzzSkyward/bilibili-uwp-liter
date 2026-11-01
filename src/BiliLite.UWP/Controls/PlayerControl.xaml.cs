@@ -215,6 +215,11 @@ namespace BiliLite.Controls
         public event EventHandler<PlayDirectorySourceEventArgs> DirectorySourceRequested;
 
         /// <summary>
+        /// 目录里点了"加载更多"/"重试"。取页由页面执行,播放器只转发。
+        /// </summary>
+        public event EventHandler DirectoryLoadMoreRequested;
+
+        /// <summary>
         /// 切换剧集事件
         /// </summary>
 
@@ -613,7 +618,7 @@ namespace BiliLite.Controls
                         //还有分P就回上一P;第一个分P上的上一个交给页面,它可能换到上一个视频
                         if (HasPreviousPart)
                         {
-                            await SetPlayItem(CurrentPlayIndex - 1);
+                            await SetPlayItem(CurrentPlayIndex - 1, PlayTargetStart.Resume);
                         }
                         else
                         {
@@ -630,7 +635,7 @@ namespace BiliLite.Controls
                         //还有分P就换下一P;最后一P的下一个交给页面,它可能换到下一个视频
                         if (HasNextPart)
                         {
-                            await SetPlayItem(CurrentPlayIndex + 1);
+                            await SetPlayItem(CurrentPlayIndex + 1, PlayTargetStart.FromStart);
                         }
                         else
                         {
@@ -982,7 +987,7 @@ namespace BiliLite.Controls
             });
         }
 
-        public void InitializePlayInfo(List<PlayInfo> playInfos, int index)
+        public void InitializePlayInfo(List<PlayInfo> playInfos, int index, PlayTargetStart start)
         {
             //保持屏幕常亮
             dispRequest.RequestActive();
@@ -1001,7 +1006,9 @@ namespace BiliLite.Controls
             {
                 ShowPlaylistButton = false;
             }
-            EpisodeList.SelectedIndex = index;
+            // 当前分P和开播位置只由 SetPlayItem 认:打开视频这一拍不是用户选集,
+            // 续播策略跟着页面传进来,不让选集列表的事件再猜一次
+            _ = SetPlayItem(index, start);
         }
 
         /// <summary>
@@ -1205,7 +1212,7 @@ namespace BiliLite.Controls
             }
         }
 
-        private async Task SetPlayItem(int index)
+        private async Task SetPlayItem(int index, PlayTargetStart start)
         {
             ReleaseAcceleratingOverlay();
             if (PlayInfos == null || PlayInfos.Count == 0)
@@ -1265,7 +1272,8 @@ namespace BiliLite.Controls
             //{
             //   // Player._ffmpegConfig.FFmpegOptions["referer"] = "https://www.bilibili.com/bangumi/play/ep" + CurrentPlayItem.ep_id;
             //}
-            if (SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_TO_POSITION, true))
+            // 开播位置由调用方明说:往前走的续播移动从 0 开始,只有"续播"才跳到保存的进度
+            if (PlayContinuationPolicy.RestoresPosition(start, SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_TO_POSITION, true)))
             {
                 _position = SettingHelper.GetValue<double>(CurrentPlayItem.season_id != 0 ? "ep" + CurrentPlayItem.ep_id : CurrentPlayItem.cid, 0);
                 //减去两秒防止视频直接结束了
@@ -1583,9 +1591,9 @@ namespace BiliLite.Controls
             return grid;
         }
 
-        public void ChangePlayIndex(int index)
+        public void ChangePlayIndex(int index, PlayTargetStart start)
         {
-            // 页面请求换P和快捷键换P走同一条路径:当前分P只由 SetPlayItem 认
+            // 页面请求换P和快捷键换P走同一条路径:当前分P只由 SetPlayItem 认,从哪开始播也由这里传下去
             ClearSubTitle();
             DanmuControl.ClearAll();
             //选集列表不接受的下标也不起播,和原来直接设 SelectedIndex 的越界表现一致
@@ -1598,7 +1606,7 @@ namespace BiliLite.Controls
             {
                 return;
             }
-            _ = SetPlayItem(index);
+            _ = SetPlayItem(index, start);
         }
 
         /// <summary>
@@ -1634,7 +1642,8 @@ namespace BiliLite.Controls
                 return;
             }
             DanmuControl.ClearAll();
-            await SetPlayItem(EpisodeList.SelectedIndex);
+            // 用户自己在选集里挑了一P:沿用这一P保存的进度
+            await SetPlayItem(EpisodeList.SelectedIndex, PlayTargetStart.Resume);
         }
 
         private async void NodeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -2878,7 +2887,7 @@ namespace BiliLite.Controls
             {
                 //原来是借选集列表的事件换P,那里会先清掉上一P的弹幕;现在直接换,这一手照旧
                 DanmuControl.ClearAll();
-                await SetPlayItem(CurrentPlayIndex + 1);
+                await SetPlayItem(CurrentPlayIndex + 1, PlayTargetStart.FromStart);
                 return;
             }
             NextOuterRequested?.Invoke(this, EventArgs.Empty);
@@ -2927,6 +2936,11 @@ namespace BiliLite.Controls
         private void DirectoryDrawer_ContinuationSourceRequested(object sender, PlayDirectorySourceEventArgs e)
         {
             DirectorySourceRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_LoadMoreRequested(object sender, EventArgs e)
+        {
+            DirectoryLoadMoreRequested?.Invoke(this, e);
         }
 
         private void DirectoryDrawer_CloseRequested(object sender, EventArgs e)
@@ -3096,7 +3110,7 @@ namespace BiliLite.Controls
                     if (PlayerSettingAutoNext.IsOn)
                     {
                         _autoPlay = true;
-                        ChangePlayIndex(CurrentPlayIndex + 1);
+                        ChangePlayIndex(CurrentPlayIndex + 1, PlayTargetStart.FromStart);
                     }
                     else
                     {
@@ -3132,11 +3146,11 @@ namespace BiliLite.Controls
                 _autoPlay = true;
                 if (CurrentPlayIndex == PlayInfos.Count - 1)
                 {
-                    ChangePlayIndex(0);
+                    ChangePlayIndex(0, PlayTargetStart.FromStart);
                 }
                 else
                 {
-                    ChangePlayIndex(CurrentPlayIndex + 1);
+                    ChangePlayIndex(CurrentPlayIndex + 1, PlayTargetStart.FromStart);
                 }
                 return;
             }

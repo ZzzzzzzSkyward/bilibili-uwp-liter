@@ -246,16 +246,17 @@ namespace C3Probe
                 "source: VideoPlaylist carries the paging state");
             Check(page.Contains("mediaListState = playlist.MediaListState ?? new MediaListPagingState(playlist.MediaListId, playlist.MediaListType, MediaListSourceKind.MediaList, playlist.Title);"),
                 "source: the page reuses the state the link supplied");
-            Check(page.Contains("AppendMediaListRows(0);") && page.Contains("if (mediaListState.LoadedCount == 0 && !await LoadMediaListPage())"),
+            Check(page.Contains("AppendMediaListRows();") && page.Contains("if (mediaListState.LoadedCount == 0 && !await LoadMediaListPage())"),
                 "source: rows already in the state are bound without a second first-page request");
             Check(page.Contains("playlist.MediaListId = mediaListState.MediaListId;") && page.Contains("playlist.MediaListType = mediaListState.MediaListType;"),
                 "source: the page takes the id and type from the supported source");
-            Check(page.Contains("mediaListState.MarkLoadFailed();"),
-                "source: a failed page request is recorded on the state");
+            Check(ReadSource("src/BiliLite.UWP/Models/MediaListResources.cs")
+                    .Contains("m_state.MarkLoadFailed();"),
+                "source: a failed page request is recorded on the state by the one loader");
             Check(page.Contains("if (!mediaListState.HasMore && !mediaListState.LastLoadFailed) return;"),
                 "source: the Load more action retries a failed page without waiting for HasMore");
-            Check(page.Contains("if (mediaListState.LastLoadFailed)")
-                && page.Contains("mediaListLoadMoreButton.Visibility = Visibility.Visible;"),
+            Check(page.Contains("var state = PlayDirectoryBuilder.PagingOf(mediaListState);")
+                && page.Contains("PlayDirectoryPagingState.Failed"),
                 "source: a failed page keeps the retry action visible after the source runs out");
             Check(page.Contains("WatchSequenceOrder.Next(sequence.Position, skipRemainingParts)")
                 && page.Contains("mediaListState != null && mediaListState.HasMore,")
@@ -266,9 +267,10 @@ namespace C3Probe
             Check(page.Contains("case WatchSequenceMove.RetryNextPage:") && page.Contains("RefreshMediaListChrome();")
                 && page.Contains("下一页加载失败,点\\\"加载更多\\\"重试"),
                 "source: a failed next page leaves the Load more retry visible and does not finish playback");
-            Check(page.Contains("private async Task SelectPlaylistRowAsync(int index)")
-                && page.Contains("listView.SelectedIndex = index;"),
-                "source: advancing selects the next row through the existing selection handler");
+            Check(page.Contains("private async Task SelectPlaylistRowAsync(int index, PlayTargetStart start)")
+                && page.Contains("SelectPlaylistRow(listView, index);")
+                && page.Contains("await InitializeVideo(playlist.Playlist[index].ID, start);"),
+                "source: advancing moves the row highlight under a guard and starts the row itself");
             Check(page.Contains("var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);")
                 && page.Contains("var rowIndex = aids.IndexOf(videoDetailVM?.VideoInfo?.aid);"),
                 "source: a collection continues in section/episode order");
@@ -276,16 +278,16 @@ namespace C3Probe
                 && page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);"),
                 "source: the page records whether the current video came from the collection or the queue");
             Check(page.Contains("case WatchSequenceMove.PlayRow:")
-                && page.Contains("await PlaySequenceRowAsync(step.RowIndex);")
+                && page.Contains("await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart);")
                 && page.Contains("if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)"),
                 "source: a collection episode advances inside the collection, leaving the opened queue alone");
             Check(!page.Contains("playlist.Index == playlist.Playlist.Count - 1"),
                 "source: the old stop-at-last-row condition is gone");
 
             var selectionStart = page.IndexOf("private async void ListView_SelectionChanged", StringComparison.Ordinal);
-            var selectionBody = selectionStart < 0 ? "" : page.Substring(selectionStart, 700);
+            var selectionBody = selectionStart < 0 ? "" : page.Substring(selectionStart, 1200);
             Check(selectionBody.Contains("playlist.Index = playlist.Playlist.IndexOf(item);")
-                && selectionBody.Contains("await InitializeVideo(item.ID);"),
+                && selectionBody.Contains("await InitializeVideo(item.ID, PlayTargetStart.Resume);"),
                 "source: choosing a row loads that video's details and its own pages");
             Check(!selectionBody.Contains("playlist = "), "source: choosing a row never replaces the active queue");
 

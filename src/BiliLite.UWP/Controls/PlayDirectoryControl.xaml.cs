@@ -40,6 +40,11 @@ namespace BiliLite.Controls
         /// </summary>
         public event EventHandler<PlayDirectorySourceEventArgs> ContinuationSourceRequested;
 
+        /// <summary>
+        /// 用户点了"加载更多"/"重试"。取页由宿主执行,抽屉自己不发请求。
+        /// </summary>
+        public event EventHandler LoadMoreRequested;
+
         public event EventHandler CloseRequested;
 
         public PlayDirectorySectionKind ActiveKind
@@ -64,6 +69,7 @@ namespace BiliLite.Controls
             BuildTabs(model);
             SelectScope(PlayDirectoryBuilder.ResolveBrowsedSection(model, browsed), false);
             UpdateSourceActions(model);
+            UpdatePaging(model);
         }
 
         /// <summary>
@@ -142,6 +148,31 @@ namespace BiliLite.Controls
             return host;
         }
 
+        /// <summary>
+        /// 翻页 footer:只属于远程播放列表那一段,按钮长在它的行下面。
+        /// 已到头和固定内存队列都不留空块;加载中只有转圈,同一件事不再用字说一遍。
+        /// </summary>
+        private void UpdatePaging(PlayDirectoryModel model)
+        {
+            var state = model == null ? PlayDirectoryPagingState.None : model.Paging;
+            // 该不该摆:这页真的能翻,而且用户正看着会产生新行的那一段
+            var owned = state != PlayDirectoryPagingState.None
+                && m_activeKind == PlayDirectorySectionKind.Playlist
+                && SectionOf(PlayDirectorySectionKind.Playlist) != null;
+            var loading = state == PlayDirectoryPagingState.Loading;
+            var actionable = state == PlayDirectoryPagingState.More || state == PlayDirectoryPagingState.Failed;
+
+            PagingHost.Visibility = owned && (actionable || loading) ? Visibility.Visible : Visibility.Collapsed;
+            PagingRing.Visibility = owned && loading ? Visibility.Visible : Visibility.Collapsed;
+            PagingRing.IsActive = owned && loading;
+            LoadMoreButton.Visibility = owned && actionable ? Visibility.Visible : Visibility.Collapsed;
+
+            var text = state == PlayDirectoryPagingState.Failed ? "重试" : "加载更多";
+            LoadMoreText.Text = text;
+            // 按钮上的字就是它做的事,读屏读同一句
+            AutomationProperties.SetName(LoadMoreButton, text);
+        }
+
         private void UpdateSourceActions(PlayDirectoryModel model)
         {
             var bothSources = model != null
@@ -164,6 +195,7 @@ namespace BiliLite.Controls
             m_scopeSet = true;
             RowList.ItemsSource = section.Rows;
             UpdateTabStyles();
+            UpdatePaging(m_model);
             if (notify) ScopeChanged?.Invoke(this, new PlayDirectorySourceEventArgs(section.Kind));
         }
 
@@ -221,6 +253,12 @@ namespace BiliLite.Controls
         private void LocateButton_Click(object sender, RoutedEventArgs e)
         {
             LocateCurrent();
+        }
+
+        private void LoadMoreButton_Click(object sender, RoutedEventArgs e)
+        {
+            var handler = LoadMoreRequested;
+            if (handler != null) handler(this, EventArgs.Empty);
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)

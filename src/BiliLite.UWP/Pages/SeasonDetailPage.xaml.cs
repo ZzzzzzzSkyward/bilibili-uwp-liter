@@ -2,6 +2,7 @@
 using BiliLite.Dialogs;
 using BiliLite.Helpers;
 using BiliLite.Modules;
+using BiliLite.Models.Common;
 using BiliLite.Modules.Season;
 using Microsoft.UI.Xaml.Controls;
 using System;
@@ -211,7 +212,7 @@ namespace BiliLite.Pages
                 });
                 i++;
             }
-            player.InitializePlayInfo(playInfos, index);
+            player.InitializePlayInfo(playInfos, index, PlayTargetStart.Resume);
             comment.LoadComment(new LoadCommentInfo()
             {
                 CommentMode = (int)Api.CommentApi.CommentType.Video,
@@ -242,7 +243,7 @@ namespace BiliLite.Pages
                 });
                 i++;
             }
-            player.InitializePlayInfo(playInfos, index);
+            player.InitializePlayInfo(playInfos, index, PlayTargetStart.Resume);
             comment.LoadComment(new LoadCommentInfo()
             {
                 CommentMode = (int)Api.CommentApi.CommentType.Video,
@@ -361,7 +362,7 @@ namespace BiliLite.Pages
                 selectPreview = false;
                 UpdatePlayInfoToEpisode(listEpisode.SelectedIndex);
             }
-            player.ChangePlayIndex(listEpisode.SelectedIndex);
+            player.ChangePlayIndex(listEpisode.SelectedIndex, PlayTargetStart.Resume);
             ep_id =seasonDetailVM.Episodes[listEpisode.SelectedIndex].id.ToString();
             comment.LoadComment(new LoadCommentInfo()
             {
@@ -383,7 +384,7 @@ namespace BiliLite.Pages
                 selectPreview = true;
                 UpdatePlayInfoToPreview(listPreview.SelectedIndex);
             }
-            player.ChangePlayIndex(listPreview.SelectedIndex);
+            player.ChangePlayIndex(listPreview.SelectedIndex, PlayTargetStart.Resume);
             ep_id = seasonDetailVM.Previews[listPreview.SelectedIndex].id.ToString();
             comment.LoadComment(new LoadCommentInfo()
             {

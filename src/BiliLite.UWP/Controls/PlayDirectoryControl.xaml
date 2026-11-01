@@ -34,6 +34,7 @@
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>
       <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
     <!--标题和关闭-->
     <Grid Padding="16 12 8 8" Background="#33000000">
@@ -107,8 +108,15 @@
         </DataTemplate>
       </ListView.ItemTemplate>
     </ListView>
+    <!--翻页:只属于远程播放列表那一段,按钮长在它的行下面,全屏/全窗口里也点得到-->
+    <StackPanel x:Name="PagingHost" Grid.Row="4" Orientation="Horizontal" Padding="16 6 16 10" Visibility="Collapsed">
+      <Button x:Name="LoadMoreButton" Click="LoadMoreButton_Click" Style="{StaticResource DirectoryActionStyle}" VerticalAlignment="Center">
+        <TextBlock x:Name="LoadMoreText" Text="加载更多" FontSize="13"/>
+      </Button>
+      <ProgressRing x:Name="PagingRing" Width="20" Height="20" IsActive="False" Visibility="Collapsed" Margin="4 0 0 0" Foreground="#B3FFFFFF" VerticalAlignment="Center" AutomationProperties.Name="正在加载"/>
+    </StackPanel>
     <!--连播来源切换:只在两个外层来源都在时出现,切换不重播-->
-    <StackPanel x:Name="SourceActionHost" Grid.Row="4" Orientation="Horizontal" Padding="16 4 16 12" Background="#33000000">
+    <StackPanel x:Name="SourceActionHost" Grid.Row="5" Orientation="Horizontal" Padding="16 4 16 12" Background="#33000000">
       <Button x:Name="PlayCollectionButton" Click="PlayCollectionButton_Click" Style="{StaticResource DirectoryActionStyle}" Margin="0 0 8 0" AutomationProperties.Name="按合集连播" Visibility="Collapsed">
         <TextBlock Text="按合集连播" FontSize="13"/>
       </Button>

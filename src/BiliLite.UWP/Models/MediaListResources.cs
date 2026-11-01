@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Threading.Tasks;
 using Newtonsoft.Json;
 
 namespace BiliLite.Models.Common
@@ -82,6 +83,47 @@ namespace BiliLite.Models.Common
             // 已经在最后一行:取下一页失败过就先等重试,不要重复请求也别当成播完
             if (!hasMore) return MediaListNextAction.Stop;
             return lastLoadFailed ? MediaListNextAction.RetryNextPage : MediaListNextAction.LoadNextPage;
+        }
+    }
+
+    /// <summary>
+    /// 换到某个目标时从哪开始播。续播=目标自己保存的进度,从头=0。
+    /// 每个换目标的入口都要明说,不能让上一次的续播状态顺下来。
+    /// </summary>
+    public enum PlayTargetStart
+    {
+        /// <summary>
+        /// 沿用目标保存的进度:直接打开、用户自己点的行/分P、往回(上一个)
+        /// </summary>
+        Resume = 0,
+        /// <summary>
+        /// 从 0 开始:往前走的续播移动(播放结束的自动连播、下一个、下一分P)
+        /// </summary>
+        FromStart = 1,
+    }
+
+    /// <summary>
+    /// 连播的两个策略决定:自动边界要不要真的推进,换到目标后从哪开始播。
+    /// 分P边界和视频边界读同一个开关,不另立第二份判断。
+    /// </summary>
+    public static class PlayContinuationPolicy
+    {
+        /// <summary>
+        /// 播放结束的自动边界要不要继续推进。"自动连播"关着时停在当前这一P/这一条;
+        /// 用户自己按的"下一个/上一个"不受这个开关约束。
+        /// </summary>
+        public static bool AdvanceAllowed(bool manual, bool autoNextEnabled)
+        {
+            return manual || autoNextEnabled;
+        }
+
+        /// <summary>
+        /// 目标要不要跳到它保存的进度:只有"续播"这个选择在 AUTO_TO_POSITION 打开时才算数,
+        /// 往前走的续播移动一律从 0 开始。
+        /// </summary>
+        public static bool RestoresPosition(PlayTargetStart start, bool autoToPositionEnabled)
+        {
+            return start == PlayTargetStart.Resume && autoToPositionEnabled;
         }
     }
 
@@ -210,9 +252,27 @@ namespace BiliLite.Models.Common
         /// </summary>
         public bool LastLoadFailed { get; private set; }
 
+        /// <summary>
+        /// 有一次取页还在路上。footer 和抽屉据此显示"加载中",不再开第二个请求。
+        /// </summary>
+        public bool IsLoading { get; private set; }
+
         public void MarkLoadFailed()
         {
             LastLoadFailed = true;
+        }
+
+        public void MarkLoading()
+        {
+            IsLoading = true;
+        }
+
+        /// <summary>
+        /// 请求结束(成功或失败)都要调,否则状态会停在"加载中"
+        /// </summary>
+        public void MarkLoadFinished()
+        {
+            IsLoading = false;
         }
 
         public IReadOnlyList<MediaListItem> Rows
@@ -293,6 +353,71 @@ namespace BiliLite.Models.Common
         public bool ContainsId(long id)
         {
             return m_rows.Exists(x => x.Id == id);
+        }
+    }
+
+    /// <summary>
+    /// 取页的单飞通道:详情列 footer、抽屉和连播边界共用同一个在途请求,
+    /// 后到的调用者等这一次的结果,不另开第二个请求。
+    /// 失败只记账,已加载的行和游标都不动,"加载更多"留给用户重试。
+    /// </summary>
+    public sealed class MediaListPageLoader
+    {
+        private readonly MediaListPagingState m_state;
+        private readonly Func<Task<MediaListResources>> m_fetch;
+        private Task<bool> m_running;
+
+        public MediaListPageLoader(MediaListPagingState state, Func<Task<MediaListResources>> fetch)
+        {
+            m_state = state;
+            m_fetch = fetch;
+        }
+
+        /// <summary>
+        /// 取一页。已经有请求在路上时返回同一个请求,所以两个入口同时点只会取一次。
+        /// 返回 true 表示这一页真的追加进了状态。
+        /// </summary>
+        public Task<bool> LoadAsync()
+        {
+            var running = m_running;
+            if (running != null) return running;
+            var task = RunAsync();
+            m_running = task;
+            return ClearWhenDone(task);
+        }
+
+        private async Task<bool> ClearWhenDone(Task<bool> task)
+        {
+            try
+            {
+                return await task;
+            }
+            finally
+            {
+                // 只有开这一次请求的调用者清标记,后到的调用者不碰
+                if (ReferenceEquals(m_running, task)) m_running = null;
+            }
+        }
+
+        private async Task<bool> RunAsync()
+        {
+            m_state.MarkLoading();
+            try
+            {
+                var page = await m_fetch();
+                // 失败已经由服务按现有提示方式上报:记号留着,"加载更多"就是重试入口
+                if (page == null)
+                {
+                    m_state.MarkLoadFailed();
+                    return false;
+                }
+                m_state.Append(page);
+                return true;
+            }
+            finally
+            {
+                m_state.MarkLoadFinished();
+            }
         }
     }
 }

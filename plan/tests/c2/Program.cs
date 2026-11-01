@@ -378,12 +378,14 @@ namespace C2Probe
                 "source: the page builds the paging state from the navigation source");
             Check(page.Contains("mediaListState.IsFirstPage") && page.Contains("mediaListService.LoadMoreMediaList(mediaListState)"),
                 "source: the page never passes a selected row id as the cursor");
-            Check(page.Contains("mediaListState.Append(page);") && page.Contains("for (var i = loaded; i < mediaListState.LoadedCount; i++)"),
+            Check(ReadSource("src/BiliLite.UWP/Models/MediaListResources.cs").Contains("m_state.Append(page);")
+                && page.Contains("for (var i = mediaListRows.Count; i < mediaListState.LoadedCount; i++)"),
                 "source: load more appends only the rows the state reports as new");
             Check(page.Contains("playlist.Playlist = mediaListRows;") && page.Contains("ItemsSource = mediaListRows"),
                 "source: the bound list and the active playlist are the same collection");
-            Check(page.Contains("mediaListLoadMoreButton.Visibility = mediaListState.HasMore ? Visibility.Visible : Visibility.Collapsed;"),
-                "source: the Load more action is only shown while HasMore");
+            Check(page.Contains("mediaListLoadMoreButton.Visibility = actionable ? Visibility.Visible : Visibility.Collapsed;")
+                && page.Contains("state == PlayDirectoryPagingState.More || state == PlayDirectoryPagingState.Failed"),
+                "source: the Load more action is only shown while a page or a retry is available, and not while one loads");
             Check(page.Contains("mediaListCountText.Text = \"已加载 \" + mediaListState.CountText;"),
                 "source: the page shows the loaded and total counts");
             Check(page.Contains("ID = item.Id.ToString(CultureInfo.InvariantCulture)") && page.Contains("Duration = FormatDuration(item.Duration),"),

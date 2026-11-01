@@ -64,6 +64,7 @@ namespace BiliLite.Pages
             player.DirectoryRequested += player_DirectoryRequested;
             player.DirectoryRowRequested += player_DirectoryRowRequested;
             player.DirectorySourceRequested += player_DirectorySourceRequested;
+            player.DirectoryLoadMoreRequested += player_DirectoryLoadMoreRequested;
             NavigationCacheMode = NavigationCacheMode.Enabled;
             videoDetailVM = new VideoDetailVM();
             this.DataContext = videoDetailVM;
@@ -85,7 +86,8 @@ namespace BiliLite.Pages
                     if (NoMod())
                     {
                         if (videoDetailVM.Loading) return;
-                        await InitializeVideo(_id);
+                        // 用户自己刷新:照旧从这一条视频的历史位置接着看
+                        await InitializeVideo(_id, PlayTargetStart.Resume);
                     }
                     break;
                 default:
@@ -171,9 +173,15 @@ namespace BiliLite.Pages
         PivotItem ugcSeasonPivotItem;
         readonly List<ListView> ugcSeasonEpisodeLists = new List<ListView>();
         string ugcSeasonAid;
+        // 连播换集自己起播:高亮赋值引起的选中事件不是用户选集,不能借它起播
+        bool _syncingUgcSelection;
+        // 连播选播放列表行自己起播:同上
+        bool _syncingPlaylistSelection;
         // 远程 medialist 播放列表:行、翻页状态和页签内容都由这里持有
         readonly MediaListService mediaListService = new MediaListService();
         MediaListPagingState mediaListState;
+        // 取页的单飞通道:footer、抽屉和连播边界都走它,同一个在途请求不会取两次
+        MediaListPageLoader mediaListLoader;
         ObservableCollection<VideoPlaylistItem> mediaListRows;
         ListView mediaListListView;
         TextBlock mediaListCountText;
@@ -238,12 +246,14 @@ namespace BiliLite.Pages
                     playlistPivotItem = element;
                     pivot.Items.Insert(0, element);
                     pivot.SelectedIndex = 0;
-                    await InitializeVideo(playlist.Playlist[playlist.Index].ID);
+                    // 打开时就带着队列:用户自己打开的这一条,照旧续播
+                    await InitializeVideo(playlist.Playlist[playlist.Index].ID, PlayTargetStart.Resume);
                 }
                 else
                 {
                     var id = e.Parameter.ToString();
-                    await InitializeVideo(id);
+                    // 直接打开链接:用户自己选的视频,照旧续播
+                    await InitializeVideo(id, PlayTargetStart.Resume);
                 }
 
             }
@@ -260,7 +270,7 @@ namespace BiliLite.Pages
             UnsubscribeClosedPage();
             base.OnNavigatedFrom(e);
         }
-        private async Task InitializeVideo(string id)
+        private async Task InitializeVideo(string id, PlayTargetStart start)
         {
             // 页签已关:既不取详情也不换标题、不起播
             if (_isClosed) return;
@@ -333,17 +343,18 @@ namespace BiliLite.Pages
                         i++;
                     }
                     var index = 0;
-                    if (videoDetailVM.VideoInfo.history != null)
+                    // 续播只属于用户自己选的这一条:连播/下一个换过来的目标从第一P的 0 开始,
+                    // 不能拿上一条视频的历史位置顺下来
+                    if (start == PlayTargetStart.Resume && videoDetailVM.VideoInfo.history != null)
                     {
                         var history = videoDetailVM.VideoInfo.pages.FirstOrDefault(x => x.cid.Equals(videoDetailVM.VideoInfo.history.cid));
                         if (history != null)
                         {
                             SettingHelper.SetValue<double>(history.cid, Convert.ToDouble(videoDetailVM.VideoInfo.history.progress));
                             index = videoDetailVM.VideoInfo.pages.IndexOf(history);
-                            //player.InitializePlayInfo(playInfos, );
                         }
                     }
-                    player.InitializePlayInfo(playInfos, index);
+                    player.InitializePlayInfo(playInfos, index, start);
                     comment.LoadComment(new LoadCommentInfo()
                     {
                         CommentMode = (int)Api.CommentApi.CommentType.Video,
@@ -485,6 +496,8 @@ namespace BiliLite.Pages
             if (_isClosed) return;
             // 详情还在路上:这次选中整条丢掉,不换高亮也不改连播来源
             if (flag) return;
+            // 连播换集由 PlayCollectionRowAsync 自己发起:续播策略要跟着那一拍传下去
+            if (_syncingUgcSelection) return;
             var listView = sender as ListView;
             var item = listView?.SelectedItem as VideoUgcSeasonEpisodeView;
             // 选中当前播放的视频时不重新加载，只换一个分集时才播放并清掉其它分区的高亮
@@ -496,7 +509,29 @@ namespace BiliLite.Pages
             }
             // 从合集分集点进来:连播跟合集顺序,打开时的队列原样留着
             sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);
-            await InitializeVideo(item.Aid);
+            // 用户自己点的分集:沿用这一集保存的进度
+            await InitializeVideo(item.Aid, PlayTargetStart.Resume);
+        }
+
+        /// <summary>
+        /// 把合集的高亮移到某一集,不触发选中处理。连播换集之后由调用方自己起播,
+        /// 续播策略才不会在选中事件里丢掉。
+        /// </summary>
+        private void SelectUgcSeasonRow(ListView owner, VideoUgcSeasonEpisodeView row)
+        {
+            _syncingUgcSelection = true;
+            try
+            {
+                foreach (var other in ugcSeasonEpisodeLists)
+                {
+                    if (!ReferenceEquals(other, owner)) other.SelectedItem = null;
+                }
+                owner.SelectedItem = row;
+            }
+            finally
+            {
+                _syncingUgcSelection = false;
+            }
         }
 
         private static VideoUgcSeasonEpisodeView ToUgcSeasonEpisodeView(VideoUgcSeasonSectionEpisode episode)
@@ -526,8 +561,10 @@ namespace BiliLite.Pages
             playlist.MediaListState = mediaListState;
             playlist.MediaListId = mediaListState.MediaListId;
             playlist.MediaListType = mediaListState.MediaListType;
+            // footer、抽屉和连播边界都从这一条通道取页:同一个在途请求只取一次
+            mediaListLoader = new MediaListPageLoader(mediaListState, FetchMediaListPageAsync);
             mediaListRows = new ObservableCollection<VideoPlaylistItem>();
-            AppendMediaListRows(0);
+            AppendMediaListRows();
             playlist.Playlist = mediaListRows;
             // 下标和已加载的行数对齐:负数归零,越界退到最后已加载行;
             // 一行都没有时留给下面"播放列表是空的"分支,这里只保证不越界
@@ -599,63 +636,94 @@ namespace BiliLite.Pages
             }
             var index = Math.Min(playlist.Index, mediaListRows.Count - 1);
             playlist.Index = index;
-            mediaListListView.SelectedIndex = index;
-            await InitializeVideo(mediaListRows[index].ID);
+            // 高亮跟着换,起播由这里发起:用户自己打开的播放列表,第一行照旧续播
+            SelectPlaylistRow(mediaListListView, index);
+            await InitializeVideo(mediaListRows[index].ID, PlayTargetStart.Resume);
         }
 
+        /// <summary>
+        /// 详情列 footer 的"加载更多"/"重试"。只补行,不起播。
+        /// </summary>
         private async void MediaListLoadMore_Click(object sender, RoutedEventArgs e)
         {
+            await RequestMediaListPageAsync();
+        }
+
+        /// <summary>
+        /// 抽屉里的"加载更多"/"重试"。与 footer 走同一条通道:取页只补行,
+        /// 不起播、不改连播来源、不换浏览的页签;取完刷新抽屉和详情列的同一份状态。
+        /// </summary>
+        private async void player_DirectoryLoadMoreRequested(object sender, EventArgs e)
+        {
+            await RequestMediaListPageAsync();
+        }
+
+        /// <summary>
+        /// 用户点"加载更多"/"重试"的唯一入口。footer 和抽屉共用:同一份状态、同一条单飞通道。
+        /// </summary>
+        private async Task RequestMediaListPageAsync()
+        {
             // 页签已关:按钮不再取页
-            if (_isClosed) return;
+            if (_isClosed || mediaListState == null) return;
             // 失败后按钮就是重试入口,不受 HasMore 限制
-            if (mediaListState == null) return;
             if (!mediaListState.HasMore && !mediaListState.LastLoadFailed) return;
-            mediaListLoadMoreButton.IsEnabled = false;
-            await LoadMediaListPage();
+
+            var request = LoadMediaListPage();
+            // 请求已经在路上:先把"加载中"画到两个界面上
+            RefreshMediaListChrome();
+            RedrawOpenDirectory();
+            await request;
             // 取页期间页签被关掉:不再碰已拆掉的页面状态
             if (_isClosed) return;
             RefreshMediaListChrome();
+            RedrawOpenDirectory();
             // 手动取回一页后,"下一个目标"也跟着变
             RefreshSequenceState();
         }
 
         /// <summary>
-        /// 取一页并追加。游标来自 MediaListPagingState 记录的上一页最后一条 aid,
+        /// 取一页。footer、抽屉和连播边界都调这里:单飞通道保证同一个在途请求只取一次,
+        /// 后到的调用者等同一个结果。游标来自 MediaListPagingState 记录的上一页最后一条 aid,
         /// 与当前选中的播放行无关;服务层已按返回的 ID 去重。
         /// </summary>
         private async Task<bool> LoadMediaListPage()
         {
-            if (mediaListState == null) return false;
-            var page = mediaListState.IsFirstPage
-                ? await mediaListService.GetMediaList(mediaListState.MediaListId, mediaListState.MediaListType)
-                : await mediaListService.LoadMoreMediaList(mediaListState);
-            // 页签已关:这一页只当没取到,不追加行、也不把状态记成失败
+            if (mediaListLoader == null) return false;
+            var landed = await mediaListLoader.LoadAsync();
+            // 页签已关:新行留在状态里,但不再更新已拆掉的页面
             if (_isClosed) return false;
-            // 失败已经由服务按现有提示方式上报,这里保留已加载的行和"加载更多"
-            if (page == null)
-            {
-                mediaListState.MarkLoadFailed();
-                return false;
-            }
-
-            var loaded = mediaListState.LoadedCount;
-            mediaListState.Append(page);
-            AppendMediaListRows(loaded);
+            if (landed) AppendMediaListRows();
+            // 取完(或失败)才画:状态从"加载中"回到"还有下一页/重试/已到头"
             RefreshMediaListChrome();
-            return true;
+            return landed;
         }
 
         /// <summary>
-        /// 把状态里从第 loaded 条起的新行补到绑定的集合上,已加载的行不重建
+        /// 取页通道的取法:游标为空时取首页,否则取下一页。
+        /// 这是全页唯一发起播放列表请求的地方。
         /// </summary>
-        private void AppendMediaListRows(int loaded)
+        private Task<MediaListResources> FetchMediaListPageAsync()
         {
-            for (var i = loaded; i < mediaListState.LoadedCount; i++)
+            return mediaListState.IsFirstPage
+                ? mediaListService.GetMediaList(mediaListState.MediaListId, mediaListState.MediaListType)
+                : mediaListService.LoadMoreMediaList(mediaListState);
+        }
+
+        /// <summary>
+        /// 把状态里还没绑定的行补到集合上,已加载的行不重建。
+        /// 集合和状态都是只追加的,行数就是进度。
+        /// </summary>
+        private void AppendMediaListRows()
+        {
+            for (var i = mediaListRows.Count; i < mediaListState.LoadedCount; i++)
             {
                 mediaListRows.Add(ToPlaylistItem(mediaListState.Rows[i]));
             }
         }
 
+        /// <summary>
+        /// 详情列 footer 的数量和按钮。状态和抽屉同源:加载中不给按钮、失败就是"重试"、到头收起。
+        /// </summary>
         private void RefreshMediaListChrome()
         {
             if (mediaListState == null) return;
@@ -665,14 +733,11 @@ namespace BiliLite.Pages
             }
             if (mediaListLoadMoreButton != null)
             {
-                mediaListLoadMoreButton.IsEnabled = mediaListState.HasMore;
-                mediaListLoadMoreButton.Visibility = mediaListState.HasMore ? Visibility.Visible : Visibility.Collapsed;
-                // 取失败过时按钮就是重试入口,即使这一页之后没有更多也要留着
-                if (mediaListState.LastLoadFailed)
-                {
-                    mediaListLoadMoreButton.IsEnabled = true;
-                    mediaListLoadMoreButton.Visibility = Visibility.Visible;
-                }
+                var state = PlayDirectoryBuilder.PagingOf(mediaListState);
+                var actionable = state == PlayDirectoryPagingState.More || state == PlayDirectoryPagingState.Failed;
+                mediaListLoadMoreButton.IsEnabled = actionable;
+                mediaListLoadMoreButton.Visibility = actionable ? Visibility.Visible : Visibility.Collapsed;
+                mediaListLoadMoreButton.Content = state == PlayDirectoryPagingState.Failed ? "重试" : "加载更多";
             }
         }
 
@@ -896,7 +961,8 @@ namespace BiliLite.Pages
             {
                 return;
             }
-            player.ChangePlayIndex(listEpisode.SelectedIndex);
+            // 用户自己在详情列点了分P:沿用这一P保存的进度
+            player.ChangePlayIndex(listEpisode.SelectedIndex, PlayTargetStart.Resume);
         }
 
         private void listEpisode_PreviewKeyDown(object sender, KeyRoutedEventArgs e)
@@ -1002,6 +1068,8 @@ namespace BiliLite.Pages
             if (_isClosed) return;
             // 详情还在路上:这次选中整条丢掉,不动队列游标
             if (flag) return;
+            // 连播选行由 SelectPlaylistRowAsync 自己发起:续播策略要跟着那一拍传下去
+            if (_syncingPlaylistSelection) return;
             var liveView = sender as ListView;
             if (liveView.SelectedItem == null ) return;
             var item = liveView.SelectedItem as VideoPlaylistItem;
@@ -1009,7 +1077,8 @@ namespace BiliLite.Pages
             playlist.Index = playlist.Playlist.IndexOf(item);
             // 从队列里选行:连播回到队列,队列和选中行都不换
             sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);
-            await InitializeVideo(item.ID);
+            // 用户自己点的行:沿用这一条保存的进度
+            await InitializeVideo(item.ID, PlayTargetStart.Resume);
 
         }
 
@@ -1019,7 +1088,8 @@ namespace BiliLite.Pages
         /// </summary>
         private async void player_AllMediaEndEvent(object sender, EventArgs e)
         {
-            await AdvanceSequenceAsync(false);
+            // 自动边界:manual=false 时 AdvanceSequenceAsync 按"自动连播"开关决定走不走
+            await AdvanceSequenceAsync(false, false);
         }
 
         /// <summary>
@@ -1052,10 +1122,11 @@ namespace BiliLite.Pages
             switch (step.Move)
             {
                 case WatchSequenceMove.PlayPart:
-                    player.ChangePlayIndex(step.PartIndex);
+                    // 往回走:回到那一P保存的进度
+                    player.ChangePlayIndex(step.PartIndex, PlayTargetStart.Resume);
                     return;
                 case WatchSequenceMove.PlayRow:
-                    await PlaySequenceRowAsync(step.RowIndex);
+                    await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.Resume);
                     return;
                 default:
                     // 没有上一个目标:说清是第一个,不进任何换集路径
@@ -1075,6 +1146,13 @@ namespace BiliLite.Pages
             if (_isClosed) return false;
             // 详情还在路上:这一拍丢掉,不让它顶掉在途请求
             if (flag) return false;
+            // 自动连播关着:播放结束就停在当前这一P,不换下一个视频。分P之间的自动换P
+            // 由播放器看同一个开关;用户自己按的下一个/上一个不经过这里
+            if (!PlayContinuationPolicy.AdvanceAllowed(manual, SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_NEXT, true)))
+            {
+                ShowSequenceEndToast(manual);
+                return false;
+            }
 
             // 一页可能全是已加载的行,取完再判定一次;上限只是防止服务端反复返回 has_more
             for (var attempt = 0; attempt < 3; attempt++)
@@ -1084,11 +1162,11 @@ namespace BiliLite.Pages
                 switch (step.Move)
                 {
                     case WatchSequenceMove.PlayPart:
-                        // 走播放器自己的分P切换
-                        player.ChangePlayIndex(step.PartIndex);
+                        // 走播放器自己的分P切换;往前走的续播从 0 开始
+                        player.ChangePlayIndex(step.PartIndex, PlayTargetStart.FromStart);
                         return !_isClosed;
                     case WatchSequenceMove.PlayRow:
-                        await PlaySequenceRowAsync(step.RowIndex);
+                        await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart);
                         return !_isClosed;
                     case WatchSequenceMove.LoadNextPage:
                         if (await LoadMediaListPage())
@@ -1131,17 +1209,17 @@ namespace BiliLite.Pages
         /// <summary>
         /// 执行外层来源的一行:播放列表选行,合集选分集,两者都复用已有的选择处理
         /// </summary>
-        private async Task PlaySequenceRowAsync(int rowIndex)
+        private async Task PlaySequenceRowAsync(int rowIndex, PlayTargetStart start)
         {
             if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)
             {
-                await PlayCollectionRowAsync(rowIndex);
+                await PlayCollectionRowAsync(rowIndex, start);
                 return;
             }
-            await SelectPlaylistRowAsync(rowIndex);
+            await SelectPlaylistRowAsync(rowIndex, start);
         }
 
-        private async Task PlayCollectionRowAsync(int rowIndex)
+        private async Task PlayCollectionRowAsync(int rowIndex, PlayTargetStart start)
         {
             var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);
             if (rowIndex < 0 || rowIndex >= aids.Count) return;
@@ -1151,17 +1229,12 @@ namespace BiliLite.Pages
                 var episodes = listView.ItemsSource as List<VideoUgcSeasonEpisodeView>;
                 var row = episodes?.FirstOrDefault(x => x.Aid == aid);
                 if (row == null) continue;
-                // 交给已有的分集选择处理,合集页签和当前队列都不动
-                if (!ReferenceEquals(listView.SelectedItem, row))
-                {
-                    listView.SelectedItem = row;
-                    return;
-                }
-                // 高亮已经在这一行(例如从队列换过视频):直接按 aid 起播
-                break;
+                // 高亮跟着换,但起播由这里发起:续播策略要跟着这一拍传下去,不能让选中事件再猜一次。
+                // 合集页签和当前队列都不动。
+                SelectUgcSeasonRow(listView, row);
+                await InitializeVideo(aid, start);
+                return;
             }
-
-            await InitializeVideo(aid);
         }
 
         /// <summary>
@@ -1278,7 +1351,7 @@ namespace BiliLite.Pages
                 && position.PartIndex < position.PartCount - 1;
         }
 
-        private async Task SelectPlaylistRowAsync(int index)
+        private async Task SelectPlaylistRowAsync(int index, PlayTargetStart start)
         {
             // 页签已关:不换选中行,也不起播
             if (_isClosed) return;
@@ -1286,16 +1359,32 @@ namespace BiliLite.Pages
             if (flag) return;
             if (index < 0 || index >= playlist.Playlist.Count) return;
 
-            // 远程和内存列表的页签内容都是这个 ListView,选中会走已有的行选择处理
+            // 远程和内存列表的页签内容都是这个 ListView:高亮跟着换,起播由这里发起,
+            // 续播策略才不会被选中事件丢掉
             var listView = playlistPivotItem?.Content as ListView;
-            if (listView != null && listView.SelectedIndex != index)
+            if (listView != null)
+            {
+                SelectPlaylistRow(listView, index);
+            }
+            playlist.Index = index;
+            await InitializeVideo(playlist.Playlist[index].ID, start);
+        }
+
+        /// <summary>
+        /// 把播放列表的高亮移到某一行,不触发行选择处理。
+        /// </summary>
+        private void SelectPlaylistRow(ListView listView, int index)
+        {
+            if (listView.SelectedIndex == index) return;
+            _syncingPlaylistSelection = true;
+            try
             {
                 listView.SelectedIndex = index;
-                return;
             }
-
-            playlist.Index = index;
-            await InitializeVideo(playlist.Playlist[index].ID);
+            finally
+            {
+                _syncingPlaylistSelection = false;
+            }
         }
 
         /// <summary>
@@ -1371,16 +1460,16 @@ namespace BiliLite.Pages
             switch (kind)
             {
                 case PlayDirectorySectionKind.Parts:
-                    // 换分P不动外层来源;高亮由播放器的换集事件刷新
-                    player.ChangePlayIndex(rowIndex);
+                    // 换分P不动外层来源;高亮由播放器的换集事件刷新。用户自己点的这一P沿用保存的进度
+                    player.ChangePlayIndex(rowIndex, PlayTargetStart.Resume);
                     return;
                 case PlayDirectorySectionKind.UgcSeason:
                     sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);
-                    await PlayCollectionRowAsync(rowIndex);
+                    await PlayCollectionRowAsync(rowIndex, PlayTargetStart.Resume);
                     break;
                 case PlayDirectorySectionKind.Playlist:
                     sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);
-                    await SelectPlaylistRowAsync(rowIndex);
+                    await SelectPlaylistRowAsync(rowIndex, PlayTargetStart.Resume);
                     break;
                 default:
                     return;
@@ -1588,12 +1677,13 @@ namespace BiliLite.Pages
         {
             var position = sequence.Position;
             var loaded = mediaListState == null ? 0 : mediaListState.LoadedCount;
-            var hasMore = mediaListState != null && mediaListState.HasMore ? 1 : 0;
+            // 翻页状态也算进签名:加载中、失败后的"重试"、到头都要重画
+            var paging = (int)PlayDirectoryBuilder.PagingOf(mediaListState);
             var sections = videoDetailVM?.VideoInfo?.UgcSeason?.Sections;
             return (int)position.Source
                 + "|" + position.RowCount
                 + "|" + loaded
-                + "|" + hasMore
+                + "|" + paging
                 + "|" + (sections == null ? 0 : sections.Count);
         }
 
@@ -1642,7 +1732,8 @@ namespace BiliLite.Pages
         private async void btnRefresh_Click(object sender, RoutedEventArgs e)
         {
             if (videoDetailVM.Loading) return;
-            await InitializeVideo(_id);
+            // 用户自己刷新:照旧接着看
+            await InitializeVideo(_id, PlayTargetStart.Resume);
         }
 
         private void btnOpenQR_Click(object sender, RoutedEventArgs e)

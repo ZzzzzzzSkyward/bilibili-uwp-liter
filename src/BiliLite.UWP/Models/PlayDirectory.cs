@@ -51,6 +51,34 @@ namespace BiliLite.Models.Common
     }
 
     /// <summary>
+    /// 目录里远程播放列表的翻页状态。只有背后有 MediaListPagingState 的播放列表会用到;
+    /// 固定内存队列和没有播放列表时是 None,目录不摆翻页 footer。
+    /// </summary>
+    public enum PlayDirectoryPagingState
+    {
+        /// <summary>
+        /// 没有可翻的页:固定内存队列,或者根本没有播放列表
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// 还有下一页,footer 上是"加载更多"
+        /// </summary>
+        More = 1,
+        /// <summary>
+        /// 有一页在路上,footer 上只有转圈
+        /// </summary>
+        Loading = 2,
+        /// <summary>
+        /// 上一次取失败了,footer 上是"重试"
+        /// </summary>
+        Failed = 3,
+        /// <summary>
+        /// 已经取到头,footer 不留东西
+        /// </summary>
+        Exhausted = 4,
+    }
+
+    /// <summary>
     /// 一份完整的目录。Caption 是播放器"目录"按钮上的短标签,CountText 是页头的数量说明,
     /// CurrentPositionText 是"现在播到哪"的一句话;三者都跟着活动来源。
     /// </summary>
@@ -75,6 +103,11 @@ namespace BiliLite.Models.Common
         /// 重画要留着用户正在看的那一段。
         /// </summary>
         public bool IsFreshOpen { get; set; }
+
+        /// <summary>
+        /// 远程播放列表的翻页状态。固定内存队列是 None:没有更多页可取,界面上什么都不摆。
+        /// </summary>
+        public PlayDirectoryPagingState Paging { get; set; }
 
         /// <summary>
         /// 一段都没有时不弹空抽屉
@@ -281,6 +314,7 @@ namespace BiliLite.Models.Common
                 CurrentPositionText = ordinal > 0 ? OrdinalText(ordinal) : "",
                 ActiveKind = PlayDirectorySectionKind.Playlist,
                 Sections = new List<PlayDirectorySection>(),
+                Paging = PagingOf(paging),
             };
 
             if (total > 0)
@@ -327,6 +361,8 @@ namespace BiliLite.Models.Common
                 HeaderText = header,
                 ActiveKind = activeKind,
                 Sections = sections,
+                // 翻页属于播放列表那一段,与当前跟哪个来源连播无关:合集在连载时播放列表照样还有页
+                Paging = playlist == null ? PlayDirectoryPagingState.None : playlist.Paging,
             };
         }
 
@@ -358,6 +394,19 @@ namespace BiliLite.Models.Common
             return hasKnownTotal
                 ? loaded + "/" + Math.Max(0, totalCount).ToString(CultureInfo.InvariantCulture)
                 : loaded;
+        }
+
+        /// <summary>
+        /// 远程列表的翻页状态。取页在路上时就是"加载中";失败要先于"还有下一页"判定,
+        /// 否则重试入口会被 has_more 盖掉;首页还没取过时也还有东西可取。
+        /// </summary>
+        public static PlayDirectoryPagingState PagingOf(MediaListPagingState paging)
+        {
+            if (paging == null) return PlayDirectoryPagingState.None;
+            if (paging.IsLoading) return PlayDirectoryPagingState.Loading;
+            if (paging.LastLoadFailed) return PlayDirectoryPagingState.Failed;
+            if (paging.IsFirstPage || paging.HasMore) return PlayDirectoryPagingState.More;
+            return PlayDirectoryPagingState.Exhausted;
         }
 
         /// <summary>

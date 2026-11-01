@@ -336,7 +336,7 @@ namespace Ux1aProbe
             Check(!page.Contains("MediaListQueue.NextAction("),
                 "source: the page does not keep a second copy of the row rule");
 
-            Check(Body(page, "private async void player_AllMediaEndEvent").Contains("await AdvanceSequenceAsync(false);"),
+            Check(Body(page, "private async void player_AllMediaEndEvent").Contains("await AdvanceSequenceAsync(false, false);"),
                 "source: the completion event resolves through the page's sequence method");
             Check(Body(page, "private async void player_NextOuterRequested").Contains("await AdvanceSequenceAsync(false, true);"),
                 "source: the next button's request resolves through the same method");
@@ -353,18 +353,18 @@ namespace Ux1aProbe
 
             Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("WatchSequenceOrder.Next(sequence.Position, skipRemainingParts)"),
                 "source: the advance path asks the sequence for the target");
-            Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("player.ChangePlayIndex(step.PartIndex);"),
+            Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("player.ChangePlayIndex(step.PartIndex, PlayTargetStart.FromStart);"),
                 "source: a part move uses the player's own part switch");
-            Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("await PlaySequenceRowAsync(step.RowIndex);"),
+            Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart);"),
                 "source: a row move uses the row executor");
             Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("if (await LoadMediaListPage())"),
                 "source: a page step fetches through the existing page loader");
             Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("if (_isClosed) return false;")
                 && Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("if (flag) return false;"),
                 "source: the closed-page and in-flight guards stay on the advance path");
-            Check(Body(page, "private async Task PlayCollectionRowAsync").Contains("listView.SelectedItem = row;"),
+            Check(Body(page, "private async Task PlayCollectionRowAsync").Contains("SelectUgcSeasonRow(listView, row);"),
                 "source: a collection row move reuses the existing selection handler");
-            Check(Body(page, "private async Task PlayCollectionRowAsync").Contains("await InitializeVideo(aid);"),
+            Check(Body(page, "private async Task PlayCollectionRowAsync").Contains("await InitializeVideo(aid, start);"),
                 "source: a collection row that is already highlighted still starts that video");
 
             Check(page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);"),
@@ -433,21 +433,21 @@ namespace Ux1aProbe
                 "source: the player raises the skip-remaining-parts request");
 
             var nextShortcut = Body(player, "case Windows.System.VirtualKey.X:");
-            Check(nextShortcut.Contains("if (HasNextPart)") && nextShortcut.Contains("await SetPlayItem(CurrentPlayIndex + 1);")
+            Check(nextShortcut.Contains("if (HasNextPart)") && nextShortcut.Contains("await SetPlayItem(CurrentPlayIndex + 1, PlayTargetStart.FromStart);")
                 && nextShortcut.Contains("NextOuterRequested?.Invoke(this, EventArgs.Empty);"),
                 "source: the next shortcut walks parts on the current index and asks the page at the last one");
             Check(!nextShortcut.Contains("EpisodeList"),
                 "source: the next shortcut no longer branches on the list selection");
             var previousShortcut = Body(player, "case Windows.System.VirtualKey.Z:");
             Check(previousShortcut.Contains("if (HasPreviousPart)")
-                && previousShortcut.Contains("await SetPlayItem(CurrentPlayIndex - 1);")
+                && previousShortcut.Contains("await SetPlayItem(CurrentPlayIndex - 1, PlayTargetStart.Resume);")
                 && previousShortcut.Contains("PreviousOuterRequested?.Invoke(this, EventArgs.Empty);"),
                 "source: the previous shortcut walks parts on the current index and asks the page at the first one");
             Check(!previousShortcut.Contains("EpisodeList"),
                 "source: the previous shortcut no longer branches on the list selection");
 
             var nextClick = Body(player, "private async void BottomBtnNext_Click");
-            Check(nextClick.Contains("if (HasNextPart)") && nextClick.Contains("await SetPlayItem(CurrentPlayIndex + 1);")
+            Check(nextClick.Contains("if (HasNextPart)") && nextClick.Contains("await SetPlayItem(CurrentPlayIndex + 1, PlayTargetStart.FromStart);")
                 && nextClick.Contains("NextOuterRequested?.Invoke(this, EventArgs.Empty);"),
                 "source: the next button walks parts on the current index and asks the page at the last one");
             Check(!nextClick.Contains("EpisodeList"),
@@ -472,16 +472,16 @@ namespace Ux1aProbe
             var changed = Body(player, "private async void EpisodeList_SelectionChanged");
             Check(changed.Contains("if (_syncingEpisodeSelection)") && changed.Contains("return;"),
                 "source: the selection event raised by the sync does not start a second playback");
-            Check(changed.Contains("await SetPlayItem(EpisodeList.SelectedIndex);"),
+            Check(changed.Contains("await SetPlayItem(EpisodeList.SelectedIndex, PlayTargetStart.Resume);"),
                 "source: a user picking a part still goes through the same part switch");
 
-            Check(CountOf(player, "EpisodeList.SelectedIndex = index;") == 2
-                && Body(player, "public void InitializePlayInfo").Contains("EpisodeList.SelectedIndex = index;")
+            Check(CountOf(player, "EpisodeList.SelectedIndex = index;") == 1
+                && Body(player, "public void InitializePlayInfo").Contains("_ = SetPlayItem(index, start);")
                 && sync.Contains("EpisodeList.SelectedIndex = index;"),
-                "source: the list selection is written only for the initial part and the mirror");
+                "source: the list selection is written only inside the mirror guard");
 
             var changeIndex = Body(player, "public void ChangePlayIndex");
-            Check(changeIndex.Contains("_ = SetPlayItem(index);") && !changeIndex.Contains("EpisodeList.SelectedIndex"),
+            Check(changeIndex.Contains("_ = SetPlayItem(index, start);") && !changeIndex.Contains("EpisodeList.SelectedIndex"),
                 "source: a page-requested part change uses the same part switch as the shortcut");
             Check(changeIndex.Contains("if (index == CurrentPlayIndex)"),
                 "source: a page request for the part already playing does not restart it");

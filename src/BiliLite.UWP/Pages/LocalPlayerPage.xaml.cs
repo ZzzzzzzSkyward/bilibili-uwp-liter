@@ -1,5 +1,6 @@
 ﻿using BiliLite.Controls;
 using BiliLite.Helpers;
+using BiliLite.Models.Common;
 using System;
 using System.Collections.Generic;
 using Windows.UI.Xaml;
@@ -82,7 +83,7 @@ namespace BiliLite.Pages
                     player.IsFullWindow = SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_FULL_WINDOW, false);
                 }
                 var data = e.Parameter as LocalPlayInfo;
-                player.InitializePlayInfo(data.PlayInfos, data.Index);
+                player.InitializePlayInfo(data.PlayInfos, data.Index, PlayTargetStart.Resume);
             }
         }
         protected override void OnNavigatedFrom(NavigationEventArgs e)
