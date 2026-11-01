@@ -3,12 +3,13 @@
   <Border x:Name="ToastRoot" Visibility="Collapsed" Background="#B3000000" CornerRadius="8" Padding="16,8">
     <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
       <!-- 图标右侧的间距由 SetContent 按有无文本决定，标记里的默认值仅用于纯图标浮层 -->
-      <TextBlock x:Name="IconGlyph" Foreground="White" FontSize="20" VerticalAlignment="Center" Margin="0" LineStackingStrategy="BlockLineHeight" TextLineBounds="Full" TextWrapping="NoWrap" Text="">
+      <!-- 两个块都收紧到墨迹：盒子一样高且都贴墨迹，居中对齐就是墨迹对齐；不再钉死行框高度，那会把文字墨迹推低 -->
+      <TextBlock x:Name="IconGlyph" Foreground="White" FontSize="20" VerticalAlignment="Center" Margin="0" TextLineBounds="Tight" TextWrapping="NoWrap" Text="">
         <TextBlock.RenderTransform>
           <TranslateTransform x:Name="IconOffset"/>
         </TextBlock.RenderTransform>
       </TextBlock>
-      <TextBlock x:Name="TxtToast" Foreground="White" FontSize="20" VerticalAlignment="Center" LineStackingStrategy="BlockLineHeight" TextLineBounds="Full" TextWrapping="NoWrap" Text=""/>
+      <TextBlock x:Name="TxtToast" Foreground="White" FontSize="20" VerticalAlignment="Center" TextLineBounds="Tight" TextWrapping="NoWrap" Text=""/>
     </StackPanel>
   </Border>
 </UserControl>

@@ -46,25 +46,18 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 需要的修复：两个文本块用同一套行框规则（行框高度算出来是同一份，`ApplyScale` 里一起缩放），图标只允许有
 一个命名的补偿常量，不按图标类型写特例；不通过 Padding 上下不对称的办法掩盖。
 
-## BR-44 — 点“播放目录”按钮报错（维护者 2026-11-01，真机）
+**真机复测（维护者 2026-11-01，修复 `a99c3f8` 之后）：** 浮层里的图标和文字**比之前更往下偏**了。
+上一版是"文字高于图标中心"，这一版把两个文本块的行框统一成 `BlockLineHeight` + `LineHeight = 20 × 1.1`，
+并给图标 `TranslateY = -2.4`；维护者的观感是整体下沉，比原来更明显。同批次的 BR-44 播放目录已确认真机正常。
 
-维护者：点播放器的 播放目录 按钮时出现错误。日志确认（2026-11-01 19:03:16，session=c0f6d4a6…）：
-
-```
-程序运行出现错误 | HResult=0x800F1000 | System.Exception: 没有检测到已安装的组件。
-Cannot resolve TargetProperty Opacity on specified object.
-   at Windows.UI.Xaml.Media.Animation.Storyboard.Begin()
-   at BiliLite.Controls.PlayerControl.PlayDirectoryButtonPress()
-   at BiliLite.Controls.PlayerControl.BottomBtnDirectory_Click(...)
-```
-
-根因：`PlayerControl.PlayDirectoryButtonPress` 把 `ScaleX/ScaleY` 和 `Opacity` 三条动画都 `SetTarget` 到同一个
-`BottomBtnDirectoryPress`，而它是 `CompositeTransform`（`PlayerControl.xaml:726`）——`Transform` 没有 `Opacity` 属性，
-`Storyboard.Begin()` 抛异常，且抛出点在 `DirectoryRequested?.Invoke` 之前（`PlayerControl.xaml.cs:3190-3193`），
-所以目录既闪不了也打不开；视频详情页与番剧页都中，引入于 `5ed8d17`。
-
-需要的修复：透明度那条动画落到承载图标与文字的 `StackPanel` 上，缩放继续作用在变换上，“每次点击都闪一次”的意图不变；
-补一条能抓住“对没有该属性的目标设 `TargetProperty`”的检查，让这类错误在编译/探针阶段就红。
+**第二轮修复（2026-11-01，未上真机验收）：** 原因认定是"行框等高 ≠ 墨迹等高"：`BlockLineHeight` 只是把两块
+的盒子钉成同一高度，文字字体在行框内自带的下沉留白被一起搬进了对齐里，于是把文字墨迹推得比图标更低——
+上一版用统一行框来对齐，方向就是错的。新机制不再钉任何行框：两块都改成 `TextLineBounds="Tight"`、删掉
+全部 `LineStackingStrategy` 与 `LineHeight`（XAML 和代码里都不留），盒子包住各自的墨迹，等高即等墨迹。
+墨迹收紧后内容变矮，胶囊的外框靠 `ToastRoot.MinHeight` 维持旧尺寸（`BaseContentHeight` = 20 × 1.1 = 22，
+加上下内边距后乘同一个 `scale`）；垂直方向的补偿只剩 `BaseIconOpticalOffset` 一个常量，当前为 `0`，
+只作 FA 字形墨迹与度量框不对称的残差，真机上若仍差一点就只改它。`plan/tests/toastalign/` 把这个形状钉住，
+对 `a99c3f8` 跑是红的（报出 2 处 `LineStackingStrategy` 和 2 处 `LineHeight`）。
 
 ## BR-45 — 列表行的封面把字符串直接绑给 `Image.Source`，没有走转换器（内部评审 2026-11-01）
 

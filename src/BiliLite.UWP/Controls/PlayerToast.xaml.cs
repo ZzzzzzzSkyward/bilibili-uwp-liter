@@ -19,10 +19,10 @@ namespace BiliLite.Controls
         private const double BasePaddingY = 8;
         private const double BaseIconSpacing = 10;
         private const double BaseCornerRadius = 8;
-        //两块共用同一个行框高度，块高一致时它们的盒子中心才是同一条线
-        private const double BaseLineHeight = BaseFontSize * 1.1;
-        //共用行框后数字的墨迹中心仍偏高约 2 DIP，这个常量只补视觉位置、不改测量尺寸和图标右侧间距；设备上若显得图标偏高就改它
-        private const double BaseIconOpticalOffset = -2.4;
+        //收紧到墨迹后块高会缩，胶囊外框沿用旧的 22 DIP 内容高度，只作为 ToastRoot 的最小高度
+        private const double BaseContentHeight = BaseFontSize * 1.1;
+        //唯一的视觉补偿常量：FA 字形的墨迹与度量框本身不对称。它只补图标、不改测量尺寸和图标右侧间距；设备上若仍差一点就只改它
+        private const double BaseIconOpticalOffset = 0;
 
         //淡出期间元素必须留在布局里，否则居中的父级会重新居中，正在变透明的浮层会跟着往右挪
         private static readonly TimeSpan ShowFadeDuration = TimeSpan.FromMilliseconds(150);
@@ -83,18 +83,18 @@ namespace BiliLite.Controls
             }
             _scale = scale;
             TxtToast.FontSize = BaseFontSize * scale;
-            TxtToast.LineHeight = BaseLineHeight * scale;
             IconGlyph.FontSize = BaseFontSize * scale;
             ApplyIconLayout();
             ToastRoot.Padding = new Thickness(BasePaddingX * scale, BasePaddingY * scale, BasePaddingX * scale, BasePaddingY * scale);
+            //墨迹收紧后内容变矮，用最小高度把胶囊的外框恢复成旧尺寸（内容 22 + 上下内边距），随同一个 scale 缩放
+            ToastRoot.MinHeight = (BaseContentHeight + BasePaddingY * 2) * scale;
             ToastRoot.CornerRadius = new CornerRadius(BaseCornerRadius * scale);
         }
 
         private void ApplyIconLayout()
         {
             var hasText = TxtToast.Visibility == Visibility.Visible;
-            //纯图标浮层没有数字要和它对齐，用自然行框即可：FA 字形在自己的行框里本来就是对称的，钉死行框再补偏移只会把它推离中心
-            IconGlyph.LineHeight = hasText ? BaseLineHeight * _scale : 0;
+            //两个块都只按自己的墨迹测量，盒子等高即墨迹等高；唯一的垂直位移来自那个光学常量，纯图标时归零
             IconOffset.Y = hasText ? BaseIconOpticalOffset * _scale : 0;
             IconGlyph.Margin = new Thickness(0, 0, hasText ? BaseIconSpacing * _scale : 0, 0);
         }

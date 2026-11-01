@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- BR-43 探针:只读 Controls/PlayerToast.xaml + .xaml.cs 做静态校验,不编译 App 工程,也不进 BiliLite.UWP.csproj -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>ToastAlignProbe</AssemblyName>
+    <RootNamespace>ToastAlignProbe</RootNamespace>
+  </PropertyGroup>
+
+</Project>
