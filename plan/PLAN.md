@@ -24,17 +24,31 @@ Newest first; every one of these is device-accepted per the policy above, except
 device-confirmed, while P4 step 1, BR-45 and the second BR-43 attempt are compiled and probe-covered only — their
 device rows are still open in `plan/VALIDATION.md`.
 
-- **P4 step 5 — comments:** `2c2de3d` — `Models/Api/Comment/` DTOs + `Parsing/Comment/` (`WebCommentPageParser`,
+- **BR-46 keyboard focus after a switch:** `50bb009` — a `PivotHeaderItem` handles Space itself and every advance funnels through
+  `InitializeVideo`, so after auto-next the focus sat on a tab header and Space switched tabs. `PlayerControl.FocusPlayer()`
+  is the one entry over the existing `BtnFoucs` sink, called from `InitializeVideo`'s success path only when
+  `IsTabStripFocused()` says the focus is on a `Pivot`/`PivotHeaderItem`. `Timer_focus_Tick` keeps its four-type set on
+  purpose — a timer that pulls focus off tab headers would break switching tabs from the keyboard. `plan/tests/focus` (33 checks).
+- **P4 step 3 — video detail:** `e6c2fb5` — `Models/Api/Video/` + `Parsing/Video/` own web view, related, tags, relation
+  stat/attribute, the four state reads, the action endpoints and the favourite-created list. The fallback chain (web → signed
+  app → proxied) and the relates merge are decisions over parse results; a failed related read logs its category instead of
+  nulling the page; the `relates` setter is null-safe so a wire null no longer throws; `short_link`/`owner_ext`/`pages`
+  defaults live in the mapper and `req_user` is never copied from the wire. The `biliproxy` proxy stays as a documented
+  last-resort source. `plan/tests/c1` 52→161.
+- **Closed-page latch probe refreshed:** `93a8ed3` — `plan/tests/stab` re-pointed at the single-flight paging channel and the
+  collection sequence (`AdvanceSequenceAsync`), since `AdvancePlaylistAsync`/`AdvanceUgcSeasonAsync` no longer exist.
+  15 checks, 55 assertions, each rewritten anchor shown red with its guard removed.
+- **P4 step 5 — comments:** `f03078c` — `Models/Api/Comment/` DTOs + `Parsing/Comment/` (`WebCommentPageParser`,
   `WebCommentActionParser`, `WebCommentPageMapper`). A body without a business code is an envelope failure
   instead of `code = 0` success; the pinned-reply dedupe and the two cursor shapes (`cursor.next_offset` vs the
   legacy `pn`) live in the mapper; `CommentControl` toasts by category and keeps `_page`/cursor source-bound.
   Dead `dataCommentModel`, `CommentItem` and `Comment_New` deleted. `plan/tests/comments` (99 assertions).
-- **PLAN item 1 — player session ownership:** `ca0a0e1` — `Services/PlayerSessionState.cs` (Begin/Accept/
+- **PLAN item 1 — player session ownership:** `2c3fc09` — `Services/PlayerSessionState.cs` (Begin/Accept/
   Invalidate/Hold/Release/IsCurrent) makes every open carry a session; resources sit in a per-session ledger
   until accepted, an invalidated session releases once, and a resource born after invalidation is released on
   the spot. All 12 open paths are bound, the quality change is awaited, the engine fallback is single in flight,
   and stale continuations/`MediaOpened`/`MediaFailed` are rejected. `plan/tests/playersess` (69 checks).
-- **P4 step 2 — playlists:** `355e511` — `Parsing/MediaList/` parsers + mappers for medialist (signed/unsigned),
+- **P4 step 2 — playlists:** `1838108` — `Parsing/MediaList/` parsers + mappers for medialist (signed/unsigned),
   favorites and watch later; the service keeps source policy and single-flight but no longer decodes, toasts or
   collapses failures. The toast moved to the publishers through `MediaListFailureText`; an absent `media_list` is
   its own stage and the only case that spends the unsigned retry. `oid = last aid`, `has_more`, `HasKnownTotal`
@@ -107,9 +121,9 @@ device rows are still open in `plan/VALIDATION.md`.
 
 | # | Item | State |
 | --- | --- | --- |
-| 1 | Player open/replace/close session ownership | **done** — `ca0a0e1`; the device rows in `plan/VALIDATION.md` are what is left |
+| 1 | Player open/replace/close session ownership | **done** — `2c3fc09`; the device rows in `plan/VALIDATION.md` are what is left |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
-| 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. P4 steps 1, 2 and 5 shipped: season detail `ed9f248`, playlists `355e511`, comments `2c2de3d` — each with a parser/mapper layer, DTOs under `Models/Api/`, a field table beside the parser and its own probe (`season1` 109, `c2` 162 + `c3` 117, `comments` 99). Remaining: **video detail** (step 3 — `view`+`related` first, then the four state reads; `relates: null` NRE and the `biliproxy.iill.moe` third-party fallback are the open decisions) and **account** (step 4, held back by the maintainer). Order and traps: `plan/P4_INVENTORY.md` §2 and §5 |
+| 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. P4 steps 1, 2 and 5 shipped: season detail `ed9f248`, playlists `1838108`, comments `f03078c` — each with a parser/mapper layer, DTOs under `Models/Api/`, a field table beside the parser and its own probe (`season1` 109, `c2` 162 + `c3` 117, `comments` 99). Remaining for P4: **account** only (step 4), which the maintainer is holding back; the video-detail step shipped in `e6c2fb5` and `c1` grew to 161 assertions. Order and traps: `plan/P4_INVENTORY.md` §5 |
 | 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; the remaining checks are the device rows in `plan/VALIDATION.md` |
 
 ## 1. Player session ownership

@@ -11,6 +11,8 @@ below were removed on purpose — they are all fixed and `git log` has them.
 | `4bc8cb9` | `d905726` | The widened `自动连播` label promised automatic continuation while the outer source still advanced regardless of `AUTO_NEXT` | Fixed in `1dd359c`: `PlayContinuationPolicy.AdvanceAllowed(manual, AUTO_NEXT)` gates the automatic path, manual next/previous stay ungated, `plan/tests/ux1c` pins both. |
 | `edfd08c`, `08f64dd`, `78f8950`, `7cb4ba6` | — | Empty review markers (no findings) | No action. |
 | `b7fb5bc` | `0839615` | No findings: the pass emptied `code_review.md` (106 lines) and touched nothing else — no code, no `bug_report.md` entry, no probe | No action. The four P4-season findings and the BR-44/BR-45 dispositions it read were closed in `0839615`; that commit's `code_review.md` is the evidence now that the working file is empty. |
+| `89ece7a` | `456d920` | Player session guard ordering: `PlayVideoUseSYEngine` (both branches) and three other native paths wrote the shared `_playerVideo` before checking the ticket, so a superseded open could still replace the selected video's source | Fixed in `340a031`: the player and its source stay in locals, the ticket is checked after every await and before any shared assignment, publishing waits for `Accept()`, and an abandoned player is released exactly once by the session. `plan/tests/playersess` (69 -> 95 checks) adds the reviewer's resume-after-replacement scenario plus order checks that fail 4 ways against the previous body. |
+| `ad1bb39` | `094cdb0` | Empty review marker (no findings) | No action. |
 
 ## Standing review notes
 
