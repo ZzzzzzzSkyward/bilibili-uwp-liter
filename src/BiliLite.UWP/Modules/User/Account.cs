@@ -756,41 +756,19 @@ namespace BiliLite.Modules
             }
         }
         /// <summary>
-        /// 刷新Token
+        /// 刷新Token。解析出来的令牌和 cookie_info 一起交给 SaveLogin，
+        /// jar、ACCESS_KEY、轮换后的 REFRESH_KEY 和到期时间才会同步换新。
         /// </summary>
         /// <returns></returns>
         public async Task<bool> RefreshToken()
         {
-            try
-            {
-                var req = await accountApi.RefreshToken().Request();
-
-                if (req.status)
-                {
-                    var obj = req.GetJObject();
-                    if (obj["code"].ToInt32() == 0)
-                    {
-                        var data = JsonConvert.DeserializeObject<LoginTokenInfo>(obj["data"].ToString());
-                        await SaveLogin(data.access_token, data.refresh_token, data.expires_in, data.mid, null,null);
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    throw new Exception(req.message);
-                    // return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-                //LogHelper.Log("读取access_key信息失败", LogType.ERROR, ex);
-                //return false;
-            }
+            return await AccessKeyRenewal.RunAsync(
+                SettingHelper.Account.AccessKey,
+                SettingHelper.GetValue<string>(SettingHelper.Account.REFRESH_KEY, ""),
+                (accessKey, refreshToken) => accountApi.RefreshToken(accessKey, refreshToken).Request(),
+                (token, cookie) => SaveLogin(token.access_token, token.refresh_token, token.expires_in,
+                    token.mid > 0 ? token.mid : SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L), null, cookie),
+                (message, exception) => LogHelper.Log(message, LogType.ERROR, exception));
         }
     }
 

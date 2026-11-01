@@ -3,6 +3,7 @@ using BiliLite.Helpers;
 using BiliLite.Models;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -97,6 +98,16 @@ namespace BiliLite.Services
         public static bool NeedsRelogin
         {
             get { lock (reloginLock) return needsRelogin; }
+        }
+
+        /// <summary>
+        /// 会话已死时 web playurl 只会给到 480p 上限，code 0 照样算成功；
+        /// 列表里没有请求的画质就说明这份结果不是结论，得让 gRPC 再说一次。
+        /// </summary>
+        public static bool WebPlayUrlCappedOnDeadSession(int requestedQuality, IEnumerable<int> availableQualities)
+        {
+            if (!NeedsRelogin || availableQualities == null) return false;
+            return !availableQualities.Contains(requestedQuality);
         }
 
         /// <summary>只在 NeedsRelogin 由 false 变 true 时触发一次。</summary>

@@ -145,6 +145,7 @@
     <Compile Include="Models\Requests\Api\EmoteApi.cs" />
     <Compile Include="Models\Requests\Api\DanmakuApi.cs" />
     <Compile Include="Services\CookieService.cs" />
+    <Compile Include="Services\AccessKeyRenewal.cs" />
     <Compile Include="Services\HttpLogSanitizer.cs" />
     <Compile Include="Services\ApiShape.cs" />
     <Compile Include="Services\ApiCapture.cs" />
@@ -314,6 +315,7 @@
     <Compile Include="Helpers\AppHelper.cs" />
     <Compile Include="Helpers\CCToSrt.cs" />
     <Compile Include="Helpers\ChineseConverter.cs" />
+    <Compile Include="Helpers\CommentRichText.cs" />
     <Compile Include="Helpers\ControlHelper.cs" />
     <Compile Include="Helpers\DownloadHelper.cs" />
     <Compile Include="Helpers\ExceptionHandler.cs" />
@@ -369,6 +371,7 @@
     <Compile Include="Modules\Player\Playurl\BiliPayUrlRequest.cs" />
     <Compile Include="Modules\Player\Playurl\BiliPlayUrl.cs" />
     <Compile Include="Modules\Player\Playurl\BiliPlayUrlInfo.cs" />
+    <Compile Include="Modules\Player\Playurl\PlayUrlFallback.cs" />
     <Compile Include="Modules\RegionDetailVM.cs" />
     <Compile Include="Modules\SearchVM.cs" />
     <Compile Include="Modules\Season\SeasonRankVM.cs" />

@@ -509,18 +509,19 @@ namespace BiliLite.Api
         }
 
         /// <summary>
-        /// 刷新Token
+        /// 刷新ACCESS_KEY。令牌是为 TV appkey 签发的，刷新也必须用它签名，否则服务端不认；
+        /// 文档口径是 access_key + refresh_token + 公共参数，签名永远压最后。
         /// </summary>
-        /// <returns></returns>
-        public ApiModel RefreshToken()
+        public ApiModel RefreshToken(string accessKey, string refreshToken)
         {
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Post,
-                baseUrl = "https://passport.bilibili.com/api/oauth2/refreshToken",
-                body = ApiHelper.MustParameter(ApiHelper.AndroidKey)+ $"&access_token={SettingHelper.Account.AccessKey}&refresh_token={SettingHelper.GetValue<string>(SettingHelper.Account.REFRESH_KEY, "")}"
+                baseUrl = "https://passport.bilibili.com/api/v2/oauth2/refresh_token",
+                body = $"access_key={FormValue(accessKey)}&" + ApiHelper.MustParameter(ApiHelper.AndroidTVKey) +
+                       $"&refresh_token={FormValue(refreshToken)}"
             };
-            api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
+            api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidTVKey);
             return api;
         }
 

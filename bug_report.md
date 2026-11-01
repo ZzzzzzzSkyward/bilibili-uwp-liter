@@ -62,6 +62,16 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 需要的修复：全量打包在交付包布局校验通过之后删掉副产物的 MSIX（连同只剩下它的 `_Test` 目录），`Z:\` 上不再并排留一个装上去会闪退的同名包；
 历史遗留的副产物目录一并清掉。
 
+## BR-42 — 评论里的图片加载失败（维护者 2026-11-01）
+
+维护者：评论区里的图片似乎加载不出来。现象未细分，需要先定位是整类（表情/大表情/评论附图）都失败，还是只有某一种域名或某一种引用方式失败，
+以及有没有占位图、重试、控制台诊断日志可用。
+
+已知背景：`i0.hdslb.com` 这类图床在没有 `Referer` 时返回 200，所以不是简单的防盗链拒绝；需要看 App 里评论图片是怎么构造 `Image`/`BitmapImage` 的
+（URL 是否被规范化、是否带 `@` 缩放后缀、是否是协议相对地址），以及同一套图片控件在别的页面（封面）是否正常。
+
+需要的修复：定位后在源头修，不在渲染处吞错；如果是图片 URL 需要参数或请求头，就补在统一的图片加载入口，而不是每个模板各补一次。
+
 ## Notes
 
 - Install a `BiliLite.Packages_*` MSIX (root launcher ≈ 8 KB plus `entrypoint/BiliLiter.exe`). A

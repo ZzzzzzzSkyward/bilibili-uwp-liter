@@ -702,9 +702,13 @@ namespace BiliLite.Controls
 
         private void OnImageFail(object sender, ExceptionRoutedEventArgs e)
         {
-            // 在此处处理加载图像失败的情况
-            // 在此示例中，我们将图像的 Source 属性设置为一个缺省图像的 URI
-            ((Image)sender).Source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/Image/DefaultImage.png"));
+            var image = sender as Image;
+            var source = image?.Source;
+            var bitmap = source as Windows.UI.Xaml.Media.Imaging.BitmapImage;
+            LogHelper.Log("评论图片加载失败：" + (bitmap?.UriSource?.OriginalString ?? source?.ToString() ?? "未知地址")
+                + " | " + e?.ErrorMessage, LogType.ERROR);
+            if (image == null) return;
+            image.Source = new Windows.UI.Xaml.Media.Imaging.BitmapImage(new Uri("ms-appx:///Assets/Image/DefaultImage.png"));
         }
     }
 

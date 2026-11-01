@@ -154,7 +154,7 @@
           <toolkit:AdaptiveGridView.ItemTemplate>
             <DataTemplate>
               <Grid Background="Transparent">
-                <Image Source="{Binding ImgSrc}" ImageFailed="OnImageFail" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <Image Source="{Binding ImgSrc, Converter={StaticResource imageConvert}, ConverterParameter='200w'}" ImageFailed="OnImageFail" Stretch="UniformToFill" HorizontalAlignment="Center" VerticalAlignment="Center"/>
               </Grid>
             </DataTemplate>
           </toolkit:AdaptiveGridView.ItemTemplate>
