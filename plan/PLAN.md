@@ -23,6 +23,13 @@ in `bug_report.md` first.
 
 Newest first; every one of these is device-accepted per the policy above.
 
+- **Collection and playlist navigation (P0–P2 season):** `67b9eae`, `399807d`, `6c9b39c`, `e9e5d2a`,
+  `18c519d`, `d905726`, `f68b705`, `1dd359c`, `da62afc`, `4db379c`, `503ceae`, `d0d6bd9`, `0e5b0df` —
+  one sequence state for next/previous/auto, a player-hosted 目录 drawer that works in full screen,
+  pending/retry/late-result rules, honest counts, one single-flight paging channel with 加载全部,
+  search by stable row identity, season 正片/预告 sections, and named queues. Copy rules recorded in
+  `bug_report.md` BR-31; the reviewer's open finding became BR-32 and was fixed.
+
 - **Response-evidence workflow:** capture of response shapes and drift behind two diagnostics toggles,
   redacted opt-in samples, one-click zip bundle with `manifest.json`, and `tools/import-capture.ps1`
   turning a bundle into probe fixtures. Finished plans and their references were removed.
@@ -53,7 +60,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. Remaining: apply the same boundaries to comments, video/season detail, playlists and account responses, then delete what the migration left unused |
-| 5 | Collection and playlist navigation / UI | planned — [COLLECTION_PLAYLIST_UX.md](COLLECTION_PLAYLIST_UX.md): full-screen directory, visible continuation source, consistent next/previous, honest counts, and loading/retry feedback |
+| 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; the remaining checks are the device rows in `plan/VALIDATION.md` |
 
 ## 1. Player session ownership
 
