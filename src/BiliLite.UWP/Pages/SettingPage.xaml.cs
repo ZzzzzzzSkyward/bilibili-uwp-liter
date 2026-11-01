@@ -55,7 +55,52 @@ namespace BiliLite.Pages
             LoadLiveDanmu();
             LoadDownlaod();
             api = new Api.AccountApi();
+            RefreshAccountState();
         }
+
+        private void SettingPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (ReferenceEquals(SettingPivot.SelectedItem, AccountPivotItem)) RefreshAccountState();
+        }
+
+        /// <summary>每次切到账号页都重新读一遍，登录状态可能已被其它页面或后台刷新改掉。</summary>
+        private void RefreshAccountState()
+        {
+            var loggedIn = SettingHelper.Account.Logined;
+            var state = "未登录";
+            if (loggedIn) state = BiliLite.Services.CookieService.NeedsRelogin ? "已失效" : "已登录";
+            AccountStateText.Text = state;
+            // 未登录时刷新和退出都没有意义
+            RefreshLoginButton.IsEnabled = loggedIn;
+            LogoutButton.IsEnabled = loggedIn;
+        }
+
+        private async void RefreshLogin_Click(object sender, RoutedEventArgs e)
+        {
+            RefreshLoginButton.IsEnabled = false;
+            try
+            {
+                await ApiHelper.Cookie.RefreshLoginAsync();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Setting page login refresh failed.", LogType.ERROR, ex);
+            }
+            RefreshAccountState();
+        }
+
+        private async void Relogin_Click(object sender, RoutedEventArgs e)
+        {
+            await Utils.ShowLoginDialog();
+            RefreshAccountState();
+        }
+
+        private void Logout_Click(object sender, RoutedEventArgs e)
+        {
+            MessageCenter.SendLogout();
+            RefreshAccountState();
+        }
+
         private void LoadUI()
         {
             //主题

@@ -159,12 +159,12 @@ internal static class API01
             });
         service.CookieTimestamp = 123;
         ApiHelper.Cookie = service;
-        ApiHelper.RefreshCookie();
+        await ApiHelper.RefreshCookieAsync();
         await confirmSent.Task.WaitAsync(TimeSpan.FromSeconds(2));
         Check(sent.Count == 3 && sent[0].method == RestSharp.Method.Get &&
             sent[1].method == RestSharp.Method.Post && sent[2].method == RestSharp.Method.Post &&
             sent[2].baseUrl == "https://passport.bilibili.com/x/passport-login/web/confirm/refresh",
-            "ApiHelper async-void wrapper dispatches the confirm-refresh POST after the refresh response");
+            "ApiHelper refresh wrapper dispatches the confirm-refresh POST after the refresh response");
         Check(sent[2].body == "csrf=csrf-original&refresh_token=old-refresh-token" &&
             SettingHelper.GetValue<string>("CookieRefreshToken", "") == "new-refresh-token",
             "confirm-refresh request preserves the established old-token body and stores the rotated token");

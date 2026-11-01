@@ -54,7 +54,11 @@ namespace BiliLite.Services
         private bool needsCookieRefresh;
         private short refreshCheckAttempts;
         private Timer refreshTimer;
-        private bool refreshWarningShown;
+        private Task refreshFlow;
+        // 会话是否已死是进程级事实：多个 CookieService 实例（ApiHelper、设置页）看到的是同一个结论
+        private static readonly object reloginLock = new object();
+        private static bool needsRelogin;
+        private static EventHandler reloginRequired;
 
         public CookieService()
             : this(new WindowsCookieStore(), key => SettingHelper.GetValue<string>(key, ""),
@@ -80,6 +84,52 @@ namespace BiliLite.Services
 
         public long CookieTimestamp { get; set; }
 
+        /// <summary>服务端已经判定这个会话不可用（-101/-111 或刷新令牌缺失），只能重新登录。</summary>
+        public static bool NeedsRelogin
+        {
+            get { lock (reloginLock) return needsRelogin; }
+        }
+
+        /// <summary>只在 NeedsRelogin 由 false 变 true 时触发一次。</summary>
+        public static event EventHandler ReloginRequired
+        {
+            add { lock (reloginLock) reloginRequired += value; }
+            remove { lock (reloginLock) reloginRequired -= value; }
+        }
+
+        /// <summary>重新登录成功后清掉失效结论，下一次失效仍能再触发一次事件。</summary>
+        public static void ClearReloginRequired()
+        {
+            lock (reloginLock) needsRelogin = false;
+        }
+
+        private void MarkRelogin(string reason)
+        {
+            SetRefreshState(true, false);
+            log("Cookie session unusable: " + reason, null);
+            EventHandler handler;
+            lock (reloginLock)
+            {
+                if (needsRelogin) return;
+                needsRelogin = true;
+                handler = reloginRequired;
+            }
+            if (handler == null)
+            {
+                // 没有宿主订阅（探针、无 UI 进程）时才由服务自己提示
+                notify("登录已失效");
+                return;
+            }
+            try
+            {
+                handler(null, EventArgs.Empty);
+            }
+            catch (Exception exception)
+            {
+                log("Re-login notification handler failed.", exception);
+            }
+        }
+
         public bool NeedRefreshCookie
         {
             get
@@ -100,12 +150,15 @@ namespace BiliLite.Services
         {
             var cookieValue = ReadCookie(cookieName, "");
             var settingValue = readSetting(settingName);
-            if (string.IsNullOrEmpty(cookieValue) && !string.IsNullOrEmpty(settingValue))
+            if (string.IsNullOrEmpty(cookieValue))
             {
+                if (string.IsNullOrEmpty(settingValue)) return "";
+                // 浏览器里还没有这项时，用手动填写的设置补一个
                 WriteCookie(cookieName, settingValue);
                 return settingValue;
             }
-            if (!string.IsNullOrEmpty(cookieValue) && string.IsNullOrEmpty(settingValue))
+            // cookie 才是权威来源：刷新出来的新会话必须覆盖设置里的旧值
+            if (!string.Equals(settingValue, cookieValue, StringComparison.Ordinal))
                 writeSetting(settingName, cookieValue);
             return cookieValue;
         }
@@ -116,6 +169,16 @@ namespace BiliLite.Services
         {
             SyncCookie("SESSDATA", "CookieSESSDATA");
             SyncCookie("bili_jct", "CookieCSRF");
+            MirrorRefreshToken();
+        }
+
+        /// <summary>ac_time_value 只存在于 cookie 里时才算真正拿到刷新令牌，登录成功后必须落到设置。</summary>
+        public void MirrorRefreshToken()
+        {
+            var cookieValue = ReadCookie("ac_time_value", "");
+            if (string.IsNullOrEmpty(cookieValue)) return;
+            if (string.Equals(readSetting("CookieRefreshToken"), cookieValue, StringComparison.Ordinal)) return;
+            writeSetting("CookieRefreshToken", cookieValue);
         }
 
         public string GetRefreshToken() => readSetting("CookieRefreshToken");
@@ -155,9 +218,9 @@ namespace BiliLite.Services
                     var apiCode = (int?)body["code"];
                     if (!apiCode.HasValue)
                         throw new FormatException("Cookie refresh-state response was missing its API status code.");
-                    if (apiCode == -101)
+                    if (apiCode == -101 || apiCode == -111)
                     {
-                        SetRefreshState(true, false);
+                        MarkRelogin("cookie/info code=" + apiCode);
                         return;
                     }
                     if (apiCode.HasValue && apiCode.Value != 0)
@@ -168,13 +231,15 @@ namespace BiliLite.Services
                     if (data == null || !timestamp.HasValue || timestamp.Value <= 0 || !refreshFlag.HasValue)
                         throw new FormatException("Cookie refresh-state response contained incomplete data.");
                     CookieTimestamp = timestamp ?? 0;
+                    // 服务端认这个会话，之前记下的失效结论作废
+                    ClearReloginRequired();
                     SetRefreshState(true, refreshFlag.Value);
                     resultValue = NeedRefreshCookieValue();
                     return;
                 }
-                if (response?.code == -101)
+                if (response?.code == -101 || response?.code == -111)
                 {
-                    SetRefreshState(true, false);
+                    MarkRelogin("cookie/info transport code=" + response?.code);
                     return;
                 }
 
@@ -228,17 +293,59 @@ namespace BiliLite.Services
             }
         }
 
-        public async Task RefreshCookieAsync()
+        /// <summary>单飞：并发调用者等同一次刷新，刷新一结束（成功或失败）就释放槽位，之后的重试仍会重新走完整流程。</summary>
+        public Task RefreshCookieAsync()
+        {
+            TaskCompletionSource<bool> producer;
+            Task result;
+            lock (stateLock)
+            {
+                if (refreshFlow != null) return refreshFlow;
+                producer = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                refreshFlow = producer.Task;
+                result = refreshFlow;
+            }
+            _ = RunRefreshCookieAsync(producer);
+            return result;
+        }
+
+        /// <summary>校验会话状态并在需要时刷新，供启动、恢复和设置页“刷新登录”共用。</summary>
+        public async Task RefreshLoginAsync()
+        {
+            lock (stateLock)
+            {
+                hasInitializedRefreshState = false;
+            }
+            if (await NeedRefreshCookieAsync()) await RefreshCookieAsync();
+        }
+
+        private async Task RunRefreshCookieAsync(TaskCompletionSource<bool> producer)
+        {
+            try
+            {
+                await RefreshCookieCoreAsync();
+            }
+            catch (Exception exception)
+            {
+                log("Cookie refresh failed.", exception);
+            }
+            finally
+            {
+                // 先释放槽位再放行等待者，否则紧接着的重试会拿到刚完成的旧任务
+                lock (stateLock)
+                {
+                    if (ReferenceEquals(refreshFlow, producer.Task)) refreshFlow = null;
+                }
+                producer.TrySetResult(true);
+            }
+        }
+
+        private async Task RefreshCookieCoreAsync()
         {
             var timestamp = CookieTimestamp;
             if (timestamp == 0)
             {
-                log("Cookie refresh was skipped because its timestamp is unavailable.", null);
-                if (!refreshWarningShown)
-                {
-                    refreshWarningShown = true;
-                    notify("啊哦，cookie过气了，\n而且没有刷新令牌，\n需要重新登录了呢");
-                }
+                MarkRelogin("refresh timestamp unavailable");
                 return;
             }
 
@@ -254,7 +361,18 @@ namespace BiliLite.Services
             if (string.IsNullOrEmpty(csrf)) return;
 
             var token = GetRefreshToken();
-            if (string.IsNullOrEmpty(token)) return;
+            if (string.IsNullOrEmpty(token))
+            {
+                // cookie 里可能已经有 ac_time_value，只是没落到设置
+                MirrorRefreshToken();
+                token = GetRefreshToken();
+            }
+            if (string.IsNullOrEmpty(token))
+            {
+                MarkRelogin("refresh token missing");
+                return;
+            }
+
             var refresh = await send(accountApi.RefreshCookie(GetCSRF(), csrf, token));
             var newToken = "";
             if (refresh?.code == 200)
@@ -263,8 +381,16 @@ namespace BiliLite.Services
                 var apiCode = (int?)body["code"];
                 if (apiCode == 0)
                     newToken = (string)body["data"]?["refresh_token"] ?? "";
-                else if (apiCode == -101) log("Cookie refresh reported that the account is logged out.", null);
-                else if (apiCode == -111) log("Cookie refresh reported a CSRF validation failure.", null);
+                else if (apiCode == -101 || apiCode == -111)
+                {
+                    MarkRelogin("cookie/refresh code=" + apiCode);
+                    return;
+                }
+            }
+            else if (refresh?.code == -101 || refresh?.code == -111)
+            {
+                MarkRelogin("cookie/refresh transport code=" + refresh.code);
+                return;
             }
             if (string.IsNullOrEmpty(newToken)) return;
 
@@ -277,9 +403,20 @@ namespace BiliLite.Services
                 if (confirmCode == 0)
                 {
                     CookieTimestamp = 0;
+                    ClearReloginRequired();
                     SetRefreshState(true, false);
                     return;
                 }
+                if (confirmCode == -101 || confirmCode == -111)
+                {
+                    MarkRelogin("confirm/refresh code=" + confirmCode);
+                    return;
+                }
+            }
+            else if (confirm?.code == -101 || confirm?.code == -111)
+            {
+                MarkRelogin("confirm/refresh transport code=" + confirm.code);
+                return;
             }
             log("Cookie refresh confirmation did not return a successful response.", null);
         }
@@ -318,6 +455,19 @@ namespace BiliLite.Services
                     lock (stateLock) hasInitializedRefreshState = false;
                 };
             }
+        }
+    }
+
+    /// <summary>一次播放地址请求（含多轮代理重试）只预刷新一次 cookie。</summary>
+    public sealed class CookiePreflight
+    {
+        private bool done;
+
+        public async Task EnsureAsync(Func<Task<bool>> needRefresh, Func<Task> refresh)
+        {
+            if (done) return;
+            done = true;
+            if (await needRefresh()) await refresh();
         }
     }
 }

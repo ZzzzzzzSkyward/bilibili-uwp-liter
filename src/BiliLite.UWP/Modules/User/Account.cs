@@ -346,6 +346,9 @@ namespace BiliLite.Modules
                     LogHelper.Log($"SSO失败", LogType.ERROR, ex);
                 }
 
+                // ac_time_value 只随 cookie 下发，登录成功当场落到设置，否则刷新链永远缺令牌
+                MirrorCookieRefreshToken();
+
                 //读取个人资料
                 await GetProfile();
                 MessageCenter.SendLogined();
@@ -442,6 +445,30 @@ namespace BiliLite.Modules
             SettingHelper.SetValue("CookieSESSDATA", sessdata);
             SettingHelper.SetValue("CookieCSRF", csrf);
             SettingHelper.SetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, null);
+            // 交换回来的令牌为空时，cookie 里的 ac_time_value 才是唯一来源
+            MirrorCookieRefreshToken();
+        }
+
+        /// <summary>ac_time_value 只存在于 cookie，登录成功后必须同步进设置，否则 QR 登录根本无法刷新。</summary>
+        private static void MirrorCookieRefreshToken()
+        {
+            try
+            {
+                var filter = new HttpBaseProtocolFilter();
+                foreach (var origin in CookieLoginOrigins())
+                {
+                    var cookie = filter.CookieManager.GetCookies(origin)
+                        .FirstOrDefault(x => x.Name == "ac_time_value");
+                    if (cookie == null || string.IsNullOrEmpty(cookie.Value)) continue;
+                    if (string.Equals(SettingHelper.GetValue("CookieRefreshToken", ""), cookie.Value, StringComparison.Ordinal)) return;
+                    SettingHelper.SetValue("CookieRefreshToken", cookie.Value);
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("ac_time_value 同步失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+            }
         }
 
         private static void RestoreCookieLoginSnapshot(CookieLoginSnapshot snapshot)

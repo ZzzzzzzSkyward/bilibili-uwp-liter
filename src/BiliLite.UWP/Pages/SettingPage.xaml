@@ -13,7 +13,7 @@
       <ColumnDefinition Width="569*"/>
       <ColumnDefinition Width="1352*"/>
     </Grid.ColumnDefinitions>
-    <Pivot Grid.ColumnSpan="2">
+    <Pivot x:Name="SettingPivot" Grid.ColumnSpan="2" SelectionChanged="SettingPivot_SelectionChanged">
       <PivotItem Margin="0">
         <PivotItem.Header>
           <TextBlock FontSize="15">个性化</TextBlock>
@@ -312,6 +312,24 @@
                 </DataTemplate>
               </ComboBox.ItemTemplate>
             </ComboBox>
+          </StackPanel>
+        </ScrollViewer>
+      </PivotItem>
+      <PivotItem Margin="0" x:Name="AccountPivotItem">
+        <PivotItem.Header>
+          <TextBlock FontSize="15">账号</TextBlock>
+        </PivotItem.Header>
+        <ScrollViewer Padding="12 0" VerticalScrollBarVisibility="Auto">
+          <StackPanel>
+            <StackPanel Orientation="Horizontal" Margin="0 16 0 8">
+              <TextBlock FontSize="16" VerticalAlignment="Center">登录状态</TextBlock>
+              <TextBlock x:Name="AccountStateText" FontSize="16" Margin="12 0 0 0" VerticalAlignment="Center" Text="未登录"/>
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+              <Button x:Name="RefreshLoginButton" Margin="0 0 8 0" Click="RefreshLogin_Click">刷新登录</Button>
+              <Button Margin="0 0 8 0" Click="Relogin_Click">重新登录</Button>
+              <Button x:Name="LogoutButton" Click="Logout_Click">退出登录</Button>
+            </StackPanel>
           </StackPanel>
         </ScrollViewer>
       </PivotItem>

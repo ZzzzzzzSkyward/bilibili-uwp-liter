@@ -1,6 +1,7 @@
 ﻿using BiliLite.Api;
 using BiliLite.Helpers;
 using BiliLite.Modules;
+using BiliLite.Services;
 using FFmpegInteropX;
 using Microsoft.Toolkit.Uwp.Helpers;
 using System;
@@ -62,6 +63,49 @@ namespace BiliLite
             LogHelper.Log("FFmpeg diagnostics enabled at Info level", LogType.INFO);
             SqlHelper.InitDB();
             this.Suspending += OnSuspending;
+            // Resuming 只在 Application 上，且 OnLaunched 可能因协议激活多次进入：先减后加保证只挂一次
+            this.Resuming -= OnAppResuming;
+            this.Resuming += OnAppResuming;
+            BiliLite.Services.CookieService.ReloginRequired += OnReloginRequired;
+            // 登录成功或主动退出后，上一次的「已失效」结论必须作废，否则设置页一直挂着失效
+            MessageCenter.LoginedEvent += OnSessionChanged;
+            MessageCenter.LogoutedEvent += OnSessionChanged;
+        }
+
+        private static void OnSessionChanged(object sender, object e) => BiliLite.Services.CookieService.ClearReloginRequired();
+
+        /// <summary>UI 线程的调度器：ReloginRequired 从后台请求线程触发，Toast 只能在 UI 线程弹。</summary>
+        private static Windows.UI.Core.CoreDispatcher uiDispatcher;
+
+        private static void OnReloginRequired(object sender, EventArgs e)
+        {
+            var dispatcher = uiDispatcher;
+            if (dispatcher == null)
+            {
+                LogHelper.Log("Re-login required before a window existed; toast skipped", LogType.ERROR);
+                return;
+            }
+            if (dispatcher.HasThreadAccess)
+            {
+                ShowReloginToast();
+                return;
+            }
+            _ = dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, ShowReloginToast);
+        }
+
+        private static void ShowReloginToast() => Utils.ShowMessageToast("登录已失效");
+
+        /// <summary>启动与恢复都不等待结果：会话校验失败也不该挡住界面。</summary>
+        private static async Task PreflightLoginAsync()
+        {
+            try
+            {
+                await ApiHelper.Cookie.RefreshLoginAsync();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Startup cookie preflight failed", LogType.ERROR, ex);
+            }
         }
         private void RegisterExceptionHandlingSynchronizationContext()
         {
@@ -116,9 +160,17 @@ namespace BiliLite
         {
             RegisterExceptionHandlingSynchronizationContext();
             LogHelper.Log("Application launched; prelaunch=" + e.PrelaunchActivated, LogType.INFO);
+            uiDispatcher = Window.Current.Dispatcher;
             LoadTheme();
             Navigation(e.Arguments,e.PrelaunchActivated);
-            
+            _ = PreflightLoginAsync();
+        }
+
+        // 挂起后回到前台时 SESSDATA 很可能已经过期，先校验再让用户去点播放
+        private void OnAppResuming(object sender, object e)
+        {
+            LogHelper.Log("Application resumed", LogType.INFO);
+            _ = PreflightLoginAsync();
         }
 
 
@@ -273,6 +325,7 @@ namespace BiliLite
             base.OnActivated(args);
             RegisterExceptionHandlingSynchronizationContext();
             LogHelper.Log("Application activated; kind=" + args.Kind, LogType.INFO);
+            uiDispatcher = Window.Current.Dispatcher;
             if (args.Kind == ActivationKind.Protocol)
             {
                 ProtocolActivatedEventArgs eventArgs = args as ProtocolActivatedEventArgs;

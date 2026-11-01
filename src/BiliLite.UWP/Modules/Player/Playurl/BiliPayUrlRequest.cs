@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Threading;
 using BiliLite.gRPC.Api;
+using BiliLite.Services;
 using Bilibili.App.Playurl.V1;
 
 namespace BiliLite.Modules.Player.Playurl
@@ -93,6 +94,13 @@ namespace BiliLite.Modules.Player.Playurl
         {
             Message += $"{type}：{msg}\r\n";
         }
+
+        private readonly CookiePreflight cookiePreflight = new CookiePreflight();
+
+        /// <summary>播放地址请求前的 cookie 预刷新：先刷新再发请求，且整个请求只做一次。</summary>
+        protected Task PreflightCookieAsync() =>
+            cookiePreflight.EnsureAsync(ApiHelper.NeedRefreshCookie, ApiHelper.RefreshCookieAsync);
+
         protected async Task<bool> CheckUrlAvailable(string url, string userAgent, string referer)
         {
             var requestId = NewRequestId();
@@ -615,11 +623,7 @@ namespace BiliLite.Modules.Player.Playurl
             LogPlayurl(playInfo, requestId, "web-api", qualityID, "started");
             try
             {
-                var refresh = await ApiHelper.NeedRefreshCookie();
-                if (refresh)
-                {
-                    ApiHelper.RefreshCookie();
-                }
+                await PreflightCookieAsync();
                 var webApiResult = await (playerAPI.VideoPlayUrl(aid: playInfo.avid, cid: playInfo.cid, qn: qualityID, dash: CodecMode != PlayUrlCodecMode.FLV, false, playInfo.area)).Request();
                 LogPlayurl(playInfo, requestId, "web-api", qualityID, "status=" + webApiResult.code + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 if (!webApiResult.status)
@@ -730,6 +734,7 @@ namespace BiliLite.Modules.Player.Playurl
             LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " started");
             try
             {
+                await PreflightCookieAsync();
                 var webApiResult = await (playerAPI.SeasonPlayUrl(aid: playInfo.avid, cid: playInfo.cid, ep_id: playInfo.ep_id, qn: qualityID, season_type: playInfo.season_type, dash: CodecMode != PlayUrlCodecMode.FLV, area != "", area)).Request();
                 LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " status=" + webApiResult.code + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 if (!webApiResult.status)

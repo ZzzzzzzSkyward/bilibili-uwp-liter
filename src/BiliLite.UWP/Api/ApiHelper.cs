@@ -275,7 +275,7 @@ namespace BiliLite.Api
 
         public static Task<bool> NeedRefreshCookie() => Cookie.NeedRefreshCookieAsync();
 
-        public static async void RefreshCookie()
+        public static async Task RefreshCookieAsync()
         {
             try
             {
