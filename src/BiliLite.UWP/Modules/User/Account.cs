@@ -768,7 +768,7 @@ namespace BiliLite.Modules
                 (accessKey, refreshToken) => accountApi.RefreshToken(accessKey, refreshToken).Request(),
                 (token, cookie) => SaveLogin(token.access_token, token.refresh_token, token.expires_in,
                     token.mid > 0 ? token.mid : SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L), null, cookie),
-                (message, exception) => LogHelper.Log(message, LogType.ERROR, exception));
+                (message, exception) => LogHelper.Log(message, exception == null ? LogType.INFO : LogType.ERROR, exception));
         }
     }
 
