@@ -20,9 +20,9 @@ in `bug_report.md` first.
 
 ## Done
 
-Newest first; every one of these is device-accepted per the policy above, except the three 2026-11-01 entries
-(P4 step 1, BR-44/BR-43, BR-45): those are compiled and probe-covered only, and their device rows are still
-open in `plan/VALIDATION.md`.
+Newest first; every one of these is device-accepted per the policy above, except the 2026-11-01 entries: BR-44 is
+device-confirmed, while P4 step 1, BR-45 and the second BR-43 attempt are compiled and probe-covered only — their
+device rows are still open in `plan/VALIDATION.md`.
 
 - **P4 step 1 — season detail:** `ed9f248` — `pgc/view/web/ep/list` runs builder → `ApiEnvelope.ReadResult` →
   `Parsing/Season/WebSeasonEpListParser` → mapper, with the field table and the 正片/预告 dedupe rule in the
@@ -30,11 +30,16 @@ open in `plan/VALIDATION.md`.
   envelope failure instead of `解析json对象失败`; `GetJObject` keeps its toast for its existing callers on top of
   the same decode. `plan/tests/season1` (109 assertions) pins the envelope, the shapes that used to throw, a
   per-body no-toast check, the dedupe divergence and a refresh that fails after a good load.
-- **BR-44 播放目录 crash / BR-43 toast centring:** `a99c3f8` — the fade now targets the button's content
+- **BR-43 toast alignment, second attempt:** `78a94cb` — the device pass on `a99c3f8` still showed the text lower
+  than the icon, so the shared forced line box is gone: both blocks use `TextLineBounds=Tight` with no
+  `LineStackingStrategy` and no `LineHeight` at all, the pill keeps its old 38-DIP outer height through a scaled
+  `ToastRoot.MinHeight`, and `BaseIconOpticalOffset` is the one residual constant (now 0). `plan/tests/toastalign`
+  (36 checks) pins those invariants and exits 1 against `a99c3f8`.
+- **BR-44 播放目录 crash:** `a99c3f8` — the fade now targets the button's content
   `StackPanel` and the scale stays on the `CompositeTransform`, so `Storyboard.Begin` no longer throws before
   `DirectoryRequested`; a `Begin` failure is logged instead of swallowing the click. `plan/tests/dirpress`
   (31 checks) reads the XAML names and fails when a `SetTargetProperty` names a property the target type does
-  not have — it exits 1 against the pre-fix source.
+  not have — it exits 1 against the pre-fix source. Device-confirmed 2026-11-01.
 - **BR-45 list covers:** `433f128` — directory rows, the playlist template, the UGC-season template and the
   live honour icon route their string cover through the existing `imageConvert2` + `'200w'`, so the box gets a
   `BitmapImage` and an empty `Cover` falls back to the placeholder. `DownloadPage` keeps its binding: that model

@@ -36,8 +36,8 @@ every row below still needs the device pass.
 
 | Item | Commit(s) | Confirm on the device |
 | --- | --- | --- |
-| BR-43 toast alignment | `a99c3f8` | volume `100%` and brightness `100%` share one optical centre with the glyph; the mute pill (no text) stays centred and gains no right gap; seek `hh:mm:ss` digits look centred on the clock; the same relation at a small and a large window (the constant scales). If the digits sit low, the icon is too high — one constant, `BaseIconOpticalOffset`, is the only edit |
-| BR-44 播放目录 button | `a99c3f8` | one flash per click on the video-detail drawer and on the season drawer; the drawer actually opens; clicking again while the flash is still running neither throws nor leaves the button dimmed or scaled |
+| BR-43 toast alignment | `78a94cb` | volume `100%` and brightness `100%` show the digits' ink centre on the same line as the glyph's ink centre — the digits must no longer sit lower than the icon; the pill keeps its old height and corner radius; the same relation at a small and a large window. The text-less 静音 pill was not reachable on the device, so it stays unverified. If a residual gap remains, `BaseIconOpticalOffset` (now `0`) is the only edit |
+| BR-44 播放目录 button | `a99c3f8` | **confirmed 2026-11-01** — the directory button works on the device |
 | Season detail parse (P4) | `ed9f248` | 正片 and 预告 tabs keep their contents and ordinals; an episode that also appears inside a section shows as 预告 only; a season with `result.episodes` empty (or a section with no episodes) shows the empty state instead of an error panel; `total: 0` still lists the episodes |
 | Non-JSON body stays quiet | `ed9f248` | a season page whose response is not JSON shows the error panel and no `解析json对象失败` toast; other screens that still use `GetJObject` keep their toast |
 | BR-45 list covers | `433f128` | directory rows show a thumbnail instead of an empty box, at the same size as the row; a row whose cover is empty shows the placeholder; playlist rows, UGC-season rows and a live anchor's honour icons likewise show an image, and no row downloads a full-size cover into a 64×36 box |
