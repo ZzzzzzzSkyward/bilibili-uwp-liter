@@ -338,9 +338,36 @@ if ($LASTEXITCODE -ne 0) {
     throw "生成失败（退出码 $LASTEXITCODE）。"
 }
 
+# ---------- 清理副产物 ----------
+# BiliLite.UWP_*.msix 能编出来却装不上（包里没有 entrypoint/），留在输出目录只会继续被误装（BR-41）。
+# 只清「本次构建的版本」不够：-Fast 编译和任何一次生成都会往当前版本的
+# BiliLite.UWP_<版本>_x64_Test 里写包，一次 -Fast 就能让上一个版本的清理白做，
+# 所以改成扫描输出根下的所有副产物目录，按名字认，不看版本号。
+# 守卫：只认目录名 ^BiliLite\.UWP_.*_x64_Test$；目录里一旦有 BiliLite.Packages_* 或 .appxsym
+# （交付包的符号），说明它不是纯副产物目录，整目录跳过——绝不碰交付包目录、.appxsym、.cer、Dependencies。
+function Remove-ByproductFolders {
+    param([string]$Root)
+    $removed = @()
+    $folders = @(Get-ChildItem -LiteralPath $Root -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^BiliLite\.UWP_.*_x64_Test$' })
+    foreach ($folder in $folders) {
+        $guarded = @(Get-ChildItem -LiteralPath $folder.FullName -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^(BiliLite\.Packages_.*|.*\.appxsym)$' })
+        if ($guarded) { continue }
+        Remove-Item -LiteralPath $folder.FullName -Recurse -Force
+        $removed += $folder.Name
+    }
+    # 没有可删的就一个字都不打，避免日志里出现空操作
+    if ($removed) {
+        Write-Host "已清理副产物：$($removed -join '、')（共 $($removed.Count) 个目录）"
+    }
+}
+
 if ($Fast) {
     Write-Host ''
     Write-Host '快速编译完成（未生成 MSIX）。'
+    # 编译同样会留下副产物目录，顺手清掉，别让它被当成可安装包
+    Remove-ByproductFolders -Root $OutputDir
     return
 }
 
@@ -365,7 +392,6 @@ $deliverables = @($packages | Where-Object { $_ -match 'BiliLite\.Packages_.*\.m
 if (-not $deliverables) {
     throw "找到的 MSIX 里没有 BiliLite.Packages_*.msix（$($packages -join '; ')），自检过的完整包不存在，不要交付。"
 }
-$byproducts = @($packages | Where-Object { $_ -match 'BiliLite\.UWP_.*\.msix$' })
 Write-Host ''
 Write-Host '生成产物：'
 $deliverables | ForEach-Object { Write-Host "  $_" }
@@ -415,23 +441,5 @@ if ($problem) {
 Write-Host ''
 Write-Host "交付包：$fullPackage"
 
-# ---------- 清理副产物 ----------
-# BiliLite.UWP_*.msix 能编出来却装不上（包里没有 entrypoint/），留在 Z:\ 只会继续被误装。
-# 完整包已通过布局校验、路径也已打印，此时删掉副产物不影响任何交付信息。
-# 只处理 BiliLite.UWP_*_x64_Test 这个约定目录，绝不碰 BiliLite.Packages_* 目录和它的 .appxsym/.cer/Dependencies。
-foreach ($byproduct in $byproducts) {
-    if (-not (Test-Path -LiteralPath $byproduct)) { continue }
-    $folder = Split-Path -Parent $byproduct
-    $folderName = Split-Path -Leaf $folder
-    if ($folderName -notmatch '^BiliLite\.UWP_.*_x64_Test$') { continue }
-    Remove-Item -LiteralPath $byproduct -Force
-    # 目录里除 .appxsym/.cer/脚本/依赖目录外已无 MSIX 可当负载，就整目录收掉
-    $left = @(Get-ChildItem -LiteralPath $folder -Filter '*.msix' -File -ErrorAction SilentlyContinue)
-    if ($left.Count -eq 0) {
-        Remove-Item -LiteralPath $folder -Recurse -Force
-        Write-Host "已清理副产物：$(Split-Path -Leaf $byproduct)（目录 $folderName 一并删除）"
-    }
-    else {
-        Write-Host "已清理副产物：$(Split-Path -Leaf $byproduct)"
-    }
-}
+# 完整包已通过布局校验、路径也已打印，此时删副产物不影响任何交付信息
+Remove-ByproductFolders -Root $OutputDir
