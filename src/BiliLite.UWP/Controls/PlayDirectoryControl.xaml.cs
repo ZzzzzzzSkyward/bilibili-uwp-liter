@@ -1,7 +1,10 @@
 using System;
 using Windows.System;
+using Windows.UI;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Automation;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using BiliLite.Models.Common;
 
@@ -56,7 +59,7 @@ namespace BiliLite.Controls
             m_model = model;
             HeaderText.Text = model == null ? "" : model.HeaderText ?? "";
             SourceTitleText.Text = model == null ? "" : model.SourceTitle ?? "";
-            PositionText.Text = ComposePosition(model);
+            SetPosition(model);
 
             BuildTabs(model);
             SelectScope(PlayDirectoryBuilder.ResolveBrowsedSection(model, browsed), false);
@@ -85,12 +88,15 @@ namespace BiliLite.Controls
             RowList.ScrollIntoView(row, ScrollIntoViewAlignment.Leading);
         }
 
-        private static string ComposePosition(PlayDirectoryModel model)
+        /// <summary>
+        /// 位置和数量各占一个块:其中一个为空时另一个自己站着,不留分隔符
+        /// </summary>
+        private void SetPosition(PlayDirectoryModel model)
         {
-            if (model == null) return "";
-            if (string.IsNullOrEmpty(model.CurrentPositionText)) return model.CountText ?? "";
-            if (string.IsNullOrEmpty(model.CountText)) return model.CurrentPositionText;
-            return model.CurrentPositionText + " · " + model.CountText;
+            var position = model == null ? "" : model.CurrentPositionText ?? "";
+            PositionText.Text = position;
+            PositionCountText.Text = model == null ? "" : model.CountText ?? "";
+            PositionCountText.Margin = new Thickness(string.IsNullOrEmpty(position) ? 0 : 8, 0, 0, 0);
         }
 
         private void BuildTabs(PlayDirectoryModel model)
@@ -100,16 +106,40 @@ namespace BiliLite.Controls
             foreach (var section in model.Sections)
             {
                 if (section == null) continue;
-                var text = section.Kind == model.ActiveKind ? section.Title + " · 连播中" : section.Title;
                 var tab = new Button()
                 {
-                    Content = text,
                     Tag = section.Kind,
                     Style = (Style)Resources["DirectoryTabStyle"],
                 };
+                tab.Content = section.Kind == model.ActiveKind
+                    ? (object)ContinuationTabContent(section.Title ?? "", tab)
+                    : section.Title ?? "";
                 tab.Click += Tab_Click;
                 TabHost.Children.Add(tab);
             }
+        }
+
+        /// <summary>
+        /// 连播来源那一段的页签:前面一个圆点,状态不再用字写一遍
+        /// </summary>
+        private UIElement ContinuationTabContent(string title, Button tab)
+        {
+            var host = new StackPanel() { Orientation = Orientation.Horizontal, VerticalAlignment = VerticalAlignment.Center };
+            var dot = new TextBlock()
+            {
+                Text = "●",
+                FontSize = 10,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 6, 0),
+                Style = (Style)Resources["DirectoryDotStyle"],
+            };
+            AutomationProperties.SetName(dot, "连播中");
+            host.Children.Add(dot);
+            var label = new TextBlock() { Text = title, VerticalAlignment = VerticalAlignment.Center };
+            // 页签的选中样式改的是按钮的 Foreground,标题跟着它走
+            label.SetBinding(TextBlock.ForegroundProperty, new Binding() { Source = tab, Path = new PropertyPath("Foreground") });
+            host.Children.Add(label);
+            return host;
         }
 
         private void UpdateSourceActions(PlayDirectoryModel model)

@@ -395,8 +395,13 @@ namespace Ux1aProbe
                 && Body(page, "private void RefreshSequenceState").Contains("mediaListState != null && mediaListState.LastLoadFailed);"),
                 "source: the row paging flags come from the paging state");
 
-            Check(page.Contains("\"下一P：\"") && page.Contains("\"下一个视频：\"") && page.Contains("\"下一集：\""),
-                "source: the preview names its target kind");
+            Check(Body(page, "private string DescribeStep").Contains("return PartTitle(step.PartIndex);")
+                && Body(page, "private string DescribeStep").Contains("return RowTitle(step.RowIndex);")
+                && Body(page, "private string DescribeStep").Contains("return \"下一页\";"),
+                "source: the preview is the bare target: part title, row title, or 下一页");
+            Check(!page.Contains("下一P：") && !page.Contains("下一个视频：") && !page.Contains("下一集：")
+                && !page.Contains("上一P：") && !page.Contains("上一集：") && !page.Contains("RowPrefix"),
+                "source: the preview no longer prefixes its direction or explains a retry");
 
             Check(Body(page, "private bool CanSkipToNextVideo").Contains("position.RowCount > 0")
                 && Body(page, "private bool CanSkipToNextVideo").Contains("position.PartIndex < position.PartCount - 1"),

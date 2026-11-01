@@ -74,12 +74,12 @@
             </StackPanel>
             <StackPanel x:Name="PictureQuality" Margin="0 0 0 8">
               <TextBlock Margin="0 8" FontSize="16">加载原图</TextBlock>
-              <ToggleSwitch x:Name="swPictureQuality"/>
+              <ToggleSwitch x:Name="swPictureQuality" AutomationProperties.Name="加载原图"/>
             </StackPanel>
             <Button x:Name="btnCleanImageCache" Click="btnCleanImageCache_Click" Margin="0 0 0 8">清除图片缓存</Button>
             <StackPanel x:Name="HomeCache" Margin="0 0 0 8">
               <TextBlock Margin="0 8" FontSize="16">缓存首页</TextBlock>
-              <ToggleSwitch x:Name="swHomeCache"/>
+              <ToggleSwitch x:Name="swHomeCache" AutomationProperties.Name="缓存首页"/>
             </StackPanel>
             <StackPanel Margin="0 0 0 8">
               <TextBlock Margin="0 8 0 4" FontSize="16">首页自定义</TextBlock>

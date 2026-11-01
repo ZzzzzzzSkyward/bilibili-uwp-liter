@@ -585,7 +585,7 @@ namespace BiliLite.Controls
                                 _position = Player.Duration;
                             }
                             Player.Position = _position;
-                            playerToasts.Show(PlayerToastService.Msg, "跳过OP(快进90秒)");
+                            playerToasts.Show(PlayerToastService.Msg, "跳过OP");
                         }
                     }
                     break;
@@ -1024,15 +1024,15 @@ namespace BiliLite.Controls
         }
 
         /// <summary>
-        /// 页面报告目录是否可用,以及"目录"按钮上的短标签(合集 · 7/24 这种)。
-        /// 播放器只换标签和可见性,不自己判断有没有目录。
+        /// 页面报告目录是否可用,以及按钮上的短标签(合集 7/24 这种)。
+        /// 播放器只换标签和可见性,不自己判断有没有目录;没有位置时只留图标。
         /// </summary>
         public void UpdateDirectoryInfo(bool available, string caption)
         {
             _directoryAvailable = available;
             if (BottomBtnDirectoryCaption != null)
             {
-                BottomBtnDirectoryCaption.Text = string.IsNullOrEmpty(caption) ? "目录" : caption;
+                BottomBtnDirectoryCaption.Text = caption ?? "";
             }
             if (BottomBtnDirectory != null)
             {

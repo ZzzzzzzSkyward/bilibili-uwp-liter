@@ -1206,43 +1206,35 @@ namespace BiliLite.Pages
             }
 
             player?.UpdateSequenceInfo(
-                DescribeStep(WatchSequenceOrder.Next(sequence.Position, false), true),
-                DescribeStep(WatchSequenceOrder.Previous(sequence.Position), false),
+                DescribeStep(WatchSequenceOrder.Next(sequence.Position, false)),
+                DescribeStep(WatchSequenceOrder.Previous(sequence.Position)),
                 CanSkipToNextVideo());
             // "目录"按钮跟着同一份顺序状态:有没有目录、按钮上写什么
-            var directoryCaption = DirectoryCaption();
-            player?.UpdateDirectoryInfo(!string.IsNullOrEmpty(directoryCaption), directoryCaption);
+            bool hasDirectory;
+            var directoryCaption = DirectoryCaption(out hasDirectory);
+            player?.UpdateDirectoryInfo(hasDirectory, directoryCaption);
             RefreshOpenDirectory();
         }
 
         /// <summary>
-        /// 把一次移动写成按钮提示里的目标文字;没有目标时返回空,播放器据此收起"下一个"按钮
+        /// 把一次移动写成按钮提示里的目标文字;没有目标时返回空,播放器据此收起"下一个"按钮。
+        /// 只写目标本身:是下一个还是上一个由按钮决定。
         /// </summary>
-        private string DescribeStep(WatchSequenceStep step, bool isNext)
+        private string DescribeStep(WatchSequenceStep step)
         {
             if (step == null) return "";
             switch (step.Move)
             {
                 case WatchSequenceMove.PlayPart:
-                    return (isNext ? "下一P：" : "上一P：") + PartTitle(step.PartIndex);
+                    return PartTitle(step.PartIndex);
                 case WatchSequenceMove.PlayRow:
-                    return RowPrefix(isNext) + RowTitle(step.RowIndex);
+                    return RowTitle(step.RowIndex);
                 case WatchSequenceMove.LoadNextPage:
-                    return RowPrefix(isNext) + "下一页";
                 case WatchSequenceMove.RetryNextPage:
-                    return RowPrefix(isNext) + "下一页（需重试加载）";
+                    return "下一页";
                 default:
                     return "";
             }
-        }
-
-        private string RowPrefix(bool isNext)
-        {
-            if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)
-            {
-                return isNext ? "下一集：" : "上一集：";
-            }
-            return isNext ? "下一个视频：" : "上一个视频：";
         }
 
         private string PartTitle(int index)
@@ -1493,10 +1485,12 @@ namespace BiliLite.Pages
         }
 
         /// <summary>
-        /// "目录"按钮的短标签和目录页头同源,只算位置不建行
+        /// "目录"按钮的短标签和目录页头同源,只算位置不建行。
+        /// available 只问有没有目录:没有位置时按钮只剩图标,不因此消失。
         /// </summary>
-        private string DirectoryCaption()
+        private string DirectoryCaption(out bool available)
         {
+            available = true;
             var position = sequence.Position;
             if (position.Source == WatchSequenceSourceKind.UgcSeason && position.RowCount > 0)
             {
@@ -1511,6 +1505,7 @@ namespace BiliLite.Pages
             {
                 return PlayDirectoryBuilder.Caption(PlayDirectorySectionKind.Parts, position.PartIndex + 1, position.PartCount);
             }
+            available = false;
             return "";
         }
 
@@ -1554,8 +1549,7 @@ namespace BiliLite.Pages
             var queue = playlist?.Playlist == null
                 ? null
                 : PlayDirectoryBuilder.FromPlaylist(playlist, mediaListState, info == null ? null : info.aid);
-            var model = PlayDirectoryBuilder.Combine(parts, collection, queue, sequence.Position.Source,
-                DescribeStep(WatchSequenceOrder.Next(sequence.Position, false), true));
+            var model = PlayDirectoryBuilder.Combine(parts, collection, queue, sequence.Position.Source);
             // 新开目录才让浏览的分段回到连播来源;重画留着用户正在看的那一段
             model.IsFreshOpen = freshOpen;
             return model;

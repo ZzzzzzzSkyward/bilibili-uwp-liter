@@ -15,6 +15,9 @@
       <Setter Property="Foreground" Value="{ThemeResource HighLightColor}"/>
       <Setter Property="FontWeight" Value="SemiBold"/>
     </Style>
+    <Style x:Key="DirectoryDotStyle" TargetType="TextBlock">
+      <Setter Property="Foreground" Value="{ThemeResource HighLightColor}"/>
+    </Style>
     <Style x:Key="DirectoryActionStyle" TargetType="Button">
       <Setter Property="Foreground" Value="White"/>
       <Setter Property="Background" Value="#33FFFFFF"/>
@@ -54,7 +57,10 @@
       </Grid.ColumnDefinitions>
       <StackPanel VerticalAlignment="Center">
         <TextBlock x:Name="SourceTitleText" FontSize="16" Foreground="White" TextTrimming="CharacterEllipsis" MaxLines="1"/>
-        <TextBlock x:Name="PositionText" FontSize="12" Foreground="#B3FFFFFF" TextWrapping="Wrap" Margin="0 4 0 0"/>
+        <StackPanel Orientation="Horizontal" Margin="0 4 0 0">
+          <TextBlock x:Name="PositionText" FontSize="12" Foreground="#B3FFFFFF"/>
+          <TextBlock x:Name="PositionCountText" FontSize="12" Foreground="#B3FFFFFF"/>
+        </StackPanel>
       </StackPanel>
       <Button x:Name="LocateButton" Grid.Column="1" Click="LocateButton_Click" Style="{StaticResource DirectoryActionStyle}" VerticalAlignment="Center" AutomationProperties.Name="定位正在播放" ToolTipService.ToolTip="滚动到正在播放的一行">
         <TextBlock Text="定位正在播放" FontSize="13"/>

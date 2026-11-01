@@ -28,7 +28,7 @@ namespace BiliLite.Models.Common
         /// </summary>
         public string Subtitle { get; set; }
         /// <summary>
-        /// 位置文字,例如 合集 7/24、第7项;当前行会再带上分P位置
+        /// 位置文字,例如 合集 7/24、第7项
         /// </summary>
         public string PositionText { get; set; }
         public string Duration { get; set; }
@@ -65,11 +65,7 @@ namespace BiliLite.Models.Common
         public string CurrentKey { get; set; }
         public string CurrentPositionText { get; set; }
         /// <summary>
-        /// 当前分P的 P2/3;只有一个分P时为空,免得页头一直写 P1/1
-        /// </summary>
-        public string CurrentPartText { get; set; }
-        /// <summary>
-        /// 页头那行"连播来源：… · 接下来：…"
+        /// 页头那行来源:合集《标题》、播放列表《标题》、分P
         /// </summary>
         public string HeaderText { get; set; }
         public PlayDirectorySectionKind ActiveKind { get; set; }
@@ -107,7 +103,7 @@ namespace BiliLite.Models.Common
     /// </summary>
     public static class PlayDirectoryBuilder
     {
-        public const string PartsSectionTitle = "当前视频分P";
+        public const string PartsSectionTitle = "分P";
         public const string CollectionSectionTitle = "合集";
         public const string PlaylistSectionTitle = "播放列表";
         public const string NowPlayingBadge = "正在播放";
@@ -143,10 +139,9 @@ namespace BiliLite.Models.Common
             {
                 SourceTitle = sourceTitle ?? "",
                 Caption = Caption(PlayDirectorySectionKind.Parts, index + 1, count),
-                CountText = "共" + count.ToString(CultureInfo.InvariantCulture) + "P",
+                CountText = count.ToString(CultureInfo.InvariantCulture),
                 CurrentKey = currentKey,
                 CurrentPositionText = partText,
-                CurrentPartText = count > 1 ? partText : "",
                 ActiveKind = PlayDirectorySectionKind.Parts,
                 Sections = new List<PlayDirectorySection>(),
             };
@@ -218,10 +213,9 @@ namespace BiliLite.Models.Common
             {
                 SourceTitle = season == null ? "" : season.Title,
                 Caption = Caption(PlayDirectorySectionKind.UgcSeason, currentIndex + 1, total),
-                CountText = "共" + total.ToString(CultureInfo.InvariantCulture) + "个视频",
+                CountText = total.ToString(CultureInfo.InvariantCulture),
                 CurrentKey = currentIndex < 0 ? "" : rows[currentIndex].Key,
                 CurrentPositionText = currentIndex < 0 ? "" : PositionOf(CollectionSectionTitle, currentIndex + 1, total),
-                CurrentPartText = "",
                 ActiveKind = PlayDirectorySectionKind.UgcSeason,
                 Sections = new List<PlayDirectorySection>(),
             };
@@ -281,11 +275,10 @@ namespace BiliLite.Models.Common
                 SourceTitle = title,
                 Caption = Caption(PlayDirectorySectionKind.Playlist, ordinal, total),
                 CountText = paging != null
-                    ? CountText(ordinal, paging.LoadedCount, paging.HasKnownTotal, paging.TotalCount, paging.HasMore)
+                    ? CountText(paging.LoadedCount, paging.HasKnownTotal, paging.TotalCount)
                     : FixedCountText(ordinal, total),
                 CurrentKey = index < 0 ? "" : rows[index].Key,
                 CurrentPositionText = ordinal > 0 ? OrdinalText(ordinal) : "",
-                CurrentPartText = "",
                 ActiveKind = PlayDirectorySectionKind.Playlist,
                 Sections = new List<PlayDirectorySection>(),
             };
@@ -307,7 +300,7 @@ namespace BiliLite.Models.Common
         /// 活动分段优先跟随连播来源,没有外层来源时落在分P上。
         /// </summary>
         public static PlayDirectoryModel Combine(PlayDirectoryModel parts, PlayDirectoryModel collection,
-            PlayDirectoryModel playlist, WatchSequenceSourceKind activeSource, string nextTargetText)
+            PlayDirectoryModel playlist, WatchSequenceSourceKind activeSource)
         {
             var sections = new List<PlayDirectorySection>();
             AppendSections(sections, parts);
@@ -315,35 +308,14 @@ namespace BiliLite.Models.Common
             AppendSections(sections, playlist);
 
             var activeKind = ResolveActiveKind(sections, activeSource);
-            var activeSection = SectionOf(sections, activeKind);
             var model = ModelOf(activeKind, parts, collection, playlist);
-            var partsText = parts == null ? "" : parts.CurrentPartText;
-
-            var positionText = model == null ? "" : model.CurrentPositionText;
-            if (activeKind != PlayDirectorySectionKind.Parts && !string.IsNullOrEmpty(partsText))
-            {
-                positionText = Join(positionText, partsText);
-                // 活动分段的当前行也写出分P位置,例如 合集 7/24 · P2/3
-                if (activeSection != null && activeSection.Rows != null)
-                {
-                    foreach (var row in activeSection.Rows)
-                    {
-                        if (row.IsCurrent) row.PositionText = Join(row.PositionText, partsText);
-                    }
-                }
-            }
 
             var sourceLabel = SourceLabelOf(activeKind);
             var sourceTitle = model == null ? "" : model.SourceTitle;
-            var header = "连播来源：" + sourceLabel;
-            if (activeKind != PlayDirectorySectionKind.Parts && !string.IsNullOrEmpty(sourceTitle))
-            {
-                header = header + "《" + sourceTitle + "》";
-            }
-            if (!string.IsNullOrEmpty(nextTargetText))
-            {
-                header = header + " · 接下来：" + nextTargetText;
-            }
+            // 页头只写来源本身;下一集在"下一个"按钮上,分P位置在分P页签里
+            var header = activeKind != PlayDirectorySectionKind.Parts && !string.IsNullOrEmpty(sourceTitle)
+                ? sourceLabel + "《" + sourceTitle + "》"
+                : sourceLabel;
 
             return new PlayDirectoryModel()
             {
@@ -351,8 +323,7 @@ namespace BiliLite.Models.Common
                 Caption = model == null ? "" : model.Caption,
                 CountText = model == null ? "" : model.CountText,
                 CurrentKey = model == null ? "" : model.CurrentKey,
-                CurrentPositionText = positionText,
-                CurrentPartText = partsText,
+                CurrentPositionText = model == null ? "" : model.CurrentPositionText,
                 HeaderText = header,
                 ActiveKind = activeKind,
                 Sections = sections,
@@ -360,53 +331,43 @@ namespace BiliLite.Models.Common
         }
 
         /// <summary>
-        /// 播放器按钮上的短标签:合集 · 7/24、播放列表 · 第7项、分P · 2/3。
-        /// 当前位置不在这一段里(没有当前行)时只写总量。
+        /// 播放器按钮上的短标签:7/24、第7项、2/3。
+        /// 当前位置不在这一段里(没有当前行)时不写位置。
         /// </summary>
         public static string Caption(PlayDirectorySectionKind kind, int ordinal, int count)
         {
-            if (count < 0) count = 0;
+            if (ordinal <= 0 || count <= 0) return "";
             switch (kind)
             {
                 case PlayDirectorySectionKind.UgcSeason:
-                    return ordinal > 0 && ordinal <= count
-                        ? CollectionSectionTitle + " · " + CountPosition(ordinal, count)
-                        : CollectionSectionTitle + " · " + count.ToString(CultureInfo.InvariantCulture) + "项";
+                    return CountPosition(ordinal, count);
                 case PlayDirectorySectionKind.Playlist:
-                    return ordinal > 0
-                        ? PlaylistSectionTitle + " · " + OrdinalText(ordinal)
-                        : PlaylistSectionTitle;
+                    return OrdinalText(ordinal);
                 default:
-                    return count > 0
-                        ? "分P · " + CountPosition(Math.Max(1, ordinal), count)
-                        : "分P";
+                    return CountPosition(Math.Max(1, ordinal), count);
             }
         }
 
         /// <summary>
-        /// 远程队列的数量说明:第7项 · 已加载20项 · 共120项 / 总数未知,
-        /// 只有翻页真的到头(hasMore 为 false)才写已全部加载。
+        /// 远程队列的数量:已加载/已知总数,总数未知时只写已加载数
         /// </summary>
-        public static string CountText(int ordinal, int loadedCount, bool hasKnownTotal, int totalCount, bool hasMore)
+        public static string CountText(int loadedCount, bool hasKnownTotal, int totalCount)
         {
             if (loadedCount < 0) loadedCount = 0;
-            var text = ordinal > 0 ? OrdinalText(ordinal) : "";
-            text = Join(text, "已加载" + loadedCount.ToString(CultureInfo.InvariantCulture) + "项");
-            text = Join(text, hasKnownTotal
-                ? "共" + Math.Max(0, totalCount).ToString(CultureInfo.InvariantCulture) + "项"
-                : "总数未知");
-            if (!hasMore) text = Join(text, "已全部加载");
-            return text;
+            var loaded = loadedCount.ToString(CultureInfo.InvariantCulture);
+            return hasKnownTotal
+                ? loaded + "/" + Math.Max(0, totalCount).ToString(CultureInfo.InvariantCulture)
+                : loaded;
         }
 
         /// <summary>
-        /// 固定内存队列没有翻页:写可播放总量
+        /// 固定内存队列没有翻页:写当前项/总量,没有当前项时只写总量
         /// </summary>
         public static string FixedCountText(int ordinal, int count)
         {
             if (count < 0) count = 0;
-            var total = "共" + count.ToString(CultureInfo.InvariantCulture) + "个可播放视频";
-            return ordinal > 0 ? Join(OrdinalText(ordinal), total) : total;
+            var total = count.ToString(CultureInfo.InvariantCulture);
+            return ordinal > 0 ? CountPosition(ordinal, count) : total;
         }
 
         /// <summary>
@@ -502,7 +463,7 @@ namespace BiliLite.Models.Common
             {
                 case PlayDirectorySectionKind.UgcSeason: return CollectionSectionTitle;
                 case PlayDirectorySectionKind.Playlist: return PlaylistSectionTitle;
-                default: return "本视频分P";
+                default: return PartsSectionTitle;
             }
         }
 
@@ -553,11 +514,14 @@ namespace BiliLite.Models.Common
             }
         }
 
+        /// <summary>
+        /// 行副标题的两段(合集分区、UP主)。分隔只用空格:"·"是把两个事实拼成一句话的写法。
+        /// </summary>
         private static string Join(string left, string right)
         {
             if (string.IsNullOrEmpty(left)) return right ?? "";
             if (string.IsNullOrEmpty(right)) return left;
-            return left + " · " + right;
+            return left + " " + right;
         }
 
         private sealed class EpisodeRow

@@ -704,8 +704,11 @@
                       <ComboBoxItem Content="0.5x"/>
                     </ComboBox.Items>
                   </ComboBox>
-                  <Button x:Name="BottomBtnDirectory" Click="BottomBtnDirectory_Click" Visibility="Collapsed" ToolTipService.ToolTip="打开播放目录" AutomationProperties.Name="打开播放目录" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
-                    <TextBlock x:Name="BottomBtnDirectoryCaption" VerticalAlignment="Center" FontSize="18" Text="目录"/>
+                  <Button x:Name="BottomBtnDirectory" Click="BottomBtnDirectory_Click" Visibility="Collapsed" ToolTipService.ToolTip="播放目录" AutomationProperties.Name="播放目录" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
+                    <StackPanel Orientation="Horizontal">
+                      <fa:FontAwesome Icon="Solid_ListUl" FontSize="18" VerticalAlignment="Center"/>
+                      <TextBlock x:Name="BottomBtnDirectoryCaption" VerticalAlignment="Center" FontSize="18" Text="" Margin="8 0 0 0"/>
+                    </StackPanel>
                   </Button>
                   <Button x:Name="BottomBtnList" Click="BottomBtnList_Click" Visibility="{x:Bind ShowPlaylistButton,Mode=OneWay}" ToolTipService.ToolTip="选集" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
                     <TextBlock VerticalAlignment="Center" FontSize="18">选集</TextBlock>
