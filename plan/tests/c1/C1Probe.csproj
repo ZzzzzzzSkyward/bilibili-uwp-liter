@@ -17,6 +17,10 @@
 
   <ItemGroup>
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\VideoCollections.cs" Link="VideoCollections.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiEnvelope.cs" Link="ApiEnvelope.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Video\*.cs" LinkBase="Parsing\Video" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\Video\*.cs" LinkBase="Models\Api\Video" />
   </ItemGroup>
 
 </Project>
