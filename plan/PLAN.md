@@ -23,6 +23,10 @@ in `bug_report.md` first.
 
 Newest first; every one of these is device-accepted per the policy above.
 
+- **Cookie jar and packaging traps:** `fe335f3` — `Models/CookieOrigins.cs` is the one origin list (read across
+  root/www/passport/api, write to root and www) so `ac_time_value` is visible, plus one verdict log line;
+  `862e61c` — the build script prints only the installable `BiliLite.Packages_*`, fails before printing
+  when it is missing, and deletes the `BiliLite.UWP_*` byproduct that installs into a launch crash.
 - **Drawer polish from the device pass:** `5ed8d17` — `Models/DirectoryDrawerMotion.cs` (close token so a
   reopen during the close is never hidden, snap when animations are disabled), a scrim before
   `DirectoryHost` that closes on a tap and swallows the gesture, the 目录 button flashing with an active
