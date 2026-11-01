@@ -351,7 +351,7 @@ $packages = @()
 foreach ($line in $buildOutput) {
     if ($line -match '->\s+(.+\.msix)\s*$') { $packages += $Matches[1].Trim() }
 }
-foreach ($name in @('BiliLite.UWP', 'BiliLite.Packages')) {
+foreach ($name in @('BiliLite.Packages', 'BiliLite.UWP')) {
     $expected = Join-Path $OutputDir ("{0}_{1}_x64_Test\{0}_{1}_x64.msix" -f $name, $builtVersion)
     if (Test-Path -LiteralPath $expected) { $packages += $expected }
 }
@@ -359,7 +359,8 @@ $packages = @($packages | Select-Object -Unique)
 if ($packages) {
     Write-Host ''
     Write-Host '生成产物：'
-    $packages | ForEach-Object { Write-Host "  $_" }
+    # 交付包排第一位，UWP 包只是副产物，排在后面
+    $packages | Sort-Object { -not ($_ -match 'BiliLite\.Packages_') } | ForEach-Object { Write-Host "  $_" }
 }
 else {
     throw "生成成功，但在 $OutputDir 里没有找到任何 MSIX（版本 $builtVersion）。不要交付空结果。"
@@ -367,8 +368,10 @@ else {
 
 # ---------- 打包布局校验 ----------
 # 1.0.9.12 把 4MB 的托管主程序放在包根、且没有 entrypoint/，装上去就停在启动图闪退；
-# 能正常启动的布局是「根目录 8KB 启动器 + entrypoint\BiliLiter.exe」。
-# 两个打包工程都会往同一个目录写同名 MSIX，谁后写谁赢，所以最后一个文件不能直接交付。
+# 能正常启动的布局是「根目录 8KB 启动器 + entrypoint\BiliLiter.exe + Win32Tools + fullTrustProcess 扩展」，
+# 这个布局只会出现在 BiliLite.Packages 包里，所以只校验它。
+# 原逻辑假设两个打包工程往同一个目录写同名 MSIX、后者覆盖前者，实测各自写自己的目录，
+# 于是 BiliLite.UWP 包永远没有 entrypoint/，拿它当校验对象只会让正确构建报错，这里不再校验它。
 Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue | Out-Null
 
 function Read-AppxPackageLayout {
@@ -390,15 +393,6 @@ function Read-AppxPackageLayout {
     }
 }
 
-function Test-UwpPackageLayout {
-    param([string]$Path)
-    $layout = Read-AppxPackageLayout -Path $Path
-    if (-not $layout.Entries.ContainsKey('entrypoint/BiliLiter.exe')) { return '缺少 entrypoint/BiliLiter.exe' }
-    if (-not $layout.Entries.ContainsKey('BiliLiter.exe')) { return '缺少根 BiliLiter.exe' }
-    if ($layout.Entries['BiliLiter.exe'] -ge 65536) { return "根 BiliLiter.exe 是 $($layout.Entries['BiliLiter.exe']) 字节的托管主程序，不是启动器" }
-    return $null
-}
-
 function Test-FullPackageLayout {
     param([string]$Path)
     $layout = Read-AppxPackageLayout -Path $Path
@@ -408,27 +402,15 @@ function Test-FullPackageLayout {
     return $null
 }
 
-$uwpPackage = $packages | Where-Object { $_ -match 'BiliLite\.UWP_.*\.msix$' } | Select-Object -First 1
 $fullPackage = $packages | Where-Object { $_ -match 'BiliLite\.Packages_.*\.msix$' } | Select-Object -First 1
-if (-not $uwpPackage -and -not $fullPackage) {
-    throw "找到的 MSIX 里没有 BiliLite.UWP_* 或 BiliLite.Packages_*（$($packages -join '; ')），布局无法校验，不要交付。"
+if (-not $fullPackage) {
+    throw "找到的 MSIX 里没有 BiliLite.Packages_*.msix（$($packages -join '; ')），自检过的完整包不存在，不要交付。"
 }
-if ($uwpPackage) {
-    $problem = Test-UwpPackageLayout -Path $uwpPackage
-    if ($problem) {
-        # 另一个打包工程会把同名文件覆盖成正确布局：重跑它一次再检查
-        Write-Warning "UWP 包布局不对（$problem），重跑 BiliLite.Packages 打包修正。"
-        $wapproj = Join-Path $root 'src\BiliLite.Packages\BiliLite.Packages.wapproj'
-        & $msbuild $wapproj -t:Package '-p:Configuration=Release' '-p:Platform=x64' '-v:m' '-nologo' '-m' '-nodeReuse:false' "-p:AppxPackageDir=$OutputDir" | Out-Null
-        $problem = Test-UwpPackageLayout -Path $uwpPackage
-        if ($problem) {
-            throw "UWP 包布局仍然不对（$problem）：$uwpPackage。这个包装上去会停在启动图，不要交付。"
-        }
-    }
+$problem = Test-FullPackageLayout -Path $fullPackage
+if ($problem) {
+    throw "完整包布局不对（$problem）：$fullPackage。"
 }
-if ($fullPackage) {
-    $problem = Test-FullPackageLayout -Path $fullPackage
-    if ($problem) {
-        throw "完整包布局不对（$problem）：$fullPackage。"
-    }
-}
+
+Write-Host ''
+Write-Host "交付包：$fullPackage"
+Write-Host 'BiliLite.UWP 包是同一构建的副产物，不能单独安装。'
