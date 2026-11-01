@@ -400,9 +400,9 @@ namespace C2Probe
             Check(xaml.Contains("x:Key=\"MediaListRowTpl\""), "source: the remote playlist row template exists");
             var template = xaml.Substring(xaml.IndexOf("x:Key=\"MediaListRowTpl\"", StringComparison.Ordinal));
             template = template.Substring(0, template.IndexOf("</DataTemplate>", StringComparison.Ordinal));
-            Check(template.Contains("{Binding Cover}") && template.Contains("{Binding Title}")
+            Check(template.Contains("{Binding Cover, Converter={StaticResource imageConvert2}") && template.Contains("{Binding Title}")
                 && template.Contains("{Binding Author}") && template.Contains("{Binding Duration}"),
-                "source: the remote row shows cover, title, author and duration");
+                "source: the remote row shows a converted cover, title, author and duration");
         }
 
         private static void ProjectEntries()

@@ -165,9 +165,9 @@ namespace C1Probe
             Check(xaml.Contains("x:Key=\"UgcSeasonEpisodeTpl\""), "source: the episode row template exists");
             var template = xaml.Substring(xaml.IndexOf("x:Key=\"UgcSeasonEpisodeTpl\"", StringComparison.Ordinal));
             template = template.Substring(0, template.IndexOf("</DataTemplate>", StringComparison.Ordinal));
-            Check(template.Contains("{Binding Cover}") && template.Contains("{Binding Title}")
+            Check(template.Contains("{Binding Cover, Converter={StaticResource imageConvert2}") && template.Contains("{Binding Title}")
                 && template.Contains("{Binding Author}") && template.Contains("{Binding Duration}"),
-                "source: the row shows cover, title, author and duration like the playlist template");
+                "source: the row shows a converted cover, title, author and duration like the playlist template");
         }
 
         private static VideoDetailModel ParseDetail(string json)
