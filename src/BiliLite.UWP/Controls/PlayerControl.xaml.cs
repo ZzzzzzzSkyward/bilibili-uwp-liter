@@ -459,23 +459,25 @@ namespace BiliLite.Controls
         private async void PlayerControl_KeyDown(CoreWindow sender, KeyEventArgs args)
         {
             var ele = FocusManager.GetFocusedElement();
-            if (ele is TextBox || ele is AutoSuggestBox)
-            {
-                args.Handled = false;
-                return;
-            }
-            // 目录抽屉开着:Esc 先关抽屉,方向键/回车留给列表浏览,播放器快捷键先让路
+            // 目录抽屉开着:Esc 先清搜索框,词空了才关抽屉;方向键/回车留给列表浏览,
+            // 其余键一概让路(焦点在搜索框里时,这段也要排在下面那个文本框判断之前)
             if (_directoryOpen)
             {
                 if (args.VirtualKey == Windows.System.VirtualKey.Escape)
                 {
-                    HideDirectory();
+                    if (DirectoryDrawer.HasQuery) DirectoryDrawer.SetQuery("");
+                    else HideDirectory();
                     args.Handled = true;
                 }
                 else
                 {
                     args.Handled = false;
                 }
+                return;
+            }
+            if (ele is TextBox || ele is AutoSuggestBox)
+            {
+                args.Handled = false;
                 return;
             }
             args.Handled = true;

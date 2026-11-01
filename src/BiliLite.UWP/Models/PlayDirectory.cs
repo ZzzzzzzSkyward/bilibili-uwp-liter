@@ -136,6 +136,17 @@ namespace BiliLite.Models.Common
         public string PendingKey { get; set; }
 
         /// <summary>
+        /// 生效的搜索词,空表示没过滤。过滤出来的是另一份模型:
+        /// 未过滤的那份留在抽屉里,清空搜索就原样拿回来
+        /// </summary>
+        public string Query { get; set; }
+
+        public bool IsFiltered
+        {
+            get { return !string.IsNullOrEmpty(Query); }
+        }
+
+        /// <summary>
         /// 一段都没有时不弹空抽屉
         /// </summary>
         public bool HasSections
@@ -415,6 +426,76 @@ namespace BiliLite.Models.Common
         }
 
         /// <summary>
+        /// 在已经拿到手的目录里搜索。纯函数:只按标题筛手里的行,不取页、不换来源、不动播放,
+        /// 也不改传进来的那份模型。
+        /// 分段顺序不变,一段没命中就留一个空段(用户要看得见它还在,只是没有结果);
+        /// 活下来的行还是原来那些对象,Key/Ordinal/当前/等待都跟着它们走。
+        /// </summary>
+        public static PlayDirectoryModel Filter(PlayDirectoryModel model, string query)
+        {
+            if (model == null) return null;
+            var needle = (query ?? "").Trim();
+            if (needle.Length == 0) return model;
+
+            var sections = new List<PlayDirectorySection>();
+            if (model.Sections != null)
+            {
+                foreach (var section in model.Sections)
+                {
+                    if (section == null) continue;
+                    var rows = new List<PlayDirectoryRow>();
+                    if (section.Rows != null)
+                    {
+                        foreach (var row in section.Rows)
+                        {
+                            if (row == null || !TitleMatches(row.Title, needle)) continue;
+                            rows.Add(row);
+                        }
+                    }
+                    sections.Add(new PlayDirectorySection()
+                    {
+                        Kind = section.Kind,
+                        Title = section.Title,
+                        Rows = rows,
+                    });
+                }
+            }
+
+            // 其余字段照抄:活动来源、翻页状态、当前行和等待行都还是这份目录的
+            return new PlayDirectoryModel()
+            {
+                SourceTitle = model.SourceTitle,
+                Caption = model.Caption,
+                CountText = model.CountText,
+                CurrentKey = model.CurrentKey,
+                CurrentPositionText = model.CurrentPositionText,
+                HeaderText = model.HeaderText,
+                ActiveKind = model.ActiveKind,
+                Sections = sections,
+                IsFreshOpen = model.IsFreshOpen,
+                Paging = model.Paging,
+                PendingKey = model.PendingKey,
+                Query = needle,
+            };
+        }
+
+        /// <summary>
+        /// 行在它自己来源里的下标。身份只认 Key:过滤之后 Ordinal 还是原来源里的位置,
+        /// 行的位置却变了,拿它当下标就会播错一条。来源里已经没有这个 Key 时返回 -1(过期行)。
+        /// </summary>
+        public static int SourceIndexOf(string key, IList<string> sourceKeys)
+        {
+            if (sourceKeys == null || string.IsNullOrEmpty(key)) return -1;
+            for (var i = 0; i < sourceKeys.Count; i++)
+            {
+                var candidate = sourceKeys[i];
+                if (string.IsNullOrEmpty(candidate)) continue;
+                if (string.Equals(candidate, key, StringComparison.Ordinal)) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
         /// 播放器按钮上的短标签:7/24、第7项、2/3。
         /// 当前位置不在这一段里(没有当前行)时不写位置。
         /// </summary>
@@ -524,11 +605,27 @@ namespace BiliLite.Models.Common
             return seconds >= 3600 ? duration.ToString(@"hh\:mm\:ss") : duration.ToString(@"mm\:ss");
         }
 
+        /// <summary>
+        /// 标题命中:不分大小写,词两头的空白不算内容。空词已经在外层挡掉了
+        /// </summary>
+        private static bool TitleMatches(string title, string needle)
+        {
+            return !string.IsNullOrEmpty(title) && title.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>
+        /// 分P行的身份键:有 cid 就是 cid;详情没给 cid 时退到位置,至少不会和别的行撞成同一个 Key。
+        /// 解析来源下标时用同一条规则,行的 Key 才总能回到它自己的来源位置
+        /// </summary>
+        public static string PartKey(string cid, int index)
+        {
+            if (!string.IsNullOrEmpty(cid)) return cid;
+            return "part-" + (index + 1).ToString(CultureInfo.InvariantCulture);
+        }
+
         private static string PartKey(PlayDirectoryPart part, int index)
         {
-            // 分P的身份是 cid;详情没给 cid 时退到位置,至少不会和别的行撞成同一个 Key
-            if (part != null && !string.IsNullOrEmpty(part.Cid)) return part.Cid;
-            return "part-" + (index + 1).ToString(CultureInfo.InvariantCulture);
+            return PartKey(part == null ? null : part.Cid, index);
         }
 
         private static string PartText(int index, int count)

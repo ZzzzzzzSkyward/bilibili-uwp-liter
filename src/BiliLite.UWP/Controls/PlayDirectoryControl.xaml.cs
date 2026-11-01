@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using Windows.System;
 using Windows.UI;
 using Windows.UI.Xaml;
@@ -17,9 +18,11 @@ namespace BiliLite.Controls
     /// </summary>
     public sealed partial class PlayDirectoryControl : UserControl
     {
+        private PlayDirectoryModel m_source;
         private PlayDirectoryModel m_model;
         private PlayDirectorySectionKind m_activeKind;
         private bool m_scopeSet;
+        private string m_query = "";
 
         public PlayDirectoryControl()
         {
@@ -57,20 +60,63 @@ namespace BiliLite.Controls
         /// 换一份目录。分段顺序由模型决定,页签只为有内容的分段生成。
         /// 重画时留着用户正在浏览的分段:换集、自动连播都不该把人从别的页签拽走;
         /// 只有新开目录或那一段没了才回到连播来源。
+        /// 重画照旧带着正在用的搜索词:新到的行也从同一道筛子里过。
         /// </summary>
         public void SetModel(PlayDirectoryModel model)
         {
             var resetScope = model != null && model.IsFreshOpen || !m_scopeSet;
-            var browsed = resetScope ? (PlayDirectorySectionKind?)null : m_activeKind;
-            m_model = model;
+            m_source = model;
+            // 新开目录:上一段搜索不跟过来,输入框也回空
+            if (resetScope)
+            {
+                m_query = "";
+                QueryBox.Text = "";
+            }
+            m_model = DisplayModel();
             HeaderText.Text = model == null ? "" : model.HeaderText ?? "";
             SourceTitleText.Text = model == null ? "" : model.SourceTitle ?? "";
             SetPosition(model);
+            Render(resetScope ? (PlayDirectorySectionKind?)null : m_activeKind);
+        }
 
-            BuildTabs(model);
-            SelectScope(PlayDirectoryBuilder.ResolveBrowsedSection(model, browsed), false);
-            UpdateSourceActions(model);
-            UpdatePaging(model);
+        /// <summary>
+        /// 在已经加载的行里搜索。只筛抽屉手里这份目录:不发请求、不换连播来源、不起播,
+        /// 浏览的分段只要还在就留着。空词恢复未过滤的那份。
+        /// </summary>
+        public void SetQuery(string query)
+        {
+            var text = query ?? "";
+            if (QueryBox.Text != text) QueryBox.Text = text;
+            var needle = text.Trim();
+            if (needle == m_query) return;
+            m_query = needle;
+            m_model = DisplayModel();
+            // 过滤只换行,不通知宿主:没有任何一段因此换来源
+            Render(m_scopeSet ? m_activeKind : (PlayDirectorySectionKind?)null);
+        }
+
+        /// <summary>
+        /// 搜索框里有词。Esc 先清它,空了才轮到关抽屉
+        /// </summary>
+        public bool HasQuery
+        {
+            get { return m_query.Length > 0; }
+        }
+
+        /// <summary>
+        /// 要显示的那份:有词就筛一遍手里这份,没词就是它本身
+        /// </summary>
+        private PlayDirectoryModel DisplayModel()
+        {
+            return m_query.Length == 0 ? m_source : PlayDirectoryBuilder.Filter(m_source, m_query);
+        }
+
+        private void Render(PlayDirectorySectionKind? browsed)
+        {
+            BuildTabs(m_model);
+            SelectScope(PlayDirectoryBuilder.ResolveBrowsedSection(m_model, browsed), false);
+            UpdateSourceActions(m_model);
+            UpdatePaging(m_model);
         }
 
         /// <summary>
@@ -87,7 +133,10 @@ namespace BiliLite.Controls
         /// </summary>
         public void LocateCurrent()
         {
-            var kind = PlayDirectoryBuilder.LocateSection(m_model, m_activeKind);
+            // 过滤时只在用户正在看的那一段里找:当前行被筛掉了就什么都不做,不跳到别的段
+            var kind = m_model != null && m_model.IsFiltered
+                ? m_activeKind
+                : PlayDirectoryBuilder.LocateSection(m_model, m_activeKind);
             var row = PlayDirectoryBuilder.CurrentRowOf(m_model, kind);
             if (row == null) return;
             if (kind != m_activeKind) SelectScope(kind, true);
@@ -110,14 +159,20 @@ namespace BiliLite.Controls
         {
             TabHost.Children.Clear();
             if (model == null || model.Sections == null) return;
+            var filtering = model.IsFiltered;
             foreach (var section in model.Sections)
             {
                 if (section == null) continue;
+                var count = section.Rows == null ? 0 : section.Rows.Count;
                 var title = section.Title ?? "";
+                // 过滤时页签带上命中数:一个数字,不加单位也不解释
+                if (filtering) title += " " + count.ToString(CultureInfo.InvariantCulture);
                 var tab = new Button()
                 {
                     Tag = section.Kind,
                     Style = (Style)Resources["DirectoryTabStyle"],
+                    // 没命中的段留着让用户看见它还在,只是点不开
+                    IsEnabled = !filtering || count > 0,
                 };
                 var isContinuation = section.Kind == model.ActiveKind;
                 tab.Content = isContinuation
@@ -243,6 +298,50 @@ namespace BiliLite.Controls
         private void RowList_ItemClick(object sender, ItemClickEventArgs e)
         {
             Activate(e.ClickedItem as PlayDirectoryRow);
+        }
+
+        /// <summary>
+        /// 输入框里打字归输入框;上下键把焦点交给结果列表并移动选中行,回车激活那一行
+        /// </summary>
+        private void QueryBox_KeyDown(object sender, KeyRoutedEventArgs e)
+        {
+            if (e.Key == VirtualKey.Enter)
+            {
+                e.Handled = true;
+                var selected = RowList.SelectedItem as PlayDirectoryRow;
+                if (selected == null)
+                {
+                    FocusRows();
+                    return;
+                }
+                Activate(selected);
+                return;
+            }
+            if (e.Key != VirtualKey.Up && e.Key != VirtualKey.Down) return;
+            e.Handled = true;
+            FocusRows();
+            MoveSelection(e.Key == VirtualKey.Down ? 1 : -1);
+        }
+
+        private void QueryBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            SetQuery(QueryBox.Text);
+        }
+
+        /// <summary>
+        /// 在结果里挪一行;还没有选中项时从这一头的第一行开始
+        /// </summary>
+        private void MoveSelection(int delta)
+        {
+            var count = RowList.Items.Count;
+            if (count == 0) return;
+            var index = RowList.SelectedIndex;
+            index = index < 0
+                ? (delta > 0 ? 0 : count - 1)
+                : Math.Min(Math.Max(0, index + delta), count - 1);
+            RowList.SelectedIndex = index;
+            var row = RowList.SelectedItem as PlayDirectoryRow;
+            if (row != null) RowList.ScrollIntoView(row);
         }
 
         private void RowList_KeyDown(object sender, KeyRoutedEventArgs e)

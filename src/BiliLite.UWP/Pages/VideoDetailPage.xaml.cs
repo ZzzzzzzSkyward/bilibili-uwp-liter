@@ -1621,8 +1621,14 @@ namespace BiliLite.Pages
             if (transition.IsPending) return;
             // 用户自己选了行:断在取页上的那一步不再作数,不再自动推进
             transition.DropAdvance();
-            var rowIndex = row.Ordinal - 1;
-            if (rowIndex < 0) return;
+            // 行的身份是 Key:抽屉里搜过之后 Ordinal 还是来源位置,行在列表里的位置却变了
+            var rowIndex = DirectorySourceIndex(kind, row);
+            if (rowIndex < 0)
+            {
+                // 这一行在来源里已经没有了:重画抽屉让它消失,不起播
+                RedrawOpenDirectory();
+                return;
+            }
             // 只有真的就是正在播的那一条才不起播:行上的 IsCurrent 可能来自别的时段或别的分段
             if (IsPlayingDirectoryRow(kind, row))
             {
@@ -1651,26 +1657,67 @@ namespace BiliLite.Pages
         }
 
         /// <summary>
-        /// 这一行是不是正在播的那条视频。分P比 cid,合集和播放列表比 aid:
+        /// 行 → 它所在来源里的下标,按分段查各自的 Key 序列:分P查 cid,合集查分集 aid,
+        /// 播放列表查队列行 aid。找不到就是过期行(返回 -1)。Ordinal 是展示位置,
+        /// 过滤之后不能拿它当来源下标。
+        /// </summary>
+        private int DirectorySourceIndex(PlayDirectorySectionKind kind, PlayDirectoryRow row)
+        {
+            if (row == null) return -1;
+            switch (kind)
+            {
+                case PlayDirectorySectionKind.Parts:
+                    return PlayDirectoryBuilder.SourceIndexOf(row.Key, PartKeys());
+                case PlayDirectorySectionKind.UgcSeason:
+                    return PlayDirectoryBuilder.SourceIndexOf(row.Key,
+                        VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason));
+                default:
+                    return PlayDirectoryBuilder.SourceIndexOf(row.Key, PlaylistIds());
+            }
+        }
+
+        private List<string> PartKeys()
+        {
+            var keys = new List<string>();
+            var playInfos = player?.PlayInfos;
+            if (playInfos == null) return keys;
+            for (var i = 0; i < playInfos.Count; i++)
+            {
+                var info = playInfos[i];
+                // 和建目录同一条身份规则:cid,没有 cid 时退到这个位置
+                keys.Add(PlayDirectoryBuilder.PartKey(info == null ? null : info.cid, i));
+            }
+            return keys;
+        }
+
+        private List<string> PlaylistIds()
+        {
+            var ids = new List<string>();
+            var rows = playlist?.Playlist;
+            if (rows == null) return ids;
+            foreach (var item in rows) ids.Add(item == null ? null : item.ID);
+            return ids;
+        }
+
+        /// <summary>
+        /// 这一行是不是正在播的那条视频:先按 Key 回查到来源下标,再和这个来源现在的下标比。
         /// 队列游标会停在旧的一行,行的 IsCurrent 不能当成"正在播"的证据。
         /// </summary>
         private bool IsPlayingDirectoryRow(PlayDirectorySectionKind kind, PlayDirectoryRow row)
         {
-            if (row == null) return false;
+            var index = DirectorySourceIndex(kind, row);
+            if (index < 0) return false;
             if (kind == PlayDirectorySectionKind.Parts)
             {
-                var playInfos = player?.PlayInfos;
-                var index = player == null ? -1 : player.CurrentPlayIndex;
-                if (playInfos == null || index < 0 || index >= playInfos.Count) return false;
-                var info = playInfos[index];
-                var cid = info == null ? null : info.cid;
-                // 详情没给 cid 时退到位置:分P的行序就是播放器的分P序
-                if (string.IsNullOrEmpty(cid)) return row.Ordinal - 1 == index;
-                return string.Equals(row.Key, cid, StringComparison.Ordinal);
+                return player != null && index == player.CurrentPlayIndex;
             }
             var aid = videoDetailVM?.VideoInfo?.aid;
             if (string.IsNullOrEmpty(aid)) return false;
-            return string.Equals(row.Key, aid, StringComparison.Ordinal);
+            if (kind == PlayDirectorySectionKind.UgcSeason)
+            {
+                return index == VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason).IndexOf(aid);
+            }
+            return index == PlaylistIndexOf(aid);
         }
 
         /// <summary>

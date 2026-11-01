@@ -536,9 +536,9 @@ namespace Ux1bProbe
                 "source: a queue row goes through the P1a sequence path");
 
             var playing = Body(page, "private bool IsPlayingDirectoryRow");
-            Check(playing.Contains("string.Equals(row.Key, cid, StringComparison.Ordinal)")
-                && playing.Contains("string.Equals(row.Key, aid, StringComparison.Ordinal)"),
-                "source: a part row matches the playing cid while collection and queue rows match the playing aid");
+            Check(playing.Contains("var index = DirectorySourceIndex(kind, row);")
+                && playing.Contains("index == player.CurrentPlayIndex"),
+                "source: the playing row is decided by the row's own key resolved to its source index, not by row.IsCurrent");
 
             var adopt = Body(page, "private void AdoptDirectoryRowSource");
             Check(adopt.Contains("playlist.Index = rowIndex;")
@@ -578,7 +578,7 @@ namespace Ux1bProbe
                 "source: the drawer declares exactly one row template");
             Check(control.Contains("RowList.ItemsSource = section.Rows;"),
                 "source: every section renders through that one list and template");
-            Check(xaml.Contains("x:Name=\"TabHost\"") && control.Contains("BuildTabs(model)"),
+            Check(xaml.Contains("x:Name=\"TabHost\"") && control.Contains("BuildTabs(m_model)"),
                 "source: scope tabs are generated from the sections that exist");
             Check(!control.Contains("\" · 连播中\""),
                 "source: an active tab is not restated in words");
@@ -599,7 +599,7 @@ namespace Ux1bProbe
             Check(control.Contains("PlayDirectoryBuilder.LocateSection(m_model, m_activeKind)")
                 && control.Contains("PlayDirectoryBuilder.CurrentRowOf(m_model, kind)"),
                 "source: locate asks the model for the browsed section's row first, the active source second");
-            Check(control.Contains("PlayDirectoryBuilder.ResolveBrowsedSection(model, browsed)")
+            Check(control.Contains("PlayDirectoryBuilder.ResolveBrowsedSection(m_model, browsed)")
                 && control.Contains("model.IsFreshOpen")
                 && control.Contains("SelectScope(PlayDirectoryBuilder.ResolveBrowsedSection"),
                 "source: a redraw keeps the browsed section and only a fresh open defaults to the active source");

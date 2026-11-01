@@ -33,6 +33,7 @@
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
       <RowDefinition Height="*"/>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
@@ -68,10 +69,12 @@
         <TextBlock Text="定位正在播放" FontSize="13"/>
       </Button>
     </Grid>
-    <!--分段页签:只出现有内容的分段-->
-    <StackPanel x:Name="TabHost" Grid.Row="2" Orientation="Horizontal" Margin="8 0 8 4"/>
+    <!--在已加载的行里搜索:输入归输入框,上下键进结果列表-->
+    <TextBox x:Name="QueryBox" Grid.Row="2" Margin="16 0 16 6" FontSize="14" PlaceholderText="搜索" AutomationProperties.Name="搜索" TextChanged="QueryBox_TextChanged" KeyDown="QueryBox_KeyDown"/>
+    <!--分段页签:只出现有内容的分段;过滤时带命中数,没命中的段留着但点不开-->
+    <StackPanel x:Name="TabHost" Grid.Row="3" Orientation="Horizontal" Margin="8 0 8 4"/>
     <!--行:每段共用同一套行模板-->
-    <ListView x:Name="RowList" Grid.Row="3" Margin="0 0 0 4" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="RowList_ItemClick" KeyDown="RowList_KeyDown" AutomationProperties.Name="播放目录列表">
+    <ListView x:Name="RowList" Grid.Row="4" Margin="0 0 0 4" SelectionMode="Single" IsItemClickEnabled="True" ItemClick="RowList_ItemClick" KeyDown="RowList_KeyDown" AutomationProperties.Name="播放目录列表">
       <ListView.ItemContainerStyle>
         <Style TargetType="ListViewItem">
           <Setter Property="Padding" Value="12 6"/>
@@ -114,14 +117,14 @@
       </ListView.ItemTemplate>
     </ListView>
     <!--翻页:只属于远程播放列表那一段,按钮长在它的行下面,全屏/全窗口里也点得到-->
-    <StackPanel x:Name="PagingHost" Grid.Row="4" Orientation="Horizontal" Padding="16 6 16 10" Visibility="Collapsed">
+    <StackPanel x:Name="PagingHost" Grid.Row="5" Orientation="Horizontal" Padding="16 6 16 10" Visibility="Collapsed">
       <Button x:Name="LoadMoreButton" Click="LoadMoreButton_Click" Style="{StaticResource DirectoryActionStyle}" VerticalAlignment="Center">
         <TextBlock x:Name="LoadMoreText" Text="加载更多" FontSize="13"/>
       </Button>
       <ProgressRing x:Name="PagingRing" Width="20" Height="20" IsActive="False" Visibility="Collapsed" Margin="4 0 0 0" Foreground="#B3FFFFFF" VerticalAlignment="Center" AutomationProperties.Name="正在加载"/>
     </StackPanel>
     <!--连播来源切换:只在两个外层来源都在时出现,切换不重播-->
-    <StackPanel x:Name="SourceActionHost" Grid.Row="5" Orientation="Horizontal" Padding="16 4 16 12" Background="#33000000">
+    <StackPanel x:Name="SourceActionHost" Grid.Row="6" Orientation="Horizontal" Padding="16 4 16 12" Background="#33000000">
       <Button x:Name="PlayCollectionButton" Click="PlayCollectionButton_Click" Style="{StaticResource DirectoryActionStyle}" Margin="0 0 8 0" AutomationProperties.Name="按合集连播" Visibility="Collapsed">
         <TextBlock Text="按合集连播" FontSize="13"/>
       </Button>
