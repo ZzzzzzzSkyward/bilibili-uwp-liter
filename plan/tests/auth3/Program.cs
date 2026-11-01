@@ -38,6 +38,7 @@ internal static class Program
         ServerRejectionLeavesSettingsUntouched();
         TransportFailureReturnsFalseWithoutThrowing();
         EmptyRefreshTokenSendsNothing();
+        RenewalLogReportsMissingCookie();
         DeadCookieUgcRequestUsesAccessKey();
         HealthySessionKeepsTheCookieRequest();
         ProfileNullNoLongerThrows();
@@ -130,8 +131,21 @@ internal static class Program
             "the rotated key, refresh token and expiry all move together");
         Check(!BiliLite.Services.CookieService.NeedsRelogin, "a successful renewal clears the relogin verdict through the login event");
 
+        var successLines = Log.Where(line => line.StartsWith("ACCESS_KEY 已刷新", StringComparison.Ordinal)).ToList();
+        Check(successLines.Count == 1, "a successful renewal leaves exactly one line");
+        Check(successLines[0] == "ACCESS_KEY 已刷新 mid=99182 expires_in=7776000 cookie=present",
+            "the line carries mid, expires_in and that cookie_info arrived");
+        Check(Log.All(line => !line.Contains("new-ak") && !line.Contains("rt-rotated") && !line.Contains("ac-fresh")),
+            "no token or cookie value reaches the log");
+
         Check(!Preflight(send, save), "the next preflight has nothing to do");
         Check(sends == 1, "a fresh key does not cause a second refresh");
+        var skipLines = Log.Where(line => line.StartsWith("ACCESS_KEY 续期跳过", StringComparison.Ordinal)).ToList();
+        Check(skipLines.Count == 1, "a declined gate leaves exactly one line per preflight");
+        Check(Regex.IsMatch(skipLines[0], @"^ACCESS_KEY 续期跳过：session=有效 key=(89|90)d refresh=present$"),
+            "the skip line states the session verdict, the remaining days and that a token exists");
+        Check(!skipLines[0].Contains("rt-rotated") && !skipLines[0].Contains("new-ak"),
+            "the skip line never prints the token");
 
         var flat = new List<int>();
         var flatResult = AccessKeyRenewal.RunAsync("ak", "rt",
@@ -205,6 +219,34 @@ internal static class Program
             (_, __) => { sends++; return Task.FromResult(new HttpResults { status = true, results = "{}" }); },
             (t, c) => Task.CompletedTask, (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
         Check(!result && sends == 0, "an empty refresh token performs no request at all");
+
+        Log.Clear();
+        var gateNow = DateTime.Now;
+        var approved = AccessKeyRenewal.ShouldRenew(true, "", gateNow.AddDays(-3), gateNow,
+            (message, exception) => Log.Add(message));
+        Check(!approved && Log.Count == 1, "a dead session without a token logs its skip exactly once");
+        Check(Regex.IsMatch(Log[0], @"^ACCESS_KEY 续期跳过：session=无效 key=-3d refresh=missing$"),
+            "the skip line says the session is dead and the refresh token is missing");
+    }
+
+    /// <summary>cookie_info 缺失时成功行要说 missing，而不是假装 jar 换新了。</summary>
+    private static void RenewalLogReportsMissingCookie()
+    {
+        ResetSession();
+        Log.Clear();
+        var result = AccessKeyRenewal.RunAsync("ak", "rt",
+            (_, __) => Task.FromResult(new HttpResults
+            {
+                status = true,
+                results = "{\"code\":0,\"data\":{\"token_info\":{\"mid\":42,\"access_token\":\"ak-2\",\"refresh_token\":\"rt-2\",\"expires_in\":3600}}}"
+            }),
+            (token, cookie) => Task.CompletedTask, (message, exception) => Log.Add(message))
+            .GetAwaiter().GetResult();
+        Check(result, "a renewal without cookie_info still succeeds");
+        var line = Log.Single(item => item.StartsWith("ACCESS_KEY 已刷新", StringComparison.Ordinal));
+        Check(line == "ACCESS_KEY 已刷新 mid=42 expires_in=3600 cookie=missing",
+            "the success line says cookie=missing when the server sent no cookie_info");
+        Check(!line.Contains("ak-2") && !line.Contains("rt-2"), "the success line carries no credential");
     }
 
     private static void DeadCookieUgcRequestUsesAccessKey()
@@ -428,7 +470,8 @@ internal static class Program
     {
         var refreshToken = SettingHelper.GetValue(SettingHelper.Account.REFRESH_KEY, "");
         var expiresAt = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue);
-        if (!AccessKeyRenewal.ShouldRenew(BiliLite.Services.CookieService.NeedsRelogin, refreshToken, expiresAt, DateTime.Now)) return false;
+        if (!AccessKeyRenewal.ShouldRenew(BiliLite.Services.CookieService.NeedsRelogin, refreshToken, expiresAt, DateTime.Now,
+                (message, exception) => Log.Add(message))) return false;
         return AccessKeyRenewal.RunAsync(SettingHelper.Account.AccessKey, refreshToken, send, save, (message, exception) => Log.Add(message))
             .GetAwaiter().GetResult();
     }

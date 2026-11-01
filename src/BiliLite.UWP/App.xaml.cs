@@ -108,11 +108,12 @@ namespace BiliLite
             }
 
             // cookie 刷新链拿不到 ac_time_value，会话死掉后只能靠 OAuth2 刷新令牌续 ACCESS_KEY；
-            // 每次启动/恢复到这里只发一次，失败了就等重新登录，绝不在这里连环重试。
+            // 每次启动/恢复到这里只发一次，失败了就等重新登录，绝不在这里连环重试。闸门自己会记一行原因。
             var refreshToken = SettingHelper.GetValue<string>(SettingHelper.Account.REFRESH_KEY, "");
             var expiresAt = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue);
             if (!BiliLite.Services.AccessKeyRenewal.ShouldRenew(BiliLite.Services.CookieService.NeedsRelogin,
-                    refreshToken, expiresAt, DateTime.Now)) return;
+                    refreshToken, expiresAt, DateTime.Now,
+                    (message, exception) => LogHelper.Log(message, exception == null ? LogType.INFO : LogType.ERROR, exception))) return;
             await new BiliLite.Modules.Account().RefreshToken();
         }
         private void RegisterExceptionHandlingSynchronizationContext()

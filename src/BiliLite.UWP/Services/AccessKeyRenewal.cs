@@ -20,6 +20,21 @@ namespace BiliLite.Services
         }
 
         /// <summary>
+        /// 启动/恢复时唯一的决策入口，顺便把它记成一行：跳过必须说清为什么，真的续了由 RunAsync 记结果。
+        /// 每次启动/恢复只有这一行，不循环、不打印令牌本身。
+        /// </summary>
+        public static bool ShouldRenew(bool needsRelogin, string refreshToken, DateTime expiresAt, DateTime now,
+            Action<string, Exception> log)
+        {
+            var renew = ShouldRenew(needsRelogin, refreshToken, expiresAt, now);
+            if (renew) return true;
+            log("ACCESS_KEY 续期跳过：session=" + (needsRelogin ? "无效" : "有效") +
+                " key=" + (int)Math.Floor((expiresAt - now).TotalDays) + "d" +
+                " refresh=" + (string.IsNullOrEmpty(refreshToken) ? "missing" : "present"), null);
+            return false;
+        }
+
+        /// <summary>
         /// 一次调用只发一次刷新请求，服务端拒绝就作罢，不重试；失败时一个设置都不碰。
         /// </summary>
         public static async Task<bool> RunAsync(string accessKey, string refreshToken,
@@ -95,6 +110,9 @@ namespace BiliLite.Services
                 log("ACCESS_KEY 刷新后落盘失败", exception);
                 return false;
             }
+            // 成功也要留痕：日志里能区分「续期成功」和「根本没试」，且只报 cookie 有没有到，不报内容
+            log("ACCESS_KEY 已刷新 mid=" + token.mid + " expires_in=" + token.expires_in +
+                " cookie=" + (cookie == null ? "missing" : "present"), null);
             return true;
         }
     }
