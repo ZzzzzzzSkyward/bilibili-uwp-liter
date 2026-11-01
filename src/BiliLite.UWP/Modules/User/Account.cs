@@ -512,11 +512,7 @@ namespace BiliLite.Modules
             catch (Exception ex) { failures.Add("setting-" + key + "=" + ex.GetType().FullName); }
         }
 
-        private static List<Uri> CookieLoginOrigins() => new[]
-        {
-            "https://bilibili.com/", "https://www.bilibili.com/",
-            "https://passport.bilibili.com/", "https://api.bilibili.com/"
-        }.Select(x => new Uri(x)).ToList();
+        private static List<Uri> CookieLoginOrigins() => CookieOrigins.All.Select(x => new Uri(x)).ToList();
 
         private static HashSet<string> CookieLoginReplacedNames() => new HashSet<string>(new[]
         {

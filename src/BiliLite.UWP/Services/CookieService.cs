@@ -1,5 +1,6 @@
 using BiliLite.Api;
 using BiliLite.Helpers;
+using BiliLite.Models;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Linq;
@@ -27,13 +28,21 @@ namespace BiliLite.Services
 
         public void Write(string name, string value)
         {
-            filter.CookieManager.SetCookie(new HttpCookie(name, "bilibili.com", "/") { Value = value });
+            // 根域和 www 各落一份：写根域时 WinRT 不会顺手给 www 补副本
+            foreach (var host in CookieOrigins.WriteHosts)
+                filter.CookieManager.SetCookie(new HttpCookie(name, host, "/") { Value = value });
         }
 
         public string Read(string name, string defaultValue)
         {
-            var cookies = filter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
-            return cookies?.FirstOrDefault(cookie => cookie.Name == name)?.Value ?? defaultValue;
+            // 登录在 www 上发的 host-only cookie 只有按 www 查询才看得见，根域查不到
+            foreach (var origin in CookieOrigins.All)
+            {
+                var cookies = filter.CookieManager.GetCookies(new Uri(origin));
+                var value = CookieOrigins.FirstValue(cookies?.Select(cookie => cookie.Name == name ? cookie.Value : null));
+                if (!string.IsNullOrEmpty(value)) return value;
+            }
+            return defaultValue;
         }
     }
 
@@ -233,6 +242,10 @@ namespace BiliLite.Services
                     CookieTimestamp = timestamp ?? 0;
                     // 服务端认这个会话，之前记下的失效结论作废
                     ClearReloginRequired();
+                    // 有效的会话原本没有任何日志，刷新链能不能起来只能靠这一行判断
+                    var refreshToken = GetRefreshToken();
+                    log("Cookie refresh state refresh=" + refreshFlag.Value + " timestamp=" + timestamp.Value +
+                        "; token=" + (string.IsNullOrEmpty(refreshToken) ? "missing" : "present"), null);
                     SetRefreshState(true, refreshFlag.Value);
                     resultValue = NeedRefreshCookieValue();
                     return;

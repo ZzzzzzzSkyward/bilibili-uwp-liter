@@ -332,6 +332,7 @@
     </Compile>
     <Compile Include="Models\ApiModel.cs" />
     <Compile Include="Models\Common.cs" />
+    <Compile Include="Models\CookieOrigins.cs" />
     <Compile Include="Models\Common\User\SubmitVideoItemModel.cs" />
     <Compile Include="Models\Common\Danmaku\DanmakuListSnapshot.cs" />
     <Compile Include="Models\LocalMedia\LocalMediaItem.cs" />

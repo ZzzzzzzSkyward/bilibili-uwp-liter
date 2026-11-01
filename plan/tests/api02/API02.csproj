@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\CookieOrigins.cs" Link="CookieOrigins.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\CookieService.cs" Link="CookieService.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Api\AccountApi.cs" Link="AccountApi.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Api\ApiHelper.cs" Link="ApiHelper.cs" />

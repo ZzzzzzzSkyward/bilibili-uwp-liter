@@ -37,6 +37,18 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 新增文案直接按这两条写；一次性的大扫除已经做完，不再保留逐条清单。
 
+## BR-40 — 浏览器 cookie 只按 `bilibili.com` 读，`ac_time_value` 这类主机级 cookie 永远读不到（维护者 2026-11-01 追问能否自动续期）
+
+`Services/CookieService.cs` 的 `WindowsCookieStore.Read` 只查询 `https://bilibili.com` 这一个 origin，写入也只按根域写。B 站登录下发的 `ac_time_value`
+（刷新令牌）是 `www.bilibili.com` 的主机级 cookie，不带 `Domain=.bilibili.com`，所以 `GetCookies(bilibili.com)` 看不到它：
+`MirrorRefreshToken` 永远读到空串，续期链因为缺令牌根本走不起来。`Modules/User/Account.cs` 自己的 `CookieLoginOrigins()` 已经枚举四个 origin，
+两处口径不一致。
+
+触发：扫码/网页登录拿到会话后，cookie 罐里的 SESSDATA 可用（`cookie/info` 10-30 与 10-31 共 12 次全部 code 0），但日志里 `passport-login/web/cookie/correspond`
+从没出现过；11-01 的 12 次 `cookie/info` 全部 -101，会话到期后没有任何续期动作，于是画质掉到 480p。
+
+需要的修复：读 cookie 时按同一条 origin 列表查（首次非空为准），写 cookie 落到根域与 www；origin 列表与 `Account` 共用一份，不再各写一套。
+
 ## Notes
 
 - Install a `BiliLite.Packages_*` MSIX (root launcher ≈ 8 KB plus `entrypoint/BiliLiter.exe`). A

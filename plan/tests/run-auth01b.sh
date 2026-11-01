@@ -32,6 +32,7 @@ args=()
 for ref in "$refs"/*.dll; do args+=("-r:$ref"); done
 args+=("-r:$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll")
 "$tools/dotnet/dotnet" "$sdk/Roslyn/bincore/csc.dll" -nologo -langversion:latest -target:exe -out:"$scratch/AUTH01B.dll" "${args[@]}" \
+  "$repo/src/BiliLite.UWP/Models/CookieOrigins.cs" \
   "$repo/src/BiliLite.UWP/Services/PasswordLoginSession.cs" \
   "$repo/src/BiliLite.UWP/Services/IsolatedPasswordLoginTransport.cs" \
   "$account_source" \
@@ -150,6 +151,7 @@ sed -i \
   -e 's/private async void CompletePasswordLoginCheck(/private async Task CompletePasswordLoginCheck(/' \
   "$login_vm_source"
 "$tools/dotnet/dotnet" "$sdk/Roslyn/bincore/csc.dll" -nologo -langversion:latest -target:exe -out:"$scratch/AUTH01BLoginVM.dll" "${args[@]}" \
+  "$repo/src/BiliLite.UWP/Models/CookieOrigins.cs" \
   "$repo/src/BiliLite.UWP/Services/PasswordLoginSession.cs" \
   "$repo/src/BiliLite.UWP/Services/IsolatedPasswordLoginTransport.cs" \
   "$(dirname -- "${BASH_SOURCE[0]}")/AUTH01BStubs.cs" \

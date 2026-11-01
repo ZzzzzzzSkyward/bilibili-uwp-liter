@@ -29,13 +29,8 @@ namespace BiliLite.Services
 
     public static class PasswordLoginSessionValidator
     {
-        private static readonly Uri[] CookieOrigins =
-        {
-            new Uri("https://bilibili.com/"),
-            new Uri("https://www.bilibili.com/"),
-            new Uri("https://passport.bilibili.com/"),
-            new Uri("https://api.bilibili.com/")
-        };
+        // 域名策略只有一份：Models/CookieOrigins 是这份 jar 的唯一来源
+        private static readonly Uri[] Origins = BiliLite.Models.CookieOrigins.All.Select(x => new Uri(x)).ToArray();
 
         public static string ParseExchangeRefreshToken(string responseBody)
         {
@@ -73,7 +68,7 @@ namespace BiliLite.Services
         {
             if (container == null) throw new ArgumentNullException(nameof(container));
             var cookies = new Dictionary<string, PasswordLoginCookie>(StringComparer.OrdinalIgnoreCase);
-            foreach (var origin in CookieOrigins)
+            foreach (var origin in Origins)
             {
                 foreach (Cookie cookie in container.GetCookies(origin))
                 {
