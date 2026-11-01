@@ -44,6 +44,23 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 需要的修复：总数未知保持未知；已知总数在后续页缺省时保留。
 
+## BR-24 — 最后一P 时手动“下一P”消失，合集/播放列表里的下一个视频点不到（source review 2026-10-31）
+
+`Controls/PlayerControl.xaml.cs` 的 `BottomBtnNext` 只在 `CurrentPlayIndex != PlayInfos.Count - 1` 时可见，快捷键
+`X/M/190` 在最后一P 提示“已经是最后一P了”；而同一个位置上的自动连播（`AllMediaEndEvent`）能继续走合集或播放列表。
+只有一个分P 的合集视频因此没有任何手动前进入口，键盘和按钮都到此为止。
+
+需要的修复：按钮、快捷键、自动连播用同一套判定；最后一P → 外层来源（合集/播放列表）的下一行；提示文字写出目标。
+
+## BR-25 — 全屏/全窗口模式下整个外层列表不可达（source review 2026-10-31）
+
+`Pages/VideoDetailPage.xaml.cs` 的 `PlayerControl_FullScreenEvent` / `FullWindowEvent` 把 `RightInfo.Width` 和
+`BottomInfo.Height` 置 0，详情列连同合集、播放列表一起消失；播放器的“选集”只列当前视频的 `PlayInfos`，
+单P 合集视频连这个按钮都没有。想看合集里的其它视频只能先退出全屏。
+
+需要的修复：播放器里一个“目录”入口，在播放器内部打开覆盖层抽屉；普通窗口下则打开侧栏同一份列表。两个宿主
+共享同一份状态和同一套行模板，浏览抽屉不改变播放、也不改变连播来源。
+
 ## Notes
 
 - Install a `BiliLite.Packages_*` MSIX (root launcher ≈ 8 KB plus `entrypoint/BiliLiter.exe`). A

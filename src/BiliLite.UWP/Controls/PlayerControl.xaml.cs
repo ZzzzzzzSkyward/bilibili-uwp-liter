@@ -34,6 +34,7 @@ using Windows.UI.Popups;
 using Windows.UI.Text;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Automation;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
@@ -184,6 +185,21 @@ namespace BiliLite.Controls
         public event EventHandler AllMediaEndEvent;
 
         /// <summary>
+        /// 本视频的最后一个分P已经到顶,下一个目标由页面决定
+        /// </summary>
+        public event EventHandler NextOuterRequested;
+
+        /// <summary>
+        /// 已经在本视频的第一个分P上,上一个目标由页面决定
+        /// </summary>
+        public event EventHandler PreviousOuterRequested;
+
+        /// <summary>
+        /// 跳过本视频剩下的分P,直接换下一个视频
+        /// </summary>
+        public event EventHandler NextVideoRequested;
+
+        /// <summary>
         /// 切换剧集事件
         /// </summary>
 
@@ -203,6 +219,11 @@ namespace BiliLite.Controls
         /// 当前播放
         /// </summary>
         public PlayInfo CurrentPlayItem { get; set; }
+
+        // 页面报告的"下一个目标"文字;空表示外层没有下一个
+        private bool _hasOuterNextTarget;
+        // 页面报告的可跳过剩余分P:有外层来源且本视频还有分P没播完
+        private bool _canSkipToNextVideo;
 
         private readonly PlayerVM playerHelper;
         private readonly NSDanmaku.Helper.DanmakuParse danmakuParse;
@@ -267,6 +288,8 @@ namespace BiliLite.Controls
             this.Unloaded += PlayerControl_Unloaded;
             gestureRecognizer = new GestureRecognizer();
             InitializeGesture();
+            // 右键/按住"下一个"就是"跳过剩余分P";可跳过与否由页面报告的顺序状态决定
+            BottomBtnNext.RightTapped += BottomBtnNext_RightTapped;
         }
 
         private void Timer_focus_Tick(object sender, object e)
@@ -552,13 +575,14 @@ namespace BiliLite.Controls
                 case (Windows.System.VirtualKey)188:
                     if (NoMod())
                     {
-                        if (EpisodeList.SelectedIndex == 0)
+                        //还有分P就回上一P;第一个分P上的上一个交给页面,它可能换到上一个视频
+                        if (EpisodeList.SelectedIndex > 0)
                         {
-                            Utils.ShowMessageToast("已经是第一P了");
+                            await SetPlayItem(EpisodeList.SelectedIndex - 1);
                         }
                         else
                         {
-                            await SetPlayItem(EpisodeList.SelectedIndex - 1);
+                            PreviousOuterRequested?.Invoke(this, EventArgs.Empty);
                         }
                     }
                     break;
@@ -568,13 +592,14 @@ namespace BiliLite.Controls
                 case (Windows.System.VirtualKey)190:
                     if (NoMod())
                     {
-                        if (EpisodeList.SelectedIndex == EpisodeList.Items.Count - 1)
+                        //还有分P就换下一P;最后一P的下一个交给页面,它可能换到下一个视频
+                        if (EpisodeList.SelectedIndex >= 0 && EpisodeList.SelectedIndex < EpisodeList.Items.Count - 1)
                         {
-                            Utils.ShowMessageToast("已经是最后一P了");
+                            await SetPlayItem(EpisodeList.SelectedIndex + 1);
                         }
                         else
                         {
-                            await SetPlayItem(EpisodeList.SelectedIndex + 1);
+                            NextOuterRequested?.Invoke(this, EventArgs.Empty);
                         }
                     }
                     break;
@@ -944,6 +969,31 @@ namespace BiliLite.Controls
             EpisodeList.SelectedIndex = index;
         }
 
+        /// <summary>
+        /// 页面报告顺序状态判定出的下一个/上一个目标。播放器只记文字和"下一个"按钮的可见性,
+        /// 既不取页、也不改页面的顺序状态;真正换集由页面收到事件后决定。
+        /// </summary>
+        public void UpdateSequenceInfo(string nextTargetText, string previousTargetText, bool canSkipToNextVideo)
+        {
+            _hasOuterNextTarget = !string.IsNullOrEmpty(nextTargetText);
+            _canSkipToNextVideo = canSkipToNextVideo;
+            // 没有外层下一个时按钮只代表下一P
+            var nextName = _hasOuterNextTarget ? nextTargetText : "下一P";
+            ToolTipService.SetToolTip(BottomBtnNext, nextName);
+            AutomationProperties.SetName(BottomBtnNext, nextName);
+            UpdateBottomBtnNextVisibility();
+        }
+
+        /// <summary>
+        /// 还有分P,或者页面报告了外层下一个目标时,"下一个"按钮才在
+        /// </summary>
+        private void UpdateBottomBtnNextVisibility()
+        {
+            if (BottomBtnNext == null) return;
+            var hasPart = PlayInfos != null && PlayInfos.Count >= 1 && CurrentPlayIndex != PlayInfos.Count - 1;
+            BottomBtnNext.Visibility = hasPart || _hasOuterNextTarget ? Visibility.Visible : Visibility.Collapsed;
+        }
+
         private async void DanmuTimer_Tick(object sender, object e)
         {
             if (showControlsFlag != -1)
@@ -1094,14 +1144,7 @@ namespace BiliLite.Controls
             }
 
             //设置下一集按钮的显示
-            if (PlayInfos.Count >= 1 && index != PlayInfos.Count - 1)
-            {
-                BottomBtnNext.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                BottomBtnNext.Visibility = Visibility.Collapsed;
-            }
+            UpdateBottomBtnNextVisibility();
             ChangeEpisodeEvent?.Invoke(this, index);
 
             playUrlInfo = null;
@@ -2672,7 +2715,23 @@ namespace BiliLite.Controls
 
         private void BottomBtnNext_Click(object sender, RoutedEventArgs e)
         {
-            EpisodeList.SelectedIndex = EpisodeList.SelectedIndex + 1;
+            //还有分P就先换分P;最后一P把机会交给页面,它可能换到下一个视频
+            if (EpisodeList.SelectedIndex >= 0 && EpisodeList.SelectedIndex < EpisodeList.Items.Count - 1)
+            {
+                EpisodeList.SelectedIndex = EpisodeList.SelectedIndex + 1;
+                return;
+            }
+            NextOuterRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// 右键/按住"下一个":跳过剩下的分P直接换下一个视频,只在页面报告可跳过时生效
+        /// </summary>
+        private void BottomBtnNext_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+            if (!_canSkipToNextVideo) return;
+            NextVideoRequested?.Invoke(this, EventArgs.Empty);
         }
 
         private void KeepScreenOn(bool value = true)

@@ -83,6 +83,10 @@ namespace BiliLite.Pages
             this.Loaded += VideoDetailPage_Loaded;
             this.Unloaded += VideoDetailPage_Unloaded;
             this.Player = this.player;
+            // 播放器的下一个/上一个只喊一声,目标由本页的顺序状态决定
+            player.NextOuterRequested += player_NextOuterRequested;
+            player.NextVideoRequested += player_NextVideoRequested;
+            player.PreviousOuterRequested += player_PreviousOuterRequested;
             NavigationCacheMode = NavigationCacheMode.Enabled;
             videoDetailVM = new VideoDetailVM();
             this.DataContext = videoDetailVM;
@@ -201,8 +205,9 @@ namespace BiliLite.Pages
         // 页签关闭后页面上的一切续作都要收手:关闭路径先立标记,晚到的请求按它放弃
         bool _isClosed;
         string _id = "";
-        // 当前视频是从合集分集打开的:连播跟着合集顺序走,不去动打开时的队列
-        bool playFromUgcSeason;
+        // 页面自己持有的播放顺序:当前连播来源、当前分P、当前来源里的当前行。
+        // 下一个按钮、快捷键和播放结束都按这一份状态判定目标,不再各自猜来源。
+        readonly WatchSequenceState sequence = new WatchSequenceState();
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -213,6 +218,8 @@ namespace BiliLite.Pages
 
             if (e.NavigationMode == NavigationMode.New)
             {
+                // 重新进入本页:上一次的连播来源和行号不能留着
+                sequence.Clear();
                 if(SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_FULL_SCREEN, false))
                 {
                     player.IsFullScreen = true;
@@ -225,7 +232,8 @@ namespace BiliLite.Pages
                 if (e.Parameter is VideoPlaylist)
                 {
                     playlist = e.Parameter as VideoPlaylist;
-                    playFromUgcSeason = false;
+                    // 打开时就带着队列:连播先按队列走,直到点了合集分集
+                    sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);
                     // 带 medialist ID 的是远程播放列表:先取首页再播放,不走内存列表
                     if (!string.IsNullOrEmpty(playlist.MediaListId))
                     {
@@ -362,6 +370,9 @@ namespace BiliLite.Pages
                     });
                 }
                 ApplyUgcSeason();
+                // 详情和分P都换好之后,把顺序状态对齐到当前视频
+                ApplyDefaultSequenceSource();
+                RefreshSequenceState();
             }
             finally
             {
@@ -502,7 +513,7 @@ namespace BiliLite.Pages
                 if (!ReferenceEquals(other, listView)) other.SelectedItem = null;
             }
             // 从合集分集点进来:连播跟合集顺序,打开时的队列原样留着
-            playFromUgcSeason = true;
+            sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);
             await InitializeVideo(item.Aid);
         }
 
@@ -543,7 +554,6 @@ namespace BiliLite.Pages
             playlist.Index = mediaListRows.Count == 0
                 ? 0
                 : Math.Min(Math.Max(0, playlist.Index), mediaListRows.Count - 1);
-            playFromUgcSeason = false;
 
             mediaListCountText = new TextBlock()
             {
@@ -625,6 +635,8 @@ namespace BiliLite.Pages
             // 取页期间页签被关掉:不再碰已拆掉的页面状态
             if (_isClosed) return;
             RefreshMediaListChrome();
+            // 手动取回一页后,"下一个目标"也跟着变
+            RefreshSequenceState();
         }
 
         /// <summary>
@@ -892,6 +904,8 @@ namespace BiliLite.Pages
             changedFlag = true;
             listEpisode.SelectedIndex = e;
             changedFlag = false;
+            // 分P换了:顺序状态和"下一个/上一个"的目标跟着换
+            RefreshSequenceState();
         }
 
         private void listEpisode_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1012,113 +1026,278 @@ namespace BiliLite.Pages
            
             playlist.Index = playlist.Playlist.IndexOf(item);
             // 从队列里选行:连播回到队列,队列和选中行都不换
-            playFromUgcSeason = false;
+            sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);
             await InitializeVideo(item.ID);
 
         }
 
         /// <summary>
-        /// 当前视频自己的分P播完后才会到这里:先从合集分集打开的就按分区/分集顺序走,
-        /// 否则走打开时的队列。远程队列停在最后一行且还有下一页时先取下一页,取不到就
-        /// 把"加载更多"留作重试,不跳过任何一行也不当成播完。
+        /// 当前视频自己的分P播完后才会到这里:下一个目标由页面的顺序状态判定,
+        /// 与"下一个"按钮、快捷键走的是同一条路径。
         /// </summary>
         private async void player_AllMediaEndEvent(object sender, EventArgs e)
         {
-            // 页签已关:播放器已释放,播放结束事件不再续播
+            await AdvanceSequenceAsync(false);
+        }
+
+        /// <summary>
+        /// 播放器的"下一个":还有分P就先换分P,最后一P时换到外层来源的下一条
+        /// </summary>
+        private async void player_NextOuterRequested(object sender, EventArgs e)
+        {
+            await AdvanceSequenceAsync(false, true);
+        }
+
+        /// <summary>
+        /// 跳过本视频剩下的分P,直接换到外层来源的下一条
+        /// </summary>
+        private async void player_NextVideoRequested(object sender, EventArgs e)
+        {
+            await AdvanceSequenceAsync(true, true);
+        }
+
+        /// <summary>
+        /// 播放器的"上一个":先回上一个分P,再回外层来源的上一行
+        /// </summary>
+        private async void player_PreviousOuterRequested(object sender, EventArgs e)
+        {
+            // 页签已关:播放器已释放,不再换集
             if (_isClosed) return;
-            // 详情还在路上:续播这一拍丢掉,不让它顶掉在途请求
+            // 详情还在路上:这一拍丢掉,不让它顶掉在途请求
             if (flag) return;
-            if (playFromUgcSeason)
+            RefreshSequenceState();
+            var step = WatchSequenceOrder.Previous(sequence.Position);
+            switch (step.Move)
             {
-                // 跟着合集走:合集播完就结束,不跳回打开时的队列
-                if (await AdvanceUgcSeasonAsync()) return;
-                if (_isClosed) return;
-                Utils.ShowMessageToast("播放完毕");
-                return;
+                case WatchSequenceMove.PlayPart:
+                    player.ChangePlayIndex(step.PartIndex);
+                    return;
+                case WatchSequenceMove.PlayRow:
+                    await PlaySequenceRowAsync(step.RowIndex);
+                    return;
+                default:
+                    // 没有上一个目标:说清是第一个,不进任何换集路径
+                    Utils.ShowMessageToast("已经是第一P了");
+                    return;
             }
-
-            if (playlist != null && playlist.Playlist != null && playlist.Playlist.Count > 0)
-            {
-                await AdvancePlaylistAsync();
-                return;
-            }
-
-            // 没有队列时,详情里的合集就是顺序源
-            if (await AdvanceUgcSeasonAsync()) return;
-            if (_isClosed) return;
-            Utils.ShowMessageToast("播放完毕");
         }
 
-        private async Task<bool> AdvanceUgcSeasonAsync()
+        /// <summary>
+        /// 按顺序状态推进一个目标。播放结束、下一个按钮和下一个快捷键都只走这一处:
+        /// 分P优先,分P走完交给外层来源;远程队列停在最后一行且还有下一页时先取下一页,
+        /// 取不到就把"加载更多"留作重试,不跳过任何一行也不当成播完。
+        /// </summary>
+        private async Task<bool> AdvanceSequenceAsync(bool skipRemainingParts, bool manual = false)
         {
-            // 页签已关:不再按合集顺序选下一集
+            // 页签已关:播放器已释放,续播不再进行
             if (_isClosed) return false;
-            var next = VideoUgcSeasonOrder.NextAid(videoDetailVM?.VideoInfo?.UgcSeason, ugcSeasonAid);
-            if (string.IsNullOrEmpty(next)) return false;
+            // 详情还在路上:这一拍丢掉,不让它顶掉在途请求
+            if (flag) return false;
 
-            foreach (var listView in ugcSeasonEpisodeLists)
-            {
-                var episodes = listView.ItemsSource as List<VideoUgcSeasonEpisodeView>;
-                var row = episodes?.FirstOrDefault(x => x.Aid == next);
-                if (row == null) continue;
-                if (!ReferenceEquals(listView.SelectedItem, row))
-                {
-                    // 交给已有的分集选择处理,合集页签和当前队列都不动
-                    listView.SelectedItem = row;
-                    return true;
-                }
-                break;
-            }
-
-            playFromUgcSeason = true;
-            await InitializeVideo(next);
-            // 关闭后这一集没有真正起播,调用方不必再提示播放完毕
-            return !_isClosed;
-        }
-
-        private async Task AdvancePlaylistAsync()
-        {
-            // 页签已关:队列不再往前推
-            if (_isClosed) return;
             // 一页可能全是已加载的行,取完再判定一次;上限只是防止服务端反复返回 has_more
             for (var attempt = 0; attempt < 3; attempt++)
             {
-                var action = MediaListQueue.NextAction(
-                    playlist.Index,
-                    playlist.Playlist.Count,
-                    mediaListState != null && mediaListState.HasMore,
-                    mediaListState != null && mediaListState.LastLoadFailed);
-
-                switch (action)
+                RefreshSequenceState();
+                var step = WatchSequenceOrder.Next(sequence.Position, skipRemainingParts);
+                switch (step.Move)
                 {
-                    case MediaListNextAction.PlayNextRow:
-                        await SelectPlaylistRowAsync(playlist.Index + 1);
-                        return;
-                    case MediaListNextAction.LoadNextPage:
+                    case WatchSequenceMove.PlayPart:
+                        // 走播放器自己的分P切换
+                        player.ChangePlayIndex(step.PartIndex);
+                        return !_isClosed;
+                    case WatchSequenceMove.PlayRow:
+                        await PlaySequenceRowAsync(step.RowIndex);
+                        return !_isClosed;
+                    case WatchSequenceMove.LoadNextPage:
                         if (await LoadMediaListPage())
                         {
                             // 取页期间页签被关掉:新行留在状态里,但不选行也不起播
-                            if (_isClosed) return;
+                            if (_isClosed) return false;
                             // 新行已经追加到同一个列表,重新判定再走
                             continue;
                         }
                         // 页签已关:失败也不再改计数、不再提示重试
-                        if (_isClosed) return;
+                        if (_isClosed) return false;
                         // 失败:已加载行不动,"加载更多"仍然可见,就是重试入口
                         RefreshMediaListChrome();
                         Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
-                        return;
-                    case MediaListNextAction.RetryNextPage:
+                        return false;
+                    case WatchSequenceMove.RetryNextPage:
                         RefreshMediaListChrome();
                         Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
-                        return;
+                        return false;
                     default:
-                        Utils.ShowMessageToast("播放完毕");
-                        return;
+                        ShowSequenceEndToast(manual);
+                        return false;
                 }
             }
 
             Utils.ShowMessageToast("播放列表没有更多可播放的内容");
+            return false;
+        }
+
+        /// <summary>
+        /// 没有下一个目标。手动按"下一个"时仍要说清是最后一P,自动播完只说播放完毕。
+        /// </summary>
+        private void ShowSequenceEndToast(bool manual)
+        {
+            var position = sequence.Position;
+            var noOuterRow = position.Source == WatchSequenceSourceKind.None || position.RowCount <= 0;
+            Utils.ShowMessageToast(manual && noOuterRow ? "已经是最后一P了" : "播放完毕");
+        }
+
+        /// <summary>
+        /// 执行外层来源的一行:播放列表选行,合集选分集,两者都复用已有的选择处理
+        /// </summary>
+        private async Task PlaySequenceRowAsync(int rowIndex)
+        {
+            if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)
+            {
+                await PlayCollectionRowAsync(rowIndex);
+                return;
+            }
+            await SelectPlaylistRowAsync(rowIndex);
+        }
+
+        private async Task PlayCollectionRowAsync(int rowIndex)
+        {
+            var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);
+            if (rowIndex < 0 || rowIndex >= aids.Count) return;
+            var aid = aids[rowIndex];
+            foreach (var listView in ugcSeasonEpisodeLists)
+            {
+                var episodes = listView.ItemsSource as List<VideoUgcSeasonEpisodeView>;
+                var row = episodes?.FirstOrDefault(x => x.Aid == aid);
+                if (row == null) continue;
+                // 交给已有的分集选择处理,合集页签和当前队列都不动
+                if (!ReferenceEquals(listView.SelectedItem, row))
+                {
+                    listView.SelectedItem = row;
+                    return;
+                }
+                // 高亮已经在这一行(例如从队列换过视频):直接按 aid 起播
+                break;
+            }
+
+            await InitializeVideo(aid);
+        }
+
+        /// <summary>
+        /// 连播来源的优先级不变:点过队列行或合集分集就按那个来源,打开时就带着队列的也按队列;
+        /// 这些都没有时,详情里的合集才作为兜底的顺序源
+        /// </summary>
+        private void ApplyDefaultSequenceSource()
+        {
+            if (sequence.Position.Source != WatchSequenceSourceKind.None) return;
+            if (videoDetailVM?.VideoInfo?.UgcSeason != null && !string.IsNullOrEmpty(ugcSeasonAid))
+            {
+                sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);
+            }
+        }
+
+        /// <summary>
+        /// 把播放器当前分P和当前来源的行补进顺序状态,再刷新播放器上的"下一个/上一个"目标。
+        /// </summary>
+        private void RefreshSequenceState()
+        {
+            var playInfos = player?.PlayInfos;
+            var partCount = playInfos?.Count ?? 0;
+            var partIndex = partCount == 0 ? 0 : Math.Min(Math.Max(0, player.CurrentPlayIndex), partCount - 1);
+            sequence.SetParts(partIndex, partCount);
+
+            var source = sequence.Position.Source;
+            if (source == WatchSequenceSourceKind.Playlist && playlist?.Playlist != null)
+            {
+                sequence.SetRows(source, playlist.Index, playlist.Playlist.Count,
+                    mediaListState != null && mediaListState.HasMore,
+                    mediaListState != null && mediaListState.LastLoadFailed);
+            }
+            else if (source == WatchSequenceSourceKind.UgcSeason)
+            {
+                var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);
+                var rowIndex = aids.IndexOf(videoDetailVM?.VideoInfo?.aid);
+                sequence.SetRows(source, rowIndex, aids.Count, false, false);
+            }
+            else
+            {
+                sequence.SetRows(WatchSequenceSourceKind.None, -1, 0, false, false);
+            }
+
+            player?.UpdateSequenceInfo(
+                DescribeStep(WatchSequenceOrder.Next(sequence.Position, false), true),
+                DescribeStep(WatchSequenceOrder.Previous(sequence.Position), false),
+                CanSkipToNextVideo());
+        }
+
+        /// <summary>
+        /// 把一次移动写成按钮提示里的目标文字;没有目标时返回空,播放器据此收起"下一个"按钮
+        /// </summary>
+        private string DescribeStep(WatchSequenceStep step, bool isNext)
+        {
+            if (step == null) return "";
+            switch (step.Move)
+            {
+                case WatchSequenceMove.PlayPart:
+                    return (isNext ? "下一P：" : "上一P：") + PartTitle(step.PartIndex);
+                case WatchSequenceMove.PlayRow:
+                    return RowPrefix(isNext) + RowTitle(step.RowIndex);
+                case WatchSequenceMove.LoadNextPage:
+                    return RowPrefix(isNext) + "下一页";
+                case WatchSequenceMove.RetryNextPage:
+                    return RowPrefix(isNext) + "下一页（需重试加载）";
+                default:
+                    return "";
+            }
+        }
+
+        private string RowPrefix(bool isNext)
+        {
+            if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)
+            {
+                return isNext ? "下一集：" : "上一集：";
+            }
+            return isNext ? "下一个视频：" : "上一个视频：";
+        }
+
+        private string PartTitle(int index)
+        {
+            var playInfos = player?.PlayInfos;
+            var title = playInfos != null && index >= 0 && index < playInfos.Count ? playInfos[index]?.title : null;
+            return string.IsNullOrEmpty(title) ? "P" + (index + 1) : title;
+        }
+
+        private string RowTitle(int index)
+        {
+            if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)
+            {
+                var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);
+                if (index < 0 || index >= aids.Count) return "";
+                var aid = aids[index];
+                foreach (var listView in ugcSeasonEpisodeLists)
+                {
+                    var episodes = listView.ItemsSource as List<VideoUgcSeasonEpisodeView>;
+                    var row = episodes?.FirstOrDefault(x => x.Aid == aid);
+                    if (row != null) return row.Title ?? "";
+                }
+                return "";
+            }
+
+            var rows = playlist?.Playlist;
+            if (rows == null || index < 0 || index >= rows.Count) return "";
+            return rows[index].Title ?? "";
+        }
+
+        /// <summary>
+        /// 外层来源有下一条,且本视频还有分P没播完:才允许"跳过剩余分P"
+        /// </summary>
+        private bool CanSkipToNextVideo()
+        {
+            var position = sequence.Position;
+            return position.Source != WatchSequenceSourceKind.None
+                && position.RowCount > 0
+                && position.PartCount > 0
+                && position.PartIndex >= 0
+                && position.PartIndex < position.PartCount - 1;
         }
 
         private async Task SelectPlaylistRowAsync(int index)

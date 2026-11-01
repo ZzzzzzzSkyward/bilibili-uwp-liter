@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using BiliLite.Models.Common;
@@ -255,25 +255,27 @@ namespace C3Probe
             Check(page.Contains("if (mediaListState.LastLoadFailed)")
                 && page.Contains("mediaListLoadMoreButton.Visibility = Visibility.Visible;"),
                 "source: a failed page keeps the retry action visible after the source runs out");
-            Check(page.Contains("var action = MediaListQueue.NextAction(")
+            Check(page.Contains("WatchSequenceOrder.Next(sequence.Position, skipRemainingParts)")
                 && page.Contains("mediaListState != null && mediaListState.HasMore,")
                 && page.Contains("mediaListState != null && mediaListState.LastLoadFailed);"),
-                "source: auto-advance asks the queue decision with the paging state");
-            Check(page.Contains("case MediaListNextAction.LoadNextPage:") && page.Contains("if (await LoadMediaListPage())"),
+                "source: advancing asks the sequence, whose paging flags come from the paging state");
+            Check(page.Contains("case WatchSequenceMove.LoadNextPage:") && page.Contains("if (await LoadMediaListPage())"),
                 "source: the last loaded row fetches the next page before advancing");
-            Check(page.Contains("case MediaListNextAction.RetryNextPage:") && page.Contains("RefreshMediaListChrome();")
+            Check(page.Contains("case WatchSequenceMove.RetryNextPage:") && page.Contains("RefreshMediaListChrome();")
                 && page.Contains("下一页加载失败,点\\\"加载更多\\\"重试"),
                 "source: a failed next page leaves the Load more retry visible and does not finish playback");
             Check(page.Contains("private async Task SelectPlaylistRowAsync(int index)")
                 && page.Contains("listView.SelectedIndex = index;"),
                 "source: advancing selects the next row through the existing selection handler");
-            Check(page.Contains("var next = VideoUgcSeasonOrder.NextAid(videoDetailVM?.VideoInfo?.UgcSeason, ugcSeasonAid);"),
+            Check(page.Contains("var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);")
+                && page.Contains("var rowIndex = aids.IndexOf(videoDetailVM?.VideoInfo?.aid);"),
                 "source: a collection continues in section/episode order");
-            Check(page.Contains("playFromUgcSeason = true;") && page.Contains("playFromUgcSeason = false;"),
+            Check(page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);")
+                && page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);"),
                 "source: the page records whether the current video came from the collection or the queue");
-            Check(page.Contains("if (playFromUgcSeason)")
-                && page.Contains("if (await AdvanceUgcSeasonAsync()) return;")
-                && page.Contains("// 跟着合集走:合集播完就结束,不跳回打开时的队列"),
+            Check(page.Contains("case WatchSequenceMove.PlayRow:")
+                && page.Contains("await PlaySequenceRowAsync(step.RowIndex);")
+                && page.Contains("if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)"),
                 "source: a collection episode advances inside the collection, leaving the opened queue alone");
             Check(!page.Contains("playlist.Index == playlist.Playlist.Count - 1"),
                 "source: the old stop-at-last-row condition is gone");
@@ -285,7 +287,8 @@ namespace C3Probe
                 "source: choosing a row loads that video's details and its own pages");
             Check(!selectionBody.Contains("playlist = "), "source: choosing a row never replaces the active queue");
 
-            Check(page.Contains("playFromUgcSeason = true;") && page.Contains("item.Aid == ugcSeasonAid) return;"),
+            Check(page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);")
+                && page.Contains("item.Aid == ugcSeasonAid) return;"),
                 "source: an embedded collection stays browseable inside the queued video");
         }
 

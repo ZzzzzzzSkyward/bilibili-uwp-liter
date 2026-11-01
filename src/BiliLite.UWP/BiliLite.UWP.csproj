@@ -342,6 +342,7 @@
     <Compile Include="Models\UserModels.cs" />
     <Compile Include="Models\VideoCollections.cs" />
     <Compile Include="Models\MediaListResources.cs" />
+    <Compile Include="Models\WatchSequence.cs" />
     <Compile Include="Modules\Detail\FavoriteDetailVM.cs" />
     <Compile Include="Modules\DownloadVM.cs" />
     <Compile Include="Modules\EmoteVM.cs" />
