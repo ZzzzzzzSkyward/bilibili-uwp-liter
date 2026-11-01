@@ -515,7 +515,7 @@ namespace Ux1bProbe
                 "source: an open drawer still follows the new current part");
 
             Check(page.Contains("private PlayDirectoryModel BuildDirectoryModel(bool freshOpen)")
-                && page.Contains("PlayDirectoryBuilder.Combine(parts, collection, queue, sequence.Position.Source)"),
+                && page.Contains("PlayDirectoryBuilder.Combine(parts, collection, playlistSection, sequence.Position.Source)"),
                 "source: the drawer model is composed from parts, collection and queue");
             Check(page.Contains("PlayDirectoryBuilder.FromPlaylist(playlist, mediaListState, info == null ? null : info.aid)")
                 && page.Contains("model.IsFreshOpen = freshOpen;"),
@@ -528,10 +528,10 @@ namespace Ux1bProbe
                 "source: activating the row that already plays only adopts its source");
             Check(activate.Contains("player.ChangePlayIndex(rowIndex, PlayTargetStart.Resume);"),
                 "source: a part row goes through the player's own part switch");
-            Check(activate.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);")
+            Check(activate.Contains("SetSequenceSource(WatchSequenceSourceKind.UgcSeason);")
                 && activate.Contains("await PlayCollectionRowAsync(rowIndex, PlayTargetStart.Resume);"),
                 "source: a collection row goes through the P1a sequence path");
-            Check(activate.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);")
+            Check(activate.Contains("SetSequenceSource(WatchSequenceSourceKind.Playlist);")
                 && activate.Contains("await SelectPlaylistRowAsync(rowIndex, PlayTargetStart.Resume);"),
                 "source: a queue row goes through the P1a sequence path");
 
@@ -542,7 +542,7 @@ namespace Ux1bProbe
 
             var adopt = Body(page, "private void AdoptDirectoryRowSource");
             Check(adopt.Contains("playlist.Index = rowIndex;")
-                && adopt.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);"),
+                && adopt.Contains("SetSequenceSource(WatchSequenceSourceKind.Playlist);"),
                 "source: adopting a playing queue row moves the cursor and the continuation source");
             Check(!adopt.Contains("InitializeVideo(") && !adopt.Contains("SelectPlaylistRowAsync(")
                 && !adopt.Contains("PlayCollectionRowAsync("),
@@ -559,7 +559,7 @@ namespace Ux1bProbe
                 "source: the source switch checks that the current video is in the target source");
             Check(!source.Contains("InitializeVideo(") && !source.Contains("ChangePlayIndex("),
                 "source: switching the continuation source never restarts the current video");
-            Check(source.Contains("sequence.SetActiveSource(source);"),
+            Check(source.Contains("SetSequenceSource(source);"),
                 "source: only an explicit source action changes the continuation source");
 
             Check(Body(page, "private void RefreshSequenceState").Contains("player?.UpdateDirectoryInfo("),

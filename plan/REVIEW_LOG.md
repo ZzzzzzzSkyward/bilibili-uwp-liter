@@ -13,7 +13,9 @@ below were removed on purpose — they are all fixed and `git log` has them.
 
 ## Standing review notes
 
-- Reviews are static source inspection only: no build, no launch, no API call. A finding marked here
+- **The external reviewer is off duty as of 2026-11-01**; no further review commits are expected unless
+  the maintainer asks for one. Rows above stay as the record of what was already found and fixed.
+- Reviews were static source inspection only: no build, no launch, no API call. A finding marked here
   as fixed means "fixed in source", not "verified on device".
 - The reviewer re-reads earlier findings every round, so an open row must stay accurate; close it in
   the same commit that fixes it.

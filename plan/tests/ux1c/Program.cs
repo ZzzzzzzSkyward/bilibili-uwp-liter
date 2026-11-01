@@ -348,7 +348,9 @@ namespace Ux1cProbe
                 "source: the one request builder is the channel's fetch");
             Check(CountOf(page, "new MediaListPageLoader(") == 1,
                 "source: the page holds one paging channel");
-            Check(CountOf(page, "mediaListLoader.LoadAsync()") == 1,
+            var load = Body(page, "private async Task<bool> LoadMediaListPage()");
+            Check(CountOf(page, ".LoadAsync()") == 1
+                && load.Contains("var loader = mediaListLoader;") && load.Contains("await loader.LoadAsync();"),
                 "source: only LoadMediaListPage awaits the channel");
             Check(page.Contains("var request = LoadMediaListPage();") && CountOf(page, "await LoadMediaListPage()") == 3,
                 "source: the first page, the boundary, the user's action and the load-all step all use that one channel");

@@ -770,6 +770,7 @@ namespace Ux2bProbe
                 && handler.IndexOf("ChangePlayIndex(", StringComparison.Ordinal) < 0
                 && handler.IndexOf("SetQuery(", StringComparison.Ordinal) < 0
                 && handler.IndexOf("SetActiveSource", StringComparison.Ordinal) < 0
+                && handler.IndexOf("SetSequenceSource", StringComparison.Ordinal) < 0
                 && handler.IndexOf("pivot.SelectedIndex", StringComparison.Ordinal) < 0,
                 "source: 加载全部 never plays, never changes the source, the tab or the query");
 
@@ -787,8 +788,9 @@ namespace Ux2bProbe
             Check(Body(page, "private void RefreshMediaListChrome()").Contains("mediaListLoadMoreButton.IsEnabled = actionable && !running;"),
                 "source: the detail footer's button is not left live during the run");
 
-            Check(Body(page, "private void ClosePage()").Contains("loadAll.RequestCancel();"),
-                "source: closing the page cancels the run");
+            Check(Body(page, "private void ClosePage()").Contains("RemoveMediaListPlaylist();")
+                && Body(page, "private void RemoveMediaListPlaylist()").Contains("queue.Clear();"),
+                "source: closing the page tears the queue down, and the teardown cancels the run");
             Check(Body(page, "private async Task<bool> InitializeVideo(string id, PlayTargetStart start)").Contains("loadAll.RequestCancel();"),
                 "source: a new playback target cancels the run");
             Check(Body(page, "private bool BeginTransition(string targetTitle, string pendingKey)").Contains("loadAll.RequestCancel();"),

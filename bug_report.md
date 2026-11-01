@@ -49,6 +49,15 @@ generation，`DecideResume` 照样认这条记录。
 需要的修复：用户改连播来源时作废这条待推进记录（或者先校验并执行记录里的来源/行号再推进）；换来源与在途推进之间要有一致的失效规则，
 普通浏览目录不受影响。
 
+## BR-33 — 缓存页复用后，上一个视频的播放列表和它的“加载全部”跟到下一个视频（P2b 2026-11-01）
+
+`Pages/VideoDetailPage.xaml.cs` 从不拆 `playlist` / `mediaListState` / `playlistPivotItem`：页面是
+`NavigationCacheMode.Enabled`，从播放列表进站、看完要点开另一个视频时，上一份播放列表页签、它的游标、以及新加的“加载全部”
+都还在，目录里于是出现跟当前视频无关的播放列表，底部那几个按钮也照样能操作它。这条在 P2b 之前就存在，只是“加载全部”让它更能干坏事。
+
+需要的修复：离开或换目标时把播放列表状态、行集合、页签和页签里的控制一起拆掉并取消在途取页；重新进入时除非这次启动真的带了队列，
+否则没有播放列表。
+
 ## Notes
 
 - Install a `BiliLite.Packages_*` MSIX (root launcher ≈ 8 KB plus `entrypoint/BiliLiter.exe`). A

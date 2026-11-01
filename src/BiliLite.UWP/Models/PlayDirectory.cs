@@ -436,6 +436,43 @@ namespace BiliLite.Models.Common
     }
 
     /// <summary>
+    /// 页面手上的这一份播放队列:启动带来的队列、翻页状态、已加载的行,以及"加载全部"。
+    /// 四样东西一起建、一起拆:页面是缓存实例,漏掉一样,下一个视频就会接着用上一个视频的队列。
+    /// 拆只放掉引用,不清行里的内容:内存队列的行是启动器给的,那边还在用。
+    /// </summary>
+    public sealed class PlayQueueState
+    {
+        public VideoPlaylist Playlist { get; set; }
+
+        public MediaListPagingState Paging { get; set; }
+
+        public ObservableCollection<VideoPlaylistItem> Rows { get; set; }
+
+        public PlayDirectoryLoadAll LoadAll { get; set; }
+
+        public bool IsEmpty
+        {
+            get { return Playlist == null && Paging == null && Rows == null && LoadAll == null; }
+        }
+
+        /// <summary>
+        /// 拆掉这一份:在跑的"加载全部"先收手,四样引用一起放掉。
+        /// 没建过、或者已经拆过时再拆一次什么都不做,返回 false。
+        /// </summary>
+        public bool Clear()
+        {
+            if (IsEmpty) return false;
+            // 手上这一页走完就停;请求本身收不回来,但它再回来时已经找不到这一份
+            if (LoadAll != null) LoadAll.RequestCancel();
+            Playlist = null;
+            Paging = null;
+            Rows = null;
+            LoadAll = null;
+            return true;
+        }
+    }
+
+    /// <summary>
     /// 分P的最小输入:只有目录需要的字段,构建器不碰播放器的 PlayInfo
     /// </summary>
     public sealed class PlayDirectoryPart

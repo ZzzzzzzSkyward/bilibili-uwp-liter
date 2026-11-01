@@ -119,7 +119,7 @@ namespace Ux1dProbe
             state.Commit("6001", "ml-1");
             state.Begin("下一页", "");
             state.Settle();
-            var record = state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, false, true);
+            var record = state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, "7000", false, true);
             var generation = state.Generation;
 
             Check(!state.IsPending, "recording the interrupted move does not leave a pending wait behind");
@@ -132,36 +132,36 @@ namespace Ux1dProbe
                 "the record pins how the move was asked for");
 
             // 重试又失败:记录留着,下一次重试还能接着走
-            Check(state.DecideResume(false, PlayDirectoryPagingState.Failed) == PlayAdvanceResume.WaitForRetry,
+            Check(state.DecideResume(false, PlayDirectoryPagingState.Failed, WatchSequenceSourceKind.Playlist, "7000") == PlayAdvanceResume.WaitForRetry,
                 "a retry that fails again leaves the interrupted move waiting");
             Check(state.PendingAdvance != null && state.AdvanceIsCurrent(),
                 "the record survives a failed retry");
 
             // 重试取到了:接着走,记录先收掉,不会推进两次
-            Check(state.DecideResume(true, PlayDirectoryPagingState.More) == PlayAdvanceResume.Resume,
+            Check(state.DecideResume(true, PlayDirectoryPagingState.More, WatchSequenceSourceKind.Playlist, "7000") == PlayAdvanceResume.Resume,
                 "a retry that lands resumes the interrupted move");
             Check(state.PendingAdvance == null, "the resumed move consumes the record exactly once");
-            Check(state.DecideResume(true, PlayDirectoryPagingState.More) == PlayAdvanceResume.None,
+            Check(state.DecideResume(true, PlayDirectoryPagingState.More, WatchSequenceSourceKind.Playlist, "7000") == PlayAdvanceResume.None,
                 "a second retry never advances twice");
 
             // 列表到头:这一次推进取消,记录不留下
-            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, true, false);
-            Check(state.DecideResume(false, PlayDirectoryPagingState.Exhausted) == PlayAdvanceResume.Cancel,
+            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, "7000", true, false);
+            Check(state.DecideResume(false, PlayDirectoryPagingState.Exhausted, WatchSequenceSourceKind.Playlist, "7000") == PlayAdvanceResume.Cancel,
                 "an exhausted list cancels the interrupted move");
             Check(state.PendingAdvance == null, "a cancelled move leaves no record behind");
 
             // 用户自己选了行
-            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, false, true);
+            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, "7000", false, true);
             state.DropAdvance();
             Check(state.PendingAdvance == null, "activating a row drops the record");
 
             // 开了另一条视频
-            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, false, true);
+            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, "7000", false, true);
             state.Commit("6002", "ml-1");
             Check(state.PendingAdvance == null, "playing another video drops the record");
 
             // 关页
-            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, false, true);
+            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 19, "7000", false, true);
             state.Begin("第9讲", "7009");
             state.Close();
             Check(state.PendingAdvance == null && !state.IsPending,
@@ -175,22 +175,22 @@ namespace Ux1dProbe
         {
             var state = new PlayTransitionState();
             state.Commit("6001", "ml-1");
-            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 4, false, true);
+            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 4, "7004", false, true);
 
             state.SetMediaList("ml-2");
             Check(!state.AdvanceIsCurrent() && state.PendingAdvance == null,
                 "another playlist drops the record instead of reviving it");
 
             state.Commit("6001", null);
-            state.RememberAdvance(WatchSequenceSourceKind.UgcSeason, 2, false, true);
+            state.RememberAdvance(WatchSequenceSourceKind.UgcSeason, 2, "7002", false, true);
             state.Commit("6009", "");
             Check(state.PendingAdvance == null, "another video drops the record");
 
-            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 3, false, true);
+            state.RememberAdvance(WatchSequenceSourceKind.Playlist, 3, "7003", false, true);
             // 新的一拍换了代数:旧记录不能再被一次重试拉起来
             state.Begin("第5讲", "7005");
             Check(!state.AdvanceIsCurrent(), "a newer transition invalidates the old record");
-            Check(state.DecideResume(true, PlayDirectoryPagingState.More) == PlayAdvanceResume.None,
+            Check(state.DecideResume(true, PlayDirectoryPagingState.More, WatchSequenceSourceKind.Playlist, "7003") == PlayAdvanceResume.None,
                 "a retry after a newer transition does not revive the old move");
             Check(state.PendingAdvance == null, "the stale record is dropped when it is found stale");
             state.Settle();
@@ -317,7 +317,8 @@ namespace Ux1dProbe
             Check(request.Contains("var landed = await request;") && request.Contains("await ResumeInterruptedAdvanceAsync(landed);"),
                 "source: the footer and drawer retry resume the interrupted transition");
             var resume = Body(page, "private async Task ResumeInterruptedAdvanceAsync(bool landed)");
-            Check(resume.Contains("transition.DecideResume(landed, PlayDirectoryBuilder.PagingOf(mediaListState))"),
+            Check(resume.Contains("transition.DecideResume(landed, PlayDirectoryBuilder.PagingOf(mediaListState),")
+                && resume.Contains("sequence.Position.Source, RowKeyIn(record.Source, record.RowIndex));"),
                 "source: the record's own decision drives the resume");
             Check(resume.Contains("await AdvanceSequenceAsync(record.SkipRemainingParts, record.Manual);"),
                 "source: the resume walks the move that was recorded, not a new one");

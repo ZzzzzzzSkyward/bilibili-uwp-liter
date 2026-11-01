@@ -88,7 +88,8 @@ namespace BiliLite.Models.Common
 
     /// <summary>
     /// 断在取页上的那一步。记的是"本来要往哪走":哪个来源、从哪一行出发、跳过不跳过剩下的分P、
-    /// 是不是用户自己按的;身份三项(VideoId/MediaListId/Generation)决定它还作不作数。
+    /// 是不是用户自己按的;身份三项(VideoId/MediaListId/Generation)决定它还作不作数,
+    /// 来源和行 Key 决定重试时这一步还走不走得通。
     /// </summary>
     public sealed class PlayPendingAdvance
     {
@@ -107,6 +108,11 @@ namespace BiliLite.Models.Common
         /// 推进的起点:当时所在的那一行
         /// </summary>
         public int RowIndex { get; set; }
+
+        /// <summary>
+        /// 那一行的身份。重试时同一行下标上还得是同一个视频:行集合换过,下一步就不是当时那一步了
+        /// </summary>
+        public string RowKey { get; set; }
 
         public bool SkipRemainingParts { get; set; }
 
@@ -257,7 +263,7 @@ namespace BiliLite.Models.Common
         /// <summary>
         /// 取页失败,这一次换目标断在这里:记下本来要走的那一步
         /// </summary>
-        public PlayPendingAdvance RememberAdvance(WatchSequenceSourceKind source, int rowIndex, bool skipRemainingParts, bool manual)
+        public PlayPendingAdvance RememberAdvance(WatchSequenceSourceKind source, int rowIndex, string rowKey, bool skipRemainingParts, bool manual)
         {
             m_advance = new PlayPendingAdvance()
             {
@@ -266,6 +272,7 @@ namespace BiliLite.Models.Common
                 Generation = m_generation,
                 Source = source,
                 RowIndex = rowIndex,
+                RowKey = rowKey ?? "",
                 SkipRemainingParts = skipRemainingParts,
                 Manual = manual,
             };
@@ -285,12 +292,30 @@ namespace BiliLite.Models.Common
 
         /// <summary>
         /// 用户点了"重试/加载更多":取到页就接着走那一步,又失败就留着记录,列表到头就取消。
+        /// 记录里的来源和行都还在,才轮到走:换过连播来源时推进它,等于把用户切到的那个来源换掉;
+        /// 那一行下标上已经换了视频时,重算出来的下一步也不是当时那一步。
+        /// rowKeyAtRecordedIndex 是记录里那个行下标现在在它自己来源里的 Key。
         /// </summary>
-        public PlayAdvanceResume DecideResume(bool landed, PlayDirectoryPagingState paging)
+        public PlayAdvanceResume DecideResume(bool landed, PlayDirectoryPagingState paging,
+            WatchSequenceSourceKind activeSource, string rowKeyAtRecordedIndex)
         {
             if (m_advance == null) return PlayAdvanceResume.None;
             // 换了视频或播放列表:这一条记录不再属于现在,只补行不推进
             if (!AdvanceIsCurrent())
+            {
+                m_advance = null;
+                return PlayAdvanceResume.None;
+            }
+            // 换了连播来源:这一步是旧来源的下一步,不再作数,也不改写用户切到的来源
+            if (m_advance.Source != activeSource)
+            {
+                m_advance = null;
+                return PlayAdvanceResume.None;
+            }
+            // 那一行已经不在了,或者那个位置上换成了别的视频:重算下一步等于走错行
+            var rowKey = m_advance.RowKey ?? "";
+            if (rowKey.Length == 0
+                || !string.Equals(rowKey, rowKeyAtRecordedIndex ?? "", StringComparison.Ordinal))
             {
                 m_advance = null;
                 return PlayAdvanceResume.None;
@@ -316,6 +341,16 @@ namespace BiliLite.Models.Common
         public void DropAdvance()
         {
             m_advance = null;
+        }
+
+        /// <summary>
+        /// 连播来源真的换了。断在取页上的那一步记的是旧来源的下一步,当场作废,不留到重试时才判;
+        /// 代数加一,换来源之前发出去的取页回来时对不上票,改不动用户切到的这个来源。
+        /// </summary>
+        public void SourceChanged()
+        {
+            m_advance = null;
+            m_generation++;
         }
 
         /// <summary>

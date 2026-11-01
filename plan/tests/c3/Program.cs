@@ -274,8 +274,8 @@ namespace C3Probe
             Check(page.Contains("var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);")
                 && page.Contains("var rowIndex = aids.IndexOf(videoDetailVM?.VideoInfo?.aid);"),
                 "source: a collection continues in section/episode order");
-            Check(page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);")
-                && page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);"),
+            Check(page.Contains("SetSequenceSource(WatchSequenceSourceKind.UgcSeason);")
+                && page.Contains("SetSequenceSource(WatchSequenceSourceKind.Playlist);"),
                 "source: the page records whether the current video came from the collection or the queue");
             Check(page.Contains("case WatchSequenceMove.PlayRow:")
                 && page.Contains("PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart)")
@@ -291,7 +291,7 @@ namespace C3Probe
                 "source: choosing a row loads that video's details and its own pages");
             Check(!selectionBody.Contains("playlist = "), "source: choosing a row never replaces the active queue");
 
-            Check(page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);")
+            Check(page.Contains("SetSequenceSource(WatchSequenceSourceKind.UgcSeason);")
                 && page.Contains("item.Aid == ugcSeasonAid) return;"),
                 "source: an embedded collection stays browseable inside the queued video");
         }

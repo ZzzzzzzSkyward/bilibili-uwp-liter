@@ -367,16 +367,16 @@ namespace Ux1aProbe
             Check(Body(page, "private async Task<bool> PlayCollectionRowAsync").Contains("return await InitializeVideo(aid, start);"),
                 "source: a collection row that is already highlighted still starts that video");
 
-            Check(page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);"),
+            Check(page.Contains("SetSequenceSource(WatchSequenceSourceKind.UgcSeason);"),
                 "source: picking a collection row makes the collection the active source");
-            Check(page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);"),
+            Check(page.Contains("SetSequenceSource(WatchSequenceSourceKind.Playlist);"),
                 "source: picking a queue row makes the queue the active source");
             Check(Body(page, "private void ApplyDefaultSequenceSource")
                     .Contains("if (sequence.Position.Source != WatchSequenceSourceKind.None) return;")
                 && Body(page, "private void ApplyDefaultSequenceSource")
-                    .Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);"),
+                    .Contains("SetSequenceSource(WatchSequenceSourceKind.UgcSeason);"),
                 "source: the collection is only the fallback when no queue and no row click chose a source");
-            Check(page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);")
+            Check(page.Contains("SetSequenceSource(WatchSequenceSourceKind.Playlist);")
                 && page.Contains("if (e.Parameter is VideoPlaylist)"),
                 "source: opening through a queue keeps the queue active");
 
