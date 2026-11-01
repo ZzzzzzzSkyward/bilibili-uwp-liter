@@ -268,6 +268,10 @@ namespace BiliLite.Controls
         private readonly UISettings _uiSettings = new UISettings();
         // 当前在跑的抽屉故事板:换方向时先停掉,停掉的不会发完成回调
         private Storyboard _directoryStoryboard;
+        // "目录"按钮按下反馈的故事板:目标固定,只建一次,每次点重放
+        private Storyboard _directoryPressStoryboard;
+        // 按下反馈正在跑:这时候再点要先停掉,不能把同一个故事板叠着 Begin
+        private bool _directoryPressRunning;
         // 这一次关门的令牌,完成回调拿着它回来认领
         private int _directoryCloseToken;
         // 页面报告"正在换到某个目标":等待中"下一个"按钮变灰,提示仍然写着那个目标
@@ -1292,35 +1296,64 @@ namespace BiliLite.Controls
         }
 
         /// <summary>
-        /// "目录"按钮自己的按下反馈:缩放一下再弹回。点一次就闪一次,
+        /// "目录"按钮自己的按下反馈:内容缩一下再弹回,同时淡一下。点一次就闪一次,
         /// 不受窗口模式影响,也不指望主题里的按下态在视频画面上看得出来
         /// </summary>
-        private static readonly string[] DirectoryPressProperties = { "ScaleX", "ScaleY" };
-
         private void PlayDirectoryButtonPress()
         {
-            if (BottomBtnDirectoryPress == null) return;
-            var duration = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ButtonPressMilliseconds);
-            var half = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ButtonPressMilliseconds * 0.4);
-            var storyboard = new Storyboard { FillBehavior = FillBehavior.Stop };
-            foreach (var property in DirectoryPressProperties)
+            // 少一个目标就整段不发:动画没接住对象的故事板 Begin 会直接抛,后面的打开抽屉就再也走不到
+            if (BottomBtnDirectoryPress == null || BottomBtnDirectoryPressHost == null) return;
+            // 目标元素和时长在加载后都不变,故事板只建一次,每次点只重放
+            if (_directoryPressStoryboard == null)
             {
-                var scale = new DoubleAnimationUsingKeyFrames { Duration = duration };
-                scale.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 1 });
-                scale.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = half, Value = 0.88 });
-                scale.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = duration, Value = 1 });
-                Storyboard.SetTarget(scale, BottomBtnDirectoryPress);
-                Storyboard.SetTargetProperty(scale, property);
-                storyboard.Children.Add(scale);
+                var duration = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ButtonPressMilliseconds);
+                var half = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ButtonPressMilliseconds * 0.4);
+                var storyboard = new Storyboard { FillBehavior = FillBehavior.Stop };
+                // 缩放挂在 CompositeTransform 上,ScaleX/ScaleY 是它的属性
+                var scaleX = BuildPressFlash(duration, half, 0.88);
+                Storyboard.SetTarget(scaleX, BottomBtnDirectoryPress);
+                Storyboard.SetTargetProperty(scaleX, "ScaleX");
+                storyboard.Children.Add(scaleX);
+                var scaleY = BuildPressFlash(duration, half, 0.88);
+                Storyboard.SetTarget(scaleY, BottomBtnDirectoryPress);
+                Storyboard.SetTargetProperty(scaleY, "ScaleY");
+                storyboard.Children.Add(scaleY);
+                // 淡入淡出只能挂在 UIElement 上:Opacity 在内容面板,变换上没有这个属性
+                var fade = BuildPressFlash(duration, half, 0.55);
+                Storyboard.SetTarget(fade, BottomBtnDirectoryPressHost);
+                Storyboard.SetTargetProperty(fade, "Opacity");
+                storyboard.Children.Add(fade);
+                storyboard.Completed += DirectoryPressStoryboard_Completed;
+                _directoryPressStoryboard = storyboard;
             }
-            var fade = new DoubleAnimationUsingKeyFrames { Duration = duration };
-            fade.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 1 });
-            fade.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = half, Value = 0.55 });
-            fade.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = duration, Value = 1 });
-            Storyboard.SetTarget(fade, BottomBtnDirectoryPress);
-            Storyboard.SetTargetProperty(fade, "Opacity");
-            storyboard.Children.Add(fade);
-            storyboard.Begin();
+            // 上一次闪光还没跑完就又点:先停掉自己这一份再从头放,不能叠着 Begin
+            if (_directoryPressRunning)
+            {
+                _directoryPressStoryboard.Stop();
+                _directoryPressRunning = false;
+            }
+            _directoryPressRunning = true;
+            _directoryPressStoryboard.Begin();
+        }
+
+        /// <summary>
+        /// 闪光跑完了,下一次点就可以直接 Begin
+        /// </summary>
+        private void DirectoryPressStoryboard_Completed(object sender, object e)
+        {
+            _directoryPressRunning = false;
+        }
+
+        /// <summary>
+        /// 1 → low → 1 的闪光关键帧,按下反馈的缩放和淡出共用
+        /// </summary>
+        private static DoubleAnimationUsingKeyFrames BuildPressFlash(TimeSpan duration, TimeSpan half, double low)
+        {
+            var flash = new DoubleAnimationUsingKeyFrames { Duration = duration };
+            flash.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 1 });
+            flash.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = half, Value = low });
+            flash.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = duration, Value = 1 });
+            return flash;
         }
 
         /// <summary>

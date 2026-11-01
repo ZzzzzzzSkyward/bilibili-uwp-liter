@@ -721,7 +721,7 @@
                     </ComboBox.Items>
                   </ComboBox>
                   <Button x:Name="BottomBtnDirectory" Click="BottomBtnDirectory_Click" Visibility="Collapsed" ToolTipService.ToolTip="播放目录" AutomationProperties.Name="播放目录" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
-                    <StackPanel Orientation="Horizontal" RenderTransformOrigin="0.5,0.5">
+                    <StackPanel x:Name="BottomBtnDirectoryPressHost" Orientation="Horizontal" RenderTransformOrigin="0.5,0.5">
                       <StackPanel.RenderTransform>
                         <CompositeTransform x:Name="BottomBtnDirectoryPress"/>
                       </StackPanel.RenderTransform>

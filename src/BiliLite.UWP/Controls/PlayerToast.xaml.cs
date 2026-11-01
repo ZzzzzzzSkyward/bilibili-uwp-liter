@@ -19,6 +19,10 @@ namespace BiliLite.Controls
         private const double BasePaddingY = 8;
         private const double BaseIconSpacing = 10;
         private const double BaseCornerRadius = 8;
+        //两块共用同一个行框高度，块高一致时它们的盒子中心才是同一条线
+        private const double BaseLineHeight = BaseFontSize * 1.1;
+        //共用行框后数字的墨迹中心仍偏高约 2 DIP，这个常量只补视觉位置、不改测量尺寸和图标右侧间距；设备上若显得图标偏高就改它
+        private const double BaseIconOpticalOffset = -2.4;
 
         //淡出期间元素必须留在布局里，否则居中的父级会重新居中，正在变透明的浮层会跟着往右挪
         private static readonly TimeSpan ShowFadeDuration = TimeSpan.FromMilliseconds(150);
@@ -57,10 +61,9 @@ namespace BiliLite.Controls
         public void SetContent(string text, EFontAwesomeIcon icon)
         {
             //没有文本时不留空位：折叠文本块同时收掉图标右侧间距，否则纯图标浮层右边挂一条空白
-            var hasText = !string.IsNullOrEmpty(text);
             TxtToast.Text = text ?? "";
-            TxtToast.Visibility = hasText ? Visibility.Visible : Visibility.Collapsed;
-            IconGlyph.Margin = new Thickness(0, 0, hasText ? BaseIconSpacing * _scale : 0, 0);
+            TxtToast.Visibility = string.IsNullOrEmpty(text) ? Visibility.Collapsed : Visibility.Visible;
+            ApplyIconLayout();
             if (icon == EFontAwesomeIcon.None)
             {
                 IconGlyph.Text = "";
@@ -80,10 +83,20 @@ namespace BiliLite.Controls
             }
             _scale = scale;
             TxtToast.FontSize = BaseFontSize * scale;
+            TxtToast.LineHeight = BaseLineHeight * scale;
             IconGlyph.FontSize = BaseFontSize * scale;
-            IconGlyph.Margin = new Thickness(0, 0, TxtToast.Visibility == Visibility.Visible ? BaseIconSpacing * scale : 0, 0);
+            ApplyIconLayout();
             ToastRoot.Padding = new Thickness(BasePaddingX * scale, BasePaddingY * scale, BasePaddingX * scale, BasePaddingY * scale);
             ToastRoot.CornerRadius = new CornerRadius(BaseCornerRadius * scale);
+        }
+
+        private void ApplyIconLayout()
+        {
+            var hasText = TxtToast.Visibility == Visibility.Visible;
+            //纯图标浮层没有数字要和它对齐，用自然行框即可：FA 字形在自己的行框里本来就是对称的，钉死行框再补偏移只会把它推离中心
+            IconGlyph.LineHeight = hasText ? BaseLineHeight * _scale : 0;
+            IconOffset.Y = hasText ? BaseIconOpticalOffset * _scale : 0;
+            IconGlyph.Margin = new Thickness(0, 0, hasText ? BaseIconSpacing * _scale : 0, 0);
         }
 
         public void ShowToast()
