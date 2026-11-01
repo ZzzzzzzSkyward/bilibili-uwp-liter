@@ -582,9 +582,10 @@ namespace Ux1bProbe
                 "source: scope tabs are generated from the sections that exist");
             Check(!control.Contains("\" · 连播中\""),
                 "source: an active tab is not restated in words");
-            Check(control.Contains("AutomationProperties.SetName(dot, \"连播中\")")
+            // 状态改由页签的自动化名称说出来,圆点只是画出来的
+            Check(control.Contains("AutomationProperties.SetName(tab, isContinuation ? title + \" 连播中\" : title)")
                 && xaml.Contains("x:Key=\"DirectoryDotStyle\""),
-                "source: the continuation tab carries a dot with the 连播中 name");
+                "source: the continuation tab keeps its state in its accessible name, drawn by the dot");
             Check(xaml.Contains("x:Name=\"PositionCountText\"") && control.Contains("PositionText.Text = position;"),
                 "source: the position and the count are two separate blocks");
             Check(control.Contains("ContinuationSourceRequested") && xaml.Contains("按合集连播")

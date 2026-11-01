@@ -348,23 +348,23 @@ namespace Ux1aProbe
 
             Check(CountOf(page, "private async Task<bool> AdvanceSequenceAsync(") == 1,
                 "source: there is exactly one advance path in the page");
-            Check(CountOf(page, "await AdvanceSequenceAsync(") == 3,
-                "source: completion, next and skip-remaining-parts all call it");
+            Check(CountOf(page, "await AdvanceSequenceAsync(") == 4,
+                "source: completion, next, skip-remaining-parts and the resumed retry all call it");
 
             Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("WatchSequenceOrder.Next(sequence.Position, skipRemainingParts)"),
                 "source: the advance path asks the sequence for the target");
             Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("player.ChangePlayIndex(step.PartIndex, PlayTargetStart.FromStart);"),
                 "source: a part move uses the player's own part switch");
-            Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart);"),
+            Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart)"),
                 "source: a row move uses the row executor");
             Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("if (await LoadMediaListPage())"),
                 "source: a page step fetches through the existing page loader");
             Check(Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("if (_isClosed) return false;")
                 && Body(page, "private async Task<bool> AdvanceSequenceAsync").Contains("if (flag) return false;"),
                 "source: the closed-page and in-flight guards stay on the advance path");
-            Check(Body(page, "private async Task PlayCollectionRowAsync").Contains("SelectUgcSeasonRow(listView, row);"),
+            Check(Body(page, "private async Task<bool> PlayCollectionRowAsync").Contains("SelectUgcSeasonRow(listView, row);"),
                 "source: a collection row move reuses the existing selection handler");
-            Check(Body(page, "private async Task PlayCollectionRowAsync").Contains("await InitializeVideo(aid, start);"),
+            Check(Body(page, "private async Task<bool> PlayCollectionRowAsync").Contains("return await InitializeVideo(aid, start);"),
                 "source: a collection row that is already highlighted still starts that video");
 
             Check(page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);"),
@@ -487,8 +487,11 @@ namespace Ux1aProbe
                 "source: a page request for the part already playing does not restart it");
 
             var update = Body(player, "public void UpdateSequenceInfo");
-            Check(update.Contains("ToolTipService.SetToolTip(BottomBtnNext, nextName);")
-                && update.Contains("AutomationProperties.SetName(BottomBtnNext, nextName);"),
+            // 提示文字的实际赋值收在 ApplyNextLabel:等待中也要写着同一个目标
+            var updateLabel = Body(player, "private void ApplyNextLabel()");
+            Check(update.Contains("ApplyNextLabel();")
+                && updateLabel.Contains("ToolTipService.SetToolTip(BottomBtnNext, nextName);")
+                && updateLabel.Contains("AutomationProperties.SetName(BottomBtnNext, nextName);"),
                 "source: the reported target names the next button for pointer and screen reader users");
 
             var visibility = Body(player, "private void UpdateBottomBtnNextVisibility");

@@ -267,9 +267,9 @@ namespace C3Probe
             Check(page.Contains("case WatchSequenceMove.RetryNextPage:") && page.Contains("RefreshMediaListChrome();")
                 && page.Contains("下一页加载失败,点\\\"加载更多\\\"重试"),
                 "source: a failed next page leaves the Load more retry visible and does not finish playback");
-            Check(page.Contains("private async Task SelectPlaylistRowAsync(int index, PlayTargetStart start)")
+            Check(page.Contains("private async Task<bool> SelectPlaylistRowAsync(int index, PlayTargetStart start)")
                 && page.Contains("SelectPlaylistRow(listView, index);")
-                && page.Contains("await InitializeVideo(playlist.Playlist[index].ID, start);"),
+                && page.Contains("return await InitializeVideo(playlist.Playlist[index].ID, start);"),
                 "source: advancing moves the row highlight under a guard and starts the row itself");
             Check(page.Contains("var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);")
                 && page.Contains("var rowIndex = aids.IndexOf(videoDetailVM?.VideoInfo?.aid);"),
@@ -278,7 +278,7 @@ namespace C3Probe
                 && page.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);"),
                 "source: the page records whether the current video came from the collection or the queue");
             Check(page.Contains("case WatchSequenceMove.PlayRow:")
-                && page.Contains("await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart);")
+                && page.Contains("PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart)")
                 && page.Contains("if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)"),
                 "source: a collection episode advances inside the collection, leaving the opened queue alone");
             Check(!page.Contains("playlist.Index == playlist.Playlist.Count - 1"),

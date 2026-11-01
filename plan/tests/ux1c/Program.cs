@@ -9,10 +9,10 @@ namespace Ux1cProbe
     /// <summary>
     /// Ux1c: 连播边界、续播策略和唯一一条取页通道。
     ///
-    /// Executed against product source: Models/MediaListResources.cs (the paging state machine,
-    /// the single-flight loader and the continuation policy) and Models/PlayDirectory.cs (the
-    /// directory's own paging state), so editing those decisions changes what the executed
-    /// assertions see. The player, the page and the controls cannot run outside UWP, so their
+    /// Executed against product source: Models/MediaListResources.cs (the paging state machine and
+    /// the single-flight loader), Models/PlayContinuation.cs (the continuation policy, which moved
+    /// there from MediaListResources.cs) and Models/PlayDirectory.cs (the directory's own paging
+    /// state), so editing those decisions changes what the executed assertions see. The player, the page and the controls cannot run outside UWP, so their
     /// wiring is read as text; every such check is named "source:".
     /// </summary>
     public static class Program
@@ -306,7 +306,7 @@ namespace Ux1cProbe
                 "source: manual next and previous never read the automatic toggle");
 
             Check(advance.Contains("player.ChangePlayIndex(step.PartIndex, PlayTargetStart.FromStart);")
-                && advance.Contains("await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart);"),
+                && advance.Contains("PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart)"),
                 "source: automatic and manual forward moves start the target at 0");
             Check(Body(page, "private async void player_PreviousOuterRequested")
                     .Contains("player.ChangePlayIndex(step.PartIndex, PlayTargetStart.Resume);")
@@ -332,7 +332,7 @@ namespace Ux1cProbe
                 && page.Contains("await InitializeVideo(id, PlayTargetStart.Resume);"),
                 "source: direct opening and refresh keep today's resume");
 
-            var initialize = Body(page, "private async Task InitializeVideo");
+            var initialize = Body(page, "private async Task<bool> InitializeVideo");
             Check(initialize.Contains("if (start == PlayTargetStart.Resume && videoDetailVM.VideoInfo.history != null)"),
                 "source: a continuation move does not inherit the target's saved part");
             Check(initialize.Contains("player.InitializePlayInfo(playInfos, index, start);"),

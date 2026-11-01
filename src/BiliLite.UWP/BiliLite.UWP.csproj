@@ -348,6 +348,7 @@
     <Compile Include="Models\WatchSequence.cs" />
     <Compile Include="Models\VideoQueue.cs" />
     <Compile Include="Models\PlayDirectory.cs" />
+    <Compile Include="Models\PlayContinuation.cs" />
     <Compile Include="Modules\Detail\FavoriteDetailVM.cs" />
     <Compile Include="Modules\DownloadVM.cs" />
     <Compile Include="Modules\EmoteVM.cs" />

@@ -87,47 +87,6 @@ namespace BiliLite.Models.Common
     }
 
     /// <summary>
-    /// 换到某个目标时从哪开始播。续播=目标自己保存的进度,从头=0。
-    /// 每个换目标的入口都要明说,不能让上一次的续播状态顺下来。
-    /// </summary>
-    public enum PlayTargetStart
-    {
-        /// <summary>
-        /// 沿用目标保存的进度:直接打开、用户自己点的行/分P、往回(上一个)
-        /// </summary>
-        Resume = 0,
-        /// <summary>
-        /// 从 0 开始:往前走的续播移动(播放结束的自动连播、下一个、下一分P)
-        /// </summary>
-        FromStart = 1,
-    }
-
-    /// <summary>
-    /// 连播的两个策略决定:自动边界要不要真的推进,换到目标后从哪开始播。
-    /// 分P边界和视频边界读同一个开关,不另立第二份判断。
-    /// </summary>
-    public static class PlayContinuationPolicy
-    {
-        /// <summary>
-        /// 播放结束的自动边界要不要继续推进。"自动连播"关着时停在当前这一P/这一条;
-        /// 用户自己按的"下一个/上一个"不受这个开关约束。
-        /// </summary>
-        public static bool AdvanceAllowed(bool manual, bool autoNextEnabled)
-        {
-            return manual || autoNextEnabled;
-        }
-
-        /// <summary>
-        /// 目标要不要跳到它保存的进度:只有"续播"这个选择在 AUTO_TO_POSITION 打开时才算数,
-        /// 往前走的续播移动一律从 0 开始。
-        /// </summary>
-        public static bool RestoresPosition(PlayTargetStart start, bool autoToPositionEnabled)
-        {
-            return start == PlayTargetStart.Resume && autoToPositionEnabled;
-        }
-    }
-
-    /// <summary>
     /// 启动器链接 bilibili://music/playlist/playpage/{id}[?page_type=n] 的解析。
     /// 只认这一种形态:收藏夹的 ml 链接、音频/歌单链接和其它 bilibili 链接都返回 false,
     /// 交给 MessageCenter 里原有的路由继续处理。

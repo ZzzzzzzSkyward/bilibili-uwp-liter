@@ -41,6 +41,26 @@ namespace BiliLite.Models.Common
         /// 当前行的文字标记("正在播放"),不是当前行时为空;界面直接按这个字符串显隐
         /// </summary>
         public string CurrentBadge { get; set; }
+
+        /// <summary>
+        /// 正在换到这一行。等待的行不是正在播放的行:它只挂转圈,不挂"正在播放"的条和字
+        /// </summary>
+        public bool IsPending { get; set; }
+
+        /// <summary>
+        /// 读屏读到的这一行:标题,再加上它现在的状态。
+        /// 状态只在这里出现,行上的可见文字不再自己复述一遍标题
+        /// </summary>
+        public string AutomationName
+        {
+            get
+            {
+                var title = Title ?? "";
+                if (IsPending) return title + " 正在切换";
+                if (IsCurrent) return title + " 正在播放";
+                return title;
+            }
+        }
     }
 
     public sealed class PlayDirectorySection
@@ -108,6 +128,12 @@ namespace BiliLite.Models.Common
         /// 远程播放列表的翻页状态。固定内存队列是 None:没有更多页可取,界面上什么都不摆。
         /// </summary>
         public PlayDirectoryPagingState Paging { get; set; }
+
+        /// <summary>
+        /// 正在换到的那一行(Key)。空表示没有换目标在路上;
+        /// 界面上这一行挂转圈,不当成正在播放
+        /// </summary>
+        public string PendingKey { get; set; }
 
         /// <summary>
         /// 一段都没有时不弹空抽屉
@@ -364,6 +390,28 @@ namespace BiliLite.Models.Common
                 // 翻页属于播放列表那一段,与当前跟哪个来源连播无关:合集在连载时播放列表照样还有页
                 Paging = playlist == null ? PlayDirectoryPagingState.None : playlist.Paging,
             };
+        }
+
+        /// <summary>
+        /// 把"正在换到这一行"标进目录:等待的行只多一个标记,
+        /// 当前行(正在播放)的条和字都不动,等待的行也不会被标成当前行。
+        /// </summary>
+        public static PlayDirectoryModel ApplyPending(PlayDirectoryModel model, string pendingKey)
+        {
+            if (model == null) return null;
+            var key = pendingKey ?? "";
+            model.PendingKey = key;
+            if (model.Sections == null) return model;
+            foreach (var section in model.Sections)
+            {
+                if (section == null || section.Rows == null) continue;
+                foreach (var row in section.Rows)
+                {
+                    if (row == null) continue;
+                    row.IsPending = !string.IsNullOrEmpty(key) && string.Equals(row.Key, key, StringComparison.Ordinal);
+                }
+            }
+            return model;
         }
 
         /// <summary>

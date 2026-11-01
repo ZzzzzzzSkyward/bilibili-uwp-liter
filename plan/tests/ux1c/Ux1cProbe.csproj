@@ -17,6 +17,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\MediaListResources.cs" Link="MediaListResources.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\PlayContinuation.cs" Link="PlayContinuation.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\PlayDirectory.cs" Link="PlayDirectory.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\VideoQueue.cs" Link="VideoQueue.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\VideoCollections.cs" Link="VideoCollections.cs" />

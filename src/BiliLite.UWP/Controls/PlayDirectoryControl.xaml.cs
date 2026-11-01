@@ -3,6 +3,7 @@ using Windows.System;
 using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Automation;
+using Windows.UI.Xaml.Automation.Peers;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
@@ -112,14 +113,18 @@ namespace BiliLite.Controls
             foreach (var section in model.Sections)
             {
                 if (section == null) continue;
+                var title = section.Title ?? "";
                 var tab = new Button()
                 {
                     Tag = section.Kind,
                     Style = (Style)Resources["DirectoryTabStyle"],
                 };
-                tab.Content = section.Kind == model.ActiveKind
-                    ? (object)ContinuationTabContent(section.Title ?? "", tab)
-                    : section.Title ?? "";
+                var isContinuation = section.Kind == model.ActiveKind;
+                tab.Content = isContinuation
+                    ? (object)ContinuationTabContent(title, tab)
+                    : title;
+                // 读屏读到页签名和它是不是连播来源;页签上的圆点只是把同一件事画出来,不再念一遍
+                AutomationProperties.SetName(tab, isContinuation ? title + " 连播中" : title);
                 tab.Click += Tab_Click;
                 TabHost.Children.Add(tab);
             }
@@ -139,7 +144,8 @@ namespace BiliLite.Controls
                 Margin = new Thickness(0, 0, 6, 0),
                 Style = (Style)Resources["DirectoryDotStyle"],
             };
-            AutomationProperties.SetName(dot, "连播中");
+            // 状态由页签的自动化名称说出来,圆点只是画出来的
+            AutomationProperties.SetAccessibilityView(dot, AccessibilityView.Raw);
             host.Children.Add(dot);
             var label = new TextBlock() { Text = title, VerticalAlignment = VerticalAlignment.Center };
             // 页签的选中样式改的是按钮的 Foreground,标题跟着它走
@@ -298,6 +304,22 @@ namespace BiliLite.Controls
         private void Root_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
         {
             e.Handled = true;
+        }
+    }
+
+    /// <summary>
+    /// 布尔标记转可见性:为真才显示。等待的那一行用它挂转圈,没有标记的行不占位。
+    /// </summary>
+    public sealed class PlayDirectoryVisibleConvert : Windows.UI.Xaml.Data.IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            return value is bool && (bool)value ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotSupportedException();
         }
     }
 

@@ -249,6 +249,11 @@ namespace BiliLite.Controls
         // 页面报告了目录,以及目录抽屉当前是否打开
         private bool _directoryAvailable;
         private bool _directoryOpen;
+        // 页面报告"正在换到某个目标":等待中"下一个"按钮变灰,提示仍然写着那个目标
+        private bool _transitionPending;
+        private string _pendingTargetText;
+        // 页面报告的下一个目标文字,等待结束后用来恢复按钮提示
+        private string _nextTargetText;
         // "下一个视频"(跳过剩余分P)的右键/长按菜单,只在页面报告可跳过时挂上
         private MenuFlyout _nextVideoFlyout;
 
@@ -615,6 +620,8 @@ namespace BiliLite.Controls
                 case (Windows.System.VirtualKey)188:
                     if (NoMod())
                     {
+                        // 换目标还在路上:上一个这一拍丢掉,与"下一个"同一条规矩
+                        if (_transitionPending) break;
                         //还有分P就回上一P;第一个分P上的上一个交给页面,它可能换到上一个视频
                         if (HasPreviousPart)
                         {
@@ -632,6 +639,8 @@ namespace BiliLite.Controls
                 case (Windows.System.VirtualKey)190:
                     if (NoMod())
                     {
+                        // 换目标还在路上:下一个这一拍丢掉,不排队
+                        if (_transitionPending) break;
                         //还有分P就换下一P;最后一P的下一个交给页面,它可能换到下一个视频
                         if (HasNextPart)
                         {
@@ -1018,16 +1027,60 @@ namespace BiliLite.Controls
         public void UpdateSequenceInfo(string nextTargetText, string previousTargetText, bool canSkipToNextVideo)
         {
             _hasOuterNextTarget = !string.IsNullOrEmpty(nextTargetText);
+            _nextTargetText = nextTargetText;
             if (canSkipToNextVideo != _canSkipToNextVideo)
             {
                 _canSkipToNextVideo = canSkipToNextVideo;
                 UpdateNextVideoMenu();
             }
-            // 没有外层下一个时按钮只代表下一P
-            var nextName = _hasOuterNextTarget ? nextTargetText : "下一P";
+            ApplyNextLabel();
+            UpdateBottomBtnNextVisibility();
+        }
+
+        /// <summary>
+        /// "下一个"按钮上的目标:等待中一直写着正在换的那一条,不因为别的重画把它顶掉;
+        /// 没有外层下一个时按钮只代表下一P
+        /// </summary>
+        private void ApplyNextLabel()
+        {
+            if (BottomBtnNext == null) return;
+            var nextName = _transitionPending && !string.IsNullOrEmpty(_pendingTargetText)
+                ? _pendingTargetText
+                : (_hasOuterNextTarget ? _nextTargetText : "下一P");
             ToolTipService.SetToolTip(BottomBtnNext, nextName);
             AutomationProperties.SetName(BottomBtnNext, nextName);
-            UpdateBottomBtnNextVisibility();
+        }
+
+        /// <summary>
+        /// 页面报告"正在换到某个目标":摆一个转圈加目标标题,并把"下一个"按钮变灰——
+        /// 等待中再按它不会有任何效果,不能让它看着还能按。目标标题原样显示,不加前缀。
+        /// </summary>
+        public void ShowTransitionPending(string targetTitle)
+        {
+            _transitionPending = true;
+            _pendingTargetText = targetTitle ?? "";
+            if (TransitionPendingText != null) TransitionPendingText.Text = _pendingTargetText;
+            if (TransitionPendingHost != null)
+            {
+                TransitionPendingHost.Visibility = Visibility.Visible;
+                // 读屏读一次"正在切换 + 目标";画面上的文字仍然只有目标本身
+                AutomationProperties.SetName(TransitionPendingHost,
+                    string.IsNullOrEmpty(_pendingTargetText) ? "正在切换" : "正在切换 " + _pendingTargetText);
+            }
+            if (BottomBtnNext != null) BottomBtnNext.IsEnabled = false;
+            ApplyNextLabel();
+        }
+
+        /// <summary>
+        /// 换目标结束(起播、失败或关页):收起等待态,按钮和提示回到页面报告的目标
+        /// </summary>
+        public void ClearTransitionPending()
+        {
+            _transitionPending = false;
+            _pendingTargetText = "";
+            if (TransitionPendingHost != null) TransitionPendingHost.Visibility = Visibility.Collapsed;
+            if (BottomBtnNext != null) BottomBtnNext.IsEnabled = true;
+            ApplyNextLabel();
         }
 
         /// <summary>
@@ -2882,6 +2935,8 @@ namespace BiliLite.Controls
 
         private async void BottomBtnNext_Click(object sender, RoutedEventArgs e)
         {
+            // 换目标还在路上:这一按不生效,也不能让它把等待中的那一步顶掉
+            if (_transitionPending) return;
             //还有分P就先换分P;最后一P把机会交给页面,它可能换到下一个视频
             if (HasNextPart)
             {

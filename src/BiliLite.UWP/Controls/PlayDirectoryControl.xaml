@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" x:Class="BiliLite.Controls.PlayDirectoryControl" mc:Ignorable="d" RequestedTheme="Dark" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:local="using:BiliLite.Controls" x:Class="BiliLite.Controls.PlayDirectoryControl" mc:Ignorable="d" RequestedTheme="Dark" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
   <UserControl.Resources>
+    <local:PlayDirectoryVisibleConvert x:Key="pendingVisible"/>
     <Style x:Key="DirectoryTabStyle" TargetType="Button">
       <Setter Property="Foreground" Value="#B3FFFFFF"/>
       <Setter Property="Background" Value="Transparent"/>
@@ -27,7 +28,7 @@
       <Setter Property="FontSize" Value="13"/>
     </Style>
   </UserControl.Resources>
-  <Grid x:Name="Root" Background="#F21A1A1A" BorderBrush="#33FFFFFF" BorderThickness="1 0 0 0" PointerPressed="Root_PointerPressed" PointerReleased="Root_PointerReleased" Tapped="Root_Tapped" DoubleTapped="Root_DoubleTapped">
+  <Grid x:Name="Root" TabFocusNavigation="Cycle" Background="#F21A1A1A" BorderBrush="#33FFFFFF" BorderThickness="1 0 0 0" PointerPressed="Root_PointerPressed" PointerReleased="Root_PointerReleased" Tapped="Root_Tapped" DoubleTapped="Root_DoubleTapped">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto"/>
       <RowDefinition Height="Auto"/>
@@ -78,6 +79,8 @@
           <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
           <Setter Property="BorderThickness" Value="0"/>
           <Setter Property="Margin" Value="0 1"/>
+          <!--读屏读标题加状态;状态只在自动化名称里,行上的字不复述标题-->
+          <Setter Property="AutomationProperties.Name" Value="{Binding AutomationName}"/>
         </Style>
       </ListView.ItemContainerStyle>
       <ListView.ItemTemplate>
@@ -100,6 +103,8 @@
               <TextBlock Text="{Binding Subtitle}" FontSize="11" Foreground="#99FFFFFF" TextTrimming="CharacterEllipsis" MaxLines="1" Margin="0 2 0 0"/>
             </StackPanel>
             <StackPanel Grid.Column="4" VerticalAlignment="Center" HorizontalAlignment="Right" MinWidth="60">
+              <!--等待这一行:只有转圈,没有"正在播放"的条和字-->
+              <ProgressRing Width="16" Height="16" IsActive="{Binding IsPending}" Visibility="{Binding IsPending, Converter={StaticResource pendingVisible}}" HorizontalAlignment="Right" Margin="0 0 0 2" Foreground="{ThemeResource HighLightColor}" AutomationProperties.AccessibilityView="Raw"/>
               <TextBlock Text="{Binding CurrentBadge}" Visibility="{Binding CurrentBadge, Converter={StaticResource display}}" FontSize="11" Foreground="{ThemeResource HighLightColor}" HorizontalAlignment="Right"/>
               <TextBlock Text="{Binding PositionText}" FontSize="11" Foreground="#B3FFFFFF" HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"/>
               <TextBlock Text="{Binding Duration}" FontSize="12" Foreground="#99FFFFFF" HorizontalAlignment="Right" Margin="0 2 0 0"/>

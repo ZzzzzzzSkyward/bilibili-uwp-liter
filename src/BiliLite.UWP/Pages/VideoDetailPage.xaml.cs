@@ -79,6 +79,8 @@ namespace BiliLite.Pages
                 args.Handled = false;
                 return;
             }
+            // 目录抽屉开着:键盘归抽屉(方向键浏览、回车激活、Esc 关抽屉),页面快捷键一个都不接
+            if (player != null && player.IsDirectoryVisible) return;
             args.Handled = true;
             switch (args.VirtualKey)
             {
@@ -146,6 +148,8 @@ namespace BiliLite.Pages
         {
             // 页签已经关掉,播放器马上释放:先立标记,还在路上的请求回来后按它收手
             _isClosed = true;
+            // 等待态、断在取页上的那一步和身份一起作废:晚到的结果一张票都对不上
+            transition.Close();
             // 详情请求可能还在路上,下一次进入本页(页面是缓存的同一实例)要能重新取
             flag = false;
             UnsubscribeClosedPage();
@@ -158,6 +162,8 @@ namespace BiliLite.Pages
             }
             RemoveUgcSeason();
             changedFlag = true;
+            // 等待态也不留在播放器上:页面是缓存实例,下一次进来不该还挂着上一条的目标
+            player?.ClearTransitionPending();
             player?.FullScreen(false);
             player?.MiniWidnows(false);
             player?.Dispose();
@@ -193,8 +199,12 @@ namespace BiliLite.Pages
         // 页面自己持有的播放顺序:当前连播来源、当前分P、当前来源里的当前行。
         // 下一个按钮、快捷键和播放结束都按这一份状态判定目标,不再各自猜来源。
         readonly WatchSequenceState sequence = new WatchSequenceState();
+        // 换目标的在途状态:一次只走一拍,断在取页上的那一步也记在这里。
+        // 身份是"视频 + 播放列表 + 代数",晚到的详情、取页和起播结果据此丢掉
+        readonly PlayTransitionState transition = new PlayTransitionState();
         // 上一次推进抽屉的目录签名:来源或行集合没变就不重建行
         string directorySignature;
+
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -207,6 +217,8 @@ namespace BiliLite.Pages
             {
                 // 重新进入本页:上一次的连播来源和行号不能留着
                 sequence.Clear();
+                // 上一次的等待态、断掉的那一步和身份也不能留着
+                transition.Close();
                 // 上一次留下的目录签名和抽屉也要收掉,等这次详情回来再报
                 directorySignature = null;
                 player.HideDirectory();
@@ -270,14 +282,23 @@ namespace BiliLite.Pages
             UnsubscribeClosedPage();
             base.OnNavigatedFrom(e);
         }
-        private async Task InitializeVideo(string id, PlayTargetStart start)
+        /// <summary>
+        /// 取详情并起播。返回值说这一次请求有没有真的起了播:
+        /// 晚到的结果(关页、换了视频、新的一拍)既不算成功也不算失败,调用方据此收掉等待态。
+        /// </summary>
+        private async Task<bool> InitializeVideo(string id, PlayTargetStart start)
         {
             // 页签已关:既不取详情也不换标题、不起播
-            if (_isClosed) return;
+            if (_isClosed) return false;
             // 上一次取详情还在路上:这次选择整条丢掉,不改 _id,免得在途请求的对账条件被顶替
-            if (flag) return;
+            if (flag) return false;
+            // 用户开了另一条视频:断在取页上的那一步不再作数
+            transition.DropAdvance();
             _id = id;
             flag = true;
+            // 这一拍的身份:视频、播放列表和代数。结果回来时三项都得还是发起时的那一份
+            var ticket = transition.Ticket();
+            var played = false;
             try
             {
                 if (long.TryParse(id, out var aid))
@@ -291,11 +312,11 @@ namespace BiliLite.Pages
                     is_bvid = true;
                 }
                 await videoDetailVM.LoadVideoDetail(id, is_bvid);
-                // 详情回来时页签已经关掉,或者这次请求已被下一次进入本页的取详情顶替:
-                // 都不要再改 VM 和播放器(播放器可能已经释放)
-                if (_isClosed || _id != id)
+                // 详情回来时页签已经关掉,这次请求已被下一次进入本页的取详情顶替,
+                // 或者已经开了新的一拍:都不要再改 VM 和播放器(播放器可能已经释放)
+                if (_isClosed || _id != id || !transition.IsCurrent(ticket))
                 {
-                    return;
+                    return false;
                 }
                 if (this.VideoCover != null)
                 {
@@ -322,7 +343,7 @@ namespace BiliLite.Pages
                             this.Frame.Navigate(typeof(SeasonDetailPage), result);
                             //从栈中移除当前页面的历史
                             this.Frame.BackStack.Remove(this.Frame.BackStack.FirstOrDefault(x => x.SourcePageType == this.GetType()));
-                            return;
+                            return false;
                         }
                     }
                     List<PlayInfo> playInfos = new List<PlayInfo>();
@@ -355,6 +376,9 @@ namespace BiliLite.Pages
                         }
                     }
                     player.InitializePlayInfo(playInfos, index, start);
+                    // 起播了:身份换成这一条视频,等待态和旧身份上的记录一起收掉
+                    transition.Commit(videoDetailVM.VideoInfo.aid, MediaListIdText());
+                    played = true;
                     comment.LoadComment(new LoadCommentInfo()
                     {
                         CommentMode = (int)Api.CommentApi.CommentType.Video,
@@ -372,6 +396,15 @@ namespace BiliLite.Pages
                 // 在途标记只归发起这次请求的一方:关页后重新进入再发起的请求不能被这里放开
                 if (_id == id) flag = false;
             }
+            return played;
+        }
+
+        /// <summary>
+        /// 当前播放列表 id。固定内存队列没有 id,写空串:身份里它就一直是同一份
+        /// </summary>
+        private string MediaListIdText()
+        {
+            return mediaListState == null ? "" : mediaListState.MediaListId ?? "";
         }
 
         /// <summary>
@@ -496,6 +529,8 @@ namespace BiliLite.Pages
             if (_isClosed) return;
             // 详情还在路上:这次选中整条丢掉,不换高亮也不改连播来源
             if (flag) return;
+            // 一拍换目标还在路上:这次选中也丢掉,不排队
+            if (transition.IsPending) return;
             // 连播换集由 PlayCollectionRowAsync 自己发起:续播策略要跟着那一拍传下去
             if (_syncingUgcSelection) return;
             var listView = sender as ListView;
@@ -559,6 +594,8 @@ namespace BiliLite.Pages
             // 启动器链接已经取过首页,直接复用同一份状态;内存里传来的链接自己建一份
             mediaListState = playlist.MediaListState ?? new MediaListPagingState(playlist.MediaListId, playlist.MediaListType, MediaListSourceKind.MediaList, playlist.Title);
             playlist.MediaListState = mediaListState;
+            // 身份里的播放列表换成这一份:上一条列表断掉的换目标不属于现在
+            transition.SetMediaList(mediaListState.MediaListId);
             playlist.MediaListId = mediaListState.MediaListId;
             playlist.MediaListType = mediaListState.MediaListType;
             // footer、抽屉和连播边界都从这一条通道取页:同一个在途请求只取一次
@@ -672,13 +709,15 @@ namespace BiliLite.Pages
             // 请求已经在路上:先把"加载中"画到两个界面上
             RefreshMediaListChrome();
             RedrawOpenDirectory();
-            await request;
+            var landed = await request;
             // 取页期间页签被关掉:不再碰已拆掉的页面状态
             if (_isClosed) return;
             RefreshMediaListChrome();
             RedrawOpenDirectory();
             // 手动取回一页后,"下一个目标"也跟着变
             RefreshSequenceState();
+            // 上一次换目标就断在这一页上:取到了就自动接着走,用户不必再按一次下一个
+            await ResumeInterruptedAdvanceAsync(landed);
         }
 
         /// <summary>
@@ -961,6 +1000,8 @@ namespace BiliLite.Pages
             {
                 return;
             }
+            // 一拍换目标还在路上:用户点分P也丢掉,不排队
+            if (transition.IsPending) return;
             // 用户自己在详情列点了分P:沿用这一P保存的进度
             player.ChangePlayIndex(listEpisode.SelectedIndex, PlayTargetStart.Resume);
         }
@@ -1068,6 +1109,8 @@ namespace BiliLite.Pages
             if (_isClosed) return;
             // 详情还在路上:这次选中整条丢掉,不动队列游标
             if (flag) return;
+            // 一拍换目标还在路上:这次选中也丢掉,不排队
+            if (transition.IsPending) return;
             // 连播选行由 SelectPlaylistRowAsync 自己发起:续播策略要跟着那一拍传下去
             if (_syncingPlaylistSelection) return;
             var liveView = sender as ListView;
@@ -1117,6 +1160,8 @@ namespace BiliLite.Pages
             if (_isClosed) return;
             // 详情还在路上:这一拍丢掉,不让它顶掉在途请求
             if (flag) return;
+            // 一拍还在路上:再按上一个也丢掉,不排队。用户可以继续看,但不能开第二个换目标
+            if (transition.IsPending) return;
             RefreshSequenceState();
             var step = WatchSequenceOrder.Previous(sequence.Position);
             switch (step.Move)
@@ -1126,7 +1171,16 @@ namespace BiliLite.Pages
                     player.ChangePlayIndex(step.PartIndex, PlayTargetStart.Resume);
                     return;
                 case WatchSequenceMove.PlayRow:
-                    await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.Resume);
+                    // 往回换的是另一条视频:同样先摆等待态,起播或失败后收起
+                    if (!BeginTransition(RowTitle(step.RowIndex), RowKey(step.RowIndex))) return;
+                    try
+                    {
+                        await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.Resume);
+                    }
+                    finally
+                    {
+                        EndTransition();
+                    }
                     return;
                 default:
                     // 没有上一个目标:说清是第一个,不进任何换集路径
@@ -1139,6 +1193,7 @@ namespace BiliLite.Pages
         /// 按顺序状态推进一个目标。播放结束、下一个按钮和下一个快捷键都只走这一处:
         /// 分P优先,分P走完交给外层来源;远程队列停在最后一行且还有下一页时先取下一页,
         /// 取不到就把"加载更多"留作重试,不跳过任何一行也不当成播完。
+        /// 远端的一步会摆出等待态;一次只走一拍,等待中再来的请求在这里被挡掉。
         /// </summary>
         private async Task<bool> AdvanceSequenceAsync(bool skipRemainingParts, bool manual = false)
         {
@@ -1146,6 +1201,8 @@ namespace BiliLite.Pages
             if (_isClosed) return false;
             // 详情还在路上:这一拍丢掉,不让它顶掉在途请求
             if (flag) return false;
+            // 一拍还在路上:第二次下一个/上一个直接丢掉,不排队。判定只在这一个地方
+            if (transition.IsPending) return false;
             // 自动连播关着:播放结束就停在当前这一P,不换下一个视频。分P之间的自动换P
             // 由播放器看同一个开关;用户自己按的下一个/上一个不经过这里
             if (!PlayContinuationPolicy.AdvanceAllowed(manual, SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_NEXT, true)))
@@ -1154,46 +1211,141 @@ namespace BiliLite.Pages
                 return false;
             }
 
-            // 一页可能全是已加载的行,取完再判定一次;上限只是防止服务端反复返回 has_more
-            for (var attempt = 0; attempt < 3; attempt++)
+            // 等待态从第一次落到远端的一步开始,一直到这一拍走完才收
+            var pending = false;
+            try
             {
-                RefreshSequenceState();
-                var step = WatchSequenceOrder.Next(sequence.Position, skipRemainingParts);
-                switch (step.Move)
+                // 一页可能全是已加载的行,取完再判定一次;上限只是防止服务端反复返回 has_more
+                for (var attempt = 0; attempt < 3; attempt++)
                 {
-                    case WatchSequenceMove.PlayPart:
-                        // 走播放器自己的分P切换;往前走的续播从 0 开始
-                        player.ChangePlayIndex(step.PartIndex, PlayTargetStart.FromStart);
-                        return !_isClosed;
-                    case WatchSequenceMove.PlayRow:
-                        await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart);
-                        return !_isClosed;
-                    case WatchSequenceMove.LoadNextPage:
-                        if (await LoadMediaListPage())
-                        {
-                            // 取页期间页签被关掉:新行留在状态里,但不选行也不起播
+                    RefreshSequenceState();
+                    var step = WatchSequenceOrder.Next(sequence.Position, skipRemainingParts);
+                    switch (step.Move)
+                    {
+                        case WatchSequenceMove.PlayPart:
+                            // 分P就在当前这一条视频里:换P是立刻的,不摆等待态
+                            player.ChangePlayIndex(step.PartIndex, PlayTargetStart.FromStart);
+                            return !_isClosed;
+                        case WatchSequenceMove.PlayRow:
+                            if (pending)
+                            {
+                                // 取到页了:等待的文字从"下一页"换成真正的目标行
+                                RetitleTransition(RowTitle(step.RowIndex), RowKey(step.RowIndex));
+                            }
+                            else if (!BeginTransition(RowTitle(step.RowIndex), RowKey(step.RowIndex)))
+                            {
+                                // 已经有一拍在路上:这一拍不再叠加
+                                return false;
+                            }
+                            pending = true;
+                            return await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart) && !_isClosed;
+                        case WatchSequenceMove.LoadNextPage:
+                            if (!pending)
+                            {
+                                // 还不知道会落在哪一行:等待态先写这一步的目标
+                                if (!BeginTransition(DescribeStep(step), "")) return false;
+                                pending = true;
+                            }
+                            // 取页的结果只对发起它的那一拍算数
+                            var ticket = transition.Ticket();
+                            if (await LoadMediaListPage())
+                            {
+                                // 取页期间页签被关掉:新行留在状态里,但不选行也不起播
+                                if (_isClosed) return false;
+                                // 取页期间换了视频或播放列表:这一拍不属于现在,也不再往下推
+                                if (!transition.IsCurrent(ticket)) return false;
+                                // 新行已经追加到同一个列表,重新判定再走
+                                continue;
+                            }
+                            // 页签已关:失败也不再改计数、不再提示重试
                             if (_isClosed) return false;
-                            // 新行已经追加到同一个列表,重新判定再走
-                            continue;
-                        }
-                        // 页签已关:失败也不再改计数、不再提示重试
-                        if (_isClosed) return false;
-                        // 失败:已加载行不动,"加载更多"仍然可见,就是重试入口
-                        RefreshMediaListChrome();
-                        Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
-                        return false;
-                    case WatchSequenceMove.RetryNextPage:
-                        RefreshMediaListChrome();
-                        Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
-                        return false;
-                    default:
-                        ShowSequenceEndToast(manual);
-                        return false;
+                            // 失败:已加载行不动,"加载更多"仍然可见,就是重试入口。
+                            // 本来要走的这一步记下来,重试取到页就自动接着走
+                            RefreshMediaListChrome();
+                            RememberInterruptedAdvance(skipRemainingParts, manual);
+                            Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
+                            return false;
+                        case WatchSequenceMove.RetryNextPage:
+                            RefreshMediaListChrome();
+                            RememberInterruptedAdvance(skipRemainingParts, manual);
+                            Utils.ShowMessageToast("下一页加载失败,点\"加载更多\"重试");
+                            return false;
+                        default:
+                            ShowSequenceEndToast(manual);
+                            return false;
+                    }
                 }
-            }
 
-            Utils.ShowMessageToast("播放列表没有更多可播放的内容");
-            return false;
+                Utils.ShowMessageToast("播放列表没有更多可播放的内容");
+                return false;
+            }
+            finally
+            {
+                // 这一拍走完(起播、失败、关页)就把等待态收掉;代数让晚到的结果自己作废
+                if (pending) EndTransition();
+            }
+        }
+
+        /// <summary>
+        /// 摆出等待态:播放器一条(转圈 + 目标标题),抽屉里那一行一条。
+        /// 已经有一拍在路上时返回 false:这一次请求直接丢掉,不排队。
+        /// </summary>
+        private bool BeginTransition(string targetTitle, string pendingKey)
+        {
+            if (!transition.Begin(targetTitle, pendingKey)) return false;
+            player.ShowTransitionPending(targetTitle);
+            RedrawOpenDirectory();
+            return true;
+        }
+
+        /// <summary>
+        /// 同一次换目标换了目标文字:只改播放器和抽屉上的那一条,不重开一拍
+        /// </summary>
+        private void RetitleTransition(string targetTitle, string pendingKey)
+        {
+            if (!transition.Retitle(targetTitle, pendingKey)) return;
+            player.ShowTransitionPending(targetTitle);
+            RedrawOpenDirectory();
+        }
+
+        /// <summary>
+        /// 这一拍结束:等待态收起,抽屉回到当前行
+        /// </summary>
+        private void EndTransition()
+        {
+            transition.Settle();
+            player.ClearTransitionPending();
+            RedrawOpenDirectory();
+        }
+
+        /// <summary>
+        /// 换目标断在取页上:记下本来要走的那一步,重试取到页后自动接着走,不必再按一次下一个
+        /// </summary>
+        private void RememberInterruptedAdvance(bool skipRemainingParts, bool manual)
+        {
+            var position = sequence.Position;
+            transition.RememberAdvance(position.Source, position.RowIndex, skipRemainingParts, manual);
+        }
+
+        /// <summary>
+        /// 用户点了"重试/加载更多":上一次换目标就断在这一页上时接着把它走完。
+        /// 取页又失败就留着记录;列表到头就取消并给结束提示;身份换了就只补行。
+        /// </summary>
+        private async Task ResumeInterruptedAdvanceAsync(bool landed)
+        {
+            var record = transition.PendingAdvance;
+            if (record == null) return;
+            var decision = transition.DecideResume(landed, PlayDirectoryBuilder.PagingOf(mediaListState));
+            if (decision == PlayAdvanceResume.Cancel)
+            {
+                // 列表到头:这一次推进取消,只留原来那句结束提示,不额外再报一次
+                ShowSequenceEndToast(record.Manual);
+                RedrawOpenDirectory();
+                return;
+            }
+            if (decision != PlayAdvanceResume.Resume) return;
+            // 走的是原来那一步,不重新猜:用户按的是"重试",不是又一个下一个
+            await AdvanceSequenceAsync(record.SkipRemainingParts, record.Manual);
         }
 
         /// <summary>
@@ -1209,20 +1361,19 @@ namespace BiliLite.Pages
         /// <summary>
         /// 执行外层来源的一行:播放列表选行,合集选分集,两者都复用已有的选择处理
         /// </summary>
-        private async Task PlaySequenceRowAsync(int rowIndex, PlayTargetStart start)
+        private async Task<bool> PlaySequenceRowAsync(int rowIndex, PlayTargetStart start)
         {
             if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)
             {
-                await PlayCollectionRowAsync(rowIndex, start);
-                return;
+                return await PlayCollectionRowAsync(rowIndex, start);
             }
-            await SelectPlaylistRowAsync(rowIndex, start);
+            return await SelectPlaylistRowAsync(rowIndex, start);
         }
 
-        private async Task PlayCollectionRowAsync(int rowIndex, PlayTargetStart start)
+        private async Task<bool> PlayCollectionRowAsync(int rowIndex, PlayTargetStart start)
         {
             var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);
-            if (rowIndex < 0 || rowIndex >= aids.Count) return;
+            if (rowIndex < 0 || rowIndex >= aids.Count) return false;
             var aid = aids[rowIndex];
             foreach (var listView in ugcSeasonEpisodeLists)
             {
@@ -1232,9 +1383,9 @@ namespace BiliLite.Pages
                 // 高亮跟着换,但起播由这里发起:续播策略要跟着这一拍传下去,不能让选中事件再猜一次。
                 // 合集页签和当前队列都不动。
                 SelectUgcSeasonRow(listView, row);
-                await InitializeVideo(aid, start);
-                return;
+                return await InitializeVideo(aid, start);
             }
+            return false;
         }
 
         /// <summary>
@@ -1339,6 +1490,21 @@ namespace BiliLite.Pages
         }
 
         /// <summary>
+        /// 外层来源第 index 行的身份:合集是那一集的 aid,播放列表是那一行的 aid。
+        /// 抽屉的行也按这个 Key 认人,等待态就挂在这一行上。
+        /// </summary>
+        private string RowKey(int index)
+        {
+            if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)
+            {
+                var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);
+                return index >= 0 && index < aids.Count ? aids[index] ?? "" : "";
+            }
+            var rows = playlist?.Playlist;
+            return rows != null && index >= 0 && index < rows.Count ? rows[index].ID ?? "" : "";
+        }
+
+        /// <summary>
         /// 外层来源有下一条,且本视频还有分P没播完:才允许"跳过剩余分P"
         /// </summary>
         private bool CanSkipToNextVideo()
@@ -1351,13 +1517,13 @@ namespace BiliLite.Pages
                 && position.PartIndex < position.PartCount - 1;
         }
 
-        private async Task SelectPlaylistRowAsync(int index, PlayTargetStart start)
+        private async Task<bool> SelectPlaylistRowAsync(int index, PlayTargetStart start)
         {
             // 页签已关:不换选中行,也不起播
-            if (_isClosed) return;
+            if (_isClosed) return false;
             // 详情还在路上:这次换行丢掉,队列游标不动
-            if (flag) return;
-            if (index < 0 || index >= playlist.Playlist.Count) return;
+            if (flag) return false;
+            if (index < 0 || index >= playlist.Playlist.Count) return false;
 
             // 远程和内存列表的页签内容都是这个 ListView:高亮跟着换,起播由这里发起,
             // 续播策略才不会被选中事件丢掉
@@ -1367,7 +1533,7 @@ namespace BiliLite.Pages
                 SelectPlaylistRow(listView, index);
             }
             playlist.Index = index;
-            await InitializeVideo(playlist.Playlist[index].ID, start);
+            return await InitializeVideo(playlist.Playlist[index].ID, start);
         }
 
         /// <summary>
@@ -1393,8 +1559,10 @@ namespace BiliLite.Pages
         /// </summary>
         private void player_DirectoryRequested(object sender, EventArgs e)
         {
-            // 页签已关或详情还在路上:这一拍不打开任何东西
-            if (_isClosed || flag) return;
+            // 页签已关:这一拍不打开任何东西
+            if (_isClosed) return;
+            // 详情还在路上:等它回来再开;只是换目标在等的话照样能开,用户要能继续浏览
+            if (flag && !transition.IsPending) return;
             if (RightInfo.Width.Value > 0 && SelectDetailDirectory()) return;
             // 抽屉开着时再点"目录"只是刷新内容,不把用户浏览的分段拉回连播来源
             player.ShowDirectory(BuildDirectoryModel(!player.IsDirectoryVisible));
@@ -1449,6 +1617,10 @@ namespace BiliLite.Pages
         private async Task ActivateDirectoryRowAsync(PlayDirectorySectionKind kind, PlayDirectoryRow row)
         {
             if (_isClosed || flag || row == null) return;
+            // 一拍换目标还在路上:这次换行丢掉。用户还能继续浏览目录,只是不能同时开第二个换目标
+            if (transition.IsPending) return;
+            // 用户自己选了行:断在取页上的那一步不再作数,不再自动推进
+            transition.DropAdvance();
             var rowIndex = row.Ordinal - 1;
             if (rowIndex < 0) return;
             // 只有真的就是正在播的那一条才不起播:行上的 IsCurrent 可能来自别的时段或别的分段
@@ -1639,6 +1811,8 @@ namespace BiliLite.Pages
                 ? null
                 : PlayDirectoryBuilder.FromPlaylist(playlist, mediaListState, info == null ? null : info.aid);
             var model = PlayDirectoryBuilder.Combine(parts, collection, queue, sequence.Position.Source);
+            // 正在换到的那一行挂转圈;它还不是正在播放的行,两条标记分开
+            PlayDirectoryBuilder.ApplyPending(model, transition.PendingKey);
             // 新开目录才让浏览的分段回到连播来源;重画留着用户正在看的那一段
             model.IsFreshOpen = freshOpen;
             return model;
@@ -1677,14 +1851,16 @@ namespace BiliLite.Pages
         {
             var position = sequence.Position;
             var loaded = mediaListState == null ? 0 : mediaListState.LoadedCount;
-            // 翻页状态也算进签名:加载中、失败后的"重试"、到头都要重画
+            // 翻页状态也算进签名:加载中、失败后的"重试"、到头都要重画;
+            // 等待的那一行换了也要重画,才能把转圈挂到新的目标上
             var paging = (int)PlayDirectoryBuilder.PagingOf(mediaListState);
             var sections = videoDetailVM?.VideoInfo?.UgcSeason?.Sections;
             return (int)position.Source
                 + "|" + position.RowCount
                 + "|" + loaded
                 + "|" + paging
-                + "|" + (sections == null ? 0 : sections.Count);
+                + "|" + (sections == null ? 0 : sections.Count)
+                + "|" + (transition.PendingKey ?? "");
         }
 
         private async void btnDownload_Click(object sender, RoutedEventArgs e)
