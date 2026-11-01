@@ -12,7 +12,8 @@ in `bug_report.md` first.
 | Fact | Value |
 | --- | --- |
 | branch | `work`, in sync with `origin/work` |
-| build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump` (compile only) or without `-Fast` to package into `Z:\` |
+| build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (compile only; this machine's VS has no .NET SDK component, so the script evaluates the skipped SDK-style `BiliLite.gRPC` through the installed dotnet SDK) or without `-Fast` to package into `Z:\` |
+| probe checks | `sh plan/tests/<batch>/run.sh` — net8.0 probe projects under `plan/tests/` compile the real product sources and assert behavior; `bash` on this machine is the WSL stub, use `sh` |
 | sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-work.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
 | dependency plan | `plan/DEPENDENCY_UPGRADE.md` — open migrations only (toolkit 8.x, NLog 6, FFMpegCore, SharpCompress, RestSharp) |
 | review cache | `plan/REVIEW_LOG.md` |

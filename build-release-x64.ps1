@@ -25,6 +25,10 @@ param(
     [switch]$NoVersionBump,
     [switch]$Fast,
     [switch]$Restore,
+    # 显式指定 MSBuild.exe（vswhere 查不到 VS 时用）
+    [string]$MSBuildPath = '',
+    # 依赖项目（BiliLite.gRPC 等 SDK 风格项目）已单独生成时跳过它们，只编译 BiliLite.UWP
+    [switch]$SkipProjectReferences,
     # CS2012（中间产物被占用）时的等待上限与重试前的额外停顿，秒
     [int]$LockWaitSeconds = 90,
     [int]$LockRetryDelay = 3
@@ -102,14 +106,30 @@ if (-not $NoVersionBump) {
     }
 }
 
-# 通过 vswhere 定位 Visual Studio 自带的 MSBuild
-$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-if (-not (Test-Path $vswhere)) {
-    throw "找不到 vswhere.exe，请安装 Visual Studio 2022（含 UWP 工作负载）：$vswhere"
+# 通过 vswhere 定位 Visual Studio 自带的 MSBuild；vswhere 查不到时回落到 VS2022 的默认安装路径
+$msbuild = $MSBuildPath
+if ($msbuild) {
+    if (-not (Test-Path $msbuild)) {
+        throw "找不到指定的 MSBuild.exe：$msbuild"
+    }
 }
-$msbuild = & $vswhere -latest -prerelease -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
-if (-not $msbuild) {
-    throw '找不到 MSBuild.exe，请安装 Visual Studio 2022（含 MSBuild 组件）。'
+else {
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (Test-Path $vswhere) {
+        $msbuild = & $vswhere -latest -prerelease -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+    }
+    if (-not $msbuild) {
+        foreach ($edition in @('Community', 'Professional', 'Enterprise', 'BuildTools')) {
+            $candidate = Join-Path ${env:ProgramFiles} "Microsoft Visual Studio\2022\$edition\MSBuild\Current\Bin\MSBuild.exe"
+            if (Test-Path $candidate) {
+                $msbuild = $candidate
+                break
+            }
+        }
+    }
+    if (-not $msbuild) {
+        throw '找不到 MSBuild.exe，请安装 Visual Studio 2022（含 MSBuild 组件），或用 -MSBuildPath 指定路径。'
+    }
 }
 
 $target = if ($Clean) { 'Rebuild' } else { 'Build' }
@@ -140,6 +160,28 @@ else {
 # nodeReuse:false 与关闭编译服务器: 复用的 MSBuild 节点会持有 intermediatexaml\BiliLiter.exe,
 # 让紧随其后的第二次生成因 CS2012 失败
 $buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platform=x64', '-v:m', '-nologo', '-m', '-nodeReuse:false', '-p:UseSharedCompilation=false')
+if ($Fast -and $SkipProjectReferences) {
+    # 已单独生成过的 SDK 风格依赖不再参与本次生成；VS 自带的 MSBuild 解析不了 Microsoft.NET.Sdk 时靠它
+    $buildArgs += '-p:BuildProjectReferences=false'
+
+    # 依赖项目仍要被求值(取引用路径),所以 VS 里没有 Microsoft.NET.Sdk 时改用已安装的 dotnet SDK
+    $vsSdks = Join-Path (Split-Path -Parent (Split-Path -Parent $msbuild)) 'Sdks\Microsoft.NET.Sdk'
+    if (-not (Test-Path $vsSdks) -and -not $env:MSBuildSDKsPath) {
+        $dotnetSdkRoot = Join-Path ${env:ProgramFiles} 'dotnet\sdk'
+        if (Test-Path $dotnetSdkRoot) {
+            $newestSdk = Get-ChildItem $dotnetSdkRoot -Directory |
+                Where-Object { (Test-Path (Join-Path $_.FullName 'Sdks\Microsoft.NET.Sdk')) -and $_.Name -match '^\d+\.\d+\.\d+$' } |
+                Sort-Object { [version]$_.Name } -Descending |
+                Select-Object -First 1
+            if ($newestSdk) {
+                $env:MSBuildSDKsPath = Join-Path $newestSdk.FullName 'Sdks'
+                # dotnet SDK 的工作负载导入器只存在于 dotnet 自己的 MSBuild 里
+                $env:MSBuildEnableWorkloadResolver = 'false'
+                Write-Host "SDK 路径 : $env:MSBuildSDKsPath（VS 未安装 .NET SDK 组件）"
+            }
+        }
+    }
+}
 if (-not $Fast) {
     $buildArgs += "-p:AppxPackageDir=$OutputDir"
 }
