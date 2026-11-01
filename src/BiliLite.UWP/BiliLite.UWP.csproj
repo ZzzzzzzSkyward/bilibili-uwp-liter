@@ -275,6 +275,9 @@
     <Compile Include="Controls\PlayerControl.xaml.cs">
       <DependentUpon>PlayerControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\PlayDirectoryControl.xaml.cs">
+      <DependentUpon>PlayDirectoryControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\PlayerToast.xaml.cs">
       <DependentUpon>PlayerToast.xaml</DependentUpon>
     </Compile>
@@ -343,6 +346,8 @@
     <Compile Include="Models\VideoCollections.cs" />
     <Compile Include="Models\MediaListResources.cs" />
     <Compile Include="Models\WatchSequence.cs" />
+    <Compile Include="Models\VideoQueue.cs" />
+    <Compile Include="Models\PlayDirectory.cs" />
     <Compile Include="Modules\Detail\FavoriteDetailVM.cs" />
     <Compile Include="Modules\DownloadVM.cs" />
     <Compile Include="Modules\EmoteVM.cs" />
@@ -722,6 +727,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\PlayerControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\PlayDirectoryControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

@@ -1,5 +1,6 @@
 ﻿using BiliLite.Dialogs;
 using BiliLite.Helpers;
+using BiliLite.Models.Common;
 using BiliLite.Modules;
 using System;
 using System.Collections.Generic;

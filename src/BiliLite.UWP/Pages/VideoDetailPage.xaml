@@ -258,7 +258,7 @@
       </Grid>
       <Grid Grid.Column="1" Background="{ThemeResource TransparentBackground}">
         <Pivot x:Name="pivot">
-          <PivotItem Margin="0">
+          <PivotItem x:Name="detailPivotItem" Margin="0">
             <PivotItem.Header>
               <TextBlock Text="详情" FontSize="18"/>
             </PivotItem.Header>

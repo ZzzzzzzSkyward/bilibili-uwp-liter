@@ -22,33 +22,6 @@ using System.Threading.Tasks;
 
 namespace BiliLite.Pages
 {
-    public class VideoPlaylist
-    {
-        public int Index { get; set; }
-        public IList<VideoPlaylistItem> Playlist { get; set; }
-        /// <summary>
-        /// 非空表示这是远程 medialist,列表内容由 MediaListService 分页读取
-        /// </summary>
-        public string MediaListId { get; set; }
-        public int MediaListType { get; set; } = MediaListService.DefaultMediaListType;
-        /// <summary>
-        /// 远程播放列表的翻页状态。启动器链接进来的会带上已取好的首页,
-        /// 页面直接复用,不重复请求;为空时页面自己建一份。
-        /// </summary>
-        public MediaListPagingState MediaListState { get; set; }
-        /// <summary>
-        /// 导航来源给出的标题,没有就用通用标题
-        /// </summary>
-        public string Title { get; set; }
-    }
-    public class VideoPlaylistItem
-    {
-        public string ID { get; set; }
-        public string Author { get; set; }
-        public string Cover { get; set; }
-        public string Title { get; set; }
-        public string Duration { get; set; }
-    }
     public class VideoUgcSeasonEpisodeView
     {
         public string Aid { get; set; }
@@ -87,6 +60,10 @@ namespace BiliLite.Pages
             player.NextOuterRequested += player_NextOuterRequested;
             player.NextVideoRequested += player_NextVideoRequested;
             player.PreviousOuterRequested += player_PreviousOuterRequested;
+            // 目录:一个入口,选详情列还是开播放器抽屉由本页按窗口状态决定
+            player.DirectoryRequested += player_DirectoryRequested;
+            player.DirectoryRowRequested += player_DirectoryRowRequested;
+            player.DirectorySourceRequested += player_DirectorySourceRequested;
             NavigationCacheMode = NavigationCacheMode.Enabled;
             videoDetailVM = new VideoDetailVM();
             this.DataContext = videoDetailVM;
@@ -208,6 +185,8 @@ namespace BiliLite.Pages
         // 页面自己持有的播放顺序:当前连播来源、当前分P、当前来源里的当前行。
         // 下一个按钮、快捷键和播放结束都按这一份状态判定目标,不再各自猜来源。
         readonly WatchSequenceState sequence = new WatchSequenceState();
+        // 上一次推进抽屉的目录签名:来源或行集合没变就不重建行
+        string directorySignature;
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -220,6 +199,9 @@ namespace BiliLite.Pages
             {
                 // 重新进入本页:上一次的连播来源和行号不能留着
                 sequence.Clear();
+                // 上一次留下的目录签名和抽屉也要收掉,等这次详情回来再报
+                directorySignature = null;
+                player.HideDirectory();
                 if(SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_FULL_SCREEN, false))
                 {
                     player.IsFullScreen = true;
@@ -531,9 +513,7 @@ namespace BiliLite.Pages
 
         private static string FormatDuration(long seconds)
         {
-            if (seconds < 0) seconds = 0;
-            var duration = TimeSpan.FromSeconds(seconds);
-            return seconds >= 3600 ? duration.ToString(@"hh\:mm\:ss") : duration.ToString(@"mm\:ss");
+            return PlayDirectoryBuilder.FormatDuration(seconds);
         }
 
         /// <summary>
@@ -906,6 +886,8 @@ namespace BiliLite.Pages
             changedFlag = false;
             // 分P换了:顺序状态和"下一个/上一个"的目标跟着换
             RefreshSequenceState();
+            // 抽屉开着时"正在播放"要跟着换到新的分P
+            RedrawOpenDirectory();
         }
 
         private void listEpisode_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1227,6 +1209,10 @@ namespace BiliLite.Pages
                 DescribeStep(WatchSequenceOrder.Next(sequence.Position, false), true),
                 DescribeStep(WatchSequenceOrder.Previous(sequence.Position), false),
                 CanSkipToNextVideo());
+            // "目录"按钮跟着同一份顺序状态:有没有目录、按钮上写什么
+            var directoryCaption = DirectoryCaption();
+            player?.UpdateDirectoryInfo(!string.IsNullOrEmpty(directoryCaption), directoryCaption);
+            RefreshOpenDirectory();
         }
 
         /// <summary>
@@ -1318,6 +1304,249 @@ namespace BiliLite.Pages
 
             playlist.Index = index;
             await InitializeVideo(playlist.Playlist[index].ID);
+        }
+
+        /// <summary>
+        /// "目录"只喊一声:普通窗口有详情列就选到对应那页,全屏/铺满/窄窗才在播放器里开抽屉。
+        /// 打开目录不停播、不改全屏,也不改连播来源。
+        /// </summary>
+        private void player_DirectoryRequested(object sender, EventArgs e)
+        {
+            // 页签已关或详情还在路上:这一拍不打开任何东西
+            if (_isClosed || flag) return;
+            if (RightInfo.Width.Value > 0 && SelectDetailDirectory()) return;
+            player.ShowDirectory(BuildDirectoryModel());
+        }
+
+        /// <summary>
+        /// 普通窗口:选到详情列里当前来源那一页,并把当前行滚进视野。
+        /// 只有外层来源没有详情页时才让播放器开抽屉。
+        /// </summary>
+        private bool SelectDetailDirectory()
+        {
+            var source = sequence.Position.Source;
+            if (source == WatchSequenceSourceKind.Playlist && playlistPivotItem != null && pivot.Items.Contains(playlistPivotItem))
+            {
+                pivot.SelectedItem = playlistPivotItem;
+                var listView = playlistPivotItem.Content as ListView;
+                if (listView != null && listView.SelectedItem != null) listView.ScrollIntoView(listView.SelectedItem);
+                return true;
+            }
+            if (source == WatchSequenceSourceKind.UgcSeason && ugcSeasonPivotItem != null && pivot.Items.Contains(ugcSeasonPivotItem))
+            {
+                pivot.SelectedItem = ugcSeasonPivotItem;
+                foreach (var listView in ugcSeasonEpisodeLists)
+                {
+                    if (listView.SelectedItem == null) continue;
+                    listView.ScrollIntoView(listView.SelectedItem);
+                    break;
+                }
+                return true;
+            }
+            if (detailPivotItem != null && pivot.Items.Contains(detailPivotItem))
+            {
+                pivot.SelectedItem = detailPivotItem;
+                if (listEpisode != null && listEpisode.SelectedItem != null)
+                {
+                    listEpisode.ScrollIntoView(listEpisode.SelectedItem);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// 目录里点了一行:分P走播放器的分P切换,外层行走已有的选行路径;
+        /// 选中哪一行就把那个来源设成连播来源,不再自己猜位置。
+        /// </summary>
+        private async void player_DirectoryRowRequested(object sender, PlayDirectoryRowActivatedEventArgs e)
+        {
+            await ActivateDirectoryRowAsync(e.Kind, e.Row);
+        }
+
+        private async Task ActivateDirectoryRowAsync(PlayDirectorySectionKind kind, PlayDirectoryRow row)
+        {
+            if (_isClosed || flag || row == null) return;
+            // 点的就是正在播放的这一行:不起播,也不重新加载详情
+            if (row.IsCurrent)
+            {
+                RedrawOpenDirectory();
+                return;
+            }
+            var rowIndex = row.Ordinal - 1;
+            if (rowIndex < 0) return;
+            switch (kind)
+            {
+                case PlayDirectorySectionKind.Parts:
+                    // 换分P不动外层来源;高亮由播放器的换集事件刷新
+                    player.ChangePlayIndex(rowIndex);
+                    return;
+                case PlayDirectorySectionKind.UgcSeason:
+                    sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);
+                    await PlayCollectionRowAsync(rowIndex);
+                    break;
+                case PlayDirectorySectionKind.Playlist:
+                    sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);
+                    await SelectPlaylistRowAsync(rowIndex);
+                    break;
+                default:
+                    return;
+            }
+            // 显式选行之后重画抽屉,让"正在播放"跟着走;重画不会再起播
+            RedrawOpenDirectory();
+        }
+
+        /// <summary>
+        /// "按合集连播"/"按播放列表连播":只换连播来源,不重播当前视频。
+        /// 目标来源里没有当前视频时不换,让用户先在目录里挑一行。
+        /// </summary>
+        private void player_DirectorySourceRequested(object sender, PlayDirectorySourceEventArgs e)
+        {
+            if (_isClosed || flag) return;
+            SwitchSequenceSource(e.Kind == PlayDirectorySectionKind.UgcSeason
+                ? WatchSequenceSourceKind.UgcSeason
+                : WatchSequenceSourceKind.Playlist);
+        }
+
+        private void SwitchSequenceSource(WatchSequenceSourceKind source)
+        {
+            var info = videoDetailVM?.VideoInfo;
+            if (info == null) return;
+            if (source == WatchSequenceSourceKind.UgcSeason)
+            {
+                if (VideoUgcSeasonOrder.AidOrder(info.UgcSeason).IndexOf(info.aid) < 0)
+                {
+                    Utils.ShowMessageToast("当前视频不在这个合集里,请在目录里选一行");
+                    return;
+                }
+            }
+            else if (source == WatchSequenceSourceKind.Playlist)
+            {
+                var index = PlaylistIndexOf(info.aid);
+                if (index < 0)
+                {
+                    Utils.ShowMessageToast("当前视频不在这个播放列表里,请在目录里选一行");
+                    return;
+                }
+                // 队列游标跟着当前视频走:只改序号,不选行、不起播
+                playlist.Index = index;
+            }
+
+            sequence.SetActiveSource(source);
+            RefreshSequenceState();
+            RedrawOpenDirectory();
+        }
+
+        private int PlaylistIndexOf(string aid)
+        {
+            if (playlist?.Playlist == null) return -1;
+            var ids = playlist.Playlist.Select(x => x == null ? null : x.ID).ToList();
+            return VideoPlaylistOrder.IndexOfItem(ids, aid);
+        }
+
+        /// <summary>
+        /// "目录"按钮的短标签和目录页头同源,只算位置不建行
+        /// </summary>
+        private string DirectoryCaption()
+        {
+            var position = sequence.Position;
+            if (position.Source == WatchSequenceSourceKind.UgcSeason && position.RowCount > 0)
+            {
+                return PlayDirectoryBuilder.Caption(PlayDirectorySectionKind.UgcSeason, position.RowIndex + 1, position.RowCount);
+            }
+            if (position.Source == WatchSequenceSourceKind.Playlist && position.RowCount > 0)
+            {
+                return PlayDirectoryBuilder.Caption(PlayDirectorySectionKind.Playlist, position.RowIndex + 1, position.RowCount);
+            }
+            // 一个分P的普通视频没有目录;互动视频例外
+            if (position.PartCount > 1 || (position.PartCount == 1 && IsInteractionVideo()))
+            {
+                return PlayDirectoryBuilder.Caption(PlayDirectorySectionKind.Parts, position.PartIndex + 1, position.PartCount);
+            }
+            return "";
+        }
+
+        private bool IsInteractionVideo()
+        {
+            return videoDetailVM?.VideoInfo?.interaction != null;
+        }
+
+        private List<PlayDirectoryPart> CurrentParts()
+        {
+            var parts = new List<PlayDirectoryPart>();
+            var playInfos = player?.PlayInfos;
+            if (playInfos == null) return parts;
+            foreach (var info in playInfos)
+            {
+                if (info == null) continue;
+                parts.Add(new PlayDirectoryPart()
+                {
+                    Cid = info.cid,
+                    Title = info.title,
+                    // 详情里的分P时长本来就是秒(与合集分集同一个单位),不再换算
+                    DurationSeconds = info.duration,
+                });
+            }
+            return parts;
+        }
+
+        /// <summary>
+        /// 用当前顺序、合集和队列现搭一份目录。行只在打开抽屉或来源/行集合变了时重建。
+        /// </summary>
+        private PlayDirectoryModel BuildDirectoryModel()
+        {
+            var info = videoDetailVM?.VideoInfo;
+            var parts = PlayDirectoryBuilder.FromParts(CurrentParts(),
+                player == null ? 0 : player.CurrentPlayIndex,
+                info == null ? Title : info.title,
+                IsInteractionVideo());
+            var collection = PlayDirectoryBuilder.FromUgcSeason(info == null ? null : info.UgcSeason,
+                info == null ? null : info.aid);
+            var queue = playlist?.Playlist == null ? null : PlayDirectoryBuilder.FromPlaylist(playlist, mediaListState);
+            return PlayDirectoryBuilder.Combine(parts, collection, queue, sequence.Position.Source,
+                DescribeStep(WatchSequenceOrder.Next(sequence.Position, false), true));
+        }
+
+        /// <summary>
+        /// 抽屉开着时按"来源 + 行集合"判断要不要重建。换集、自动连播不重建整份列表,
+        /// 只有换了来源或行集合真的变了才重建。
+        /// </summary>
+        private void RefreshOpenDirectory()
+        {
+            if (player == null || !player.IsDirectoryVisible)
+            {
+                directorySignature = null;
+                return;
+            }
+            if (DirectorySignature() == directorySignature) return;
+            RedrawOpenDirectory();
+        }
+
+        /// <summary>
+        /// 立刻重画已经打开的抽屉(打开时,以及新一节页取回来之后)
+        /// </summary>
+        private void RedrawOpenDirectory()
+        {
+            if (player == null || !player.IsDirectoryVisible)
+            {
+                directorySignature = null;
+                return;
+            }
+            directorySignature = DirectorySignature();
+            player.ShowDirectory(BuildDirectoryModel());
+        }
+
+        private string DirectorySignature()
+        {
+            var position = sequence.Position;
+            var loaded = mediaListState == null ? 0 : mediaListState.LoadedCount;
+            var hasMore = mediaListState != null && mediaListState.HasMore ? 1 : 0;
+            var sections = videoDetailVM?.VideoInfo?.UgcSeason?.Sections;
+            return (int)position.Source
+                + "|" + position.RowCount
+                + "|" + loaded
+                + "|" + hasMore
+                + "|" + (sections == null ? 0 : sections.Count);
         }
 
         private async void btnDownload_Click(object sender, RoutedEventArgs e)

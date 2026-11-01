@@ -367,8 +367,10 @@ namespace C2Probe
         {
             var page = ReadSource("src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs");
             var xaml = ReadSource("src/BiliLite.UWP/Pages/VideoDetailPage.xaml");
+            // 队列类型搬进了模型层,携带字段的断言跟着读新文件
+            var queue = ReadSource("src/BiliLite.UWP/Models/VideoQueue.cs");
 
-            Check(page.Contains("public string MediaListId { get; set; }") && page.Contains("public int MediaListType { get; set; }"),
+            Check(queue.Contains("public string MediaListId { get; set; }") && queue.Contains("public int MediaListType { get; set; }"),
                 "source: VideoPlaylist carries the remote medialist id and type");
             Check(page.Contains("if (!string.IsNullOrEmpty(playlist.MediaListId))") && page.Contains("await InitializeMediaListPlaylist();"),
                 "source: a remote playlist is loaded instead of the in-memory list");

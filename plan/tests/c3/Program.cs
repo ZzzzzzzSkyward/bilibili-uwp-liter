@@ -239,8 +239,10 @@ namespace C3Probe
         private static void PageSourceWiring()
         {
             var page = ReadSource("src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs");
+            // 队列类型搬进了模型层,携带字段的断言跟着读新文件
+            var queue = ReadSource("src/BiliLite.UWP/Models/VideoQueue.cs");
 
-            Check(page.Contains("public MediaListPagingState MediaListState { get; set; }"),
+            Check(queue.Contains("public MediaListPagingState MediaListState { get; set; }"),
                 "source: VideoPlaylist carries the paging state");
             Check(page.Contains("mediaListState = playlist.MediaListState ?? new MediaListPagingState(playlist.MediaListId, playlist.MediaListType, MediaListSourceKind.MediaList, playlist.Title);"),
                 "source: the page reuses the state the link supplied");

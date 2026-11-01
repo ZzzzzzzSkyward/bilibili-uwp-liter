@@ -200,6 +200,21 @@ namespace BiliLite.Controls
         public event EventHandler NextVideoRequested;
 
         /// <summary>
+        /// 用户点了"目录"。普通窗口和全屏用同一个入口,开在哪由页面决定。
+        /// </summary>
+        public event EventHandler DirectoryRequested;
+
+        /// <summary>
+        /// 目录里激活了一行;播放由页面按连播顺序决定
+        /// </summary>
+        public event EventHandler<PlayDirectoryRowActivatedEventArgs> DirectoryRowRequested;
+
+        /// <summary>
+        /// 目录里点了"按合集连播"/"按播放列表连播";是否换来源由页面确认
+        /// </summary>
+        public event EventHandler<PlayDirectorySourceEventArgs> DirectorySourceRequested;
+
+        /// <summary>
         /// 切换剧集事件
         /// </summary>
 
@@ -224,6 +239,11 @@ namespace BiliLite.Controls
         private bool _hasOuterNextTarget;
         // 页面报告的可跳过剩余分P:有外层来源且本视频还有分P没播完
         private bool _canSkipToNextVideo;
+        // 页面报告了目录,以及目录抽屉当前是否打开
+        private bool _directoryAvailable;
+        private bool _directoryOpen;
+        // "下一个视频"(跳过剩余分P)的右键/长按菜单,只在页面报告可跳过时挂上
+        private MenuFlyout _nextVideoFlyout;
 
         private readonly PlayerVM playerHelper;
         private readonly NSDanmaku.Helper.DanmakuParse danmakuParse;
@@ -288,8 +308,6 @@ namespace BiliLite.Controls
             this.Unloaded += PlayerControl_Unloaded;
             gestureRecognizer = new GestureRecognizer();
             InitializeGesture();
-            // 右键/按住"下一个"就是"跳过剩余分P";可跳过与否由页面报告的顺序状态决定
-            BottomBtnNext.RightTapped += BottomBtnNext_RightTapped;
         }
 
         private void Timer_focus_Tick(object sender, object e)
@@ -432,6 +450,20 @@ namespace BiliLite.Controls
             if (ele is TextBox || ele is AutoSuggestBox)
             {
                 args.Handled = false;
+                return;
+            }
+            // 目录抽屉开着:Esc 先关抽屉,方向键/回车留给列表浏览,播放器快捷键先让路
+            if (_directoryOpen)
+            {
+                if (args.VirtualKey == Windows.System.VirtualKey.Escape)
+                {
+                    HideDirectory();
+                    args.Handled = true;
+                }
+                else
+                {
+                    args.Handled = false;
+                }
                 return;
             }
             args.Handled = true;
@@ -976,12 +1008,73 @@ namespace BiliLite.Controls
         public void UpdateSequenceInfo(string nextTargetText, string previousTargetText, bool canSkipToNextVideo)
         {
             _hasOuterNextTarget = !string.IsNullOrEmpty(nextTargetText);
-            _canSkipToNextVideo = canSkipToNextVideo;
+            if (canSkipToNextVideo != _canSkipToNextVideo)
+            {
+                _canSkipToNextVideo = canSkipToNextVideo;
+                UpdateNextVideoMenu();
+            }
             // 没有外层下一个时按钮只代表下一P
             var nextName = _hasOuterNextTarget ? nextTargetText : "下一P";
             ToolTipService.SetToolTip(BottomBtnNext, nextName);
             AutomationProperties.SetName(BottomBtnNext, nextName);
             UpdateBottomBtnNextVisibility();
+        }
+
+        /// <summary>
+        /// 页面报告目录是否可用,以及"目录"按钮上的短标签(合集 · 7/24 这种)。
+        /// 播放器只换标签和可见性,不自己判断有没有目录。
+        /// </summary>
+        public void UpdateDirectoryInfo(bool available, string caption)
+        {
+            _directoryAvailable = available;
+            if (BottomBtnDirectoryCaption != null)
+            {
+                BottomBtnDirectoryCaption.Text = string.IsNullOrEmpty(caption) ? "目录" : caption;
+            }
+            if (BottomBtnDirectory != null)
+            {
+                BottomBtnDirectory.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
+            }
+            // 目录没了就别把一个空的抽屉留在画面上
+            if (!available) HideDirectory();
+        }
+
+        /// <summary>
+        /// 在播放器内部打开目录抽屉。只装内容和显示抽屉:不停播、不跳进度、不改全屏/铺满。
+        /// </summary>
+        public void ShowDirectory(PlayDirectoryModel model)
+        {
+            if (model == null || !model.HasSections) return;
+            var wasOpen = _directoryOpen;
+            DirectoryDrawer.SetModel(model);
+            DirectoryHost.Visibility = Visibility.Visible;
+            _directoryOpen = true;
+            // 打开时定位一次;已经开着就只换内容,不抢滚动位置和焦点
+            if (wasOpen) return;
+            DirectoryDrawer.LocateCurrent();
+            DirectoryDrawer.FocusRows();
+        }
+
+        /// <summary>
+        /// 收起目录抽屉,焦点还给打开它的"目录"按钮
+        /// </summary>
+        public void HideDirectory()
+        {
+            if (!_directoryOpen) return;
+            _directoryOpen = false;
+            DirectoryHost.Visibility = Visibility.Collapsed;
+            if (BottomBtnDirectory != null && BottomBtnDirectory.Visibility == Visibility.Visible)
+            {
+                BottomBtnDirectory.Focus(FocusState.Programmatic);
+            }
+        }
+
+        /// <summary>
+        /// 目录抽屉是否打开。页面据此决定要不要把重建好的目录推进来。
+        /// </summary>
+        public bool IsDirectoryVisible
+        {
+            get { return _directoryOpen; }
         }
 
         /// <summary>
@@ -2642,6 +2735,15 @@ namespace BiliLite.Controls
         private void Grid_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
             var pointerUpdateKind = e.GetCurrentPoint(sender as UIElement).Properties.PointerUpdateKind;
+            // 后退键/中键先关目录抽屉,退出全屏等留给下一次按键
+            if (_directoryOpen
+                && (pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.XButton1Released
+                    || pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.MiddleButtonReleased))
+            {
+                HideDirectory();
+                e.Handled = true;
+                return;
+            }
             if (SettingHelper.GetValue<bool>(SettingHelper.UI.MOUSE_BACK, true)
                 && (pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.XButton1Released
                     || pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.MiddleButtonReleased))
@@ -2725,13 +2827,53 @@ namespace BiliLite.Controls
         }
 
         /// <summary>
-        /// 右键/按住"下一个":跳过剩下的分P直接换下一个视频,只在页面报告可跳过时生效
+        /// "下一个"按钮的右键/长按菜单:只有页面报告可跳过剩余分P时才挂上"下一个视频",
+        /// 菜单本身就是这个动作的发现入口,不再靠隐藏的右键手势
         /// </summary>
-        private void BottomBtnNext_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        private void UpdateNextVideoMenu()
         {
-            e.Handled = true;
-            if (!_canSkipToNextVideo) return;
+            if (!_canSkipToNextVideo)
+            {
+                BottomBtnNext.ContextFlyout = null;
+                return;
+            }
+            if (_nextVideoFlyout == null)
+            {
+                _nextVideoFlyout = new MenuFlyout();
+                var item = new MenuFlyoutItem() { Text = "下一个视频" };
+                item.Click += NextVideoMenuItem_Click;
+                _nextVideoFlyout.Items.Add(item);
+            }
+            BottomBtnNext.ContextFlyout = _nextVideoFlyout;
+        }
+
+        /// <summary>
+        /// 菜单里的"下一个视频":跳过剩下的分P,直接换外层来源的下一条
+        /// </summary>
+        private void NextVideoMenuItem_Click(object sender, RoutedEventArgs e)
+        {
             NextVideoRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void BottomBtnDirectory_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_directoryAvailable) return;
+            DirectoryRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void DirectoryDrawer_RowActivated(object sender, PlayDirectoryRowActivatedEventArgs e)
+        {
+            DirectoryRowRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_ContinuationSourceRequested(object sender, PlayDirectorySourceEventArgs e)
+        {
+            DirectorySourceRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_CloseRequested(object sender, EventArgs e)
+        {
+            HideDirectory();
         }
 
         private void KeepScreenOn(bool value = true)

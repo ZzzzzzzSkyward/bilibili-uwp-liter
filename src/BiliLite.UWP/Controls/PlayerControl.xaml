@@ -612,7 +612,7 @@
                     <fa:FontAwesome Icon="Solid_Play" FontSize="20"/>
                   </HyperlinkButton>
                   <ProgressRing IsActive="True" x:Name="BottomBtnLoading" Visibility="Collapsed" Foreground="White" Padding="8" Width="48" Height="48"/>
-                  <HyperlinkButton x:Name="BottomBtnNext" Click="BottomBtnNext_Click" Visibility="Collapsed" Foreground="White" Padding="8" Width="48" Height="48">
+                  <HyperlinkButton x:Name="BottomBtnNext" Click="BottomBtnNext_Click" Visibility="Collapsed" Foreground="White" Padding="8" Width="48" Height="48" ToolTipService.ToolTip="下一P">
                     <fa:FontAwesome Icon="Solid_StepForward" FontSize="18"/>
                   </HyperlinkButton>
                   <TextBlock x:Name="BottomTextPostion" VerticalAlignment="Center" Foreground="White" Margin="8 0" FontSize="18"><Run Text="{Binding ElementName=Player,Path=Position,Mode=OneWay,Converter={StaticResource progress}}"/> / <Run Text="{Binding ElementName=Player,Path=Duration,Mode=OneWay,Converter={StaticResource progress}}"/></TextBlock>
@@ -704,6 +704,9 @@
                       <ComboBoxItem Content="0.5x"/>
                     </ComboBox.Items>
                   </ComboBox>
+                  <Button x:Name="BottomBtnDirectory" Click="BottomBtnDirectory_Click" Visibility="Collapsed" ToolTipService.ToolTip="打开播放目录" AutomationProperties.Name="打开播放目录" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
+                    <TextBlock x:Name="BottomBtnDirectoryCaption" VerticalAlignment="Center" FontSize="18" Text="目录"/>
+                  </Button>
                   <Button x:Name="BottomBtnList" Click="BottomBtnList_Click" Visibility="{x:Bind ShowPlaylistButton,Mode=OneWay}" ToolTipService.ToolTip="选集" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
                     <TextBlock VerticalAlignment="Center" FontSize="18">选集</TextBlock>
                   </Button>
@@ -760,6 +763,10 @@
           <Image Source="ms-appx:///Assets/Icon/ic_play.png"/>
         </HyperlinkButton>
         <Button x:Name="BtnFoucs" Width="0" Height="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="-8 -8 0 0" Background="Transparent" BorderThickness="0"/>
+        <!--播放目录:播放器内部的全高抽屉。只盖住视频,不碰播放、全屏、铺满和设置面板-->
+        <Grid x:Name="DirectoryHost" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="380" BorderBrush="#33FFFFFF" BorderThickness="1 0 0 0">
+          <local:PlayDirectoryControl x:Name="DirectoryDrawer" RowActivated="DirectoryDrawer_RowActivated" ContinuationSourceRequested="DirectoryDrawer_ContinuationSourceRequested" CloseRequested="DirectoryDrawer_CloseRequested"/>
+        </Grid>
       </Grid>
     </SplitView>
   </Grid>
