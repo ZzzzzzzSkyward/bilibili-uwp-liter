@@ -37,27 +37,6 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 新增文案直接按这两条写；一次性的大扫除已经做完，不再保留逐条清单。
 
-## BR-32 — 重试会把断在取页上的那一步推进到别的连播来源（review 2026-11-01）
-
-`Pages/VideoDetailPage.xaml.cs` 的 `ResumeInterruptedAdvanceAsync` 只把 `SkipRemainingParts` 和 `Manual`
-传回 `AdvanceSequenceAsync`，目标来源是重新按“当前来源”算的。打断的那一步记下了来源和行号，但换来源既不改视频/列表身份也不改
-generation，`DecideResume` 照样认这条记录。
-
-触发：播放远程播放列表最后一条已加载行（该视频同时在合集里），点“下一个”并让取页失败；切到“按合集连播”，回到播放列表分段点“重试”，
-推进的是合集的下一集，而不是把播放列表这一页取回来、或至少停在原地。换来源期间也在途的那一步同样可能被页面响应改写目标。
-
-需要的修复：用户改连播来源时作废这条待推进记录（或者先校验并执行记录里的来源/行号再推进）；换来源与在途推进之间要有一致的失效规则，
-普通浏览目录不受影响。
-
-## BR-33 — 缓存页复用后，上一个视频的播放列表和它的“加载全部”跟到下一个视频（P2b 2026-11-01）
-
-`Pages/VideoDetailPage.xaml.cs` 从不拆 `playlist` / `mediaListState` / `playlistPivotItem`：页面是
-`NavigationCacheMode.Enabled`，从播放列表进站、看完要点开另一个视频时，上一份播放列表页签、它的游标、以及新加的“加载全部”
-都还在，目录里于是出现跟当前视频无关的播放列表，底部那几个按钮也照样能操作它。这条在 P2b 之前就存在，只是“加载全部”让它更能干坏事。
-
-需要的修复：离开或换目标时把播放列表状态、行集合、页签和页签里的控制一起拆掉并取消在途取页；重新进入时除非这次启动真的带了队列，
-否则没有播放列表。
-
 ## Notes
 
 - Install a `BiliLite.Packages_*` MSIX (root launcher ≈ 8 KB plus `entrypoint/BiliLiter.exe`). A

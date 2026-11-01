@@ -23,6 +23,16 @@ in `bug_report.md` first.
 
 Newest first; every one of these is device-accepted per the policy above.
 
+- **Drawer polish from the device pass:** `5ed8d17` — `Models/DirectoryDrawerMotion.cs` (close token so a
+  reopen during the close is never hidden, snap when animations are disabled), a scrim before
+  `DirectoryHost` that closes on a tap and swallows the gesture, the 目录 button flashing with an active
+  background and one detail-column highlight when the pivot already sits on the target page, a single
+  header title (`ShowsSourceTitle` keeps the name only for 正片/预告), crosshair + 正在播放 for the locate
+  action, 8px between the playing bar and the ordinal, and tooltips on truncated titles.
+- **Login refresh:** `ea7ead8` — `CookieService.NeedsRelogin`/`ReloginRequired`, single-flight
+  `RefreshCookieAsync` resetting its slot before releasing waiters, `MirrorRefreshToken` reading
+  `ac_time_value` from the jar on every login path, an awaited preflight on both playurl paths, the
+  `App.Resuming` hook plus one launch preflight, and 设置 → 账号 with 登录状态/刷新登录/重新登录/退出登录.
 - **Collection and playlist navigation (P0–P2 season):** `67b9eae`, `399807d`, `6c9b39c`, `e9e5d2a`,
   `18c519d`, `d905726`, `f68b705`, `1dd359c`, `da62afc`, `4db379c`, `503ceae`, `d0d6bd9`, `0e5b0df` —
   one sequence state for next/previous/auto, a player-hosted 目录 drawer that works in full screen,
