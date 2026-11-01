@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using BiliLite.Helpers;
 using BiliLite.Models.Common;
+using BiliLite.Parsing.MediaList;
 
 namespace C3Probe
 {
@@ -27,8 +29,10 @@ namespace C3Probe
             NextActionAfterAFailedPage();
             FailedPageKeepsRowsAndCursor();
             CollectionOrder();
+            ParsedPageFeedsTheRouteState();
             MessageCenterSourceWiring();
             PageSourceWiring();
+            DecodersAreWired();
             ProjectEntries();
 
             Console.WriteLine("PASS " + _passed + " assertions");
@@ -209,6 +213,43 @@ namespace C3Probe
             Check(VideoUgcSeasonOrder.AidOrder(new VideoUgcSeason()).Count == 0, "an empty collection has no order");
         }
 
+        /// <summary>
+        /// The link route -> paging state path with the real parser: the page the link pre-fetches is
+        /// decoded, appended and turned into a cursor, and a page without media_list keeps both.
+        /// </summary>
+        private static void ParsedPageFeedsTheRouteState()
+        {
+            MediaListRoute route;
+            MediaListRoute.TryParse("bilibili://music/playlist/playpage/159001856", out route);
+            var state = new MediaListPagingState(route.MediaListId, route.MediaListType, MediaListSourceKind.MediaList);
+
+            var parsed = MediaListResourceListParser.Parse(Response(RoutePageJson));
+            Check(parsed.IsSuccess, "the link's first page decodes through the parser");
+            Check(parsed.Value.HasMore == true && parsed.Value.TotalCount == 3,
+                "the parsed page keeps has_more and the total as reported");
+
+            state.Append(MediaListResourceListMapper.Map(parsed.Value));
+            Check(state.LoadedCount == 2 && state.NextCursor == "2002",
+                "the parsed page fills the rows and the cursor");
+            Check(state.HasMore && state.HasKnownTotal,
+                "the parsed page carries has_more and a known total");
+            Check(state.CountText == "2 / 3", "the parsed total reaches the footer text");
+
+            var missing = MediaListResourceListParser.Parse(Response(RouteNoListJson));
+            Check(!missing.IsSuccess && missing.Stage == MediaListResourceListParser.NoMediaListStage,
+                "a page without media_list is a failure, not an empty page");
+            state.MarkLoadFailed();
+            Check(state.LoadedCount == 2 && state.NextCursor == "2002" && state.HasMore && state.LastLoadFailed,
+                "a failed page keeps the rows, the last cursor and HasMore");
+            Check(MediaListFailureText.For(missing) == MediaListFailureText.NoMediaListText,
+                "the missing list keeps its own sentence on the link path");
+            Check(MediaListFailureText.For(MediaListResourceListParser.Parse(null)) == MediaListFailureText.TransportText,
+                "a missing response reads as a connection check, not as a shape problem");
+            Check(MediaListQueue.NextAction(1, state.LoadedCount, state.HasMore, state.LastLoadFailed)
+                    == MediaListNextAction.RetryNextPage,
+                "after the failed page the queue asks for a retry instead of finishing");
+        }
+
         private static void MessageCenterSourceWiring()
         {
             var center = ReadSource("src/BiliLite.UWP/Helpers/MessageCenter.cs");
@@ -219,9 +260,9 @@ namespace C3Probe
                 "source: a matched playpage link opens the playlist instead of falling through");
             Check(center.Contains("GetMediaList(route.MediaListId, route.MediaListType)"),
                 "source: the first page is loaded with the link's own id and page type");
-            Check(center.Contains("state.Append(page);") && center.Contains("if (state.LoadedCount == 0)"),
+            Check(center.Contains("state.Append(page.Value);") && center.Contains("if (state.LoadedCount == 0)"),
                 "source: the first page is appended and an empty playlist is reported instead of opening");
-            Check(center.Contains("if (page == null) return;"), "source: a failed first page does not open an empty queue");
+            Check(center.Contains("if (!page.IsSuccess)"), "source: a failed first page does not open an empty queue");
             Check(center.Contains("parameters = new VideoPlaylist()") && center.Contains("MediaListId = route.MediaListId,")
                 && center.Contains("MediaListType = route.MediaListType,") && center.Contains("MediaListState = state,"),
                 "source: the navigation carries the remote id, type and the paging state");
@@ -296,6 +337,39 @@ namespace C3Probe
                 "source: an embedded collection stays browseable inside the queued video");
         }
 
+        private static void DecodersAreWired()
+        {
+            var favorite = ReadSource("src/BiliLite.UWP/Modules/Detail/FavoriteDetailVM.cs");
+            Check(favorite.Contains("FavoriteResourceListParser.Parse(results)")
+                && favorite.Contains("FavoriteResourceListMapper.Map(parsed.Value)"),
+                "source: favorites decode through the shared parser and mapper");
+            Check(!favorite.Contains("GetJson<ApiDataModel<FavoriteDetailModel>>"),
+                "source: the favorite page no longer re-deserializes data itself");
+            Check(favorite.Contains("Utils.ShowMessageToast(MediaListFailureText.For(parsed));"),
+                "source: the favorite VM publishes the parse result's category");
+
+            var watchLater = ReadSource("src/BiliLite.UWP/Modules/User/WatchLaterVM.cs");
+            Check(watchLater.Contains("WatchLaterListParser.Parse(results)")
+                && watchLater.Contains("WatchLaterListMapper.Map(parsed.Value)"),
+                "source: watch later decodes through the shared parser and mapper");
+            Check(!watchLater.Contains("data.data[\"list\"]"),
+                "source: watch later no longer re-deserializes data.list");
+            Check(watchLater.Contains("Utils.ShowMessageToast(MediaListFailureText.For(parsed));"),
+                "source: the watch later VM publishes the parse result's category");
+            Check(!watchLater.Contains("public List<WatchlaterPagesModel> pages"),
+                "source: the unread pages field left the watch later model");
+
+            var center = ReadSource("src/BiliLite.UWP/Helpers/MessageCenter.cs");
+            Check(center.Contains("Utils.ShowMessageToast(MediaListFailureText.For(page));"),
+                "source: the link route publishes the category too");
+
+            var page = ReadSource("src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs");
+            Check(page.Contains("var message = MediaListFailureText.For(page);"),
+                "source: the detail page publishes the category from its fetch");
+            Check(!ReadSource("src/BiliLite.UWP/Services/MediaListService.cs").Contains("ShowMessageToast"),
+                "source: the service is not a publisher");
+        }
+
         private static void ProjectEntries()
         {
             var csproj = ReadSource("src/BiliLite.UWP/BiliLite.UWP.csproj");
@@ -303,6 +377,24 @@ namespace C3Probe
             Check(csproj.Contains("Models\\MediaListResources.cs"), "source: the media list model is compiled by the UWP project");
             Check(csproj.Contains("Models\\VideoCollections.cs"), "source: the collection model is compiled by the UWP project");
         }
+
+        private static HttpResults Response(string body)
+        {
+            return new HttpResults() { results = body };
+        }
+
+        /// <summary>线上 playpage 首页的一条响应:两行、还有下一页、总数 3</summary>
+        private const string RoutePageJson = @"{""code"":0,""message"":""0"",""data"":{
+  ""media_list"": [
+    { ""id"": 2001, ""title"": ""第一集"", ""cover"": ""http://i0.hdslb.com/bfs/archive/r1.jpg"", ""upper"": { ""name"": ""UP一"" }, ""duration"": 60 },
+    { ""id"": 2002, ""title"": ""第二集"", ""cover"": ""http://i0.hdslb.com/bfs/archive/r2.jpg"", ""duration"": 61 }
+  ],
+  ""has_more"": true,
+  ""total_count"": 3
+}}";
+
+        /// <summary>同一个端点但没有 video 列表:签名接口靠这一条换未登录接口</summary>
+        private const string RouteNoListJson = @"{""code"":0,""message"":""0"",""data"":{""has_more"":false}}";
 
         private static MediaListResources Page1()
         {

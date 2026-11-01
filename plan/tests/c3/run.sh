@@ -7,5 +7,21 @@
 # cannot run outside UWP; those checks are read as text and named "source:".
 set -euo pipefail
 repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)"
+probe="$repo/plan/tests/c3/C3Probe.csproj"
 
-dotnet run --project "$repo/plan/tests/c3/C3Probe.csproj" -c Debug
+portable="${UPSTREAM_UNIT_TOOLS:-/nonexistent}/dotnet"
+if [ -f "$portable/dotnet" ]; then
+    export DOTNET_ROOT="$portable"
+    dotnet="$portable/dotnet"
+elif [ -f "$portable/dotnet.exe" ]; then
+    export DOTNET_ROOT="$portable"
+    dotnet="$portable/dotnet.exe"
+elif [ -x "C:/Program Files/dotnet/dotnet.exe" ]; then
+    dotnet="C:/Program Files/dotnet/dotnet.exe"
+else
+    dotnet="dotnet"
+fi
+
+export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
+
+"$dotnet" run --project "$probe" -c Debug

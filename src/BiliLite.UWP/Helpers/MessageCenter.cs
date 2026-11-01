@@ -4,6 +4,7 @@ using BiliLite.Models.Common;
 using BiliLite.Pages;
 using BiliLite.Pages.Other;
 using BiliLite.Pages.User;
+using BiliLite.Parsing.MediaList;
 using BiliLite.Services;
 using System;
 using System.Collections.Generic;
@@ -528,9 +529,14 @@ namespace BiliLite.Helpers
             var state = new MediaListPagingState(route.MediaListId, route.MediaListType, MediaListSourceKind.MediaList, title);
             // 链接里的 page_type 原样传给接口,链接默认 2,不用接口方法的默认 1
             var page = await new MediaListService().GetMediaList(route.MediaListId, route.MediaListType);
-            if (page == null) return;
+            if (!page.IsSuccess)
+            {
+                // 失败类别由解析结论给出:传输、业务拒绝、形状不对各说各的,这一句只在链接入口说一次
+                Utils.ShowMessageToast(MediaListFailureText.For(page));
+                return;
+            }
 
-            state.Append(page);
+            state.Append(page.Value);
             if (state.LoadedCount == 0)
             {
                 Utils.ShowMessageToast("播放列表是空的");

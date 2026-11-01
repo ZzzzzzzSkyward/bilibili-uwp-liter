@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -186,6 +186,13 @@
     <Compile Include="Parsing\Dynamic\WireScalars.cs" />
     <Compile Include="Parsing\Season\WebSeasonEpListParser.cs" />
     <Compile Include="Parsing\Season\WebSeasonEpListMapper.cs" />
+    <Compile Include="Parsing\MediaList\MediaListResourceListParser.cs" />
+    <Compile Include="Parsing\MediaList\MediaListResourceListMapper.cs" />
+    <Compile Include="Parsing\MediaList\FavoriteResourceListParser.cs" />
+    <Compile Include="Parsing\MediaList\FavoriteResourceListMapper.cs" />
+    <Compile Include="Parsing\MediaList\WatchLaterListParser.cs" />
+    <Compile Include="Parsing\MediaList\WatchLaterListMapper.cs" />
+    <Compile Include="Parsing\MediaList\MediaListFailureText.cs" />
     <Compile Include="Services\PlayerToastOverlay.cs" />
     <Compile Include="Services\PlayerToastService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
@@ -336,6 +343,9 @@
     </Compile>
     <Compile Include="Models\ApiModel.cs" />
     <Compile Include="Models\Api\Season\Web\WebSeasonEpListDto.cs" />
+    <Compile Include="Models\Api\MediaList\MediaListResourceListDto.cs" />
+    <Compile Include="Models\Api\MediaList\FavoriteResourceListDto.cs" />
+    <Compile Include="Models\Api\MediaList\WatchLaterListDto.cs" />
     <Compile Include="Models\Common.cs" />
     <Compile Include="Models\CookieOrigins.cs" />
     <Compile Include="Models\Common\User\SubmitVideoItemModel.cs" />

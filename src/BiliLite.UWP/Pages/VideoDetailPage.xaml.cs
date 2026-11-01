@@ -17,6 +17,7 @@ using BiliLite.Controls;
 using Windows.System;
 using BiliLite.Dialogs;
 using BiliLite.Services;
+using BiliLite.Parsing.MediaList;
 using System.Threading.Tasks;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -896,13 +897,21 @@ namespace BiliLite.Pages
 
         /// <summary>
         /// 取页通道的取法:游标为空时取首页,否则取下一页。
-        /// 这是全页唯一发起播放列表请求的地方。
+        /// 这是全页唯一发起播放列表请求的地方,也是一次失败的提示点——
+        /// 单飞通道保证同一个在途请求只有一个发起者,所以这里提示一次就是一次。
         /// </summary>
-        private Task<MediaListResources> FetchMediaListPageAsync()
+        private async Task<MediaListResources> FetchMediaListPageAsync()
         {
-            return mediaListState.IsFirstPage
-                ? mediaListService.GetMediaList(mediaListState.MediaListId, mediaListState.MediaListType)
-                : mediaListService.LoadMoreMediaList(mediaListState);
+            var page = mediaListState.IsFirstPage
+                ? await mediaListService.GetMediaList(mediaListState.MediaListId, mediaListState.MediaListType)
+                : await mediaListService.LoadMoreMediaList(mediaListState);
+            if (page.IsSuccess) return page.Value;
+
+            // 解析结论带着类别:传输失败、业务拒绝、形状不对在这里才分得开
+            var message = MediaListFailureText.For(page);
+            if (!_isClosed) Utils.ShowMessageToast(message);
+            LogHelper.Log("[MediaList] " + page.Failure + " " + page.Stage + " " + message, LogType.ERROR);
+            return null;
         }
 
         /// <summary>

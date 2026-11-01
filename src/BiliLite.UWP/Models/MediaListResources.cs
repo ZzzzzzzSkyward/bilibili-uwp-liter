@@ -2,25 +2,34 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 
 namespace BiliLite.Models.Common
 {
     /// <summary>
-    /// /x/v2/medialist/resource/list 的响应,字段名与请求参数以外的服务端键保持一致
+    /// 远程播放列表的一页,已经归一化:线上键名只活在 Models/Api/MediaList 的 DTO 里,
+    /// 由 Parsing/MediaList/MediaListResourceListMapper 填进来,这里不再直接反序列化。
     /// </summary>
     public class MediaListResources
     {
-        [JsonProperty("media_list")]
+        /// <summary>
+        /// 这一页的行;空表是合法的空页,缺列表在解析层就已经是失败,不走这里
+        /// </summary>
         public List<MediaListItem> MediaList { get; set; }
 
-        [JsonProperty("has_more")]
+        /// <summary>
+        /// 服务端说还有下一页;线上没报时是 false
+        /// </summary>
         public bool HasMore { get; set; }
 
-        [JsonProperty("total_count")]
+        /// <summary>
+        /// 服务端报的总数;0 表示没报过(与 MediaListPagingState.HasKnownTotal 一致)
+        /// </summary>
         public int TotalCount { get; set; }
     }
 
+    /// <summary>
+    /// 播放列表里的一行
+    /// </summary>
     public class MediaListItem
     {
         /// <summary>

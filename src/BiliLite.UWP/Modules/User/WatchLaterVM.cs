@@ -1,10 +1,9 @@
 ﻿using BiliLite.Api.User;
 using BiliLite.Helpers;
 using BiliLite.Models;
-using Newtonsoft.Json;
+using BiliLite.Parsing.MediaList;
 using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Windows.Input;
@@ -108,41 +107,29 @@ namespace BiliLite.Modules.User
         {
             try
             {
-              
                 Loading = true;
                 Nothing = false;
                 var results = await watchLaterAPI.Watchlater().Request();
-                if (results.status)
+                var parsed = WatchLaterListParser.Parse(results);
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<JObject>>();
-                    if (data.success)
-                    {
-                        var ls = JsonConvert.DeserializeObject<ObservableCollection<WatchlaterItemModel>>(data.data["list"].ToString());
-                        if (ls == null || ls.Count == 0)
-                        {
-                            Nothing = true;
-
-                        }
-                        else
-                        {
-                            foreach (var item in ls)
-                            {
-                                item.DeleteCommand = DeleteCommand;
-                            }
-                        }
-                        Videos = ls;
-                       
-                      
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
+                    // 失败类别来自解析结论:传输、业务拒绝、形状不对在这里各说各的
+                    Utils.ShowMessageToast(MediaListFailureText.For(parsed));
+                    return;
+                }
+                var ls = WatchLaterListMapper.Map(parsed.Value);
+                if (ls.Count == 0)
+                {
+                    Nothing = true;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    foreach (var item in ls)
+                    {
+                        item.DeleteCommand = DeleteCommand;
+                    }
                 }
+                Videos = ls;
             }
             catch (Exception ex)
             {
@@ -269,8 +256,6 @@ namespace BiliLite.Modules.User
         public long add_at { get; set; }
     
         public WatchlaterOwnerModel owner { get; set; }
-       
-        public List<WatchlaterPagesModel> pages { get; set; }
 
         public int progress { get; set; }
         public int duration { get; set; }
@@ -314,19 +299,5 @@ namespace BiliLite.Modules.User
         public long mid { get; set; }
         public string name { get; set; }
     }
-    public class WatchlaterPagesModel
-    {
-        public long cid { get; set; }
-        public string from { get; set; }
-        public string has_alias { get; set; }
-        public string link { get; set; }
-        public string page { get; set; }
-        public string part { get; set; }
-        public int duration { get; set; }
-        public string rich_vid { get; set; }
-        public string vid { get; set; }
-        public string weblink { get; set; }
 
-
-    }
 }
