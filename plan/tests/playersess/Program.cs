@@ -34,11 +34,27 @@ namespace PlayersessProbe
     {
         private static int checks;
         private static readonly List<string> failures = new List<string>();
+        // 默认读仓库里的 Player.xaml.cs;--player 换一份(比如 git show HEAD:... 拷出来的旧文件)就能验红
+        private static string playerPath;
 
-        private static int Main()
+        private static int Main(string[] args)
         {
+            playerPath = Path.Combine(FindRepoRoot(), "src", "BiliLite.UWP", "Controls", "Player.xaml.cs");
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (args[i] != "--player") continue;
+                if (i + 1 >= args.Length)
+                {
+                    Fail("--player 后面要跟一个源文件路径");
+                    return 1;
+                }
+                playerPath = args[i + 1];
+            }
+
             StateCases();
+            ResumeAfterReplacementCases();
             SourceCases();
+            PublishOrderCases();
 
             Console.WriteLine();
             if (failures.Count == 0)
@@ -145,14 +161,64 @@ namespace PlayersessProbe
         }
 
         /// <summary>
+        /// 复核意见里的场景:A 还挂在 SaveAndGetFileUriAsync(或者本地多段的文件解析)上时,
+        /// 换视频把 A 作废、B 打开并且已经把自己的播放器接进 _playerVideo;A 的 await 回来时必须放弃自己那一份。
+        /// 会话本身是真代码(PlayerSessionState),这里按 Player 的发布顺序走一遍:A 先 Hold,等完源再判定,
+        /// 判定过了才 Accept + 发布;B 已经发布之后 A 再回来。
+        /// </summary>
+        private static void ResumeAfterReplacementCases()
+        {
+            var state = new PlayerSessionState();
+            var field = "none"; // 正在播的播放器(_playerVideo)
+
+            // A:打开开始,建出来的播放器先挂在自己的会话名下,然后去等源
+            var a = state.Begin(PlayerSessionReason.Open);
+            var aPlayer = new FakeResource("player-A");
+            Check(a.Hold(aPlayer), "A 建出来的播放器挂到 A 名下");
+            Check(field == "none", "A 等源的时候还没有接进正在播的播放器");
+
+            // SetPlayItem 换视频:先作废在飞的 A(_playerSessions.Invalidate()),B 再开自己的会话
+            Check(state.Invalidate(), "换视频作废还在等源的 A");
+            Check(aPlayer.DisposeCount == 1, "A 被丢下的播放器在作废时释放一次");
+            var b = state.Begin(PlayerSessionReason.Open);
+            var bPlayer = new FakeResource("player-B");
+            Check(b.Hold(bPlayer), "B 的播放器挂到 B 名下");
+            Check(b.Accept(), "B 在发布之前接受会话");
+            field = bPlayer.Name; // B 接进 _playerVideo
+            Check(field == "player-B", "B 已经把自己装进正在播的播放器");
+
+            // A 的 await 回来了:判定在会话上,不读也不写正在播的播放器
+            Check(!a.IsCurrent, "A 回来时已经不是当前的会话");
+            Check(aPlayer.DisposeCount == 1, "A 的播放器已经释放过,回来时不再释放第二次");
+            if (a.IsCurrent) field = aPlayer.Name; // 旧的接线:判定排在发布后面,这里就会把 B 顶掉
+            Check(field == "player-B", "A 迟到不覆盖 B 已经装好的播放器");
+            Check(!a.Accept(), "A 迟到的 Accept 被拒");
+            Check(aPlayer.DisposeCount == 1, "A 迟到的 Accept 不会再释放一次");
+            Check(!a.Release(), "A 迟到的 Release 落空");
+            Check(aPlayer.DisposeCount == 1, "A 被丢下的播放器恰好释放一次");
+            Check(state.Current == b, "当前会话还是 B");
+            Check(bPlayer.DisposeCount == 0, "A 的收尾不碰 B 的播放器");
+            Check(field == bPlayer.Name, "正在播的播放器还是 B 的");
+
+            // 关页/换视频照旧:交给过播放器的 B 不归会话,作废时不再由会话释放它(ClosePlay 管)
+            state.Invalidate();
+            Check(bPlayer.DisposeCount == 0, "已经交给播放器的 B 不在作废时由会话释放");
+            Check(aPlayer.DisposeCount == 1, "关掉 B 时不动已经释放过的 A");
+        }
+
+        /// <summary>
         /// 源码接线:会话本身在 probe 里跑,这里只钉住"每条打开路径都带着它走"。
         /// </summary>
         private static void SourceCases()
         {
             var repo = FindRepoRoot();
             var controlPath = Path.Combine(repo, "src", "BiliLite.UWP", "Controls", "PlayerControl.xaml.cs");
-            var playerPath = Path.Combine(repo, "src", "BiliLite.UWP", "Controls", "Player.xaml.cs");
             var control = File.ReadAllText(controlPath);
+            if (!File.Exists(playerPath))
+            {
+                Fail("读不到 Player 源文件:" + playerPath);
+                return;
+            }
             var player = File.ReadAllText(playerPath);
 
             Check(control.Contains("await ChangeQuality(info.CurrentQuality);"), "SetQuality 等切清晰度收尾,不再 fire-and-forget");
@@ -200,6 +266,89 @@ namespace PlayersessProbe
             Check(player.Contains("if (!session.Hold(") || player.Contains("HoldSessionResource("), "Player 通过会话托管资源");
             Check(CountOf(player, "session?.Accept();") >= 3, "源进字段之前接受会话");
             Check(player.Contains("using BiliLite.Services;"), "Player 引用了会话所在命名空间");
+        }
+
+        /// <summary>
+        /// 发布顺序:播放器先建在本地并挂到会话名下,等完源再判定会话,判定过了才装源、接受会话、接进 _playerVideo。
+        /// 对着四条打开路径钉顺序;--player 换一份旧文件跑,这几条就会红。
+        /// </summary>
+        private static void PublishOrderCases()
+        {
+            if (!File.Exists(playerPath))
+            {
+                Fail("读不到 Player 源文件:" + playerPath);
+                return;
+            }
+            var player = File.ReadAllText(playerPath);
+
+            CheckPublishOrder(player, "PlayDashUseNative(", "PlayerSingleMp4UseNativeAsync(", "PlayDashUseNative");
+            CheckPublishOrder(player, "PlayerSingleMp4UseNativeAsync(", "PlayDashUseFFmpegInterop(", "PlayerSingleMp4UseNativeAsync");
+            CheckPublishOrder(player, "PlaySingleFlvUseSYEngine(", "PlayVideoUseSYEngine(", "PlaySingleFlvUseSYEngine");
+            CheckPublishOrder(player, "PlayVideoUseSYEngine(", "public void SetRatioMode(", "PlayVideoUseSYEngine");
+
+            // 三条 FFmpeg 路径本来就把源挂在会话名下、接受之后才建播放器:这次不动它们,只钉住没退化
+            CheckHeldThenAccepted(player, "PlayDashUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop(", "PlayDashUseFFmpegInterop");
+            CheckHeldThenAccepted(player, "PlayDashUrlUseFFmpegInterop(", "PlaySingleFlvUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop");
+            CheckHeldThenAccepted(player, "PlaySingleFlvUseFFmpegInterop(", "PlaySingleFlvUseSYEngine(", "PlaySingleFlvUseFFmpegInterop");
+        }
+
+        private static void CheckPublishOrder(string player, string start, string end, string name)
+        {
+            var body = Code(Section(player, start, end));
+            if (body.Length == 0)
+            {
+                Fail(name + " 找不到方法体");
+                return;
+            }
+            var problem = PublishOrderProblem(body);
+            Check(problem == null, name + " 的发布顺序(先挂会话名下、等完源再判定、判定过了才接进播放器)" + (problem == null ? "" : ": " + problem));
+        }
+
+        /// <summary>
+        /// 返回第一条不满足的说明,null 表示顺序对。
+        /// </summary>
+        private static string PublishOrderProblem(string body)
+        {
+            if (body.Contains("_playerVideo = new MediaPlayer()")) return "播放器直接建进 _playerVideo,判定之前就顶掉了正在播的那一份";
+            if (body.Contains("_playerVideo.Source =")) return "源直接装在 _playerVideo 上,判定之前就可能改到别人的播放器";
+            var hold = body.IndexOf("HoldSessionPlayer(session, video)", StringComparison.Ordinal);
+            if (hold < 0) return "建出来的播放器没有先挂到会话名下";
+            var stale = body.IndexOf("if (IsSessionStale(session)) return SupersededOpen();", StringComparison.Ordinal);
+            if (stale < 0) return "等完源之后没有判定会话";
+            var source = body.IndexOf("video.Source =", StringComparison.Ordinal);
+            if (source < 0) return "没有给本地播放器装源";
+            var accept = body.IndexOf("session?.Accept();", StringComparison.Ordinal);
+            if (accept < 0) return "接进播放器之前没有接受会话";
+            var publish = body.IndexOf("_playerVideo = video;", StringComparison.Ordinal);
+            if (publish < 0) return "没有把本地这一份接进 _playerVideo";
+            if (hold > stale) return "判定会话排在挂到会话名下之前";
+            if (stale > source) return "装源排在判定会话之前";
+            if (source > accept) return "接受会话排在装源之前";
+            if (accept > publish) return "接进 _playerVideo 排在接受会话之前";
+            return null;
+        }
+
+        private static void CheckHeldThenAccepted(string player, string start, string end, string name)
+        {
+            var body = Code(Section(player, start, end));
+            if (body.Length == 0)
+            {
+                Fail(name + " 找不到方法体");
+                return;
+            }
+            var hold = body.IndexOf("HoldSessionResource(session, videoSource)", StringComparison.Ordinal);
+            var accept = body.IndexOf("session?.Accept();", StringComparison.Ordinal);
+            var publish = body.IndexOf("_playerVideo = new MediaPlayer()", StringComparison.Ordinal);
+            Check(hold >= 0 && accept > hold && publish > accept,
+                name + " 没动:源先挂会话名下,接受之后才建播放器(hold=" + hold + " accept=" + accept + " publish=" + publish + ")");
+        }
+
+        /// <summary>
+        /// 顺序判定只看代码:注释里的旧写法不算数。
+        /// </summary>
+        private static string Code(string text)
+        {
+            return Regex.Replace(text, @"^[ \t]*//.*$", "", RegexOptions.Multiline);
         }
 
         private static string Section(string text, string start, string end)

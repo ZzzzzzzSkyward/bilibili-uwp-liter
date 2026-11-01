@@ -268,6 +268,16 @@ namespace BiliLite.Controls
         }
 
         /// <summary>
+        /// 打开途中建出来的播放器先挂在会话名下:关页/换视频/换清晰度作废这次打开时由它释放一次。
+        /// 返回 false 表示会话已经不认这次打开,播放器已经就地放掉,调用方直接放弃、不要再碰它。
+        /// </summary>
+        private static bool HoldSessionPlayer(PlayerSessionTicket session, MediaPlayer player)
+        {
+            if (session == null) return true;
+            return session.Hold(new MediaPlayerLease(player));
+        }
+
+        /// <summary>
         /// WinRT 的 FFmpeg 源自己不是 IDisposable,会话只认 IDisposable:这一层就是那个桥。
         /// </summary>
         private sealed class FFmpegSourceLease : IDisposable
@@ -282,6 +292,24 @@ namespace BiliLite.Controls
             public void Dispose()
             {
                 source?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// 同上,给还没接进正在播的播放器的那一份 MediaPlayer 用的桥。
+        /// </summary>
+        private sealed class MediaPlayerLease : IDisposable
+        {
+            private readonly MediaPlayer player;
+
+            public MediaPlayerLease(MediaPlayer player)
+            {
+                this.player = player;
+            }
+
+            public void Dispose()
+            {
+                player?.Dispose();
             }
         }
 
@@ -324,9 +352,10 @@ namespace BiliLite.Controls
                 ClosePlay();
 
 
-                //设置播放器
-                _playerVideo = new MediaPlayer();
-                //_playerVideo.Source = MediaSource.CreateFromUri(new Uri(videoUrl.baseUrl));
+                //设置播放器:这一份先落在本地,等完源、确认会话还算数才接进正在播的播放器
+                var video = new MediaPlayer();
+                if (!HoldSessionPlayer(session, video)) return SupersededOpen();
+                //video.Source = MediaSource.CreateFromUri(new Uri(videoUrl.baseUrl));
                 AdaptiveMediaSource mediaSource=null;
                 MediaSource mediaSource2=null;
                 if (isLocal)
@@ -347,12 +376,15 @@ namespace BiliLite.Controls
                         message = "创建MediaSource失败"
                     };
                 }
-                // 等源的这段时间里被新的打开取代了:这一份不再接进正在播的播放器
+                // 等源的这段时间里被新的打开取代了:这一份已经由会话释放,不能再碰,也不接进正在播的播放器
                 if (IsSessionStale(session)) return SupersededOpen();
                 if(mediaSource!=null)
-                _playerVideo.Source = MediaSource.CreateFromAdaptiveMediaSource(mediaSource);
+                video.Source = MediaSource.CreateFromAdaptiveMediaSource(mediaSource);
                 else
-                _playerVideo.Source = mediaSource2;
+                video.Source = mediaSource2;
+                // 到这里才交给正在播的播放器:Accept 把这一份从会话名下转给字段
+                session?.Accept();
+                _playerVideo = video;
                 Buffering = true;
               
                 //设置时长
@@ -505,20 +537,25 @@ namespace BiliLite.Controls
                 PlayStateChanged?.Invoke(this, PlayState);
                 ClosePlay();
 
-                //设置播放器
-                _playerVideo = new MediaPlayer();
+                //设置播放器:这一份先落在本地,等完源、确认会话还算数才接进正在播的播放器
+                var video = new MediaPlayer();
+                if (!HoldSessionPlayer(session, video)) return SupersededOpen();
+                MediaSource videoSource;
                 if (isLocal)
                 {
                     var file = await StorageFile.GetFileFromPathAsync(url);
-                    // 会话在等待里被取代了:这一份不再接进正在播的播放器
+                    // 会话在等待里被取代了:这一份已经由会话释放,不能再碰,也不接进正在播的播放器
                     if (IsSessionStale(session)) return SupersededOpen();
-                    _playerVideo.Source = MediaSource.CreateFromStorageFile(file);
+                    videoSource = MediaSource.CreateFromStorageFile(file);
                 }
                 else
                 {
-                    _playerVideo.Source = MediaSource.CreateFromUri(new Uri(url));
+                    videoSource = MediaSource.CreateFromUri(new Uri(url));
                 }
-
+                video.Source = videoSource;
+                // 到这里才交给正在播的播放器:Accept 把这一份从会话名下转给字段
+                session?.Accept();
+                _playerVideo = video;
 
                 //设置时长
                 _playerVideo.MediaOpened += new TypedEventHandler<MediaPlayer, object>(async (e, arg) =>
@@ -1219,13 +1256,16 @@ namespace BiliLite.Controls
                     playList.NetworkConfigs = CreatePlaylistNetworkConfigs(userAgent, referer, epId);
                 }
                 playList.Append(url, 0, 0);
-                //设置播放器
-                _playerVideo = new MediaPlayer();
-                _playerVideo.Source = null;
+                //设置播放器:这一份先落在本地,等完源、确认会话还算数才接进正在播的播放器
+                var video = new MediaPlayer();
+                if (!HoldSessionPlayer(session, video)) return SupersededOpen();
                 var mediaSource = await playList.SaveAndGetFileUriAsync();
-                // 会话在等待里被取代了:这一份不再接进正在播的播放器
+                // 会话在等待里被取代了:这一份已经由会话释放,不能再碰,也不接进正在播的播放器
                 if (IsSessionStale(session)) return SupersededOpen();
-                _playerVideo.Source = MediaSource.CreateFromUri(mediaSource);
+                video.Source = MediaSource.CreateFromUri(mediaSource);
+                // 到这里才交给正在播的播放器:Accept 把这一份从会话名下转给字段
+                session?.Accept();
+                _playerVideo = video;
                 //设置时长
                 _playerVideo.MediaOpened += new TypedEventHandler<MediaPlayer, object>(async (e, arg) =>
                 {
@@ -1380,10 +1420,11 @@ namespace BiliLite.Controls
                 }
                 //设置时长
                 Duration = urls.Sum(x => x.Length / 1000);
-                //设置播放器
-                _playerVideo = new MediaPlayer();
-                _playerVideo.Source = null;
+                //设置播放器:这一份先落在本地,等完源、确认会话还算数才接进正在播的播放器
+                var video = new MediaPlayer();
+                if (!HoldSessionPlayer(session, video)) return SupersededOpen();
 
+                MediaSource videoSource;
                 if (isLocal)
                 {
                     MediaComposition composition = new MediaComposition();
@@ -1393,17 +1434,21 @@ namespace BiliLite.Controls
                         var clip = await MediaClip.CreateFromFileAsync(file);
                         composition.Clips.Add(clip);
                     }
-                    _playerVideo.Source = MediaSource.CreateFromMediaStreamSource(composition.GenerateMediaStreamSource());
+                    // 会话在等待里被取代了(本地多段的文件解析也算):这一份已经由会话释放,不再建源、也不接进正在播的播放器
+                    if (IsSessionStale(session)) return SupersededOpen();
+                    videoSource = MediaSource.CreateFromMediaStreamSource(composition.GenerateMediaStreamSource());
                 }
                 else
                 {
                     var mediaSource = await playList.SaveAndGetFileUriAsync();
-
-                    _playerVideo.Source = MediaSource.CreateFromUri(mediaSource);
-
+                    // 会话在等待里被取代了:这一份已经由会话释放,不再建源、也不接进正在播的播放器
+                    if (IsSessionStale(session)) return SupersededOpen();
+                    videoSource = MediaSource.CreateFromUri(mediaSource);
                 }
-                // 会话在等待里被取代了(本地多段的文件解析也算):这一份不再接进正在播的播放器
-                if (IsSessionStale(session)) return SupersededOpen();
+                video.Source = videoSource;
+                // 到这里才交给正在播的播放器:Accept 把这一份从会话名下转给字段
+                session?.Accept();
+                _playerVideo = video;
                 _playerVideo.MediaOpened += new TypedEventHandler<MediaPlayer, object>(async (e, arg) =>
                 {
                     Opening = false;
