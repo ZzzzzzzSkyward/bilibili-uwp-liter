@@ -13,16 +13,32 @@ in `bug_report.md` first.
 | --- | --- |
 | branch | `dev`, in sync with `origin/dev` |
 | build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (compile only; this machine's VS has no .NET SDK component, so the script evaluates the skipped SDK-style `BiliLite.gRPC` through the installed dotnet SDK) or without `-Fast` to package into `Z:\` |
-| probe checks | `sh plan/tests/<batch>/run.sh` — net8.0 probe projects under `plan/tests/` compile the real product sources and assert behavior; `bash` on this machine is the WSL stub, use `sh` |
+| probe checks | `sh plan/tests/<batch>/run.sh` — net8.0 probe projects under `plan/tests/` compile the real product sources and assert behavior. The scripts expect a portable drop at `$UPSTREAM_UNIT_TOOLS/dotnet` with SDK 8.0.427; that drop is absent on this machine, the installed SDK is 10.0.302 with the 8.0.33 ref pack and an 8.0.33 runtime, so a batch either points `UPSTREAM_UNIT_TOOLS` at a directory containing a `dotnet` root or resolves the installed SDK. `sh` here is MSYS2 (Git Bash) |
 | sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-dev.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
-| dependency plan | `plan/DEPENDENCY_UPGRADE.md` — open migrations only (toolkit 8.x, NLog 6, FFMpegCore, SharpCompress, RestSharp) |
 | review cache | `plan/REVIEW_LOG.md` |
 | bug device log | `bug_report.md`, `code_review.md` at the repo root |
 
 ## Done
 
-Newest first; every one of these is device-accepted per the policy above.
+Newest first; every one of these is device-accepted per the policy above, except the three 2026-11-01 entries
+(P4 step 1, BR-44/BR-43, BR-45): those are compiled and probe-covered only, and their device rows are still
+open in `plan/VALIDATION.md`.
 
+- **P4 step 1 — season detail:** `ed9f248` — `pgc/view/web/ep/list` runs builder → `ApiEnvelope.ReadResult` →
+  `Parsing/Season/WebSeasonEpListParser` → mapper, with the field table and the 正片/预告 dedupe rule in the
+  parser. `HttpResults.TryGetJObject` is the silent body decode the envelope uses, so a non-JSON body is an
+  envelope failure instead of `解析json对象失败`; `GetJObject` keeps its toast for its existing callers on top of
+  the same decode. `plan/tests/season1` (109 assertions) pins the envelope, the shapes that used to throw, a
+  per-body no-toast check, the dedupe divergence and a refresh that fails after a good load.
+- **BR-44 播放目录 crash / BR-43 toast centring:** `a99c3f8` — the fade now targets the button's content
+  `StackPanel` and the scale stays on the `CompositeTransform`, so `Storyboard.Begin` no longer throws before
+  `DirectoryRequested`; a `Begin` failure is logged instead of swallowing the click. `plan/tests/dirpress`
+  (31 checks) reads the XAML names and fails when a `SetTargetProperty` names a property the target type does
+  not have — it exits 1 against the pre-fix source.
+- **BR-45 list covers:** `433f128` — directory rows, the playlist template, the UGC-season template and the
+  live honour icon route their string cover through the existing `imageConvert2` + `'200w'`, so the box gets a
+  `BitmapImage` and an empty `Cover` falls back to the placeholder. `DownloadPage` keeps its binding: that model
+  already stores a `BitmapImage`.
 - **Cookie jar and packaging traps:** `fe335f3` — `Models/CookieOrigins.cs` is the one origin list (read across
   root/www/passport/api, write to root and www) so `ac_time_value` is visible, plus one verdict log line;
   `862e61c` — the build script prints only the installable `BiliLite.Packages_*`, fails before printing
@@ -73,7 +89,7 @@ Newest first; every one of these is device-accepted per the policy above.
 | --- | --- | --- |
 | 1 | Player open/replace/close session ownership | not started |
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
-| 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. Remaining: apply the same boundaries to comments, video/season detail, playlists and account responses, then delete what the migration left unused |
+| 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. P4 step 1 (season detail) is **shipped** in `ed9f248`: `result` selector on `ApiEnvelope`, a silent body decode (`HttpResults.TryGetJObject`) so a non-JSON body is a parse failure rather than a toast, `Parsing/Season/`, `Models/Api/Season/Web/`, the dead web path deleted, probe `plan/tests/season1` (109 assertions). The review's four findings are closed with evidence in `code_review.md`. Remaining order from `plan/P4_INVENTORY.md`: playlists → video detail → account → comments |
 | 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; the remaining checks are the device rows in `plan/VALIDATION.md` |
 
 ## 1. Player session ownership

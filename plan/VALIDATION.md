@@ -27,3 +27,18 @@ starts that.
 | Login refresh | `ea7ead8` | after an overnight session the first play still offers 1080p and above; 设置 → 账号 reports 已登录 and 刷新登录 keeps it so; an expired session shows one 登录已失效 toast and 重新登录 restores quality |
 | Cookie jar reads every login origin | `fe335f3` | the first preflight of a launch writes `Cookie refresh state refresh=… timestamp=…; token=present`, and once the server reports `refresh=True` the log shows the correspond → refresh → confirm chain instead of nothing |
 | Only the installable package is delivered | `862e61c` | a full build prints one 交付包 path under `Z:\BiliLite.Packages_<version>_x64_Test\`, no `BiliLite.UWP_*` folder is left beside it, and installing that file starts the app instead of blinking out |
+
+## Shipped 2026-11-01 — the batch that was uncommitted, now built
+
+Compiled with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (0 errors), probes green:
+`plan/tests/season1` (109 assertions) and `plan/tests/dirpress` (31 checks). No package was installed, so
+every row below still needs the device pass.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| BR-43 toast alignment | `a99c3f8` | volume `100%` and brightness `100%` share one optical centre with the glyph; the mute pill (no text) stays centred and gains no right gap; seek `hh:mm:ss` digits look centred on the clock; the same relation at a small and a large window (the constant scales). If the digits sit low, the icon is too high — one constant, `BaseIconOpticalOffset`, is the only edit |
+| BR-44 播放目录 button | `a99c3f8` | one flash per click on the video-detail drawer and on the season drawer; the drawer actually opens; clicking again while the flash is still running neither throws nor leaves the button dimmed or scaled |
+| Season detail parse (P4) | `ed9f248` | 正片 and 预告 tabs keep their contents and ordinals; an episode that also appears inside a section shows as 预告 only; a season with `result.episodes` empty (or a section with no episodes) shows the empty state instead of an error panel; `total: 0` still lists the episodes |
+| Non-JSON body stays quiet | `ed9f248` | a season page whose response is not JSON shows the error panel and no `解析json对象失败` toast; other screens that still use `GetJObject` keep their toast |
+| BR-45 list covers | `433f128` | directory rows show a thumbnail instead of an empty box, at the same size as the row; a row whose cover is empty shows the placeholder; playlist rows, UGC-season rows and a live anchor's honour icons likewise show an image, and no row downloads a full-size cover into a 64×36 box |
+
