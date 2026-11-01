@@ -178,7 +178,9 @@ namespace BiliLite.Pages.User
                 parameters = new VideoPlaylist()
                 {
                     Index = 0,
-                    Playlist = items
+                    Playlist = items,
+                    // 队列页头写用户认得的收藏夹名;没拿到详情时留空,不编一个
+                    Title = favoriteDetailVM.FavoriteInfo == null ? "" : favoriteDetailVM.FavoriteInfo.title
                 }
             });
         }

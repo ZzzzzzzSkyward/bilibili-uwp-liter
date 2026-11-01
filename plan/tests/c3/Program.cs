@@ -215,7 +215,7 @@ namespace C3Probe
 
             Check(center.Contains("MediaListRoute.TryParse(url, out mediaListRoute)"),
                 "source: MessageCenter asks the route parser before the other routes");
-            Check(center.Contains("await OpenMediaListPlaylist(mediaListRoute);"),
+            Check(center.Contains("await OpenMediaListPlaylist(mediaListRoute, PlaylistTitleOf(url));"),
                 "source: a matched playpage link opens the playlist instead of falling through");
             Check(center.Contains("GetMediaList(route.MediaListId, route.MediaListType)"),
                 "source: the first page is loaded with the link's own id and page type");
@@ -232,7 +232,7 @@ namespace C3Probe
             Check(center.Contains("page = typeof(FavoriteDetailPage),") && center.Contains("Id = medialist_id,"),
                 "source: the ml favorite-folder route still opens the favorite page with the ml id");
             Check(!center.Contains("MediaListId = medialist_id"), "source: a favorite-folder id is never used as a medialist id");
-            Check(center.Contains("private static async Task OpenMediaListPlaylist(MediaListRoute route)"),
+            Check(center.Contains("private static async Task OpenMediaListPlaylist(MediaListRoute route, string title)"),
                 "source: the playlist opening is one helper, not inline page logic");
         }
 

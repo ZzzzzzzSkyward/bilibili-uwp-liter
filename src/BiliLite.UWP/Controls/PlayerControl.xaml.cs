@@ -215,6 +215,11 @@ namespace BiliLite.Controls
         public event EventHandler<PlayDirectorySourceEventArgs> DirectorySourceRequested;
 
         /// <summary>
+        /// 目录里换了浏览的分段。播放器只转发:换页签不改播放,也不改连播来源
+        /// </summary>
+        public event EventHandler<PlayDirectorySourceEventArgs> DirectoryScopeChanged;
+
+        /// <summary>
         /// 目录里点了"加载更多"/"重试"。取页由页面执行,播放器只转发。
         /// </summary>
         public event EventHandler DirectoryLoadMoreRequested;
@@ -3003,6 +3008,11 @@ namespace BiliLite.Controls
         private void DirectoryDrawer_ContinuationSourceRequested(object sender, PlayDirectorySourceEventArgs e)
         {
             DirectorySourceRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_ScopeChanged(object sender, PlayDirectorySourceEventArgs e)
+        {
+            DirectoryScopeChanged?.Invoke(this, e);
         }
 
         private void DirectoryDrawer_LoadMoreRequested(object sender, EventArgs e)

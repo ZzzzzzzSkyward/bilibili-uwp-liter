@@ -403,7 +403,7 @@ namespace BiliLite.Helpers
             MediaListRoute mediaListRoute;
             if (MediaListRoute.TryParse(url, out mediaListRoute))
             {
-                await OpenMediaListPlaylist(mediaListRoute);
+                await OpenMediaListPlaylist(mediaListRoute, PlaylistTitleOf(url));
                 return true;
             }
 
@@ -521,10 +521,11 @@ namespace BiliLite.Helpers
         /// <summary>
         /// 播放列表链接:先用 medialist 接口取首页,页面再用同一份翻页状态继续加载。
         /// 首页取不到就不打开页面,避免留下一个空队列。
+        /// title 是链接自带的播放列表名;链接没写就是空,队列页头跟着留空。
         /// </summary>
-        private static async Task OpenMediaListPlaylist(MediaListRoute route)
+        private static async Task OpenMediaListPlaylist(MediaListRoute route, string title)
         {
-            var state = new MediaListPagingState(route.MediaListId, route.MediaListType, MediaListSourceKind.MediaList);
+            var state = new MediaListPagingState(route.MediaListId, route.MediaListType, MediaListSourceKind.MediaList, title);
             // 链接里的 page_type 原样传给接口,链接默认 2,不用接口方法的默认 1
             var page = await new MediaListService().GetMediaList(route.MediaListId, route.MediaListType);
             if (page == null) return;
@@ -546,9 +547,27 @@ namespace BiliLite.Helpers
                     MediaListId = route.MediaListId,
                     MediaListType = route.MediaListType,
                     MediaListState = state,
-                    Title = state.Title,
+                    Title = title,
                 }
             });
+        }
+
+        /// <summary>
+        /// 链接自带的播放列表标题。链接里没写就是没有标题:页头留空,不拿占位词顶替。
+        /// </summary>
+        private static string PlaylistTitleOf(string url)
+        {
+            if (string.IsNullOrEmpty(url)) return "";
+            var query = url.IndexOf('?');
+            if (query < 0 || query == url.Length - 1) return "";
+            foreach (var part in url.Substring(query + 1).Split('&'))
+            {
+                var pair = part.Split(new[] { '=' }, 2);
+                if (pair.Length != 2) continue;
+                if (!string.Equals(pair[0].Trim(), "title", StringComparison.OrdinalIgnoreCase)) continue;
+                return Uri.UnescapeDataString(pair[1].Trim()).Trim();
+            }
+            return "";
         }
 
         public async static Task<string> HandelSeasonID(string url)

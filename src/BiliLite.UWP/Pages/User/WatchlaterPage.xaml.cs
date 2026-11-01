@@ -68,7 +68,9 @@ namespace BiliLite.Pages.User
                 parameters = new VideoPlaylist()
                 {
                     Index = index,
-                    Playlist = items
+                    Playlist = items,
+                    // 队列页头写用户认得的名字:这一页就是稍后再看
+                    Title = "稍后再看"
                 }
             });
         }

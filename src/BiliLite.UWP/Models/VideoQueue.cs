@@ -22,7 +22,8 @@ namespace BiliLite.Models.Common
         /// </summary>
         public MediaListPagingState MediaListState { get; set; }
         /// <summary>
-        /// 导航来源给出的标题,没有就用通用标题
+        /// 队列的名字:用户认得的那一个(稍后再看、收藏夹名、链接里带的播放列表名)。
+        /// 没有名字就留空,页头跟着留空,不拿占位词顶替。
         /// </summary>
         public string Title { get; set; }
     }

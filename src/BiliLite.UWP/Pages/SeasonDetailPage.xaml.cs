@@ -30,12 +30,18 @@ namespace BiliLite.Pages
         string season_id = "";
         string ep_id = "";
         bool selectPreview = false;
+        // 用户正在浏览的目录分段(正片/预告)。页头跟着它,重画时不换掉
+        PlayDirectorySectionKind? browsedDirectoryKind;
         public SeasonDetailPage()
         {
             this.InitializeComponent();
             Title = "剧集详情";
             this.Loaded += SeasonDetailPage_Loaded;
             this.Player = this.player;
+            // 目录只在播放器抽屉里:正片和预告各成一段,页面回答抽屉的事件
+            player.DirectoryRequested += Player_DirectoryRequested;
+            player.DirectoryRowRequested += Player_DirectoryRowRequested;
+            player.DirectoryScopeChanged += Player_DirectoryScopeChanged;
             NavigationCacheMode = NavigationCacheMode.Enabled;
             seasonDetailVM = new SeasonDetailVM();
             seasonReviewVM = new SeasonReviewVM();
@@ -91,6 +97,9 @@ namespace BiliLite.Pages
                 seasonDetailVM.Detail = null;
             }
             changedFlag = true;
+            // 缓存页关掉时不留下一次的分段和按钮标签
+            browsedDirectoryKind = null;
+            player?.UpdateDirectoryInfo(false, "");
             player?.FullScreen(false);
             player?.MiniWidnows(false);
             player?.Dispose();
@@ -180,6 +189,10 @@ namespace BiliLite.Pages
             {
                 index = (selectPreview ? seasonDetailVM.Previews : seasonDetailVM.Episodes).IndexOf(selectItem);
             }
+            // 链接里的分集不在列表里时从第一集起播:正在播的分集 id 要跟着这一集,
+            // 否则目录上的当前行和位置标签会停在链接里那个不存在的 id 上
+            var playing = selectPreview ? seasonDetailVM.Previews : seasonDetailVM.Episodes;
+            if (index >= 0 && index < playing.Count) ep_id = playing[index].id.ToString();
             if (selectPreview)
             {
                 UpdatePlayInfoToPreview(index);
@@ -188,6 +201,7 @@ namespace BiliLite.Pages
             {
                 UpdatePlayInfoToEpisode(index);
             }
+            RefreshSeasonDirectory();
         }
         private void UpdatePlayInfoToEpisode(int index)
         {
@@ -348,6 +362,8 @@ namespace BiliLite.Pages
                 Oid = aid
             });
             changedFlag = false;
+            // 换集是播放器发起的:目录的当前行、位置标签和开着的抽屉都跟着这一集走
+            RefreshSeasonDirectory();
         }
 
         private void listEpisode_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -395,6 +411,178 @@ namespace BiliLite.Pages
             CreateQR();
         }
 
+
+        /// <summary>
+        /// 只有一集、又没有预告的剧集没有目录可翻:按钮不出现,抽屉也开不出来
+        /// </summary>
+        private bool HasSeasonDirectory()
+        {
+            var episodes = seasonDetailVM?.Episodes == null ? 0 : seasonDetailVM.Episodes.Count;
+            var previews = seasonDetailVM?.Previews == null ? 0 : seasonDetailVM.Previews.Count;
+            return PlayDirectoryBuilder.HasSeasonDirectory(episodes, previews);
+        }
+
+        /// <summary>
+        /// "目录"按钮上的短标签:只写正在播的这一段里的位置,段名在页签和页头上
+        /// </summary>
+        private string SeasonDirectoryCaption()
+        {
+            var preview = selectPreview;
+            var kind = preview ? PlayDirectorySectionKind.SeasonPreviews : PlayDirectorySectionKind.SeasonEpisodes;
+            var count = preview
+                ? (seasonDetailVM?.Previews == null ? 0 : seasonDetailVM.Previews.Count)
+                : (seasonDetailVM?.Episodes == null ? 0 : seasonDetailVM.Episodes.Count);
+            return PlayDirectoryBuilder.Caption(kind, CurrentSeasonIndex() + 1, count);
+        }
+
+        /// <summary>
+        /// 正在播的这一集在它自己那一段里的下标,按分集 id 找;找不到返回 -1
+        /// </summary>
+        private int CurrentSeasonIndex()
+        {
+            var list = selectPreview ? seasonDetailVM?.Previews : seasonDetailVM?.Episodes;
+            if (list == null) return -1;
+            for (var i = 0; i < list.Count; i++)
+            {
+                if (list[i] != null && list[i].id.ToString() == ep_id) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// 一段的分集身份:分集 id。目录行的 Key 和这里用的是同一条规则
+        /// </summary>
+        private List<string> SeasonEpisodeKeys(bool preview)
+        {
+            var keys = new List<string>();
+            var list = preview ? seasonDetailVM?.Previews : seasonDetailVM?.Episodes;
+            if (list == null) return keys;
+            foreach (var item in list) keys.Add(item == null ? "" : item.id.ToString());
+            return keys;
+        }
+
+        private List<PlayDirectorySeasonEpisode> SeasonEpisodeRows(bool preview)
+        {
+            var rows = new List<PlayDirectorySeasonEpisode>();
+            var list = preview ? seasonDetailVM?.Previews : seasonDetailVM?.Episodes;
+            if (list == null) return rows;
+            foreach (var item in list)
+            {
+                if (item == null) continue;
+                rows.Add(new PlayDirectorySeasonEpisode()
+                {
+                    EpId = item.id.ToString(),
+                    Title = EpisodeRowTitle(item),
+                    Cover = item.cover,
+                });
+            }
+            return rows;
+        }
+
+        /// <summary>
+        /// 行标题和播放列表里同一条的写法一致:集号加长标题,缺一半时不留空格
+        /// </summary>
+        private static string EpisodeRowTitle(SeasonDetailEpisodeModel item)
+        {
+            var title = (item.title ?? "").Trim();
+            var longTitle = (item.long_title ?? "").Trim();
+            if (title.Length == 0) return longTitle;
+            if (longTitle.Length == 0) return title;
+            return title + " " + longTitle;
+        }
+
+        /// <summary>
+        /// 现搭一份剧集目录:正片、预告各用自己那份列表和自己那个当前分集 id,
+        /// 两段的行永远不混在一起。正在播的那一段才算"活动段"。
+        /// </summary>
+        private PlayDirectoryModel BuildSeasonDirectory(bool freshOpen)
+        {
+            var title = seasonDetailVM?.Detail?.title;
+            var episodes = PlayDirectoryBuilder.FromSeasonSection(PlayDirectorySectionKind.SeasonEpisodes,
+                SeasonEpisodeRows(false), selectPreview ? "" : ep_id, title);
+            var previews = PlayDirectoryBuilder.FromSeasonSection(PlayDirectorySectionKind.SeasonPreviews,
+                SeasonEpisodeRows(true), selectPreview ? ep_id : "", title);
+            var model = PlayDirectoryBuilder.CombineSeason(episodes, previews, selectPreview);
+            model.IsFreshOpen = freshOpen;
+            // 新开目录从正在播的那一段看起,页头也是它
+            if (freshOpen) browsedDirectoryKind = null;
+            // 页头写用户正在浏览的那一段:重画(换集)不把这一段的名字换掉
+            if (browsedDirectoryKind.HasValue) PlayDirectoryBuilder.WithHeader(model, browsedDirectoryKind.Value);
+            return model;
+        }
+
+        /// <summary>
+        /// 目录按钮和开着的抽屉跟着正在播的这一集走;没有目录时按钮收起,抽屉也收起来
+        /// </summary>
+        private void RefreshSeasonDirectory()
+        {
+            if (player == null) return;
+            var available = HasSeasonDirectory();
+            player.UpdateDirectoryInfo(available, available ? SeasonDirectoryCaption() : "");
+            if (!available) return;
+            RedrawSeasonDirectory();
+        }
+
+        private void RedrawSeasonDirectory()
+        {
+            if (player == null || !player.IsDirectoryVisible) return;
+            player.ShowDirectory(BuildSeasonDirectory(false));
+        }
+
+        /// <summary>
+        /// "目录"按钮:剧集页的选集列把正片和预告叠在一起,抽屉是唯一分开看两段的地方,
+        /// 所以这里直接开抽屉。打开目录不停播、不改全屏。
+        /// </summary>
+        private void Player_DirectoryRequested(object sender, EventArgs e)
+        {
+            if (player == null || seasonDetailVM?.Detail == null) return;
+            if (!HasSeasonDirectory()) return;
+            player.ShowDirectory(BuildSeasonDirectory(!player.IsDirectoryVisible));
+        }
+
+        /// <summary>
+        /// 用户只是换了浏览的段:页头跟着换,不改正在播的那一段,也不重新起播
+        /// </summary>
+        private void Player_DirectoryScopeChanged(object sender, PlayDirectorySourceEventArgs e)
+        {
+            if (player == null || !player.IsDirectoryVisible) return;
+            browsedDirectoryKind = e.Kind;
+            player.ShowDirectory(BuildSeasonDirectory(false));
+        }
+
+        /// <summary>
+        /// 目录里点了一行:按分集 id 找回它在自己那一段里的下标,再交给页面原有的选集路径
+        /// (换段、重建播放列表、按保存的进度起播)。点的就是正在播的那一条时不起播。
+        /// </summary>
+        private void Player_DirectoryRowRequested(object sender, PlayDirectoryRowActivatedEventArgs e)
+        {
+            if (e.Row == null || !PlayDirectoryBuilder.IsSeasonKind(e.Kind)) return;
+            var preview = e.Kind == PlayDirectorySectionKind.SeasonPreviews;
+            var index = PlayDirectoryBuilder.SourceIndexOf(e.Row.Key, SeasonEpisodeKeys(preview));
+            if (index < 0)
+            {
+                // 这一集在详情里已经没有了:重画让它消失,不起播
+                RedrawSeasonDirectory();
+                return;
+            }
+            // 正在播的就是这一条:只把抽屉重画一遍,不重新起播
+            if (preview == selectPreview && index == CurrentSeasonIndex())
+            {
+                RedrawSeasonDirectory();
+                return;
+            }
+            // 选中行由那两个列表自己触发换集;列表选中项已经是这一行时先清掉,事件才会来
+            if (preview)
+            {
+                if (listPreview.SelectedIndex == index) listPreview.SelectedIndex = -1;
+                listPreview.SelectedIndex = index;
+            }
+            else
+            {
+                if (listEpisode.SelectedIndex == index) listEpisode.SelectedIndex = -1;
+                listEpisode.SelectedIndex = index;
+            }
+        }
 
         private void CreateQR()
         {

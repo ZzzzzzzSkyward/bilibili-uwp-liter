@@ -64,6 +64,7 @@ namespace BiliLite.Pages
             player.DirectoryRequested += player_DirectoryRequested;
             player.DirectoryRowRequested += player_DirectoryRowRequested;
             player.DirectorySourceRequested += player_DirectorySourceRequested;
+            player.DirectoryScopeChanged += player_DirectoryScopeChanged;
             player.DirectoryLoadMoreRequested += player_DirectoryLoadMoreRequested;
             player.DirectoryLoadAllRequested += player_DirectoryLoadAllRequested;
             player.DirectoryCancelLoadAllRequested += player_DirectoryCancelLoadAllRequested;
@@ -232,6 +233,8 @@ namespace BiliLite.Pages
         readonly PlayTransitionState transition = new PlayTransitionState();
         // 上一次推进抽屉的目录签名:来源或行集合没变就不重建行
         string directorySignature;
+        // 用户正在浏览的分段:页头跟着它,重画(换集、翻页)时也不换掉
+        PlayDirectorySectionKind? browsedDirectoryKind;
 
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -251,6 +254,7 @@ namespace BiliLite.Pages
                 RemoveMediaListPlaylist();
                 // 上一次留下的目录签名和抽屉也要收掉,等这次详情回来再报
                 directorySignature = null;
+                browsedDirectoryKind = null;
                 player.HideDirectory();
                 if(SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_FULL_SCREEN, false))
                 {
@@ -1930,6 +1934,16 @@ namespace BiliLite.Pages
                 : WatchSequenceSourceKind.Playlist);
         }
 
+        /// <summary>
+        /// 用户只是换了浏览的分段:页头跟着换成那一段的来源,不换连播来源、不起播、不重取页。
+        /// </summary>
+        private void player_DirectoryScopeChanged(object sender, PlayDirectorySourceEventArgs e)
+        {
+            if (_isClosed || player == null || !player.IsDirectoryVisible) return;
+            browsedDirectoryKind = e.Kind;
+            player.ShowDirectory(BuildDirectoryModel(false));
+        }
+
         private void SwitchSequenceSource(WatchSequenceSourceKind source)
         {
             var info = videoDetailVM?.VideoInfo;
@@ -2053,6 +2067,10 @@ namespace BiliLite.Pages
             model.LoadAll = loadAll == null ? LoadAllState.Idle : loadAll.State;
             // 新开目录才让浏览的分段回到连播来源;重画留着用户正在看的那一段
             model.IsFreshOpen = freshOpen;
+            // 新开目录从连播来源那一段看起,页头也是它
+            if (freshOpen) browsedDirectoryKind = null;
+            // 页头写用户正在浏览的那一段:重画(换集、翻页)不把这一段的名字换掉
+            if (browsedDirectoryKind.HasValue) PlayDirectoryBuilder.WithHeader(model, browsedDirectoryKind.Value);
             return model;
         }
 

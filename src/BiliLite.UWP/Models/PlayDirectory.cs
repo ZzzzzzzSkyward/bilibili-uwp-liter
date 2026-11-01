@@ -15,6 +15,14 @@ namespace BiliLite.Models.Common
         Parts = 0,
         UgcSeason = 1,
         Playlist = 2,
+        /// <summary>
+        /// 剧集页的正片。和预告是两段,不合成一段,也不按播出时间重排
+        /// </summary>
+        SeasonEpisodes = 3,
+        /// <summary>
+        /// 剧集页的预告/花絮。预告不是正片的一集,段和行都分开
+        /// </summary>
+        SeasonPreviews = 4,
     }
 
     /// <summary>
@@ -166,6 +174,11 @@ namespace BiliLite.Models.Common
     {
         public PlayDirectorySectionKind Kind { get; set; }
         public string Title { get; set; }
+        /// <summary>
+        /// 这一段背后的名字:合集名、播放列表名。页头按用户正在浏览的那一段写名字,
+        /// 所以名字得跟着段走,不能只留一份活动来源的
+        /// </summary>
+        public string SourceTitle { get; set; }
         public IList<PlayDirectoryRow> Rows { get; set; }
     }
 
@@ -486,6 +499,17 @@ namespace BiliLite.Models.Common
     }
 
     /// <summary>
+    /// 剧集页一集的最小输入。身份是分集 id:正片和预告各自一段,id 在两段里都不重复,
+    /// 所以同一个 id 只会在它自己那一段里被标成当前行。
+    /// </summary>
+    public sealed class PlayDirectorySeasonEpisode
+    {
+        public string EpId { get; set; }
+        public string Title { get; set; }
+        public string Cover { get; set; }
+    }
+
+    /// <summary>
     /// 目录的组装。纯函数:只读传进来的顺序、合集和队列,不取页、不改播放、不决定下一步播什么。
     /// </summary>
     public static class PlayDirectoryBuilder
@@ -493,6 +517,8 @@ namespace BiliLite.Models.Common
         public const string PartsSectionTitle = "分P";
         public const string CollectionSectionTitle = "合集";
         public const string PlaylistSectionTitle = "播放列表";
+        public const string SeasonEpisodesSectionTitle = "正片";
+        public const string SeasonPreviewsSectionTitle = "预告";
         public const string NowPlayingBadge = "正在播放";
         public const string LoadMoreText = "加载更多";
         public const string RetryText = "重试";
@@ -543,6 +569,7 @@ namespace BiliLite.Models.Common
                 {
                     Kind = PlayDirectorySectionKind.Parts,
                     Title = PartsSectionTitle,
+                    SourceTitle = sourceTitle ?? "",
                     Rows = rows,
                 });
             }
@@ -617,6 +644,7 @@ namespace BiliLite.Models.Common
                 {
                     Kind = PlayDirectorySectionKind.UgcSeason,
                     Title = CollectionSectionTitle,
+                    SourceTitle = season == null ? "" : season.Title,
                     Rows = rows,
                 });
             }
@@ -657,9 +685,8 @@ namespace BiliLite.Models.Common
             }
 
             var ordinal = index + 1;
-            var title = paging != null && !string.IsNullOrEmpty(paging.Title)
-                ? paging.Title
-                : (playlist != null && !string.IsNullOrEmpty(playlist.Title) ? playlist.Title : MediaListPagingState.DefaultTitle);
+            // 页头写的是用户认得的名字:远程列表的占位词不算名字,没有名字就留空,不编一个
+            var title = PlaylistTitleOf(playlist, paging);
 
             var model = new PlayDirectoryModel()
             {
@@ -681,10 +708,99 @@ namespace BiliLite.Models.Common
                 {
                     Kind = PlayDirectorySectionKind.Playlist,
                     Title = PlaylistSectionTitle,
+                    SourceTitle = title,
                     Rows = rows,
                 });
             }
             return model;
+        }
+
+        /// <summary>
+        /// 剧集页的一段(正片或预告)。行顺序就是详情页选集列里的顺序,不按播出时间重排;
+        /// 身份是分集 id,当前行只在这一段里按正在播的分集 id 标。
+        /// 这一段背后是一次拿全的列表,所以没有翻页状态:footer 不留东西。
+        /// </summary>
+        public static PlayDirectoryModel FromSeasonSection(PlayDirectorySectionKind kind,
+            IList<PlayDirectorySeasonEpisode> episodes, string currentEpId, string sourceTitle)
+        {
+            var count = episodes == null ? 0 : episodes.Count;
+            var rows = new List<PlayDirectoryRow>();
+            var index = -1;
+            for (var i = 0; i < count; i++)
+            {
+                var episode = episodes[i];
+                var key = episode == null ? "" : episode.EpId ?? "";
+                var isCurrent = index < 0 && !string.IsNullOrEmpty(currentEpId)
+                    && string.Equals(key, currentEpId, StringComparison.Ordinal);
+                if (isCurrent) index = i;
+                rows.Add(new PlayDirectoryRow()
+                {
+                    Key = key,
+                    Title = episode == null ? "" : episode.Title,
+                    Cover = episode == null ? "" : episode.Cover,
+                    Ordinal = i + 1,
+                    IsCurrent = isCurrent,
+                    CurrentBadge = isCurrent ? NowPlayingBadge : "",
+                });
+            }
+
+            var model = new PlayDirectoryModel()
+            {
+                SourceTitle = sourceTitle ?? "",
+                Caption = Caption(kind, index + 1, count),
+                // 位置只说这一段里的第几个;这一段的总量就是页头那行数字,不再写两遍
+                CurrentKey = index < 0 ? "" : rows[index].Key,
+                CurrentPositionText = index < 0 ? "" : CountPosition(index + 1, count),
+                HeaderText = HeaderOf(kind, sourceTitle),
+                ActiveKind = kind,
+                Sections = new List<PlayDirectorySection>(),
+                Paging = PlayDirectoryPagingState.None,
+            };
+
+            if (count > 0)
+            {
+                model.Sections.Add(new PlayDirectorySection()
+                {
+                    Kind = kind,
+                    Title = SeasonSectionTitle(kind),
+                    SourceTitle = sourceTitle ?? "",
+                    Rows = rows,
+                });
+            }
+            return model;
+        }
+
+        /// <summary>
+        /// 剧集页的目录:正片、预告各成一段,顺序固定正片在前,空段不摆,两段的行永不合在一起。
+        /// 活动段跟着正在播的那一条走(在预告里播着就是预告段),位置和按钮标签只算活动段里的位置。
+        /// </summary>
+        public static PlayDirectoryModel CombineSeason(PlayDirectoryModel episodes, PlayDirectoryModel previews, bool previewsActive)
+        {
+            var sections = new List<PlayDirectorySection>();
+            AppendSections(sections, episodes);
+            AppendSections(sections, previews);
+
+            var activeKind = previewsActive && SectionOf(sections, PlayDirectorySectionKind.SeasonPreviews) != null
+                ? PlayDirectorySectionKind.SeasonPreviews
+                : (SectionOf(sections, PlayDirectorySectionKind.SeasonEpisodes) != null
+                    ? PlayDirectorySectionKind.SeasonEpisodes
+                    : PlayDirectorySectionKind.SeasonPreviews);
+            var model = activeKind == PlayDirectorySectionKind.SeasonPreviews ? previews : episodes;
+            var sourceTitle = model == null ? "" : model.SourceTitle;
+
+            return new PlayDirectoryModel()
+            {
+                SourceTitle = sourceTitle,
+                Caption = model == null ? "" : model.Caption,
+                CountText = model == null ? "" : model.CountText,
+                CurrentKey = model == null ? "" : model.CurrentKey,
+                CurrentPositionText = model == null ? "" : model.CurrentPositionText,
+                HeaderText = HeaderOf(activeKind, sourceTitle),
+                ActiveKind = activeKind,
+                Sections = sections,
+                // 剧集页的列表是一次拿全的:没有页可翻,footer 不留东西
+                Paging = PlayDirectoryPagingState.None,
+            };
         }
 
         /// <summary>
@@ -702,12 +818,9 @@ namespace BiliLite.Models.Common
             var activeKind = ResolveActiveKind(sections, activeSource);
             var model = ModelOf(activeKind, parts, collection, playlist);
 
-            var sourceLabel = SourceLabelOf(activeKind);
             var sourceTitle = model == null ? "" : model.SourceTitle;
             // 页头只写来源本身;下一集在"下一个"按钮上,分P位置在分P页签里
-            var header = activeKind != PlayDirectorySectionKind.Parts && !string.IsNullOrEmpty(sourceTitle)
-                ? sourceLabel + "《" + sourceTitle + "》"
-                : sourceLabel;
+            var header = HeaderOf(activeKind, sourceTitle);
 
             return new PlayDirectoryModel()
             {
@@ -747,6 +860,72 @@ namespace BiliLite.Models.Common
         }
 
         /// <summary>
+        /// 页头那一行。外层来源写"合集《标题》"/"播放列表《标题》",没有名字就只写来源;
+        /// 剧集页两段只写段名,剧名在页头下面一行,不在这里重复。
+        /// </summary>
+        public static string HeaderOf(PlayDirectorySectionKind kind, string sourceTitle)
+        {
+            if (IsSeasonKind(kind)) return SeasonSectionTitle(kind);
+            if (kind == PlayDirectorySectionKind.Parts) return PartsSectionTitle;
+            var label = SourceLabelOf(kind);
+            return string.IsNullOrEmpty(sourceTitle) ? label : label + "《" + sourceTitle + "》";
+        }
+
+        /// <summary>
+        /// 把页头换成用户正在浏览的那一段。只改这一行字:行、当前标记、翻页状态都还是这一份;
+        /// 那一段不在目录里时什么都不改。
+        /// </summary>
+        public static PlayDirectoryModel WithHeader(PlayDirectoryModel model, PlayDirectorySectionKind browsed)
+        {
+            if (model == null) return null;
+            var section = SectionOf(model.Sections, browsed);
+            if (section == null) return model;
+            model.HeaderText = HeaderOf(section.Kind, section.SourceTitle);
+            return model;
+        }
+
+        /// <summary>
+        /// 剧集页有没有目录:只有一集、又没有预告的剧集没有可翻的东西。
+        /// 和视频页"只有一个分P就没有目录"同一条规则,这里两段合起来算。
+        /// </summary>
+        public static bool HasSeasonDirectory(int episodeCount, int previewCount)
+        {
+            return Math.Max(0, episodeCount) + Math.Max(0, previewCount) > 1;
+        }
+
+        /// <summary>
+        /// 剧集页的段名。别的分段没有这个名字,返回空
+        /// </summary>
+        public static string SeasonSectionTitle(PlayDirectorySectionKind kind)
+        {
+            switch (kind)
+            {
+                case PlayDirectorySectionKind.SeasonEpisodes: return SeasonEpisodesSectionTitle;
+                case PlayDirectorySectionKind.SeasonPreviews: return SeasonPreviewsSectionTitle;
+                default: return "";
+            }
+        }
+
+        /// <summary>
+        /// 剧集页的分段(正片、预告)。它们不是连播来源,也不是播放列表,页头写段名不写来源
+        /// </summary>
+        public static bool IsSeasonKind(PlayDirectorySectionKind kind)
+        {
+            return kind == PlayDirectorySectionKind.SeasonEpisodes || kind == PlayDirectorySectionKind.SeasonPreviews;
+        }
+
+        /// <summary>
+        /// 播放列表的名字:页面给的队列标题优先,其次是翻页状态里的名字。
+        /// 翻页状态在没给名字时填的是占位词,那不是用户认得的名字,当成没有。
+        /// </summary>
+        public static string PlaylistTitleOf(VideoPlaylist playlist, MediaListPagingState paging)
+        {
+            if (playlist != null && !string.IsNullOrEmpty(playlist.Title)) return playlist.Title;
+            if (paging == null || string.IsNullOrEmpty(paging.Title)) return "";
+            return string.Equals(paging.Title, MediaListPagingState.DefaultTitle, StringComparison.Ordinal) ? "" : paging.Title;
+        }
+
+        /// <summary>
         /// 在已经拿到手的目录里搜索。纯函数:只按标题筛手里的行,不取页、不换来源、不动播放,
         /// 也不改传进来的那份模型。
         /// 分段顺序不变,一段没命中就留一个空段(用户要看得见它还在,只是没有结果);
@@ -777,6 +956,7 @@ namespace BiliLite.Models.Common
                     {
                         Kind = section.Kind,
                         Title = section.Title,
+                        SourceTitle = section.SourceTitle,
                         Rows = rows,
                     });
                 }
@@ -828,6 +1008,10 @@ namespace BiliLite.Models.Common
             switch (kind)
             {
                 case PlayDirectorySectionKind.UgcSeason:
+                    return CountPosition(ordinal, count);
+                case PlayDirectorySectionKind.SeasonEpisodes:
+                case PlayDirectorySectionKind.SeasonPreviews:
+                    // 剧集页只说这一段里的位置:段名在页头和页签上,不重复
                     return CountPosition(ordinal, count);
                 case PlayDirectorySectionKind.Playlist:
                     return OrdinalText(ordinal);
@@ -1018,6 +1202,10 @@ namespace BiliLite.Models.Common
             {
                 case PlayDirectorySectionKind.UgcSeason: return CollectionSectionTitle;
                 case PlayDirectorySectionKind.Playlist: return PlaylistSectionTitle;
+                // 剧集页的段名就是来源本身
+                case PlayDirectorySectionKind.SeasonEpisodes:
+                case PlayDirectorySectionKind.SeasonPreviews:
+                    return SeasonSectionTitle(kind);
                 default: return PartsSectionTitle;
             }
         }
