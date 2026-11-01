@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Globalization;
+using System.Threading.Tasks;
 
 namespace BiliLite.Models.Common
 {
@@ -17,35 +20,98 @@ namespace BiliLite.Models.Common
     /// <summary>
     /// 目录的一行。身份是 Key(分P用 cid,合集/播放列表用 aid),Ordinal 只是展示位置;
     /// 标题重复、翻页追加、封面裁剪都不会改变 Key。
+    /// 行对象跟着抽屉那张列表一起活着:重画只把改动的字段写回原对象,
+    /// 界面按属性通知就地更新,行对象和滚动位置都不用重建。
     /// </summary>
-    public sealed class PlayDirectoryRow
+    public sealed class PlayDirectoryRow : INotifyPropertyChanged
     {
-        public string Key { get; set; }
-        public string Title { get; set; }
-        public string Cover { get; set; }
+        private string m_key;
+        private string m_title;
+        private string m_cover;
+        private string m_subtitle;
+        private string m_positionText;
+        private string m_duration;
+        private int m_ordinal;
+        private bool m_isCurrent;
+        private string m_currentBadge;
+        private bool m_isPending;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public string Key
+        {
+            get { return m_key; }
+            set { Set(ref m_key, value, "Key"); }
+        }
+
+        public string Title
+        {
+            get { return m_title; }
+            set { if (Set(ref m_title, value, "Title")) Raise("AutomationName"); }
+        }
+
+        public string Cover
+        {
+            get { return m_cover; }
+            set { Set(ref m_cover, value, "Cover"); }
+        }
+
         /// <summary>
         /// 次要信息:合集的分区名、UP主
         /// </summary>
-        public string Subtitle { get; set; }
+        public string Subtitle
+        {
+            get { return m_subtitle; }
+            set { Set(ref m_subtitle, value, "Subtitle"); }
+        }
+
         /// <summary>
         /// 位置文字,例如 合集 7/24、第7项
         /// </summary>
-        public string PositionText { get; set; }
-        public string Duration { get; set; }
+        public string PositionText
+        {
+            get { return m_positionText; }
+            set { Set(ref m_positionText, value, "PositionText"); }
+        }
+
+        public string Duration
+        {
+            get { return m_duration; }
+            set { Set(ref m_duration, value, "Duration"); }
+        }
+
         /// <summary>
         /// 1 起的序号,只是展示用
         /// </summary>
-        public int Ordinal { get; set; }
-        public bool IsCurrent { get; set; }
+        public int Ordinal
+        {
+            get { return m_ordinal; }
+            set { Set(ref m_ordinal, value, "Ordinal"); }
+        }
+
+        public bool IsCurrent
+        {
+            get { return m_isCurrent; }
+            set { if (Set(ref m_isCurrent, value, "IsCurrent")) Raise("AutomationName"); }
+        }
+
         /// <summary>
         /// 当前行的文字标记("正在播放"),不是当前行时为空;界面直接按这个字符串显隐
         /// </summary>
-        public string CurrentBadge { get; set; }
+        public string CurrentBadge
+        {
+            get { return m_currentBadge; }
+            set { Set(ref m_currentBadge, value, "CurrentBadge"); }
+        }
 
         /// <summary>
         /// 正在换到这一行。等待的行不是正在播放的行:它只挂转圈,不挂"正在播放"的条和字
         /// </summary>
-        public bool IsPending { get; set; }
+        public bool IsPending
+        {
+            get { return m_isPending; }
+            set { if (Set(ref m_isPending, value, "IsPending")) Raise("AutomationName"); }
+        }
 
         /// <summary>
         /// 读屏读到的这一行:标题,再加上它现在的状态。
@@ -60,6 +126,39 @@ namespace BiliLite.Models.Common
                 if (IsCurrent) return title + " 正在播放";
                 return title;
             }
+        }
+
+        /// <summary>
+        /// 把另一份模型里同一个 Key 的行写到这一行上;Key 是身份,不动。
+        /// 只有真的变了才发通知:一页落下来时整张列表不必逐行重画。
+        /// </summary>
+        internal void CopyFrom(PlayDirectoryRow other)
+        {
+            if (other == null) return;
+            Title = other.Title;
+            Cover = other.Cover;
+            Subtitle = other.Subtitle;
+            PositionText = other.PositionText;
+            Duration = other.Duration;
+            Ordinal = other.Ordinal;
+            IsCurrent = other.IsCurrent;
+            CurrentBadge = other.CurrentBadge;
+            IsPending = other.IsPending;
+        }
+
+        private bool Set<T>(ref T field, T value, string name)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            Raise(name);
+            return true;
+        }
+
+        private void Raise(string name)
+        {
+            var handler = PropertyChanged;
+            if (handler == null) return;
+            handler(this, new PropertyChangedEventArgs(name));
         }
     }
 
@@ -96,6 +195,56 @@ namespace BiliLite.Models.Common
         /// 已经取到头,footer 不留东西
         /// </summary>
         Exhausted = 4,
+    }
+
+    /// <summary>
+    /// 抽屉里"加载全部"的进行状态。Idle 时 footer 照常是加载更多/重试,
+    /// Running 和 Stopping 都在跑:手上这一页还没回来,footer 上只有"取消"。
+    /// </summary>
+    public enum LoadAllState
+    {
+        /// <summary>
+        /// 没在跑
+        /// </summary>
+        Idle = 0,
+        /// <summary>
+        /// 一页接一页地取,直到到头、失败或取消
+        /// </summary>
+        Running = 1,
+        /// <summary>
+        /// 用户已经点了取消:手上这一页走完就停,停完回到 Idle
+        /// </summary>
+        Stopping = 2,
+    }
+
+    /// <summary>
+    /// 抽屉翻页 footer 这一拍该摆什么。两个按钮最多各一个,转圈只在取页时出现:
+    /// 文案就是按钮要做的事,不带任何解释。
+    /// </summary>
+    public struct PlayDirectoryFooter
+    {
+        /// <summary>
+        /// 一次取页在路上,没有可点的动作
+        /// </summary>
+        public bool ShowRing;
+
+        /// <summary>
+        /// 主按钮上的字:加载更多、重试或者取消;空表示不摆
+        /// </summary>
+        public string PrimaryText;
+
+        /// <summary>
+        /// "加载全部";空表示不摆
+        /// </summary>
+        public string SecondaryText;
+
+        public bool HasContent
+        {
+            get
+            {
+                return ShowRing || !string.IsNullOrEmpty(PrimaryText) || !string.IsNullOrEmpty(SecondaryText);
+            }
+        }
     }
 
     /// <summary>
@@ -141,6 +290,17 @@ namespace BiliLite.Models.Common
         /// </summary>
         public string Query { get; set; }
 
+        /// <summary>
+        /// "加载全部"进行到哪一步。footer 据此在加载更多/重试和"取消"之间换,
+        /// 进度不另说一遍:页头的数量就是进度。
+        /// </summary>
+        public LoadAllState LoadAll { get; set; }
+
+        public bool IsLoadingAll
+        {
+            get { return LoadAll != LoadAllState.Idle; }
+        }
+
         public bool IsFiltered
         {
             get { return !string.IsNullOrEmpty(Query); }
@@ -152,6 +312,126 @@ namespace BiliLite.Models.Common
         public bool HasSections
         {
             get { return Sections != null && Sections.Count > 0; }
+        }
+    }
+
+    /// <summary>
+    /// 抽屉里正在显示的行。ListView 的 ItemsSource 一直是这同一个集合:
+    /// 翻页只在末尾追加,已经显示的行对象一个都不换,所以滚动位置保得住,虚拟化也不会被关掉。
+    /// 行集合真的换了(过滤、换段、来源里的行被砍短)才整批替换。
+    /// </summary>
+    public sealed class PlayDirectoryRows : ObservableCollection<PlayDirectoryRow>
+    {
+        /// <summary>
+        /// 换成另一份行。同一个位置上还是同一个 Key 就算没换:只把改动的字段写回原对象,
+        /// 末尾多出来的行追加。行真的变了才整批替换。
+        /// </summary>
+        public void Sync(IList<PlayDirectoryRow> rows)
+        {
+            var next = rows;
+            var nextCount = next == null ? 0 : next.Count;
+            var shared = 0;
+            var limit = Math.Min(Count, nextCount);
+            while (shared < limit && SameKey(this[shared], next[shared])) shared++;
+
+            // 前面的行对不上了:这是一份别的行集合,整批替换
+            if (shared < Count)
+            {
+                Clear();
+                for (var i = 0; i < nextCount; i++)
+                {
+                    if (next[i] != null) Add(next[i]);
+                }
+                return;
+            }
+
+            // 已经显示的行留在原地,只把标记和文字写回去
+            for (var i = 0; i < shared; i++) this[i].CopyFrom(next[i]);
+            // 新取回来的一页接在后面
+            for (var i = shared; i < nextCount; i++)
+            {
+                if (next[i] != null) Add(next[i]);
+            }
+        }
+
+        private static bool SameKey(PlayDirectoryRow left, PlayDirectoryRow right)
+        {
+            if (left == null || right == null) return false;
+            return string.Equals(left.Key ?? "", right.Key ?? "", StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
+    /// 一键把列表剩下的页取完。走的是取页的单飞通道:一页回来才取下一页,任何时刻只有一页在路上。
+    /// 到头、失败或取消就停;取消只让手上这一页走完,已经取回来的行一条都不掉。
+    /// 它只补行:不起播、不换连播来源、不换浏览的分段。
+    /// </summary>
+    public sealed class PlayDirectoryLoadAll
+    {
+        private readonly Func<bool> m_haveMore;
+        private readonly Func<bool> m_busy;
+        private readonly Func<Task<bool>> m_loadPage;
+
+        public PlayDirectoryLoadAll(Func<bool> haveMore, Func<bool> busy, Func<Task<bool>> loadPage)
+        {
+            m_haveMore = haveMore;
+            m_busy = busy;
+            m_loadPage = loadPage;
+        }
+
+        public LoadAllState State { get; private set; }
+
+        public bool IsRunning
+        {
+            get { return State != LoadAllState.Idle; }
+        }
+
+        /// <summary>
+        /// 开始。已经在跑(这时候 footer 上只有"取消")、通道上已经有一页在路上、
+        /// 或者已经没有下一页时都不开始:两个请求永远不叠在一起。
+        /// </summary>
+        public bool TryStart()
+        {
+            if (State != LoadAllState.Idle) return false;
+            if (m_busy()) return false;
+            if (!m_haveMore()) return false;
+            State = LoadAllState.Running;
+            return true;
+        }
+
+        /// <summary>
+        /// 收手:手上这一页走完就停,已经到手的行都留着。没在跑时什么也不做。
+        /// </summary>
+        public void RequestCancel()
+        {
+            if (State == LoadAllState.Running) State = LoadAllState.Stopping;
+        }
+
+        /// <summary>
+        /// 一页一页走到停为止,返回真正取回来的页数。没开始时直接返回 0。
+        /// </summary>
+        public async Task<int> RunAsync()
+        {
+            // 没开始就没什么可走的;已经在上一步取消过一次的话,这里把状态落回 Idle
+            if (State == LoadAllState.Idle) return 0;
+            var pages = 0;
+            try
+            {
+                while (State == LoadAllState.Running)
+                {
+                    // 取一页再看结果:失败就停在原地,footer 换回"重试",这一轮不再自己往下走
+                    if (!await m_loadPage()) break;
+                    pages++;
+                    // 已经取到头:没有下一页了
+                    if (!m_haveMore()) break;
+                }
+            }
+            finally
+            {
+                // 取消也只停在这里:状态回到 Idle,footer 回到加载更多/重试
+                State = LoadAllState.Idle;
+            }
+            return pages;
         }
     }
 
@@ -177,6 +457,10 @@ namespace BiliLite.Models.Common
         public const string CollectionSectionTitle = "合集";
         public const string PlaylistSectionTitle = "播放列表";
         public const string NowPlayingBadge = "正在播放";
+        public const string LoadMoreText = "加载更多";
+        public const string RetryText = "重试";
+        public const string LoadAllText = "加载全部";
+        public const string CancelText = "取消";
 
         /// <summary>
         /// 当前视频的分P。只有一个分P的普通视频没有这一段;互动视频除外。
@@ -476,6 +760,8 @@ namespace BiliLite.Models.Common
                 Paging = model.Paging,
                 PendingKey = model.PendingKey,
                 Query = needle,
+                // 过滤只换行,这一轮"加载全部"还在跑:footer 不能因为搜索一下就把"取消"换掉
+                LoadAll = model.LoadAll,
             };
         }
 
@@ -536,6 +822,44 @@ namespace BiliLite.Models.Common
             if (paging.LastLoadFailed) return PlayDirectoryPagingState.Failed;
             if (paging.IsFirstPage || paging.HasMore) return PlayDirectoryPagingState.More;
             return PlayDirectoryPagingState.Exhausted;
+        }
+
+        /// <summary>
+        /// 抽屉翻页 footer 这一拍摆什么:转圈、一个主按钮、或者主按钮加"加载全部"。
+        /// footer 只属于会产生新行的远程播放列表那一段;平时跟着用户浏览的分段,
+        /// "加载全部"跑着时整份目录都算它,不然用户切个页签就找不到取消。
+        /// </summary>
+        public static PlayDirectoryFooter FooterOf(PlayDirectoryPagingState paging, LoadAllState loadAll,
+            bool hasPlaylistSection, PlayDirectorySectionKind browsed)
+        {
+            var footer = new PlayDirectoryFooter() { PrimaryText = "", SecondaryText = "" };
+            if (!hasPlaylistSection || paging == PlayDirectoryPagingState.None) return footer;
+
+            // 跑着的时候只有一件事可做:取消。进度是页头那个数量,这里不再说一遍
+            if (loadAll != LoadAllState.Idle)
+            {
+                footer.PrimaryText = CancelText;
+                return footer;
+            }
+
+            if (browsed != PlayDirectorySectionKind.Playlist) return footer;
+
+            switch (paging)
+            {
+                case PlayDirectoryPagingState.Loading:
+                    // 一页在路上:只有一个转圈,按钮都收起来
+                    footer.ShowRing = true;
+                    break;
+                case PlayDirectoryPagingState.Failed:
+                    footer.PrimaryText = RetryText;
+                    footer.SecondaryText = LoadAllText;
+                    break;
+                case PlayDirectoryPagingState.More:
+                    footer.PrimaryText = LoadMoreText;
+                    footer.SecondaryText = LoadAllText;
+                    break;
+            }
+            return footer;
         }
 
         /// <summary>

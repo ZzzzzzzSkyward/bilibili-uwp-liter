@@ -118,8 +118,11 @@
     </ListView>
     <!--翻页:只属于远程播放列表那一段,按钮长在它的行下面,全屏/全窗口里也点得到-->
     <StackPanel x:Name="PagingHost" Grid.Row="5" Orientation="Horizontal" Padding="16 6 16 10" Visibility="Collapsed">
-      <Button x:Name="LoadMoreButton" Click="LoadMoreButton_Click" Style="{StaticResource DirectoryActionStyle}" VerticalAlignment="Center">
+      <Button x:Name="LoadMoreButton" Click="LoadMoreButton_Click" Style="{StaticResource DirectoryActionStyle}" VerticalAlignment="Center" Margin="0 0 8 0">
         <TextBlock x:Name="LoadMoreText" Text="加载更多" FontSize="13"/>
+      </Button>
+      <Button x:Name="LoadAllButton" Click="LoadAllButton_Click" Style="{StaticResource DirectoryActionStyle}" VerticalAlignment="Center">
+        <TextBlock x:Name="LoadAllText" Text="加载全部" FontSize="13"/>
       </Button>
       <ProgressRing x:Name="PagingRing" Width="20" Height="20" IsActive="False" Visibility="Collapsed" Margin="4 0 0 0" Foreground="#B3FFFFFF" VerticalAlignment="Center" AutomationProperties.Name="正在加载"/>
     </StackPanel>

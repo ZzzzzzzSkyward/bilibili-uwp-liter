@@ -65,6 +65,8 @@ namespace BiliLite.Pages
             player.DirectoryRowRequested += player_DirectoryRowRequested;
             player.DirectorySourceRequested += player_DirectorySourceRequested;
             player.DirectoryLoadMoreRequested += player_DirectoryLoadMoreRequested;
+            player.DirectoryLoadAllRequested += player_DirectoryLoadAllRequested;
+            player.DirectoryCancelLoadAllRequested += player_DirectoryCancelLoadAllRequested;
             NavigationCacheMode = NavigationCacheMode.Enabled;
             videoDetailVM = new VideoDetailVM();
             this.DataContext = videoDetailVM;
@@ -150,6 +152,8 @@ namespace BiliLite.Pages
             _isClosed = true;
             // 等待态、断在取页上的那一步和身份一起作废:晚到的结果一张票都对不上
             transition.Close();
+            // "加载全部"也收手:手上这一页走完就停,晚到的行不再碰拆掉的页面
+            if (loadAll != null) loadAll.RequestCancel();
             // 详情请求可能还在路上,下一次进入本页(页面是缓存的同一实例)要能重新取
             flag = false;
             UnsubscribeClosedPage();
@@ -188,6 +192,8 @@ namespace BiliLite.Pages
         MediaListPagingState mediaListState;
         // 取页的单飞通道:footer、抽屉和连播边界都走它,同一个在途请求不会取两次
         MediaListPageLoader mediaListLoader;
+        // "加载全部":同一条单飞通道上一次一页,失败/到头/取消就停。它只补行
+        PlayDirectoryLoadAll loadAll;
         ObservableCollection<VideoPlaylistItem> mediaListRows;
         ListView mediaListListView;
         TextBlock mediaListCountText;
@@ -294,6 +300,8 @@ namespace BiliLite.Pages
             if (flag) return false;
             // 用户开了另一条视频:断在取页上的那一步不再作数
             transition.DropAdvance();
+            // 换了播放目标:后台把列表取完这件事让给它,手上这一页走完就停
+            if (loadAll != null) loadAll.RequestCancel();
             _id = id;
             flag = true;
             // 这一拍的身份:视频、播放列表和代数。结果回来时三项都得还是发起时的那一份
@@ -591,6 +599,8 @@ namespace BiliLite.Pages
         /// </summary>
         private async Task InitializeMediaListPlaylist()
         {
+            // 换了一份播放列表:上一轮的"加载全部"取的已经不是这一份,手上这页走完就停
+            if (loadAll != null) loadAll.RequestCancel();
             // 启动器链接已经取过首页,直接复用同一份状态;内存里传来的链接自己建一份
             mediaListState = playlist.MediaListState ?? new MediaListPagingState(playlist.MediaListId, playlist.MediaListType, MediaListSourceKind.MediaList, playlist.Title);
             playlist.MediaListState = mediaListState;
@@ -600,6 +610,12 @@ namespace BiliLite.Pages
             playlist.MediaListType = mediaListState.MediaListType;
             // footer、抽屉和连播边界都从这一条通道取页:同一个在途请求只取一次
             mediaListLoader = new MediaListPageLoader(mediaListState, FetchMediaListPageAsync);
+            // "加载全部"绑在这一份状态上:换了一份播放列表,上一轮取的就是别人的页
+            var loadAllState = mediaListState;
+            loadAll = new PlayDirectoryLoadAll(
+                () => HaveMoreMediaListPages(loadAllState),
+                () => loadAllState.IsLoading,
+                () => LoadAllOneMediaListPageAsync(loadAllState));
             mediaListRows = new ObservableCollection<VideoPlaylistItem>();
             AppendMediaListRows();
             playlist.Playlist = mediaListRows;
@@ -696,12 +712,73 @@ namespace BiliLite.Pages
         }
 
         /// <summary>
+        /// 抽屉里的"加载全部":一页一页把剩下的取完,行一页一页出现在已经开着的抽屉里。
+        /// 跑着的时候它自己就是这条通道唯一的使用者,再点一次被忽略(footer 上那时只有"取消")。
+        /// </summary>
+        private async void player_DirectoryLoadAllRequested(object sender, EventArgs e)
+        {
+            var runner = loadAll;
+            if (runner == null || _isClosed) return;
+
+            if (!runner.TryStart())
+            {
+                // 已经在跑、通道上还有一页、或者已经到头:这一次什么也不做
+                RedrawOpenDirectory();
+                return;
+            }
+
+            // footer 换成"取消",详情列那个按钮先让路
+            RefreshMediaListChrome();
+            RedrawOpenDirectory();
+            await runner.RunAsync();
+            // 页签已关:行留在状态里,不再碰拆掉的页面
+            if (_isClosed) return;
+            // 停下来了(到头、失败或取消):footer 回到加载更多/重试,数量是最后取到的那个
+            RefreshMediaListChrome();
+            RedrawOpenDirectory();
+        }
+
+        /// <summary>
+        /// 抽屉里在"加载全部"跑着时点了"取消":手上这一页走完就停,已经取回来的行都留着。
+        /// </summary>
+        private void player_DirectoryCancelLoadAllRequested(object sender, EventArgs e)
+        {
+            if (loadAll == null) return;
+            loadAll.RequestCancel();
+        }
+
+        /// <summary>
+        /// "加载全部"取一页。走的是同一条单飞通道,一页回来才进来第二次:
+        /// 任何时刻只有一页在路上。换了一份播放列表或页签关掉时立刻收手,不碰别人的状态。
+        /// </summary>
+        private async Task<bool> LoadAllOneMediaListPageAsync(MediaListPagingState state)
+        {
+            if (_isClosed || !ReferenceEquals(mediaListState, state)) return false;
+            var landed = await LoadMediaListPage();
+            if (_isClosed || !ReferenceEquals(mediaListState, state)) return false;
+            // 新行进了抽屉,页头的数量也是进度;"有没有下一页"跟着这一页变
+            RefreshSequenceState();
+            return landed;
+        }
+
+        /// <summary>
+        /// 还有页可取:还有下一页,或者上一次取失败了(重试入口)。
+        /// </summary>
+        private static bool HaveMoreMediaListPages(MediaListPagingState state)
+        {
+            var paging = PlayDirectoryBuilder.PagingOf(state);
+            return paging == PlayDirectoryPagingState.More || paging == PlayDirectoryPagingState.Failed;
+        }
+
+        /// <summary>
         /// 用户点"加载更多"/"重试"的唯一入口。footer 和抽屉共用:同一份状态、同一条单飞通道。
         /// </summary>
         private async Task RequestMediaListPageAsync()
         {
             // 页签已关:按钮不再取页
             if (_isClosed || mediaListState == null) return;
+            // "加载全部"跑着时由它一个人用这条通道:手动取页让路,两个请求不叠在一起
+            if (loadAll != null && loadAll.IsRunning) return;
             // 失败后按钮就是重试入口,不受 HasMore 限制
             if (!mediaListState.HasMore && !mediaListState.LastLoadFailed) return;
 
@@ -774,7 +851,9 @@ namespace BiliLite.Pages
             {
                 var state = PlayDirectoryBuilder.PagingOf(mediaListState);
                 var actionable = state == PlayDirectoryPagingState.More || state == PlayDirectoryPagingState.Failed;
-                mediaListLoadMoreButton.IsEnabled = actionable;
+                // "加载全部"跑着时这条通道归它一个人用:这个按钮点了也只会让路
+                var running = loadAll != null && loadAll.IsRunning;
+                mediaListLoadMoreButton.IsEnabled = actionable && !running;
                 mediaListLoadMoreButton.Visibility = actionable ? Visibility.Visible : Visibility.Collapsed;
                 mediaListLoadMoreButton.Content = state == PlayDirectoryPagingState.Failed ? "重试" : "加载更多";
             }
@@ -1293,6 +1372,8 @@ namespace BiliLite.Pages
         private bool BeginTransition(string targetTitle, string pendingKey)
         {
             if (!transition.Begin(targetTitle, pendingKey)) return false;
+            // 有更新的一拍要走:在后台把列表取完这件事让路,手上这一页走完就停
+            if (loadAll != null) loadAll.RequestCancel();
             player.ShowTransitionPending(targetTitle);
             RedrawOpenDirectory();
             return true;
@@ -1860,6 +1941,8 @@ namespace BiliLite.Pages
             var model = PlayDirectoryBuilder.Combine(parts, collection, queue, sequence.Position.Source);
             // 正在换到的那一行挂转圈;它还不是正在播放的行,两条标记分开
             PlayDirectoryBuilder.ApplyPending(model, transition.PendingKey);
+            // "加载全部"跑到哪一步:footer 据此在加载更多/重试和"取消"之间换
+            model.LoadAll = loadAll == null ? LoadAllState.Idle : loadAll.State;
             // 新开目录才让浏览的分段回到连播来源;重画留着用户正在看的那一段
             model.IsFreshOpen = freshOpen;
             return model;
@@ -1902,10 +1985,13 @@ namespace BiliLite.Pages
             // 等待的那一行换了也要重画,才能把转圈挂到新的目标上
             var paging = (int)PlayDirectoryBuilder.PagingOf(mediaListState);
             var sections = videoDetailVM?.VideoInfo?.UgcSeason?.Sections;
+            // "加载全部"开始和停下来都要重画 footer,这一项跟着变
+            var loadAllState = loadAll == null ? (int)LoadAllState.Idle : (int)loadAll.State;
             return (int)position.Source
                 + "|" + position.RowCount
                 + "|" + loaded
                 + "|" + paging
+                + "|" + loadAllState
                 + "|" + (sections == null ? 0 : sections.Count)
                 + "|" + (transition.PendingKey ?? "");
         }

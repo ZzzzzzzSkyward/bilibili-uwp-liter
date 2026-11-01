@@ -383,7 +383,8 @@ namespace Ux1dProbe
                 "source: a tab's accessible name is its title plus the continuation state");
             Check(control.Contains("AutomationProperties.SetAccessibilityView(dot, AccessibilityView.Raw);"),
                 "source: the continuation dot is not read twice");
-            Check(control.Contains("AutomationProperties.SetName(LoadMoreButton, text);"),
+            Check(control.Contains("AutomationProperties.SetName(LoadMoreButton, footer.PrimaryText);")
+                && control.Contains("AutomationProperties.SetName(LoadAllButton, footer.SecondaryText);"),
                 "source: the footer's accessible name is the label it shows");
             Check(Body(control, "private void Activate(PlayDirectoryRow row)")
                     .Contains("RowActivated"),

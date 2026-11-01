@@ -350,8 +350,8 @@ namespace Ux1cProbe
                 "source: the page holds one paging channel");
             Check(CountOf(page, "mediaListLoader.LoadAsync()") == 1,
                 "source: only LoadMediaListPage awaits the channel");
-            Check(page.Contains("var request = LoadMediaListPage();") && CountOf(page, "await LoadMediaListPage()") == 2,
-                "source: the first page, the boundary and the user's action all use that one channel");
+            Check(page.Contains("var request = LoadMediaListPage();") && CountOf(page, "await LoadMediaListPage()") == 3,
+                "source: the first page, the boundary, the user's action and the load-all step all use that one channel");
             Check(CountOf(page, "private async void MediaListLoadMore_Click") == 1
                 && CountOf(page, "private async Task RequestMediaListPageAsync") == 1
                 && CountOf(page, "private async Task<bool> LoadMediaListPage") == 1,
@@ -398,26 +398,28 @@ namespace Ux1cProbe
                 "source: full screen and full window collapse the detail column");
 
             var footerMarkup = Between(xaml, "x:Name=\"PagingHost\"", "</StackPanel>");
-            Check(CountOf(footerMarkup, "<TextBlock") == 1 && CountOf(footerMarkup, "<ProgressRing") == 1,
-                "source: the footer is one label and one ring, nothing else");
+            Check(CountOf(footerMarkup, "<TextBlock") == 2 && CountOf(footerMarkup, "<ProgressRing") == 1,
+                "source: the footer is two labels (the paging one and 加载全部) and one ring, nothing else");
             Check(!footerMarkup.Contains("（") && !footerMarkup.Contains("·") && !footerMarkup.Contains("："),
                 "source: the footer copy carries no explanatory suffix");
 
-            Check(control.Contains("state == PlayDirectoryPagingState.Failed ? \"重试\" : \"加载更多\""),
+            var directoryModel = ReadSource("src/BiliLite.UWP/Models/PlayDirectory.cs");
+            Check(directoryModel.Contains("footer.PrimaryText = RetryText;")
+                && directoryModel.Contains("footer.PrimaryText = LoadMoreText;"),
                 "source: the failed state reads 重试, the more state reads 加载更多");
             Check(xaml.Contains("Text=\"加载更多\""),
                 "source: the more state's label is exactly 加载更多");
             Check(!control.Contains("加载更多（") && !control.Contains("重试（") && !control.Contains("·"),
                 "source: the paging labels do not explain themselves");
-            Check(control.Contains("PagingRing.IsActive = owned && loading;"),
+            Check(control.Contains("PagingRing.IsActive = footer.ShowRing;"),
                 "source: the ring only spins while a request is actually running");
-            Check(control.Contains("state != PlayDirectoryPagingState.None")
-                && control.Contains("m_activeKind == PlayDirectorySectionKind.Playlist"),
+            Check(directoryModel.Contains("if (!hasPlaylistSection || paging == PlayDirectoryPagingState.None) return footer;")
+                && directoryModel.Contains("if (browsed != PlayDirectorySectionKind.Playlist) return footer;"),
                 "source: only a remote playlist section exposes the footer");
             Check(!control.Contains("MediaListService") && !control.Contains("GetMediaList")
                 && !control.Contains("LoadMoreMediaList"),
                 "source: the drawer never fetches the page it asks for");
-            Check(control.Contains("AutomationProperties.SetName(LoadMoreButton, text);"),
+            Check(control.Contains("AutomationProperties.SetName(LoadMoreButton, footer.PrimaryText);"),
                 "source: the footer button's accessible name is the label it shows");
         }
 

@@ -576,7 +576,9 @@ namespace Ux1bProbe
 
             Check(CountOf(xaml, "<DataTemplate>") == 1,
                 "source: the drawer declares exactly one row template");
-            Check(control.Contains("RowList.ItemsSource = section.Rows;"),
+            Check(control.Contains("var rows = RowsOf(section.Kind);")
+                && control.Contains("if (!ReferenceEquals(RowList.ItemsSource, rows)) RowList.ItemsSource = rows;")
+                && control.Contains("rows.Sync(section == null ? null : section.Rows);"),
                 "source: every section renders through that one list and template");
             Check(xaml.Contains("x:Name=\"TabHost\"") && control.Contains("BuildTabs(m_model)"),
                 "source: scope tabs are generated from the sections that exist");
@@ -592,8 +594,9 @@ namespace Ux1bProbe
                 && xaml.Contains("按播放列表连播"),
                 "source: the drawer offers the explicit continuation-source actions");
             Check(control.Contains("public void LocateCurrent()")
-                && control.Contains("ScrollIntoView(row, ScrollIntoViewAlignment.Leading)"),
-                "source: 定位正在播放 scrolls the current row into view");
+                && control.Contains("ScrollIntoView(live, ScrollIntoViewAlignment.Leading)")
+                && control.Contains("var live = LiveRow(row);"),
+                "source: 定位正在播放 scrolls the current row into view, using the row object the list holds");
             Check(!control.Contains("private PlayDirectoryRow CurrentRow()"),
                 "source: the control no longer takes the first IsCurrent row across all sections");
             Check(control.Contains("PlayDirectoryBuilder.LocateSection(m_model, m_activeKind)")

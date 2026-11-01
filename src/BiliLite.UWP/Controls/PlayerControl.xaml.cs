@@ -220,6 +220,16 @@ namespace BiliLite.Controls
         public event EventHandler DirectoryLoadMoreRequested;
 
         /// <summary>
+        /// 目录里点了"加载全部"。一页一页取完由页面执行,播放器只转发。
+        /// </summary>
+        public event EventHandler DirectoryLoadAllRequested;
+
+        /// <summary>
+        /// 目录里在"加载全部"跑着时点了"取消"
+        /// </summary>
+        public event EventHandler DirectoryCancelLoadAllRequested;
+
+        /// <summary>
         /// 切换剧集事件
         /// </summary>
 
@@ -2998,6 +3008,16 @@ namespace BiliLite.Controls
         private void DirectoryDrawer_LoadMoreRequested(object sender, EventArgs e)
         {
             DirectoryLoadMoreRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_LoadAllRequested(object sender, EventArgs e)
+        {
+            DirectoryLoadAllRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_CancelLoadAllRequested(object sender, EventArgs e)
+        {
+            DirectoryCancelLoadAllRequested?.Invoke(this, e);
         }
 
         private void DirectoryDrawer_CloseRequested(object sender, EventArgs e)

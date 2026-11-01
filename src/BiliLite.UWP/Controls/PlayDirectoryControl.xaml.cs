@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using Windows.System;
 using Windows.UI;
@@ -23,6 +24,9 @@ namespace BiliLite.Controls
         private PlayDirectorySectionKind m_activeKind;
         private bool m_scopeSet;
         private string m_query = "";
+        // 每一段自己的行集合:同一段反复重画都用同一个实例,ListView 的 ItemsSource 不换
+        private readonly Dictionary<PlayDirectorySectionKind, PlayDirectoryRows> m_rows =
+            new Dictionary<PlayDirectorySectionKind, PlayDirectoryRows>();
 
         public PlayDirectoryControl()
         {
@@ -48,6 +52,17 @@ namespace BiliLite.Controls
         /// 用户点了"加载更多"/"重试"。取页由宿主执行,抽屉自己不发请求。
         /// </summary>
         public event EventHandler LoadMoreRequested;
+
+        /// <summary>
+        /// 用户点了"加载全部"。一页一页取完由宿主执行;抽屉只喊这一声,
+        /// 它连这一轮跑到第几页都不知道,进度就是模型里的数量。
+        /// </summary>
+        public event EventHandler LoadAllRequested;
+
+        /// <summary>
+        /// 用户在"加载全部"跑着时点了"取消"
+        /// </summary>
+        public event EventHandler CancelLoadAllRequested;
 
         public event EventHandler CloseRequested;
 
@@ -140,8 +155,25 @@ namespace BiliLite.Controls
             var row = PlayDirectoryBuilder.CurrentRowOf(m_model, kind);
             if (row == null) return;
             if (kind != m_activeKind) SelectScope(kind, true);
-            RowList.SelectedItem = row;
-            RowList.ScrollIntoView(row, ScrollIntoViewAlignment.Leading);
+            // 集合里的那一行才是 ListView 认识的:重画只把字段写回原对象,行对象一直是集合里这些
+            var live = LiveRow(row);
+            RowList.SelectedItem = live;
+            RowList.ScrollIntoView(live, ScrollIntoViewAlignment.Leading);
+        }
+
+        /// <summary>
+        /// 按 Key 找到集合里那一行。重画之后模型里的是新对象,集合里还是原来那些,
+        /// 直接拿模型里的行去选是选不中的。
+        /// </summary>
+        private PlayDirectoryRow LiveRow(PlayDirectoryRow row)
+        {
+            var rows = RowList.ItemsSource as PlayDirectoryRows;
+            if (row == null || rows == null) return row;
+            foreach (var candidate in rows)
+            {
+                if (candidate != null && string.Equals(candidate.Key, row.Key, StringComparison.Ordinal)) return candidate;
+            }
+            return row;
         }
 
         /// <summary>
@@ -211,27 +243,29 @@ namespace BiliLite.Controls
 
         /// <summary>
         /// 翻页 footer:只属于远程播放列表那一段,按钮长在它的行下面。
-        /// 已到头和固定内存队列都不留空块;加载中只有转圈,同一件事不再用字说一遍。
+        /// 摆什么由模型算:已到头和固定内存队列都不留空块;加载中只有转圈,
+        /// "加载全部"跑着时只剩"取消"——同一件事不再用字说一遍。
         /// </summary>
         private void UpdatePaging(PlayDirectoryModel model)
         {
-            var state = model == null ? PlayDirectoryPagingState.None : model.Paging;
-            // 该不该摆:这页真的能翻,而且用户正看着会产生新行的那一段
-            var owned = state != PlayDirectoryPagingState.None
-                && m_activeKind == PlayDirectorySectionKind.Playlist
-                && SectionOf(PlayDirectorySectionKind.Playlist) != null;
-            var loading = state == PlayDirectoryPagingState.Loading;
-            var actionable = state == PlayDirectoryPagingState.More || state == PlayDirectoryPagingState.Failed;
+            var footer = PlayDirectoryBuilder.FooterOf(
+                model == null ? PlayDirectoryPagingState.None : model.Paging,
+                model == null ? LoadAllState.Idle : model.LoadAll,
+                SectionOf(PlayDirectorySectionKind.Playlist) != null,
+                m_activeKind);
 
-            PagingHost.Visibility = owned && (actionable || loading) ? Visibility.Visible : Visibility.Collapsed;
-            PagingRing.Visibility = owned && loading ? Visibility.Visible : Visibility.Collapsed;
-            PagingRing.IsActive = owned && loading;
-            LoadMoreButton.Visibility = owned && actionable ? Visibility.Visible : Visibility.Collapsed;
+            PagingHost.Visibility = footer.HasContent ? Visibility.Visible : Visibility.Collapsed;
+            PagingRing.Visibility = footer.ShowRing ? Visibility.Visible : Visibility.Collapsed;
+            PagingRing.IsActive = footer.ShowRing;
 
-            var text = state == PlayDirectoryPagingState.Failed ? "重试" : "加载更多";
-            LoadMoreText.Text = text;
-            // 按钮上的字就是它做的事,读屏读同一句
-            AutomationProperties.SetName(LoadMoreButton, text);
+            LoadMoreButton.Visibility = string.IsNullOrEmpty(footer.PrimaryText) ? Visibility.Collapsed : Visibility.Visible;
+            LoadMoreText.Text = footer.PrimaryText;
+            // 按钮上的字就是它要做的事,读屏读同一句
+            AutomationProperties.SetName(LoadMoreButton, footer.PrimaryText);
+
+            LoadAllButton.Visibility = string.IsNullOrEmpty(footer.SecondaryText) ? Visibility.Collapsed : Visibility.Visible;
+            LoadAllText.Text = footer.SecondaryText;
+            AutomationProperties.SetName(LoadAllButton, footer.SecondaryText);
         }
 
         private void UpdateSourceActions(PlayDirectoryModel model)
@@ -254,10 +288,30 @@ namespace BiliLite.Controls
             if (section == null) return;
             m_activeKind = section.Kind;
             m_scopeSet = true;
-            RowList.ItemsSource = section.Rows;
+            // 同一段的行集合一直是同一个实例:实例没换就不碰 ItemsSource,
+            // 列表的滚动位置和虚拟化都留着,翻页只是往同一个集合里追加
+            var rows = RowsOf(section.Kind);
+            if (!ReferenceEquals(RowList.ItemsSource, rows)) RowList.ItemsSource = rows;
             UpdateTabStyles();
             UpdatePaging(m_model);
             if (notify) ScopeChanged?.Invoke(this, new PlayDirectorySourceEventArgs(section.Kind));
+        }
+
+        /// <summary>
+        /// 一段的行集合。同一段一直是同一个实例:翻页只往后追加,
+        /// 已经显示的行对象和列表的滚动位置都留着,ListView 的虚拟化也不会被关掉。
+        /// </summary>
+        private PlayDirectoryRows RowsOf(PlayDirectorySectionKind kind)
+        {
+            PlayDirectoryRows rows;
+            if (!m_rows.TryGetValue(kind, out rows))
+            {
+                rows = new PlayDirectoryRows();
+                m_rows[kind] = rows;
+            }
+            var section = SectionOf(kind);
+            rows.Sync(section == null ? null : section.Rows);
+            return rows;
         }
 
         private void UpdateTabStyles()
@@ -362,7 +416,14 @@ namespace BiliLite.Controls
 
         private void LoadMoreButton_Click(object sender, RoutedEventArgs e)
         {
-            var handler = LoadMoreRequested;
+            // 一个按钮两种身份:跑着时它是"取消",其余时候是取一页
+            var handler = m_model != null && m_model.IsLoadingAll ? CancelLoadAllRequested : LoadMoreRequested;
+            if (handler != null) handler(this, EventArgs.Empty);
+        }
+
+        private void LoadAllButton_Click(object sender, RoutedEventArgs e)
+        {
+            var handler = LoadAllRequested;
             if (handler != null) handler(this, EventArgs.Empty);
         }
 

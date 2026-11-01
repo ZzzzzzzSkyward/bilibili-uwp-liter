@@ -781,7 +781,7 @@
         <Button x:Name="BtnFoucs" Width="0" Height="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="-8 -8 0 0" Background="Transparent" BorderThickness="0"/>
         <!--播放目录:播放器内部的全高抽屉。只盖住视频,不碰播放、全屏、铺满和设置面板-->
         <Grid x:Name="DirectoryHost" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="380" BorderBrush="#33FFFFFF" BorderThickness="1 0 0 0">
-          <local:PlayDirectoryControl x:Name="DirectoryDrawer" RowActivated="DirectoryDrawer_RowActivated" ContinuationSourceRequested="DirectoryDrawer_ContinuationSourceRequested" LoadMoreRequested="DirectoryDrawer_LoadMoreRequested" CloseRequested="DirectoryDrawer_CloseRequested"/>
+          <local:PlayDirectoryControl x:Name="DirectoryDrawer" RowActivated="DirectoryDrawer_RowActivated" ContinuationSourceRequested="DirectoryDrawer_ContinuationSourceRequested" LoadMoreRequested="DirectoryDrawer_LoadMoreRequested" LoadAllRequested="DirectoryDrawer_LoadAllRequested" CancelLoadAllRequested="DirectoryDrawer_CancelLoadAllRequested" CloseRequested="DirectoryDrawer_CloseRequested"/>
         </Grid>
       </Grid>
     </SplitView>
