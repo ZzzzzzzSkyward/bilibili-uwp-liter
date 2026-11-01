@@ -356,15 +356,19 @@ foreach ($name in @('BiliLite.Packages', 'BiliLite.UWP')) {
     if (Test-Path -LiteralPath $expected) { $packages += $expected }
 }
 $packages = @($packages | Select-Object -Unique)
-if ($packages) {
-    Write-Host ''
-    Write-Host '生成产物：'
-    # 交付包排第一位，UWP 包只是副产物，排在后面
-    $packages | Sort-Object { -not ($_ -match 'BiliLite\.Packages_') } | ForEach-Object { Write-Host "  $_" }
-}
-else {
+if (-not $packages) {
     throw "生成成功，但在 $OutputDir 里没有找到任何 MSIX（版本 $builtVersion）。不要交付空结果。"
 }
+# 只公布 BiliLite.Packages 包：BiliLite.UWP 包缺 entrypoint/，装上去停在启动图就闪退，
+# 它一旦出现在"生成产物"里就会被人当成可安装的交付包（bug_report BR-41 就是这么装错的）。
+$deliverables = @($packages | Where-Object { $_ -match 'BiliLite\.Packages_.*\.msix$' })
+if (-not $deliverables) {
+    throw "找到的 MSIX 里没有 BiliLite.Packages_*.msix（$($packages -join '; ')），自检过的完整包不存在，不要交付。"
+}
+$byproducts = @($packages | Where-Object { $_ -match 'BiliLite\.UWP_.*\.msix$' })
+Write-Host ''
+Write-Host '生成产物：'
+$deliverables | ForEach-Object { Write-Host "  $_" }
 
 # ---------- 打包布局校验 ----------
 # 1.0.9.12 把 4MB 的托管主程序放在包根、且没有 entrypoint/，装上去就停在启动图闪退；
@@ -402,10 +406,7 @@ function Test-FullPackageLayout {
     return $null
 }
 
-$fullPackage = $packages | Where-Object { $_ -match 'BiliLite\.Packages_.*\.msix$' } | Select-Object -First 1
-if (-not $fullPackage) {
-    throw "找到的 MSIX 里没有 BiliLite.Packages_*.msix（$($packages -join '; ')），自检过的完整包不存在，不要交付。"
-}
+$fullPackage = $deliverables | Select-Object -First 1
 $problem = Test-FullPackageLayout -Path $fullPackage
 if ($problem) {
     throw "完整包布局不对（$problem）：$fullPackage。"
@@ -413,4 +414,24 @@ if ($problem) {
 
 Write-Host ''
 Write-Host "交付包：$fullPackage"
-Write-Host 'BiliLite.UWP 包是同一构建的副产物，不能单独安装。'
+
+# ---------- 清理副产物 ----------
+# BiliLite.UWP_*.msix 能编出来却装不上（包里没有 entrypoint/），留在 Z:\ 只会继续被误装。
+# 完整包已通过布局校验、路径也已打印，此时删掉副产物不影响任何交付信息。
+# 只处理 BiliLite.UWP_*_x64_Test 这个约定目录，绝不碰 BiliLite.Packages_* 目录和它的 .appxsym/.cer/Dependencies。
+foreach ($byproduct in $byproducts) {
+    if (-not (Test-Path -LiteralPath $byproduct)) { continue }
+    $folder = Split-Path -Parent $byproduct
+    $folderName = Split-Path -Leaf $folder
+    if ($folderName -notmatch '^BiliLite\.UWP_.*_x64_Test$') { continue }
+    Remove-Item -LiteralPath $byproduct -Force
+    # 目录里除 .appxsym/.cer/脚本/依赖目录外已无 MSIX 可当负载，就整目录收掉
+    $left = @(Get-ChildItem -LiteralPath $folder -Filter '*.msix' -File -ErrorAction SilentlyContinue)
+    if ($left.Count -eq 0) {
+        Remove-Item -LiteralPath $folder -Recurse -Force
+        Write-Host "已清理副产物：$(Split-Path -Leaf $byproduct)（目录 $folderName 一并删除）"
+    }
+    else {
+        Write-Host "已清理副产物：$(Split-Path -Leaf $byproduct)"
+    }
+}

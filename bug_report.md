@@ -49,6 +49,19 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 需要的修复：读 cookie 时按同一条 origin 列表查（首次非空为准），写 cookie 落到根域与 www；origin 列表与 `Account` 共用一份，不再各写一套。
 
+## BR-41 — 构建产物把不能装的那个包留在同一个目录，装错就一启动就闪退（维护者 2026-11-01）
+
+`build-release-x64.ps1` 一次全量打包会产出两个 MSIX：可安装的 `Z:\BiliLite.Packages_<版本>_x64_Test\` 和它旁边的
+`Z:\BiliLite.UWP_<版本>_x64_Test\`。后者是副产物：根目录是 4.5 MB 的托管主程序、没有 `entrypoint\BiliLiter.exe`，装上之后一启动就闪退。
+维护者安装 1.0.9.26 时选中的就是这个副产物，应用一启动即 `0xe0434352` 退出，日志里连一行都没有。
+
+证据：安装目录 `C:\Program Files\WindowsApps\BilibiliUWPLiter_1.0.9.26_x64__wskk75rcr36e6\BiliLiter.exe` 的 SHA-256 前 16 位
+`bb9a699166dbe34a`，与 `Z:\BiliLite.UWP_1.0.9.26_x64_Test\BiliLite.UWP_1.0.9.26_x64.msix` 里的 `BiliLiter.exe` 一致，
+而可安装包里该文件是 8192 字节的启动器（`0d12e88368a55bb8`），`entrypoint/BiliLiter.exe` 才是 `bb9a699166dbe34a`。整个安装目录没有 `entrypoint\`。
+
+需要的修复：全量打包在交付包布局校验通过之后删掉副产物的 MSIX（连同只剩下它的 `_Test` 目录），`Z:\` 上不再并排留一个装上去会闪退的同名包；
+历史遗留的副产物目录一并清掉。
+
 ## Notes
 
 - Install a `BiliLite.Packages_*` MSIX (root launcher ≈ 8 KB plus `entrypoint/BiliLiter.exe`). A
