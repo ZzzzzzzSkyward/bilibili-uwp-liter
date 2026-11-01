@@ -15,6 +15,7 @@ namespace BiliLite.Controls
     {
         private PlayDirectoryModel m_model;
         private PlayDirectorySectionKind m_activeKind;
+        private bool m_scopeSet;
 
         public PlayDirectoryControl()
         {
@@ -45,17 +46,20 @@ namespace BiliLite.Controls
 
         /// <summary>
         /// 换一份目录。分段顺序由模型决定,页签只为有内容的分段生成。
+        /// 重画时留着用户正在浏览的分段:换集、自动连播都不该把人从别的页签拽走;
+        /// 只有新开目录或那一段没了才回到连播来源。
         /// </summary>
         public void SetModel(PlayDirectoryModel model)
         {
+            var resetScope = model != null && model.IsFreshOpen || !m_scopeSet;
+            var browsed = resetScope ? (PlayDirectorySectionKind?)null : m_activeKind;
             m_model = model;
             HeaderText.Text = model == null ? "" : model.HeaderText ?? "";
             SourceTitleText.Text = model == null ? "" : model.SourceTitle ?? "";
             PositionText.Text = ComposePosition(model);
 
             BuildTabs(model);
-            var active = model == null ? PlayDirectorySectionKind.Parts : model.ActiveKind;
-            SelectScope(SectionOf(active) == null ? FirstKind(model) : active, false);
+            SelectScope(PlayDirectoryBuilder.ResolveBrowsedSection(model, browsed), false);
             UpdateSourceActions(model);
         }
 
@@ -68,13 +72,14 @@ namespace BiliLite.Controls
         }
 
         /// <summary>
-        /// 把正在播放的一行滚进视野;当前行不在浏览的分段里时先切回它所在的分段
+        /// 把正在播放的一行滚进视野。先找用户正在浏览的分段,这一段没有当前行才退到连播来源;
+        /// 排在前面的分段(分P)不会因为也有当前行就把浏览位置抢走。
         /// </summary>
         public void LocateCurrent()
         {
-            var row = CurrentRow();
+            var kind = PlayDirectoryBuilder.LocateSection(m_model, m_activeKind);
+            var row = PlayDirectoryBuilder.CurrentRowOf(m_model, kind);
             if (row == null) return;
-            var kind = KindOf(row);
             if (kind != m_activeKind) SelectScope(kind, true);
             RowList.SelectedItem = row;
             RowList.ScrollIntoView(row, ScrollIntoViewAlignment.Leading);
@@ -126,6 +131,7 @@ namespace BiliLite.Controls
             var section = SectionOf(kind);
             if (section == null) return;
             m_activeKind = section.Kind;
+            m_scopeSet = true;
             RowList.ItemsSource = section.Rows;
             UpdateTabStyles();
             if (notify) ScopeChanged?.Invoke(this, new PlayDirectorySourceEventArgs(section.Kind));
@@ -142,18 +148,6 @@ namespace BiliLite.Controls
             }
         }
 
-        private PlayDirectorySectionKind FirstKind(PlayDirectoryModel model)
-        {
-            if (model != null && model.Sections != null)
-            {
-                foreach (var section in model.Sections)
-                {
-                    if (section != null) return section.Kind;
-                }
-            }
-            return PlayDirectorySectionKind.Parts;
-        }
-
         private PlayDirectorySection SectionOf(PlayDirectorySectionKind kind)
         {
             if (m_model == null || m_model.Sections == null) return null;
@@ -162,34 +156,6 @@ namespace BiliLite.Controls
                 if (section != null && section.Kind == kind) return section;
             }
             return null;
-        }
-
-        private PlayDirectoryRow CurrentRow()
-        {
-            if (m_model == null || string.IsNullOrEmpty(m_model.CurrentKey)) return null;
-            foreach (var section in m_model.Sections)
-            {
-                if (section == null || section.Rows == null) continue;
-                foreach (var row in section.Rows)
-                {
-                    if (row != null && row.IsCurrent) return row;
-                }
-            }
-            return null;
-        }
-
-        private PlayDirectorySectionKind KindOf(PlayDirectoryRow row)
-        {
-            if (m_model == null || m_model.Sections == null) return m_activeKind;
-            foreach (var section in m_model.Sections)
-            {
-                if (section == null || section.Rows == null) continue;
-                foreach (var candidate in section.Rows)
-                {
-                    if (ReferenceEquals(candidate, row)) return section.Kind;
-                }
-            }
-            return m_activeKind;
         }
 
         private void Activate(PlayDirectoryRow row)

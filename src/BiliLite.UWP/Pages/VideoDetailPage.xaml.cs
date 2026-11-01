@@ -1315,7 +1315,8 @@ namespace BiliLite.Pages
             // 页签已关或详情还在路上:这一拍不打开任何东西
             if (_isClosed || flag) return;
             if (RightInfo.Width.Value > 0 && SelectDetailDirectory()) return;
-            player.ShowDirectory(BuildDirectoryModel());
+            // 抽屉开着时再点"目录"只是刷新内容,不把用户浏览的分段拉回连播来源
+            player.ShowDirectory(BuildDirectoryModel(!player.IsDirectoryVisible));
         }
 
         /// <summary>
@@ -1367,14 +1368,14 @@ namespace BiliLite.Pages
         private async Task ActivateDirectoryRowAsync(PlayDirectorySectionKind kind, PlayDirectoryRow row)
         {
             if (_isClosed || flag || row == null) return;
-            // 点的就是正在播放的这一行:不起播,也不重新加载详情
-            if (row.IsCurrent)
-            {
-                RedrawOpenDirectory();
-                return;
-            }
             var rowIndex = row.Ordinal - 1;
             if (rowIndex < 0) return;
+            // 只有真的就是正在播的那一条才不起播:行上的 IsCurrent 可能来自别的时段或别的分段
+            if (IsPlayingDirectoryRow(kind, row))
+            {
+                AdoptDirectoryRowSource(kind, rowIndex);
+                return;
+            }
             switch (kind)
             {
                 case PlayDirectorySectionKind.Parts:
@@ -1394,6 +1395,53 @@ namespace BiliLite.Pages
             }
             // 显式选行之后重画抽屉,让"正在播放"跟着走;重画不会再起播
             RedrawOpenDirectory();
+        }
+
+        /// <summary>
+        /// 这一行是不是正在播的那条视频。分P比 cid,合集和播放列表比 aid:
+        /// 队列游标会停在旧的一行,行的 IsCurrent 不能当成"正在播"的证据。
+        /// </summary>
+        private bool IsPlayingDirectoryRow(PlayDirectorySectionKind kind, PlayDirectoryRow row)
+        {
+            if (row == null) return false;
+            if (kind == PlayDirectorySectionKind.Parts)
+            {
+                var playInfos = player?.PlayInfos;
+                var index = player == null ? -1 : player.CurrentPlayIndex;
+                if (playInfos == null || index < 0 || index >= playInfos.Count) return false;
+                var info = playInfos[index];
+                var cid = info == null ? null : info.cid;
+                // 详情没给 cid 时退到位置:分P的行序就是播放器的分P序
+                if (string.IsNullOrEmpty(cid)) return row.Ordinal - 1 == index;
+                return string.Equals(row.Key, cid, StringComparison.Ordinal);
+            }
+            var aid = videoDetailVM?.VideoInfo?.aid;
+            if (string.IsNullOrEmpty(aid)) return false;
+            return string.Equals(row.Key, aid, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// 点的就是正在播的这一行:只把它所在的来源写成连播来源,播放列表还要把游标移到这一行,
+        /// 不重新起播、不重新加载详情。分P不是连播来源,只重画。
+        /// </summary>
+        private void AdoptDirectoryRowSource(PlayDirectorySectionKind kind, int rowIndex)
+        {
+            switch (kind)
+            {
+                case PlayDirectorySectionKind.UgcSeason:
+                    sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);
+                    break;
+                case PlayDirectorySectionKind.Playlist:
+                    if (playlist?.Playlist == null || rowIndex >= playlist.Playlist.Count) return;
+                    playlist.Index = rowIndex;
+                    sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);
+                    break;
+                default:
+                    RedrawOpenDirectory();
+                    return;
+            }
+            // 顺序状态一换,开着的抽屉由它按签名决定要不要重画
+            RefreshSequenceState();
         }
 
         /// <summary>
@@ -1492,8 +1540,9 @@ namespace BiliLite.Pages
 
         /// <summary>
         /// 用当前顺序、合集和队列现搭一份目录。行只在打开抽屉或来源/行集合变了时重建。
+        /// 队列的当前行认正在播的 aid,不认停在旧位置的队列游标。
         /// </summary>
-        private PlayDirectoryModel BuildDirectoryModel()
+        private PlayDirectoryModel BuildDirectoryModel(bool freshOpen)
         {
             var info = videoDetailVM?.VideoInfo;
             var parts = PlayDirectoryBuilder.FromParts(CurrentParts(),
@@ -1502,9 +1551,14 @@ namespace BiliLite.Pages
                 IsInteractionVideo());
             var collection = PlayDirectoryBuilder.FromUgcSeason(info == null ? null : info.UgcSeason,
                 info == null ? null : info.aid);
-            var queue = playlist?.Playlist == null ? null : PlayDirectoryBuilder.FromPlaylist(playlist, mediaListState);
-            return PlayDirectoryBuilder.Combine(parts, collection, queue, sequence.Position.Source,
+            var queue = playlist?.Playlist == null
+                ? null
+                : PlayDirectoryBuilder.FromPlaylist(playlist, mediaListState, info == null ? null : info.aid);
+            var model = PlayDirectoryBuilder.Combine(parts, collection, queue, sequence.Position.Source,
                 DescribeStep(WatchSequenceOrder.Next(sequence.Position, false), true));
+            // 新开目录才让浏览的分段回到连播来源;重画留着用户正在看的那一段
+            model.IsFreshOpen = freshOpen;
+            return model;
         }
 
         /// <summary>
@@ -1533,7 +1587,7 @@ namespace BiliLite.Pages
                 return;
             }
             directorySignature = DirectorySignature();
-            player.ShowDirectory(BuildDirectoryModel());
+            player.ShowDirectory(BuildDirectoryModel(false));
         }
 
         private string DirectorySignature()

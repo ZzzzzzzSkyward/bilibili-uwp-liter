@@ -29,6 +29,9 @@ namespace Ux1bProbe
             CombineKeepsSourceAndOrder();
             CombineFallsBackWithoutTheActiveSection();
             IdentitySurvivesDuplicateTitles();
+            PlaylistCurrentFollowsPlayingAid();
+            LocateFollowsBrowsedSection();
+            BrowsedSectionSurvivesRedraw();
             PlayerSourceWiring();
             PageSourceWiring();
             ControlSourceWiring();
@@ -140,7 +143,7 @@ namespace Ux1bProbe
         private static void FixedPlaylistDirectory()
         {
             var playlist = Queue(21, 6);
-            var model = PlayDirectoryBuilder.FromPlaylist(playlist, null);
+            var model = PlayDirectoryBuilder.FromPlaylist(playlist, null, "3007");
 
             Check(model.Caption == "播放列表 · 第7项", "the queue caption names the current row");
             Check(model.CountText == "第7项 · 共21个可播放视频",
@@ -157,7 +160,7 @@ namespace Ux1bProbe
             Check(rows[6].CurrentBadge == "正在播放" && rows[5].CurrentBadge == "",
                 "the queue marks exactly the playing row as 正在播放");
 
-            var empty = PlayDirectoryBuilder.FromPlaylist(new VideoPlaylist() { Playlist = new List<VideoPlaylistItem>() }, null);
+            var empty = PlayDirectoryBuilder.FromPlaylist(new VideoPlaylist() { Playlist = new List<VideoPlaylistItem>() }, null, "3007");
             Check(!empty.HasSections, "an empty queue produces no section");
             Check(empty.Caption == "播放列表", "an empty queue still has a name");
         }
@@ -165,7 +168,7 @@ namespace Ux1bProbe
         private static void RemotePlaylistCounts()
         {
             var unknown = RemoteQueue(20, 6, 0, true, "课程播放列表");
-            var unknownModel = PlayDirectoryBuilder.FromPlaylist(unknown.Item1, unknown.Item2);
+            var unknownModel = PlayDirectoryBuilder.FromPlaylist(unknown.Item1, unknown.Item2, "4007");
             Check(unknownModel.SourceTitle == "课程播放列表", "the remote queue uses the source title");
             Check(unknownModel.CountText == "第7项 · 已加载20项 · 总数未知",
                 "a page without a total keeps the total unknown");
@@ -173,7 +176,7 @@ namespace Ux1bProbe
                 "an unknown total with more pages is not complete");
 
             var known = RemoteQueue(20, 6, 120, true, "课程播放列表");
-            var knownModel = PlayDirectoryBuilder.FromPlaylist(known.Item1, known.Item2);
+            var knownModel = PlayDirectoryBuilder.FromPlaylist(known.Item1, known.Item2, "4007");
             Check(knownModel.CountText == "第7项 · 已加载20项 · 共120项",
                 "a server total is shown next to the loaded count");
             Check(!knownModel.CountText.Contains("已全部加载"),
@@ -207,7 +210,7 @@ namespace Ux1bProbe
                 Parts(Part("cid-1", "P1 开场", 90), Part("cid-2", "P2 正片", 95), Part("cid-3", "P3 结尾", 60)),
                 1, "测试视频", false);
             var collection = PlayDirectoryBuilder.FromUgcSeason(Season(), "7003");
-            var playlist = PlayDirectoryBuilder.FromPlaylist(Queue(21, 6), null);
+            var playlist = PlayDirectoryBuilder.FromPlaylist(Queue(21, 6), null, "3007");
 
             var inCollection = PlayDirectoryBuilder.Combine(parts, collection, playlist,
                 WatchSequenceSourceKind.UgcSeason, "下一集：第4讲");
@@ -300,12 +303,138 @@ namespace Ux1bProbe
             {
                 item.Title = "同名";
             }
-            var playlist = PlayDirectoryBuilder.FromPlaylist(queue, null);
+            var playlist = PlayDirectoryBuilder.FromPlaylist(queue, null, "3003");
             var queueRows = Rows(playlist, PlayDirectorySectionKind.Playlist);
             Check(Distinct(queueRows), "duplicate queue titles keep distinct keys");
             Check(playlist.CurrentKey == "3003", "the current queue row is found by aid, not by title");
             Check(queueRows[2].Ordinal == 3 && queueRows[2].Key == "3003",
                 "the display ordinal is derived from the position while the key stays the identity");
+        }
+
+        /// <summary>
+        /// BR-28:队列游标停在旧位置,当前行只认正在播的 aid。
+        /// </summary>
+        private static void PlaylistCurrentFollowsPlayingAid()
+        {
+            // 游标还在第 7 项,正在播的却是第 11 项
+            var queue = Queue(21, 6);
+            var model = PlayDirectoryBuilder.FromPlaylist(queue, null, "3011");
+            var rows = Rows(model, PlayDirectorySectionKind.Playlist);
+
+            Check(model.CurrentKey == "3011", "BR-28: the queue locates the aid that is playing, not the cursor");
+            Check(rows[10].IsCurrent && rows[10].CurrentBadge == "正在播放",
+                "BR-28: the row of the playing aid is the only current row");
+            Check(rows.FindAll(x => x.IsCurrent).Count == 1,
+                "BR-28: a stale cursor leaves exactly one current row");
+            Check(!rows[6].IsCurrent && rows[6].CurrentBadge == "",
+                "BR-28: the row under the stale cursor is not claimed as playing");
+            Check(model.Caption == "播放列表 · 第11项" && model.CurrentPositionText == "第11项",
+                "BR-28: the caption and position name the row that plays");
+            Check(model.CountText == "第11项 · 共21个可播放视频",
+                "BR-28: the count text counts from the playing row");
+            Check(queue.Index == 6, "BR-28: building the model never moves the queue cursor");
+
+            // 正在播的视频根本不在这个队列里:这一段没有当前行,也不许编一个位置
+            var absent = PlayDirectoryBuilder.FromPlaylist(Queue(21, 6), null, "9999");
+            var absentRows = Rows(absent, PlayDirectorySectionKind.Playlist);
+            Check(absent.CurrentKey == "" && absent.CurrentPositionText == "",
+                "BR-28: a video outside the queue has no current row and no position");
+            Check(absentRows.TrueForAll(x => !x.IsCurrent && x.CurrentBadge == ""),
+                "BR-28: no queue row is claimed as playing when the video is elsewhere");
+            Check(absent.Caption == "播放列表" && absent.CountText == "共21个可播放视频",
+                "BR-28: the queue caption states no position for a video outside it");
+
+            var noAid = PlayDirectoryBuilder.FromPlaylist(Queue(3, 1), null, null);
+            Check(noAid.CurrentKey == "" && Rows(noAid, PlayDirectorySectionKind.Playlist).TrueForAll(x => !x.IsCurrent),
+                "BR-28: an unknown playing aid marks no row");
+
+            var parts = PlayDirectoryBuilder.FromParts(
+                Parts(Part("cid-1", "P1 开场", 90), Part("cid-2", "P2 正片", 95)), 1, "测试视频", false);
+            var outside = PlayDirectoryBuilder.Combine(parts,
+                PlayDirectoryBuilder.FromUgcSeason(Season(), "7003"),
+                PlayDirectoryBuilder.FromPlaylist(Queue(21, 6), null, "9999"),
+                WatchSequenceSourceKind.UgcSeason, "");
+            Check(outside.CurrentKey == "7003" && outside.Caption == "合集 · 3/7",
+                "BR-28: the combined model locates the video in the section it really is in");
+            Check(!outside.Caption.Contains("第") && outside.CurrentPositionText == "合集 3/7 · P2/2",
+                "BR-28: the active collection states its own position and no queue position");
+            Check(Rows(outside, PlayDirectorySectionKind.Playlist).TrueForAll(x => !x.IsCurrent),
+                "BR-28: the queue section keeps no current row in the combined model");
+        }
+
+        /// <summary>
+        /// BR-30:定位先看正在浏览的分段,这一段没有当前行才退到连播来源那一段。
+        /// </summary>
+        private static void LocateFollowsBrowsedSection()
+        {
+            var parts = PlayDirectoryBuilder.FromParts(
+                Parts(Part("cid-1", "P1 开场", 90), Part("cid-2", "P2 正片", 95)), 1, "测试视频", false);
+            var collection = PlayDirectoryBuilder.FromUgcSeason(Season(), "7003");
+            var playlist = PlayDirectoryBuilder.FromPlaylist(Queue(21, 6), null, "3007");
+            var model = PlayDirectoryBuilder.Combine(parts, collection, playlist, WatchSequenceSourceKind.UgcSeason, "");
+
+            Check(PlayDirectoryBuilder.CurrentRowOf(model, PlayDirectorySectionKind.UgcSeason).Key == "7003"
+                && PlayDirectoryBuilder.CurrentRowOf(model, PlayDirectorySectionKind.Parts).Key == "cid-2"
+                && PlayDirectoryBuilder.CurrentRowOf(model, PlayDirectorySectionKind.Playlist).Key == "3007",
+                "BR-30: every section answers with its own current row");
+
+            Check(PlayDirectoryBuilder.LocateSection(model, PlayDirectorySectionKind.UgcSeason) == PlayDirectorySectionKind.UgcSeason,
+                "BR-30: locate stays in the browsed collection instead of jumping to the parts");
+            Check(PlayDirectoryBuilder.LocateSection(model, PlayDirectorySectionKind.Parts) == PlayDirectorySectionKind.Parts,
+                "BR-30: locate in the browsed parts stays in the parts");
+            Check(PlayDirectoryBuilder.LocateSection(model, PlayDirectorySectionKind.Playlist) == PlayDirectorySectionKind.Playlist,
+                "BR-30: locate in the browsed queue stays in the queue");
+
+            // 浏览的段里没有当前行:才退到连播来源那一段
+            var playlistAbsent = PlayDirectoryBuilder.FromPlaylist(Queue(21, 6), null, "9999");
+            var fallback = PlayDirectoryBuilder.Combine(parts, collection, playlistAbsent,
+                WatchSequenceSourceKind.UgcSeason, "");
+            Check(PlayDirectoryBuilder.LocateSection(fallback, PlayDirectorySectionKind.Playlist) == PlayDirectorySectionKind.UgcSeason,
+                "BR-30: a browsed section without a current row falls back to the active source");
+            Check(PlayDirectoryBuilder.CurrentRowOf(fallback,
+                    PlayDirectoryBuilder.LocateSection(fallback, PlayDirectorySectionKind.Playlist)).Key == "7003",
+                "BR-30: the fallback locates the active source's scoped key");
+
+            var nowhere = PlayDirectoryBuilder.Combine(parts,
+                PlayDirectoryBuilder.FromUgcSeason(Season(), "9999"), playlistAbsent,
+                WatchSequenceSourceKind.UgcSeason, "");
+            Check(PlayDirectoryBuilder.LocateSection(nowhere, PlayDirectorySectionKind.Playlist) == PlayDirectorySectionKind.Playlist
+                && PlayDirectoryBuilder.CurrentRowOf(nowhere, PlayDirectorySectionKind.Playlist) == null,
+                "BR-30: with no current row anywhere locate changes nothing");
+        }
+
+        /// <summary>
+        /// BR-30:重画留在用户正在浏览的分段,只有新开目录或那一段没了才跟随连播来源。
+        /// </summary>
+        private static void BrowsedSectionSurvivesRedraw()
+        {
+            var parts = PlayDirectoryBuilder.FromParts(
+                Parts(Part("cid-1", "P1 开场", 90), Part("cid-2", "P2 正片", 95)), 1, "测试视频", false);
+            var collection = PlayDirectoryBuilder.FromUgcSeason(Season(), "7003");
+            var playlist = PlayDirectoryBuilder.FromPlaylist(Queue(21, 6), null, "3007");
+            var model = PlayDirectoryBuilder.Combine(parts, collection, playlist, WatchSequenceSourceKind.UgcSeason, "");
+
+            Check(PlayDirectoryBuilder.ResolveBrowsedSection(model, null) == PlayDirectorySectionKind.UgcSeason,
+                "BR-30: a fresh open starts on the active source");
+            Check(PlayDirectoryBuilder.ResolveBrowsedSection(model, PlayDirectorySectionKind.Playlist) == PlayDirectorySectionKind.Playlist,
+                "BR-30: a redraw keeps the browsed queue instead of pulling it to the active source");
+
+            var redrawn = PlayDirectoryBuilder.Combine(parts, collection, playlist, WatchSequenceSourceKind.UgcSeason, "下一集：第4讲");
+            Check(redrawn.ActiveKind == PlayDirectorySectionKind.UgcSeason
+                && PlayDirectoryBuilder.ResolveBrowsedSection(redrawn, PlayDirectorySectionKind.Parts) == PlayDirectorySectionKind.Parts,
+                "BR-30: a redraw that still contains the browsed parts keeps them");
+
+            var withoutQueue = PlayDirectoryBuilder.Combine(parts, collection, null, WatchSequenceSourceKind.UgcSeason, "");
+            Check(PlayDirectoryBuilder.ResolveBrowsedSection(withoutQueue, PlayDirectorySectionKind.Playlist)
+                    == PlayDirectorySectionKind.UgcSeason,
+                "BR-30: a browsed section that disappeared falls back to the active source");
+
+            var partsOnly = PlayDirectoryBuilder.Combine(parts, null, null, WatchSequenceSourceKind.None, "");
+            Check(PlayDirectoryBuilder.ResolveBrowsedSection(partsOnly, null) == PlayDirectorySectionKind.Parts,
+                "BR-30: a parts-only directory opens on the parts");
+            Check(PlayDirectoryBuilder.ResolveBrowsedSection(PlayDirectoryBuilder.Combine(null, collection, null,
+                    WatchSequenceSourceKind.UgcSeason, ""), PlayDirectorySectionKind.Playlist) == PlayDirectorySectionKind.UgcSeason,
+                "BR-30: a missing browsed section with no parts still resolves to a section that exists");
         }
 
         private static void PlayerSourceWiring()
@@ -377,8 +506,8 @@ namespace Ux1bProbe
             var request = Body(page, "private void player_DirectoryRequested");
             Check(request.Contains("RightInfo.Width.Value > 0") && request.Contains("SelectDetailDirectory()"),
                 "source: a wide window reuses the detail column instead of the overlay");
-            Check(request.Contains("player.ShowDirectory(BuildDirectoryModel())"),
-                "source: the drawer model is built when the drawer opens");
+            Check(request.Contains("player.ShowDirectory(BuildDirectoryModel(!player.IsDirectoryVisible))"),
+                "source: the drawer model is built when the drawer opens, and only a fresh open resets the browsed section");
 
             var change = Body(page, "private void PlayerControl_ChangeEpisodeEvent");
             Check(!change.Contains("BuildDirectoryModel("),
@@ -386,11 +515,18 @@ namespace Ux1bProbe
             Check(change.Contains("RedrawOpenDirectory();"),
                 "source: an open drawer still follows the new current part");
 
-            Check(page.Contains("private PlayDirectoryModel BuildDirectoryModel()")
+            Check(page.Contains("private PlayDirectoryModel BuildDirectoryModel(bool freshOpen)")
                 && page.Contains("PlayDirectoryBuilder.Combine(parts, collection, queue, sequence.Position.Source,"),
                 "source: the drawer model is composed from parts, collection and queue");
+            Check(page.Contains("PlayDirectoryBuilder.FromPlaylist(playlist, mediaListState, info == null ? null : info.aid)")
+                && page.Contains("model.IsFreshOpen = freshOpen;"),
+                "source: the queue section is built from the playing aid and the model carries the fresh-open intent");
 
             var activate = Body(page, "private async Task ActivateDirectoryRowAsync");
+            Check(!activate.Contains("row.IsCurrent") && activate.Contains("if (IsPlayingDirectoryRow(kind, row))"),
+                "source: activation is decided by the playing identity in that section's scope, not by row.IsCurrent");
+            Check(activate.Contains("AdoptDirectoryRowSource(kind, rowIndex);"),
+                "source: activating the row that already plays only adopts its source");
             Check(activate.Contains("player.ChangePlayIndex(rowIndex);"),
                 "source: a part row goes through the player's own part switch");
             Check(activate.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.UgcSeason);")
@@ -399,6 +535,19 @@ namespace Ux1bProbe
             Check(activate.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);")
                 && activate.Contains("await SelectPlaylistRowAsync(rowIndex);"),
                 "source: a queue row goes through the P1a sequence path");
+
+            var playing = Body(page, "private bool IsPlayingDirectoryRow");
+            Check(playing.Contains("string.Equals(row.Key, cid, StringComparison.Ordinal)")
+                && playing.Contains("string.Equals(row.Key, aid, StringComparison.Ordinal)"),
+                "source: a part row matches the playing cid while collection and queue rows match the playing aid");
+
+            var adopt = Body(page, "private void AdoptDirectoryRowSource");
+            Check(adopt.Contains("playlist.Index = rowIndex;")
+                && adopt.Contains("sequence.SetActiveSource(WatchSequenceSourceKind.Playlist);"),
+                "source: adopting a playing queue row moves the cursor and the continuation source");
+            Check(!adopt.Contains("InitializeVideo(") && !adopt.Contains("SelectPlaylistRowAsync(")
+                && !adopt.Contains("PlayCollectionRowAsync("),
+                "source: adopting a playing row never restarts or reloads the video");
 
             var parts = Body(page, "private List<PlayDirectoryPart> CurrentParts");
             Check(parts.Contains("DurationSeconds = info.duration,"),
@@ -438,6 +587,15 @@ namespace Ux1bProbe
             Check(control.Contains("public void LocateCurrent()")
                 && control.Contains("ScrollIntoView(row, ScrollIntoViewAlignment.Leading)"),
                 "source: 定位正在播放 scrolls the current row into view");
+            Check(!control.Contains("private PlayDirectoryRow CurrentRow()"),
+                "source: the control no longer takes the first IsCurrent row across all sections");
+            Check(control.Contains("PlayDirectoryBuilder.LocateSection(m_model, m_activeKind)")
+                && control.Contains("PlayDirectoryBuilder.CurrentRowOf(m_model, kind)"),
+                "source: locate asks the model for the browsed section's row first, the active source second");
+            Check(control.Contains("PlayDirectoryBuilder.ResolveBrowsedSection(model, browsed)")
+                && control.Contains("model.IsFreshOpen")
+                && control.Contains("SelectScope(PlayDirectoryBuilder.ResolveBrowsedSection"),
+                "source: a redraw keeps the browsed section and only a fresh open defaults to the active source");
             Check(xaml.Contains("AutomationProperties.Name=\"定位正在播放\""),
                 "source: the locate action has an accessible name");
             Check(control.Contains("VirtualKey.Enter") && control.Contains("VirtualKey.Space"),

@@ -74,6 +74,11 @@ namespace BiliLite.Models.Common
         public string HeaderText { get; set; }
         public PlayDirectorySectionKind ActiveKind { get; set; }
         public IList<PlayDirectorySection> Sections { get; set; }
+        /// <summary>
+        /// 这一次是新开目录,不是重画。界面只在为真时把浏览的分段拉回连播来源,
+        /// 重画要留着用户正在看的那一段。
+        /// </summary>
+        public bool IsFreshOpen { get; set; }
 
         /// <summary>
         /// 一段都没有时不弹空抽屉
@@ -236,17 +241,22 @@ namespace BiliLite.Models.Common
         /// <summary>
         /// 打开视频时带的队列。带了翻页状态的是远程 medialist:数量按已加载和已知总数写,
         /// 不把已加载数冒充总数;没有翻页状态的固定队列直接写可播放总量。
+        /// 当前行只认正在播的 aid:队列游标(playlist.Index)是连播的续播位置,它会停在旧的一行,
+        /// 拿它标"正在播放"会让用户看到一条假的高亮。
         /// </summary>
-        public static PlayDirectoryModel FromPlaylist(VideoPlaylist playlist, MediaListPagingState paging)
+        public static PlayDirectoryModel FromPlaylist(VideoPlaylist playlist, MediaListPagingState paging, string currentAid)
         {
             var items = playlist == null ? null : playlist.Playlist;
             var total = items == null ? 0 : items.Count;
-            var index = total == 0 ? -1 : Math.Min(Math.Max(0, playlist.Index), total - 1);
 
             var rows = new List<PlayDirectoryRow>();
+            var index = -1;
             for (var i = 0; i < total; i++)
             {
                 var item = items[i];
+                var isCurrent = index < 0 && !string.IsNullOrEmpty(currentAid) && item != null
+                    && string.Equals(item.ID, currentAid, StringComparison.Ordinal);
+                if (isCurrent) index = i;
                 rows.Add(new PlayDirectoryRow()
                 {
                     Key = item == null ? "" : item.ID,
@@ -256,8 +266,8 @@ namespace BiliLite.Models.Common
                     PositionText = "",
                     Duration = item == null ? "" : item.Duration,
                     Ordinal = i + 1,
-                    IsCurrent = i == index,
-                    CurrentBadge = i == index ? NowPlayingBadge : "",
+                    IsCurrent = isCurrent,
+                    CurrentBadge = isCurrent ? NowPlayingBadge : "",
                 });
             }
 
@@ -397,6 +407,53 @@ namespace BiliLite.Models.Common
             if (count < 0) count = 0;
             var total = "共" + count.ToString(CultureInfo.InvariantCulture) + "个可播放视频";
             return ordinal > 0 ? Join(OrdinalText(ordinal), total) : total;
+        }
+
+        /// <summary>
+        /// 某一段里的当前行。只在这一段里找:合集和播放列表可以同时有当前行,
+        /// 扫全部分段就会把正在浏览的段换成排在前面的分段。
+        /// </summary>
+        public static PlayDirectoryRow CurrentRowOf(PlayDirectoryModel model, PlayDirectorySectionKind kind)
+        {
+            var section = SectionOf(model == null ? null : model.Sections, kind);
+            if (section == null || section.Rows == null) return null;
+            foreach (var row in section.Rows)
+            {
+                if (row != null && row.IsCurrent) return row;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 定位正在播放该落在哪一段:先看用户正在浏览的段,这一段没有当前行
+        /// (视频不在这一段里)才退到连播来源那一段;两段都没有当前行时不动浏览的分段。
+        /// </summary>
+        public static PlayDirectorySectionKind LocateSection(PlayDirectoryModel model, PlayDirectorySectionKind browsed)
+        {
+            if (CurrentRowOf(model, browsed) != null) return browsed;
+            if (model != null && CurrentRowOf(model, model.ActiveKind) != null) return model.ActiveKind;
+            return browsed;
+        }
+
+        /// <summary>
+        /// 重画之后该停在哪一段:用户正在浏览的段还在就留在那里,只有新开目录
+        /// (browsed 为空)或那一段消失了才跟随连播来源。
+        /// </summary>
+        public static PlayDirectorySectionKind ResolveBrowsedSection(PlayDirectoryModel model, PlayDirectorySectionKind? browsed)
+        {
+            var sections = model == null ? null : model.Sections;
+            if (browsed.HasValue && SectionOf(sections, browsed.Value) != null) return browsed.Value;
+
+            var active = model == null ? PlayDirectorySectionKind.Parts : model.ActiveKind;
+            if (SectionOf(sections, active) != null) return active;
+            if (sections != null)
+            {
+                foreach (var section in sections)
+                {
+                    if (section != null) return section.Kind;
+                }
+            }
+            return PlayDirectorySectionKind.Parts;
         }
 
         /// <summary>
