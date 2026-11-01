@@ -264,15 +264,15 @@ Order is by "one endpoint pair, one commit, smallest blast radius, probes alread
 
 | # | Family / step | Why here | Risk & blockers |
 | --- | --- | --- | --- |
-| 1 | **Season detail** (`EpList` only) | Single live endpoint, single prompt VM, `result` envelope is the one shared piece every other family will need; nothing else depends on it | Needs a `result`-envelope reader alongside `ApiEnvelope` (`ApiEnvelope.cs` is `data`-only). `episodes` null and `total==0` semantics must be written down first. No probe — add one before touching. Dead `Detail`/`Detail_Web`/`DetailWeb`/`GetWebSeasonDetail` delete in the same commit (they are the fallback chain and must not be resurrected silently) |
+| 1 | **Season detail** (`EpList` only) — **done in `ed9f248`** | Single live endpoint, single prompt VM, `result` envelope is the one shared piece every other family will need; nothing else depends on it | Shipped as planned: `ApiEnvelope.ReadResult`, `Parsing/Season/`, `Models/Api/Season/Web/`, the dead fallback chain deleted, `plan/tests/season1` (109 assertions) added first and grown until it pins each finding |
 | 2 | **Playlists** (medialist pair + favorites/watch-later decode) | `c2`/`c3` already pin paging and retry, so a parser can be asserted before/after; the service is the cleanest "toast in the parse path" removal | Moves toast + retry decision from `MediaListService` into `VideoDetailPage`/`MessageCenter`; two page call sites and the link route must keep their single-flight and `lastAid` cursor. Do **not** touch `MediaListPagingState.Append` (already correct and probed) |
 | 3 | **Video detail** (`view` + `related` first, then the four state reads) | Largest fan-in, but `c1` pins the model; splitting `view`/`related` from the action endpoints keeps each commit reviewable | `relates` setter NRE must be fixed or the DTO mapper must bypass it; the proxy fallback (`biliproxy.iill.moe`) is a third-party transport and needs an explicit decision (keep as a fallback source, or delete — it is only reachable when the signed app endpoint fails); `req_user`/`owner_ext` defaults must move to the mapper with tests |
 | 4 | **Account** | Highest risk: credentials, `CookieService` single-flight, the exchanged-session commit path and `AUTH-01b`'s 136 assertions | Do **not** re-plumb the cookie chain (`CookieService`, `AccessKeyRenewal`, `PasswordLoginSession`, `IsolatedPasswordLoginTransport`) in the same commit as plain response decoding. Start with the read-only/profile endpoints (`myinfo`, `mine`+`space`, `oauth2/info`, QR) and only then the login responses. Separate `Account.Login2023` from `AccountApi.Login2023` naming before any rename |
 | 5 | **Comments** | Last on purpose: the publisher is a `UserControl` that owns paging, cursor and toasts, so the VM work is part of the migration, and there is no probe to fall back on | Requires a `CommentModel` source DTO + mapper extraction (view fields: `showTop`, `replyText`, `loadpage`, `showLoading`, `showReplies`), a decision on where `_page`/`cursor` live, and two source-bound cursors (offset string vs `pn`). `CommentItem` and `Comment_New` delete with it |
 
-Cross-family item, do first if it is not already done: `HttpResults.GetJObject` must not toast
-(`HttpHelper.cs:596`); parsers that need `JObject` should get it from a silent reader. This is a one-line
-behaviour change with callers in all four families.
+Cross-family item, **done in `ed9f248`**: `HttpResults.TryGetJObject` is the silent reader and
+`ApiEnvelope` uses it; `GetJObject` keeps its toast for callers that have not migrated yet, so a family
+that still parses inline must keep going through `GetJObject` until it is migrated.
 
 ---
 
