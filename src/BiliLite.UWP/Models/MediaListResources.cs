@@ -196,6 +196,11 @@ namespace BiliLite.Models.Common
         public int TotalCount { get; private set; }
 
         /// <summary>
+        /// 总数只认服务端报过的值;没报过就一直是未知,不能拿已加载行数顶上
+        /// </summary>
+        public bool HasKnownTotal { get; private set; }
+
+        /// <summary>
         /// 上一页响应里最后一条的 aid,下一次请求的 oid;与选中的播放行无关
         /// </summary>
         public string LastAid { get; private set; }
@@ -240,7 +245,7 @@ namespace BiliLite.Models.Common
         {
             get
             {
-                return TotalCount > 0
+                return HasKnownTotal
                     ? m_rows.Count.ToString(CultureInfo.InvariantCulture) + " / " + TotalCount.ToString(CultureInfo.InvariantCulture)
                     : m_rows.Count.ToString(CultureInfo.InvariantCulture);
             }
@@ -276,7 +281,12 @@ namespace BiliLite.Models.Common
 
             // has_more 以最新一页为准
             HasMore = page.HasMore;
-            TotalCount = page.TotalCount > 0 ? page.TotalCount : m_rows.Count;
+            // 总数只认服务端报过的值:后面的页没带总数时保留上一页已知的值,别把已知改回未知
+            if (page.TotalCount > 0)
+            {
+                TotalCount = page.TotalCount;
+                HasKnownTotal = true;
+            }
             return added;
         }
 

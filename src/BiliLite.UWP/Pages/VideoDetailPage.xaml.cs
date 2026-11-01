@@ -233,6 +233,15 @@ namespace BiliLite.Pages
                         return;
                     }
 
+                    // 内存队列的下标不一定还对得上列表(点击身份修好前留下的参数仍会传进来):
+                    // 空列表或越界时什么都不建,免得播错视频或直接抛越界
+                    if (playlist.Playlist == null || playlist.Playlist.Count == 0
+                        || playlist.Index < 0 || playlist.Index >= playlist.Playlist.Count)
+                    {
+                        Utils.ShowMessageToast("播放列表已失效,请重新打开");
+                        return;
+                    }
+
                     var element = PlayListTpl.GetElement(new Windows.UI.Xaml.ElementFactoryGetArgs()) as PivotItem;
                     element.DataContext = playlist;
                  
@@ -529,7 +538,11 @@ namespace BiliLite.Pages
             mediaListRows = new ObservableCollection<VideoPlaylistItem>();
             AppendMediaListRows(0);
             playlist.Playlist = mediaListRows;
-            playlist.Index = Math.Max(0, playlist.Index);
+            // 下标和已加载的行数对齐:负数归零,越界退到最后已加载行;
+            // 一行都没有时留给下面"播放列表是空的"分支,这里只保证不越界
+            playlist.Index = mediaListRows.Count == 0
+                ? 0
+                : Math.Min(Math.Max(0, playlist.Index), mediaListRows.Count - 1);
             playFromUgcSeason = false;
 
             mediaListCountText = new TextBlock()
