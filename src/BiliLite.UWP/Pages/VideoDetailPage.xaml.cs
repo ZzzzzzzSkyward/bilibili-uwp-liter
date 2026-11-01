@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Navigation;
@@ -428,6 +429,12 @@ namespace BiliLite.Pages
                 // 详情和分P都换好之后,把顺序状态对齐到当前视频
                 ApplyDefaultSequenceSource();
                 RefreshSequenceState();
+                // 连播/下一个/目录/播放列表/F5 换过来之后,焦点常留在页签头上:页签头自己吃空格键,
+                // 空格就只切页签、播不了。只在焦点确实停在页签上时才抢回来,目录和输入框里不打扰
+                if (played && IsTabStripFocused())
+                {
+                    player.FocusPlayer();
+                }
             }
             finally
             {
@@ -435,6 +442,16 @@ namespace BiliLite.Pages
                 if (_id == id) flag = false;
             }
             return played;
+        }
+
+        /// <summary>
+        /// 焦点是不是正停在页签上(Pivot 本身或它的 PivotHeaderItem) —— 也就是空格键会被页签抢走的位置。
+        /// 只认这两样:焦点在目录、播放列表、输入框里时一律不算,换视频不去打扰用户的浏览焦点。
+        /// </summary>
+        private bool IsTabStripFocused()
+        {
+            var focused = FocusManager.GetFocusedElement();
+            return focused is PivotHeaderItem || focused is Pivot;
         }
 
         /// <summary>

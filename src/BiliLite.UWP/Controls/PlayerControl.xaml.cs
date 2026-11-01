@@ -360,6 +360,16 @@ namespace BiliLite.Controls
             }
         }
 
+        /// <summary>
+        /// 把焦点交还给播放器。页签头(PivotHeaderItem)会先吃掉空格键去切页签,
+        /// 换了视频之后焦点常留在页签头上,空格就再也到不了播放器 —— 页面换完视频要调这里。
+        /// 定时器那条路不能加页签头:它会从页签上抢走键盘切换。
+        /// </summary>
+        public void FocusPlayer()
+        {
+            BtnFoucs.Focus(FocusState.Programmatic);
+        }
+
         private bool runing = false;
         private bool pointer_in_player = false;
 
