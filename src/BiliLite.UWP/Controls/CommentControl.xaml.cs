@@ -5,7 +5,6 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Media;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Collections.ObjectModel;
 using Windows.UI;
@@ -18,7 +17,10 @@ using static BiliLite.Api.CommentApi;
 using BiliLite.Modules;
 using BiliLite.Dialogs;
 using Microsoft.Toolkit.Uwp.UI.Controls;
+using BiliLite.Models.Api.Comment;
 using BiliLite.Models.Common;
+using BiliLite.Parsing;
+using BiliLite.Parsing.Comment;
 
 //https://go.microsoft.com/fwlink/?LinkId=234236 上介绍了“用户控件”项模板
 
@@ -143,7 +145,14 @@ namespace BiliLite.Controls
             await emoteVM.GetEmote(EmoteBusiness.reply);
         }
 
-        private CommentCursor cursor;
+        /// <summary>游标源的下一页 offset：只有游标源真的解析出一页才推进，失败不动</summary>
+        private string _nextOffset;
+
+        /// <summary>
+        /// 这一轮到底走哪一路。游标源拿不到可发布的一页就落到 pn 源，之后这一轮都用 pn：
+        /// 两路的游标形状不同（next_offset / pn），混着用会把游标指回已经上屏的那一页。
+        /// </summary>
+        private bool _useCursorSource = true;
 
         private async Task GetComment()
         {
@@ -153,7 +162,8 @@ namespace BiliLite.Controls
                 closeRepost.Visibility = Visibility.Collapsed;
                 //ls_hot.ItemsSource = null;
                 ls_new.ItemsSource = null;
-                cursor = null;
+                _nextOffset = null;
+                _useCursorSource = true;
             }
             try
             {
@@ -161,118 +171,41 @@ namespace BiliLite.Controls
                 btn_LoadMore.Visibility = Visibility.Collapsed;
                 _loading = true;
                 pr_load.Visibility = Visibility.Visible;
-                ObservableCollection<CommentModel> ls = new ObservableCollection<CommentModel>();
 
-
-                var isCursorApiResponse = true;
-                var api = await commentApi.CommentV2(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page,
-                    _loadCommentInfo.CommentMode, offsetStr: cursor?.PaginationReply?.NextOffset);
-                var re = await api.Request();
-                var errorCheck = await re.GetData<object>();
-                if (!re.status || (errorCheck != null && errorCheck.code < 0))
+                HttpResults re;
+                ApiParseResult<WebCommentPageDto> parsed;
+                if (_useCursorSource)
                 {
-                    isCursorApiResponse = false;
-                    re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page, _loadCommentInfo.CommentMode).Request();
-                }
-                if (re.status)
-                {
-                    dataCommentModel m;
-                    try
+                    //CommentV2 的构造是异步的（内含 WBI 签名），拿到 ApiModel 才发请求
+                    var api = await commentApi.CommentV2(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort,
+                        _page, _loadCommentInfo.CommentMode, offsetStr: _nextOffset);
+                    re = await api.Request();
+                    parsed = WebCommentPageParser.ParseWebCommentPage(re);
+                    //改造前的换源触发条件是 !re.status || code < 0：传输失败与"负业务码"才换 pn 源。
+                    //正业务码（例如 12002 评论区已关闭）不换源，正文/形状不对也不换源——那时候旧代码
+                    //只是弹一句"解析评论失败"。
+                    if (parsed.Failure == ApiParseFailure.Transport
+                        || (parsed.Failure == ApiParseFailure.Rejected && parsed.BusinessCode < 0))
                     {
-                        m = JsonConvert.DeserializeObject<dataCommentModel>(re.results);
-                    }
-                    catch(Exception e)
-                    {
-                        Utils.ShowMessageToast("解析评论失败",e.ToString());
-                        return;
-                    }
-                    if (m.code == 0)
-                    {
-
-                        if (m.data.replies == null)
-                        {
-                            m.data.replies = new ObservableCollection<CommentModel>();
-                        }
-                        var hasPinnedReplies = _page == 1 &&
-                            ((m.data.upper != null && m.data.upper.top != null) ||
-                            (m.data.topReplies != null && m.data.topReplies.Count != 0));
-                        if (m.data.replies.Count != 0 || hasPinnedReplies)
-                        {
-                            if (_page == 1)
-                            {
-                                var displayedReplies = new ObservableCollection<CommentModel>();
-                                if (m.data.upper != null && m.data.upper.top != null)
-                                {
-                                    m.data.upper.top.showTop = Visibility.Visible;
-                                    displayedReplies.Add(m.data.upper.top);
-                                }
-                                if (m.data.topReplies != null)
-                                {
-                                    foreach (var item in m.data.topReplies)
-                                    {
-                                        item.showTop = Visibility.Visible;
-                                        if (!displayedReplies.Any(reply => reply.rpid == item.rpid))
-                                        {
-                                            displayedReplies.Add(item);
-                                        }
-                                    }
-                                }
-                                foreach (var item in m.data.replies)
-                                {
-                                    if (!displayedReplies.Any(reply => reply.rpid == item.rpid))
-                                    {
-                                        displayedReplies.Add(item);
-                                    }
-                                }
-                                ls_new.ItemsSource = displayedReplies;
-                            }
-                            else
-                            {
-                                foreach (var item in m.data.replies)
-                                {
-                                    (ls_new.ItemsSource as ObservableCollection<CommentModel>).Add(item);
-                                }
-                            }
-                            _page++;
-
-                            cursor=m.data.cursor;
-                            if (m.data.replies.Count >= 10 && (!isCursorApiResponse || cursor?.PaginationReply?.NextOffset != null))
-                            {
-                                btn_LoadMore.Visibility = Visibility.Visible;
-                            }
-                        }
-                        else
-                        {
-                            if (_page == 1)
-                            {
-                                noRepost.Visibility = Visibility.Visible;
-                                btn_LoadMore.Visibility = Visibility.Collapsed;
-                            }
-                            else
-                            {
-                                Utils.ShowMessageToast("全部加载完了...");
-                            }
-                        }
-                    }
-                    else
-                    {
-                        if (m.code == 12002)
-                        {
-                            closeRepost.Visibility = Visibility.Visible;
-                            btn_LoadMore.Visibility = Visibility.Collapsed;
-                            Utils.ShowMessageToast("评论区已关闭");
-                        }
-                        else
-                        {
-                            Utils.ShowMessageToast(m.message);
-                        }
+                        _useCursorSource = false;
+                        re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page,
+                            _loadCommentInfo.CommentMode).Request();
+                        parsed = WebCommentPageParser.ParseWebCommentPage(re);
                     }
                 }
                 else
                 {
-                    Utils.ShowMessageToast("加载评论失败" , re.results.ToString());
+                    re = await commentApi.Comment(_loadCommentInfo.Oid, _loadCommentInfo.CommentSort, _page,
+                        _loadCommentInfo.CommentMode).Request();
+                    parsed = WebCommentPageParser.ParseWebCommentPage(re);
                 }
 
+                if (!EnsureCommentParsed(parsed, re))
+                {
+                    return;
+                }
+                PublishCommentPage(WebCommentPageMapper.MapWebCommentPage(parsed.Value,
+                    _useCursorSource ? WebCommentPageSource.Cursor : WebCommentPageSource.PageNumber, _page == 1));
             }
             catch (Exception ex)
             {
@@ -287,6 +220,106 @@ namespace BiliLite.Controls
             }
         }
 
+        /// <summary>只发布被接受的页：翻页状态在这里推进，且游标槽只跟游标源走。</summary>
+        private void PublishCommentPage(WebCommentPage page)
+        {
+            if (page.Rows.Count == 0)
+            {
+                if (_page == 1)
+                {
+                    noRepost.Visibility = Visibility.Visible;
+                    btn_LoadMore.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    Utils.ShowMessageToast("全部加载完了...");
+                }
+                return;
+            }
+
+            if (_page == 1)
+            {
+                ls_new.ItemsSource = new ObservableCollection<CommentModel>(page.Rows);
+            }
+            else
+            {
+                var items = ls_new.ItemsSource as ObservableCollection<CommentModel>;
+                foreach (var item in page.Rows)
+                {
+                    items.Add(item);
+                }
+            }
+            _page++;
+            if (_useCursorSource)
+            {
+                _nextOffset = page.NextOffset;
+            }
+            if (page.ReplyCount >= 10 && (!_useCursorSource || _nextOffset != null))
+            {
+                btn_LoadMore.Visibility = Visibility.Visible;
+            }
+        }
+
+        /// <summary>解析结论 → 界面上的一句话。失败类别在控件里分得开，解析层不弹提示。</summary>
+        private bool EnsureCommentParsed<T>(ApiParseResult<T> parsed, HttpResults results)
+        {
+            if (parsed == null)
+            {
+                Utils.ShowMessageToast("解析评论失败");
+                return false;
+            }
+            if (parsed.IsSuccess)
+            {
+                return true;
+            }
+            switch (parsed.Failure)
+            {
+                case ApiParseFailure.Transport:
+                    Utils.ShowMessageToast("加载评论失败", results == null ? "" : results.results);
+                    return false;
+                case ApiParseFailure.Rejected:
+                    if (parsed.BusinessCode == CommentClosedCode)
+                    {
+                        closeRepost.Visibility = Visibility.Visible;
+                        btn_LoadMore.Visibility = Visibility.Collapsed;
+                        Utils.ShowMessageToast("评论区已关闭");
+                    }
+                    else
+                    {
+                        Utils.ShowMessageToast(parsed.Message);
+                    }
+                    return false;
+                default:
+                    Utils.ShowMessageToast("解析评论失败", parsed.Stage + "：" + parsed.Message);
+                    return false;
+            }
+        }
+
+        /// <summary>动作接口只有 code/message：拒绝时说的是服务端那句话，其它类别是"操作失败"。</summary>
+        private bool EnsureCommentActionParsed(ApiParseResult<WebCommentActionResultDto> parsed)
+        {
+            if (parsed == null)
+            {
+                Utils.ShowMessageToast("操作失败");
+                return false;
+            }
+            if (parsed.IsSuccess)
+            {
+                return true;
+            }
+            if (parsed.Failure == ApiParseFailure.Rejected)
+            {
+                Utils.ShowMessageToast(parsed.Message);
+            }
+            else
+            {
+                Utils.ShowMessageToast("操作失败", parsed.Stage + "：" + parsed.Message);
+            }
+            return false;
+        }
+
+        private const int CommentClosedCode = 12002;
+
         private async Task GetReply(CommentModel data)
         {
             try
@@ -297,38 +330,28 @@ namespace BiliLite.Controls
                 }
                 data.showReplyMore = Visibility.Collapsed;
                 data.showLoading = Visibility.Visible;
-                var ls = new ObservableCollection<CommentModel>();
                 var re = await commentApi.Reply(_loadCommentInfo.Oid, data.rpid.ToString(), data.loadpage, _loadCommentInfo.CommentMode).Request();
-                if (re.status)
+                var parsed = WebCommentPageParser.ParseWebCommentReplies(re);
+                if (!EnsureCommentParsed(parsed, re))
                 {
-                    var m = JsonConvert.DeserializeObject<dataCommentModel>(re.results);
-                    if (m.code == 0)
+                    return;
+                }
+                var rows = WebCommentPageMapper.MapWebCommentReplies(parsed.Value);
+                if (rows.Count != 0)
+                {
+                    if (rows.Count >= 10)
                     {
-                        if (m.data.replies != null && m.data.replies.Count != 0)
-                        {
-                            if (m.data.replies.Count >= 10)
-                            {
-                                data.showReplyMore = Visibility.Visible;
-                            }
-                            foreach (var item in m.data.replies)
-                            {
-                                data.replies.Add(item);
-                            }
-                            data.loadpage++;
-                        }
-                        else
-                        {
-                            data.showReplyMore = Visibility.Collapsed;
-                        }
+                        data.showReplyMore = Visibility.Visible;
                     }
-                    else
+                    foreach (var item in rows)
                     {
-                        Utils.ShowMessageToast(m.message);
+                        data.replies.Add(item);
                     }
+                    data.loadpage++;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(re.message);
+                    data.showReplyMore = Visibility.Collapsed;
                 }
             }
             catch (Exception e)
@@ -357,32 +380,21 @@ namespace BiliLite.Controls
                     action = 1;
                 }
                 var re = await commentApi.Like(_loadCommentInfo.Oid, data.rpid.ToString(), action, _loadCommentInfo.CommentMode).Request();
-                if (re.status)
+                var parsed = WebCommentActionParser.Parse(re);
+                if (!EnsureCommentActionParsed(parsed))
                 {
-                    JObject obj = JObject.Parse(re.results);
-                    if (obj["code"].ToInt32() == 0)
-                    {
-                        if (data.action == 0)
-                        {
-                            data.action = 1;
-                            data.like += 1;
-                        }
-                        else
-                        {
-                            data.action = 0;
-                            data.like -= 1;
-                        }
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(obj["message"].ToString());
-                    }
+                    return;
+                }
+                if (data.action == 0)
+                {
+                    data.action = 1;
+                    data.like += 1;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(re.message);
+                    data.action = 0;
+                    data.like -= 1;
                 }
-
             }
             catch (Exception e)
             {
@@ -461,14 +473,13 @@ namespace BiliLite.Controls
         private void btn_HotSort_Click(object sender, RoutedEventArgs e)
         {
             _loadCommentInfo.CommentSort = CommentSort.Hot;
-            cursor = null;
+            //换排序就是重新开一轮：游标槽和源都由 LoadComment 重置
             LoadComment(_loadCommentInfo);
         }
 
         private void btn_NewSort_Click(object sender, RoutedEventArgs e)
         {
             _loadCommentInfo.CommentSort = CommentSort.New;
-            cursor = null;
             LoadComment(_loadCommentInfo);
         }
 
@@ -510,27 +521,16 @@ namespace BiliLite.Controls
             try
             {
                 var re = await commentApi.ReplyComment(_loadCommentInfo.Oid, m.rpid.ToString(), m.rpid.ToString(), Uri.EscapeDataString(m.replyText), _loadCommentInfo.CommentMode).Request();
-                if (re.status)
+                var parsed = WebCommentActionParser.Parse(re);
+                if (!EnsureCommentActionParsed(parsed))
                 {
-                    JObject obj = JObject.Parse(re.results);
-                    if (obj["code"].ToInt32() == 0)
-                    {
-                        Utils.ShowMessageToast("回复评论成功");
-                        m.loadpage = 1;
-                        m.replies.Clear();
-                        m.replyText = "";
-                        GetReply(m);
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(obj["message"].ToString());
-                    }
+                    return;
                 }
-                else
-                {
-                    Utils.ShowMessageToast(re.message);
-                }
-
+                Utils.ShowMessageToast("回复评论成功");
+                m.loadpage = 1;
+                m.replies.Clear();
+                m.replyText = "";
+                await GetReply(m);
             }
             catch (Exception e)
             {
@@ -567,27 +567,16 @@ namespace BiliLite.Controls
                 //content += "&sign=" + ApiHelper.GetSign(content);
 
                 var re = await commentApi.ReplyComment(_loadCommentInfo.Oid, m.root.ToString(), m.rpid.ToString(), Uri.EscapeDataString(txt), _loadCommentInfo.CommentMode).Request();
-                if (re.status)
+                var parsed = WebCommentActionParser.Parse(re);
+                if (!EnsureCommentActionParsed(parsed))
                 {
-                    JObject obj = JObject.Parse(re.results);
-                    if (obj["code"].ToInt32() == 0)
-                    {
-                        Utils.ShowMessageToast("回复评论成功");
-                        m.loadpage = 1;
-                        m.replies.Clear();
-                        m.replyText = "";
-                        await GetReply(m);
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(obj["message"].ToString());
-                    }
+                    return;
                 }
-                else
-                {
-                    Utils.ShowMessageToast(re.message);
-                }
-
+                Utils.ShowMessageToast("回复评论成功");
+                m.loadpage = 1;
+                m.replies.Clear();
+                m.replyText = "";
+                await GetReply(m);
             }
             catch (Exception e)
             {
@@ -639,23 +628,13 @@ namespace BiliLite.Controls
 
                 //var re = await WebClientClass.PostResults(new Uri(url), content);
                 var re = await commentApi.DeleteComment(_loadCommentInfo.Oid, m.rpid.ToString(), _loadCommentInfo.CommentMode).Request();
-                if (re.status)
+                var parsed = WebCommentActionParser.Parse(re);
+                if (!EnsureCommentActionParsed(parsed))
                 {
-                    JObject obj = JObject.Parse(re.results);
-                    if (obj["code"].ToInt32() == 0)
-                    {
-                        Utils.ShowMessageToast("评论删除成功");
-                        RefreshComment();
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(obj["message"].ToString());
-                    }
+                    return;
                 }
-                else
-                {
-                    Utils.ShowMessageToast(re.message);
-                }
+                Utils.ShowMessageToast("评论删除成功");
+                RefreshComment();
             }
             catch (Exception e)
             {
@@ -718,43 +697,6 @@ namespace BiliLite.Controls
         public CommentSort CommentSort { get; set; }
         public string Oid { get; set; }
         public bool IsDialog { get; set; } = false;
-    }
-    public class CommentPagination
-    {
-        [JsonProperty("next_offset")]
-        public string NextOffset { get; set; }
-    }
-    public class CommentCursor
-    {
-        [JsonProperty("pagination_reply")]
-        public CommentPagination PaginationReply { get; set; }
-    }
-
-    public class dataCommentModel
-    {
-
-        public int code { get; set; }
-        public string message { get; set; }
-
-
-        public dataCommentModel data { get; set; }
-
-        public dataCommentModel page { get; set; }
-        public int acount { get; set; }
-        public int count { get; set; }
-        public int num { get; set; }
-        public int size { get; set; }
-        public CommentCursor cursor { get; set; }
-
-        public ObservableCollection<CommentModel> hots { get; set; }
-        public ObservableCollection<CommentModel> replies { get; set; }
-
-        public dataCommentModel upper { get; set; }
-        public CommentModel top { get; set; }
-
-        [JsonProperty("top_replies")]
-        public List<CommentModel> topReplies { get; set; }
-
     }
     public class CommentModel : INotifyPropertyChanged
     {
@@ -1020,81 +962,6 @@ namespace BiliLite.Controls
 
 
 
-    }
-    public class CommentItem
-    {
-        public int Action { get; set; }
-
-        [JsonProperty("rpid")]
-        public long RpId { get; set; }
-
-        public long Oid { get; set; }
-
-        public int Type { get; set; }
-
-        public long Mid { get; set; }
-
-        public long Root { get; set; }
-
-        public long Parent { get; set; }
-
-        public int Count { get; set; }
-
-        public int Rcount { get; set; }
-
-        public int Like { get; set; }
-
-        public int Floor { get; set; }
-
-        public int State { get; set; }
-
-        public long Ctime { get; set; }
-
-        [JsonProperty("rpid_str")]
-        public string RpidStr { get; set; }
-
-        public CommentMemberModel Member { get; set; }
-
-        public CommentContentModel Content { get; set; }
-
-        [JsonProperty("up_action")]
-        public CommentUPActionModel UpAction { get; set; }
-
-        [JsonProperty("reply_control")]
-        public CommentReplyControlModel ReplyControl { get; set; }
-
-        public List<CommentItem> Replies { get; set; }
-        public bool showTop { get; internal set; }
-
-        public CommentModel ToCommentModel()
-        {
-            CommentModel c = new CommentModel();
-            var t = this;
-            c.rpid = t.RpId;
-            c.rpid_str = t.RpidStr;
-            c.content = t.Content;
-            c.like = t.Like;
-            c.mid = t.Mid;
-            c.oid = t.Oid;
-            c.rcount = t.Rcount;
-            c.state = t.State;
-            c.action = t.Action;
-            c.type = t.Type;
-            c.root = t.Root;
-            c.parent = t.Parent;
-            c.count = t.Count;
-            c.floor = t.Floor;
-            c.ctime = t.Ctime;
-            c.replies =new ObservableCollection<CommentModel>();
-            if (t.Replies != null && t.Replies.Count > 0)
-            {
-                foreach (var i in t.Replies)
-                {
-                    c.replies.Append(i.ToCommentModel());
-                }
-            }
-            return c;
-        }
     }
     public class CommentReplyControlModel
     {

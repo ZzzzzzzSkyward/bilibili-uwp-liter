@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -193,6 +193,9 @@
     <Compile Include="Parsing\MediaList\WatchLaterListParser.cs" />
     <Compile Include="Parsing\MediaList\WatchLaterListMapper.cs" />
     <Compile Include="Parsing\MediaList\MediaListFailureText.cs" />
+    <Compile Include="Parsing\Comment\WebCommentPageParser.cs" />
+    <Compile Include="Parsing\Comment\WebCommentActionParser.cs" />
+    <Compile Include="Parsing\Comment\WebCommentPageMapper.cs" />
     <Compile Include="Services\PlayerSessionState.cs" />
     <Compile Include="Services\PlayerToastOverlay.cs" />
     <Compile Include="Services\PlayerToastService.cs" />
@@ -347,6 +350,10 @@
     <Compile Include="Models\Api\MediaList\MediaListResourceListDto.cs" />
     <Compile Include="Models\Api\MediaList\FavoriteResourceListDto.cs" />
     <Compile Include="Models\Api\MediaList\WatchLaterListDto.cs" />
+    <Compile Include="Models\Api\Comment\WebCommentPageDto.cs" />
+    <Compile Include="Models\Api\Comment\WebCommentReplyDto.cs" />
+    <Compile Include="Models\Api\Comment\WebCommentReplyListDto.cs" />
+    <Compile Include="Models\Api\Comment\WebCommentActionResultDto.cs" />
     <Compile Include="Models\Common.cs" />
     <Compile Include="Models\CookieOrigins.cs" />
     <Compile Include="Models\Common\User\SubmitVideoItemModel.cs" />

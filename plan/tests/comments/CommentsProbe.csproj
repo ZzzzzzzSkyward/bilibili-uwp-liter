@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>CommentsProbe</AssemblyName>
+    <RootNamespace>CommentsProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiEnvelope.cs" Link="ApiEnvelope.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Comment\WebCommentPageParser.cs" Link="WebCommentPageParser.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Comment\WebCommentActionParser.cs" Link="WebCommentActionParser.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Comment\WebCommentPageMapper.cs" Link="WebCommentPageMapper.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\Comment\WebCommentPageDto.cs" Link="WebCommentPageDto.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\Comment\WebCommentReplyDto.cs" Link="WebCommentReplyDto.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\Comment\WebCommentReplyListDto.cs" Link="WebCommentReplyListDto.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\Comment\WebCommentActionResultDto.cs" Link="WebCommentActionResultDto.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Common.cs" Link="Common.cs" />
+  </ItemGroup>
+
+</Project>
