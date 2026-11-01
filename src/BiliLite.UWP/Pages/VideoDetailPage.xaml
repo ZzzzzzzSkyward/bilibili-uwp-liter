@@ -20,7 +20,7 @@
                   <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
                 <Border CornerRadius="2">
-                  <Image Width="100" Source="{Binding Cover}"/>
+                  <Image Width="100" Source="{Binding Cover, Converter={StaticResource imageConvert2}, ConverterParameter='200w'}"/>
                 </Border>
                 <StackPanel Grid.Column="1" Margin="8 0 0 0">
                   <TextBlock TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{Binding Title}" Foreground="{ThemeResource ForegroundTextColor}"/>
@@ -45,7 +45,7 @@
           <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <Border CornerRadius="2">
-          <Image Width="100" Source="{Binding Cover}"/>
+          <Image Width="100" Source="{Binding Cover, Converter={StaticResource imageConvert2}, ConverterParameter='200w'}"/>
         </Border>
         <StackPanel Grid.Column="1" Margin="8 0 0 0">
           <TextBlock TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{Binding Title}" Foreground="{ThemeResource ForegroundTextColor}"/>
@@ -65,7 +65,7 @@
           <ColumnDefinition/>
         </Grid.ColumnDefinitions>
         <Border CornerRadius="2">
-          <Image Width="100" Source="{Binding Cover}"/>
+          <Image Width="100" Source="{Binding Cover, Converter={StaticResource imageConvert2}, ConverterParameter='200w'}"/>
         </Border>
         <StackPanel Grid.Column="1" Margin="8 0 0 0">
           <TextBlock TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" Text="{Binding Title}" Foreground="{ThemeResource ForegroundTextColor}"/>

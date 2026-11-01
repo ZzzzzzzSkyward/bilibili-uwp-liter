@@ -102,7 +102,7 @@
             <Border Background="{ThemeResource HighLightColor}" Visibility="{Binding CurrentBadge, Converter={StaticResource display}}"/>
             <TextBlock Grid.Column="2" Text="{Binding Ordinal}" FontSize="13" Foreground="#99FFFFFF" VerticalAlignment="Center"/>
             <Border Grid.Column="3" Width="64" Height="36" CornerRadius="3" Background="#33FFFFFF">
-              <Image Source="{Binding Cover}" Stretch="UniformToFill"/>
+              <Image Source="{Binding Cover, Converter={StaticResource imageConvert2}, ConverterParameter='200w'}" Stretch="UniformToFill"/>
             </Border>
             <StackPanel Grid.Column="4" Margin="8 0" VerticalAlignment="Center">
               <TextBlock Text="{Binding Title}" FontSize="14" Foreground="White" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{Binding Title, Converter={StaticResource tooltipText}}"/>
