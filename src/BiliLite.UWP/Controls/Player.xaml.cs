@@ -1,5 +1,6 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Modules.Player.Playurl;
+using BiliLite.Services;
 using FFmpegInteropX;
 using System;
 using System.Collections.Generic;
@@ -246,6 +247,55 @@ namespace BiliLite.Controls
             //_ffmpegConfig.StreamBufferSize = 655360;//1024 * 30;
 
         }
+
+        /// <summary>
+        /// 会话已经被关页/换视频/换清晰度/换引擎取代:这一次打开建出来的东西不再碰正在播的播放器。
+        /// 没带会话(session 为 null)的调用沿用原来的行为。
+        /// </summary>
+        private static bool IsSessionStale(PlayerSessionTicket session)
+        {
+            return session != null && !session.IsCurrent;
+        }
+
+        /// <summary>
+        /// 打开途中建出来的 FFmpeg 源先挂在会话名下:会话已经不认这个 id 时由它就地释放,
+        /// 这里返回 false 表示这次打开作废。
+        /// </summary>
+        private static bool HoldSessionResource(PlayerSessionTicket session, FFmpegMediaSource resource)
+        {
+            if (session == null) return true;
+            return session.Hold(new FFmpegSourceLease(resource));
+        }
+
+        /// <summary>
+        /// WinRT 的 FFmpeg 源自己不是 IDisposable,会话只认 IDisposable:这一层就是那个桥。
+        /// </summary>
+        private sealed class FFmpegSourceLease : IDisposable
+        {
+            private readonly FFmpegMediaSource source;
+
+            public FFmpegSourceLease(FFmpegMediaSource source)
+            {
+                this.source = source;
+            }
+
+            public void Dispose()
+            {
+                source?.Dispose();
+            }
+        }
+
+        /// <summary>
+        /// 这次打开在等待里被新的打开取代了:不算失败,也不弹错误,调用方按"作废"处理。
+        /// </summary>
+        private static PlayerOpenResult SupersededOpen()
+        {
+            return new PlayerOpenResult()
+            {
+                result = false,
+                message = "本次打开已被新的打开取代"
+            };
+        }
         /// <summary>
         /// 使用AdaptiveMediaSource播放视频
         /// </summary>
@@ -255,7 +305,7 @@ namespace BiliLite.Controls
         /// <param name="position"></param>
         /// <param name="isLocal"></param>
         /// <returns></returns>
-        public async Task<PlayerOpenResult> PlayDashUseNative(BiliDashPlayUrlInfo dashInfo, string userAgent, string referer, double position = 0,bool isLocal=false)
+        public async Task<PlayerOpenResult> PlayDashUseNative(BiliDashPlayUrlInfo dashInfo, string userAgent, string referer, double position = 0,bool isLocal=false, PlayerSessionTicket session = null)
         {
             try
             {
@@ -297,6 +347,8 @@ namespace BiliLite.Controls
                         message = "创建MediaSource失败"
                     };
                 }
+                // 等源的这段时间里被新的打开取代了:这一份不再接进正在播的播放器
+                if (IsSessionStale(session)) return SupersededOpen();
                 if(mediaSource!=null)
                 _playerVideo.Source = MediaSource.CreateFromAdaptiveMediaSource(mediaSource);
                 else
@@ -309,6 +361,8 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:迟到的打开回调不许再动正在播的那一份
+                        if (IsSessionStale(session)) return;
                         Buffering = false;
                         if(_playerVideo!=null)
                         Duration = _playerVideo.PlaybackSession.NaturalDuration.TotalSeconds;
@@ -343,6 +397,8 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:失败回调不再触发换引擎重开
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
@@ -432,7 +488,7 @@ namespace BiliLite.Controls
         /// <param name="positon"></param>
         /// <param name="needConfig"></param>
         /// <returns></returns>
-        public async Task<PlayerOpenResult> PlayerSingleMp4UseNativeAsync(string url, double positon = 0, bool needConfig = true, bool isLocal = false)
+        public async Task<PlayerOpenResult> PlayerSingleMp4UseNativeAsync(string url, double positon = 0, bool needConfig = true, bool isLocal = false, PlayerSessionTicket session = null)
         {
             try
             {
@@ -453,7 +509,10 @@ namespace BiliLite.Controls
                 _playerVideo = new MediaPlayer();
                 if (isLocal)
                 {
-                    _playerVideo.Source = MediaSource.CreateFromStorageFile(await StorageFile.GetFileFromPathAsync(url));
+                    var file = await StorageFile.GetFileFromPathAsync(url);
+                    // 会话在等待里被取代了:这一份不再接进正在播的播放器
+                    if (IsSessionStale(session)) return SupersededOpen();
+                    _playerVideo.Source = MediaSource.CreateFromStorageFile(file);
                 }
                 else
                 {
@@ -467,6 +526,8 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:迟到的打开回调不许再动正在播的那一份
+                        if (IsSessionStale(session)) return;
                         Duration = _playerVideo.PlaybackSession.NaturalDuration.TotalSeconds;
                         LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
@@ -499,6 +560,8 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:失败回调不再触发换引擎重开
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
@@ -589,7 +652,7 @@ namespace BiliLite.Controls
         /// <param name="positon"></param>
         /// <param name="needConfig"></param>
         /// <returns></returns>
-        public async Task<PlayerOpenResult> PlayDashUseFFmpegInterop(BiliDashPlayUrlInfo dashPlayUrlInfo, string userAgent, string referer, double positon = 0, bool needConfig = true, bool isLocal = false)
+        public async Task<PlayerOpenResult> PlayDashUseFFmpegInterop(BiliDashPlayUrlInfo dashPlayUrlInfo, string userAgent, string referer, double positon = 0, bool needConfig = true, bool isLocal = false, PlayerSessionTicket session = null)
         {
             try
             {
@@ -609,26 +672,37 @@ namespace BiliLite.Controls
                 //关闭正在播放的视频
                 ClosePlay();
                 var _ffmpegConfig = CreateFFmpegInteropConfig(userAgent, referer);
+                // 建出来的源先放在局部:会话被取代时它们还不属于正在播的播放器,由会话释放
+                FFmpegMediaSource videoSource;
+                FFmpegMediaSource audioSource = null;
                 if (isLocal)
                 {
 
                     var videoFile = dashPlayUrlInfo.Video.file ?? await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Video.Url);
-                    _ffmpegMSSVideo = await FFmpegMediaSource.CreateFromStreamAsync(await videoFile.OpenAsync(FileAccessMode.Read), _ffmpegConfig);
+                    videoSource = await FFmpegMediaSource.CreateFromStreamAsync(await videoFile.OpenAsync(FileAccessMode.Read), _ffmpegConfig);
+                    if (!HoldSessionResource(session, videoSource)) return SupersededOpen();
                     if (dashPlayUrlInfo.Audio != null)
                     {
                         var audioFile = dashPlayUrlInfo.Audio.file ?? await StorageFile.GetFileFromPathAsync(dashPlayUrlInfo.Audio.Url);
-                        _ffmpegMSSAudio = await FFmpegMediaSource.CreateFromStreamAsync(await audioFile.OpenAsync(FileAccessMode.Read), _ffmpegConfig);
+                        audioSource = await FFmpegMediaSource.CreateFromStreamAsync(await audioFile.OpenAsync(FileAccessMode.Read), _ffmpegConfig);
+                        if (!HoldSessionResource(session, audioSource)) return SupersededOpen();
                     }
                 }
                 else
                 {
-                    _ffmpegMSSVideo = await FFmpegMediaSource.CreateFromUriAsync(dashPlayUrlInfo.Video.Url, _ffmpegConfig);
+                    videoSource = await FFmpegMediaSource.CreateFromUriAsync(dashPlayUrlInfo.Video.Url, _ffmpegConfig);
+                    if (!HoldSessionResource(session, videoSource)) return SupersededOpen();
                     if (dashPlayUrlInfo.Audio != null)
                     {
-                        _ffmpegMSSAudio = await FFmpegMediaSource.CreateFromUriAsync(dashPlayUrlInfo.Audio.Url, _ffmpegConfig);
+                        audioSource = await FFmpegMediaSource.CreateFromUriAsync(dashPlayUrlInfo.Audio.Url, _ffmpegConfig);
+                        if (!HoldSessionResource(session, audioSource)) return SupersededOpen();
                     }
 
                 }
+                // 到这里才把源交给播放器:在这之前它们只属于这次打开
+                session?.Accept();
+                _ffmpegMSSVideo = videoSource;
+                _ffmpegMSSAudio = audioSource;
 
 
                 //设置时长
@@ -658,6 +732,8 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:迟到的打开回调不许再动正在播的那一份
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
                     });
@@ -683,6 +759,8 @@ namespace BiliLite.Controls
                     if (_playerVideo == null || _playerVideo.Source == null) return;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:失败回调不再触发换引擎重开
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
@@ -806,7 +884,7 @@ namespace BiliLite.Controls
         /// <param name="positon"></param>
         /// <param name="needConfig"></param>
         /// <returns></returns>
-        public async Task<PlayerOpenResult> PlayDashUrlUseFFmpegInterop(string url, string userAgent, string referer, double positon = 0, bool needConfig = true)
+        public async Task<PlayerOpenResult> PlayDashUrlUseFFmpegInterop(string url, string userAgent, string referer, double positon = 0, bool needConfig = true, PlayerSessionTicket session = null)
         {
 
             try
@@ -825,7 +903,11 @@ namespace BiliLite.Controls
                 ClosePlay();
 
                 var _ffmpegConfig = CreateFFmpegInteropConfig(userAgent, referer);
-                _ffmpegMSSVideo = await FFmpegMediaSource.CreateFromUriAsync(url, _ffmpegConfig);
+                var videoSource = await FFmpegMediaSource.CreateFromUriAsync(url, _ffmpegConfig);
+                // 会话在等待里被取代了:这一份由会话释放,不接进正在播的播放器
+                if (!HoldSessionResource(session, videoSource)) return SupersededOpen();
+                session?.Accept();
+                _ffmpegMSSVideo = videoSource;
 
 
                 //设置时长
@@ -840,6 +922,8 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:迟到的打开回调不许再动正在播的那一份
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
                     });
@@ -864,6 +948,8 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:失败回调不再触发换引擎重开
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
@@ -953,7 +1039,7 @@ namespace BiliLite.Controls
         /// <param name="positon"></param>
         /// <param name="needConfig"></param>
         /// <returns></returns>
-        public async Task<PlayerOpenResult> PlaySingleFlvUseFFmpegInterop(string url, string userAgent, string referer, double positon = 0, bool needConfig = true)
+        public async Task<PlayerOpenResult> PlaySingleFlvUseFFmpegInterop(string url, string userAgent, string referer, double positon = 0, bool needConfig = true, PlayerSessionTicket session = null)
         {
 
             try
@@ -973,7 +1059,11 @@ namespace BiliLite.Controls
                 ClosePlay();
 
                 var _ffmpegConfig = CreateFFmpegInteropConfig(userAgent, referer);
-                _ffmpegMSSVideo = await FFmpegMediaSource.CreateFromUriAsync(url, _ffmpegConfig);
+                var videoSource = await FFmpegMediaSource.CreateFromUriAsync(url, _ffmpegConfig);
+                // 会话在等待里被取代了:这一份由会话释放,不接进正在播的播放器
+                if (!HoldSessionResource(session, videoSource)) return SupersededOpen();
+                session?.Accept();
+                _ffmpegMSSVideo = videoSource;
 
 
                 //设置时长
@@ -988,6 +1078,8 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:迟到的打开回调不许再动正在播的那一份
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
                     });
@@ -1012,6 +1104,8 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:失败回调不再触发换引擎重开
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
@@ -1102,7 +1196,7 @@ namespace BiliLite.Controls
         /// <param name="needConfig"></param>
         /// <param name="epId"></param>
         /// <returns></returns>
-        public async Task<PlayerOpenResult> PlaySingleFlvUseSYEngine(string url, string userAgent, string referer, double positon = 0, bool needConfig = true, string epId = "")
+        public async Task<PlayerOpenResult> PlaySingleFlvUseSYEngine(string url, string userAgent, string referer, double positon = 0, bool needConfig = true, string epId = "", PlayerSessionTicket session = null)
         {
 
             try
@@ -1129,6 +1223,8 @@ namespace BiliLite.Controls
                 _playerVideo = new MediaPlayer();
                 _playerVideo.Source = null;
                 var mediaSource = await playList.SaveAndGetFileUriAsync();
+                // 会话在等待里被取代了:这一份不再接进正在播的播放器
+                if (IsSessionStale(session)) return SupersededOpen();
                 _playerVideo.Source = MediaSource.CreateFromUri(mediaSource);
                 //设置时长
                 _playerVideo.MediaOpened += new TypedEventHandler<MediaPlayer, object>(async (e, arg) =>
@@ -1136,6 +1232,8 @@ namespace BiliLite.Controls
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:迟到的打开回调不许再动正在播的那一份
+                        if (IsSessionStale(session)) return;
                         Duration = _playerVideo.PlaybackSession.NaturalDuration.TotalSeconds;
                         LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
@@ -1163,6 +1261,8 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:失败回调不再触发换引擎重开
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);
@@ -1254,7 +1354,7 @@ namespace BiliLite.Controls
         /// <param name="needConfig"></param>
         /// <param name="epId"></param>
         /// <returns></returns>
-        public async Task<PlayerOpenResult> PlayVideoUseSYEngine(List<BiliFlvPlayUrlInfo> urls, string userAgent, string referer, double positon = 0, bool needConfig = true, string epId = "", bool isLocal = false)
+        public async Task<PlayerOpenResult> PlayVideoUseSYEngine(List<BiliFlvPlayUrlInfo> urls, string userAgent, string referer, double positon = 0, bool needConfig = true, string epId = "", bool isLocal = false, PlayerSessionTicket session = null)
         {
             current_engine = PlayEngine.SYEngine;
             PlayMediaType = PlayMediaType.MultiFlv;
@@ -1302,11 +1402,15 @@ namespace BiliLite.Controls
                     _playerVideo.Source = MediaSource.CreateFromUri(mediaSource);
 
                 }
+                // 会话在等待里被取代了(本地多段的文件解析也算):这一份不再接进正在播的播放器
+                if (IsSessionStale(session)) return SupersededOpen();
                 _playerVideo.MediaOpened += new TypedEventHandler<MediaPlayer, object>(async (e, arg) =>
                 {
                     Opening = false;
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:迟到的打开回调不许再动正在播的那一份
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaOpened", "durationSeconds=" + Duration);
                         PlayMediaOpened?.Invoke(this, new EventArgs());
                     });
@@ -1331,6 +1435,8 @@ namespace BiliLite.Controls
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        // 这个播放器已经不属于当前会话:失败回调不再触发换引擎重开
+                        if (IsSessionStale(session)) return;
                         LogPlaybackDiagnostic("MediaFailed", "error=" + arg.Error + " message=" + arg.ErrorMessage);
                         PlayState = PlayState.Error;
                         PlayStateChanged?.Invoke(this, PlayState);

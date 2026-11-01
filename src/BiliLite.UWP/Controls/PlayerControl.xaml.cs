@@ -322,6 +322,10 @@ namespace BiliLite.Controls
         private readonly LocalMediaAsyncLoadGuard _subtitleLoadGuard = new LocalMediaAsyncLoadGuard();
         private readonly LocalMediaAsyncLoadGuard _danmakuLoadGuard = new LocalMediaAsyncLoadGuard();
         private readonly HashSet<string> _enabledManifestDanmaku = new HashSet<string>(StringComparer.Ordinal);
+        // 播放器会话:每次打开媒体一个 id。关页/换P/换清晰度会把在飞的那次作废,它建出来还没接进播放器的资源在作废处释放
+        private readonly PlayerSessionState _playerSessions = new PlayerSessionState();
+        // 引擎回退重开:同一时刻只允许一个在飞,失败回调不能叠出第二次打开
+        private bool _engineFallbackRunning;
 
         private DisplayInformation displayInformation = DisplayInformation.GetForCurrentView();
 
@@ -1518,6 +1522,8 @@ namespace BiliLite.Controls
             _danmakuLoadGuard.Invalidate();
             var itemGeneration = ++_playItemGeneration;
             ClearSubTitle();
+            // 换P/换视频:在飞的那次打开在这里作废,它挂着的资源当场释放,拿着旧会话回来的回调不再被认
+            _playerSessions.Invalidate();
             Player.ClosePlay();
             if (index >= PlayInfos.Count)
             {
@@ -2326,7 +2332,10 @@ namespace BiliLite.Controls
             }
 
             var qn = SettingHelper.GetValue<int>(SettingHelper.Player.DEFAULT_QUALITY, 80);
-            var info = await playerHelper.GetPlayUrls(CurrentPlayItem, qn);
+            var requestedItem = CurrentPlayItem;
+            var info = await playerHelper.GetPlayUrls(requestedItem, qn);
+            // 取地址的这段时间里换了P/换了视频:这一份地址属于上一次播放,不再采用也不去改清晰度下拉
+            if (!ReferenceEquals(CurrentPlayItem, requestedItem)) return;
 
             if (info.Success)
             {
@@ -2336,7 +2345,8 @@ namespace BiliLite.Controls
                 BottomCBQuality.SelectedItem = info.CurrentQuality;
                 //SettingHelper.SetValue<int>(SettingHelper.Player.DEFAULT_QUALITY, info.data.current.quality);
                 BottomCBQuality.SelectionChanged += BottomCBQuality_SelectionChanged;
-                ChangeQuality(info.CurrentQuality);
+                // 等这次打开收尾:不等的话 SetPlayItem 会踩着这次打开去读播放信息
+                await ChangeQuality(info.CurrentQuality);
             }
             else
             {
@@ -2352,6 +2362,7 @@ namespace BiliLite.Controls
                 result = false
             };
             var info = CurrentPlayItem.LocalPlayInfo.Info;
+            var session = _playerSessions.Begin(PlayerSessionReason.LocalOpen);
             if (info.PlayUrlType == BiliPlayUrlType.DASH)
             {
                 //如果设置是系统播放器则优先系统
@@ -2359,20 +2370,23 @@ namespace BiliLite.Controls
                 var hasExternalAudio = CurrentPlayItem.LocalPlayInfo.IsManifestPlayback && CurrentPlayItem.LocalPlayInfo.SelectedAudioTrack != null;
                 if (priority && !hasExternalAudio)
                 {
-                    result = await Player.PlayDashUseNative(info.DashInfo, "", "", position: _position, isLocal: true);
+                    result = await Player.PlayDashUseNative(info.DashInfo, "", "", position: _position, isLocal: true, session: session);
                 }
+                // 会话在等待里被取代了(换P/关页):这一次的后续,包括换解码器回退,一律不做
+                if (!session.IsCurrent) return result;
                 if (!result.result)
-                    result = await Player.PlayDashUseFFmpegInterop(info.DashInfo, "", "", positon: _position, isLocal: true);
+                    result = await Player.PlayDashUseFFmpegInterop(info.DashInfo, "", "", positon: _position, isLocal: true, session: session);
             }
             else if (CurrentPlayItem.LocalPlayInfo.Info.PlayUrlType == BiliPlayUrlType.SingleFLV)
             {
-                result = await Player.PlayerSingleMp4UseNativeAsync(info.FlvInfo.First().Url, positon: _position, isLocal: true);
+                result = await Player.PlayerSingleMp4UseNativeAsync(info.FlvInfo.First().Url, positon: _position, isLocal: true, session: session);
             }
             else if (CurrentPlayItem.LocalPlayInfo.Info.PlayUrlType == BiliPlayUrlType.MultiFLV)
             {
                 //TODO 本地播放
-                result = await Player.PlayVideoUseSYEngine(info.FlvInfo, "", "", positon: _position, epId: CurrentPlayItem.ep_id, isLocal: true);
+                result = await Player.PlayVideoUseSYEngine(info.FlvInfo, "", "", positon: _position, epId: CurrentPlayItem.ep_id, isLocal: true, session: session);
             }
+            if (!session.IsCurrent) return result;
             if (result.result)
             {
                 VideoLoading.Visibility = Visibility.Collapsed;
@@ -2381,6 +2395,8 @@ namespace BiliLite.Controls
             }
             else
             {
+                // 这次打开没成:它建出来还挂着的东西在这里释放一次
+                session.Release();
                 if (CurrentPlayItem.LocalPlayInfo.IsManifestPlayback)
                 {
                     LogHelper.Log("Local media playback failed; stage=player-open; collectionId=" +
@@ -2531,16 +2547,21 @@ namespace BiliLite.Controls
                 return;
             }
             current_quality_info = quality;
+            var session = _playerSessions.Begin(PlayerSessionReason.QualityChange);
             if (!quality.HasPlayUrl)
             {
                 var info = await playerHelper.GetPlayUrls(CurrentPlayItem, quality.QualityID);
+                // 取地址的这段时间里换了P/换了清晰度:这一份地址不再采用,也不弹它失败的提示
+                if (!session.IsCurrent) return;
                 if (!info.Success)
                 {
+                    session.Release();
                     ShowDialog(info.Message, "切换清晰度失败");
                     return;
                 }
                 if (!info.CurrentQuality.HasPlayUrl)
                 {
+                    session.Release();
                     ShowDialog("无法读取到播放地址，试试换个清晰度?", "播放失败");
                     return;
                 }
@@ -2555,7 +2576,9 @@ namespace BiliLite.Controls
                 var audio = quality.DashInfo.Audio;
                 var video = quality.DashInfo.Video;
 
-                result = await Player.PlayDashUseNative(quality.DashInfo, quality.UserAgent, quality.Referer, position: _position, isLocal: false);
+                result = await Player.PlayDashUseNative(quality.DashInfo, quality.UserAgent, quality.Referer, position: _position, isLocal: false, session: session);
+                // 会话在等待里被取代了:这一次的地址属于上一次播放,后面换 FFmpeg 回退也不该做
+                if (!session.IsCurrent) return;
 
                 if (!result.result)
                 {
@@ -2575,7 +2598,7 @@ namespace BiliLite.Controls
                         VideoWidth = video.Width,
                         VideoUrl = video.Url,
                     });
-                    result = await Player.PlayDashUrlUseFFmpegInterop(mpd_url, quality.UserAgent, quality.Referer, positon: _position);
+                    result = await Player.PlayDashUrlUseFFmpegInterop(mpd_url, quality.UserAgent, quality.Referer, positon: _position, session: session);
                     //result = await Player.PlayDashUseFFmpegInterop(quality.playUrlInfo.dash_video_url, quality.playUrlInfo.dash_audio_url, quality.HttpHeader, positon: _postion);
                     //if (!result.result)
                     //{
@@ -2585,10 +2608,11 @@ namespace BiliLite.Controls
             }
             else if (quality.PlayUrlType == BiliPlayUrlType.SingleFLV)
             {
-                result = await Player.PlaySingleFlvUseSYEngine(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id);
+                result = await Player.PlaySingleFlvUseSYEngine(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id, session: session);
+                if (!session.IsCurrent) return;
                 if (!result.result)
                 {
-                    result = await Player.PlaySingleFlvUseFFmpegInterop(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _position);
+                    result = await Player.PlaySingleFlvUseFFmpegInterop(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _position, session: session);
                 }
             }
             //else if (quality.PlayUrlType == VideoPlayMode.SingleMp4)
@@ -2601,8 +2625,10 @@ namespace BiliLite.Controls
             //}
             else if (quality.PlayUrlType == BiliPlayUrlType.MultiFLV)
             {
-                result = await Player.PlayVideoUseSYEngine(quality.FlvInfo, quality.UserAgent, quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id);
+                result = await Player.PlayVideoUseSYEngine(quality.FlvInfo, quality.UserAgent, quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id, session: session);
             }
+            // 会话在等待里被取代了:这一次的结果既不改界面也不弹错误
+            if (!session.IsCurrent) return;
             if (result.result)
             {
                 //var text = $"AID:{CurrentPlayItem.avid}\r\nCID:{CurrentPlayItem.cid}\r\nSeasonID:{CurrentPlayItem.season_id}\r\n";
@@ -2611,6 +2637,8 @@ namespace BiliLite.Controls
             }
             else
             {
+                // 这次打开没成:它建出来还挂着的东西在这里释放一次
+                session.Release();
                 ShowErrorDialog(result.message + "[ChangeQuality]");
             }
         }
@@ -3522,12 +3550,28 @@ namespace BiliLite.Controls
                 ShowErrorDialog(e.message + "[ChangeEngine]");
                 return;
             }
+            // 已经在换引擎重开:同一次失败里再叠一个打开会把刚接上的源顶掉
+            if (_engineFallbackRunning) return;
+            _engineFallbackRunning = true;
+            try
+            {
+                await ChangeEngineAsync(e);
+            }
+            finally
+            {
+                _engineFallbackRunning = false;
+            }
+        }
+
+        private async Task ChangeEngineAsync(ChangePlayerEngine e)
+        {
             VideoLoading.Visibility = Visibility.Visible;
             PlayerOpenResult result = new PlayerOpenResult()
             {
                 result = false,
                 message = ""
             };
+            var session = _playerSessions.Begin(PlayerSessionReason.EngineFallback);
             if (e.play_type == PlayMediaType.Dash && e.change_engine == PlayEngine.FFmpegInteropMSS)
             {
                 if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
@@ -3535,19 +3579,23 @@ namespace BiliLite.Controls
                     var localInfo = CurrentPlayItem.LocalPlayInfo.Info;
                     var position = Player.Position > 0 ? Player.Position : _position;
                     _position = position;
-                    result = await Player.PlayDashUseFFmpegInterop(localInfo.DashInfo, "", "", positon: position, isLocal: true);
+                    result = await Player.PlayDashUseFFmpegInterop(localInfo.DashInfo, "", "", positon: position, isLocal: true, session: session);
                 }
                 else
                 {
-                    result = await Player.PlayDashUseFFmpegInterop(current_quality_info.DashInfo, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position);
+                    result = await Player.PlayDashUseFFmpegInterop(current_quality_info.DashInfo, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position, session: session);
                 }
             }
             if (e.play_type == PlayMediaType.Single && e.change_engine == PlayEngine.SYEngine)
             {
-                result = await Player.PlaySingleFlvUseSYEngine(current_quality_info.FlvInfo.First().Url, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position);
+                if (!session.IsCurrent) return;
+                result = await Player.PlaySingleFlvUseSYEngine(current_quality_info.FlvInfo.First().Url, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position, session: session);
             }
+            // 换引擎途中被换P/关页取代了:这一次的结果既不改界面也不弹错误
+            if (!session.IsCurrent) return;
             if (!result.result)
             {
+                session.Release();
                 if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
                 {
                     var localInfo = CurrentPlayItem.LocalPlayInfo;
@@ -3628,6 +3676,8 @@ namespace BiliLite.Controls
             playerToasts.Dispose();
             _subtitleLoadGuard.Invalidate();
             _danmakuLoadGuard.Invalidate();
+            // 关页:在飞的那次打开在这里作废,它挂着的资源当场释放,之后回来的回调不再被认
+            _playerSessions.Invalidate();
             _playItemGeneration++;
             ClearSubTitle();
             var historyItem = CurrentPlayItem;
