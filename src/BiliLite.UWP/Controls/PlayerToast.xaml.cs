@@ -28,6 +28,7 @@ namespace BiliLite.Controls
         private readonly Storyboard _hideFade;
 
         private bool _hiding;
+        private double _scale = 1;
 
         public PlayerToast()
         {
@@ -55,7 +56,11 @@ namespace BiliLite.Controls
 
         public void SetContent(string text, EFontAwesomeIcon icon)
         {
+            //没有文本时不留空位：折叠文本块同时收掉图标右侧间距，否则纯图标浮层右边挂一条空白
+            var hasText = !string.IsNullOrEmpty(text);
             TxtToast.Text = text ?? "";
+            TxtToast.Visibility = hasText ? Visibility.Visible : Visibility.Collapsed;
+            IconGlyph.Margin = new Thickness(0, 0, hasText ? BaseIconSpacing * _scale : 0, 0);
             if (icon == EFontAwesomeIcon.None)
             {
                 IconGlyph.Text = "";
@@ -73,9 +78,10 @@ namespace BiliLite.Controls
             {
                 scale = 1;
             }
+            _scale = scale;
             TxtToast.FontSize = BaseFontSize * scale;
             IconGlyph.FontSize = BaseFontSize * scale;
-            IconGlyph.Margin = new Thickness(0, 0, BaseIconSpacing * scale, 0);
+            IconGlyph.Margin = new Thickness(0, 0, TxtToast.Visibility == Visibility.Visible ? BaseIconSpacing * scale : 0, 0);
             ToastRoot.Padding = new Thickness(BasePaddingX * scale, BasePaddingY * scale, BasePaddingX * scale, BasePaddingY * scale);
             ToastRoot.CornerRadius = new CornerRadius(BaseCornerRadius * scale);
         }

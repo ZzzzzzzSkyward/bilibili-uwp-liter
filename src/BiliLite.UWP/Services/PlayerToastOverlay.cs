@@ -9,15 +9,16 @@ namespace BiliLite.Services
     public static class PlayerToastOverlay
     {
         /// <summary>
-        /// 0-1 音量显示为整数百分比（0-100，四舍五入，.5 远离零）。
+        /// 音量浮层的文本：只有 0-1 音量对应的整数百分比（0-100，四舍五入，.5 远离零）。
+        /// 浮层自带音量图标，文本再写“音量:”就是同一句话画两遍。
         /// </summary>
         public static string FormatVolume(double volume)
         {
-            return "音量:" + FormatPercent(volume);
+            return FormatPercent(volume);
         }
 
         /// <summary>
-        /// 0-1 音量显示为整数百分比文本（0-100，四舍五入，.5 远离零）。
+        /// 0-1 比例（音量和亮度都用它）显示为整数百分比文本（0-100，四舍五入，.5 远离零）。
         /// </summary>
         public static string FormatPercent(double volume)
         {

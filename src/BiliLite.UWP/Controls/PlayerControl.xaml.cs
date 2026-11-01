@@ -523,7 +523,7 @@ namespace BiliLite.Controls
                             }
                             if (step >= 1)
                             {
-                                playerToasts.Show(PlayerToastService.Progress, "进度:" + TimeSpan.FromSeconds(Player.Position).ToString(@"hh\:mm\:ss"));
+                                playerToasts.Show(PlayerToastService.Progress, TimeSpan.FromSeconds(Player.Position).ToString(@"hh\:mm\:ss"));
                             }
                         }
                     }
@@ -536,7 +536,8 @@ namespace BiliLite.Controls
                         Player.Volume += args.VirtualKey == Windows.System.VirtualKey.Up ? 0.1 : -0.1;
                         if (Player.Volume == 0)
                         {
-                            playerToasts.Show(PlayerToastService.Volume, "静音", EFontAwesomeIcon.Solid_VolumeMute);
+                            //静音图标本身就说明了状态，再写“静音”是多一遍
+                            playerToasts.Show(PlayerToastService.Volume, "", EFontAwesomeIcon.Solid_VolumeMute);
                         }
                         else
                         {
@@ -2618,7 +2619,6 @@ namespace BiliLite.Controls
                 //slider_V.Value += d;
             }
             playerToasts.Show(PlayerToastService.Volume, PlayerToastOverlay.FormatVolume(Player.Volume));
-            //Utils.ShowMessageToast("音量:" +  mediaElement.MediaPlayer.Volume.ToString("P"), 3000);
         }
 
         private void HandleSlideBrightnessDelta(double delta)
@@ -2632,7 +2632,7 @@ namespace BiliLite.Controls
             {
                 Brightness = Math.Max(Brightness - dd, 0);
             }
-            playerToasts.Show(PlayerToastService.Brightness, "亮度:" + Math.Abs(Brightness - 1).ToString("P"));
+            playerToasts.Show(PlayerToastService.Brightness, PlayerToastOverlay.FormatPercent(Math.Abs(Brightness - 1)));
         }
 
         private double _brightness = 0;

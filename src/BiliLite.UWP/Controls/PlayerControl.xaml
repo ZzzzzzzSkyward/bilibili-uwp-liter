@@ -295,7 +295,7 @@
                   <Slider x:Name="DanmuSettingOpacity" Value="{x:Bind Path=DanmuControl.Opacity,Mode=TwoWay}" Minimum="0.1" Maximum="1" StepFrequency="0.1"/>
                   <TextBlock Margin="0 4 0 0">弹幕顶部距离 <Run Text="{x:Bind Path=DanmuControl.Margin.Top,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
                   <Slider x:Name="DanmuTopMargin" Value="0" Minimum="0" Maximum="200" StepFrequency="4"/>
-                  <TextBlock Margin="0 4 0 0">弹幕每秒数量(0为不限制) <Run Text="{x:Bind Path=DanmuSettingMaxNum.Value,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                  <TextBlock Margin="0 4 0 0">弹幕每秒数量 <Run Text="{x:Bind Path=DanmuSettingMaxNum.Value,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
                   <Slider x:Name="DanmuSettingMaxNum" Value="0" Minimum="0" Maximum="50" StepFrequency="1"/>
                   <Grid Margin="0 4 0 0">
                     <Grid.ColumnDefinitions>
@@ -330,7 +330,7 @@
                       </ToggleSwitch.Header>
                     </ToggleSwitch>
                   </Grid>
-                  <TextBlock Margin="0 8">屏蔽等级(0为不屏蔽) <Run Text="{x:Bind Path=DanmuSettingShieldLevel.Value,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>级</TextBlock>
+                  <TextBlock Margin="0 8">屏蔽等级 <Run Text="{x:Bind Path=DanmuSettingShieldLevel.Value,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>级</TextBlock>
                   <Slider x:Name="DanmuSettingShieldLevel" Minimum="0" Maximum="10" StepFrequency="1"/>
                   <TextBlock Margin="0 8">关键词屏蔽</TextBlock>
                   <Grid>
@@ -389,7 +389,7 @@
                   </ToggleSwitch>
                   <ToggleSwitch x:Name="PlayerSettingAutoNext" Margin="0 8" Foreground="White">
                     <ToggleSwitch.Header>
-                      <TextBlock Foreground="White">自动播放下一P</TextBlock>
+                      <TextBlock Foreground="White">自动连播</TextBlock>
                     </ToggleSwitch.Header>
                   </ToggleSwitch>
                   <TextBlock Margin="0 8">播放模式</TextBlock>

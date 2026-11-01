@@ -52,12 +52,12 @@
               </ComboBox>
             </StackPanel>
             <StackPanel x:Name="DisplayMode" Margin="0 0 0 8">
-              <TextBlock Margin="0 8" FontSize="16">显示模式(🔄重启生效)</TextBlock>
+              <TextBlock Margin="0 8" FontSize="16">显示模式</TextBlock>
               <ComboBox x:Name="cbDisplayMode" MinWidth="200">
                 <ComboBox.Items>
                   <ComboBoxItem>标签页</ComboBoxItem>
                   <ComboBoxItem>单窗口</ComboBoxItem>
-                  <ComboBoxItem>多窗口(测试)</ComboBoxItem>
+                  <ComboBoxItem>多窗口</ComboBoxItem>
                 </ComboBox.Items>
               </ComboBox>
             </StackPanel>
@@ -74,15 +74,15 @@
             </StackPanel>
             <StackPanel x:Name="PictureQuality" Margin="0 0 0 8">
               <TextBlock Margin="0 8" FontSize="16">加载原图</TextBlock>
-              <ToggleSwitch x:Name="swPictureQuality" Header="加载原图会影响加载速度及加大内存占用"/>
+              <ToggleSwitch x:Name="swPictureQuality"/>
             </StackPanel>
             <Button x:Name="btnCleanImageCache" Click="btnCleanImageCache_Click" Margin="0 0 0 8">清除图片缓存</Button>
             <StackPanel x:Name="HomeCache" Margin="0 0 0 8">
               <TextBlock Margin="0 8" FontSize="16">缓存首页</TextBlock>
-              <ToggleSwitch x:Name="swHomeCache" Header="关闭后每次切换首页会重新加载数据,但会减少内存占用"/>
+              <ToggleSwitch x:Name="swHomeCache"/>
             </StackPanel>
             <StackPanel Margin="0 0 0 8">
-              <TextBlock Margin="0 8 0 4" FontSize="16">首页自定义(重启生效)</TextBlock>
+              <TextBlock Margin="0 8 0 4" FontSize="16">首页自定义</TextBlock>
               <TextBlock Margin="0 0 0 8">拖动排序,右键或长按移除选项</TextBlock>
               <GridView x:Name="gridHomeCustom" SelectionMode="None" IsItemClickEnabled="True" CanDragItems="True" CanReorderItems="True" AllowDrop="True" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Disabled" DragItemsCompleted="gridHomeCustom_DragItemsCompleted">
                 <GridView.ItemContainerStyle>
@@ -134,9 +134,9 @@
                   </DataTemplate>
                 </GridView.ItemTemplate>
               </GridView>
-              <TextBlock Margin="0 16 0 8" FontSize="16">右侧视频详情宽度(下次打开视频生效)</TextBlock>
+              <TextBlock Margin="0 16 0 8" FontSize="16">右侧视频详情宽度</TextBlock>
               <controls:NumberBox x:Name="numRightWidth" Minimum="40" Margin="0 0 0 8" Width="200" HorizontalAlignment="Left" Value="320" SpinButtonPlacementMode="Compact" SmallChange="20"/>
-              <TextBlock Margin="0 0 0 8" FontSize="16">图片圆角半径(🔄重启生效)</TextBlock>
+              <TextBlock Margin="0 0 0 8" FontSize="16">图片圆角半径</TextBlock>
               <controls:NumberBox x:Name="numImageCornerRadius" Minimum="0" Margin="0 0 0 8" Width="200" HorizontalAlignment="Left" Value="0" SpinButtonPlacementMode="Compact" SmallChange="2"/>
               <TextBlock Margin="0 0 0 8" FontSize="16">背景图</TextBlock>
               <Border x:Name="ImageCornerRadiusExample" Width="120" Height="120" HorizontalAlignment="Left" Background="#99808080">
@@ -162,7 +162,7 @@
                 <ToggleSwitch x:Name="swPreviewImageNavigateToPage"/>
               </StackPanel>
               <StackPanel Margin="0 0 0 8">
-                <TextBlock Margin="0 8" FontSize="16">推荐页显示方式(🔄重启生效)</TextBlock>
+                <TextBlock Margin="0 8" FontSize="16">推荐页显示方式</TextBlock>
                 <ComboBox x:Name="cbRecommendDisplayMode" SelectedIndex="0" MinWidth="200">
                   <ComboBox.Items>
                     <ComboBoxItem>网格</ComboBoxItem>
@@ -171,7 +171,7 @@
                 </ComboBox>
               </StackPanel>
               <StackPanel Margin="0 0 0 8">
-                <TextBlock Margin="0 8" FontSize="16">关注动态显示方式(🔄重启生效)</TextBlock>
+                <TextBlock Margin="0 8" FontSize="16">关注动态显示方式</TextBlock>
                 <ComboBox x:Name="cbDynamicDisplayMode" SelectedIndex="0" MinWidth="200">
                   <ComboBox.Items>
                     <ComboBoxItem>列表</ComboBoxItem>
@@ -196,12 +196,12 @@
                 <ToggleSwitch x:Name="swShowBGOnDynamic"/>
               </StackPanel>
               <StackPanel Margin="0 0 0 8">
-                <TextBlock Margin="0 8" FontSize="16">记录 API 响应形状（排障用）</TextBlock>
+                <TextBlock Margin="0 8" FontSize="16">记录 API 响应形状</TextBlock>
                 <TextBlock Margin="0 0 0 4" FontSize="12" Opacity="0.7">写入 LocalState\log\api，只记字段路径与类型，第一份形状作为基线，之后字段变化会记成一次漂移</TextBlock>
                 <ToggleSwitch x:Name="swApiCapture"/>
               </StackPanel>
               <StackPanel Margin="0 0 0 8">
-                <TextBlock Margin="0 8" FontSize="16">同时记录脱敏正文样本（排障用）</TextBlock>
+                <TextBlock Margin="0 8" FontSize="16">同时记录脱敏正文样本</TextBlock>
                 <TextBlock Margin="0 0 0 4" FontSize="12" Opacity="0.7">每份响应最多 4 KB，名字像凭据的字段会被替换，需要先打开上一项</TextBlock>
                 <ToggleSwitch x:Name="swApiCaptureSamples"/>
               </StackPanel>
@@ -247,11 +247,11 @@
               </ComboBox.Items>
             </ComboBox>
             <TextBlock>⚠如果某个播放器有问题可以换一个试试</TextBlock>
-            <TextBlock Margin="0 16 0 8" FontSize="16">直播视频格式（目前UI不会刷新，请关闭重进设置页）</TextBlock>
+            <TextBlock Margin="0 16 0 8" FontSize="16">直播视频格式</TextBlock>
             <TextBlock FontSize="16" x:Name="LiveVideoText" Text="{x:Bind videotext}"/>
             <ListView x:Name="swLiveVideoFormat" MinWidth="200" SelectionChanged="swLiveVideoFormat_SelectionChanged" SelectionMode="Multiple" MaxWidth="400" HorizontalAlignment="Left">
               <ListViewItem AccessKey="0">FLV</ListViewItem>
-              <ListViewItem AccessKey="1">TS（目前不支持）</ListViewItem>
+              <ListViewItem AccessKey="1">TS</ListViewItem>
               <ListViewItem AccessKey="2">MP4</ListViewItem>
             </ListView>
             <TextBlock Margin="0 16 0 8" FontSize="16">默认倍速</TextBlock>
@@ -268,7 +268,7 @@
             </ComboBox>
             <TextBlock Margin="0 16 0 8" FontSize="16">自动开播</TextBlock>
             <ToggleSwitch x:Name="swAutoPlay"/>
-            <TextBlock Margin="0 16 0 8" FontSize="16">继续播放下一P</TextBlock>
+            <TextBlock Margin="0 16 0 8" FontSize="16">自动连播</TextBlock>
             <ToggleSwitch x:Name="swAutoNext"/>
             <!--<TextBlock  Margin="0 16 0 8" FontSize="16">使用外站视频替换无法播放的视频</TextBlock>
                         <ToggleSwitch x:Name="swPlayerSettingUseOtherSite" ToolTipService.ToolTip="打开后支持观看部分大陆无版权番剧"></ToggleSwitch>-->
@@ -500,7 +500,7 @@
             <ToggleSwitch x:Name="DanmuSettingState" OnContent="打开" OffContent="关闭"/>
             <TextBlock Margin="0 16 0 8" FontSize="16">弹幕顶部距离</TextBlock>
             <controls:NumberBox x:Name="numDanmakuTopMargin" Minimum="0" Margin="0 0 0 8" Width="200" HorizontalAlignment="Left" Value="0" SpinButtonPlacementMode="Compact" SmallChange="4"/>
-            <TextBlock Margin="0 16 0 8" FontSize="16">弹幕每秒最大数量(0为不限制)</TextBlock>
+            <TextBlock Margin="0 16 0 8" FontSize="16">弹幕每秒最大数量</TextBlock>
             <controls:NumberBox x:Name="numDanmakuMaxNum" Minimum="0" Margin="0 0 0 8" Width="200" HorizontalAlignment="Left" Value="0" SpinButtonPlacementMode="Compact" SmallChange="1"/>
             <StackPanel Orientation="Horizontal" Margin="0 16 0 0">
               <Button x:Name="DanmuSettingSyncWords" Click="DanmuSettingSyncWords_Click">同步弹幕屏蔽</Button>
