@@ -11,6 +11,7 @@ in `bug_report.md` first.
 
 | Fact | Value |
 | --- | --- |
+| workspace | `Z:\bilibili-uwp-liter` as of 2026-11-02 (the `H:\uwp\bilibili-uwp-liter` copy is left behind at `e3b8436`, holds stray uncommitted edits and is no longer the working tree). The Z: clone was made from the H: path, so its `origin` had to be reset to the GitHub URL, and a fresh clone needs `-Restore` plus the referenced project outputs (`src/BiliLite.gRPC/bin`, `src/BiliLite.JSBridge/bin`, and the other `src/*/bin`) before `-SkipProjectReferences` compiles — otherwise `CompileXaml` fails with `WMC1006` on `BiliLite.gRPC.dll`/`BiliLite.JSBridge.winmd` |
 | branch | `dev`, in sync with `origin/dev` |
 | build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -SkipProjectReferences` (compile only; this machine's VS has no .NET SDK component, so the script evaluates the skipped SDK-style `BiliLite.gRPC` through the installed dotnet SDK) or without `-Fast` to package into `Z:\`. **Every build bumps the revision** (both `Package.appxmanifest` files, same source of truth); `-NoVersionBump` is for a throwaway repeated package, not for a batch that ships |
 | probe checks | `sh plan/tests/<batch>/run.sh` — net8.0 probe projects under `plan/tests/` compile the real product sources and assert behavior. The scripts expect a portable drop at `$UPSTREAM_UNIT_TOOLS/dotnet` with SDK 8.0.427; that drop is absent on this machine, the installed SDK is 10.0.302 with the 8.0.33 ref pack and an 8.0.33 runtime, so a batch either points `UPSTREAM_UNIT_TOOLS` at a directory containing a `dotnet` root or resolves the installed SDK. `sh` here is MSYS2 (Git Bash) |
@@ -22,8 +23,34 @@ in `bug_report.md` first.
 
 Newest first; every one of these is device-accepted per the policy above, except the 2026-11-01 entries: BR-44 is
 device-confirmed, while P4 step 1, BR-45 and the second BR-43 attempt are compiled and probe-covered only — their
-device rows are still open in `plan/VALIDATION.md`.
+device rows are still open in `plan/VALIDATION.md`. The 2026-11-02 entries are compiled
+(`-Fast`, 0 errors, package 1.0.9.35), probe-covered and covered by one unified run of all 35 probe batches
+(`TOTAL_FAILURES=0`), but none of them has been on a device.
 
+- **REFRESH D4/D5 — credential identity:** `75fe40f` — `Services/RefreshCredentialPolicy.cs` holds the only
+  decision about the saved web refresh token (`RefreshTokenPolicy.Decide`, a pure function over the saved value,
+  its recorded source, the session owner, the cookie candidate and a pending-confirmation flag) plus
+  `RefreshTokenMirror`/`AppkeyPolicy`. A response token is authoritative for its session, cookie `ac_time_value`
+  adoption only happens when nothing is saved, an owner mismatch refuses the import, and both former mirror
+  implementations now call the one unit. `SaveLogin` records which configured appkey acquired the pair (Login for
+  password/SMS, Tv for QR, UnknownLegacy otherwise) and `AccountApi.RefreshToken` signs with that same key.
+  `auth3` 130 → 173 assertions; `auth1`'s pre-D4 assertion was re-stated as the keep-path plus the migration path.
+- **Settings structure (SETTINGS_PLAN slice 1):** `ed5fe9f` — ten tabs in use-case order, controls moved to the tab
+  their use case belongs to, each tab grouped with the page's own header/label/help styles, labels stripped of
+  parentheticals and duplicated icons with the text moved to the help line. The 直播视频格式 group is deleted:
+  it wrote `livevideoformat` that only the page read back, while the live request builds its format from
+  `PlayerAPI.videofmt`. Labels, dead-control removal and save errors beyond that one group are the next slice.
+- **Dynamics body (CARD_PLAN slice 1):** `2d1c4b3` — web and gRPC mappers keep `additional`, OPUS summary/covers,
+  draw pictures, `major.ugc_season`, `no_comment`/`no_forward` and the text-node vocabulary; `Parsing/Dynamic/
+  RichTextFlow.cs` joins nodes into one paragraph with the source's own breaks, no character cap and the link
+  label kept apart from its target; photo hosts and `ShowContent` read the body; the dead markup builders and the
+  reserve `??`/`+` precedence bug are gone. `g3` 73 → 135 assertions, `g5` 44.
+- **BR-47 Hot card height budget:** `3ec04aa` — tag on the thumbnail (one ellipsised line, collapsed by its text
+  rather than its style object), title plus both metadata lines in a text column, slot 100 → 132 and a sub-480
+  stack at 296/320. Layout-visible, so it closes on the device.
+- **Probe batches repaired after the unified run:** `488a978` — `g4`'s stub gained the silent `TryGetJObject`
+  (the toasting `GetJObject` on top of it), and `ux1c`'s request-builder assertion, which had silently degraded to
+  comparing empty strings after `1838108` made the method `async`, now anchors on the surviving signature tail.
 - **BR-46 keyboard focus after a switch:** `50bb009` — a `PivotHeaderItem` handles Space itself and every advance funnels through
   `InitializeVideo`, so after auto-next the focus sat on a tab header and Space switched tabs. `PlayerControl.FocusPlayer()`
   is the one entry over the existing `BtnFoucs` sink, called from `InitializeVideo`'s success path only when
@@ -125,15 +152,17 @@ device rows are still open in `plan/VALIDATION.md`.
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. P4 steps 1, 2 and 5 shipped: season detail `ed9f248`, playlists `1838108`, comments `f03078c` — each with a parser/mapper layer, DTOs under `Models/Api/`, a field table beside the parser and its own probe (`season1` 109, `c2` 162 + `c3` 117, `comments` 99). Remaining for P4: **account** only (step 4), which the maintainer is holding back; the video-detail step shipped in `e6c2fb5` and `c1` grew to 161 assertions. Order and traps: `plan/P4_INVENTORY.md` §5 |
 | 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; the remaining checks are the device rows in `plan/VALIDATION.md` |
-| 6 | Auth refresh defects — `REFRESH_PLAN.md` | D2 (truthful renewal result) in flight; then D4/D5 (credential identity) → D1 (cookie-to-app bridge) → D3 (staged web confirmation), the document's own order. P4 step 4 (account) stays held back by the maintainer |
-| 7 | Hot tab card overflow — `HOT_CARD_PLAN.md` | plan only, no code. Maintainer-reported overflow; the card budget, the tag-on-thumbnail layout and the narrow-width stack are proposed, not implemented. XAML-only and layout-visible, so it closes on the device, not on a probe |
-| 8 | Settings reorganization — `SETTINGS_PLAN.md` | report only: ten tabs in use-case order, dead controls, save errors, per-setting disposition. Nothing implemented |
-| 9 | Dynamics card contract — `CARD_PLAN.md` | report only: one card-data contract per source plus one shared body renderer, keeping source selection and paging. Nothing implemented |
+| 6 | Auth refresh defects — `REFRESH_PLAN.md` | D2 shipped in `6ee8a81`, D4/D5 in `75fe40f`. Next, in the document's order: **D1** (awaited cookie-to-app bridge plus capability-aware Home recovery) → **D3** (staged web replacement with a persisted pending confirmation; the decision unit already accepts the flag). P4 step 4 (account) stays held back by the maintainer |
+| 7 | Hot tab card overflow — `HOT_CARD_PLAN.md` | **shipped** in `3ec04aa` (BR-47). Layout-visible, so the device pass decides: clipping, the tag capsule, and the 150%/200% text-size case the plan says `AdaptiveTrigger` cannot see |
+| 8 | Settings reorganization — `SETTINGS_PLAN.md` | slice 1 shipped in `ed5fe9f` (tab set/order, moves, grouping, labels, the one provably dead group). Remaining: the rest of the dead-control list, the save-error fix (custom API path written on load), the behaviour dependencies (HEVC/AV1 hint, capture-sample disable, CDN collapse, regex validation before save, cross-page input reset, middle-click in single-window mode, the fake video-rule upload), and the local help rewrite |
+| 9 | Dynamics card contract — `CARD_PLAN.md` | slice 1 shipped in `2d1c4b3` (data: rich content preserved, one paragraph join, attachments/OPUS/forbidden flags, dead markup builders removed). Remaining: layout/typography (§5), the expansion policy (§4), the shared card-data contract with the Opus title slot (§3), previews/authors/reposts (§2 P1), the memory page window (§9) |
 
-**Order** (dispatcher, 2026-11-02): the open `code_review.md` finding inside item 1 — a failed engine
-attempt's player is never disposed when the fallback accepts — then `REFRESH_PLAN.md` D2, then
-`HOT_CARD_PLAN.md` (user-visible, needs one device pass), then `SETTINGS_PLAN.md`, then `CARD_PLAN.md`.
-`REFRESH_PLAN.md` D4/D5 → D1 → D3 follow D2; item 2 stays parked until BR-21 has measurements.
+**Order** (dispatcher, 2026-11-02, updated after the parallel wave): the engine-fallback disposal finding
+(`0b70113`) is closed; D2 and D4/D5 are in; the first slices of the Hot-card, settings and dynamics plans are in
+and await one device pass. Next: `REFRESH_PLAN.md` **D1** then **D3** (they share `Account.cs`, `CookieService.cs`
+and the login transport, so they cannot run in parallel with each other), then the second slices of
+`SETTINGS_PLAN.md` (dead controls + save errors, one page) and `CARD_PLAN.md` (layout, independent files).
+Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back.
 
 ## 1. Player session ownership
 

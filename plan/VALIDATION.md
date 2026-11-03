@@ -57,3 +57,19 @@ assertions. Nothing installed, so both rows still need the device pass.
 | --- | --- | --- |
 | Engine attempt releases what it built | `0b70113` | force the fallback a few times (a video whose native DASH source fails to build, or repeated quality switches on a long video): playback still lands on the fallback engine, audio stays in sync, closing the tab leaves no ghost audio, and the working set does not keep climbing across 10+ opens. This row is about leaks, so watch the memory graph rather than the picture |
 | Renewal says what it actually did | `6ee8a81` | cut the network, then 设置 → 账号 → 刷新登录: it says the refresh can be retried later and the account stays 已登录 with no login dialog. A genuinely expired session still shows 登录已失效 and 重新登录 restores quality. A normal refresh still reports success and keeps 1080p and above |
+
+## Shipped 2026-11-02 — the parallel wave (four slices, one build, one probe run)
+
+Compiled from `Z:\bilibili-uwp-liter` with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences`
+(0 errors, package `BiliLite.UWP_1.0.9.35_x64`), then **all 35 probe batches ran once** — `TOTAL_FAILURES=0`.
+That run is also what found `ux1c`'s vacuous assertion (an `async` signature change had made its source scan
+compare empty strings) and the three batches whose stubs predated the silent envelope decode; both are repaired
+in `488a978`. Nothing installed, so every row below still needs the device pass.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Refresh identity | `75fe40f` | with `刷新登录` pressed after an overnight session, the app keeps working on the token it has; a QR login and a password login both still renew the next day. The failure this fixes is a stale `ac_time_value` cookie replacing a fresh token, so the visible symptom is "renewal stopped working until re-login" — if that reappears, the log line names the decision (`unknown-source-kept` / `response-authoritative` / `legacy-adoption`) |
+| Settings page structure | `ed5fe9f` | the ten tabs appear in the new order; CDN sits under 网络与解析, 简繁转换 under 播放, the API-capture switches under 诊断, and the manual session fields inside 账号 (collapsed); every control still changes its setting; the old 直播视频格式 group is gone and live playback formats are unchanged |
+| Hot card height | `3ec04aa` | on 热门, cards with a recommendation reason no longer clip or overlap: the tag sits on the thumbnail as one ellipsised line, the title keeps two lines, both metadata lines are whole. Narrow the window under ~480 to see the stacked card, and set Windows text size to 150% — if it still clips there, the plan's trigger cannot see it and the slot needs a measured height |
+| Dynamics body | `2d1c4b3` | a dynamics card with an attachment card, a multi-picture post, or a sentence that spans an @/topic/emoji renders the whole body as one flowing paragraph; a photo-only card shows its text; a reserve卡 shows both description lines when the server sends two, and never a lone blank line; nothing regressed in the video/season/article tabs or in paging |
+| Probe harness truthfulness | `488a978` | no device row: `g4` and `ux1c` are harness repairs. Their value is that the next unified run cannot pass while `ux1c`'s request-builder check compares empty strings |
