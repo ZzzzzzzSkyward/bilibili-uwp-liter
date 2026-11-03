@@ -27,6 +27,18 @@ device rows are still open in `plan/VALIDATION.md`. The 2026-11-02 entries are c
 (`-Fast`, 0 errors, package 1.0.9.35), probe-covered and covered by one unified run of all 35 probe batches
 (`TOTAL_FAILURES=0`), but none of them has been on a device.
 
+- **Review finding — a login no longer inherits the previous account's token:** `14ac4c3` — `RefreshTokenPolicy`
+  decides the owner mismatch before the response-authoritative branch, `PersistCredentials` deletes the previous
+  generation's `ac_time_value` when the uid changes, `ReadToken(sessionOwnerId)` refuses a contradictory record,
+  `GetRefreshToken` passes the session owner (the only submit path), and a hand-entered token records `manual`
+  provenance with the session owner. `auth3` 188 → 218 assertions.
+- **Review findings — reused photo body and the reservation lottery line:** `2072d64` — `RichTextBodyState` makes
+  the mounted child a function of the current `Content`/`Text` on every change including empty, so a recycled card
+  cannot show the previous body; the gRPC mapper maps `desc_text3` and the visible reservation description joins
+  all three slots through `JoinText`, which now also drops an exact repeat. `g3` 135 → 176 assertions.
+- **Probe truthfulness — BR-31 checked on labels only:** `30bc06a` — `auth1`'s ban on `（ ： ·` covered the whole
+  account block and failed on a legitimate help line; it now scans label text and exempts `SettingHelp`/`ToolTip`
+  subtrees. A mutation inside a label still fails it.
 - **Review finding — a rejected cookie write reported as installed:** `b4cd995` — `Services/CredentialCommitter.cs`
   owns the D2 commit (four-value snapshot/rollback plus per-cookie accounting); a `false` from
   `CookieManager.SetCookie` now counts as a failure exactly like a throw, so `CookieInstalled` is only true when
@@ -170,10 +182,10 @@ device rows are still open in `plan/VALIDATION.md`. The 2026-11-02 entries are c
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. P4 steps 1, 2 and 5 shipped: season detail `ed9f248`, playlists `1838108`, comments `f03078c` — each with a parser/mapper layer, DTOs under `Models/Api/`, a field table beside the parser and its own probe (`season1` 109, `c2` 162 + `c3` 117, `comments` 99). Remaining for P4: **account** only (step 4), which the maintainer is holding back; the video-detail step shipped in `e6c2fb5` and `c1` grew to 161 assertions. Order and traps: `plan/P4_INVENTORY.md` §5 |
 | 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; the remaining checks are the device rows in `plan/VALIDATION.md` |
-| 6 | Auth refresh defects — `REFRESH_PLAN.md` | D2 shipped in `6ee8a81`, D4/D5 in `75fe40f`. Next, in the document's order: **D1** (awaited cookie-to-app bridge plus capability-aware Home recovery) → **D3** (staged web replacement with a persisted pending confirmation; the decision unit already accepts the flag). P4 step 4 (account) stays held back by the maintainer |
+| 6 | Auth refresh defects — `REFRESH_PLAN.md` | D2 `6ee8a81`, D4/D5 `75fe40f`, plus the two review findings `b4cd995` (rejected cookie write) and `14ac4c3` (a login is a new credential session). Next, in the document's order: **D1** (awaited cookie-to-app bridge plus capability-aware Home recovery) → **D3** (staged web replacement with a persisted pending confirmation; the decision unit already accepts the flag). P4 step 4 (account) stays held back by the maintainer |
 | 7 | Hot tab card overflow — `HOT_CARD_PLAN.md` | **shipped** in `3ec04aa` (BR-47). Layout-visible, so the device pass decides: clipping, the tag capsule, and the 150%/200% text-size case the plan says `AdaptiveTrigger` cannot see |
 | 8 | Settings reorganization — `SETTINGS_PLAN.md` | slices 1–2 shipped: `ed5fe9f` (tabs, moves, grouping, labels) and `c4c683f` (dead controls, the `api_web_secondary` save bug). Remaining slice 3: the behaviour dependencies (HEVC/AV1 hint, capture-sample disable when 响应结构 is off, CDN collapse, regex validation before save, the cross-page input reset, middle-click in single-window mode, the fake video-rule upload) and the `Assets/Text/help.md` rewrite |
-| 9 | Dynamics card contract — `CARD_PLAN.md` | slices 1–2 shipped: `2d1c4b3` (data) and `48c5df5` (reading column, header, action columns, OneRow preview). Remaining: the expansion policy (§4), the shared card-data contract with the Opus title slot (§3), the preview ratio box (§6), bounded repost depth, the memory page window (§9), plus the ten layout items awaiting the device pass |
+| 9 | Dynamics card contract — `CARD_PLAN.md` | slices 1–2 and two review findings shipped: `2d1c4b3` (data), `48c5df5` (layout), `2072d64` (body mounting on reuse + the reservation lottery line). Remaining: the expansion policy (§4), the shared card-data contract with the Opus title slot (§3), the preview ratio box (§6), bounded repost depth, the memory page window (§9), plus the ten layout items awaiting the device pass |
 
 **Order** (dispatcher, 2026-11-02, updated after the parallel wave): the engine-fallback disposal finding
 (`0b70113`) is closed; D2 and D4/D5 are in; the first slices of the Hot-card, settings and dynamics plans are in

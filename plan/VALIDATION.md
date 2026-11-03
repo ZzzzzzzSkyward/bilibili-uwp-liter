@@ -85,3 +85,15 @@ every row below needs the device pass.
 | A rejected cookie write is reported | `b4cd995` | no visible change when everything works. The case it fixes is a renewal that reports 成功 while cookie-authenticated pages are unauthenticated: if a renewal succeeds but the app still behaves as logged-out, the log line says `token=saved cookie=failed`, and 设置 → 账号 should not claim 已登录 |
 | Settings: dead controls gone, API keys safe | `c4c683f` | open 设置 with a custom API address/path set, close it without pressing 应用参数: the custom values must still be in effect and still filled in next time you open the page. The page no longer shows the 语言 dropdown, theme-colour picker, DefaultTheme/示例主题 notice, platform combo, 注销 accesskey button or 极验 test form |
 | Dynamics card layout | `48c5df5` | the feed reads as one column: header (avatar, name, time, actions), body, then three evenly spaced action buttons; nothing is indented under the avatar any more. Narrow the window under ~480 to see the header collapse into one ⋯ menu with 详情/网页/删除/装扮信息. Check at 480/800/1200 and at 150%/200% text size that the name truncates instead of colliding, the pendant/verification overlay does not overlap the name or the tag badge, the OneRow cover is not letterboxed, and the divider between cards reads correctly on the page background |
+
+## Shipped 2026-11-03 — wave 4 (three review findings, probe truthfulness)
+
+Compiled with `build-release-x64.ps1 -Fast -SkipProjectReferences` (0 errors, package
+`BiliLite.UWP_1.0.9.37_x64`), then the whole suite again: **35 batches, `TOTAL_FAILURES=0`**. Nothing installed.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| A login starts a new credential session | `14ac4c3` | while signed in as A, use 设置 → 账号 → 重新登录 to sign in as B without logging out first: B's session must behave as B (its own feed/progress), and after a restart 刷新登录 must keep working for B. If B ever sees A's history or a renewal starts failing right after the switch, this is the code path to reopen. A hand-typed `ac_time_value` in 账号 keeps working, and clearing the box clears it |
+| Reused card body | `2072d64` | scroll the dynamics feed so photo cards and text cards alternate; every card shows only its own body, never the previous card's text or links, including after returning from a detail page and after paging |
+| Reservation lottery line | `2072d64` | a 预约 card whose server data carries a lottery line (抽奖) shows time, reservation count and the lottery text in one line, with no repeated sentence when the server fills the same string into two slots |
+| No-explanation rule on labels | `30bc06a` | 账号 tab: labels are short (登录状态, 刷新登录, 重新登录, 退出登录, access_key, SESSDATA, bili_jct, ac_time_value); the grey help lines under them may explain, and no label carries a colon or a parenthetical |
