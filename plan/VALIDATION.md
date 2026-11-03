@@ -97,3 +97,20 @@ Compiled with `build-release-x64.ps1 -Fast -SkipProjectReferences` (0 errors, pa
 | Reused card body | `2072d64` | scroll the dynamics feed so photo cards and text cards alternate; every card shows only its own body, never the previous card's text or links, including after returning from a detail page and after paging |
 | Reservation lottery line | `2072d64` | a 预约 card whose server data carries a lottery line (抽奖) shows time, reservation count and the lottery text in one line, with no repeated sentence when the server fills the same string into two slots |
 | No-explanation rule on labels | `30bc06a` | 账号 tab: labels are short (登录状态, 刷新登录, 重新登录, 退出登录, access_key, SESSDATA, bili_jct, ac_time_value); the grey help lines under them may explain, and no label carries a colon or a parenthetical |
+
+## Shipped 2026-11-03 — auth wave (D1 + D3)
+
+Compiled with `build-release-x64.ps1 -Fast -SkipProjectReferences` (0 errors, `BiliLite.UWP_1.0.9.38_x64`), then the
+whole suite: **37 batches, `TOTAL_FAILURES=0`**. Nothing installed. Every row below is source + probe evidence; the
+device column is what only the device can settle.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Resumable web refresh | `bba2df4` | sign in, leave the app on a page that refreshes the web session, then kill it while the confirmation is in flight (the app must not be in the foreground when it dies). Relaunch: the log must show the pending confirmation completed, and there must be **no** second `/cookie/refresh` for that generation. If the log shows a fresh rotation instead, the record was not read |
+| Cookie-to-app recovery | `000bfd0` | sign in with the password/TV path (no OAuth refresh token), then invalidate the app key: the session must attempt the cookie-to-app conversion before any logout, and only log out when the web session is unusable as well. Worth watching the log line for the outcome; a transient failure must keep the session and toast, not log out |
+| Pending record does not survive a logout | `e0e454e` | log out, sign back in as the same account: renewal must behave like a fresh login (no resume of the previous generation), and 设置 → 账号 must not show a stale access-key provenance |
+| App-key expiry is metadata | `000bfd0` | a cookie-derived key expires locally after the estimated 240 hours; that alone must not trigger a renewal request on the next start (the log line says `estimated`) |
+
+Two probe-side repairs rode along and are worth knowing about: the stub `ApplicationData.Current.LocalFolder` is now
+per-run instead of per-PID (a stale `cookie-refresh-pending.json` in `%TEMP%\bili-probe-<pid>` made `api02` fail in a
+sweep while passing alone), and no probe leaves `%TEMP%\bili-probe*` behind.
