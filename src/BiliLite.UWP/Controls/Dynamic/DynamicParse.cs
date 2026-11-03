@@ -3,10 +3,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Windows.Input;
+using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Documents;
 using Windows.UI.Xaml.Markup;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using BiliLite.Helpers;
+using BiliLite.Parsing.Dynamic;
 using Newtonsoft.Json;
 using BiliLite.Models.Dynamic;
 using System.Xml;
@@ -201,21 +206,128 @@ namespace BiliLite.Controls.Dynamic
                     return subtype;
             }
         }
-        public static RichTextBlock Render(string t)
+        /// <summary>正文基准字号与 RichTextControl 一致；只用来把表情档位换成 em 倍数。</summary>
+        private const double BodyFontSize = 14;
+
+        /// <summary>
+        /// 正文渲染：RichTextFlow 给出的片段顺序决定内容，一个段落装下整条正文。
+        /// 节点类型切换不断句，只有来源里的换行才产生 LineBreak；不按字符数截断。
+        /// </summary>
+        public static RichTextBlock BuildRichText(DynamicItemDisplayModel data, Modules.DynamicCardModel2024_desc desc)
         {
+            return BuildBlock(RichTextFlow.Build(desc?.rich_text_nodes, desc?.text), data);
+        }
+
+        /// <summary>纯文本正文：同样只按来源换行断行，没有正文时不建空块。</summary>
+        public static RichTextBlock BuildPlainText(string text)
+        {
+            return BuildBlock(RichTextFlow.Build(null, text), null);
+        }
+
+        private static RichTextBlock BuildBlock(List<RichTextSegment> segments, DynamicItemDisplayModel data)
+        {
+            if (segments == null || segments.Count == 0)
+            {
+                return null;
+            }
+            var paragraph = new Paragraph();
+            foreach (var segment in segments)
+            {
+                var inline = BuildInline(segment, data);
+                if (inline != null)
+                {
+                    paragraph.Inlines.Add(inline);
+                }
+            }
+            if (paragraph.Inlines.Count == 0)
+            {
+                return null;
+            }
+            var block = new RichTextBlock
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = 20,
+            };
+            block.Blocks.Add(paragraph);
+            return block;
+        }
+
+        private static Inline BuildInline(RichTextSegment segment, DynamicItemDisplayModel data)
+        {
+            switch (segment.Kind)
+            {
+                case RichTextSegmentKind.LineBreak:
+                    return new LineBreak();
+                case RichTextSegmentKind.Mention:
+                    return BuildAction(segment.Text, segment.Target, data?.UserCommand);
+                case RichTextSegmentKind.Topic:
+                    // 话题走 App 自己的话题页，参数是去掉 # 的名字
+                    return BuildAction(segment.Text, segment.Text?.Trim('#'), data?.TagCommand);
+                case RichTextSegmentKind.Link:
+                    return BuildAction(segment.Text, segment.Target, data?.LaunchUrlCommand);
+                case RichTextSegmentKind.Emoji:
+                    return BuildEmoji(segment);
+                default:
+                    return string.IsNullOrEmpty(segment.Text) ? null : new Run { Text = segment.Text };
+            }
+        }
+
+        /// <summary>可点片段用文字 Hyperlink 内联，不塞 HyperlinkButton：链接跟着正文换行流动。</summary>
+        private static Inline BuildAction(string text, string target, ICommand command)
+        {
+            if (command == null || string.IsNullOrEmpty(target) || string.IsNullOrEmpty(text))
+            {
+                return string.IsNullOrEmpty(text) ? null : new Run { Text = text };
+            }
+            var link = new Hyperlink
+            {
+                Foreground = Utils.GetBrush("HighLightColor"),
+            };
+            link.Inlines.Add(new Run { Text = text });
+            link.Click += (sender, args) =>
+            {
+                if (command.CanExecute(target))
+                {
+                    command.Execute(target);
+                }
+            };
+            return link;
+        }
+
+        /// <summary>
+        /// 表情图片：wire 的 size 是语义档位（普通/大表情），不是像素倍数；图片不可用时退回它的可读文本。
+        /// </summary>
+        private static Inline BuildEmoji(RichTextSegment segment)
+        {
+            BitmapImage image = null;
             try
             {
-                var xaml = string.Format(@"<RichTextBlock HorizontalAlignment=""Stretch"" TextWrapping=""Wrap""  xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation""
-                                            xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"" xmlns:d=""http://schemas.microsoft.com/expression/blend/2008""
-    xmlns:mc = ""http://schemas.openxmlformats.org/markup-compatibility/2006"" LineHeight=""20"">{0}</RichTextBlock>", t);
-                return (RichTextBlock)XamlReader.Load(xaml);
+                image = new BitmapImage(new Uri(segment.ImageUrl));
             }
-            catch
+            catch (Exception)
             {
-                Utils.AddALog("无法解析动态 "+t);
+                image = null;
             }
-            return null;
+            if (image == null || string.IsNullOrEmpty(segment.ImageUrl))
+            {
+                return string.IsNullOrEmpty(segment.Text) ? null : new Run { Text = segment.Text };
+            }
+            var side = Math.Round(BodyFontSize * (segment.EmojiSize >= 2 ? 1.5 : 1.2));
+            var border = new Border
+            {
+                Margin = new Thickness(0, -4, 4, -4),
+                Child = new Image
+                {
+                    Source = image,
+                    Width = side,
+                    Height = side,
+                    Stretch = Stretch.Uniform,
+                },
+            };
+            return new InlineUIContainer { Child = border };
         }
+
         public static DynamicItemDisplayOneRowInfo ParseOneRowInfo2024(DynamicItemDisplayModel data, Modules.DynamicCardModel2024 item)
         {
             var info = new DynamicItemDisplayOneRowInfo()
@@ -227,25 +339,26 @@ namespace BiliLite.Controls.Dynamic
                 Desc = item.desc,
                 Title = item.title,
             };
-            data.Content = Render(item.richtext);
+            data.Content = BuildRichText(data, item.modules?.module_dynamic?.desc);
             switch (data.Type)
             {
                 case DynamicDisplayType.Text:
                     {
-                        if (GetDynamicSubType(item.modules.module_dynamic.additional?.type ?? "") == "reserve")
+                        var additional = item.modules?.module_dynamic?.additional;
+                        if (GetDynamicSubType(additional?.type ?? "") == "reserve")
                         {
+                            var reserve = additional?.reserve;
                             data.Type = DynamicDisplayType.Reserve;
                             info = new DynamicItemDisplayOneRowInfo()
                             {
                                 Title = item.title,
-                                Desc = item.modules.module_dynamic.additional.reserve.desc1?.text ?? "" + " " +
-                                item.modules.module_dynamic.additional.reserve.desc2?.text ?? "",
+                                Desc = reserve?.desc ?? "",
                                 Subtitle = item.desc,
-                                CoverText = item.modules.module_dynamic.additional.reserve.button?.text,
-                                Cover = item.modules.module_dynamic.additional.reserve.button?.icon_url,
-                                Url = item.modules.module_dynamic.additional.reserve.jump_url ?? item.jumpurl ?? "",
+                                CoverText = reserve?.button?.text,
+                                Cover = reserve?.button?.icon_url,
+                                Url = reserve?.jump_url ?? item.jumpurl ?? "",
                             };
-                            data.Content = Render(Parser.ParseText(info.Subtitle));
+                            data.Content = BuildPlainText(info.Subtitle);
                         }
                     }
                     break;

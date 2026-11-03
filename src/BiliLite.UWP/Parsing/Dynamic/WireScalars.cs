@@ -13,13 +13,67 @@ namespace BiliLite.Parsing.Dynamic
     /// </summary>
     public static class WireScalars
     {
+        /// <summary>
+        /// 正文节点类型归一：web 的 RICH_TEXT_NODE_TYPE_* 与 gRPC DescType 的枚举名（ToString 出来是
+        /// Aite/Topic/Web/Emoji 这类不带 desc_type_ 前缀的名字）都落到同一套名字上，渲染层只认这一套。
+        /// 先剥掉两边各自的固定前缀再精确匹配，不用子串猜：名字里碰巧含 "at" 的类型不该被当成 @。
+        /// 没见过的类型返回 TEXT，正文照常可读。
+        /// </summary>
         public static string MapDescriptionType(string type)
         {
-            var normalized = (type ?? "").ToLowerInvariant();
-            if (normalized.Contains("aite") || normalized.Contains("at")) return "RICH_TEXT_NODE_TYPE_AT";
-            if (normalized.Contains("topic")) return "RICH_TEXT_NODE_TYPE_TOPIC";
-            if (normalized.Contains("web") || normalized.Contains("link")) return "RICH_TEXT_NODE_TYPE_WEB";
-            return "RICH_TEXT_NODE_TYPE_TEXT";
+            const string richPrefix = "RICH_TEXT_NODE_TYPE_";
+            const string descPrefix = "DESC_TYPE_";
+
+            var key = (type ?? "").Trim().ToUpperInvariant();
+            if (key.StartsWith(richPrefix, StringComparison.Ordinal))
+            {
+                key = key.Substring(richPrefix.Length);
+            }
+            else if (key.StartsWith(descPrefix, StringComparison.Ordinal))
+            {
+                key = key.Substring(descPrefix.Length);
+            }
+
+            switch (key)
+            {
+                case "AT":
+                case "AITE":
+                    return "RICH_TEXT_NODE_TYPE_AT";
+                case "TOPIC":
+                    return "RICH_TEXT_NODE_TYPE_TOPIC";
+                case "WEB":
+                    return "RICH_TEXT_NODE_TYPE_WEB";
+                case "EMOJI":
+                    return "RICH_TEXT_NODE_TYPE_EMOJI";
+                case "VOTE":
+                    return "RICH_TEXT_NODE_TYPE_VOTE";
+                case "LOTTERY":
+                    return "RICH_TEXT_NODE_TYPE_LOTTERY";
+                case "GOODS":
+                    return "RICH_TEXT_NODE_TYPE_GOODS";
+                case "BV":
+                    return "RICH_TEXT_NODE_TYPE_BV";
+                case "AV":
+                    return "RICH_TEXT_NODE_TYPE_AV";
+                case "CV":
+                    return "RICH_TEXT_NODE_TYPE_CV";
+                case "VC":
+                    return "RICH_TEXT_NODE_TYPE_VC";
+                case "USER":
+                    return "RICH_TEXT_NODE_TYPE_USER";
+                case "TAOBAO":
+                    return "RICH_TEXT_NODE_TYPE_TAOBAO";
+                case "MAIL":
+                    return "RICH_TEXT_NODE_TYPE_MAIL";
+                case "OGV_SEASON":
+                    return "RICH_TEXT_NODE_TYPE_OGV_SEASON";
+                case "OGV_EP":
+                    return "RICH_TEXT_NODE_TYPE_OGV_EP";
+                case "SEARCH_WORD":
+                    return "RICH_TEXT_NODE_TYPE_SEARCH_WORD";
+                default:
+                    return "RICH_TEXT_NODE_TYPE_TEXT";
+            }
         }
 
         public static int ToInt(long value)
@@ -53,6 +107,19 @@ namespace BiliLite.Parsing.Dynamic
                 .Select(x => x?.ToString())
                 .Where(x => !string.IsNullOrEmpty(x))
                 .ToList();
+        }
+
+        /// <summary>
+        /// 几段可选说明拼成一行显示：丢掉 null 与空串，中间恰好一个空格，不产生前导/尾随空格。
+        /// 只用于显示拼接，来源文本本身不动。
+        /// </summary>
+        public static string JoinText(params string[] parts)
+        {
+            if (parts == null)
+            {
+                return "";
+            }
+            return string.Join(" ", parts.Where(x => !string.IsNullOrEmpty(x)));
         }
 
         /// <summary>把 "475.6万" / "1.2亿" 这类紧凑计数还原成整数；解析不出来就是 0。</summary>

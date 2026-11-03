@@ -66,13 +66,13 @@ namespace BiliLite.Controls.Dynamic
             // 优先使用富文本内容
             if (rich) return;
             Clear();
-            if (!string.IsNullOrEmpty(text))
+            // 没有正文就留空：纯图片/纯视频卡片不该被塞进一句"无内容"
+            if (string.IsNullOrEmpty(text))
             {
-                // 如果没有富文本内容，则使用纯文本
-                Add(new TextBlock { Text = text });
                 return;
             }
-            Add(new TextBlock { Text = "无内容" });
+            // 如果没有富文本内容，则使用纯文本，并套同一套正文样式
+            Add(new TextBlock { Text = text });
             SetRichTextBlockStyle();
         }
         private void Clear()

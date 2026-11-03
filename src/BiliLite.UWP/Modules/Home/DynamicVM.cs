@@ -794,13 +794,6 @@ namespace BiliLite.Modules
                     "";
             }
         }
-        public string richtext
-        {
-            get
-            {
-                return modules?.module_dynamic?.desc?.richtext;
-            }
-        }
     }
     public class DynamicCardModel2024_basic
     {
@@ -904,54 +897,8 @@ namespace BiliLite.Modules
     }
     public class DynamicCardModel2024_desc
     {
-        public static int maxlength = 1000;
         public List<DynamicCardModel2024_node> rich_text_nodes { get; set; }
         public string text { get; set; }
-        public static int BEGIN = 0;
-        public static int END = 1;
-        public string richtext
-        {
-            get
-            {
-                var str = "";
-                var state = END;
-                foreach (var s in rich_text_nodes)
-                {
-                    var t = s.richtext;
-                    if (!string.IsNullOrEmpty(t))
-                    {
-                        if (s.type == "RICH_TEXT_NODE_TYPE_TEXT")
-                        {
-                            if (state == BEGIN)
-                            {
-                                str += "</Paragraph>";
-                            }
-                            else
-                            {
-                            }
-                            str += "<Paragraph>";
-                            state = BEGIN;
-                        }
-                        else
-                        {
-                            if (state == BEGIN) { }
-                            else
-                            {
-                                str += "<Paragraph>";
-                            }
-                            state = BEGIN;
-                        }
-                        str += $"{s.richtext}";
-                    }
-                    if (str.Length > maxlength) break;
-                }
-                if (state == BEGIN)
-                {
-                    str += "</Paragraph>";
-                }
-                return str;
-            }
-        }
     }
     public class DynamicCardModel2024_node
     {
@@ -963,14 +910,6 @@ namespace BiliLite.Modules
         public string rid { get; set; }
         //goods
         public DynamicCardModel2024_emojiinfo emoji { get; set; }
-        //解析出富文本
-        public string richtext
-        {
-            get
-            {
-                return Parser.ParseRichText(this);
-            }
-        }
     }
     public class DynamicCardModel2024_emojiinfo
     {
@@ -1024,6 +963,11 @@ namespace BiliLite.Modules
         public DynamicCardModel2024_reservetext desc2 { get; set; }//预约量
         public DynamicCardModel2024_reservetext desc3 { get; set; }//预约抽奖信息
         public int reserve_total { get; set; }
+        /// <summary>预约说明：desc1/desc2 都可能缺，只拼存在的那部分，中间恰好一个空格。</summary>
+        public string desc
+        {
+            get { return WireScalars.JoinText(desc1?.text, desc2?.text); }
+        }
     }
     public class DynamicCardModel2024_reservetext
     {
@@ -1184,110 +1128,5 @@ namespace BiliLite.Modules
     {
         public string danmaku { get; set; }
         public string play { get; set; }
-    }
-    //原来位于DynamicParse.cs
-    public static class Parser
-    {
-        public static string escapexaml(string text)
-        {
-
-            text = text.Replace("&", "&amp;");
-            text = text.Replace("<", "&lt;");
-            text = text.Replace(">", "&gt;");
-            text = text.Replace("\"", "&quot;");
-            text = text.Replace("'", "&apos;");
-            text = text.Replace("\r\n", "\n");
-
-            return text;
-        }
-        public static List<string> HTTP(string text)
-        {
-            if (!string.IsNullOrEmpty(text))
-            {
-                text = escapexaml(text);
-            }
-            return text.Split('\n').ToList();
-        }
-        public static string At(DynamicCardModel2024_node node, string text)
-        {
-            if (node.type != "RICH_TEXT_NODE_TYPE_AT") return text;
-            var mid = node.rid;
-            if (string.IsNullOrEmpty(mid)) return text;
-            var url = $"https://space.bilibili.com/{mid}";
-            url = escapexaml(url);
-            return $"<InlineUIContainer><HyperlinkButton NavigateUri=\"{url}\">{text}<ToolTipService.ToolTip>" +
-                $"{url}" +
-        "</ToolTipService.ToolTip ></HyperlinkButton></InlineUIContainer>";
-        }
-        public static string Topic(DynamicCardModel2024_node node, string text)
-        {
-            if (node.type != "RICH_TEXT_NODE_TYPE_TOPIC") return text;
-            var url = node.jump_url;
-            url = escapexaml(url);
-            //replace the whole text with a hyperlink to url
-            return $"<InlineUIContainer><HyperlinkButton NavigateUri=\"{url}\">{text}</HyperlinkButton></InlineUIContainer>";
-        }
-        public static string Web(DynamicCardModel2024_node node, string text)
-        {
-            if (node.type != "RICH_TEXT_NODE_TYPE_WEB") return text;
-            var url = node.jump_url;
-            url = escapexaml(url);
-            //replace the whole text with a hyperlink to url
-            return $"<InlineUIContainer><HyperlinkButton NavigateUri=\"{url}\">{url}</HyperlinkButton></InlineUIContainer>";
-        }
-        public static string Emoji(DynamicCardModel2024_node node, string text)
-        {
-            var emojidata = node.emoji;
-            if (null == emojidata) return text;
-            var type = emojidata.type;
-            var size = emojidata.size;
-            var url = emojidata.icon_url;
-            if (string.IsNullOrEmpty(url)) return text;
-            url = escapexaml(url);
-            //replace [emojidata.text] with <InlineUIContainer><Border Margin=""0 -4 4 -4""><Image Source=""{emojidata.icon_url}"" MaxWidth=""{emojidata.size*1em}"" MaxHeight=""{emojidata.size*1em}""/></Border></InlineUIContainer>
-            return
-                $"<InlineUIContainer><Border Margin=\"0 -4 4 -4\"><Image Source=\"{url}\" MaxWidth=\"{emojidata.size * 18}\" MaxHeight=\"{emojidata.size * 18}\"/></Border></InlineUIContainer>";
-        }
-
-        public static string ParseRichText(DynamicCardModel2024_node node)
-        {
-            var str = "";
-            if (node.text != null)
-            {
-                str = node.text;
-            }
-            var strs = HTTP(str);
-            for (var i = 0; i < strs.Count; i++)
-            {
-                strs[i] = Emoji(node, strs[i]);
-                strs[i] = Topic(node, strs[i]);
-                strs[i] = At(node, strs[i]);
-                strs[i] = Web(node, strs[i]);
-            }
-            str = "";
-            foreach (var s in strs)
-            {
-                str += $"{s}\n";
-            }
-            return str;
-        }
-        public static string ParseText(string text)
-        {
-            var str = "";
-            if (text != null)
-            {
-                str = text;
-            }
-            var strs = HTTP(str);
-            for (var i = 0; i < strs.Count; i++)
-            {
-            }
-            str = "";
-            foreach (var s in strs)
-            {
-                str += $"<Paragraph>{s}</Paragraph>\n";
-            }
-            return str;
-        }
     }
 }

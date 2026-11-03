@@ -1855,12 +1855,13 @@ namespace BiliLite.Modules.User
                 var t = DynamicParse.ParseType2024(item.type);
                 if (t == DynamicDisplayType.Other)
                 {
+                    // 不认识的卡片类型也留着它的正文与 ID：Other 模板显示 ContentStr，至少还能读到作者写了什么
                     return new DynamicItemDisplayModel()
                     {
                         Type = DynamicDisplayType.Other,
                         IntType = 999,
                         DynamicID = item.id_str,
-                        ContentStr = ""
+                        ContentStr = item.modules?.module_dynamic?.desc?.text ?? ""
                     };
                 }
                 var data = new DynamicItemDisplayModel()
@@ -1916,8 +1917,12 @@ namespace BiliLite.Modules.User
                 data.Datetime = string.IsNullOrEmpty(item.modules?.module_author?.pub_time)
                     ? (item.pubdate <= 0 ? "" : Utils.TimestampToDatetime(item.pubdate).ToString())
                     : item.modules.module_author.pub_time;
-                data.ShowContent = false;
-                if ( item.owner!= null)
+                // 正文由 RichTextBlock 承载；只有模板不自己渲染正文的类型才用外层 ContentPresenter。
+                // 以前这里无条件关掉，现代卡片的正文就只有模板里那几个纯文本宿主看得见。
+                var body = item.modules?.module_dynamic?.desc;
+                data.ShowContent = body != null
+                    && (!string.IsNullOrEmpty(body.text) || (body.rich_text_nodes?.Count ?? 0) > 0);
+                if (item.owner != null)
                 {
                     data.UserName = item.owner;
                     data.Photo =item.face?.ToString();

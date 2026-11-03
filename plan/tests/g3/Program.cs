@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Bilibili.App.Dynamic.V2;
 using BiliLite.Helpers;
+using BiliLite.Modules;
 using BiliLite.Parsing.Dynamic;
 using Google.Protobuf;
 using Newtonsoft.Json.Linq;
@@ -39,6 +40,21 @@ namespace G3Probe
             WebFeedItemsMapThroughTheSameCardModel();
             WebFeedSurvivesHostileFieldTypes();
             OpusPicturesRenderAsPhotoCards();
+            WebCardKeepsAdditionalModule();
+            WebCardKeepsVoteAttachment();
+            ReserveDescriptionJoinsOnlyThePresentParts();
+            WebOpusPicturesKeepSrcFallbackAndOrder();
+            WebEmptyMajorDoesNotHideLaterPayload();
+            WebDrawItemsDropMissingUrls();
+            WebUgcSeasonKeepsItsOwnKind();
+            WebBodyJoinsOneSentence();
+            GrpcOpusSummaryBecomesTheBody();
+            GrpcOpusCoversBecomePictures();
+            GrpcCardKeepsAdditionalModule();
+            GrpcStatKeepsForbiddenFlags();
+            GrpcEmojiNodeKeepsIconAndText();
+            PlainTextKeepsEveryParagraph();
+            BodyIsNotTruncatedAtOneThousandCharacters();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -754,6 +770,607 @@ namespace G3Probe
                 "deleted/missing dynamics still parse to Miss, which the not-Other guard accepts");
             Check(!parseSource.Contains("case \"DYNAMIC_TYPE_UNSUPPORTED\":"),
                 "unsupported cards have no display type and fall to Other");
+        }
+
+        // web：附件卡（预约/投票/通用/商品）以前整块不搬，能预约的图文退化成纯文字
+        private static JObject WebCardFixture(string id, string type, JObject moduleDynamic)
+        {
+            return new JObject
+            {
+                ["id_str"] = id,
+                ["type"] = type,
+                ["basic"] = new JObject { ["comment_id_str"] = "C-" + id, ["comment_type"] = 11, ["rid_str"] = "R-" + id },
+                ["modules"] = new JObject
+                {
+                    ["module_author"] = new JObject
+                    {
+                        ["mid"] = 42,
+                        ["name"] = "摄影者",
+                        ["pub_time"] = "2小时前",
+                        ["pub_ts"] = "1700000000",
+                    },
+                    ["module_stat"] = new JObject
+                    {
+                        ["comment"] = new JObject { ["count"] = 3 },
+                        ["forward"] = new JObject { ["count"] = 0, ["forbidden"] = true },
+                        ["like"] = new JObject { ["count"] = 5, ["status"] = true },
+                    },
+                    ["module_dynamic"] = moduleDynamic,
+                },
+            };
+        }
+
+        private static DynamicCardModel2024 FirstWebCard(JObject card)
+        {
+            return WebDynamicFeedMapper.MapToUserFeedCards(new JArray { card })[0];
+        }
+
+        private static void WebCardKeepsAdditionalModule()
+        {
+            var moduleDynamic = new JObject
+            {
+                ["desc"] = new JObject
+                {
+                    ["text"] = "今天和 @朋友 去拍照。\n详情：拍摄地点 结尾",
+                    ["rich_text_nodes"] = new JArray
+                    {
+                        new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_TEXT", ["text"] = "今天和 " },
+                        new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_AT", ["text"] = "@朋友", ["rid"] = "777" },
+                        new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_TEXT", ["text"] = " 去拍照。\n详情：" },
+                        new JObject
+                        {
+                            ["type"] = "RICH_TEXT_NODE_TYPE_WEB",
+                            ["text"] = "拍摄地点",
+                            ["jump_url"] = "//example.com/place",
+                        },
+                        new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_TEXT", ["text"] = " 结尾" },
+                    },
+                },
+                ["major"] = new JObject
+                {
+                    ["type"] = "MAJOR_TYPE_OPUS",
+                    ["opus"] = new JObject
+                    {
+                        ["id"] = "55",
+                        ["summary"] = new JObject { ["text"] = "今天和 @朋友 去拍照。" },
+                        ["pics"] = new JArray
+                        {
+                            new JObject { ["url"] = "//i0.example/1.jpg", ["width"] = 800, ["height"] = 600 },
+                            new JObject { ["url"] = "", ["src"] = "", ["width"] = 1, ["height"] = 1 },
+                            new JObject { ["src"] = "//i0.example/2.jpg", ["width"] = 10, ["height"] = 20 },
+                        },
+                    },
+                },
+                ["additional"] = new JObject
+                {
+                    ["type"] = "ADDITIONAL_TYPE_RESERVE",
+                    ["reserve"] = new JObject
+                    {
+                        ["title"] = "预约直播",
+                        ["desc1"] = new JObject { ["text"] = "12-01 20:00", ["style"] = 0 },
+                        ["desc2"] = new JObject { ["text"] = "1.2万人预约" },
+                        ["jump_url"] = "//live.bilibili.com/1",
+                        ["reserve_total"] = "12000",
+                        ["up_mid"] = "42",
+                        ["rid"] = "88",
+                        ["button"] = new JObject
+                        {
+                            ["status"] = 1,
+                            ["jump_url"] = "//live.bilibili.com/1",
+                            ["jump_style"] = new JObject { ["text"] = "去预约" },
+                            ["uncheck"] = new JObject { ["icon_url"] = "https://i0.example/b.png", ["text"] = "去预约" },
+                        },
+                    },
+                },
+            };
+
+            var card = FirstWebCard(WebCardFixture("9001", "DYNAMIC_TYPE_OPUS", moduleDynamic));
+            var additional = card.modules.module_dynamic.additional;
+            Check(additional != null, "web additional: the attachment module is read at all");
+            Check(additional.type == "ADDITIONAL_TYPE_RESERVE",
+                "web additional: the subtype stays the wire name (type=" + additional.type + ")");
+            Check(additional.reserve != null && additional.reserve.title == "预约直播",
+                "web additional: the reserve title survives");
+            Check(additional.reserve.desc1 != null && additional.reserve.desc1.text == "12-01 20:00",
+                "web additional: reserve desc1 keeps its readable text");
+            Check(additional.reserve.desc2 != null && additional.reserve.desc2.text == "1.2万人预约",
+                "web additional: reserve desc2 keeps the server display label");
+            Check(additional.reserve.jump_url == "https://live.bilibili.com/1",
+                "web additional: the reserve target is protocol-complete (url=" + additional.reserve.jump_url + ")");
+            Check(additional.reserve.reserve_total == 12000 && additional.reserve.rid == 88,
+                "web additional: reserve total and id survive");
+            Check(additional.reserve.button != null
+                  && additional.reserve.button.uncheck != null
+                  && additional.reserve.button.uncheck.text == "去预约"
+                  && additional.reserve.button.uncheck.icon_url == "https://i0.example/b.png",
+                "web additional: the reserve button text and icon survive");
+            Check(additional.reserve.desc == "12-01 20:00 1.2万人预约",
+                "web reserve: both description lines reach the label (desc=" + additional.reserve.desc + ")");
+        }
+
+        private static void WebCardKeepsVoteAttachment()
+        {
+            var moduleDynamic = new JObject
+            {
+                ["desc"] = new JObject { ["text"] = "投个票" },
+                ["additional"] = new JObject
+                {
+                    ["type"] = "ADDITIONAL_TYPE_VOTE",
+                    ["vote"] = new JObject
+                    {
+                        ["vote_id"] = "716365292050055176",
+                        ["title"] = "投票标题",
+                        ["desc1"] = "已有 100 人参与",
+                        ["desc2"] = "剩 2 天",
+                        ["jump_url"] = "//t.bilibili.com/vote/h5/index?is_popup=1",
+                    },
+                },
+            };
+
+            var card = FirstWebCard(WebCardFixture("9002", "DYNAMIC_TYPE_WORD", moduleDynamic));
+            var vote = card.modules.module_dynamic.additional.vote;
+            Check(vote != null && vote.title == "投票标题",
+                "web additional: the vote card title survives");
+            Check(vote.id_str == "716365292050055176",
+                "web additional: the vote id is kept as a string (id=" + vote.id_str + ")");
+            Check(vote.desc1 == "已有 100 人参与" && vote.desc2 == "剩 2 天",
+                "web additional: both vote description lines survive");
+        }
+
+        // web：图文图片以前只认 url、还保留空地址条目；两种形状都要认，空地址不进图库
+        /// <summary>
+        /// 预约说明的两行拼一条标签：旧写法 `a ?? "" + " " + b ?? ""` 按 ?? 与 + 的优先级取值，
+        /// 第一行存在时第二行就被丢掉、两行都缺时留下一个空格。这里逐种组合钉住结果。
+        /// </summary>
+        private static void AssertJoinParts(Func<string, string, string> join, string label)
+        {
+            var both = join("12-01 20:00", "1.2万人预约");
+            Check(both == "12-01 20:00 1.2万人预约",
+                label + ": both segments are kept and joined by one space (got '" + (both ?? "null") + "')");
+            Check(!both.Contains("  ") && both == both.Trim(),
+                label + ": the join has no doubled or stray spaces");
+
+            var onlySecond = join(null, "1.2万人预约");
+            Check(onlySecond == "1.2万人预约",
+                label + ": a missing first segment does not leave a leading space (got '" + (onlySecond ?? "null") + "')");
+
+            var onlyFirst = join("12-01 20:00", null);
+            Check(onlyFirst == "12-01 20:00",
+                label + ": a missing second segment does not leave a trailing space (got '" + (onlyFirst ?? "null") + "')");
+
+            var emptyFirst = join("", "1.2万人预约");
+            Check(emptyFirst == "1.2万人预约",
+                label + ": an empty string is treated as absent (got '" + (emptyFirst ?? "null") + "')");
+
+            var neither = join(null, null);
+            Check(neither == "",
+                label + ": no segment means an empty label, never a space or null (got '" + (neither ?? "null") + "')");
+        }
+
+        private static void ReserveDescriptionJoinsOnlyThePresentParts()
+        {
+            AssertJoinParts((a, b) => WireScalars.JoinText(a, b), "reserve desc");
+
+            Check(WireScalars.JoinText("a", "", "b") == "a b",
+                "reserve desc: a middle empty segment is skipped, neighbours keep one space");
+            Check(WireScalars.JoinText() == "",
+                "reserve desc: no arguments is an empty label");
+
+            // 只有第二行的预约卡：旧表达式会拼出一个空格，标签就成了空白
+            var moduleDynamic = new JObject
+            {
+                ["desc"] = new JObject { ["text"] = "预约直播" },
+                ["additional"] = new JObject
+                {
+                    ["type"] = "ADDITIONAL_TYPE_RESERVE",
+                    ["reserve"] = new JObject
+                    {
+                        ["title"] = "预约直播",
+                        ["desc2"] = new JObject { ["text"] = "1.2万人预约" },
+                        ["jump_url"] = "//live.bilibili.com/2",
+                    },
+                },
+            };
+            var card = FirstWebCard(WebCardFixture("9010", "DYNAMIC_TYPE_WORD", moduleDynamic));
+            var reserve = card.modules.module_dynamic.additional.reserve;
+            Check(reserve.desc1 == null && reserve.desc2 != null && reserve.desc2.text == "1.2万人预约",
+                "web reserve: the missing line stays absent instead of being invented");
+            Check(reserve.desc == "1.2万人预约",
+                "web reserve: the label is only the present line (desc='" + (reserve.desc ?? "null") + "')");
+        }
+
+        private static void WebOpusPicturesKeepSrcFallbackAndOrder()
+        {
+            var moduleDynamic = new JObject
+            {
+                ["desc"] = new JObject { ["text"] = "两张图" },
+                ["major"] = new JObject
+                {
+                    ["type"] = "MAJOR_TYPE_OPUS",
+                    ["opus"] = new JObject
+                    {
+                        ["id"] = "56",
+                        ["pics"] = new JArray
+                        {
+                            new JObject { ["url"] = "//i0.example/1.jpg", ["width"] = 800, ["height"] = 600 },
+                            new JObject { ["src"] = "", ["width"] = 1, ["height"] = 1 },
+                            new JObject { ["src"] = "//i0.example/2.jpg", ["width"] = 10, ["height"] = 20 },
+                        },
+                    },
+                },
+            };
+
+            var card = FirstWebCard(WebCardFixture("9003", "DYNAMIC_TYPE_OPUS", moduleDynamic));
+            Check(card.type == "DYNAMIC_TYPE_DRAW", "web opus: pictures still select the photo card");
+            var items = card.modules.module_dynamic.major.draw.items;
+            Check(items.Count == 2,
+                "web opus: the url-less picture is dropped and the rest stay contiguous (count=" + items.Count + ")");
+            Check(items[0].src == "https://i0.example/1.jpg" && items[0].width == 800 && items[0].height == 600,
+                "web opus: pics[].url keeps the original url and dimensions");
+            Check(items[1].src == "https://i0.example/2.jpg" && items[1].width == 10,
+                "web opus: pics[].src is accepted when url is missing");
+        }
+
+        // web：固定的 major 顺序不该被一个空对象挡住
+        private static void WebEmptyMajorDoesNotHideLaterPayload()
+        {
+            var moduleDynamic = new JObject
+            {
+                ["desc"] = new JObject { ["text"] = "空 archive 挡不住图片" },
+                ["major"] = new JObject
+                {
+                    ["type"] = "MAJOR_TYPE_OPUS",
+                    ["archive"] = new JObject(),
+                    ["pgc"] = new JObject(),
+                    ["article"] = new JObject(),
+                    ["draw"] = new JObject
+                    {
+                        ["id"] = "57",
+                        ["items"] = new JArray
+                        {
+                            new JObject { ["src"] = "//i0.example/d.jpg", ["width"] = 5, ["height"] = 6 },
+                        },
+                    },
+                },
+            };
+
+            var card = FirstWebCard(WebCardFixture("9004", "DYNAMIC_TYPE_DRAW", moduleDynamic));
+            var major = card.modules.module_dynamic.major;
+            Check(major.archive == null && major.pgc == null && major.article == null,
+                "web major: empty payload objects do not occupy the fixed order");
+            Check(major.draw != null && major.draw.items.Count == 1 && major.draw.items[0].src == "https://i0.example/d.jpg",
+                "web major: the usable draw payload is selected instead");
+        }
+
+        private static void WebDrawItemsDropMissingUrls()
+        {
+            var moduleDynamic = new JObject
+            {
+                ["desc"] = new JObject { ["text"] = "图片" },
+                ["major"] = new JObject
+                {
+                    ["type"] = "MAJOR_TYPE_DRAW",
+                    ["draw"] = new JObject
+                    {
+                        ["id"] = "58",
+                        ["items"] = new JArray
+                        {
+                            new JObject { ["src"] = "" },
+                            new JObject { ["src"] = "//i0.example/ok.jpg", ["width"] = 3, ["height"] = 4 },
+                        },
+                    },
+                },
+            };
+
+            var card = FirstWebCard(WebCardFixture("9005", "DYNAMIC_TYPE_DRAW", moduleDynamic));
+            var items = card.modules.module_dynamic.major.draw.items;
+            Check(items.Count == 1 && items[0].src == "https://i0.example/ok.jpg",
+                "web draw: pictures without a url do not reach the gallery");
+        }
+
+        private static void WebUgcSeasonKeepsItsOwnKind()
+        {
+            var moduleDynamic = new JObject
+            {
+                ["desc"] = new JObject { ["text"] = "合集更新" },
+                ["major"] = new JObject
+                {
+                    ["type"] = "MAJOR_TYPE_UGC_SEASON",
+                    ["ugc_season"] = new JObject
+                    {
+                        ["id"] = "4444",
+                        ["aid"] = "5555",
+                        ["title"] = "合集标题",
+                        ["cover"] = "//i0.example/season.jpg",
+                        ["jump_url"] = "//www.bilibili.com/video/BV1xx",
+                        ["stat"] = new JObject { ["play"] = "1.2万", ["danmaku"] = "3" },
+                    },
+                },
+            };
+
+            var card = FirstWebCard(WebCardFixture("9006", "DYNAMIC_TYPE_UGC_SEASON", moduleDynamic));
+            Check(card.type == "DYNAMIC_TYPE_UGC_SEASON",
+                "web ugc season: the card keeps its own kind instead of becoming unsupported (type=" + card.type + ")");
+            var season = card.modules.module_dynamic.major.ugc_season;
+            Check(season != null && season.aid == 5555 && season.title == "合集标题",
+                "web ugc season: aid and title survive");
+            Check(season.jump_url == "https://www.bilibili.com/video/BV1xx",
+                "web ugc season: the jump url is protocol-complete");
+            Check(season.stat.play == "1.2万",
+                "web ugc season: the server display count is kept as text");
+        }
+
+        // 一句话流：节点顺序、@ 目标、链接标签、只按来源换行断行
+        private static void WebBodyJoinsOneSentence()
+        {
+            var moduleDynamic = new JObject
+            {
+                ["desc"] = new JObject
+                {
+                    ["text"] = "今天和 @朋友 去拍照。\n详情：拍摄地点 结尾",
+                    ["rich_text_nodes"] = new JArray
+                    {
+                        new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_TEXT", ["text"] = "今天和 " },
+                        new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_AT", ["text"] = "@朋友", ["rid"] = "777" },
+                        new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_TEXT", ["text"] = " 去拍照。\n详情：" },
+                        new JObject
+                        {
+                            ["type"] = "RICH_TEXT_NODE_TYPE_WEB",
+                            ["text"] = "拍摄地点",
+                            ["jump_url"] = "//example.com/place",
+                        },
+                        new JObject { ["type"] = "RICH_TEXT_NODE_TYPE_TEXT", ["text"] = " 结尾" },
+                    },
+                },
+            };
+
+            var card = FirstWebCard(WebCardFixture("9007", "DYNAMIC_TYPE_WORD", moduleDynamic));
+            var desc = card.modules.module_dynamic.desc;
+            var segments = RichTextFlow.Build(desc.rich_text_nodes, desc.text);
+
+            Check(RichTextFlow.PlainText(segments) == "今天和 @朋友 去拍照。\n详情：拍摄地点 结尾",
+                "web body: the whole sentence survives in order (text=" + RichTextFlow.PlainText(segments) + ")");
+            Check(segments.FindAll(x => x.Kind == RichTextSegmentKind.LineBreak).Count == 1,
+                "web body: only the source newline breaks the line, node kinds do not");
+            var mention = segments.Find(x => x.Kind == RichTextSegmentKind.Mention);
+            Check(mention != null && mention.Text == "@朋友" && mention.Target == "777",
+                "web body: the mention keeps its label and mid");
+            var link = segments.Find(x => x.Kind == RichTextSegmentKind.Link);
+            Check(link != null && link.Text == "拍摄地点",
+                "web body: the link shows its label, not the destination");
+            Check(link != null && link.Target == "https://example.com/place",
+                "web body: the link keeps a protocol-complete target");
+        }
+
+        // gRPC：图文没有 ModuleDesc，正文只在 ModuleOpusSummary 的摘要段落里
+        private static void GrpcOpusSummaryBecomesTheBody()
+        {
+            var item = new DynamicItem
+            {
+                CardType = DynamicType.Word,
+                Extend = new Extend { DynIdStr = "9101" },
+            };
+            item.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleAuthor,
+                ModuleAuthor = new ModuleAuthor { Mid = 42, PtimeLabelText = "1小时前" },
+            });
+            item.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleOpusSummary,
+                ModuleOpusSummary = new ModuleOpusSummary
+                {
+                    Summary = new Paragraph
+                    {
+                        Text = new TextParagraph
+                        {
+                            Nodes =
+                            {
+                                new TextNode
+                                {
+                                    NodeType = TextNode.Types.TextNodeType.Words,
+                                    RawText = "图文摘要",
+                                },
+                            },
+                        },
+                    },
+                },
+            });
+
+            var card = DynamicGrpcMapper.MapToUserCards(new[] { item })[0];
+            var desc = card.modules.module_dynamic.desc;
+            Check(desc != null, "grpc opus: a card without ModuleDesc still gets a body");
+            Check(desc != null && desc.text == "图文摘要",
+                "grpc opus: the summary text is the body (text=" + (desc == null ? "null" : desc.text) + ")");
+            Check(desc != null && desc.rich_text_nodes.Count == 1,
+                "grpc opus: the summary paragraph becomes ordered nodes");
+        }
+
+        private static void GrpcOpusCoversBecomePictures()
+        {
+            var item = new DynamicItem
+            {
+                CardType = DynamicType.Draw,
+                Extend = new Extend { DynIdStr = "9102" },
+            };
+            item.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleOpusSummary,
+                ModuleOpusSummary = new ModuleOpusSummary
+                {
+                    Summary = new Paragraph
+                    {
+                        Text = new TextParagraph { Nodes = { new TextNode { RawText = "三图正文" } } },
+                    },
+                    Covers =
+                    {
+                        new MdlDynDrawItem { Src = "https://i0.example/c1.jpg", Width = 100, Height = 200 },
+                        new MdlDynDrawItem { Src = "", Width = 1, Height = 1 },
+                        new MdlDynDrawItem { Src = "https://i0.example/c2.jpg", Width = 300, Height = 400 },
+                    },
+                },
+            });
+
+            var card = DynamicGrpcMapper.MapToUserCards(new[] { item })[0];
+            var major = card.modules.module_dynamic.major;
+            Check(major.draw != null && major.draw.items.Count == 2,
+                "grpc opus: covers become the picture array without the url-less entry (count=" +
+                (major.draw == null ? -1 : major.draw.items.Count) + ")");
+            Check(major.draw.items[0].src == "https://i0.example/c1.jpg" && major.draw.items[0].height == 200,
+                "grpc opus: cover url and dimensions are kept");
+        }
+
+        private static void GrpcCardKeepsAdditionalModule()
+        {
+            var item = new DynamicItem
+            {
+                CardType = DynamicType.Word,
+                Extend = new Extend { DynIdStr = "9103" },
+            };
+            item.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleDesc,
+                ModuleDesc = new ModuleDesc { Text = "预约直播" },
+            });
+            item.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleAdditional,
+                ModuleAdditional = new ModuleAdditional
+                {
+                    Type = AdditionalType.UpReservation,
+                    Up = new AdditionUP
+                    {
+                        Title = "预约直播",
+                        DescText1 = new HighlightText { Text = "12-01 20:00" },
+                        DescText2 = "1.2万人预约",
+                        Url = "https://live.bilibili.com/9",
+                        ReserveTotal = 12000,
+                        Rid = 88,
+                        Button = new AdditionalButton
+                        {
+                            Status = AdditionalButtonStatus.Uncheck,
+                            JumpUrl = "https://live.bilibili.com/9",
+                            Uncheck = new AdditionalButtonStyle { Text = "去预约", Icon = "https://i0.example/b.png" },
+                        },
+                    },
+                },
+            });
+
+            var card = DynamicGrpcMapper.MapToUserCards(new[] { item })[0];
+            var additional = card.modules.module_dynamic.additional;
+            Check(additional != null, "grpc additional: the attachment module is read at all");
+            Check(additional.type == "ADDITIONAL_TYPE_RESERVE",
+                "grpc additional: the subtype uses the web vocabulary (type=" + additional.type + ")");
+            Check(additional.reserve != null && additional.reserve.title == "预约直播",
+                "grpc additional: the reserve title survives");
+            Check(additional.reserve.desc1 != null && additional.reserve.desc1.text == "12-01 20:00"
+                  && additional.reserve.desc2 != null && additional.reserve.desc2.text == "1.2万人预约",
+                "grpc additional: both reserve descriptions survive");
+            Check(additional.reserve.reserve_total == 12000 && additional.reserve.jump_url == "https://live.bilibili.com/9",
+                "grpc additional: reserve total and target survive");
+            Check(additional.reserve.button != null
+                  && additional.reserve.button.uncheck != null
+                  && additional.reserve.button.uncheck.text == "去预约",
+                "grpc additional: the reserve button text survives");
+            Check(additional.reserve.desc == "12-01 20:00 1.2万人预约",
+                "grpc reserve: both description lines reach the label (desc=" + additional.reserve.desc + ")");
+        }
+
+        private static void GrpcStatKeepsForbiddenFlags()
+        {
+            var item = new DynamicItem
+            {
+                CardType = DynamicType.Word,
+                Extend = new Extend { DynIdStr = "9104" },
+            };
+            item.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleStat,
+                ModuleStat = new ModuleStat { Reply = 2, Repost = 1, Like = 3, NoComment = true, NoForward = true },
+            });
+
+            var card = DynamicGrpcMapper.MapToUserCards(new[] { item })[0];
+            Check(card.modules.module_stat.comment.forbidden,
+                "grpc stat: a forbidden comment target stays flagged");
+            Check(card.modules.module_stat.forward.forbidden,
+                "grpc stat: a forbidden repost target stays flagged");
+            Check(card.modules.module_stat.like.count == 3,
+                "grpc stat: the like count is unaffected");
+        }
+
+        private static void GrpcEmojiNodeKeepsIconAndText()
+        {
+            var item = new DynamicItem
+            {
+                CardType = DynamicType.Word,
+                Extend = new Extend { DynIdStr = "9105" },
+            };
+            item.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleDesc,
+                ModuleDesc = new ModuleDesc
+                {
+                    Text = "笑[笑]",
+                    Desc =
+                    {
+                        new Description { Type = DescType.Text, Text = "笑" },
+                        new Description
+                        {
+                            Type = DescType.Emoji,
+                            Text = "[笑]",
+                            OrigText = "[笑]",
+                            IconUrl = "https://i0.example/e.png",
+                            EmojiSize = 2,
+                        },
+                        new Description { Type = DescType.Aite, Text = "@朋友", Rid = "777" },
+                    },
+                },
+            });
+
+            var card = DynamicGrpcMapper.MapToUserCards(new[] { item })[0];
+            var nodes = card.modules.module_dynamic.desc.rich_text_nodes;
+            Check(nodes[1].type == "RICH_TEXT_NODE_TYPE_EMOJI",
+                "grpc emoji: the node kind is mapped explicitly, not by substring (type=" + nodes[1].type + ")");
+            Check(nodes[1].emoji != null && nodes[1].emoji.icon_url == "https://i0.example/e.png"
+                  && nodes[1].emoji.size == 2,
+                "grpc emoji: icon url and size survive");
+            Check(nodes[2].type == "RICH_TEXT_NODE_TYPE_AT" && nodes[2].rid == "777",
+                "grpc mention: the at node keeps its mid");
+            var segments = RichTextFlow.Build(nodes, card.modules.module_dynamic.desc.text);
+            Check(RichTextFlow.PlainText(segments) == "笑[笑]@朋友",
+                "grpc body: kinds switch without injected spaces or breaks (text=" +
+                RichTextFlow.PlainText(segments) + ")");
+            Check(segments.FindAll(x => x.Kind == RichTextSegmentKind.LineBreak).Count == 0,
+                "grpc body: no artificial line breaks between nodes");
+        }
+
+        // 纯文本兜底（预约卡/旧来源）：来源换行才断行，空行保留
+        private static void PlainTextKeepsEveryParagraph()
+        {
+            var segments = RichTextFlow.Build(null, "第一段\r\n\r\n第二段");
+            Check(RichTextFlow.PlainText(segments) == "第一段\n\n第二段",
+                "plain body: CRLF is normalised once (text=" + RichTextFlow.PlainText(segments) + ")");
+            Check(segments.FindAll(x => x.Kind == RichTextSegmentKind.LineBreak).Count == 2,
+                "plain body: an intentional blank line stays a blank line");
+            Check(RichTextFlow.Build(null, "").Count == 0,
+                "plain body: an empty body yields no placeholder text");
+        }
+
+        // 旧的 XAML 拼接按 1000 字符截断；正文流不按字符数限长
+        private static void BodyIsNotTruncatedAtOneThousandCharacters()
+        {
+            var nodes = new System.Collections.Generic.List<DynamicCardModel2024_node>();
+            for (var i = 0; i < 40; i++)
+            {
+                nodes.Add(new DynamicCardModel2024_node
+                {
+                    type = "RICH_TEXT_NODE_TYPE_TEXT",
+                    text = new string('长', 100),
+                });
+            }
+            var text = RichTextFlow.PlainText(RichTextFlow.Build(nodes, ""));
+            Check(text.Length == 4000,
+                "long body: every node survives without the 1000-character cap (length=" + text.Length + ")");
         }
 
         private static string RepoRoot()

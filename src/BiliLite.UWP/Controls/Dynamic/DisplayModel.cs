@@ -216,7 +216,8 @@ namespace BiliLite.Controls.Dynamic
         /// 模板自己把 Content(RichTextBlock) 交给 RichTextControl 渲染的类型。
         /// 一个 UIElement 只能有一个父元素，外层 ContentPresenter 若也拿到同一个实例会在布局阶段抛
         /// ArgumentException(E_INVALIDARG)，所以这里决定宿主归属，而不只是决定可见性。
-        /// 图片模板分工不同：1x1 / 2x2 自己渲染正文，3x3 只渲染 Desc，正文仍由外层 ContentPresenter 显示。
+        /// 图片模板全都自己渲染正文（1x1 / 2x2 / 3x3）：三张图以上的图文以前只显示纯文本 Desc，富文本链接、
+        /// @ 与表情在卡片里看不到；正文只由模板这一个宿主渲染，外层不再重复挂一次。
         /// </summary>
         public bool TemplateRendersContent
         {
@@ -227,12 +228,8 @@ namespace BiliLite.Controls.Dynamic
                     case DynamicDisplayType.Text:
                     case DynamicDisplayType.Repost:
                     case DynamicDisplayType.Reserve:
-                        return true;
                     case DynamicDisplayType.Photo:
-                        {
-                            var photoCount = ImagesInfo?.Count ?? 0;
-                            return photoCount <= 1 || photoCount == 4;
-                        }
+                        return true;
                     default:
                         return false;
                 }
