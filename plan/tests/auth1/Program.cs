@@ -105,8 +105,8 @@ internal static class Program
 
         backend.ConfirmHttp = 200;
         await service.RefreshCookieAsync();
-        Check(backend.Count("correspond") == 2 && backend.Count("refresh") == 2 && backend.Count("confirm") == 2,
-            "the single-flight slot was released, so a retry re-dispatches all three requests again");
+        Check(backend.Count("correspond") == 1 && backend.Count("refresh") == 1 && backend.Count("confirm") == 2,
+            "the single-flight slot was released and the retry resumes the pending confirmation");
     }
 
     private static async Task DeadSessionRaisesReloginOnce()

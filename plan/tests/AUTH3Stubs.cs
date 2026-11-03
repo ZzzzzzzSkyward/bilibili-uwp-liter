@@ -84,6 +84,47 @@ namespace Windows.Storage
 {
     /// <summary>播放地址模型里只有一个字段用到它，探针不需要真的文件。</summary>
     public class StorageFile { }
+
+    /// <summary>
+    /// 挂起确认记录落在 LocalFolder 下的一个文件里。目录按「一次运行」命名，不按 PID：
+    /// PID 会被系统复用，上一次运行留下的 cookie-refresh-pending.json 会被下一个进程当成自己的在途确认。
+    /// 正常退出或未处理异常终止时整目录删掉，临时目录不会被探针填满。
+    /// </summary>
+    public sealed class ApplicationDataLocalFolder
+    {
+        public string Path { get; set; }
+    }
+
+    public sealed class ApplicationData
+    {
+        private static readonly ApplicationData instance = new ApplicationData();
+
+        public static ApplicationData Current => instance;
+
+        private ApplicationData()
+        {
+            var folder = System.IO.Path.Combine(System.IO.Path.GetTempPath(),
+                "bili-probe-" + System.Guid.NewGuid().ToString("N"));
+            LocalFolder = new ApplicationDataLocalFolder { Path = folder };
+            // 正常退出和探针失败（未处理异常）两条路都要删：.NET 只在正常退出时才跑 ProcessExit
+            System.AppDomain.CurrentDomain.ProcessExit += (sender, args) => Delete(folder);
+            System.AppDomain.CurrentDomain.UnhandledException += (sender, args) => Delete(folder);
+        }
+
+        public ApplicationDataLocalFolder LocalFolder { get; }
+
+        private static void Delete(string folder)
+        {
+            try
+            {
+                if (System.IO.Directory.Exists(folder)) System.IO.Directory.Delete(folder, true);
+            }
+            catch (System.Exception)
+            {
+                // 删不掉不影响结论：目录名带 GUID，下一次运行不会再撞上这一份
+            }
+        }
+    }
 }
 
 namespace Windows.Web.Http

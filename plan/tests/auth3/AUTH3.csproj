@@ -19,6 +19,8 @@
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\UserModels.cs" Link="UserModels.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\GenerateMPDModel.cs" Link="GenerateMPDModel.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\CookieService.cs" Link="CookieService.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\WebRefreshTransaction.cs" Link="WebRefreshTransaction.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\PasswordLoginSession.cs" Link="PasswordLoginSession.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\AccessKeyRenewal.cs" Link="AccessKeyRenewal.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\CredentialCommitter.cs" Link="CredentialCommitter.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\RefreshCredentialPolicy.cs" Link="RefreshCredentialPolicy.cs" />
