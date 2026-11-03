@@ -34,6 +34,10 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class SettingPage : BasePage
     {
+        /// <summary>设置 ⇄ 令牌记录的接线：判定在 RefreshTokenPolicy，这里只读写设置。</summary>
+        private static readonly RefreshTokenMirror refreshTokenMirror = new RefreshTokenMirror(
+            key => SettingHelper.GetValue(key, ""), (key, value) => SettingHelper.SetValue(key, value));
+
         SettingVM settingVM;
         public SettingPage()
         {
@@ -1284,15 +1288,13 @@ namespace BiliLite.Pages
 
         public string CookieRefreshToken
         {
-            get
-            {
-                var cookie = SettingHelper.GetValue<string>("CookieRefreshToken", "");
-                return cookie;
-            }
+            get => SettingHelper.GetValue<string>(RefreshTokenMirror.TokenKey, "");
             set
             {
-                if (String.IsNullOrEmpty(value)) return;
-                SettingHelper.SetValue<string>("CookieRefreshToken", value);
+                // 手填的就是本会话的令牌：来源记 manual、归属记当前 uid，读令牌时不会被当成别人的；
+                // 清空输入框＝清掉记录，值、来源、归属一起走（判定和落盘都在 RefreshTokenMirror）
+                refreshTokenMirror.RecordManual(value,
+                    SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L));
                 OnPropertyChanged(nameof(CookieRefreshToken));
             }
         }

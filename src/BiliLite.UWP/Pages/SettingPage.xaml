@@ -493,7 +493,7 @@
                 <TextBlock Style="{StaticResource SettingLabel}" Text="ac_time_value"/>
                 <TextBox x:Name="CookieRefreshTokenTextBox" Text="{x:Bind CookieRefreshToken, Mode=TwoWay}" Width="300" HorizontalAlignment="Left"/>
                 <TextBlock Style="{StaticResource SettingHelp}" Text="网页会话刷新使用的值。"/>
-                <TextBlock Style="{StaticResource SettingHelp}" Text="填写后立即写入并保存，空值会被忽略。这些字段用于 B 站账号登录，请勿泄露。" Margin="0 8 0 0"/>
+                <TextBlock Style="{StaticResource SettingHelp}" Text="填写后立即保存，留空不会改动已存的值；ac_time_value 留空则会删掉它。这些值只属于你自己的 B 站会话，请勿分享给他人。" Margin="0 8 0 0"/>
               </StackPanel>
             </controls:Expander>
           </StackPanel>

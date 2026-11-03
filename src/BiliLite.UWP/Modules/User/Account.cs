@@ -331,6 +331,11 @@ namespace BiliLite.Modules
         private static CredentialCommit PersistCredentials(string access_key, string refresh_token, int expires,
             long userid, LoginCookieInfo cookie)
         {
+            // 换账号：上一代 ac_time_value 只是副本、本身不带归属，jar 里留着就会被镜像当成新会话的令牌。
+            // 先删再落盘，之后镜像只可能接住这次响应下发的 ac_time_value（或什么都接不到）。
+            if (RefreshTokenPolicy.OwnerConflicts(SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L), userid))
+                DeleteJarRefreshToken();
+
             var commit = CredentialCommitter.Commit(access_key, refresh_token, DateTime.Now.AddSeconds(expires),
                 userid, cookie?.cookies != null && cookie.cookies.Count > 0, CookieWrites(cookie),
                 credentialSettings, CookieJarWriter(), LogCommitFailure);
@@ -510,8 +515,30 @@ namespace BiliLite.Modules
         }
 
         /// <summary>
-        /// jar 里的 ac_time_value 只作为旧会话的迁移来源：设置里已有响应令牌、有挂起确认或归属对不上时，
-        /// 一个键都不动。QR 登录这类拿不到响应令牌的会话靠它补齐。
+        /// 删掉 jar 里所有 ac_time_value：换账号的落盘前调用一次，别让上一代的副本被镜像认领。
+        /// cookie 导入那条路在 ApplyCookieLogin 里已经按名字删过一遍，这里补上 SaveLogin 这一路。
+        /// </summary>
+        private static void DeleteJarRefreshToken()
+        {
+            try
+            {
+                var filter = new HttpBaseProtocolFilter();
+                foreach (var origin in CookieLoginOrigins())
+                    foreach (var current in filter.CookieManager.GetCookies(origin).ToList())
+                        if (string.Equals(current.Name, "ac_time_value", StringComparison.OrdinalIgnoreCase))
+                            filter.CookieManager.DeleteCookie(current);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("清理旧 ac_time_value 失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+            }
+        }
+
+        /// <summary>
+        /// jar 里的 ac_time_value 只作为旧会话的迁移来源：设置里已有本会话的响应令牌、有挂起确认或
+        /// jar 归属对不上时，一个键都不动。QR 登录这类拿不到响应令牌的会话靠它补齐。
+        /// 这是所有登录路径（密码/短信/扫码/cookie 导入）共用的那一次镜像，记录的 uid 与刚落盘的
+        /// uid 不同时，判定就在这里把上个账号的令牌整组作废 —— 登录完成即是新会话。
         /// </summary>
         private static void MirrorRefreshTokenFromJar()
         {

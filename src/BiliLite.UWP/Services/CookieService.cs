@@ -209,7 +209,11 @@ namespace BiliLite.Services
         /// <summary>会话归属就是设置里的 uid：cookie 迁移和响应令牌落盘都按它记。</summary>
         private long ReadSessionOwnerId() => RefreshTokenPolicy.ParseOwner(readSetting(SettingHelper.Account.USER_ID));
 
-        public string GetRefreshToken() => refreshTokenMirror.ReadToken();
+        /// <summary>
+        /// 提交路径的唯一取令牌口：归属和当前会话对不上就不交（由镜像按 uid 判定），
+        /// 所以 cookie/refresh 永远不会带上一个不属于这个账号的令牌。
+        /// </summary>
+        public string GetRefreshToken() => refreshTokenMirror.ReadToken(ReadSessionOwnerId());
 
         public Task<bool> NeedRefreshCookieAsync()
         {

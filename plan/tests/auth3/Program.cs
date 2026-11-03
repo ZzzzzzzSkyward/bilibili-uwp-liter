@@ -51,6 +51,9 @@ internal static class Program
         ResponseTokenBeatsTheCookieMirror();
         CookieMirrorOnlyMigratesALegacySession();
         CookieMirrorRefusesAnotherAccountsToken();
+        CrossAccountLoginResetsTheWebToken();
+        AnotherAccountsWebTokenIsNeverSubmitted();
+        ManualEntryBelongsToTheCurrentSession();
         PendingConfirmationBlocksMigration();
         RecordedAppkeyDrivesTheRenewalRequest();
         SourceChecks();
@@ -694,12 +697,246 @@ internal static class Program
         ownJar.Write("ac_time_value", "ac-seven");
         ownJar.Write("DedeUserID", "7");
         Mirror(foreignSaved, ownJar).LoadCookieFromSetting();
-        Check(Setting(foreignSaved, RefreshTokenMirror.TokenKey) == "rt-other-account",
-            "a saved token owned by another uid is not treated as this session's credential");
+        Check(Setting(foreignSaved, RefreshTokenMirror.TokenKey) == "ac-seven",
+            "a saved token owned by another uid is replaced by this session's own cookie token");
+        Check(Setting(foreignSaved, RefreshTokenMirror.OwnerKey) == "7",
+            "the replacement records this session as the owner instead of carrying the old one");
         Check(RefreshTokenPolicy.Decide(
                 new SavedRefreshToken { Token = "rt-other-account", Source = RefreshTokenSource.Response, OwnerId = 42 },
-                7, "ac-seven", 7, false).Reason == RefreshTokenPolicy.OwnerMismatch,
-            "the unit refuses to let another account's token answer for this session");
+                7, "ac-seven", 7, false).Reason == RefreshTokenPolicy.SessionResetAdopted,
+            "the unit calls the switch a session reset, not a migration");
+
+        var clearedSettings = new Dictionary<string, string>
+        {
+            { SettingHelper.Account.USER_ID, "7" },
+            { RefreshTokenMirror.TokenKey, "rt-other-account" },
+            { RefreshTokenMirror.SourceKey, "response" },
+            { RefreshTokenMirror.OwnerKey, "42" },
+        };
+        var noTokenJar = new MemoryCookieStore();
+        noTokenJar.Write("DedeUserID", "7");
+        var clearedService = Mirror(clearedSettings, noTokenJar);
+        clearedService.LoadCookieFromSetting();
+        Check(Setting(clearedSettings, RefreshTokenMirror.TokenKey) == "",
+            "a switch with no jar token leaves nothing of the other account behind");
+        Check(clearedService.GetRefreshToken() == "",
+            "the switched session hands nothing out to the cookie refresh submit path");
+        Check(RefreshTokenPolicy.Decide(
+                new SavedRefreshToken { Token = "rt-other-account", Source = RefreshTokenSource.Response, OwnerId = 42 },
+                7, "", 0, false).Reason == RefreshTokenPolicy.SessionReset,
+            "the unit names the empty outcome a session reset");
+    }
+
+    /// <summary>
+    /// AUTH-04：一次完成的登录就是新会话。扫码登录把 B 的 uid 和 cookie_info 整组落盘（CredentialCommitter 真代码），
+    /// 紧接着的那次镜像（Account.PersistCredentials 的最后一步）只认 B 那一代 ac_time_value；
+    /// A 的响应令牌连值带来源带归属都不许留下。同一账号的续期不走重置，旧记录没有归属也不拦。
+    /// </summary>
+    private static void CrossAccountLoginResetsTheWebToken()
+    {
+        var settings = AResponseSession("42", "rt-account-a");
+        var jar = new MemoryCookieStore();
+        CommitLogin(settings, jar, 99, new[]
+        {
+            new CookieWrite { Name = "DedeUserID", Domain = "https://bilibili.com", Path = "/", Value = "99" },
+            new CookieWrite { Name = "ac_time_value", Domain = "https://bilibili.com", Path = "/", Value = "ac-account-b" },
+        });
+
+        var service = Mirror(settings, jar);
+        service.LoadCookieFromSetting();
+        Check(Setting(settings, RefreshTokenMirror.TokenKey) == "ac-account-b",
+            "the completed login adopts the new account's ac_time_value");
+        Check(Setting(settings, RefreshTokenMirror.SourceKey) == "cookie",
+            "the adopted token records that it came from the new jar");
+        Check(Setting(settings, RefreshTokenMirror.OwnerKey) == "99",
+            "the adopted token records the new account as its owner");
+        Check(!settings.Values.Contains("rt-account-a"),
+            "the previous account's response token survives nowhere after the switch");
+        Check(service.GetRefreshToken() == "ac-account-b",
+            "the submit path reads the new account's token, not the previous one's");
+
+        // 新会话没有下发 ac_time_value（登录落盘已先删掉 jar 里上一代副本）：记录整组写成空
+        var bare = AResponseSession("42", "rt-account-a");
+        var bareJar = new MemoryCookieStore();
+        CommitLogin(bare, bareJar, 99, new[]
+        {
+            new CookieWrite { Name = "DedeUserID", Domain = "https://bilibili.com", Path = "/", Value = "99" },
+        });
+        var bareService = Mirror(bare, bareJar);
+        bareService.LoadCookieFromSetting();
+        Check(Setting(bare, RefreshTokenMirror.TokenKey) == "",
+            "a switch that brings no new ac_time_value clears the record instead of keeping the old token");
+        Check(Setting(bare, RefreshTokenMirror.OwnerKey) == "0" &&
+            Setting(bare, RefreshTokenMirror.SourceKey) == "unknown-legacy",
+            "the cleared record keeps neither the owner nor the provenance of the old session");
+        Check(bareService.GetRefreshToken() == "",
+            "the cleared session hands nothing out to the submit path");
+
+        // 退出登录只清掉令牌值、归属键留在设置里：空记录不能被那个孤立的 uid 挡在迁移之外
+        var leftover = new Dictionary<string, string>
+        {
+            { SettingHelper.Account.USER_ID, "99" },
+            { RefreshTokenMirror.TokenKey, "" },
+            { RefreshTokenMirror.OwnerKey, "42" },
+        };
+        var leftoverJar = new MemoryCookieStore();
+        leftoverJar.Write("ac_time_value", "ac-account-b");
+        leftoverJar.Write("DedeUserID", "99");
+        var leftoverService = Mirror(leftover, leftoverJar);
+        leftoverService.LoadCookieFromSetting();
+        Check(Setting(leftover, RefreshTokenMirror.TokenKey) == "ac-account-b" &&
+            leftoverService.GetRefreshToken() == "ac-account-b",
+            "a cleared token with a leftover owner still adopts the new session's cookie token");
+
+        var same = AResponseSession("42", "rt-account-a");
+        var sameJar = new MemoryCookieStore();
+        sameJar.Write("ac_time_value", "ac-account-a-old");
+        sameJar.Write("DedeUserID", "42");
+        CommitLogin(same, sameJar, 42, null);
+        var sameService = Mirror(same, sameJar);
+        sameService.LoadCookieFromSetting();
+        Check(Setting(same, RefreshTokenMirror.TokenKey) == "rt-account-a" &&
+            sameService.GetRefreshToken() == "rt-account-a",
+            "a same-account login keeps its own response token and still hands it out");
+
+        var legacy = new Dictionary<string, string>
+        {
+            { SettingHelper.Account.USER_ID, "42" },
+            { RefreshTokenMirror.TokenKey, "rt-legacy" },
+        };
+        var legacyJar = new MemoryCookieStore();
+        legacyJar.Write("ac_time_value", "ac-account-a");
+        legacyJar.Write("DedeUserID", "42");
+        var legacyService = Mirror(legacy, legacyJar);
+        legacyService.LoadCookieFromSetting();
+        Check(Setting(legacy, RefreshTokenMirror.TokenKey) == "rt-legacy" &&
+            legacyService.GetRefreshToken() == "rt-legacy",
+            "a record without an owner is not mistaken for another account's");
+    }
+
+    /// <summary>
+    /// AUTH-04：提交路径取令牌前核对归属。设置里还留着 A 的响应令牌（镜像写入抛过异常，或旧版本换号留下的记录），
+    /// 当前会话是 B 时一次 cookie/refresh 都不许发；同一账号的续期照旧用自己的令牌，响应换代按本会话归属落盘。
+    /// </summary>
+    private static void AnotherAccountsWebTokenIsNeverSubmitted()
+    {
+        Log.Clear();
+        BiliLite.Services.CookieService.ClearReloginRequired();
+        var settings = AResponseSession("99", "rt-account-a");
+        settings["CookieCSRF"] = "csrf-b";
+        var jar = new MemoryCookieStore();
+        jar.Write("bili_jct", "csrf-b");
+
+        var requests = new List<ApiModel>();
+        var service = Mirror(settings, jar, api => { requests.Add(api); return Task.FromResult(CookieRefreshStub(api)); });
+        Check(service.GetRefreshToken() == "",
+            "a token whose recorded owner contradicts the session is never handed out; got='" +
+            service.GetRefreshToken() + "'");
+
+        service.CookieTimestamp = 1700000000;
+        service.RefreshCookieAsync().GetAwaiter().GetResult();
+
+        var foreignSubmissions = requests
+            .Where(api => api.baseUrl.EndsWith("/cookie/refresh", StringComparison.Ordinal))
+            .Select(api => api.body).ToList();
+        Check(foreignSubmissions.Count == 0,
+            "no cookie/refresh request is sent for another account's token; sent=" +
+            string.Join(" | ", foreignSubmissions));
+        Check(requests.All(api => !(api.body ?? "").Contains("rt-account-a")),
+            "the previous account's token never reaches a request body");
+        Check(Log.Any(line => line.Contains("refresh token missing")),
+            "the submit path reports a missing token instead of borrowing one");
+
+        Log.Clear();
+        BiliLite.Services.CookieService.ClearReloginRequired();
+        var own = AResponseSession("42", "rt-account-a");
+        own["CookieCSRF"] = "csrf-a";
+        var ownJar = new MemoryCookieStore();
+        ownJar.Write("bili_jct", "csrf-a");
+        ownJar.Write("ac_time_value", "ac-account-a-old");
+        ownJar.Write("DedeUserID", "42");
+        var ownRequests = new List<ApiModel>();
+        var ownService = Mirror(own, ownJar, api => { ownRequests.Add(api); return Task.FromResult(CookieRefreshStub(api)); });
+        ownService.CookieTimestamp = 1700000000;
+        ownService.RefreshCookieAsync().GetAwaiter().GetResult();
+
+        var submitted = ownRequests.Single(api => api.baseUrl.EndsWith("/cookie/refresh", StringComparison.Ordinal));
+        Check(submitted.body.Contains("refresh_token=rt-account-a"),
+            "a same-account renewal submits that account's own token");
+        Check(Setting(own, RefreshTokenMirror.TokenKey) == "rt-rotated-from-response" &&
+            Setting(own, RefreshTokenMirror.SourceKey) == "response" &&
+            Setting(own, RefreshTokenMirror.OwnerKey) == "42",
+            "the refresh response replaces the token inside its own session");
+    }
+
+    /// <summary>
+    /// AUTH-04：设置页手填的 ac_time_value 属于填它的那个会话。来源记 manual、归属记当前 uid，
+    /// jar 里的另一代改写不了它，读令牌也不会因为归属空着被挡；清空输入框＝值/来源/归属一起清。
+    /// </summary>
+    private static void ManualEntryBelongsToTheCurrentSession()
+    {
+        var settings = new Dictionary<string, string> { { SettingHelper.Account.USER_ID, "42" } };
+        var jar = new MemoryCookieStore();
+        jar.Write("ac_time_value", "ac-from-jar");
+        jar.Write("DedeUserID", "42");
+        var service = Mirror(settings, jar);
+        var mirror = new RefreshTokenMirror(key => Setting(settings, key), (key, value) => settings[key] = value);
+
+        mirror.RecordManual("ac-typed", RefreshTokenPolicy.ParseOwner(Setting(settings, SettingHelper.Account.USER_ID)));
+        Check(Setting(settings, RefreshTokenMirror.SourceKey) == "manual" &&
+            Setting(settings, RefreshTokenMirror.OwnerKey) == "42",
+            "a hand-entered token records the manual source and the session as its owner");
+        Check(service.GetRefreshToken() == "ac-typed",
+            "a hand-entered token is handed out for the session that typed it");
+
+        service.LoadCookieFromSetting();
+        Check(Setting(settings, RefreshTokenMirror.TokenKey) == "ac-typed",
+            "the jar generation never rewrites a hand-entered token");
+
+        mirror.RecordManual("", 42);
+        Check(Setting(settings, RefreshTokenMirror.TokenKey) == "" &&
+            Setting(settings, RefreshTokenMirror.SourceKey) == "unknown-legacy" &&
+            Setting(settings, RefreshTokenMirror.OwnerKey) == "0" &&
+            service.GetRefreshToken() == "",
+            "clearing the box clears the value, the source and the owner together");
+    }
+
+    /// <summary>A 的会话状态：一把响应令牌，归属记在设置里。</summary>
+    private static Dictionary<string, string> AResponseSession(string userId, string token) => new Dictionary<string, string>
+    {
+        { SettingHelper.Account.USER_ID, userId },
+        { RefreshTokenMirror.TokenKey, token },
+        { RefreshTokenMirror.SourceKey, "response" },
+        { RefreshTokenMirror.OwnerKey, "42" },
+    };
+
+    /// <summary>登录落盘：和 Account.PersistCredentials 同序 —— 先 Commit（uid 和 cookie 一起写），再由调用方镜像。</summary>
+    private static void CommitLogin(IDictionary<string, string> settings, MemoryCookieStore jar, long userId,
+        IEnumerable<CookieWrite> cookies)
+    {
+        var writes = cookies?.ToList() ?? new List<CookieWrite>();
+        var commit = CredentialCommitter.Commit("ak-new", "rt-new", DateTime.Now.AddHours(240), userId,
+            writes.Count > 0, writes, new DictionaryCredentialSettings(settings),
+            write => { jar.Write(write.Name, write.Value); return true; },
+            (message, exception) => Log.Add(message));
+        if (!commit.TokenSaved) throw new Exception("AUTH-03 failed: the fixture login did not persist its credentials");
+    }
+
+    /// <summary>cookie 刷新三条请求的假服务端：correspond 页给出 CSRF，刷新换代，确认成功。</summary>
+    private static HttpResults CookieRefreshStub(ApiModel api)
+    {
+        if (api.baseUrl.Contains("/correspond/"))
+            return new HttpResults { code = 200, status = true, results = "<div id=\"1-name\">csrf-from-page</div>" };
+        if (api.baseUrl.EndsWith("/cookie/refresh", StringComparison.Ordinal))
+            return new HttpResults
+            {
+                code = 200,
+                status = true,
+                results = "{\"code\":0,\"data\":{\"refresh_token\":\"rt-rotated-from-response\"}}",
+            };
+        if (api.baseUrl.EndsWith("/confirm/refresh", StringComparison.Ordinal))
+            return new HttpResults { code = 200, status = true, results = "{\"code\":0}" };
+        return new HttpResults { code = 200, status = true, results = "{}" };
     }
 
     /// <summary>D4：有挂起的确认（D3）时，正在轮换的那一代令牌不接受 cookie 改写。</summary>
@@ -942,6 +1179,30 @@ internal static class Program
                 "private static void LogCommitFailure(")
             .Contains("MirrorRefreshTokenFromJar();"),
             "the credential commit runs the one shared mirror");
+        Check(MethodBody(account, "private static CredentialCommit PersistCredentials(",
+                "private static void LogCommitFailure(")
+            .Contains("DeleteJarRefreshToken();"),
+            "a switch drops the previous jar's ac_time_value before the new account's cookies land");
+        Check(MethodBody(account, "public async Task<LoginCallbackModel> PollQRAuthInfo(",
+                "public async Task<bool> CheckLoginState(")
+            .Contains("SaveLogin("),
+            "TV QR login reaches that commit through SaveLogin");
+        var cookieImport = MethodBody(account, "private static void ApplyCookieLogin(",
+            "private static void MirrorRefreshTokenFromJar(");
+        Check(cookieImport.Contains("refreshTokenMirror.RecordResponse(") &&
+            cookieImport.Contains("MirrorRefreshTokenFromJar();"),
+            "the cookie import commit replaces the record and then runs the same mirror");
+        Check(MethodBody(cookieService, "public string GetRefreshToken()",
+                "public Task<bool> NeedRefreshCookieAsync()")
+            .Contains("ReadToken(ReadSessionOwnerId())"),
+            "the submit path hands the session owner to the token read");
+        var settingPage = File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/Pages/SettingPage.xaml.cs"));
+        var manualBox = MethodBody(settingPage, "public string CookieRefreshToken",
+            "OnPropertyChanged(nameof(CookieRefreshToken));");
+        Check(manualBox.Contains("refreshTokenMirror.RecordManual(") &&
+            manualBox.Contains("SettingHelper.Account.USER_ID") &&
+            !manualBox.Contains("SetValue<string>(\"CookieRefreshToken\""),
+            "the settings page records a hand-entered token with its source and owner instead of a bare key");
         Check(MethodBody(account, "public async Task<bool> SaveLogin(", "public bool CommitCookieLogin(")
             .Contains("AppkeyPolicy.Format(acquiredWith)"),
             "the acquisition key identity is persisted with the token pair");
@@ -997,19 +1258,39 @@ internal static class Program
     }
 
     /// <summary>把设置和 jar 都换成字典：CookieService 的入口本身跑真代码，没有静态设置参与。</summary>
-    private static MirrorService Mirror(IDictionary<string, string> settings, ICookieStore cookies) =>
-        new MirrorService(settings, cookies);
+    private static MirrorService Mirror(IDictionary<string, string> settings, ICookieStore cookies,
+        Func<ApiModel, Task<HttpResults>> send = null) => new MirrorService(settings, cookies, send);
 
     private sealed class MirrorService : CookieService
     {
-        public MirrorService(IDictionary<string, string> settings, ICookieStore cookies)
+        public MirrorService(IDictionary<string, string> settings, ICookieStore cookies,
+            Func<ApiModel, Task<HttpResults>> send)
             : base(cookies, key => settings.TryGetValue(key, out var value) ? value : "",
-                (key, value) => settings[key] = value, () => true)
+                (key, value) => settings[key] = value, () => true,
+                send, _ => { }, (message, exception) => Log.Add(message))
         {
             Settings = settings;
         }
 
         public IDictionary<string, string> Settings { get; }
+    }
+
+    /// <summary>CredentialCommitter 的设置口接到同一本字典上：落盘和镜像看的是同一批键。</summary>
+    private sealed class DictionaryCredentialSettings : ICredentialSettings
+    {
+        private readonly IDictionary<string, string> values;
+
+        public DictionaryCredentialSettings(IDictionary<string, string> values) => this.values = values;
+
+        public T Read<T>(string key, T fallback)
+        {
+            if (!values.TryGetValue(key, out var raw) || raw == null) return fallback;
+            if (typeof(T) == typeof(string)) return (T)(object)raw;
+            return (T)Convert.ChangeType(raw, typeof(T));
+        }
+
+        public void Write<T>(string key, T value) =>
+            values[key] = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static string Setting(IDictionary<string, string> settings, string key) =>
