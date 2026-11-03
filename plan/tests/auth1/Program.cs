@@ -215,11 +215,22 @@ internal static class Program
         var service = NewService(settings, new Backend(), store);
 
         service.LoadCookieFromSetting();
-        Check(settings["CookieSESSDATA"] == "fresh-sessdata" && settings["CookieCSRF"] == "fresh-csrf" &&
-            settings["CookieRefreshToken"] == "fresh-time-value",
-            "a refresh new SESSDATA/CSRF/ac_time_value overwrite the stale settings");
-        Check(service.GetCSRF() == "fresh-csrf" && service.GetRefreshToken() == "fresh-time-value",
+        Check(settings["CookieSESSDATA"] == "fresh-sessdata" && settings["CookieCSRF"] == "fresh-csrf",
+            "a refresh new SESSDATA/CSRF overwrite the stale settings");
+        // 存的令牌来源未知：cookie 只是旧会话的迁移来源，不是「更新」手段，不许改写它
+        Check(settings["CookieRefreshToken"] == "stale-token",
+            "a saved token of unknown provenance is kept instead of being rewritten by the jar's ac_time_value");
+        Check(service.GetCSRF() == "fresh-csrf" && service.GetRefreshToken() == "stale-token",
             "the refreshed session is what later requests read back");
+
+        // 本会话没有任何刷新令牌时，jar 里的 ac_time_value 才是迁移来源
+        var legacySettings = new Dictionary<string, string> { ["CookieCSRF"] = "stale-csrf" };
+        var legacyService = NewService(legacySettings, new Backend(),
+            new FakeCookieStore { ["ac_time_value"] = "fresh-time-value" });
+        legacyService.LoadCookieFromSetting();
+        Check(legacySettings["CookieRefreshToken"] == "fresh-time-value" &&
+            legacyService.GetRefreshToken() == "fresh-time-value",
+            "a session with no saved token migrates the refreshed jar's ac_time_value into settings");
     }
 
     private static async Task ServerSessionClearsRelogin()

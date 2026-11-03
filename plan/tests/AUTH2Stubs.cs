@@ -60,6 +60,8 @@ namespace BiliLite.Helpers
         public bool Logined { get; set; }
         public string AccessKey { get; set; } = "access-fixture";
         public string REFRESH_KEY => "refreshToken";
+        /// <summary>真 SettingHelper.Account.USER_ID 的键名：会话归属就是从这条设置读的。</summary>
+        public string USER_ID => "uid";
     }
 }
 

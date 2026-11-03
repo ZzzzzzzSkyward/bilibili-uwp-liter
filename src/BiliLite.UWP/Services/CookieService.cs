@@ -54,6 +54,7 @@ namespace BiliLite.Services
         private readonly AccountApi accountApi = new AccountApi();
         private readonly Func<string, string> readSetting;
         private readonly Action<string, string> writeSetting;
+        private readonly RefreshTokenMirror refreshTokenMirror;
         private readonly Func<bool> isLoggedIn;
         private readonly Func<ApiModel, Task<HttpResults>> send;
         private readonly Action<string> notify;
@@ -86,6 +87,7 @@ namespace BiliLite.Services
             this.cookieStore = cookieStore ?? throw new ArgumentNullException(nameof(cookieStore));
             this.readSetting = readSetting ?? throw new ArgumentNullException(nameof(readSetting));
             this.writeSetting = writeSetting ?? throw new ArgumentNullException(nameof(writeSetting));
+            this.refreshTokenMirror = new RefreshTokenMirror(this.readSetting, this.writeSetting);
             this.isLoggedIn = isLoggedIn ?? throw new ArgumentNullException(nameof(isLoggedIn));
             this.send = send ?? (api => api.Request());
             this.notify = notify ?? (_ => { });
@@ -192,16 +194,22 @@ namespace BiliLite.Services
             MirrorRefreshToken();
         }
 
-        /// <summary>ac_time_value 只存在于 cookie 里时才算真正拿到刷新令牌，登录成功后必须落到设置。</summary>
-        public void MirrorRefreshToken()
+        /// <summary>
+        /// ac_time_value 只存在于 cookie 里时才算真正拿到刷新令牌，登录成功后必须落到设置。
+        /// 但它是旧会话的迁移来源：设置里已有响应令牌、有挂起确认或归属对不上时，这里一个键都不动。
+        /// </summary>
+        public RefreshTokenDecision MirrorRefreshToken()
         {
-            var cookieValue = ReadCookie("ac_time_value", "");
-            if (string.IsNullOrEmpty(cookieValue)) return;
-            if (string.Equals(readSetting("CookieRefreshToken"), cookieValue, StringComparison.Ordinal)) return;
-            writeSetting("CookieRefreshToken", cookieValue);
+            // 该谁来挡：D3 的挂起确认记录还没落地，眼下没有挂起的确认可读，判定单元先按 false 跑；
+            // D3 落地后由它供值，判定规则本身不用改。
+            return refreshTokenMirror.MirrorFromCookie(ReadCookie("ac_time_value", ""),
+                RefreshTokenPolicy.ParseOwner(ReadCookie("DedeUserID", "")), ReadSessionOwnerId(), false);
         }
 
-        public string GetRefreshToken() => readSetting("CookieRefreshToken");
+        /// <summary>会话归属就是设置里的 uid：cookie 迁移和响应令牌落盘都按它记。</summary>
+        private long ReadSessionOwnerId() => RefreshTokenPolicy.ParseOwner(readSetting(SettingHelper.Account.USER_ID));
+
+        public string GetRefreshToken() => refreshTokenMirror.ReadToken();
 
         public Task<bool> NeedRefreshCookieAsync()
         {
@@ -418,7 +426,8 @@ namespace BiliLite.Services
             }
             if (string.IsNullOrEmpty(newToken)) return;
 
-            writeSetting("CookieRefreshToken", newToken);
+            // 响应里的令牌对这个会话是权威的：来源和归属一起落盘，jar 里旧的 ac_time_value 之后顶不掉它
+            refreshTokenMirror.RecordResponse(newToken, ReadSessionOwnerId());
             var confirm = await send(accountApi.ConfirmRefreshCookie(GetCSRF(), token));
             if (confirm?.code == 200)
             {

@@ -47,6 +47,11 @@ internal static class Program
         ProfileNullNoLongerThrows();
         CappedDeadSessionAnswerIsNotFinal();
         CappedWebFallbackTable();
+        ResponseTokenBeatsTheCookieMirror();
+        CookieMirrorOnlyMigratesALegacySession();
+        CookieMirrorRefusesAnotherAccountsToken();
+        PendingConfirmationBlocksMigration();
+        RecordedAppkeyDrivesTheRenewalRequest();
         SourceChecks();
 
         Console.WriteLine("PASS " + assertions + " assertions");
@@ -468,6 +473,223 @@ internal static class Program
         Qualites = new List<BiliPlayUrlInfo> { new BiliPlayUrlInfo { QualityID = qualityId, HasPlayUrl = true } }
     };
 
+    /// <summary>
+    /// D4：响应里拿到的刷新令牌对它自己的会话是权威的，jar 里那份不一样的 ac_time_value 只是旧世代。
+    /// 修复前启动/登录完成后的镜像无条件用 cookie 覆盖设置，这条断言就是那时会红的那条。
+    /// </summary>
+    private static void ResponseTokenBeatsTheCookieMirror()
+    {
+        var settings = new Dictionary<string, string>
+        {
+            { RefreshTokenMirror.TokenKey, "rt-from-response" },
+            { RefreshTokenMirror.SourceKey, "response" },
+            { RefreshTokenMirror.OwnerKey, "42" },
+            { SettingHelper.Account.USER_ID, "42" },
+        };
+        var jar = new MemoryCookieStore();
+        jar.Write("ac_time_value", "ac-stale-cookie");
+        jar.Write("DedeUserID", "42");
+        jar.Write("SESSDATA", "sess");
+        jar.Write("bili_jct", "csrf");
+        var service = Mirror(settings, jar);
+
+        // 启动：LoadCookieFromSetting 同步 SESSDATA/CSRF，同时镜像刷新令牌
+        service.LoadCookieFromSetting();
+        Check(Setting(settings, RefreshTokenMirror.TokenKey) == "rt-from-response",
+            "startup keeps the response-derived token when the jar holds a different ac_time_value");
+        Check(Setting(settings, RefreshTokenMirror.SourceKey) == "response",
+            "startup leaves the recorded source alone");
+        Check(Setting(settings, RefreshTokenMirror.OwnerKey) == "42",
+            "startup leaves the recorded owner alone");
+
+        // 设置页/刷新前的再次镜像走同一个入口，不许把令牌往回带
+        service.LoadCookieFromSetting();
+        Check(Setting(settings, RefreshTokenMirror.TokenKey) == "rt-from-response",
+            "settings load and the refresh-token fallback see the same token after startup");
+
+        // 单元层同一张判定：响应令牌 + 不同 cookie，令牌与来源都不许动
+        var kept = RefreshTokenPolicy.Decide(
+            new SavedRefreshToken { Token = "rt-from-response", Source = RefreshTokenSource.Response, OwnerId = 42 },
+            42, "ac-stale-cookie", 42, false);
+        Check(!kept.Write && kept.Token == "rt-from-response" && kept.Source == RefreshTokenSource.Response &&
+            kept.Reason == "response-authoritative",
+            "the decision unit names the response token authoritative and never hands out the cookie value");
+    }
+
+    /// <summary>D4：cookie 迁移只在没有已存令牌时兜底，且迁移时必须记下来源和归属。</summary>
+    private static void CookieMirrorOnlyMigratesALegacySession()
+    {
+        var settings = new Dictionary<string, string> { { SettingHelper.Account.USER_ID, "42" } };
+        var jar = new MemoryCookieStore();
+        jar.Write("ac_time_value", "ac-cookie");
+        jar.Write("DedeUserID", "42");
+        var service = Mirror(settings, jar);
+
+        service.LoadCookieFromSetting();
+        Check(Setting(settings, RefreshTokenMirror.TokenKey) == "ac-cookie",
+            "a session with no saved token migrates ac_time_value from the jar");
+        Check(Setting(settings, RefreshTokenMirror.SourceKey) == "cookie",
+            "the migration records that the token came from a cookie");
+        Check(Setting(settings, RefreshTokenMirror.OwnerKey) == "42",
+            "the migration records which uid the token belongs to");
+        Check(RefreshTokenPolicy.Decide(new SavedRefreshToken(), 42, "ac-cookie", 42, false).Reason == "legacy-adoption",
+            "the unit calls an empty session's jar import a legacy adoption");
+
+        // 已经存了令牌就不再迁移：迁移是「本会话没有任何刷新令牌」时的兜底，不是更新手段。
+        // 选 keep 而不是跟着 jar 换代，是因为 cookie 只是一份副本，跟着它会把手填/迁移过的值
+        // 反复按 jar 的世代重写；真正的轮换走响应令牌，那条路已经把自己锁成 response。
+        jar.Write("ac_time_value", "ac-cookie-2");
+        service.LoadCookieFromSetting();
+        Check(Setting(settings, RefreshTokenMirror.TokenKey) == "ac-cookie",
+            "a cookie-sourced token is not rewritten by a later jar generation");
+        Check(Setting(settings, RefreshTokenMirror.SourceKey) == "cookie",
+            "the kept token keeps its recorded source");
+        Check(RefreshTokenPolicy.Decide(
+                new SavedRefreshToken { Token = "ac-cookie", Source = RefreshTokenSource.Cookie, OwnerId = 42 },
+                42, "ac-cookie-2", 42, false).Reason == "cookie-source-kept",
+            "the unit states that a cookie-sourced token is kept, not re-adopted");
+
+        // 来源未知的旧设置有值就保留：不拿 cookie 猜它是不是更新
+        var unknown = Mirror(new Dictionary<string, string>
+        {
+            { SettingHelper.Account.USER_ID, "42" },
+            { RefreshTokenMirror.TokenKey, "rt-legacy" },
+        }, jar);
+        unknown.LoadCookieFromSetting();
+        Check(Setting(unknown.Settings, RefreshTokenMirror.TokenKey) == "rt-legacy",
+            "a saved token of unknown provenance is kept instead of being overwritten by a cookie");
+        Check(RefreshTokenPolicy.Decide(
+                new SavedRefreshToken { Token = "rt-legacy", Source = RefreshTokenSource.UnknownLegacy, OwnerId = 42 },
+                42, "ac-cookie-2", 42, false).Reason == "unknown-source-kept",
+            "the unit states that unknown provenance is kept");
+
+        var nothing = RefreshTokenPolicy.Decide(new SavedRefreshToken(), 42, "", 0, false);
+        Check(!nothing.Write && nothing.Reason == "no-cookie-token",
+            "an empty jar has nothing to migrate");
+        Check(RefreshTokenPolicy.ParseSource("cookie") == RefreshTokenSource.Cookie &&
+            RefreshTokenPolicy.ParseSource("response") == RefreshTokenSource.Response &&
+            RefreshTokenPolicy.ParseSource(null) == RefreshTokenSource.UnknownLegacy,
+            "a missing or unknown source reads as unknown-legacy");
+        Check(RefreshTokenPolicy.ParseOwner("42") == 42 && RefreshTokenPolicy.ParseOwner("") == 0 &&
+            RefreshTokenPolicy.ParseOwner("not-a-uid") == 0,
+            "an unreadable uid is treated as unknown ownership, not as account zero");
+    }
+
+    /// <summary>D4：归属对不上就不导入 —— 别的账号的 cookie 令牌不许当成本会话的凭证。</summary>
+    private static void CookieMirrorRefusesAnotherAccountsToken()
+    {
+        var settings = new Dictionary<string, string> { { SettingHelper.Account.USER_ID, "7" } };
+        var jar = new MemoryCookieStore();
+        jar.Write("ac_time_value", "ac-other-account");
+        jar.Write("DedeUserID", "42");
+
+        Mirror(settings, jar).LoadCookieFromSetting();
+        Check(Setting(settings, RefreshTokenMirror.TokenKey) == "",
+            "a jar owned by another uid is refused instead of imported");
+        Check(Setting(settings, RefreshTokenMirror.SourceKey) == "",
+            "the refused import records no provenance either");
+        Check(RefreshTokenPolicy.Decide(new SavedRefreshToken(), 7, "ac-other-account", 42, false).Reason ==
+            RefreshTokenPolicy.OwnerMismatch,
+            "the unit reports the jar as another account's, not as a migration");
+
+        var foreignSaved = new Dictionary<string, string>
+        {
+            { SettingHelper.Account.USER_ID, "7" },
+            { RefreshTokenMirror.TokenKey, "rt-other-account" },
+            { RefreshTokenMirror.SourceKey, "response" },
+            { RefreshTokenMirror.OwnerKey, "42" },
+        };
+        var ownJar = new MemoryCookieStore();
+        ownJar.Write("ac_time_value", "ac-seven");
+        ownJar.Write("DedeUserID", "7");
+        Mirror(foreignSaved, ownJar).LoadCookieFromSetting();
+        Check(Setting(foreignSaved, RefreshTokenMirror.TokenKey) == "rt-other-account",
+            "a saved token owned by another uid is not treated as this session's credential");
+        Check(RefreshTokenPolicy.Decide(
+                new SavedRefreshToken { Token = "rt-other-account", Source = RefreshTokenSource.Response, OwnerId = 42 },
+                7, "ac-seven", 7, false).Reason == RefreshTokenPolicy.OwnerMismatch,
+            "the unit refuses to let another account's token answer for this session");
+    }
+
+    /// <summary>D4：有挂起的确认（D3）时，正在轮换的那一代令牌不接受 cookie 改写。</summary>
+    private static void PendingConfirmationBlocksMigration()
+    {
+        var blocked = RefreshTokenPolicy.Decide(new SavedRefreshToken(), 42, "ac-cookie", 42, true);
+        Check(!blocked.Write && blocked.Reason == "confirmation-pending",
+            "a pending confirmation keeps the jar out of the settings");
+
+        // 判定单元只有参数，不读 SettingHelper 也不读 UWP：同一个判定能被 D3 的确认状态直接调用
+        var resumed = RefreshTokenPolicy.Decide(new SavedRefreshToken(), 42, "ac-cookie", 42, false);
+        Check(resumed.Write && resumed.Token == "ac-cookie",
+            "the same input migrates once no confirmation is pending");
+    }
+
+    /// <summary>D5：续期必须用换回这一对令牌的那把 appkey，旧会话没有记录时沿用修复前的 TV 键。</summary>
+    private static void RecordedAppkeyDrivesTheRenewalRequest()
+    {
+        var previousLoginKey = ApiHelper.LoginKey;
+        var previousTvKey = ApiHelper.AndroidTVKey;
+        try
+        {
+            ApiHelper.LoginKey = new ApiKeyInfo(LoginAppkey, LoginSecret);
+            ApiHelper.AndroidTVKey = new ApiKeyInfo(TvAppkey, TvSecret);
+            var requests = new List<ApiModel>();
+            Func<string, string, Task<HttpResults>> send = (accessKey, refreshToken) =>
+            {
+                requests.Add(new AccountApi().RefreshToken(accessKey, refreshToken));
+                return Task.FromResult(new HttpResults { status = true, results = SuccessBody() });
+            };
+            Func<LoginTokenInfo, LoginCookieInfo, Task<CredentialCommit>> save =
+                (token, cookie) => Task.FromResult(Committed(cookie));
+
+            SettingHelper.SetValue(AppkeyPolicy.SettingKey, AppkeyPolicy.Format(AppkeyIdentity.Login));
+            var loginRenewal = AccessKeyRenewal.RunAsync("ak", "rt", send, save,
+                (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
+            var loginRequest = requests.Single();
+            Check(loginRenewal.Committed, "recording the acquisition key does not disturb the renewal");
+            Check(loginRequest.body.Contains("&appkey=" + LoginAppkey + "&"),
+                "a pair acquired through the login appkey renews with that same appkey");
+            Check(loginRequest.body.EndsWith("&sign=" + ExpectedSign(loginRequest.body, LoginSecret), StringComparison.Ordinal),
+                "the renewal is signed with the login secret, not the TV one");
+            Check(!loginRequest.body.Contains("&appkey=" + TvAppkey + "&"),
+                "the TV key is not substituted for a login-acquired pair");
+
+            requests.Clear();
+            SettingHelper.SetValue(AppkeyPolicy.SettingKey, AppkeyPolicy.Format(AppkeyIdentity.Tv));
+            AccessKeyRenewal.RunAsync("ak", "rt", send, save, (message, exception) => Log.Add(message))
+                .GetAwaiter().GetResult();
+            var tvRequest = requests.Single();
+            Check(tvRequest.body.Contains("&appkey=" + TvAppkey + "&") &&
+                tvRequest.body.EndsWith("&sign=" + ExpectedSign(tvRequest.body, TvSecret), StringComparison.Ordinal),
+                "a TV-acquired pair renews with the TV key and secret");
+
+            // 旧会话没有记录：保持修复前的行为（TV 键），不按候选键轮询
+            requests.Clear();
+            SettingHelper.SetValue(AppkeyPolicy.SettingKey, "");
+            AccessKeyRenewal.RunAsync("ak", "rt", send, save, (message, exception) => Log.Add(message))
+                .GetAwaiter().GetResult();
+            Check(requests.Single().body.Contains("&appkey=" + TvAppkey + "&"),
+                "a legacy session with no recorded identity keeps the pre-fix TV key");
+            Check(requests.Count == 1, "an unknown identity does not cycle through speculative appkeys");
+
+            Check(AppkeyPolicy.Parse("android") == AppkeyIdentity.UnknownLegacy &&
+                AppkeyPolicy.Parse("") == AppkeyIdentity.UnknownLegacy,
+                "an unrecognized or absent identity is unknown-legacy, not a guess");
+            Check(AppkeyPolicy.Format(AppkeyIdentity.UnknownLegacy) == "unknown-legacy" &&
+                AppkeyPolicy.Format(AppkeyIdentity.Login) == "login" &&
+                AppkeyPolicy.Format(AppkeyIdentity.Tv) == "tv",
+                "the persisted identity is written as login/tv/unknown-legacy");
+            Check(AppkeyPolicy.Select(AppkeyIdentity.UnknownLegacy, LoginAppkey, TvAppkey) == TvAppkey,
+                "unknown-legacy resolves to the documented TV compatibility policy");
+        }
+        finally
+        {
+            ApiHelper.LoginKey = previousLoginKey;
+            ApiHelper.AndroidTVKey = previousTvKey;
+            SettingHelper.SetValue(AppkeyPolicy.SettingKey, "");
+        }
+    }
+
     private static void SourceChecks()
     {
         var root = FindRepoRoot();
@@ -558,14 +780,17 @@ internal static class Program
         var builder = MethodBody(accountApi, "public ApiModel RefreshToken(string accessKey, string refreshToken)",
             "public ApiModel WbiToken()");
         Check(builder.Contains("/api/v2/oauth2/refresh_token"), "the builder targets the v2 endpoint");
-        Check(builder.Contains("ApiHelper.AndroidTVKey") && !builder.Contains("AndroidKey"),
-            "the refresh is signed with the TV appkey pair only");
-        Check(Regex.Matches(builder, @"GetSign\(api\.body, ApiHelper\.AndroidTVKey\)").Count == 1 &&
+        Check(builder.Contains("AppkeyPolicy.Select(") &&
+            builder.Contains("ApiHelper.LoginKey") && builder.Contains("ApiHelper.AndroidTVKey"),
+            "the refresh picks between the two configured key pairs instead of one fixed pair");
+        Check(!builder.Contains("ApiHelper.AndroidKey)"),
+            "the android key never becomes a renewal candidate");
+        Check(Regex.Matches(builder, @"GetSign\(api\.body, key\)").Count == 1 &&
             builder.IndexOf("GetSign(", StringComparison.Ordinal) > builder.IndexOf("refresh_token=", StringComparison.Ordinal),
             "the signature is appended after every signed parameter");
         Check(builder.IndexOf("body = $\"access_key=", StringComparison.Ordinal) >= 0 &&
             builder.IndexOf("body = $\"access_key=", StringComparison.Ordinal) <
-            builder.IndexOf("MustParameter(ApiHelper.AndroidTVKey)", StringComparison.Ordinal),
+            builder.IndexOf("MustParameter(key)", StringComparison.Ordinal),
             "access_key is emitted before the shared parameter block");
 
         var playerApi = File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/Api/PlayerAPI.cs"));
@@ -601,9 +826,69 @@ internal static class Program
             "the gRPC result is preferred but the web result is kept for the fallback");
         Check(!ugcInfo.Contains("登录已失效"),
             "the request class no longer fails the whole request over a capped dead-session answer");
+
+        var cookieService = File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/Services/CookieService.cs"));
+        var mirror = MethodBody(cookieService, "public RefreshTokenDecision MirrorRefreshToken()",
+            "public string GetRefreshToken()");
+        Check(mirror.Contains("refreshTokenMirror.MirrorFromCookie(") && !mirror.Contains("writeSetting("),
+            "the service mirror hands precedence to the decision unit instead of writing the setting itself");
+        Check(MethodBody(cookieService, "private async Task RefreshCookieCoreAsync()",
+                "private static string GetCorrespondPath(")
+            .Contains("refreshTokenMirror.RecordResponse(newToken"),
+            "a refresh response records the new token together with its provenance");
+
+        Check(!account.Contains("MirrorCookieRefreshToken"),
+            "the duplicate jar mirror implementation is gone");
+        Check(MethodBody(account, "private static CredentialCommit PersistCredentials(",
+                "private static void RestoreCredentialSettings(")
+            .Contains("MirrorRefreshTokenFromJar();"),
+            "the credential commit runs the one shared mirror");
+        Check(MethodBody(account, "public async Task<bool> SaveLogin(", "public bool CommitCookieLogin(")
+            .Contains("AppkeyPolicy.Format(acquiredWith)"),
+            "the acquisition key identity is persisted with the token pair");
+        Check(Regex.Matches(account, @"AppkeyIdentity\.Login\)").Count == 2,
+            "both password-login entry points in Account record the login key");
+        Check(MethodBody(account, "public async Task<LoginCallbackModel> PollQRAuthInfo(",
+                "public async Task<bool> CheckLoginState(")
+            .Contains("AppkeyIdentity.Tv"),
+            "TV QR login records the TV key as its acquisition identity");
+
+        var loginVm = File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/Modules/User/LoginVM.cs"));
+        Check(Regex.Matches(loginVm, @"AppkeyIdentity\.Login\)").Count == 1,
+            "LoginVM passes the login identity at its single credential commit");
     }
 
     /// <summary>把一次启动/恢复要走的路走一遍：先问闸门，再发唯一一次刷新。</summary>
+    /// <summary>探针里的 jar：字典一个，判定单元和镜像都不认 WinRT。</summary>
+    private sealed class MemoryCookieStore : ICookieStore
+    {
+        private readonly Dictionary<string, string> values = new Dictionary<string, string>(StringComparer.Ordinal);
+
+        public void Write(string name, string value) => values[name] = value;
+
+        public string Read(string name, string defaultValue) =>
+            values.TryGetValue(name, out var value) ? value : defaultValue;
+    }
+
+    /// <summary>把设置和 jar 都换成字典：CookieService 的入口本身跑真代码，没有静态设置参与。</summary>
+    private static MirrorService Mirror(IDictionary<string, string> settings, ICookieStore cookies) =>
+        new MirrorService(settings, cookies);
+
+    private sealed class MirrorService : CookieService
+    {
+        public MirrorService(IDictionary<string, string> settings, ICookieStore cookies)
+            : base(cookies, key => settings.TryGetValue(key, out var value) ? value : "",
+                (key, value) => settings[key] = value, () => true)
+        {
+            Settings = settings;
+        }
+
+        public IDictionary<string, string> Settings { get; }
+    }
+
+    private static string Setting(IDictionary<string, string> settings, string key) =>
+        settings.TryGetValue(key, out var value) ? value : "";
+
     private static RenewalResult Preflight(Func<string, string, Task<HttpResults>> send,
         Func<LoginTokenInfo, LoginCookieInfo, Task<CredentialCommit>> save)
     {
