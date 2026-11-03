@@ -114,3 +114,10 @@ device column is what only the device can settle.
 Two probe-side repairs rode along and are worth knowing about: the stub `ApplicationData.Current.LocalFolder` is now
 per-run instead of per-PID (a stale `cookie-refresh-pending.json` in `%TEMP%\bili-probe-<pid>` made `api02` fail in a
 sweep while passing alone), and no probe leaves `%TEMP%\bili-probe*` behind.
+
+### Follow-up same day — the legacy-owner finding (`ff26db7`)
+
+37 batches again, `TOTAL_FAILURES=0`; `auth3` 239. Device row: on an installation that has been signed in since before
+this batch (its saved web token has no owner), use 设置 → 重新登录 to sign into a **different** account. After that
+login, a web-session refresh must submit the new account's token; if the log shows the refresh rejected right after the
+switch, this is the path to reopen. A same-account re-login must behave exactly as before.
