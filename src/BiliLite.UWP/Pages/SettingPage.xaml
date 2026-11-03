@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<local:BasePage xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Pages" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:modules="using:BiliLite.Modules" xmlns:font="using:FontAwesome5" xmlns:covert="using:BiliLite.Converters" xmlns:controls="using:Microsoft.UI.Xaml.Controls" xmlns:controls1="using:Microsoft.Toolkit.Uwp.UI.Controls" x:Class="BiliLite.Pages.SettingPage" mc:Ignorable="d" Background="{ThemeResource TransparentBackground}">
+<local:BasePage xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Pages" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:modules="using:BiliLite.Modules" xmlns:font="using:FontAwesome5" xmlns:controls="using:Microsoft.UI.Xaml.Controls" xmlns:controls1="using:Microsoft.Toolkit.Uwp.UI.Controls" x:Class="BiliLite.Pages.SettingPage" mc:Ignorable="d" Background="{ThemeResource TransparentBackground}">
   <Page.Resources>
     <SolidColorBrush x:Key="PivotHeaderBackground" Color="{ThemeResource TopPaneBackground}"/>
     <SolidColorBrush x:Key="SystemControlHighlightAltAccentBrush" Color="White"/>
@@ -29,7 +29,6 @@
       <Setter Property="TextWrapping" Value="Wrap"/>
       <Setter Property="Margin" Value="0 2 0 8"/>
     </Style>
-    <covert:ColorConvert x:Key="color"/>
   </Page.Resources>
   <Grid>
     <Pivot x:Name="SettingPivot" SelectionChanged="SettingPivot_SelectionChanged">
@@ -49,27 +48,6 @@
                 <ComboBoxItem>深色</ComboBoxItem>
               </ComboBox.Items>
             </ComboBox>
-            <HyperlinkButton Content="请自行修改DefaultTheme.xaml" Click="OpenTheme_Click"/>
-            <controls:Expander Header="示例主题" Content="" x:Name="DefaultThemeText"/>
-            <StackPanel x:Name="Color" Visibility="Collapsed">
-              <TextBlock Style="{StaticResource SettingLabel}" Text="颜色"/>
-              <ComboBox x:Name="cbColor" ItemsSource="{x:Bind Path=settingVM.ThemeColors,Mode=OneWay}" MinWidth="200">
-                <ComboBox.ItemTemplate>
-                  <DataTemplate x:DataType="modules:AppThemeColor">
-                    <StackPanel Orientation="Horizontal">
-                      <Ellipse Visibility="{x:Bind Path=use_system_color}" Width="16" Height="16" Fill="{ThemeResource SystemAccentColor}" Margin="0,0,5,0"/>
-                      <TextBlock Visibility="{x:Bind Path=use_system_color}" Foreground="{ThemeResource SystemAccentColor}">
-                        <Run Text="{x:Bind Path=name}"/>
-                      </TextBlock>
-                      <Ellipse Visibility="{x:Bind Path=use_system_color,Converter={StaticResource display}}" Width="16" Height="16" Fill="{x:Bind Path=color,Converter={StaticResource color}}" Margin="0,0,5,0"/>
-                      <TextBlock Visibility="{x:Bind Path=use_system_color,Converter={StaticResource display}}" Foreground="{x:Bind Path=color,Converter={StaticResource color}}">
-                        <Run Text="{x:Bind Path=name}"/>
-                      </TextBlock>
-                    </StackPanel>
-                  </DataTemplate>
-                </ComboBox.ItemTemplate>
-              </ComboBox>
-            </StackPanel>
             <TextBlock Style="{StaticResource SettingLabel}" Text="背景图片"/>
             <Border Width="120" Height="120" HorizontalAlignment="Left" Margin="0 0 0 8" Background="#99808080">
               <Button Click="BGImage_Click" Background="Transparent" Width="120" Height="120" AutomationProperties.Name="选择背景图片">
@@ -205,17 +183,6 @@
             <TextBlock Style="{StaticResource SettingLabel}" Text="用浏览器打开未知链接"/>
             <ToggleSwitch x:Name="swOpenUrlWithBrowser" AutomationProperties.Name="用浏览器打开未知链接"/>
             <TextBlock Style="{StaticResource SettingHelp}" Text="把应用无法处理的链接交给浏览器。"/>
-            <StackPanel Visibility="Collapsed">
-              <TextBlock Style="{StaticResource SettingLabel}" Text="语言"/>
-              <ComboBox SelectedIndex="0" MinWidth="200">
-                <ComboBox.Items>
-                  <ComboBoxItem>跟随系统</ComboBoxItem>
-                  <ComboBoxItem>简体中文</ComboBoxItem>
-                  <ComboBoxItem>繁體中文</ComboBoxItem>
-                  <ComboBoxItem>English</ComboBoxItem>
-                </ComboBox.Items>
-              </ComboBox>
-            </StackPanel>
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
@@ -233,8 +200,6 @@
             <TextBlock Style="{StaticResource SettingLabel}" Text="自动连播"/>
             <ToggleSwitch x:Name="swAutoNext" AutomationProperties.Name="自动连播"/>
             <TextBlock Style="{StaticResource SettingHelp}" Text="当前内容结束后，按播放目录和来源继续播放。"/>
-            <!--<TextBlock  Margin="0 16 0 8" FontSize="16">使用外站视频替换无法播放的视频</TextBlock>
-                        <ToggleSwitch x:Name="swPlayerSettingUseOtherSite" ToolTipService.ToolTip="打开后支持观看部分大陆无版权番剧"></ToggleSwitch>-->
             <TextBlock Style="{StaticResource SettingLabel}" Text="记忆播放进度"/>
             <ToggleSwitch x:Name="swPlayerSettingAutoToPosition" AutomationProperties.Name="记忆播放进度"/>
             <TextBlock Style="{StaticResource SettingHelp}" Text="打开视频时恢复已有播放进度。"/>
@@ -570,9 +535,6 @@
             </ComboBox>
             <Button x:Name="RoamingSettingTestCDN" Click="RoamingSettingTestCDN_Click">测试延迟</Button>
             <TextBlock Style="{StaticResource SettingHelp}" Text="显示本次请求耗时或超时，不代表实际播放速度。"/>
-            <!--<TextBlock  Margin="0 16 0 8" FontSize="16">优先使用Akamai的CDN链接</TextBlock>
-                        <TextBlock>海外用户建议打开此选项，此项与替换CDN选项冲突，需关闭替换CDN</TextBlock>
-                        <ToggleSwitch x:Name="RoamingSettingAkamaized" OnContent="打开" OffContent="关闭" ></ToggleSwitch>-->
 
             <TextBlock Style="{StaticResource SettingSectionHeader}" Text="地区解析"/>
             <Border Style="{StaticResource SettingSectionRule}"/>
@@ -676,47 +638,6 @@
                 <TextBlock Style="{StaticResource SettingHelp}" Text="地址与路径任意一项为空时，两项一起恢复默认。"/>
               </StackPanel>
             </controls:Expander>
-            <TextBlock Style="{StaticResource SettingLabel}" Text="平台" Foreground="Gray"/>
-            <ComboBox x:Name="api_platform" MinWidth="200" PlaceholderText="Andriod" IsEnabled="false">
-              <ComboBox.Items>
-                <ComboBoxItem>Android</ComboBoxItem>
-                <ComboBoxItem>IOS</ComboBoxItem>
-                <ComboBoxItem>TV</ComboBoxItem>
-              </ComboBox.Items>
-            </ComboBox>
-            <StackPanel Visibility="Collapsed">
-              <Button Content="注销accesskey" Click="BurnTokenButton_Click"/>
-            </StackPanel>
-            <StackPanel Visibility="Collapsed">
-              <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock FontSize="16">极验登录测试</TextBlock>
-                <Button Click="DoLogin">登录</Button>
-              </StackPanel>
-              <StackPanel Orientation="Vertical">
-                <TextBlock>用户名</TextBlock>
-                <TextBox x:Name="dbguser" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>密码</TextBlock>
-                <TextBox x:Name="dbgpwd" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>gt</TextBlock>
-                <TextBox x:Name="dbggt" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>challenge</TextBlock>
-                <TextBox x:Name="dbgch" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>captcha token</TextBlock>
-                <TextBox x:Name="dbgcap" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>validate</TextBlock>
-                <TextBox x:Name="dbgval" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>seccode</TextBlock>
-                <TextBox x:Name="dbgseccode" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>accesskey</TextBlock>
-                <TextBox x:Name="dbgacc" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>cookie</TextBlock>
-                <TextBox x:Name="dbgcookie" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>message</TextBlock>
-                <TextBox x:Name="dbgmsg" Margin="0 0 0 8" MinWidth="400"/>
-                <TextBlock>token</TextBlock>
-                <TextBox x:Name="dbgtoken" Margin="0 0 0 8" MinWidth="400"/>
-              </StackPanel>
-            </StackPanel>
           </StackPanel>
         </ScrollViewer>
       </PivotItem>

@@ -18,50 +18,6 @@ namespace BiliLite.Modules
         public SettingVM()
         {
             playerAPI = new PlayerAPI();
-            ThemeColors = new List<AppThemeColor>()
-            {
-                new AppThemeColor()
-                {
-                    use_system_color=true,
-                    name="跟随系统"
-                },
-                new AppThemeColor()
-                {
-                    color="#FFDF85A0",
-                    name="少女粉",
-                    theme="Pink",
-                },
-                new AppThemeColor()
-                {
-                    color="#FFF70D0D",
-                    name="姨妈红",
-                    theme="Red",
-                },
-                new AppThemeColor()
-                {
-                    color="#FFF9EF23",
-                    name="咸蛋黄",
-                    theme="Yellow",
-                },
-                new AppThemeColor()
-                {
-                    color="#FF71F923",
-                    name="早苗绿",
-                    theme="Green",
-                },
-                new AppThemeColor()
-                {
-                    color="#FF18BDFB",
-                    name="胖次蓝",
-                    theme="Blue",
-                },
-                new AppThemeColor()
-                {
-                    color="#FFB92CBF",
-                    name="基佬紫",
-                    theme="Purple",
-                }
-            };
             CDNServers = new List<CDNServerItem>()
             {
                 new CDNServerItem("upos-sz-mirrorhwo1.bilivideo.com","华为云"),
@@ -85,7 +41,6 @@ namespace BiliLite.Modules
         public ObservableCollection<string> ShieldUsers { get; set; }
         public ObservableCollection<string> ShieldRegulars { get; set; }
         public List<CDNServerItem> CDNServers { get; set; }
-        public List<AppThemeColor> ThemeColors { get; set; }
 
         public void LoadShieldSetting()
         {
@@ -374,13 +329,6 @@ namespace BiliLite.Modules
         public long ctime { get; set; }
         public long mtime { get; set; }
 
-    }
-    public class AppThemeColor
-    {
-        public bool use_system_color { get; set; } = false;
-        public string color { get; set; }
-        public string name { get; set; }
-        public string theme { get; set; }
     }
     public class CDNServerItem : IModules
     {

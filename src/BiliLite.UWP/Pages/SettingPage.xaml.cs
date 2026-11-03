@@ -1,6 +1,5 @@
 ﻿using BiliLite.Api;
 using BiliLite.Helpers;
-using BiliLite.Models;
 using BiliLite.Modules;
 using BiliLite.Modules.User;
 using System.IO;
@@ -12,24 +11,18 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Foundation;
-using Windows.Security.Cryptography.Core;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using Windows.Storage.Streams;
 using Windows.System;
-using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.Web.Http.Filters;
-using ZXing;
 using static BiliLite.Helpers.SettingHelper;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -54,7 +47,6 @@ namespace BiliLite.Pages
             LoadDanmu();
             LoadLiveDanmu();
             LoadDownlaod();
-            api = new Api.AccountApi();
             RefreshAccountState();
         }
 
@@ -128,30 +120,6 @@ namespace BiliLite.Pages
                             break;
                     }
                     App.ExtendAcrylicIntoTitleBar();
-                });
-            });
-
-            cbColor.SelectedIndex = SettingHelper.GetValue(UI.THEME_COLOR, 0);
-            cbColor.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                cbColor.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.THEME_COLOR, cbColor.SelectedIndex);
-                    Color color = new Color();
-                    if (cbColor.SelectedIndex == 0)
-                    {
-                        var uiSettings = new Windows.UI.ViewManagement.UISettings();
-                        color = uiSettings.GetColorValue(Windows.UI.ViewManagement.UIColorType.Accent);
-                    }
-                    else
-                    {
-                        color = Utils.ToColor((cbColor.SelectedItem as AppThemeColor).color);
-
-                    }
-                    (Application.Current.Resources["SystemControlHighlightAltAccentBrush"] as SolidColorBrush).Color = color;
-                    (Application.Current.Resources["SystemControlHighlightAccentBrush"] as SolidColorBrush).Color = color;
-                    //(App.Current.Resources.ThemeDictionaries["Light"] as ResourceDictionary)["SystemAccentColor"] = Utils.ToColor(item.color);
-
                 });
             });
 
@@ -328,34 +296,6 @@ namespace BiliLite.Pages
 
             //背景
             SetBackground();
-
-            //默认主题
-            LoadDefaultThemeText();
-        }
-        private void LoadDefaultThemeText()
-        {
-            DefaultThemeText.Content = @" <Color x:Key=""HighLightTextColor"">#d0318c</Color>
-<Color x:Key=""TopPaneBackground"">#00F7F7F7</Color>
-<Color x:Key=""HighLightColor"">#ec407a</Color>
-<Color x:Key=""TextColor"">#CC000000</Color>
-<Color x:Key=""DefaultTextColor"">#CC000000</Color>
-<Color x:Key=""SystemColorHighLightColor"">#ec407a</Color>
-<Color x:Key=""CardColor"">#00FFFFFF</Color>
-<Color x:Key=""ForegroundGridColor"">#aaaaaa</Color>
-<Color x:Key=""ForegroundBorderColor"">#111111</Color>
-<Color x:Key=""ForegroundTextColor"">#333333</Color>
-<Color x:Key=""ForegroundBackColor"">#555555</Color>
-<Color x:Key=""ForegroundTransparentColor"">#aaffffff</Color>
-<Color x:Key=""SolidTransparentBackground"">#00ffffff</Color>
-<Color x:Key=""SolidHalfTransparentBackground"">#a0ffffff</Color>
-<AcrylicBrush x:Key=""TransparentLayer"" TintColor=""White"" TintOpacity=""0.1"" TintLuminosityOpacity=""0.5"" FallbackColor=""#a0ffffff"" BackgroundSource=""Backdrop""></AcrylicBrush>
-<AcrylicBrush x:Key=""TransparentBackground""
-BackgroundSource=""HostBackdrop""
-TintColor=""#ffffff""
-TintOpacity=""0.5""
-TintLuminosityOpacity=""0.5""
-FallbackColor=""#ffffff"" />
-";
         }
         private void LoadPlayer()
         {
@@ -405,16 +345,6 @@ FallbackColor=""#ffffff"" />
                     SettingHelper.SetValue(SettingHelper.Player.AUTO_NEXT, swAutoNext.IsOn);
                 });
             });
-            //使用其他网站
-            //swPlayerSettingUseOtherSite.IsOn = SettingHelper.GetValue<bool>(SettingHelper.Player.USE_OTHER_SITEVIDEO, false);
-            //swPlayerSettingUseOtherSite.Loaded += new RoutedEventHandler((sender, e) =>
-            //{
-            //    swPlayerSettingUseOtherSite.Toggled += new RoutedEventHandler((obj, args) =>
-            //    {
-            //        SettingHelper.SetValue(SettingHelper.Player.USE_OTHER_SITEVIDEO, swPlayerSettingUseOtherSite.IsOn);
-            //    });
-            //});
-
             //自动跳转进度
             swPlayerSettingAutoToPosition.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_TO_POSITION, true);
             swPlayerSettingAutoToPosition.Loaded += new RoutedEventHandler((sender, e) =>
@@ -564,15 +494,6 @@ FallbackColor=""#ffffff"" />
                 });
             });
 
-            //Akamai
-            //RoamingSettingAkamaized.IsOn = SettingHelper.GetValue<bool>(SettingHelper.Roaming.AKAMAI_CDN, false);
-            //RoamingSettingAkamaized.Loaded += new RoutedEventHandler((sender, e) =>
-            //{
-            //    RoamingSettingAkamaized.Toggled += new RoutedEventHandler((obj, args) =>
-            //    {
-            //        SettingHelper.SetValue(SettingHelper.Roaming.AKAMAI_CDN, RoamingSettingAkamaized.IsOn);
-            //    });
-            //});
             //转简体
             RoamingSettingToSimplified.IsOn = SettingHelper.GetValue(Roaming.TO_SIMPLIFIED, true);
             RoamingSettingToSimplified.Loaded += new RoutedEventHandler((sender, e) =>
@@ -674,6 +595,8 @@ FallbackColor=""#ffffff"" />
         private void LoadAPI()
         {
             LoadSettings();
+            //打开设置页只把已存值装进控件并让运行时用上，不回写存储：
+            //控件里的空值代表“用内置默认值”，写回去会把用户没编辑过的字段一起清掉。
             InitApi();
         }
         private void LoadSettings()
@@ -689,7 +612,7 @@ FallbackColor=""#ffffff"" />
             appkey_web_1.Text = SettingHelper.GetValue("appkey_web_1", "");
             appkey_web_2.Text = SettingHelper.GetValue("appkey_web_2", "");
             api_web_top.Text = SettingHelper.GetValue("api_web_top", "");
-            api_web_secondary.Text = SettingHelper.GetValue("api_web_top", "");
+            api_web_secondary.Text = SettingHelper.GetValue("api_web_secondary", "");
         }
         private void SaveSettings()
         {
@@ -708,7 +631,9 @@ FallbackColor=""#ffffff"" />
         }
         private void ApplyAPI_Click(object sender, RoutedEventArgs e)
         {
+            //只有这里把控件里的值写回存储：这些值来自用户编辑，而不是页面加载。
             InitApi();
+            SaveSettings();
         }
         private void InitApi() { 
             var lst = new List<string>();
@@ -727,7 +652,6 @@ FallbackColor=""#ffffff"" />
             lst.Add(api_web_secondary.Text);
 
             ApiHelper.Init(lst);
-            SaveSettings();
             Utils.sp = this;
         }
         private void LoadDownlaod()
@@ -1283,178 +1207,11 @@ FallbackColor=""#ffffff"" />
             }
 
         }
-        private async Task<LoginCallbackModel> HandleLoginResult(int code, string message, LoginResultModel result)
-        {
-            if (code == 0)
-            {
-                if (result.status == 0)
-                {
-                    dbgacc.Text = result.token_info.access_token;
-                    dbgtoken.Text = result.token_info.refresh_token;
-                    dbgmsg.Text = result.token_info.mid + "&" + result.sso + "&" + result.cookie_info;
-                    return new LoginCallbackModel()
-                    {
-                        status = LoginStatus.Success,
-                        message = "登录成功"
-                    };
-                }
-                if (result.status == 1 || result.status == 2)
-                {
-                    dbgmsg.Text = "需要安全验证";
-                    return new LoginCallbackModel()
-                    {
-                        status = LoginStatus.NeedValidate,
-                        message = "本次登录需要安全验证",
-                        url = result.url
-                    };
-                }
-                dbgmsg.Text = result.message;
-                return new LoginCallbackModel()
-                {
-                    status = LoginStatus.Fail,
-                    message = result.message
-                };
-            }
-            else if (code == -105)
-            {
-                dbgmsg.Text = "需要验证码";
-                return new LoginCallbackModel()
-                {
-                    status = LoginStatus.NeedCaptcha,
-                    url = result.url,
-                    message = "登录需要验证码"
-                };
-            }
-            else
-            {
-                dbgmsg.Text = message;
-                return new LoginCallbackModel()
-                {
-                    status = LoginStatus.Fail,
-                    message = message
-                };
-            }
-
-        }
-        Api.AccountApi api;
-        public async Task<string> EncryptedPassword(string passWord)
-        {
-            string base64String;
-            try
-            {
-                HttpBaseProtocolFilter httpBaseProtocolFilter = new HttpBaseProtocolFilter();
-                httpBaseProtocolFilter.IgnorableServerCertificateErrors.Add(Windows.Security.Cryptography.Certificates.ChainValidationResult.Expired);
-                httpBaseProtocolFilter.IgnorableServerCertificateErrors.Add(Windows.Security.Cryptography.Certificates.ChainValidationResult.Untrusted);
-                var jObjects = (await api.GetKey2023().Request()).GetJObject();
-                string str = jObjects["data"]["hash"].ToString();
-                string str1 = jObjects["data"]["key"].ToString();
-                string str2 = string.Concat(str, passWord);
-                string str3 = Regex.Match(str1, "BEGIN PUBLIC KEY-----(?<key>[\\s\\S]+)-----END PUBLIC KEY").Groups["key"].Value.Trim();
-                byte[] numArray = Convert.FromBase64String(str3);
-                AsymmetricKeyAlgorithmProvider asymmetricKeyAlgorithmProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaPkcs1);
-                CryptographicKey cryptographicKey = asymmetricKeyAlgorithmProvider.ImportPublicKey(WindowsRuntimeBufferExtensions.AsBuffer(numArray), 0);
-                IBuffer buffer = CryptographicEngine.Encrypt(cryptographicKey, WindowsRuntimeBufferExtensions.AsBuffer(Encoding.UTF8.GetBytes(str2)), null);
-                base64String = Convert.ToBase64String(WindowsRuntimeBufferExtensions.ToArray(buffer));
-            }
-            catch (Exception)
-            {
-                base64String = passWord;
-            }
-            return base64String;
-        }
-        private async void DoLogin(object sender, RoutedEventArgs e) {
-            var user = dbguser.Text;
-            var password = dbgpwd.Text;
-            var val=dbgval.Text;
-            var cap = dbgcap.Text;
-            var challenge = dbgch.Text;
-            if (string.IsNullOrEmpty(val))
-            {
-                //第一步，啥都没
-                var pwd = await EncryptedPassword(password);
-                var results = await api.Login2023(user, pwd).Request();
-                if (results.status)
-                {
-                    var data = await results.GetData<LoginResultModel>();
-                    var result = await HandleLoginResult(data.code, data.message, data.data);
-                    HandleResult(result);
-                }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
-                }
-            }
-            else
-            {
-                //带验证码登录
-                var pwd = await EncryptedPassword(password);
-                var results = await api.Login2023(user, pwd,challenge,cap,val).Request();
-                if (results.status)
-                {
-                    var data = await results.GetData<LoginResultModel>();
-                    var result = await HandleLoginResult(data.code, data.message, data.data);
-                    HandleResult(result);
-                }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
-                }
-            }
-
-
-
-        }
-        private void HandleResult(LoginCallbackModel result)
-        {
-            var uri = new Uri(string.IsNullOrEmpty(result.url) ? "https://www.bilibili.com" : result.url);
-            switch (result.status)
-            {
-                case LoginStatus.Success:
-                    break;
-                case LoginStatus.Fail:
-                case LoginStatus.Error:
-                    break;
-                case LoginStatus.NeedCaptcha:
-                    string gt = Regex.Match(uri.Query, "gee_gt=(.*?)&").Groups[1].Value;
-                    string cha = Regex.Match(uri.Query, "gee_challenge=(.*?)&").Groups[1].Value;
-                    string cap= Regex.Match(uri.Query, "recaptcha_token=(.*?)&").Groups[1].Value;
-                    dbggt.Text = gt;
-                    dbgch.Text = cha;
-                    dbgcap.Text = cap;
-                    break;
-                case LoginStatus.NeedValidate:
-                    dbgcap.Text = result.url;
-                    break;
-                default:
-                    break;
-            }
-        }
         private void ShowTokenButton_Click(object sender, RoutedEventArgs e)
         {
             TokenTextBox.Text = SettingHelper.Account.AccessKey;
         }
 
-        private async void OpenTheme_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var folder = await Windows.ApplicationModel.Package.Current.InstalledLocation.GetFolderAsync("Themes");
-                var success = await Windows.System.Launcher.LaunchFolderAsync(folder);
-                if (!success)
-                {
-                    Utils.ShowMessageToast("无法打开Themes文件夹");
-                }
-            }
-            catch(Exception ex)
-            {
-                Utils.ShowMessageToast("找不到Themes文件夹");
-            }
-        }
-
-        private async void BurnTokenButton_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
 
         public void OnPropertyChanged(string propertyName)
