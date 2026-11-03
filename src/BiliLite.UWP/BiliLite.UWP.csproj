@@ -283,6 +283,7 @@
     </Compile>
     <Compile Include="Controls\Dynamic\DynamicItemDataTemplateSelector.cs" />
     <Compile Include="Controls\Dynamic\DynamicParse.cs" />
+    <Compile Include="Controls\Dynamic\RichTextBodyState.cs" />
     <Compile Include="Controls\ImageViewerControl.xaml.cs">
       <DependentUpon>ImageViewerControl.xaml</DependentUpon>
     </Compile>
