@@ -484,21 +484,6 @@ FallbackColor=""#ffffff"" />
 
                 });
             });
-            //直播视频格式
-            var list = SettingHelper.GetValue("livevideoformat", "0");
-            var videolist = list.Split(",");
-            videofmt.Clear();
-            foreach (var i in videolist)
-            {
-                var id = i.ToInt32();
-                videofmt.Add(id);
-                var item=swLiveVideoFormat.Items[id] as ListViewItem;
-                if (item!=null)
-                {
-                    item.IsSelected = true;
-                }
-                OnPropertyChanged(nameof(videotext));
-            }
         }
         private void LoadRoaming()
         {
@@ -1470,38 +1455,6 @@ FallbackColor=""#ffffff"" />
         {
 
         }
-        public List<int> videofmt = new List<int> {0 };//flv and ts/m3u8 is not supported by ffmpeg 
-        public static List<string> videofmtnames = new List<string>{ "FLV", "TS", "MP4" };
-        public static string videotextfmt = "已选择格式为{0}";
-        public string videotext
-        {
-            get
-            {
-                var videostrs = new List<string>();
-                foreach(var i in videofmt)
-                {
-                    videostrs.Add(videofmtnames[i]);
-                }
-                return string.Format(videotextfmt, string.Join(">", videostrs));
-            }
-        }
-        private void swLiveVideoFormat_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var l = new List<int>();
-            foreach(var item in swLiveVideoFormat.SelectedItems)
-            {
-                var o = item as ListViewItem;
-                l.Add(o.AccessKey.ToInt32());
-            }
-            if (l.Count > 0)
-            {
-                videofmt.Clear();
-                videofmt.AddRange(l);
-                SettingHelper.SetValue("livevideoformat", string.Join(",",videofmt));
-                OnPropertyChanged(nameof(videotext));
-            }
-        }
-
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
 
         public void OnPropertyChanged(string propertyName)
