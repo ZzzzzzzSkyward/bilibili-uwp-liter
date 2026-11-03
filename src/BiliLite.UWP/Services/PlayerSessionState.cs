@@ -54,7 +54,19 @@ namespace BiliLite.Services
             return owner.Hold(Id, resource);
         }
 
-        /// <summary>释放这次打开名下还挂着的资源,重复调用不会再释放第二次</summary>
+        /// <summary>
+        /// 这一次尝试失败、但这次打开还要换引擎再试一次:释放本次尝试挂着、还没交给播放器的资源,
+        /// 票据保持当前、还没结束,回退的那次尝试继续用它。已经 Accept 过的会话不受影响。
+        /// </summary>
+        public bool Abandon()
+        {
+            return owner.Abandon(Id);
+        }
+
+        /// <summary>
+        /// 整次打开到此为止、后面没有回退:释放还挂着的资源并且让票据作废。
+        /// 还要在同一个票据上重试时用 Abandon(Release 会让票据作废,回退就用不了它了)。
+        /// </summary>
         public bool Release()
         {
             return owner.Release(Id);
@@ -64,8 +76,10 @@ namespace BiliLite.Services
     /// <summary>
     /// 播放器打开/替换/关闭的归属判定。一次打开一个会话 id:
     /// 打开途中建出来的资源先挂在会话名下,会话被取代时在这里释放;资源进字段那一刻才 Accept。
+    /// 一次打开里可以有好几次引擎尝试(原生失败换 FFmpeg):尝试失败用 Abandon 只放掉它自己的那份,
+    /// 票据还是当前的,回退的那次接着用;整次打开才 Release。
     /// 只做判定,不碰界面、不发事件、不认识播放器类型,所以这些竞态能在 probe 里直接跑。
-    /// 只在 UI 线程用:一次 Begin/Accept/Invalidate/Release/Hold 之间不会插进别的线程,因此没有加锁。
+    /// 只在 UI 线程用:一次 Begin/Accept/Invalidate/Release/Abandon/Hold 之间不会插进别的线程,因此没有加锁。
     /// </summary>
     public sealed class PlayerSessionState
     {
@@ -147,8 +161,21 @@ namespace BiliLite.Services
         }
 
         /// <summary>
-        /// 释放这个会话还挂着的资源。作废/替换时由 Invalidate 调,一次打开失败时由调用方调;
-        /// 同一个会话只会释放一次,迟到的调用不再动已经释放过的对象。
+        /// 这一次尝试在 Accept 之前就失败了:只释放它自己挂着的资源,票据还是当前的、还没结束,
+        /// 同一个票据上的下一次尝试(换引擎回退)接着用它。
+        /// 已经 Accept 过的会话不在这里释放(那些资源归播放器字段),所以失败路径上统一调它不会误伤。
+        /// 一次尝试只会释放一次,迟到的调用不再动已经释放过的对象。返回是否真的释放了东西。
+        /// </summary>
+        public bool Abandon(int id)
+        {
+            if (current == null || current.Id != id) return false;
+            if (status != SessionStatus.Pending) return false;
+            return ReleaseHeld();
+        }
+
+        /// <summary>
+        /// 释放这个会话还挂着的资源。作废/替换时由 Invalidate 调;整次打开失败、后面没有回退时由调用方调
+        /// (还要在同一个票据上换引擎再试就调 Abandon)。同一个会话只会释放一次,迟到的调用不再动已经释放过的对象。
         /// 返回是否真的释放了东西。
         /// </summary>
         public bool Release(int id)

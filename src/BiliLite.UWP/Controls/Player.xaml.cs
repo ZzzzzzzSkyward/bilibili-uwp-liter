@@ -370,6 +370,8 @@ namespace BiliLite.Controls
                 if (mediaSource == null&&mediaSource2==null)
                 {
                     LogPlaybackDiagnostic("OpenFailed", "MediaSource creation returned null");
+                    // 这次尝试没成:只放掉它自己建出来的播放器,票据留给回退的 FFmpeg 继续用
+                    session?.Abandon();
                     return new PlayerOpenResult()
                     {
                         result = false,
@@ -504,6 +506,8 @@ namespace BiliLite.Controls
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
                 LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
+                // 这次尝试失败:只放掉它自己建出来的资源,票据留给回退的那次尝试(已经 Accept 的不动)
+                session?.Abandon();
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -672,6 +676,8 @@ namespace BiliLite.Controls
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
                 LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
+                // 这次尝试失败:只放掉它自己建出来的资源,票据留给回退的那次尝试(已经 Accept 的不动)
+                session?.Abandon();
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -906,6 +912,8 @@ namespace BiliLite.Controls
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
                 LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
+                // 这次尝试失败:只放掉它自己建出来的资源,票据留给回退的那次尝试(已经 Accept 的不动)
+                session?.Abandon();
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -1061,6 +1069,8 @@ namespace BiliLite.Controls
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
                 LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
+                // 这次尝试失败:只放掉它自己建出来的资源,票据留给回退的那次尝试(已经 Accept 的不动)
+                session?.Abandon();
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -1217,6 +1227,8 @@ namespace BiliLite.Controls
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
                 LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
+                // 这次尝试失败:只放掉它自己建出来的资源,票据留给回退的那次尝试(已经 Accept 的不动)
+                session?.Abandon();
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -1378,6 +1390,8 @@ namespace BiliLite.Controls
             {
                 //PlayMediaError?.Invoke(this, "视频加载时出错:" + ex.Message);
                 LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
+                // 这次尝试失败:只放掉它自己建出来的资源,票据留给回退的那次尝试(已经 Accept 的不动)
+                session?.Abandon();
                 return new PlayerOpenResult()
                 {
                     result = false,
@@ -1556,6 +1570,8 @@ namespace BiliLite.Controls
             catch (Exception ex)
             {
                 LogPlaybackDiagnostic("OpenFailed", ex.Message, ex);
+                // 这次尝试失败:只放掉它自己建出来的资源,票据留给回退的那次尝试(已经 Accept 的不动)
+                session?.Abandon();
                 return new PlayerOpenResult()
                 {
                     result = false,

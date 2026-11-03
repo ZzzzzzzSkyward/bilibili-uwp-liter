@@ -55,6 +55,8 @@ namespace PlayersessProbe
             ResumeAfterReplacementCases();
             SourceCases();
             PublishOrderCases();
+            AttemptCases();
+            AttemptSourceCases();
 
             Console.WriteLine();
             if (failures.Count == 0)
@@ -290,6 +292,145 @@ namespace PlayersessProbe
             CheckHeldThenAccepted(player, "PlayDashUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop(", "PlayDashUseFFmpegInterop");
             CheckHeldThenAccepted(player, "PlayDashUrlUseFFmpegInterop(", "PlaySingleFlvUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop");
             CheckHeldThenAccepted(player, "PlaySingleFlvUseFFmpegInterop(", "PlaySingleFlvUseSYEngine(", "PlaySingleFlvUseFFmpegInterop");
+        }
+
+        /// <summary>
+        /// 复核意见里的 ownership 场景:一次引擎尝试失败时只放掉它自己建出来的那份,票据还是当前的、还没结束,
+        /// 回退的那次尝试接着用同一个票据;成功那次的资源照旧在 Accept 时交给播放器字段。
+        /// </summary>
+        private static void AttemptCases()
+        {
+            var state = new PlayerSessionState();
+            var field = "none"; // 正在播的播放器(_playerVideo)
+
+            // 原生 DASH 建不出源 → 同票据上回退 FFmpeg 成功
+            var session = state.Begin(PlayerSessionReason.QualityChange);
+            var abandoned = new FakeResource("native-player");
+            Check(session.Hold(abandoned), "原生尝试的播放器先挂到票据名下");
+            Check(session.Abandon(), "失败尝试调 Abandon 返回真");
+            Check(abandoned.DisposeCount == 1, "失败那次尝试的播放器放掉恰好一次");
+            Check(session.IsCurrent, "失败之后票据还是当前的");
+            Check(state.IsPending(session.Id), "失败之后票据还是没结束,回退能接着用它");
+            Check(state.Current == session, "失败之后 Current 还是这个票据");
+
+            var fallbackSource = new FakeResource("ffmpeg-source");
+            Check(session.Hold(fallbackSource), "回退的那次尝试用同一个票据挂自己的源");
+            Check(session.Accept(), "回退成功之后接受这次打开");
+            field = fallbackSource.Name; // 接进 _playerVideo
+            Check(field == "ffmpeg-source", "正在播的是回退接进来的源");
+            Check(fallbackSource.DisposeCount == 0, "回退的源交给播放器之后还活着");
+            Check(abandoned.DisposeCount == 1, "接受回退时没有再碰失败那次已经放掉的播放器");
+            Check(!session.Abandon(), "接受之后再 Abandon 落空");
+            Check(fallbackSource.DisposeCount == 0, "接受之后的失败收尾不碰已经交给播放器的源");
+            state.Invalidate();
+            Check(fallbackSource.DisposeCount == 0, "关页不释放已经交给播放器的源");
+            Check(abandoned.DisposeCount == 1, "关页不再释放失败那次已经放掉的播放器");
+
+            // 连失败两次再成功:每次只放掉自己那份
+            var twice = state.Begin(PlayerSessionReason.EngineFallback);
+            var firstPlayer = new FakeResource("player-1");
+            var secondPlayer = new FakeResource("player-2");
+            Check(twice.Hold(firstPlayer), "第一次尝试的播放器挂到票据名下");
+            Check(twice.Abandon(), "第一次尝试失败时放掉自己的播放器");
+            Check(firstPlayer.DisposeCount == 1, "第一次尝试的播放器放掉一次");
+            Check(!twice.Abandon(), "已经放干净再 Abandon 返回假");
+            Check(firstPlayer.DisposeCount == 1, "重复 Abandon 不释放第二次");
+            Check(twice.IsCurrent && state.IsPending(twice.Id), "重复 Abandon 之后票据还是当前、还没结束");
+            Check(twice.Hold(secondPlayer), "第二次尝试还能挂自己的播放器");
+            Check(firstPlayer.DisposeCount == 1, "挂第二份的时候不动已经放掉的第一份");
+            Check(twice.Abandon(), "第二次尝试失败时放掉自己的播放器");
+            Check(secondPlayer.DisposeCount == 1, "第二次尝试的播放器放掉一次");
+            Check(firstPlayer.DisposeCount == 1, "第二次失败不再碰第一份");
+            var thirdSource = new FakeResource("player-3");
+            Check(twice.Hold(thirdSource), "第三次尝试挂自己的源");
+            Check(twice.Accept(), "第三次成功之后接受这次打开");
+            field = thirdSource.Name;
+            Check(thirdSource.DisposeCount == 0, "第三次的源交给播放器之后还活着");
+            Check(firstPlayer.DisposeCount == 1 && secondPlayer.DisposeCount == 1, "两次失败各自只放掉一次");
+            state.Invalidate();
+            Check(thirdSource.DisposeCount == 0, "关页不释放已经交给播放器的源");
+
+            // 等源期间被取代:Invalidate 放一次,迟到的 Abandon 不再放第二次
+            var superseded = state.Begin(PlayerSessionReason.Open);
+            var awaiting = new FakeResource("awaiting-player");
+            Check(superseded.Hold(awaiting), "等源的播放器挂到票据名下");
+            Check(state.Invalidate(), "换视频/关页作废这次打开");
+            Check(awaiting.DisposeCount == 1, "被取代时放掉一次");
+            Check(!superseded.Abandon(), "被取代之后 Abandon 落空");
+            Check(awaiting.DisposeCount == 1, "新的收尾路径不再释放第二次");
+            Check(!superseded.IsCurrent, "被取代之后票据不是当前的");
+            var late = new FakeResource("late-source");
+            Check(!superseded.Hold(late), "被取代之后 Hold 落空");
+            Check(late.DisposeCount == 1, "被取代之后才建出来的资源当场释放");
+            Check(late.DisposeCount == 1, "迟到的资源不会由 Abandon 再释放一次");
+
+            // Abandon 不关掉票据:整次打开最后还是走 Release
+            var terminal = state.Begin(PlayerSessionReason.LocalOpen);
+            var failed = new FakeResource("failed-source");
+            Check(terminal.Hold(failed), "失败尝试的资源挂到票据名下");
+            Check(terminal.Abandon(), "失败尝试放掉自己那份");
+            var retry = new FakeResource("retry-source");
+            Check(terminal.Hold(retry), "Abandon 之后还能挂新的资源");
+            Check(terminal.Release(), "整次打开放弃的时候用 Release");
+            Check(retry.DisposeCount == 1, "Release 放掉最后一次尝试的东西");
+            Check(failed.DisposeCount == 1, "Release 不再碰 Abandon 已经放掉的那份");
+            Check(!terminal.IsCurrent, "Release 之后票据作废");
+            Check(!terminal.Accept(), "Release 之后 Accept 被拒");
+        }
+
+        /// <summary>
+        /// 源码接线:每条引擎打开路径的失败返回都先 Abandon 自己那次尝试,不再直接丢下一份还活着的资源。
+        /// </summary>
+        private static void AttemptSourceCases()
+        {
+            if (!File.Exists(playerPath))
+            {
+                Fail("读不到 Player 源文件:" + playerPath);
+                return;
+            }
+            var player = File.ReadAllText(playerPath);
+
+            CheckAbandon(player, "PlayDashUseNative(", "PlayerSingleMp4UseNativeAsync(", "PlayDashUseNative");
+            CheckAbandon(player, "PlayerSingleMp4UseNativeAsync(", "PlayDashUseFFmpegInterop(", "PlayerSingleMp4UseNativeAsync");
+            CheckAbandon(player, "PlayDashUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop(", "PlayDashUseFFmpegInterop");
+            CheckAbandon(player, "PlayDashUrlUseFFmpegInterop(", "PlaySingleFlvUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop");
+            CheckAbandon(player, "PlaySingleFlvUseFFmpegInterop(", "PlaySingleFlvUseSYEngine(", "PlaySingleFlvUseFFmpegInterop");
+            CheckAbandon(player, "PlaySingleFlvUseSYEngine(", "PlayVideoUseSYEngine(", "PlaySingleFlvUseSYEngine");
+            CheckAbandon(player, "PlayVideoUseSYEngine(", "public void SetRatioMode(", "PlayVideoUseSYEngine");
+
+            Check(CountOf(Code(player), "session?.Abandon();") == 8, "Abandon 只出现在 7 个 catch 和原生 DASH 建不出源那一处(实际 " +
+                CountOf(Code(player), "session?.Abandon();") + " 处)");
+
+            var nativeBody = Code(Section(player, "PlayDashUseNative(", "PlayerSingleMp4UseNativeAsync("));
+            Check(Regex.IsMatch(nativeBody, @"session\?\.Abandon\(\);\s*return new PlayerOpenResult\(\)"),
+                "原生 DASH 建不出源的那条失败返回之前先 Abandon");
+
+            var control = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "BiliLite.UWP", "Controls", "PlayerControl.xaml.cs"));
+            var changeQuality = Code(Section(control, "private async Task ChangeQuality(", "private void ShowErrorDialog"));
+            Check(Regex.IsMatch(changeQuality, @"PlayDashUrlUseFFmpegInterop\([^;]*session: session"),
+                "DASH 回退 FFmpeg 用的还是同一个票据");
+            Check(Regex.IsMatch(changeQuality, @"PlaySingleFlvUseFFmpegInterop\([^;]*session: session"),
+                "单段 FLV 回退 FFmpeg 用的还是同一个票据");
+        }
+
+        private static void CheckAbandon(string player, string start, string end, string name)
+        {
+            var body = Code(Section(player, start, end));
+            if (body.Length == 0)
+            {
+                Fail(name + " 找不到方法体");
+                return;
+            }
+            var accept = body.IndexOf("session?.Accept();", StringComparison.Ordinal);
+            var preAccept = accept >= 0 ? body.Substring(0, accept) : body;
+            // 接受之前失败的返回都先 Abandon(被取代的那几条走 SupersededOpen,资源已经由会话放掉)
+            var dropped = CountOf(preAccept, "return new PlayerOpenResult()");
+            var abandoned = CountOf(preAccept, "session?.Abandon();");
+            Check(dropped == abandoned, name + " 接受之前没有不加收拾就丢下的失败返回(失败返回 " + dropped +
+                " 处,先 Abandon 的 " + abandoned + " 处)");
+            var lastCatch = body.LastIndexOf("catch (Exception ex)", StringComparison.Ordinal);
+            Check(lastCatch >= 0 && body.LastIndexOf("session?.Abandon();", StringComparison.Ordinal) > lastCatch,
+                name + " 的异常路径也放掉这次尝试的资源");
         }
 
         private static void CheckPublishOrder(string player, string start, string end, string name)
