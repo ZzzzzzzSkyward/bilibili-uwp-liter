@@ -343,7 +343,8 @@ namespace Ux1cProbe
             Check(CountOf(page, "mediaListService.GetMediaList(") == 1
                 && CountOf(page, "mediaListService.LoadMoreMediaList(") == 1,
                 "source: exactly one place builds a playlist page request");
-            var fetch = Body(page, "private Task<MediaListResources> FetchMediaListPageAsync");
+            // 签名随实现变 async/await 而变,这里按方法名取体:断言的仍是「两个取页调用都在这一处」
+            var fetch = Body(page, "Task<MediaListResources> FetchMediaListPageAsync()");
             Check(fetch.Contains("mediaListService.GetMediaList(") && fetch.Contains("mediaListService.LoadMoreMediaList("),
                 "source: the one request builder is the channel's fetch");
             Check(CountOf(page, "new MediaListPageLoader(") == 1,

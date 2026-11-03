@@ -86,9 +86,39 @@ namespace BiliLite.Helpers
         public int code { get; set; }
         public bool status { get; set; }
         public string message { get; set; }
+        /// <summary>响应正文；ApiEnvelope 只通过 TryGetJObject 读它。</summary>
         public string results { get; set; }
 
-        public JObject GetJObject() => JObject.Parse(string.IsNullOrEmpty(results) ? "{}" : results);
+        /// <summary>与 Helpers/HttpHelper.cs 的静默解码同义：正文不是 JSON 对象就返回 false。</summary>
+        public bool TryGetJObject(out JObject value)
+        {
+            value = null;
+            if (string.IsNullOrEmpty(results))
+            {
+                return false;
+            }
+            try
+            {
+                value = JObject.Parse(results);
+                return true;
+            }
+            catch (Newtonsoft.Json.JsonException)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>与产品同义：静默解码失败才提示，然后交回 null，不假装成功。</summary>
+        public JObject GetJObject()
+        {
+            JObject obj;
+            if (TryGetJObject(out obj))
+            {
+                return obj;
+            }
+            Utils.ShowMessageToast("解析json对象失败");
+            return null;
+        }
     }
 }
 
