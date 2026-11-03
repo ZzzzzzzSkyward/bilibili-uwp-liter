@@ -27,6 +27,24 @@ device rows are still open in `plan/VALIDATION.md`. The 2026-11-02 entries are c
 (`-Fast`, 0 errors, package 1.0.9.35), probe-covered and covered by one unified run of all 35 probe batches
 (`TOTAL_FAILURES=0`), but none of them has been on a device.
 
+- **Review finding — a rejected cookie write reported as installed:** `b4cd995` — `Services/CredentialCommitter.cs`
+  owns the D2 commit (four-value snapshot/rollback plus per-cookie accounting); a `false` from
+  `CookieManager.SetCookie` now counts as a failure exactly like a throw, so `CookieInstalled` is only true when
+  at least one write was accepted and none failed and the existing `PartlyCommitted` path reports it. `auth3`
+  173 → 188 assertions, with the pre-fix body failing the rejected-jar case.
+- **Settings dead controls and the API-key save bug:** `c4c683f` — SETTINGS_PLAN slice 2: the collapsed 语言
+  dropdown, the theme-colour panel (`cbColor` was populated before `Loaded`, so its handler could only fire on a
+  selection no user could make), the DefaultTheme/示例主题 expander, the disabled `api_platform` combo, the
+  注销 accesskey button, the 极验 login test form with its page-private members, and the commented
+  外站替换视频 / Akamai 优先 blocks are gone with the code only they reached. Opening the page no longer writes:
+  it read `api_web_top` for the `api_web_secondary` box and wrote both keys back on load, which overwrote a
+  custom path prefix; only 应用参数 writes now, and it reads the key it displays.
+- **Dynamics card layout:** `48c5df5` — CARD_PLAN slice 2: `DynamicItemControl.xaml` is one reading column
+  (`MaxWidth` 800, one margin/padding token block at the top of the file) with header | body | content | action
+  rows at full width instead of content indented by the 56px pendant column; header collapses to an overflow menu
+  under 480 of the card's width, the action row is three star columns, body metrics 16/24, and OneRow's preview
+  is a 160-capped media column with a `2*` text column (`CoverWidth` deleted with its seven assignments).
+  Ten items need the maintainer's eyes — they are listed in the commit's handoff, not claimed.
 - **REFRESH D4/D5 — credential identity:** `75fe40f` — `Services/RefreshCredentialPolicy.cs` holds the only
   decision about the saved web refresh token (`RefreshTokenPolicy.Decide`, a pure function over the saved value,
   its recorded source, the session owner, the cookie candidate and a pending-confirmation flag) plus
@@ -154,8 +172,8 @@ device rows are still open in `plan/VALIDATION.md`. The 2026-11-02 entries are c
 | 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; the remaining checks are the device rows in `plan/VALIDATION.md` |
 | 6 | Auth refresh defects — `REFRESH_PLAN.md` | D2 shipped in `6ee8a81`, D4/D5 in `75fe40f`. Next, in the document's order: **D1** (awaited cookie-to-app bridge plus capability-aware Home recovery) → **D3** (staged web replacement with a persisted pending confirmation; the decision unit already accepts the flag). P4 step 4 (account) stays held back by the maintainer |
 | 7 | Hot tab card overflow — `HOT_CARD_PLAN.md` | **shipped** in `3ec04aa` (BR-47). Layout-visible, so the device pass decides: clipping, the tag capsule, and the 150%/200% text-size case the plan says `AdaptiveTrigger` cannot see |
-| 8 | Settings reorganization — `SETTINGS_PLAN.md` | slice 1 shipped in `ed5fe9f` (tab set/order, moves, grouping, labels, the one provably dead group). Remaining: the rest of the dead-control list, the save-error fix (custom API path written on load), the behaviour dependencies (HEVC/AV1 hint, capture-sample disable, CDN collapse, regex validation before save, cross-page input reset, middle-click in single-window mode, the fake video-rule upload), and the local help rewrite |
-| 9 | Dynamics card contract — `CARD_PLAN.md` | slice 1 shipped in `2d1c4b3` (data: rich content preserved, one paragraph join, attachments/OPUS/forbidden flags, dead markup builders removed). Remaining: layout/typography (§5), the expansion policy (§4), the shared card-data contract with the Opus title slot (§3), previews/authors/reposts (§2 P1), the memory page window (§9) |
+| 8 | Settings reorganization — `SETTINGS_PLAN.md` | slices 1–2 shipped: `ed5fe9f` (tabs, moves, grouping, labels) and `c4c683f` (dead controls, the `api_web_secondary` save bug). Remaining slice 3: the behaviour dependencies (HEVC/AV1 hint, capture-sample disable when 响应结构 is off, CDN collapse, regex validation before save, the cross-page input reset, middle-click in single-window mode, the fake video-rule upload) and the `Assets/Text/help.md` rewrite |
+| 9 | Dynamics card contract — `CARD_PLAN.md` | slices 1–2 shipped: `2d1c4b3` (data) and `48c5df5` (reading column, header, action columns, OneRow preview). Remaining: the expansion policy (§4), the shared card-data contract with the Opus title slot (§3), the preview ratio box (§6), bounded repost depth, the memory page window (§9), plus the ten layout items awaiting the device pass |
 
 **Order** (dispatcher, 2026-11-02, updated after the parallel wave): the engine-fallback disposal finding
 (`0b70113`) is closed; D2 and D4/D5 are in; the first slices of the Hot-card, settings and dynamics plans are in

@@ -73,3 +73,15 @@ in `488a978`. Nothing installed, so every row below still needs the device pass.
 | Hot card height | `3ec04aa` | on 热门, cards with a recommendation reason no longer clip or overlap: the tag sits on the thumbnail as one ellipsised line, the title keeps two lines, both metadata lines are whole. Narrow the window under ~480 to see the stacked card, and set Windows text size to 150% — if it still clips there, the plan's trigger cannot see it and the slot needs a measured height |
 | Dynamics body | `2d1c4b3` | a dynamics card with an attachment card, a multi-picture post, or a sentence that spans an @/topic/emoji renders the whole body as one flowing paragraph; a photo-only card shows its text; a reserve卡 shows both description lines when the server sends two, and never a lone blank line; nothing regressed in the video/season/article tabs or in paging |
 | Probe harness truthfulness | `488a978` | no device row: `g4` and `ux1c` are harness repairs. Their value is that the next unified run cannot pass while `ux1c`'s request-builder check compares empty strings |
+
+## Shipped 2026-11-02 — wave 3 (cookie write, settings slice 2, dynamics layout)
+
+Compiled with `build-release-x64.ps1 -Fast -SkipProjectReferences` (0 errors, package
+`BiliLite.UWP_1.0.9.36_x64`), then the whole suite again: **35 batches, `TOTAL_FAILURES=0`**. Nothing installed;
+every row below needs the device pass.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| A rejected cookie write is reported | `b4cd995` | no visible change when everything works. The case it fixes is a renewal that reports 成功 while cookie-authenticated pages are unauthenticated: if a renewal succeeds but the app still behaves as logged-out, the log line says `token=saved cookie=failed`, and 设置 → 账号 should not claim 已登录 |
+| Settings: dead controls gone, API keys safe | `c4c683f` | open 设置 with a custom API address/path set, close it without pressing 应用参数: the custom values must still be in effect and still filled in next time you open the page. The page no longer shows the 语言 dropdown, theme-colour picker, DefaultTheme/示例主题 notice, platform combo, 注销 accesskey button or 极验 test form |
+| Dynamics card layout | `48c5df5` | the feed reads as one column: header (avatar, name, time, actions), body, then three evenly spaced action buttons; nothing is indented under the avatar any more. Narrow the window under ~480 to see the header collapse into one ⋯ menu with 详情/网页/删除/装扮信息. Check at 480/800/1200 and at 150%/200% text size that the name truncates instead of colliding, the pendant/verification overlay does not overlap the name or the tag badge, the OneRow cover is not letterboxed, and the divider between cards reads correctly on the page background |
