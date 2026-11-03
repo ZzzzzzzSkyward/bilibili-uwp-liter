@@ -67,6 +67,12 @@ namespace BiliLite.Helpers
             SettingHelper.SetValue<string>("CookieSESSDATA", "");
             SettingHelper.SetValue<string>("CookieCSRF", "");
             SettingHelper.SetValue<string>("CookieRefreshToken", "");
+            // 挂起确认和令牌来历都属于刚刚离开的那个会话：留着会让下次登录的镜像被挡住、
+            // 让下一次刷新拿一枚已经死掉的旧令牌去确认
+            WebRefreshTransaction.DiscardPending(
+                (message, exception) => LogHelper.Log(message, LogType.ERROR, exception));
+            SettingHelper.SetValue<string>(SettingHelper.Account.ACCESS_KEY_SOURCE, "");
+            SettingHelper.SetValue<bool>(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false);
             ClearCookie();
             LogoutedEvent?.Invoke(null, null);
         }
