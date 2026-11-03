@@ -3,46 +3,115 @@
   <Page.Resources>
     <covert:ColorConvert x:Key="colorConvert"/>
     <covert:DisplayConvert x:Key="DisplayConvert"/>
+    <!--
+      卡片预算（有效像素，100% 文字大小）：
+      宽卡 = 6 外边距 + 12 内边距 + max(封面 90, 文本 88) + 12 内边距 + 6 外边距 = 132；
+      文本 88 = 标题两行 44 + 间距 6 + 元信息 18 + 间距 2 + 元信息 18。
+      竖排卡 = 6 + 12 + 封面 160 + 间距 12 + 文本 88 + 12 + 6 = 296。
+      推荐标签固定在封面上，一行省略号截断，不参与文本列的高度竞争。
+    -->
+    <DataTemplate x:Key="hotVideoCardWide" x:DataType="modules:HotDataItemModel">
+      <Grid Background="#00FFFFFF" Margin="6" Padding="12">
+        <Grid.ContextFlyout>
+          <MenuFlyout>
+            <MenuFlyoutItem Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看"/>
+          </MenuFlyout>
+        </Grid.ContextFlyout>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="160"/>
+          <ColumnDefinition Width="12"/>
+          <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Border Height="90" VerticalAlignment="Center" CornerRadius="{StaticResource ImageCornerRadius}">
+          <Grid>
+            <toolkit:ImageEx IsCacheEnabled="True" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='120h'}"/>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="152" Margin="4" Padding="6 2" CornerRadius="2" BorderThickness="1" BorderBrush="{x:Bind Path=rcmd_reason_style.border_color,Converter={StaticResource colorConvert}}" Background="{x:Bind Path=rcmd_reason_style.bg_color,Converter={StaticResource colorConvert}}" Visibility="{x:Bind Path=rcmd_reason_style.text,Mode=OneWay,Converter={StaticResource DisplayConvert}}">
+              <TextBlock FontSize="11" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{x:Bind Path=rcmd_reason_style.text_color,Converter={StaticResource colorConvert}}" Text="{x:Bind Path=rcmd_reason_style.text}"/>
+            </Border>
+            <Border CornerRadius="4" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="4" Padding="4 2" Background="#99000000" Visibility="{x:Bind cover_right_text_1,Mode=OneWay,Converter={StaticResource DisplayConvert}}">
+              <TextBlock Foreground="White" FontSize="12" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Text="{x:Bind cover_right_text_1}"/>
+            </Border>
+          </Grid>
+        </Border>
+        <Grid Grid.Column="2" VerticalAlignment="Center">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <TextBlock MinHeight="44" Margin="0 0 0 6" FontSize="16" FontWeight="SemiBold" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"/>
+          <TextBlock Grid.Row="1" MinHeight="18" Margin="0 0 0 2" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_1}"/>
+          <TextBlock Grid.Row="2" MinHeight="18" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_2}"/>
+        </Grid>
+      </Grid>
+    </DataTemplate>
+    <DataTemplate x:Key="hotVideoCardStacked" x:DataType="modules:HotDataItemModel">
+      <Grid Background="#00FFFFFF" Margin="6" Padding="12">
+        <Grid.ContextFlyout>
+          <MenuFlyout>
+            <MenuFlyoutItem Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看"/>
+          </MenuFlyout>
+        </Grid.ContextFlyout>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="160"/>
+          <RowDefinition Height="12"/>
+          <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <Border CornerRadius="{StaticResource ImageCornerRadius}">
+          <Grid>
+            <toolkit:ImageEx IsCacheEnabled="True" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='120h'}"/>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Top" MaxWidth="152" Margin="4" Padding="6 2" CornerRadius="2" BorderThickness="1" BorderBrush="{x:Bind Path=rcmd_reason_style.border_color,Converter={StaticResource colorConvert}}" Background="{x:Bind Path=rcmd_reason_style.bg_color,Converter={StaticResource colorConvert}}" Visibility="{x:Bind Path=rcmd_reason_style.text,Mode=OneWay,Converter={StaticResource DisplayConvert}}">
+              <TextBlock FontSize="11" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{x:Bind Path=rcmd_reason_style.text_color,Converter={StaticResource colorConvert}}" Text="{x:Bind Path=rcmd_reason_style.text}"/>
+            </Border>
+            <Border CornerRadius="4" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="4" Padding="4 2" Background="#99000000" Visibility="{x:Bind cover_right_text_1,Mode=OneWay,Converter={StaticResource DisplayConvert}}">
+              <TextBlock Foreground="White" FontSize="12" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Text="{x:Bind cover_right_text_1}"/>
+            </Border>
+          </Grid>
+        </Border>
+        <Grid Grid.Row="2" VerticalAlignment="Center">
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+          </Grid.RowDefinitions>
+          <TextBlock MinHeight="44" Margin="0 0 0 6" FontSize="16" FontWeight="SemiBold" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"/>
+          <TextBlock Grid.Row="1" MinHeight="18" Margin="0 0 0 2" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_1}"/>
+          <TextBlock Grid.Row="2" MinHeight="18" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_2}"/>
+        </Grid>
+      </Grid>
+    </DataTemplate>
   </Page.Resources>
   <Grid>
-    <controls:MyAdaptiveGridView ItemClick="gridHot_ItemClick" OneRowModeEnabled="False" Padding="8" StretchContentForSingleRow="False" ItemsSource="{x:Bind Path=hotVM.HotItems,Mode=OneWay}" ItemHeight="100" DesiredWidth="560" LoadMoreBottomOffset="0" LoadMoreCommand="{x:Bind Path=hotVM.LoadMoreCommand}" CanLoadMore="True" Loading="{x:Bind Path=hotVM.Loading,Mode=OneWay}" SelectionMode="None" IsItemClickEnabled="True">
+    <VisualStateManager.VisualStateGroups>
+      <VisualStateGroup x:Name="HotCardLayoutStates">
+        <VisualState x:Name="WideCard">
+          <VisualState.StateTriggers>
+            <AdaptiveTrigger MinWindowWidth="480"/>
+          </VisualState.StateTriggers>
+          <VisualState.Setters>
+            <Setter Target="gridHot.ItemHeight" Value="132"/>
+            <Setter Target="gridHot.DesiredWidth" Value="560"/>
+            <Setter Target="gridHot.ItemTemplate" Value="{StaticResource hotVideoCardWide}"/>
+          </VisualState.Setters>
+        </VisualState>
+        <VisualState x:Name="StackedCard">
+          <VisualState.StateTriggers>
+            <AdaptiveTrigger MinWindowWidth="0"/>
+          </VisualState.StateTriggers>
+          <VisualState.Setters>
+            <Setter Target="gridHot.ItemHeight" Value="296"/>
+            <Setter Target="gridHot.DesiredWidth" Value="320"/>
+            <Setter Target="gridHot.ItemTemplate" Value="{StaticResource hotVideoCardStacked}"/>
+          </VisualState.Setters>
+        </VisualState>
+      </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
+    <controls:MyAdaptiveGridView x:Name="gridHot" ItemClick="gridHot_ItemClick" OneRowModeEnabled="False" Padding="8" StretchContentForSingleRow="False" ItemsSource="{x:Bind Path=hotVM.HotItems,Mode=OneWay}" ItemHeight="132" DesiredWidth="560" ItemTemplate="{StaticResource hotVideoCardWide}" LoadMoreBottomOffset="0" LoadMoreCommand="{x:Bind Path=hotVM.LoadMoreCommand}" CanLoadMore="True" Loading="{x:Bind Path=hotVM.Loading,Mode=OneWay}" SelectionMode="None" IsItemClickEnabled="True">
       <toolkit:AdaptiveGridView.ItemContainerStyle>
         <Style TargetType="GridViewItem">
-          <Setter Property="Margin" Value="8"/>
+          <Setter Property="Margin" Value="0"/>
         </Style>
       </toolkit:AdaptiveGridView.ItemContainerStyle>
-      <toolkit:AdaptiveGridView.ItemTemplate>
-        <DataTemplate x:DataType="modules:HotDataItemModel">
-          <Grid Background="#00FFFFFF">
-            <Grid.ContextFlyout>
-              <MenuFlyout>
-                <MenuFlyoutItem x:Name="AddToWatchLater" Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看"/>
-              </MenuFlyout>
-            </Grid.ContextFlyout>
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="160"/>
-              <ColumnDefinition/>
-            </Grid.ColumnDefinitions>
-            <Border Margin="4" CornerRadius="{StaticResource ImageCornerRadius}">
-              <Grid>
-                <toolkit:ImageEx IsCacheEnabled="True" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" Source="{x:Bind Path=cover,Converter={StaticResource imageConvert},ConverterParameter='120h'}"/>
-                <Border CornerRadius="4" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="4" Padding="4 2" Background="#99000000">
-                  <TextBlock Foreground="White" FontSize="12" Text="{x:Bind cover_right_text_1}"/>
-                </Border>
-              </Grid>
-            </Border>
-            <StackPanel Grid.Column="1" Margin="4 0 0 0">
-              <TextBlock FontSize="20" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"/>
-              <Border Margin="0 2 0 0" BorderThickness="1" BorderBrush="{x:Bind Path=rcmd_reason_style.border_color,Converter={StaticResource colorConvert}}" Background="{x:Bind Path=rcmd_reason_style.bg_color,Converter={StaticResource colorConvert}}" HorizontalAlignment="Left" Padding="4 0" CornerRadius="2">
-                <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{x:Bind Path=rcmd_reason_style.text_color,Converter={StaticResource colorConvert}}" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=rcmd_reason_style.text}" Visibility="{x:Bind Path=rcmd_reason_style,Mode=OneWay,Converter={StaticResource DisplayConvert }}"/>
-              </Border>
-              <TextBlock Margin="0 2 0 0" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_1}"/>
-              <TextBlock Margin="0 2 0 0" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_2}"/>
-            </StackPanel>
-            <!--<TextBlock  Grid.Row="2" Margin="4 0 4 4" FontSize="12" Foreground="Gray" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{Binding desc}"></TextBlock>-->
-          </Grid>
-        </DataTemplate>
-      </toolkit:AdaptiveGridView.ItemTemplate>
       <controls:MyAdaptiveGridView.Header>
         <GridView ItemClick="gridTop_ItemClick" ItemsSource="{x:Bind Path=hotVM.TopItems,Mode=OneWay}" IsItemClickEnabled="True" SelectionMode="None" HorizontalAlignment="Center">
           <GridView.ItemTemplate>
