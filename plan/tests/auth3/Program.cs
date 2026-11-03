@@ -35,6 +35,9 @@ internal static class Program
         MessageCenter.LoginedEvent += (_, __) => BiliLite.Services.CookieService.ClearReloginRequired();
 
         RequestShapeAndOneAttemptPerPreflight();
+        SaveResultDecidesTheOutcome();
+        SaveThrowIsUncommitted();
+        PartialCookieCommitIsReported();
         ServerRejectionLeavesSettingsUntouched();
         TransportFailureReturnsFalseWithoutThrowing();
         EmptyRefreshTokenSendsNothing();
@@ -92,15 +95,15 @@ internal static class Program
             requests.Add(new AccountApi().RefreshToken(accessKey, refreshToken));
             return Task.FromResult(new HttpResults { status = true, results = SuccessBody() });
         };
-        Func<LoginTokenInfo, LoginCookieInfo, Task> save = (token, cookie) =>
+        Func<LoginTokenInfo, LoginCookieInfo, Task<CredentialCommit>> save = (token, cookie) =>
         {
             saved.Add((token, cookie));
             ApplySaveLogin(token);
-            return Task.CompletedTask;
+            return Task.FromResult(Committed(cookie));
         };
 
         Check(BiliLite.Services.CookieService.NeedsRelogin, "the fixture starts from a dead cookie session");
-        Check(Preflight(send, save), "the preflight renewal reports success");
+        Check(Preflight(send, save).Committed, "the preflight renewal reports success");
         Check(sends == 1, "one preflight turns into exactly one refresh POST");
         var request = requests.Single();
         Check(request.method == RestSharp.Method.Post, "the refresh is a POST");
@@ -133,12 +136,14 @@ internal static class Program
 
         var successLines = Log.Where(line => line.StartsWith("ACCESS_KEY 已刷新", StringComparison.Ordinal)).ToList();
         Check(successLines.Count == 1, "a successful renewal leaves exactly one line");
-        Check(successLines[0] == "ACCESS_KEY 已刷新 mid=99182 expires_in=7776000 cookie=present",
-            "the line carries mid, expires_in and that cookie_info arrived");
+        Check(successLines[0] == "ACCESS_KEY 已刷新 mid=99182 expires_in=7776000 token=saved cookie=installed",
+            "the line carries mid, expires_in, the committed token and that cookies landed in the jar");
         Check(Log.All(line => !line.Contains("new-ak") && !line.Contains("rt-rotated") && !line.Contains("ac-fresh")),
             "no token or cookie value reaches the log");
 
-        Check(!Preflight(send, save), "the next preflight has nothing to do");
+        var secondPreflight = Preflight(send, save);
+        Check(!secondPreflight.Committed && secondPreflight.Outcome == RenewalOutcome.NotAttempted,
+            "the next preflight has nothing to do");
         Check(sends == 1, "a fresh key does not cause a second refresh");
         var skipLines = Log.Where(line => line.StartsWith("ACCESS_KEY 续期跳过", StringComparison.Ordinal)).ToList();
         Check(skipLines.Count == 1, "a declined gate leaves exactly one line per preflight");
@@ -154,8 +159,81 @@ internal static class Program
                 status = true,
                 results = "{\"code\":0,\"data\":{\"access_token\":\"new-ak\",\"refresh_token\":\"rt\",\"expires_in\":100,\"mid\":1}}"
             }),
-            (t, c) => { flat.Add(1); return Task.CompletedTask; }, (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
-        Check(!flatResult && flat.Count == 0, "a flattened data payload is rejected instead of being read as a token");
+            (t, c) => { flat.Add(1); return Task.FromResult(Committed(c)); },
+            (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
+        Check(!flatResult.Committed && flatResult.Outcome == RenewalOutcome.TransportFailed && flat.Count == 0,
+            "a flattened data payload is rejected as a retryable transport problem, not read as a token");
+    }
+
+    /// <summary>
+    /// 落盘结果说了算：回调报告令牌没写进去，续期就必须报未落盘，
+    /// 不许再出现「已刷新」那行成功日志（修复前这里报的是成功）。
+    /// </summary>
+    private static void SaveResultDecidesTheOutcome()
+    {
+        ResetSession();
+        var result = AccessKeyRenewal.RunAsync("ak", "rt",
+            (_, __) => Task.FromResult(new HttpResults { status = true, results = SuccessBody() }),
+            (token, cookie) => Task.FromResult(new CredentialCommit { CookieOffered = true }),
+            (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
+
+        Check(result.Outcome == RenewalOutcome.Uncommitted, "a save that wrote nothing is reported as uncommitted");
+        Check(!result.Committed && !result.CredentialUsable, "an uncommitted save is not a usable credential");
+        Check(result.Retryable && !result.SessionDead, "an uncommitted save is retryable and is not a dead session");
+        Check(Log.All(line => !line.StartsWith("ACCESS_KEY 已刷新", StringComparison.Ordinal)),
+            "an uncommitted save never logs a success line");
+        Check(Log.Any(line => line.StartsWith("ACCESS_KEY 续期未落盘", StringComparison.Ordinal)),
+            "the uncommitted save is logged as not persisted");
+    }
+
+    /// <summary>落盘抛异常也只算未落盘：既不逃出去，也不能被当成成功。</summary>
+    private static void SaveThrowIsUncommitted()
+    {
+        ResetSession();
+        bool threw = false;
+        RenewalResult result = null;
+        try
+        {
+            result = AccessKeyRenewal.RunAsync("ak", "rt",
+                (_, __) => Task.FromResult(new HttpResults { status = true, results = SuccessBody() }),
+                (token, cookie) => throw new InvalidOperationException("storage full"),
+                (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
+        }
+        catch (Exception)
+        {
+            threw = true;
+        }
+
+        Check(!threw, "a save failure does not escape the renewal");
+        Check(result.Outcome == RenewalOutcome.Uncommitted && result.Retryable && !result.CredentialUsable,
+            "a save that threw is an uncommitted, retryable failure");
+        Check(Log.All(line => !line.StartsWith("ACCESS_KEY 已刷新", StringComparison.Ordinal)),
+            "a save that threw never logs a success line");
+    }
+
+    /// <summary>令牌写好了、cookie 没装进去：两件事分开报，别用一个「成功」盖住另一个。</summary>
+    private static void PartialCookieCommitIsReported()
+    {
+        ResetSession();
+        var result = AccessKeyRenewal.RunAsync("ak", "rt",
+            (_, __) => Task.FromResult(new HttpResults { status = true, results = SuccessBody() }),
+            (token, cookie) => Task.FromResult(new CredentialCommit
+            {
+                TokenSaved = true,
+                CookieOffered = true,
+                CookieInstalled = false,
+            }),
+            (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
+
+        Check(result.Outcome == RenewalOutcome.PartlyCommitted, "a token-only commit is partial, not full success");
+        Check(result.CredentialUsable && result.CookieOffered && !result.CookieInstalled,
+            "the app key stays usable while the web session was not restored");
+        Check(!result.SessionDead && !result.Retryable,
+            "a partial commit is neither a dead session nor a transport retry");
+        Check(Log.Any(line => line == "ACCESS_KEY 续期只落了令牌 mid=99182 token=saved cookie=failed"),
+            "the partial commit says the token landed and the cookie did not");
+        Check(Log.All(line => !line.StartsWith("ACCESS_KEY 已刷新", StringComparison.Ordinal)),
+            "a partial commit never claims a full renewal");
     }
 
     private static void ServerRejectionLeavesSettingsUntouched()
@@ -176,9 +254,13 @@ internal static class Program
                 sends++;
                 return Task.FromResult(new HttpResults { status = true, results = "{\"code\":-101,\"message\":\"账号未登录\"}" });
             },
-            (t, c) => { saved++; return Task.CompletedTask; }, (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
+            (t, c) => { saved++; return Task.FromResult(Committed(c)); },
+            (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
 
-        Check(!result, "a rejected refresh returns false");
+        Check(!result.Committed && result.Outcome == RenewalOutcome.Rejected,
+            "a rejected refresh is reported as a rejected session");
+        Check(result.SessionDead && !result.Retryable,
+            "only an explicit rejection counts as a dead session, not as a retry");
         Check(sends == 1, "a rejected refresh is not retried");
         Check(saved == 0, "a rejected refresh never reaches SaveLogin");
         Check(SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY, "") == "old-ak" &&
@@ -194,12 +276,13 @@ internal static class Program
         Log.Clear();
         var saved = 0;
         bool threw = false;
-        bool result = false;
+        RenewalResult result = null;
         try
         {
             result = AccessKeyRenewal.RunAsync("ak", "rt",
                 (_, __) => throw new InvalidOperationException("socket closed"),
-                (t, c) => { saved++; return Task.CompletedTask; }, (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
+                (t, c) => { saved++; return Task.FromResult(Committed(c)); },
+                (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
         }
         catch (Exception)
         {
@@ -207,7 +290,10 @@ internal static class Program
         }
 
         Check(!threw, "a transport failure does not escape the renewal");
-        Check(!result && saved == 0, "a transport failure returns false and saves nothing");
+        Check(result.Outcome == RenewalOutcome.TransportFailed && !result.Committed && saved == 0,
+            "a transport failure reports a retryable failure and saves nothing");
+        Check(result.Retryable && !result.SessionDead,
+            "a transport failure keeps the credentials and is not mistaken for a dead session");
         Check(Log.Any(line => line.Contains("请求失败")), "the transport failure is logged");
     }
 
@@ -217,8 +303,9 @@ internal static class Program
         var sends = 0;
         var result = AccessKeyRenewal.RunAsync("ak", "",
             (_, __) => { sends++; return Task.FromResult(new HttpResults { status = true, results = "{}" }); },
-            (t, c) => Task.CompletedTask, (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
-        Check(!result && sends == 0, "an empty refresh token performs no request at all");
+            (t, c) => Task.FromResult(Committed(c)), (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
+        Check(result.Outcome == RenewalOutcome.NotAttempted && !result.Committed && sends == 0,
+            "an empty refresh token performs no request at all");
 
         Log.Clear();
         var gateNow = DateTime.Now;
@@ -240,11 +327,14 @@ internal static class Program
                 status = true,
                 results = "{\"code\":0,\"data\":{\"token_info\":{\"mid\":42,\"access_token\":\"ak-2\",\"refresh_token\":\"rt-2\",\"expires_in\":3600}}}"
             }),
-            (token, cookie) => Task.CompletedTask, (message, exception) => Log.Add(message))
+            (token, cookie) => Task.FromResult(Committed(cookie)), (message, exception) => Log.Add(message))
             .GetAwaiter().GetResult();
-        Check(result, "a renewal without cookie_info still succeeds");
+        Check(result.Committed && result.TokenSaved,
+            "a renewal without cookie_info still commits the token");
+        Check(!result.CookieOffered && !result.CookieInstalled,
+            "no cookie_info is reported as an unreached web session, not as an installed one");
         var line = Log.Single(item => item.StartsWith("ACCESS_KEY 已刷新", StringComparison.Ordinal));
-        Check(line == "ACCESS_KEY 已刷新 mid=42 expires_in=3600 cookie=missing",
+        Check(line == "ACCESS_KEY 已刷新 mid=42 expires_in=3600 token=saved cookie=missing",
             "the success line says cookie=missing when the server sent no cookie_info");
         Check(!line.Contains("ak-2") && !line.Contains("rt-2"), "the success line carries no credential");
     }
@@ -390,12 +480,61 @@ internal static class Program
             "the flat LoginTokenInfo parse is gone from the refresh path");
 
         var account = File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/Modules/User/Account.cs"));
-        var refresh = MethodBody(account, "public async Task<bool> RefreshToken()", "public class HomeUserCardModel");
+        var refresh = MethodBody(account, "public async Task<RenewalResult> RefreshToken()", "public class HomeUserCardModel");
         Check(refresh.Contains("AccessKeyRenewal.RunAsync("), "Account.RefreshToken goes through the renewal service");
-        Check(refresh.Contains("SaveLogin(token.access_token, token.refresh_token, token.expires_in,"),
-            "the parsed token is handed to the existing SaveLogin path");
-        Check(refresh.Contains("null, cookie)"), "cookie_info is passed to SaveLogin instead of dropped");
-        Check(!refresh.Contains("throw ex"), "a failed refresh returns false instead of throwing");
+        Check(refresh.Contains("SaveRenewedLoginAsync"),
+            "the parsed token and cookie_info go to the commit callback");
+        Check(!refresh.Contains("SaveLogin("), "the renewal no longer detours through the login-shaped SaveLogin");
+        Check(refresh.Contains("Task<RenewalResult> RefreshToken()"),
+            "the renewal hands its commit outcome back to the caller");
+        Check(!refresh.Contains("throw ex"), "a failed refresh returns a result instead of throwing");
+
+        var persist = MethodBody(account, "private static CredentialCommit PersistCredentials(",
+            "private static void RestoreCredentialSettings(");
+        Check(!persist.Contains("GetProfile") && !persist.Contains("SendLogined"),
+            "the credential commit does not contain the profile fetch or the login broadcast");
+        Check(persist.Contains("RestoreCredentialSettings(") && persist.Contains("TokenSaved = true"),
+            "a failed write puts the whole credential set back and reports it unsaved");
+        Check(persist.Contains("CookieInstalled = failed == 0 && installed > 0"),
+            "cookie installation is reported per write, not assumed from the token result");
+
+        var announce = MethodBody(account, "private async Task AnnounceLoginAsync()", "public bool CommitCookieLogin(");
+        Check(announce.Contains("await GetProfile();") && announce.Contains("MessageCenter.SendLogined();"),
+            "the profile fetch and the login broadcast still happen");
+        Check(Regex.Matches(announce, @"catch \(Exception").Count == 2,
+            "a profile or broadcast failure cannot turn a committed credential into a failure");
+
+        var saveRenewed = MethodBody(account, "private async Task<CredentialCommit> SaveRenewedLoginAsync(",
+            "public class HomeUserCardModel");
+        Check(saveRenewed.IndexOf("PersistCredentials(", StringComparison.Ordinal) <
+            saveRenewed.IndexOf("AnnounceLoginAsync(", StringComparison.Ordinal) &&
+            saveRenewed.Contains("if (!commit.TokenSaved) return commit;"),
+            "the commit outcome is decided before the profile fetch runs");
+
+        var renewalSource = File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/Services/AccessKeyRenewal.cs"));
+        Check(renewalSource.Contains("Func<LoginTokenInfo, LoginCookieInfo, Task<CredentialCommit>> saveLogin"),
+            "the save callback returns an explicit commit result");
+        Check(renewalSource.Contains("if (!commit.TokenSaved)") &&
+            renewalSource.Contains("RenewalOutcome.PartlyCommitted"),
+            "success is emitted only for the committed outcome, partial commits are separate");
+
+        var home = File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/Pages/HomePage.xaml.cs"));
+        var checkLogin = MethodBody(home, "private async void CheckLoginStatus()", "private async void LoadUserStatus()");
+        Check(checkLogin.Contains("renewal.SessionDead") && checkLogin.Contains("renewal.Retryable"),
+            "Home separates an expired session from a retryable renewal failure");
+        Check(Regex.Matches(checkLogin, @"MessageCenter\.SendLogout\(\)").Count == 1 &&
+            checkLogin.IndexOf("renewal.Retryable", StringComparison.Ordinal) >
+            checkLogin.IndexOf("renewal.SessionDead", StringComparison.Ordinal),
+            "only the dead-session branch logs the user out");
+        Check(!checkLogin.Contains("if (!result)"), "Home no longer collapses every renewal failure into a logout");
+
+        var startup = MethodBody(File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/App.xaml.cs")),
+            "private static async Task PreflightLoginAsync()",
+            "private void RegisterExceptionHandlingSynchronizationContext()");
+        Check(startup.Contains("renewal.SessionDead") && startup.Contains("renewal.Retryable"),
+            "startup reports the renewal outcome without collapsing it");
+        Check(!startup.Contains("SendLogout") && !startup.Contains("AccessKey ="),
+            "startup neither logs out nor rewrites credentials on a failed renewal");
 
         var saveBody = MethodBody(account, "public async Task<bool> SaveLogin(", "public bool CommitCookieLogin(");
         Check(saveBody.Contains("MessageCenter.SendLogined();"),
@@ -465,15 +604,23 @@ internal static class Program
     }
 
     /// <summary>把一次启动/恢复要走的路走一遍：先问闸门，再发唯一一次刷新。</summary>
-    private static bool Preflight(Func<string, string, Task<HttpResults>> send,
-        Func<LoginTokenInfo, LoginCookieInfo, Task> save)
+    private static RenewalResult Preflight(Func<string, string, Task<HttpResults>> send,
+        Func<LoginTokenInfo, LoginCookieInfo, Task<CredentialCommit>> save)
     {
         var refreshToken = SettingHelper.GetValue(SettingHelper.Account.REFRESH_KEY, "");
         var expiresAt = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue);
         if (!AccessKeyRenewal.ShouldRenew(BiliLite.Services.CookieService.NeedsRelogin, refreshToken, expiresAt, DateTime.Now,
-                (message, exception) => Log.Add(message))) return false;
+                (message, exception) => Log.Add(message)))
+            return new RenewalResult(RenewalOutcome.NotAttempted, false, false, false);
         return AccessKeyRenewal.RunAsync(SettingHelper.Account.AccessKey, refreshToken, send, save, (message, exception) => Log.Add(message))
             .GetAwaiter().GetResult();
+    }
+
+    /// <summary>落盘成功的回调形状：令牌写好，响应带了 cookie_info 就算装进 jar。</summary>
+    private static CredentialCommit Committed(LoginCookieInfo cookie)
+    {
+        var offered = cookie?.cookies != null && cookie.cookies.Count > 0;
+        return new CredentialCommit { TokenSaved = true, CookieOffered = offered, CookieInstalled = offered };
     }
 
     /// <summary>镜像 Account.SaveLogin 的落盘和广播：真正的实现由源码断言覆盖。</summary>

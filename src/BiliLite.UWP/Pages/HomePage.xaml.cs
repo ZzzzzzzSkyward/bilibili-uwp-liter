@@ -66,14 +66,22 @@ namespace BiliLite.Pages
                     }
                     else
                     {
-                        var result = await account.RefreshToken();
-                        if (!result)
+                        var renewal = await account.RefreshToken();
+                        if (renewal.SessionDead)
                         {
+                            // 服务端明确拒绝，或者根本没有刷新令牌：这个会话真的到头了
                             homeVM.IsLogin = false;
                             MessageCenter.SendLogout();
                             Utils.ShowMessageToast("登录过期，请重新登录");
                             await Utils.ShowLoginDialog();
                         }
+                        else if (renewal.Retryable)
+                        {
+                            // 网络或落盘没过：现有凭证一个都没清，下次启动/恢复再试，别当成会话失效
+                            LogHelper.Log("ACCESS_KEY 续期可重试 outcome=" + renewal.Outcome, LogType.INFO);
+                            Utils.ShowMessageToast("登录信息刷新失败，可稍后重试");
+                        }
+                        // Committed / PartlyCommitted：令牌已经可用，继续用旧界面；网页会话没换新由续期日志说明
                     }
                 }
                 catch (Exception ex)

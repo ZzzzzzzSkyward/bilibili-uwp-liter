@@ -114,7 +114,12 @@ namespace BiliLite
             if (!BiliLite.Services.AccessKeyRenewal.ShouldRenew(BiliLite.Services.CookieService.NeedsRelogin,
                     refreshToken, expiresAt, DateTime.Now,
                     (message, exception) => LogHelper.Log(message, exception == null ? LogType.INFO : LogType.ERROR, exception))) return;
-            await new BiliLite.Modules.Account().RefreshToken();
+            var renewal = await new BiliLite.Modules.Account().RefreshToken();
+            // 启动不做界面决定：只把「会话到头」和「可重试」分开记下来，凭证交给上面的落盘结果
+            if (renewal.SessionDead)
+                LogHelper.Log("ACCESS_KEY 续期未完成：会话需要重新登录 outcome=" + renewal.Outcome, LogType.INFO);
+            else if (renewal.Retryable)
+                LogHelper.Log("ACCESS_KEY 续期未完成，凭证保持原样 outcome=" + renewal.Outcome, LogType.INFO);
         }
         private void RegisterExceptionHandlingSynchronizationContext()
         {
