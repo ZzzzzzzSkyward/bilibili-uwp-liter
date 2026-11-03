@@ -52,6 +52,12 @@ namespace BiliLite.Services
         /// <summary>上一个会话的记录整组作废，这个会话从自己的 jar 里接手了一代令牌。</summary>
         public const string SessionResetAdopted = "session-reset-adopted";
 
+        /// <summary>落盘前后两个已知 uid 不同：上一个账号的记录连值带来源带归属整组作废。</summary>
+        public const string AccountSwitched = "account-switched";
+
+        /// <summary>不是换账号（uid 没变，或旧值未知）：记录交给 Decide，无归属的旧记录照旧能被本会话接手。</summary>
+        public const string SameAccount = "same-account";
+
         /// <summary>
         /// 已知的两个 uid 不同才算对不上：缺归属（0）是旧版本留下的记录，不知道就不拦。
         /// </summary>
@@ -106,6 +112,22 @@ namespace BiliLite.Services
                 : savedSource == RefreshTokenSource.Manual ? "manual-source-kept"
                 : "unknown-source-kept");
         }
+
+        /// <summary>
+        /// 一次成功的落盘换掉了账号：判据是落盘前后两个已知 uid，不是旧记录上有没有归属 ——
+        /// 旧版本留下的记录 OwnerId 是 0，Decide 的归属分支拦不住它，ReadToken 也照旧把它交出去。
+        /// uid 相同或旧值未知时一个键都不动：无归属的旧记录还能被本会话接手。
+        /// </summary>
+        public static RefreshTokenDecision AccountSwitchReset(long previousOwnerId, long sessionOwnerId) =>
+            OwnerConflicts(previousOwnerId, sessionOwnerId)
+                ? Clear(AccountSwitched)
+                : new RefreshTokenDecision
+                {
+                    Token = "",
+                    Source = RefreshTokenSource.UnknownLegacy,
+                    OwnerId = 0,
+                    Reason = SameAccount,
+                };
 
         public static string FormatSource(RefreshTokenSource source)
         {
@@ -228,6 +250,17 @@ namespace BiliLite.Services
         {
             var decision = RefreshTokenPolicy.Decide(ReadSaved(), sessionOwnerId, cookieToken, cookieOwnerId,
                 confirmationPending);
+            if (decision.Write) Persist(decision.Token, decision.Source, decision.OwnerId);
+            return decision;
+        }
+
+        /// <summary>
+        /// 换账号落盘后的第一步：判定要求作废时把值、来源、归属三个键整组清掉，
+        /// 随后那次 MirrorFromCookie 只能接住新会话自己 jar 里的那一代。
+        /// </summary>
+        public RefreshTokenDecision ResetOnAccountSwitch(long previousOwnerId, long sessionOwnerId)
+        {
+            var decision = RefreshTokenPolicy.AccountSwitchReset(previousOwnerId, sessionOwnerId);
             if (decision.Write) Persist(decision.Token, decision.Source, decision.OwnerId);
             return decision;
         }

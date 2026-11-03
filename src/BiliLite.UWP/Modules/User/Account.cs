@@ -336,7 +336,8 @@ namespace BiliLite.Modules
         {
             // 换账号：上一代 ac_time_value 只是副本、本身不带归属，jar 里留着就会被镜像当成新会话的令牌。
             // 先删再落盘，之后镜像只可能接住这次响应下发的 ac_time_value（或什么都接不到）。
-            if (RefreshTokenPolicy.OwnerConflicts(SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L), userid))
+            var previousUserId = SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L);
+            if (RefreshTokenPolicy.OwnerConflicts(previousUserId, userid))
                 DeleteJarRefreshToken();
 
             var commit = CredentialCommitter.Commit(access_key, refresh_token, DateTime.Now.AddSeconds(expires),
@@ -349,6 +350,10 @@ namespace BiliLite.Modules
             // 恢复路径才不会拿 cookie 兑换去顶一把本来有 app 刷新令牌的 key
             SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false);
             CookieAppKeyBridge.RecordProvenance(AppKeyProvenance.AppResponse);
+
+            // 换账号的落盘已经成功：上个账号的记录（含旧版本没写归属的那份）连值带来源带归属整组作废，
+            // 紧接着的镜像只接新会话 jar 里的一代。放在提交成功之后，落盘失败时旧记录连同旧凭证原样留着。
+            refreshTokenMirror.ResetOnAccountSwitch(previousUserId, userid);
 
             // ac_time_value 只随 cookie 下发，登录成功当场落到设置，否则刷新链永远缺令牌；
             // 但响应令牌已存时它不许覆盖（判定在 RefreshTokenPolicy）

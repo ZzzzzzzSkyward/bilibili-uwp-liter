@@ -52,6 +52,7 @@ internal static class Program
         CookieMirrorOnlyMigratesALegacySession();
         CookieMirrorRefusesAnotherAccountsToken();
         CrossAccountLoginResetsTheWebToken();
+        LegacyRecordDoesNotSurviveAnAccountSwitch();
         AnotherAccountsWebTokenIsNeverSubmitted();
         ManualEntryBelongsToTheCurrentSession();
         PendingConfirmationBlocksMigration();
@@ -815,6 +816,146 @@ internal static class Program
     }
 
     /// <summary>
+    /// 旧版本装机的状态：设置里是 A 的令牌，来源和归属都没写过。换号登录 B 之后，那份无归属记录
+    /// 不能再靠「不知道归属就不拦」活下来 —— 判据是落盘前后两个已知 uid，不是记录上有没有归属。
+    /// </summary>
+    private static void LegacyRecordDoesNotSurviveAnAccountSwitch()
+    {
+        // B 的登录带了一代自己的 ac_time_value：A 的值连来源带归属都不许留下
+        var settings = LegacySession("rt-legacy-a");
+        var jar = new MemoryCookieStore();
+        jar.Write("ac_time_value", "ac-account-a");
+        jar.Write("DedeUserID", "42");
+        PersistLogin(settings, jar, 99, new[]
+        {
+            new CookieWrite { Name = "DedeUserID", Domain = "https://bilibili.com", Path = "/", Value = "99" },
+            new CookieWrite { Name = "ac_time_value", Domain = "https://bilibili.com", Path = "/", Value = "ac-account-b" },
+        });
+
+        Check(Setting(settings, RefreshTokenMirror.TokenKey) == "ac-account-b",
+            "an ownerless legacy record does not survive an account switch that brings a new ac_time_value");
+        Check(Setting(settings, RefreshTokenMirror.SourceKey) == "cookie" &&
+            Setting(settings, RefreshTokenMirror.OwnerKey) == "99",
+            "the switched session records the new jar as the source and owner");
+        var service = Mirror(settings, jar);
+        Check(service.GetRefreshToken() == "ac-account-b",
+            "the submit path reads B's token, never A's legacy value");
+        var mirror = new RefreshTokenMirror(key => Setting(settings, key), (key, value) => settings[key] = value);
+        Check(mirror.ReadToken(99) == "ac-account-b" && mirror.ReadToken(99) != "rt-legacy-a",
+            "the owner check stands on B's record because A's was cleared, not merely shadowed");
+
+        // B 的登录没下发 ac_time_value：记录整组空着，A 的无归属值也不许被当成本会话的兜底
+        var bare = LegacySession("rt-legacy-a");
+        var bareJar = new MemoryCookieStore();
+        bareJar.Write("ac_time_value", "ac-account-a");
+        bareJar.Write("DedeUserID", "42");
+        PersistLogin(bare, bareJar, 99, new[]
+        {
+            new CookieWrite { Name = "DedeUserID", Domain = "https://bilibili.com", Path = "/", Value = "99" },
+        });
+        Check(Setting(bare, RefreshTokenMirror.TokenKey) == "",
+            "a switch with no new ac_time_value leaves no web token at all, not A's legacy one");
+        Check(Setting(bare, RefreshTokenMirror.SourceKey) == "unknown-legacy" &&
+            Setting(bare, RefreshTokenMirror.OwnerKey) == "0",
+            "the empty record carries neither owner nor provenance");
+        Check(Mirror(bare, bareJar).GetRefreshToken() == "",
+            "the submit path stays empty instead of handing B's cookies A's token");
+
+        // 同一个账号的登录不是换号：无归属的旧记录原样保留，还有机会被本会话接手
+        var same = LegacySession("rt-legacy-a");
+        var sameJar = new MemoryCookieStore();
+        sameJar.Write("ac_time_value", "ac-account-a");
+        sameJar.Write("DedeUserID", "42");
+        PersistLogin(same, sameJar, 42, null);
+        Check(LegacyRecordUntouched(same, "rt-legacy-a"),
+            "a same-account login leaves the ownerless legacy record exactly as it was");
+        Check(Setting(same, SettingHelper.Account.USER_ID) == "42" &&
+            Setting(same, SettingHelper.Account.ACCESS_KEY) == "ak-new",
+            "the same-account login still rotates the credentials themselves");
+        Check(Mirror(same, sameJar).GetRefreshToken() == "rt-legacy-a",
+            "a same-account login still hands the adopted legacy value out");
+        Check(RefreshTokenPolicy.Decide(new SavedRefreshToken(), 42, "ac-account-a", 42, false).Write,
+            "an ownerless record with no value is still adoptable by the same account");
+
+        // 提交没成功：上一份凭证连同那份无归属记录原样留着
+        var failed = LegacySession("rt-legacy-a");
+        var failedJar = new MemoryCookieStore();
+        failedJar.Write("ac_time_value", "ac-account-a");
+        failedJar.Write("DedeUserID", "42");
+        var failedCommit = PersistLogin(failed, failedJar, 99,
+            new[]
+            {
+                new CookieWrite { Name = "DedeUserID", Domain = "https://bilibili.com", Path = "/", Value = "99" },
+            },
+            new FlakyCredentialSettings(failed, 2));
+        Check(!failedCommit.TokenSaved, "the fixture commit is refused part-way through");
+        Check(LegacyRecordUntouched(failed, "rt-legacy-a") &&
+            Setting(failed, SettingHelper.Account.USER_ID) == "42" &&
+            Setting(failed, SettingHelper.Account.ACCESS_KEY) == "ak-a" &&
+            Setting(failed, SettingHelper.Account.REFRESH_KEY) == "rt-a",
+            "a refused switch leaves the legacy record and the previous credentials intact");
+        Check(Mirror(failed, failedJar).GetRefreshToken() == "rt-legacy-a",
+            "the failed switch still hands out the record the previous session had");
+
+        // 判定单元：换号的判据只有两个已知 uid，跟旧记录上有没有归属无关
+        var switched = RefreshTokenPolicy.AccountSwitchReset(42, 99);
+        Check(switched.Write && switched.Token == "" && switched.OwnerId == 0 &&
+            switched.Source == RefreshTokenSource.UnknownLegacy &&
+            switched.Reason == RefreshTokenPolicy.AccountSwitched,
+            "the unit clears value, source and owner when the known uids differ");
+        var sameAccount = RefreshTokenPolicy.AccountSwitchReset(42, 42);
+        Check(!sameAccount.Write && sameAccount.Reason == RefreshTokenPolicy.SameAccount,
+            "the same uid is not a switch: the unit writes nothing");
+        Check(!RefreshTokenPolicy.AccountSwitchReset(0, 99).Write,
+            "an unknown previous uid is not a switch either");
+        var resetMirrorSettings = LegacySession("rt-legacy-a");
+        var resetMirror = new RefreshTokenMirror(key => Setting(resetMirrorSettings, key),
+            (key, value) => resetMirrorSettings[key] = value);
+        Check(!resetMirror.ResetOnAccountSwitch(42, 42).Write &&
+            Setting(resetMirrorSettings, RefreshTokenMirror.TokenKey) == "rt-legacy-a" &&
+            resetMirror.ReadToken(42) == "rt-legacy-a",
+            "a mirror reset on an unchanged account keeps the ownerless record adoptable");
+    }
+
+    /// <summary>换号前的旧版本状态：A 的令牌在设置里，但没有来源也没有归属。</summary>
+    private static Dictionary<string, string> LegacySession(string token) => new Dictionary<string, string>
+    {
+        { SettingHelper.Account.USER_ID, "42" },
+        { SettingHelper.Account.ACCESS_KEY, "ak-a" },
+        { SettingHelper.Account.REFRESH_KEY, "rt-a" },
+        { RefreshTokenMirror.TokenKey, token },
+    };
+
+    /// <summary>那份记录原样：值还在，来源和归属键从来没写过。</summary>
+    private static bool LegacyRecordUntouched(IDictionary<string, string> settings, string token) =>
+        Setting(settings, RefreshTokenMirror.TokenKey) == token &&
+        !settings.ContainsKey(RefreshTokenMirror.SourceKey) &&
+        !settings.ContainsKey(RefreshTokenMirror.OwnerKey);
+
+    /// <summary>
+    /// 登录落盘的整段：和 Account.PersistCredentials 同序 —— 换账号先删 jar 里上一代 ac_time_value，
+    /// 提交成功后由调用方作废旧账号的记录，再镜像新会话 jar 里的那一代；提交不成功就到此为止。
+    /// </summary>
+    private static CredentialCommit PersistLogin(IDictionary<string, string> settings, MemoryCookieStore jar,
+        long userId, IEnumerable<CookieWrite> cookies, ICredentialSettings credentialSettings = null)
+    {
+        var writes = cookies?.ToList() ?? new List<CookieWrite>();
+        var previousUserId = Convert.ToInt64(Setting(settings, SettingHelper.Account.USER_ID));
+        if (RefreshTokenPolicy.OwnerConflicts(previousUserId, userId)) jar.Delete("ac_time_value");
+
+        var commit = CredentialCommitter.Commit("ak-new", "rt-new", DateTime.Now.AddHours(240), userId,
+            writes.Count > 0, writes, credentialSettings ?? new DictionaryCredentialSettings(settings),
+            write => { jar.Write(write.Name, write.Value); return true; },
+            (message, exception) => Log.Add(message));
+        if (!commit.TokenSaved) return commit;
+
+        new RefreshTokenMirror(key => Setting(settings, key), (key, value) => settings[key] = value)
+            .ResetOnAccountSwitch(previousUserId, userId);
+        Mirror(settings, jar).LoadCookieFromSetting();
+        return commit;
+    }
+
+    /// <summary>
     /// AUTH-04：提交路径取令牌前核对归属。设置里还留着 A 的响应令牌（镜像写入抛过异常，或旧版本换号留下的记录），
     /// 当前会话是 B 时一次 cookie/refresh 都不许发；同一账号的续期照旧用自己的令牌，响应换代按本会话归属落盘。
     /// </summary>
@@ -1183,6 +1324,18 @@ internal static class Program
                 "private static void LogCommitFailure(")
             .Contains("DeleteJarRefreshToken();"),
             "a switch drops the previous jar's ac_time_value before the new account's cookies land");
+        var persistBody = MethodBody(account, "private static CredentialCommit PersistCredentials(",
+            "private static void LogCommitFailure(");
+        Check(persistBody.Contains("refreshTokenMirror.ResetOnAccountSwitch(previousUserId, userid)"),
+            "a committed switch resets the saved web-token value, source and owner");
+        Check(persistBody.IndexOf("SettingHelper.GetValue(SettingHelper.Account.USER_ID",
+                StringComparison.Ordinal) < persistBody.IndexOf("CredentialCommitter.Commit(", StringComparison.Ordinal),
+            "the previous uid is read before the commit overwrites it");
+        Check(persistBody.IndexOf("if (!commit.TokenSaved) return commit;", StringComparison.Ordinal) <
+            persistBody.IndexOf("ResetOnAccountSwitch(", StringComparison.Ordinal) &&
+            persistBody.IndexOf("ResetOnAccountSwitch(", StringComparison.Ordinal) <
+            persistBody.IndexOf("MirrorRefreshTokenFromJar();", StringComparison.Ordinal),
+            "the reset runs only after a committed login and before the jar mirror");
         Check(MethodBody(account, "public async Task<LoginCallbackModel> PollQRAuthInfo(",
                 "public async Task<bool> CheckLoginState(")
             .Contains("SaveLogin("),
@@ -1253,6 +1406,8 @@ internal static class Program
 
         public void Write(string name, string value) => values[name] = value;
 
+        public void Delete(string name) => values.Remove(name);
+
         public string Read(string name, string defaultValue) =>
             values.TryGetValue(name, out var value) ? value : defaultValue;
     }
@@ -1295,6 +1450,38 @@ internal static class Program
 
     private static string Setting(IDictionary<string, string> settings, string key) =>
         settings.TryGetValue(key, out var value) ? value : "";
+
+    /// <summary>
+    /// 落盘失败的设置口：第 failOnWrite 次写入抛一次，之后照常写 ——
+    /// 组退回旧值的那四次写入必须能落到同一本字典上，否则断言测不到回滚。
+    /// </summary>
+    private sealed class FlakyCredentialSettings : ICredentialSettings
+    {
+        private readonly IDictionary<string, string> values;
+        private readonly int failOnWrite;
+        private int writes;
+
+        public FlakyCredentialSettings(IDictionary<string, string> values, int failOnWrite)
+        {
+            this.values = values;
+            this.failOnWrite = failOnWrite;
+        }
+
+        public T Read<T>(string key, T fallback)
+        {
+            if (!values.TryGetValue(key, out var raw) || raw == null) return fallback;
+            if (typeof(T) == typeof(string)) return (T)(object)raw;
+            return (T)Convert.ChangeType(raw, typeof(T));
+        }
+
+        public void Write<T>(string key, T value)
+        {
+            writes++;
+            if (writes == failOnWrite) throw new InvalidOperationException("storage full");
+            values[key] = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+    }
+
 
     private static RenewalResult Preflight(Func<string, string, Task<HttpResults>> send,
         Func<LoginTokenInfo, LoginCookieInfo, Task<CredentialCommit>> save)
