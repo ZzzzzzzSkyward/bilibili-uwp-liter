@@ -184,6 +184,7 @@
     <Compile Include="Parsing\Dynamic\WebDynamicFeedParser.cs" />
     <Compile Include="Parsing\Dynamic\WebDynamicFeedMapper.cs" />
     <Compile Include="Parsing\Dynamic\WireScalars.cs" />
+    <Compile Include="Parsing\Dynamic\RichTextFlow.cs" />
     <Compile Include="Parsing\Season\WebSeasonEpListParser.cs" />
     <Compile Include="Parsing\Season\WebSeasonEpListMapper.cs" />
     <Compile Include="Parsing\MediaList\MediaListResourceListParser.cs" />
@@ -209,6 +210,7 @@
     <Compile Include="Parsing\Video\FavoriteCreatedListMapper.cs" />
 
     <Compile Include="Services\PlayerSessionState.cs" />
+    <Compile Include="Services\RefreshCredentialPolicy.cs" />
     <Compile Include="Services\PlayerToastOverlay.cs" />
     <Compile Include="Services\PlayerToastService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
