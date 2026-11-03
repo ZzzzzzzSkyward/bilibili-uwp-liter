@@ -963,10 +963,13 @@ namespace BiliLite.Modules
         public DynamicCardModel2024_reservetext desc2 { get; set; }//预约量
         public DynamicCardModel2024_reservetext desc3 { get; set; }//预约抽奖信息
         public int reserve_total { get; set; }
-        /// <summary>预约说明：desc1/desc2 都可能缺，只拼存在的那部分，中间恰好一个空格。</summary>
+        /// <summary>
+        /// 预约说明：desc1（时间）/desc2（预约量）/desc3（抽奖文案）都可能缺，只拼存在的那部分，
+        /// 中间恰好一个空格；服务端把同一句填进多个槽位时只显示一次。
+        /// </summary>
         public string desc
         {
-            get { return WireScalars.JoinText(desc1?.text, desc2?.text); }
+            get { return WireScalars.JoinText(desc1?.text, desc2?.text, desc3?.text); }
         }
     }
     public class DynamicCardModel2024_reservetext

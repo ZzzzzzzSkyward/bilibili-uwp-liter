@@ -38,6 +38,9 @@ namespace BiliLite.Parsing.Dynamic
     ///    直播              ✓ live；live_rcmd 解嵌套 content      ✓ DynCommonLive / DynLiveRcmd           ✓ live_play_info
     ///    转发原卡          ✓ orig 递归同一映射                   ✓ DynForward.Item 递归                   ✓ origin + origin_extend_json
     ///    附件卡            ✓ 本轮搬 additional（预约/投票/通用/商品/稿件） ✓ 本轮搬 ModuleAdditional        ✗ 只读了 add_on_card_info 的 reserve 子集
+    ///     └ 预约说明       ✓ reserve.desc1/desc2/desc3 的 text（时间/预  ✓ AdditionUP.DescText1/2/3（desc_   — 旧接口没有这三段
+    ///                       约量/抽奖），三段拼成一行、重复只显示一次        text1/2 是时间与预约量，desc_text3
+    ///                                                                        是抽奖文案）
     ///    计数 / 禁评禁转   ✓ count + forbidden + liked          ✓ 本轮补 no_comment / no_forward         ✓ desc.comment/like/repost
     ///    OPUS 标题         ✗ draw 槽只有 items，标题要等卡数据契约    ✗ Paragraph.Title 无槽位                — 旧接口没有 OPUS
     ///    绝对发布时间      ✓ module_author.pub_ts                ✗ 只有 ptime_label_text                  ✓ desc.timestamp

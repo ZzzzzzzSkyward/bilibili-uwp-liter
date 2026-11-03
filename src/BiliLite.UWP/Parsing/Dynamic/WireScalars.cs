@@ -111,7 +111,8 @@ namespace BiliLite.Parsing.Dynamic
 
         /// <summary>
         /// 几段可选说明拼成一行显示：丢掉 null 与空串，中间恰好一个空格，不产生前导/尾随空格。
-        /// 只用于显示拼接，来源文本本身不动。
+        /// 服务端把同一句填进多个槽位时（预约卡的 desc1/desc2/desc3 常见）只保留第一次出现的，
+        /// 重复不是信息，且不能让标签变成 "x x x"。只用于显示拼接，来源文本本身不动。
         /// </summary>
         public static string JoinText(params string[] parts)
         {
@@ -119,7 +120,17 @@ namespace BiliLite.Parsing.Dynamic
             {
                 return "";
             }
-            return string.Join(" ", parts.Where(x => !string.IsNullOrEmpty(x)));
+            var seen = new HashSet<string>(StringComparer.Ordinal);
+            var kept = new List<string>(parts.Length);
+            foreach (var part in parts)
+            {
+                if (string.IsNullOrEmpty(part) || !seen.Add(part))
+                {
+                    continue;
+                }
+                kept.Add(part);
+            }
+            return string.Join(" ", kept);
         }
 
         /// <summary>把 "475.6万" / "1.2亿" 这类紧凑计数还原成整数；解析不出来就是 0。</summary>

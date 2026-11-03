@@ -34,59 +34,61 @@ namespace BiliLite.Controls.Dynamic
         }
 
         // 静态属性更改回调
+        // 两个属性谁后到都只是一次"重算"：挂载结果永远由当前属性全量决定，与到达顺序无关。
         private static void OnContentPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = (RichTextControl)d;
-            control.UpdateContent((RichTextBlock)e.NewValue);
+            ((RichTextControl)d).RefreshBody();
         }
 
         private static void OnTextPropertyChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            var control = (RichTextControl)d;
-            control.UpdateText((string)e.NewValue);
+            ((RichTextControl)d).RefreshBody();
         }
-        public bool rich = false;
-        private void UpdateContent(RichTextBlock r)
-        {
-            rich = false;
-            if (Content != null && Content.Blocks.Count > 0)
-            {
-                rich = true;
 
-                // 移除所有现有的 RichTextBlock
-                Clear();
+        // 挂载状态只描述 Parent.Children 里现在是什么，和控件一起复用
+        private readonly RichTextBodyState _bodyState = new RichTextBodyState();
 
-                // 添加新的 RichTextBlock
-                Add(r);
-                SetRichTextBlockStyle();
-            }
-        }
-        private void UpdateText(string text)
+        /// <summary>
+        /// 从当前 Content/Text 重算并重挂正文。空 RichTextBlock 与 null 一样按"没有富文本"处理；
+        /// 结果为空时这里就是复位点：先清空 Parent，再什么都不挂，绝不留下上一条卡片的正文。
+        /// </summary>
+        private void RefreshBody()
         {
-            // 优先使用富文本内容
-            if (rich) return;
-            Clear();
-            // 没有正文就留空：纯图片/纯视频卡片不该被塞进一句"无内容"
-            if (string.IsNullOrEmpty(text))
+            var richContent = Content != null && Content.Blocks.Count > 0 ? Content : null;
+            var plan = _bodyState.Apply(richContent, Text);
+            if (!plan.Changed)
             {
                 return;
             }
-            // 如果没有富文本内容，则使用纯文本，并套同一套正文样式
-            Add(new TextBlock { Text = text });
-            SetRichTextBlockStyle();
+
+            Clear();
+            if (plan.Kind == RichTextBodyKind.RichText)
+            {
+                Add((RichTextBlock)richContent);
+                SetRichTextBlockStyle();
+            }
+            else if (plan.Kind == RichTextBodyKind.PlainText)
+            {
+                Add(new TextBlock { Text = plan.Text });
+                SetRichTextBlockStyle();
+            }
         }
+
         private void Clear()
         {
             Parent.Children.Clear();
         }
+
         private void Add(TextBlock r)
         {
             Parent.Children.Add(r);
         }
+
         private void Add(RichTextBlock r)
         {
             Parent.Children.Add(r);
         }
+
         /// <summary>
         /// 正文度量,对应 DynamicItemControl.xaml 顶部令牌表的“正文/正文行高”两行(计划 §5)。
         /// 行高用 MaxHeight 策略:24 是最小值而不是固定盒高,放大字号或表情时行会长高而不是被切。

@@ -605,6 +605,7 @@ namespace BiliLite.Helpers
                     reserve_total = ToInt(up.ReserveTotal),
                     desc1 = new DynamicCardModel2024_reservetext { text = up.DescText1?.Text ?? "" },
                     desc2 = new DynamicCardModel2024_reservetext { text = up.DescText2 ?? "" },
+                    desc3 = new DynamicCardModel2024_reservetext { text = up.DescText3?.Text ?? "" },
                     button = MapAdditionalButton(up.Button),
                 };
                 return result;

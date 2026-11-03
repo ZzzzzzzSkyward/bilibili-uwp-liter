@@ -24,7 +24,7 @@ namespace G3Probe
     {
         private static int _passed;
 
-        public static int Main()
+        public static int Main(string[] args)
         {
             var detailEndpoint = "bilibili.app.dynamic.v2.Dynamic/DynDetail";
 
@@ -43,6 +43,7 @@ namespace G3Probe
             WebCardKeepsAdditionalModule();
             WebCardKeepsVoteAttachment();
             ReserveDescriptionJoinsOnlyThePresentParts();
+            ReserveLotteryTextReachesTheLabel();
             WebOpusPicturesKeepSrcFallbackAndOrder();
             WebEmptyMajorDoesNotHideLaterPayload();
             WebDrawItemsDropMissingUrls();
@@ -55,6 +56,8 @@ namespace G3Probe
             GrpcEmojiNodeKeepsIconAndText();
             PlainTextKeepsEveryParagraph();
             BodyIsNotTruncatedAtOneThousandCharacters();
+
+            _passed += RichTextBodyProbe.Run(args);
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -977,6 +980,132 @@ namespace G3Probe
                 "web reserve: the missing line stays absent instead of being invented");
             Check(reserve.desc == "1.2万人预约",
                 "web reserve: the label is only the present line (desc='" + (reserve.desc ?? "null") + "')");
+        }
+
+        /// <summary>
+        /// 预约卡的第三段说明（desc3 / AdditionUP.DescText3，抽奖文案）在两端都要进可见标签：
+        /// web 的 additional.reserve.desc3 与 gRPC 的 addition_up.desc_text3 是同一条信息，
+        /// 以前 join 只拼前两段、gRPC 映射连字段都不读，抽奖文案整条丢失。
+        /// 同一段文字被服务端重复填进多个槽位时只显示一次，也不引入别的分隔符。
+        /// 传 null 表示该槽位缺席，空串表示服务端给了但没内容。
+        /// </summary>
+        private static void ReserveLotteryTextReachesTheLabel()
+        {
+            var fullLabel = "12-01 20:00 1.2万人预约 预约可参与抽奖";
+
+            var webFull = WebReserveCard("9021", "12-01 20:00", "1.2万人预约", "预约可参与抽奖");
+            Check(webFull.modules.module_dynamic.additional.reserve.desc3 != null
+                  && webFull.modules.module_dynamic.additional.reserve.desc3.text == "预约可参与抽奖",
+                "web reserve: the third description is carried on the card model");
+            Check(webFull.modules.module_dynamic.additional.reserve.desc == fullLabel,
+                "web reserve: the label has all three lines in order (desc='" +
+                webFull.modules.module_dynamic.additional.reserve.desc + "')");
+
+            var webOnlyThird = WebReserveCard("9022", null, null, "预约可参与抽奖");
+            Check(webOnlyThird.modules.module_dynamic.additional.reserve.desc == "预约可参与抽奖",
+                "web reserve: a third-only card shows the lottery text alone (desc='" +
+                webOnlyThird.modules.module_dynamic.additional.reserve.desc + "')");
+
+            var webRepeated = WebReserveCard("9023", "12-01 20:00", "12-01 20:00", "12-01 20:00");
+            var webRepeatedLabel = webRepeated.modules.module_dynamic.additional.reserve.desc;
+            Check(webRepeatedLabel == "12-01 20:00",
+                "web reserve: a description the server repeats is shown once (desc='" + webRepeatedLabel + "')");
+            Check(!webRepeatedLabel.Contains("  "),
+                "web reserve: repetition is not hidden behind a run of spaces (desc='" + webRepeatedLabel + "')");
+
+            var webEmpty = WebReserveCard("9024", "", "", "");
+            Check(webEmpty.modules.module_dynamic.additional.reserve.desc == "",
+                "web reserve: three empty descriptions give an empty label, never null (desc='" +
+                (webEmpty.modules.module_dynamic.additional.reserve.desc ?? "null") + "')");
+
+            var grpcFull = GrpcReserveCard("9121", "12-01 20:00", "1.2万人预约", "预约可参与抽奖");
+            var grpcFullReserve = grpcFull.modules.module_dynamic.additional.reserve;
+            Check(grpcFullReserve.desc3 != null && grpcFullReserve.desc3.text == "预约可参与抽奖",
+                "grpc reserve: addition_up.desc_text3 is mapped instead of dropped");
+            Check(grpcFullReserve.desc == fullLabel,
+                "grpc reserve: the label has all three lines in order (desc='" + grpcFullReserve.desc + "')");
+
+            var grpcOnlyThird = GrpcReserveCard("9122", null, null, "预约可参与抽奖");
+            Check(grpcOnlyThird.modules.module_dynamic.additional.reserve.desc == "预约可参与抽奖",
+                "grpc reserve: a third-only card shows the lottery text alone (desc='" +
+                grpcOnlyThird.modules.module_dynamic.additional.reserve.desc + "')");
+
+            var grpcRepeated = GrpcReserveCard("9123", "12-01 20:00", "12-01 20:00", "12-01 20:00");
+            var grpcRepeatedLabel = grpcRepeated.modules.module_dynamic.additional.reserve.desc;
+            Check(grpcRepeatedLabel == "12-01 20:00",
+                "grpc reserve: a description the server repeats is shown once (desc='" + grpcRepeatedLabel + "')");
+            Check(!grpcRepeatedLabel.Contains("  "),
+                "grpc reserve: repetition is not hidden behind a run of spaces (desc='" + grpcRepeatedLabel + "')");
+
+            var grpcEmpty = GrpcReserveCard("9124", "", "", "");
+            Check(grpcEmpty.modules.module_dynamic.additional.reserve.desc == "",
+                "grpc reserve: three empty descriptions give an empty label, never null (desc='" +
+                (grpcEmpty.modules.module_dynamic.additional.reserve.desc ?? "null") + "')");
+        }
+
+        // web 预约夹具：null 槽位不出现，空串槽位写空 text，跟服务端的两种缺省写法各走一遍
+        private static DynamicCardModel2024 WebReserveCard(string id, string desc1, string desc2, string desc3)
+        {
+            var reserve = new JObject
+            {
+                ["title"] = "预约直播",
+                ["jump_url"] = "//live.bilibili.com/3",
+            };
+            if (desc1 != null)
+            {
+                reserve["desc1"] = new JObject { ["text"] = desc1 };
+            }
+            if (desc2 != null)
+            {
+                reserve["desc2"] = new JObject { ["text"] = desc2 };
+            }
+            if (desc3 != null)
+            {
+                reserve["desc3"] = new JObject { ["text"] = desc3 };
+            }
+            var moduleDynamic = new JObject
+            {
+                ["desc"] = new JObject { ["text"] = "预约直播" },
+                ["additional"] = new JObject
+                {
+                    ["type"] = "ADDITIONAL_TYPE_RESERVE",
+                    ["reserve"] = reserve,
+                },
+            };
+            return FirstWebCard(WebCardFixture(id, "DYNAMIC_TYPE_WORD", moduleDynamic));
+        }
+
+        // gRPC 预约夹具：与 web 侧同一组槽位，desc_text1/3 是 HighlightText、desc_text2 是裸串
+        private static DynamicCardModel2024 GrpcReserveCard(string id, string desc1, string desc2, string desc3)
+        {
+            var item = new DynamicItem
+            {
+                CardType = DynamicType.Word,
+                Extend = new Extend { DynIdStr = id },
+            };
+            item.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleDesc,
+                ModuleDesc = new ModuleDesc { Text = "预约直播" },
+            });
+            item.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleAdditional,
+                ModuleAdditional = new ModuleAdditional
+                {
+                    Type = AdditionalType.UpReservation,
+                    Up = new AdditionUP
+                    {
+                        Title = "预约直播",
+                        DescText1 = desc1 == null ? null : new HighlightText { Text = desc1 },
+                        DescText2 = desc2 ?? "",
+                        DescText3 = desc3 == null ? null : new HighlightText { Text = desc3 },
+                        Url = "https://live.bilibili.com/3",
+                        ReserveTotal = 12000,
+                    },
+                },
+            });
+            return DynamicGrpcMapper.MapToUserCards(new[] { item })[0];
         }
 
         private static void WebOpusPicturesKeepSrcFallbackAndOrder()
