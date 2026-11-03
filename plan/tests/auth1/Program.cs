@@ -261,8 +261,14 @@ internal static class Program
         Check(accountBlock.Contains("x:Name=\"AccountStateText\"") && accountBlock.Contains(">刷新登录<") &&
             accountBlock.Contains(">重新登录<") && accountBlock.Contains(">退出登录<"),
             "the account block carries the status line and its three actions");
-        Check(!accountBlock.Contains("（") && !accountBlock.Contains("：") && !accountBlock.Contains("·"),
-            "no account label carries a colon, a parenthesised explanation or a joined restatement");
+        // BR-31 管的是可见标签；解释文字本来就归 SettingHelp/ToolTip，那里允许出现冒号和括号
+        var accountLabels = AccountLabelTexts(accountBlock);
+        Check(accountLabels.Count > 0, "the account block exposes label text to check");
+        var labelledOffenders = accountLabels
+            .Where(text => text.Contains("（") || text.Contains("：") || text.Contains("·")).ToList();
+        Check(labelledOffenders.Count == 0,
+            "no account label carries a colon, a parenthesised explanation or a joined restatement: " +
+            string.Join(" / ", labelledOffenders));
 
         var app = File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/App.xaml.cs"));
         Check(app.Contains("CookieService.ReloginRequired += OnReloginRequired") &&
@@ -277,6 +283,50 @@ internal static class Program
         Check(apiHelper.Contains("public static async Task RefreshCookieAsync()") &&
             !apiHelper.Contains("public static async void RefreshCookie"),
             "ApiHelper exposes the awaitable refresh and no async-void twin");
+    }
+
+    /// <summary>
+    /// 账号块的可见标签文字：元素正文，加上 Text/Content/Header 等承载文字的属性。
+    /// 挂 SettingHelp 或 ToolTip 的元素是解释文字的去处（BR-31 规则 1），整棵子树豁免。
+    /// </summary>
+    private static List<string> AccountLabelTexts(string block)
+    {
+        string[] labelAttributes = { "Text", "Content", "Header", "OnContent", "OffContent" };
+        var labels = new List<string>();
+        var explaining = new Stack<bool>();
+        var cursor = 0;
+        while (true)
+        {
+            var open = block.IndexOf('<', cursor);
+            var text = block.Substring(cursor, (open < 0 ? block.Length : open) - cursor)
+                .Trim('>', ' ', '\t', '\r', '\n');
+            if (text.Length > 0 && !(explaining.Count > 0 && explaining.Peek())) labels.Add(text);
+            if (open < 0) break;
+
+            var end = block.IndexOf('>', open);
+            if (end < 0) break;
+            var tag = block.Substring(open + 1, end - open - 1);
+            cursor = end + 1;
+
+            if (tag.StartsWith("/", StringComparison.Ordinal))
+            {
+                if (explaining.Count > 0) explaining.Pop();
+                continue;
+            }
+
+            var selfClosing = tag.EndsWith("/", StringComparison.Ordinal);
+            var isHelp = tag.Contains("SettingHelp") || tag.Contains("ToolTip");
+            if (!selfClosing) explaining.Push(isHelp);
+            if (isHelp) continue;
+
+            foreach (var name in labelAttributes)
+            {
+                var value = Regex.Match(tag, "\\b" + name + "=\"([^\"]*)\"").Groups[1].Value;
+                // {x:Bind}/{Binding} 不是字面标签文字
+                if (value.Length > 0 && value[0] != '{') labels.Add(value);
+            }
+        }
+        return labels;
     }
 
     private static string FindRepoRoot()
