@@ -11,3 +11,23 @@ Trigger: native DASH source creation returns null or throws before `Accept`, the
 Each such fallback leaves an abandoned player without deterministic cleanup, allowing native playback resources to accumulate until runtime cleanup catches up and adding memory pressure during repeated opens. This is a concrete disposal gap relevant to BR-21, not evidence that it explains the maintainer's reported growth (no measurements were taken here).
 
 Suggested fix: scope held resources to an individual engine attempt, or add an operation that disposes/removes the failed attempt's leases while keeping the ticket current. Only transfer the successful attempt's resources on `Accept`. Calling the current `Release` alone would invalidate the ticket and prevent the intended fallback. A failed-native/successful-FFmpeg ownership case should assert that the abandoned player is disposed exactly once and the accepted source remains live.
+
+## Dispositions (2026-11-02, dispatcher)
+
+The engine-fallback finding above is closed in `0b70113`. Everything below is source + probe evidence; nothing
+was run on a device, and this pass established no measurement for BR-21.
+
+- The defect was reproduced structurally, not just described: `plan/tests/playersess` grew 95 → 161 checks, and
+  **23 of the new assertions fail against the pre-fix sources** (a no-op `Abandon` body plus the pre-fix call
+  sites). The failing set names the exact consequences the finding listed — the abandoned player is not disposed,
+  the accepted fallback is not the only live resource, and a later close does not clean up.
+- Fix shape follows the suggestion that keeps the fallback usable: `PlayerSessionState.Abandon(id)` drains only
+  the resources held by the failed attempt, disposes them once, and leaves the ticket `Pending` and current;
+  `Release(id)` remains the terminal operation that invalidates the ticket. `Accept`'s lease clear is unchanged,
+  so the accepted attempt's own resources still transfer to the player field. A stale-ticket `Abandon` and an
+  `Abandon` after `Accept` are no-ops, so a superseded open is still released exactly once by `Invalidate`.
+- Call sites: seven catch paths across the native/FFmpeg/SYEngine openers plus the native null-source return —
+  exactly the eight spots that can return failure before `Accept`. `PlayerControl` needed no change; the probe
+  asserts its two same-ticket fallbacks still pass `session: session`.
+- On BR-21 wording: this removes one concrete undisposed-resource path. It is not evidence about the maintainer's
+  measured growth, and no measurement was taken here.

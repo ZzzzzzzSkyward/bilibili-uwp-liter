@@ -125,6 +125,15 @@ device rows are still open in `plan/VALIDATION.md`.
 | 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
 | 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. P4 steps 1, 2 and 5 shipped: season detail `ed9f248`, playlists `1838108`, comments `f03078c` — each with a parser/mapper layer, DTOs under `Models/Api/`, a field table beside the parser and its own probe (`season1` 109, `c2` 162 + `c3` 117, `comments` 99). Remaining for P4: **account** only (step 4), which the maintainer is holding back; the video-detail step shipped in `e6c2fb5` and `c1` grew to 161 assertions. Order and traps: `plan/P4_INVENTORY.md` §5 |
 | 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; the remaining checks are the device rows in `plan/VALIDATION.md` |
+| 6 | Auth refresh defects — `REFRESH_PLAN.md` | D2 (truthful renewal result) in flight; then D4/D5 (credential identity) → D1 (cookie-to-app bridge) → D3 (staged web confirmation), the document's own order. P4 step 4 (account) stays held back by the maintainer |
+| 7 | Hot tab card overflow — `HOT_CARD_PLAN.md` | plan only, no code. Maintainer-reported overflow; the card budget, the tag-on-thumbnail layout and the narrow-width stack are proposed, not implemented. XAML-only and layout-visible, so it closes on the device, not on a probe |
+| 8 | Settings reorganization — `SETTINGS_PLAN.md` | report only: ten tabs in use-case order, dead controls, save errors, per-setting disposition. Nothing implemented |
+| 9 | Dynamics card contract — `CARD_PLAN.md` | report only: one card-data contract per source plus one shared body renderer, keeping source selection and paging. Nothing implemented |
+
+**Order** (dispatcher, 2026-11-02): the open `code_review.md` finding inside item 1 — a failed engine
+attempt's player is never disposed when the fallback accepts — then `REFRESH_PLAN.md` D2, then
+`HOT_CARD_PLAN.md` (user-visible, needs one device pass), then `SETTINGS_PLAN.md`, then `CARD_PLAN.md`.
+`REFRESH_PLAN.md` D4/D5 → D1 → D3 follow D2; item 2 stays parked until BR-21 has measurements.
 
 ## 1. Player session ownership
 

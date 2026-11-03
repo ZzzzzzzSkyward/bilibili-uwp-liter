@@ -46,3 +46,14 @@ every row below still needs the device pass.
 | Player session ownership | `2c3fc09`, ordering fix `340a031` | switching P and switching video while a URL is still being fetched never plays the previous video's audio/video and never leaves a stuck player; a quality change no longer needs a second click; a decode failure still falls back to the other engine exactly once; closing the tab mid-load leaves no sound and no error dialog |
 | BR-46 space after a switch | `50bb009` | after auto-next, the 下一个/上一个 buttons, a directory row or a playlist row, pressing Space plays/pauses instead of activating a tab; pressing Space while the focus is on a tab header (reached deliberately with the keyboard) still does not steal focus; the directory list and every input keep their focus across a switch |
 
+
+## Shipped 2026-11-02 — player attempt ownership and the renewal result
+
+Compiled from `Z:\bilibili-uwp-liter` with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences
+-Restore` (0 errors, package `BiliLite.UWP_1.0.9.34_x64`); probes green: `playersess` 161 checks, `auth3` 130
+assertions. Nothing installed, so both rows still need the device pass.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Engine attempt releases what it built | `0b70113` | force the fallback a few times (a video whose native DASH source fails to build, or repeated quality switches on a long video): playback still lands on the fallback engine, audio stays in sync, closing the tab leaves no ghost audio, and the working set does not keep climbing across 10+ opens. This row is about leaks, so watch the memory graph rather than the picture |
+| Renewal says what it actually did | `6ee8a81` | cut the network, then 设置 → 账号 → 刷新登录: it says the refresh can be retried later and the account stays 已登录 with no login dialog. A genuinely expired session still shows 登录已失效 and 重新登录 restores quality. A normal refresh still reports success and keeps 1080p and above |
