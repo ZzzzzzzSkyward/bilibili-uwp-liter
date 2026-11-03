@@ -82,10 +82,15 @@ namespace BiliLite.Services
     public static class AccessKeyRenewal
     {
         /// <summary>会话已失效，或 ACCESS_KEY 一天内到期，并且手上确实有刷新令牌，才值得发请求。</summary>
-        public static bool ShouldRenew(bool needsRelogin, string refreshToken, DateTime expiresAt, DateTime now)
+        /// <param name="expiryEstimated">
+        /// 到期时间是本地估算的（cookie 兑换拿不到真实有效期）：估算值不是服务端承诺，
+        /// 到期也不代表 key 不能用，只有会话真的失效才值得续。
+        /// </param>
+        public static bool ShouldRenew(bool needsRelogin, string refreshToken, DateTime expiresAt, DateTime now,
+            bool expiryEstimated = false)
         {
             if (string.IsNullOrEmpty(refreshToken)) return false;
-            return needsRelogin || expiresAt <= now.AddDays(1);
+            return needsRelogin || (!expiryEstimated && expiresAt <= now.AddDays(1));
         }
 
         /// <summary>
@@ -93,12 +98,13 @@ namespace BiliLite.Services
         /// 每次启动/恢复只有这一行，不循环、不打印令牌本身。
         /// </summary>
         public static bool ShouldRenew(bool needsRelogin, string refreshToken, DateTime expiresAt, DateTime now,
-            Action<string, Exception> log)
+            Action<string, Exception> log, bool expiryEstimated = false)
         {
-            var renew = ShouldRenew(needsRelogin, refreshToken, expiresAt, now);
+            var renew = ShouldRenew(needsRelogin, refreshToken, expiresAt, now, expiryEstimated);
             if (renew) return true;
             log("ACCESS_KEY 续期跳过：session=" + (needsRelogin ? "无效" : "有效") +
                 " key=" + (int)Math.Floor((expiresAt - now).TotalDays) + "d" +
+                (expiryEstimated ? " estimated" : "") +
                 " refresh=" + (string.IsNullOrEmpty(refreshToken) ? "missing" : "present"), null);
             return false;
         }

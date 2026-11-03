@@ -107,19 +107,47 @@ namespace BiliLite
                 LogHelper.Log("Startup cookie preflight failed", LogType.ERROR, ex);
             }
 
-            // cookie 刷新链拿不到 ac_time_value，会话死掉后只能靠 OAuth2 刷新令牌续 ACCESS_KEY；
-            // 每次启动/恢复到这里只发一次，失败了就等重新登录，绝不在这里连环重试。闸门自己会记一行原因。
+            // 启动/恢复只走一遍：OAuth 能续就续；OAuth 这条凭证类型不适用时，cookie 来源的 key 兑换一次。
+            // 两条路各发一次请求，失败就留到下次启动，绝不在这里连环重试。闸门自己会记一行原因。
             var refreshToken = SettingHelper.GetValue<string>(SettingHelper.Account.REFRESH_KEY, "");
             var expiresAt = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue);
-            if (!BiliLite.Services.AccessKeyRenewal.ShouldRenew(BiliLite.Services.CookieService.NeedsRelogin,
-                    refreshToken, expiresAt, DateTime.Now,
-                    (message, exception) => LogHelper.Log(message, exception == null ? LogType.INFO : LogType.ERROR, exception))) return;
-            var renewal = await new BiliLite.Modules.Account().RefreshToken();
-            // 启动不做界面决定：只把「会话到头」和「可重试」分开记下来，凭证交给上面的落盘结果
-            if (renewal.SessionDead)
-                LogHelper.Log("ACCESS_KEY 续期未完成：会话需要重新登录 outcome=" + renewal.Outcome, LogType.INFO);
-            else if (renewal.Retryable)
-                LogHelper.Log("ACCESS_KEY 续期未完成，凭证保持原样 outcome=" + renewal.Outcome, LogType.INFO);
+            var expiryEstimated = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false);
+            var needsRelogin = BiliLite.Services.CookieService.NeedsRelogin;
+
+            BiliLite.Services.RenewalResult renewal = null;
+            if (BiliLite.Services.AccessKeyRenewal.ShouldRenew(needsRelogin, refreshToken, expiresAt, DateTime.Now,
+                    (message, exception) => LogHelper.Log(message, exception == null ? LogType.INFO : LogType.ERROR, exception),
+                    expiryEstimated))
+                renewal = await new BiliLite.Modules.Account().RefreshToken();
+            if (renewal != null)
+                LogHelper.Log("ACCESS_KEY 续期结果 outcome=" + renewal.Outcome +
+                    " sessionDead=" + renewal.SessionDead + " retryable=" + renewal.Retryable, LogType.INFO);
+
+            // 估算的到期时间只是提示：它过了只当「该验一次」，不当服务端已经拒绝
+            var keyLooksUsable = !(needsRelogin || expiresAt <= DateTime.Now);
+            var action = renewal != null
+                ? BiliLite.Services.AppKeyRecovery.AfterOAuth(renewal.Outcome, !needsRelogin)
+                : BiliLite.Services.AppKeyRecovery.Decide(keyLooksUsable,
+                    BiliLite.Services.CookieAppKeyBridge.ReadProvenance(),
+                    !string.IsNullOrEmpty(refreshToken), !needsRelogin);
+
+            if (action == BiliLite.Services.AppKeyRecoveryAction.Convert)
+            {
+                var conversion = await BiliLite.Services.CookieAppKeyBridge.ConvertWithWebSessionAsync(
+                    SettingHelper.Account.UserID,
+                    () => ApiHelper.Cookie.RefreshLoginAsync(),
+                    () => BiliLite.Services.CookieService.NeedsRelogin,
+                    (message, exception) => LogHelper.Log(message, exception == null ? LogType.INFO : LogType.ERROR, exception));
+                action = BiliLite.Services.AppKeyRecovery.AfterConversion(conversion.Outcome);
+                LogHelper.Log("ACCESS_KEY 兑换结果 outcome=" + conversion.Outcome + " detail=" + conversion.Detail +
+                    " action=" + action, LogType.INFO);
+            }
+
+            // 启动不做界面决定：只把结论记下来，凭证交给上面的落盘结果
+            if (action == BiliLite.Services.AppKeyRecoveryAction.Logout)
+                LogHelper.Log("ACCESS_KEY 恢复路径已走完，需要重新登录", LogType.INFO);
+            else if (action == BiliLite.Services.AppKeyRecoveryAction.Retry)
+                LogHelper.Log("ACCESS_KEY 恢复未完成，凭证保持原样", LogType.INFO);
         }
         private void RegisterExceptionHandlingSynchronizationContext()
         {

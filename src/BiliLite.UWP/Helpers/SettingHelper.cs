@@ -143,6 +143,17 @@ namespace BiliLite.Helpers
             /// 到期时间
             /// </summary>
             public const string ACCESS_KEY_EXPIRE_DATE = "expireDate";
+
+            /// <summary>
+            /// 到期时间是不是本地估算的（cookie 兑换拿不到真实有效期）：估算值不是服务端承诺，
+            /// 不能拿它当「这个 key 真的到期了」用。
+            /// </summary>
+            public const string ACCESS_KEY_EXPIRE_ESTIMATED = "expireDateEstimated";
+
+            /// <summary>
+            /// ACCESS_KEY 的来历：app 令牌响应还是 cookie 兑换（取值见 AppKeyProvenancePolicy）。
+            /// </summary>
+            public const string ACCESS_KEY_SOURCE = "accesskeySource";
             /// <summary>
             /// 用户ID
             /// </summary>

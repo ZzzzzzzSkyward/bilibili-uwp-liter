@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>AUTH4</AssemblyName>
+    <RootNamespace>AUTH4</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\CookieOrigins.cs" Link="CookieOrigins.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\UserModels.cs" Link="UserModels.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\CookieAppKeyBridge.cs" Link="CookieAppKeyBridge.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\AccessKeyRenewal.cs" Link="AccessKeyRenewal.cs" />
+  </ItemGroup>
+
+</Project>

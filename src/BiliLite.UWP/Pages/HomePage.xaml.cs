@@ -1,5 +1,6 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Modules;
+using BiliLite.Services;
 using FontAwesome5;
 using Microsoft.Toolkit.Uwp.Connectivity;
 using System;
@@ -66,22 +67,44 @@ namespace BiliLite.Pages
                     }
                     else
                     {
+                        // 一次失败不再等于「登录过期」：先看手上的路能不能走完，再决定退出/重试/兑换
                         var renewal = await account.RefreshToken();
-                        if (renewal.SessionDead)
+                        var webSessionUsable = !BiliLite.Services.CookieService.NeedsRelogin;
+                        // 三个子句分开记：会话到头、可重试、以及 OAuth 这条凭证类型根本不适用
+                        LogHelper.Log("ACCESS_KEY 续期结果 outcome=" + renewal.Outcome +
+                            " sessionDead=" + renewal.SessionDead +
+                            " retryable=" + renewal.Retryable +
+                            " web=" + (webSessionUsable ? "usable" : "dead"), LogType.INFO);
+
+                        var action = AppKeyRecovery.AfterOAuth(renewal.Outcome, webSessionUsable);
+                        if (action == AppKeyRecoveryAction.Convert)
                         {
-                            // 服务端明确拒绝，或者根本没有刷新令牌：这个会话真的到头了
+                            // cookie 换来的 key 没有 app 刷新令牌：按需刷新 web 会话再兑换一次
+                            var conversion = await CookieAppKeyBridge.ConvertWithWebSessionAsync(
+                                SettingHelper.Account.UserID,
+                                () => BiliLite.Api.ApiHelper.Cookie.RefreshLoginAsync(),
+                                () => BiliLite.Services.CookieService.NeedsRelogin,
+                                (message, exception) => LogHelper.Log(message,
+                                    exception == null ? LogType.INFO : LogType.ERROR, exception));
+                            action = AppKeyRecovery.AfterConversion(conversion.Outcome);
+                            LogHelper.Log("ACCESS_KEY 兑换结果 outcome=" + conversion.Outcome +
+                                " detail=" + conversion.Detail + " action=" + action, LogType.INFO);
+                        }
+
+                        if (action == AppKeyRecoveryAction.Logout)
+                        {
+                            // 能试的路都试完了：这才是会话真的到头
                             homeVM.IsLogin = false;
                             MessageCenter.SendLogout();
                             Utils.ShowMessageToast("登录过期，请重新登录");
                             await Utils.ShowLoginDialog();
                         }
-                        else if (renewal.Retryable)
+                        else if (action == AppKeyRecoveryAction.Retry)
                         {
-                            // 网络或落盘没过：现有凭证一个都没清，下次启动/恢复再试，别当成会话失效
-                            LogHelper.Log("ACCESS_KEY 续期可重试 outcome=" + renewal.Outcome, LogType.INFO);
+                            // 网络、落盘或身份没对上的失败：凭证一个都没清，下次启动/恢复再试
                             Utils.ShowMessageToast("登录信息刷新失败，可稍后重试");
                         }
-                        // Committed / PartlyCommitted：令牌已经可用，继续用旧界面；网页会话没换新由续期日志说明
+                        // Continue：令牌可用或刚换新，界面照旧
                     }
                 }
                 catch (Exception ex)

@@ -76,6 +76,9 @@ namespace BiliLite.Modules
                     SettingHelper.SetValue(SettingHelper.Account.USER_ID, m.data.mid);
                     SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.Now.AddSeconds(m.data.expires_in));
                     SettingHelper.SetValue(SettingHelper.Account.REFRESH_KEY, m.data.refresh_token);
+                    // 这一对来自 app 令牌响应：到期时间是服务端给的，来历也照实记
+                    SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false);
+                    CookieAppKeyBridge.RecordProvenance(AppKeyProvenance.AppResponse);
 
                     //执行SSO
                     //await accountApi.SSO(m.data.access_token).Request();
@@ -342,6 +345,11 @@ namespace BiliLite.Modules
             // 令牌没落盘就别镜像：旧凭证明明还在，jar 里的一代不能跟着换
             if (!commit.TokenSaved) return commit;
 
+            // 这一对来自 app/令牌响应的 token_info：到期时间是服务端给的，来历一起记，
+            // 恢复路径才不会拿 cookie 兑换去顶一把本来有 app 刷新令牌的 key
+            SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false);
+            CookieAppKeyBridge.RecordProvenance(AppKeyProvenance.AppResponse);
+
             // ac_time_value 只随 cookie 下发，登录成功当场落到设置，否则刷新链永远缺令牌；
             // 但响应令牌已存时它不许覆盖（判定在 RefreshTokenPolicy）
             MirrorRefreshTokenFromJar();
@@ -466,6 +474,8 @@ namespace BiliLite.Modules
                 AccessKey = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY, ""),
                 UserId = SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L),
                 Expiry = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue),
+                ExpiryEstimated = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false),
+                AccessKeySource = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_SOURCE, ""),
                 OAuthRefreshToken = SettingHelper.GetValue(SettingHelper.Account.REFRESH_KEY, ""),
                 CookieRefreshToken = SettingHelper.GetValue(RefreshTokenMirror.TokenKey, ""),
                 CookieRefreshTokenSource = SettingHelper.GetValue(RefreshTokenMirror.SourceKey, ""),
@@ -504,7 +514,10 @@ namespace BiliLite.Modules
             SettingHelper.SetValue(SettingHelper.Account.USER_ID, session.UserId);
             // Browser-cookie refresh tokens are separate from the target's OAuth refresh token.
             SettingHelper.SetValue(SettingHelper.Account.REFRESH_KEY, "");
+            // 兑换拿不到真实有效期：240 小时只是本地估算，标记出来，别当成服务端承诺
             SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.Now.AddHours(240));
+            SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, true);
+            CookieAppKeyBridge.RecordProvenance(AppKeyProvenance.CookieConversion);
             // 交换回来的令牌来自响应 JSON：来源和 uid 一起记，紧接着的 cookie 镜像就不会拿旧 ac_time_value 覆盖它
             refreshTokenMirror.RecordResponse(session.CookieRefreshToken, session.UserId);
             SettingHelper.SetValue("CookieSESSDATA", sessdata);
@@ -544,11 +557,14 @@ namespace BiliLite.Modules
         {
             try
             {
+                var sessionOwnerId = SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L);
                 refreshTokenMirror.MirrorFromCookie(ReadJarCookie("ac_time_value"),
                     RefreshTokenPolicy.ParseOwner(ReadJarCookie("DedeUserID")),
-                    SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L),
-                    // 挂起确认（D3）还没有持久化记录，眼下没有可读的确认在途
-                    false);
+                    sessionOwnerId,
+                    // 挂起确认（D3）就在这个会话名下时，jar 里的 ac_time_value 不许改写正在轮换的那一代；
+                    // 别的账号的记录读不到这个会话头上，记录读不出来时按「有」处理
+                    WebRefreshTransaction.HasPendingConfirmation(new LocalFolderWebRefreshStateStore(), sessionOwnerId,
+                        (message, exception) => LogHelper.Log(message, LogType.ERROR, exception)));
             }
             catch (Exception ex)
             {
@@ -595,6 +611,8 @@ namespace BiliLite.Modules
             RestoreSetting(SettingHelper.Account.ACCESS_KEY, snapshot.AccessKey, failures);
             RestoreSetting(SettingHelper.Account.USER_ID, snapshot.UserId, failures);
             RestoreSetting(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, snapshot.Expiry, failures);
+            RestoreSetting(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, snapshot.ExpiryEstimated, failures);
+            RestoreSetting(SettingHelper.Account.ACCESS_KEY_SOURCE, snapshot.AccessKeySource, failures);
             RestoreSetting(SettingHelper.Account.REFRESH_KEY, snapshot.OAuthRefreshToken, failures);
             RestoreSetting(RefreshTokenMirror.TokenKey, snapshot.CookieRefreshToken, failures);
             RestoreSetting(RefreshTokenMirror.SourceKey, snapshot.CookieRefreshTokenSource, failures);
@@ -628,6 +646,8 @@ namespace BiliLite.Modules
             public string AccessKey { get; set; }
             public long UserId { get; set; }
             public DateTime Expiry { get; set; }
+            public bool ExpiryEstimated { get; set; }
+            public string AccessKeySource { get; set; }
             public string OAuthRefreshToken { get; set; }
             public string CookieRefreshToken { get; set; }
             public string CookieRefreshTokenSource { get; set; }
