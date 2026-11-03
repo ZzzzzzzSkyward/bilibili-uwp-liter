@@ -8,9 +8,9 @@
         <StackPanel>
           <local:RichTextControl Text="{Binding Path=OneRowInfo.Subtitle}" Content="{Binding Path=Content}"/>
           <Border BorderThickness="1" HorizontalAlignment="Stretch" BorderBrush="{ThemeResource ForegroundTextColor}" CornerRadius="4">
-            <StackPanel Orientation="Vertical" HorizontalAlignment="Left" Margin="4 4 4 4">
-              <TextBlock Margin="0 0 0 0" Text="{Binding Path=OneRowInfo.Title}" FontSize="20" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap"/>
-              <TextBlock Margin="0 8 0 0" Text="{Binding Path=OneRowInfo.Desc}" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
+            <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="4 4 4 4">
+              <TextBlock Margin="0 0 0 0" Text="{Binding Path=OneRowInfo.Title}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
+              <TextBlock Margin="0 8 0 0" Text="{Binding Path=OneRowInfo.Desc}" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
             </StackPanel>
             <!--HyperlinkButton Command="{Binding Path=LaunchUrlCommand}" CommandParameter="{Binding Path=OneRowInfo.Url}" Background="#dd00a9" CornerRadius="2" HorizontalAlignment="Right" Margin="0 0 8 0" Height="40">
                             //实际上根本没有办法点击这个按钮
@@ -25,20 +25,25 @@
     <local:DynamicItemControl Model="{Binding}">
       <local:DynamicItemControl.CardContent>
         <Border BorderThickness="1" HorizontalAlignment="Stretch" BorderBrush="{ThemeResource ForegroundTextColor}" CornerRadius="4">
-          <HyperlinkButton Padding="0" Margin="0" Command="{Binding Path=LaunchUrlCommand}" CommandParameter="{Binding Path=OneRowInfo.Url}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
+          <HyperlinkButton Padding="0" Margin="0" Command="{Binding Path=LaunchUrlCommand}" CommandParameter="{Binding Path=OneRowInfo.Url}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
             <HyperlinkButton.ContextFlyout>
               <MenuFlyout>
                 <MenuFlyoutItem Visibility="{Binding Path=ShowWatchLater}" Icon="Add" Text="添加到稍后再看" Command="{Binding Path=WatchLaterCommand}" CommandParameter="{Binding Path=OneRowInfo.ID}"/>
               </MenuFlyout>
             </HyperlinkButton.ContextFlyout>
             <Grid HorizontalAlignment="Stretch">
+              <!--
+                预告/媒体槽位(DynamicItemControl.xaml 令牌表的“预告/OPUS 标题”“预告描述”):
+                媒体列按星号分配并封顶 160,标题列拿 2/3。卡片变窄时媒体连续缩小(320 视口的卡片内宽下约 96),
+                宽窗口下停在 160×90;不再用固定 CoverWidth 写死,也不给正文列留 800 的宽度假设。
+              -->
               <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition/>
+                <ColumnDefinition Width="*" MaxWidth="160"/>
+                <ColumnDefinition Width="2*"/>
               </Grid.ColumnDefinitions>
               <Grid>
-                <Border CornerRadius="4">
-                  <Image Source="{Binding Path=OneRowInfo.Cover}" Width="{Binding Path=OneRowInfo.CoverWidth}"/>
+                <Border CornerRadius="4" VerticalAlignment="Top">
+                  <Image Source="{Binding Path=OneRowInfo.Cover}" Stretch="Uniform" MaxHeight="90" HorizontalAlignment="Stretch" VerticalAlignment="Top"/>
                 </Border>
                 <Border Visibility="{Binding Path=OneRowInfo.ShowTag}" Background="#C8FF69B4" CornerRadius="2" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="4">
                   <TextBlock Margin="4 2" Foreground="White" FontSize="12" Text="{Binding Path=OneRowInfo.Tag}"/>
@@ -47,10 +52,10 @@
                   <TextBlock Margin="4 2" Foreground="White" FontSize="12" Text="{Binding Path=OneRowInfo.CoverText}" TextTrimming="CharacterEllipsis" TextWrapping="Wrap"/>
                 </Border>
               </Grid>
-              <StackPanel HorizontalAlignment="Stretch" Grid.Column="1" Margin="8 4 8 0">
-                <TextBlock FontSize="20" Text="{Binding Path=OneRowInfo.Title}" Foreground="{ThemeResource TextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
-                <TextBlock Visibility="Collapsed" Text="{Binding Path=OneRowInfo.Desc}" Margin="0 4" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
-                <TextBlock Margin="0 8 0 0" Text="{Binding Path=OneRowInfo.Subtitle}" FontSize="14" Foreground="{ThemeResource ForegroundTextColor}"/>
+              <StackPanel HorizontalAlignment="Stretch" Grid.Column="1" Margin="12 0 0 0">
+                <TextBlock FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Text="{Binding Path=OneRowInfo.Title}" Foreground="{ThemeResource TextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
+                <TextBlock Visibility="Collapsed" Text="{Binding Path=OneRowInfo.Desc}" Margin="0 4 0 0" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
+                <TextBlock Margin="0 4 0 0" Text="{Binding Path=OneRowInfo.Subtitle}" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
               </StackPanel>
             </Grid>
           </HyperlinkButton>
@@ -171,16 +176,15 @@
   <DataTemplate x:Key="Repost">
     <local:DynamicItemControl Model="{Binding}">
       <local:DynamicItemControl.CardContent>
-        <StackPanel HorizontalAlignment="Stretch" Grid.Column="1" Margin="8 4 8 0">
+        <StackPanel HorizontalAlignment="Stretch">
           <local:RichTextControl Text="{Binding Path=OneRowInfo.Subtitle}" Content="{Binding Path=Content}"/>
           <Border BorderThickness="1" BorderBrush="{ThemeResource ForegroundBorderColor}" CornerRadius="4" Background="{ThemeResource TopPaneBackground}">
             <ListView SelectionMode="None" IsItemClickEnabled="false" ItemsSource="{Binding Path=OriginInfo}" ItemTemplateSelector="{StaticResource select}" ScrollViewer.VerticalScrollMode="Disabled" ScrollViewer.VerticalScrollBarVisibility="Hidden">
               <ListView.ItemContainerStyle>
                 <Style TargetType="ListViewItem">
                   <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
-                  <Setter Property="MaxWidth" Value="800"/>
                   <Setter Property="Margin" Value="0"/>
-                  <Setter Property="Padding" Value="-4 0"/>
+                  <Setter Property="Padding" Value="0"/>
                 </Style>
               </ListView.ItemContainerStyle>
             </ListView>

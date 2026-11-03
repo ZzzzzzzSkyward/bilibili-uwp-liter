@@ -296,7 +296,6 @@ namespace BiliLite.Controls.Dynamic
         public string Url { get; set; }
         public string CoverText { get; set; }
         public string CoverParameter { get; set; } = "412w_232h_1c";
-        public double CoverWidth { get; set; } = 160;
         public bool ShowCoverText
         {
             get

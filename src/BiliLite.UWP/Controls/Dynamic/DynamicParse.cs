@@ -388,7 +388,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = "播放:" + item.viewtext + " 弹幕:" + item.danmakutext,
                             ID = item.aid,
                             Title = item.title,
-                            CoverWidth = 160,
                             AID = item.aid,
                         };
                         if (string.IsNullOrEmpty(info.Title))
@@ -407,7 +406,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = "播放:" + item.viewtext + " 评论:" + item.comment.ToCountString(),
                             ID = item.aid,
                             Title = item.title,
-                            CoverWidth = 80,
                             Tag = "音频",
 
                         };
@@ -423,7 +421,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = item.desc,
                             ID = item.aid,//fixme
                             Title = item.title,
-                            CoverWidth = 80,
                         };
                         info.Url = info.ID.ToString();
                     }
@@ -513,7 +510,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = item.modules?.module_dynamic?.major?.pgc?.stat?.play ?? "",
                             ID = item.aid,
                             Title = item.title,
-                            CoverWidth = 160,
                         };
                         info.Url = item.jumpurl;
                         // 合成卡片没有作者，也没有可以转发的动态，隐藏作者栏与互动栏。
@@ -607,7 +603,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = "播放:" + obj["play_count"].ToCountString() + " 弹幕:" + obj["bullet_count"].ToCountString(),
                             ID = obj["apiSeasonInfo"]["season_id"].ToString(),
                             Title = obj["new_desc"].ToString(),
-                            CoverWidth = 160,
                             AID = obj["aid"].ToString(),
                         };
                         if (string.IsNullOrEmpty(info.Title))
@@ -626,7 +621,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = "播放:" + obj["playCnt"].ToCountString() + " 评论:" + obj["replyCnt"].ToCountString(),
                             ID = obj["id"].ToString(),
                             Title = obj["title"].ToString(),
-                            CoverWidth = 80,
                             Tag = "音频",
 
                         };
@@ -642,7 +636,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = obj["sketch"]["desc_text"]?.ToString() ?? "",
                             ID = obj["sketch"]["target_url"]?.ToString() ?? "",
                             Title = obj["sketch"]["title"]?.ToString() ?? "",
-                            CoverWidth = 80,
                         };
                         info.Url = info.ID.ToString();
                     }

@@ -87,6 +87,15 @@ namespace BiliLite.Controls.Dynamic
         {
             Parent.Children.Add(r);
         }
+        /// <summary>
+        /// 正文度量,对应 DynamicItemControl.xaml 顶部令牌表的“正文/正文行高”两行(计划 §5)。
+        /// 行高用 MaxHeight 策略:24 是最小值而不是固定盒高,放大字号或表情时行会长高而不是被切。
+        /// 阅读列宽由卡片外壳负责,正文不再自带 800 的宽度假设。
+        /// </summary>
+        public const double BodyFontSize = 16;
+
+        public const double BodyLineHeight = 24;
+
         private void SetRichTextBlockStyle()
         {
             // 遍历 Grid 中的所有子元素
@@ -95,37 +104,31 @@ namespace BiliLite.Controls.Dynamic
                 // 如果子元素是 RichTextBlock，则应用预设样式
                 if (child is RichTextBlock tb)
                 {
-                    tb.MaxWidth = 800;
-                    tb.MaxHeight = 10000;
                     tb.TextLineBounds = TextLineBounds.Full;
                     tb.TextAlignment = TextAlignment.Left;
-                    tb.MinWidth = 100;
-                    tb.MinHeight = 12;
-                    tb.FontSize = 14;
+                    tb.FontSize = BodyFontSize;
+                    tb.LineHeight = BodyLineHeight;
+                    tb.LineStackingStrategy = LineStackingStrategy.MaxHeight;
                     tb.Visibility = Visibility.Visible;
                     tb.Margin = new Thickness(0);
                     tb.Foreground = Utils.GetBrush("ForegroundTextColor");
                     tb.IsTextSelectionEnabled = true;
                     tb.TextWrapping = TextWrapping.Wrap;
-                    tb.TextTrimming = TextTrimming.CharacterEllipsis;
                     tb.HorizontalAlignment = HorizontalAlignment.Left;
                     tb.HorizontalTextAlignment = TextAlignment.Left;
                 }
                 else if (child is TextBlock tb2)
                 {
-                    tb2.MaxWidth = 800;
-                    tb2.MaxHeight = 10000;
                     tb2.TextLineBounds = TextLineBounds.Full;
                     tb2.TextAlignment = TextAlignment.Left;
-                    tb2.MinWidth = 100;
-                    tb2.MinHeight = 12;
-                    tb2.FontSize = 14;
+                    tb2.FontSize = BodyFontSize;
+                    tb2.LineHeight = BodyLineHeight;
+                    tb2.LineStackingStrategy = LineStackingStrategy.MaxHeight;
                     tb2.Visibility = Visibility.Visible;
                     tb2.Margin = new Thickness(0);
                     tb2.Foreground = Utils.GetBrush("ForegroundTextColor");
                     tb2.IsTextSelectionEnabled = true;
                     tb2.TextWrapping = TextWrapping.Wrap;
-                    tb2.TextTrimming = TextTrimming.CharacterEllipsis;
                     tb2.HorizontalAlignment = HorizontalAlignment.Left;
                     tb2.HorizontalTextAlignment = TextAlignment.Left;
                 }
