@@ -307,78 +307,35 @@ namespace BiliLite.Modules
             return true;
         }
 
+        /// <summary>设置项的接线：判定单元只认接口，不认 SettingHelper 的静态口。</summary>
+        private static readonly ICredentialSettings credentialSettings = new CredentialSettings();
+
+        private sealed class CredentialSettings : ICredentialSettings
+        {
+            public T Read<T>(string key, T fallback)
+            {
+                return SettingHelper.GetValue(key, fallback);
+            }
+
+            public void Write<T>(string key, T value)
+            {
+                SettingHelper.SetValue(key, value);
+            }
+        }
+
         /// <summary>
-        /// 令牌四件套整组落盘，cookie 单独装 jar，两件事分开报。
+        /// 令牌四件套整组落盘，cookie 单独装 jar，两件事分开报（判定在 CredentialCommitter）。
         /// 写入中途抛出就把四件套整组退回旧值，宁可全旧也不留半套凭证；
         /// 但这只是本机回滚 —— 服务端已经轮换掉的 refresh_token 回不来，只能下次重新续期。
         /// </summary>
         private static CredentialCommit PersistCredentials(string access_key, string refresh_token, int expires,
             long userid, LoginCookieInfo cookie)
         {
-            var commit = new CredentialCommit
-            {
-                CookieOffered = cookie?.cookies != null && cookie.cookies.Count > 0,
-            };
-            var previousAccessKey = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY, "");
-            var previousRefreshToken = SettingHelper.GetValue(SettingHelper.Account.REFRESH_KEY, "");
-            var previousUserId = SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L);
-            var previousExpiry = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue);
-
-            try
-            {
-                //设置登录状态
-                SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY, access_key);
-                SettingHelper.SetValue(SettingHelper.Account.USER_ID, userid);
-                SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.Now.AddSeconds(expires));
-                SettingHelper.SetValue(SettingHelper.Account.REFRESH_KEY, refresh_token);
-                commit.TokenSaved = true;
-            }
-            catch (Exception ex)
-            {
-                LogHelper.Log("安全验证后设置保存信息失败，整组退回旧值 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
-                RestoreCredentialSettings(previousAccessKey, previousRefreshToken, previousUserId, previousExpiry);
-                return commit;
-            }
-
-            if (commit.CookieOffered)
-            {
-                //设置Cookie：每个 cookie 单独算成败，装失败不算令牌没换
-                var installed = 0;
-                var failed = 0;
-                try
-                {
-                    HttpBaseProtocolFilter filter = new HttpBaseProtocolFilter();
-                    foreach (var domain in cookie.domains ?? new List<string>())
-                    {
-                        foreach (var cookieItem in cookie.cookies)
-                        {
-                            try
-                            {
-                                filter.CookieManager.SetCookie(new Windows.Web.Http.HttpCookie(cookieItem.name, domain, "/")
-                                {
-                                    HttpOnly=cookieItem.http_only==1,
-                                    Secure=cookieItem.secure==1,
-                                    Expires=Utils.TimestampToDatetime(cookieItem.expires),
-                                    Value=cookieItem.value,
-                                });
-                                installed++;
-                            }
-                            catch (Exception ex)
-                            {
-                                failed++;
-                                LogHelper.Log("装 cookie 失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
-                            }
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    failed++;
-                    LogHelper.Log("装 cookie 失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
-                }
-
-                commit.CookieInstalled = failed == 0 && installed > 0;
-            }
+            var commit = CredentialCommitter.Commit(access_key, refresh_token, DateTime.Now.AddSeconds(expires),
+                userid, cookie?.cookies != null && cookie.cookies.Count > 0, CookieWrites(cookie),
+                credentialSettings, CookieJarWriter(), LogCommitFailure);
+            // 令牌没落盘就别镜像：旧凭证明明还在，jar 里的一代不能跟着换
+            if (!commit.TokenSaved) return commit;
 
             // ac_time_value 只随 cookie 下发，登录成功当场落到设置，否则刷新链永远缺令牌；
             // 但响应令牌已存时它不许覆盖（判定在 RefreshTokenPolicy）
@@ -386,20 +343,59 @@ namespace BiliLite.Modules
             return commit;
         }
 
-        private static void RestoreCredentialSettings(string accessKey, string refreshToken, long userId,
-            DateTime expiry)
+        private static void LogCommitFailure(string message, Exception exception)
         {
+            LogHelper.Log(message, LogType.ERROR, exception);
+        }
+
+        /// <summary>cookie_info 展开成写入清单：每个域名 × 每个 cookie 各一次，跟原来写 jar 的次数一致。</summary>
+        private static List<CookieWrite> CookieWrites(LoginCookieInfo cookie)
+        {
+            var writes = new List<CookieWrite>();
+            if (cookie?.cookies == null) return writes;
+            foreach (var domain in cookie.domains ?? new List<string>())
+            {
+                foreach (var cookieItem in cookie.cookies)
+                {
+                    writes.Add(new CookieWrite
+                    {
+                        Name = cookieItem.name,
+                        Domain = domain,
+                        Path = "/",
+                        Value = cookieItem.value,
+                        HttpOnly = cookieItem.http_only == 1,
+                        Secure = cookieItem.secure == 1,
+                        Expires = Utils.TimestampToDatetime(cookieItem.expires),
+                    });
+                }
+            }
+            return writes;
+        }
+
+        /// <summary>jar 的接线：SetCookie 的 bool 原样交回去，拒收由判定单元当失败算。</summary>
+        private static Func<CookieWrite, bool> CookieJarWriter()
+        {
+            HttpBaseProtocolFilter filter;
             try
             {
-                SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY, accessKey);
-                SettingHelper.SetValue(SettingHelper.Account.USER_ID, userId);
-                SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, expiry);
-                SettingHelper.SetValue(SettingHelper.Account.REFRESH_KEY, refreshToken);
+                filter = new HttpBaseProtocolFilter();
             }
             catch (Exception ex)
             {
-                LogHelper.Log("凭证回滚失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+                LogHelper.Log("装 cookie 失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+                return write =>
+                {
+                    throw new InvalidOperationException("cookie jar unavailable", ex);
+                };
             }
+            return write => filter.CookieManager.SetCookie(
+                new Windows.Web.Http.HttpCookie(write.Name, write.Domain, write.Path)
+                {
+                    HttpOnly = write.HttpOnly,
+                    Secure = write.Secure,
+                    Expires = write.Expires,
+                    Value = write.Value,
+                });
         }
 
         /// <summary>读资料和广播都不属于凭证结论：资料拿不到只是没有头像，登录事件没人接也不该回滚令牌。</summary>

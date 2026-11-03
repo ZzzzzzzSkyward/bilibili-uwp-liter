@@ -38,6 +38,7 @@ internal static class Program
         SaveResultDecidesTheOutcome();
         SaveThrowIsUncommitted();
         PartialCookieCommitIsReported();
+        RejectedCookieWriteIsAPartialCommit();
         ServerRejectionLeavesSettingsUntouched();
         TransportFailureReturnsFalseWithoutThrowing();
         EmptyRefreshTokenSendsNothing();
@@ -239,6 +240,96 @@ internal static class Program
             "the partial commit says the token landed and the cookie did not");
         Check(Log.All(line => !line.StartsWith("ACCESS_KEY 已刷新", StringComparison.Ordinal)),
             "a partial commit never claims a full renewal");
+    }
+
+    /// <summary>
+    /// 评审：jar 返回 false 是 Windows 拒收，不是「装上了」。令牌四件套照旧落盘，
+    /// 但 cookie 这一位必须算失败，续期结论停在 PartlyCommitted —— 修复前这里数成 installed，报 Committed。
+    /// </summary>
+    private static void RejectedCookieWriteIsAPartialCommit()
+    {
+        var expiry = DateTime.Now.AddSeconds(7776000);
+        var writes = new List<CookieWrite>
+        {
+            new CookieWrite
+            {
+                Name = "SESSDATA", Domain = "https://bilibili.com", Path = "/", Value = "sess-new",
+                HttpOnly = true, Secure = true, Expires = DateTimeOffset.FromUnixTimeSeconds(1893456000).UtcDateTime,
+            },
+            new CookieWrite
+            {
+                Name = "ac_time_value", Domain = "https://www.bilibili.com", Path = "/", Value = "ac-fresh",
+                HttpOnly = true, Secure = true, Expires = DateTimeOffset.FromUnixTimeSeconds(1893456000).UtcDateTime,
+            },
+        };
+        var settings = new MemoryCredentialSettings(0, new Dictionary<string, object>
+        {
+            { SettingHelper.Account.ACCESS_KEY, "old-ak" },
+            { SettingHelper.Account.REFRESH_KEY, "rt-old" },
+            { SettingHelper.Account.USER_ID, 42L },
+            { SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue },
+        });
+        var commitLog = new List<string>();
+
+        var commit = CredentialCommitter.Commit("new-ak", "rt-rotated", expiry, 99182, writes.Count > 0, writes, settings,
+            write => false, (message, exception) => commitLog.Add(message));
+
+        Check(commit.TokenSaved, "a rejected cookie write still reports the token tuple saved");
+        Check(commit.CookieOffered && !commit.CookieInstalled,
+            "a jar that rejects every write is reported as not installed");
+        Check(settings.Read(SettingHelper.Account.ACCESS_KEY, "") == "new-ak" &&
+            settings.Read(SettingHelper.Account.REFRESH_KEY, "") == "rt-rotated" &&
+            settings.Read(SettingHelper.Account.USER_ID, 0L) == 99182L &&
+            settings.Read(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue) == expiry,
+            "a rejected cookie write does not roll the saved token tuple back");
+        Check(commitLog.Count(line => line.StartsWith("装 cookie 被拒绝", StringComparison.Ordinal)) == writes.Count,
+            "every rejected write is logged by name instead of being silently counted");
+
+        var mixed = CredentialCommitter.Commit("new-ak", "rt-rotated", expiry, 99182, writes.Count > 0, writes, settings,
+            write => write.Name == "SESSDATA", (message, exception) => { });
+        Check(!mixed.CookieInstalled, "one rejected write fails the whole jar installation");
+
+        var accepted = CredentialCommitter.Commit("new-ak", "rt-rotated", expiry, 99182, writes.Count > 0, writes, settings,
+            write => true, (message, exception) => { });
+        Check(accepted.CookieInstalled, "a jar that accepts every write still reports installed");
+
+        var domainless = CredentialCommitter.Commit("new-ak", "rt-rotated", expiry, 99182, true,
+            new List<CookieWrite>(), settings, write => true, (message, exception) => { });
+        Check(domainless.CookieOffered && !domainless.CookieInstalled,
+            "cookie_info without a domain writes nothing and stays a partial commit");
+
+        var broken = new MemoryCredentialSettings(2, new Dictionary<string, object>
+        {
+            { SettingHelper.Account.ACCESS_KEY, "old-ak" },
+            { SettingHelper.Account.REFRESH_KEY, "rt-old" },
+            { SettingHelper.Account.USER_ID, 42L },
+            { SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue },
+        });
+        var rolled = CredentialCommitter.Commit("new-ak", "rt-rotated", expiry, 99182, writes.Count > 0, writes, broken,
+            write => true, (message, exception) => { });
+        Check(!rolled.TokenSaved, "a throwing token write reports the tuple unsaved");
+        Check(broken.Read(SettingHelper.Account.ACCESS_KEY, "") == "old-ak" &&
+            broken.Read(SettingHelper.Account.REFRESH_KEY, "") == "rt-old" &&
+            broken.Read(SettingHelper.Account.USER_ID, 0L) == 42L &&
+            broken.Read(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue) == DateTime.MinValue,
+            "a throwing token write puts the whole four-value tuple back");
+
+        ResetSession();
+        var rejected = CredentialCommitter.Commit("new-ak", "rt-rotated", expiry, 99182, writes.Count > 0, writes,
+            new MemoryCredentialSettings(), write => false, (message, exception) => Log.Add(message));
+        var result = AccessKeyRenewal.RunAsync("ak", "rt",
+            (_, __) => Task.FromResult(new HttpResults { status = true, results = SuccessBody() }),
+            (token, cookie) => Task.FromResult(rejected),
+            (message, exception) => Log.Add(message)).GetAwaiter().GetResult();
+
+        Check(!result.Committed && result.Outcome == RenewalOutcome.PartlyCommitted,
+            "a renewal whose jar rejects every write stays partial and never reports Committed");
+        Check(result.CredentialUsable && result.CookieInstalled == false,
+            "the app key stays usable while the web session is reported as not restored");
+        Check(Log.Any(line => line == "ACCESS_KEY 续期只落了令牌 mid=99182 token=saved cookie=failed"),
+            "the renewal logs the exact partial-commit line instead of cookie=installed");
+        Check(Log.All(line => !line.StartsWith("ACCESS_KEY 已刷新", StringComparison.Ordinal)),
+            "a rejected cookie write never logs a full renewal");
     }
 
     private static void ServerRejectionLeavesSettingsUntouched()
@@ -711,14 +802,22 @@ internal static class Program
             "the renewal hands its commit outcome back to the caller");
         Check(!refresh.Contains("throw ex"), "a failed refresh returns a result instead of throwing");
 
+        var committer = File.ReadAllText(Path.Combine(root, "src/BiliLite.UWP/Services/CredentialCommitter.cs"));
         var persist = MethodBody(account, "private static CredentialCommit PersistCredentials(",
-            "private static void RestoreCredentialSettings(");
+            "private static void LogCommitFailure(");
         Check(!persist.Contains("GetProfile") && !persist.Contains("SendLogined"),
             "the credential commit does not contain the profile fetch or the login broadcast");
-        Check(persist.Contains("RestoreCredentialSettings(") && persist.Contains("TokenSaved = true"),
+        Check(persist.Contains("CredentialCommitter.Commit(") && !persist.Contains("SetCookie("),
+            "the commit goes through the testable unit instead of calling the jar inline");
+        Check(committer.Contains("Restore(settings, previousAccessKey") && committer.Contains("TokenSaved = true"),
             "a failed write puts the whole credential set back and reports it unsaved");
-        Check(persist.Contains("CookieInstalled = failed == 0 && installed > 0"),
-            "cookie installation is reported per write, not assumed from the token result");
+        Check(committer.Contains("if (setCookie(write)) installed++;") &&
+            committer.Contains("CookieInstalled = failed == 0 && installed > 0"),
+            "a SetCookie return of false counts as a failed write, never as an installed one");
+        Check(MethodBody(account, "private static Func<CookieWrite, bool> CookieJarWriter()",
+                "private async Task AnnounceLoginAsync()")
+            .Contains("CookieManager.SetCookie("),
+            "the jar writer hands the real SetCookie result back to the unit");
 
         var announce = MethodBody(account, "private async Task AnnounceLoginAsync()", "public bool CommitCookieLogin(");
         Check(announce.Contains("await GetProfile();") && announce.Contains("MessageCenter.SendLogined();"),
@@ -840,7 +939,7 @@ internal static class Program
         Check(!account.Contains("MirrorCookieRefreshToken"),
             "the duplicate jar mirror implementation is gone");
         Check(MethodBody(account, "private static CredentialCommit PersistCredentials(",
-                "private static void RestoreCredentialSettings(")
+                "private static void LogCommitFailure(")
             .Contains("MirrorRefreshTokenFromJar();"),
             "the credential commit runs the one shared mirror");
         Check(MethodBody(account, "public async Task<bool> SaveLogin(", "public bool CommitCookieLogin(")
@@ -858,7 +957,34 @@ internal static class Program
             "LoginVM passes the login identity at its single credential commit");
     }
 
-    /// <summary>把一次启动/恢复要走的路走一遍：先问闸门，再发唯一一次刷新。</summary>
+    /// <summary>判定单元的设置口：内存字典，第 failOnWrite 次写入抛出，用来驱动 D2 的整组回滚。</summary>
+    private sealed class MemoryCredentialSettings : ICredentialSettings
+    {
+        private readonly Dictionary<string, object> values;
+        private readonly int failOnWrite;
+        private int writes;
+
+        public MemoryCredentialSettings(int failOnWrite = 0, IDictionary<string, object> seed = null)
+        {
+            this.failOnWrite = failOnWrite;
+            values = seed == null ? new Dictionary<string, object>() : new Dictionary<string, object>(seed);
+        }
+
+        public T Read<T>(string key, T fallback)
+        {
+            if (!values.TryGetValue(key, out var value) || value == null) return fallback;
+            if (value is T typed) return typed;
+            return (T)Convert.ChangeType(value, typeof(T));
+        }
+
+        public void Write<T>(string key, T value)
+        {
+            writes++;
+            if (failOnWrite > 0 && writes == failOnWrite) throw new InvalidOperationException("storage full");
+            values[key] = value;
+        }
+    }
+
     /// <summary>探针里的 jar：字典一个，判定单元和镜像都不认 WinRT。</summary>
     private sealed class MemoryCookieStore : ICookieStore
     {
