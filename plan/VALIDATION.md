@@ -161,3 +161,15 @@ the rebuild was clean), then the whole suite: **38 batches, `TOTAL_FAILURES=0`**
 | Realtime log removed | `0f11162` | the diagnostics tab has no 实时日志 switch and no log box; the log file still grows, and 导出日志 / 导出诊断包 still produce files |
 | API parameter editor removed | `0f11162` | the diagnostics tab has no 编辑 API 参数; requests still work with the built-in appkeys, and an existing install's old overrides are simply ignored |
 | 打开日志目录 | `0f11162` | the button opens the folder with today's `.log` in the file manager; with no log folder yet it still opens after creating it |
+
+## Shipped 2026-11-04 — pending confirmation, spacing, top-nav indicator (1.0.9.41)
+
+`BiliLite.Packages_1.0.9.41_x64.msix`, 0 errors, then 38 batches `TOTAL_FAILURES=0` (`webrefresh` 91 → 111).
+Every row below is 默认通过 per the maintainer's instruction; the text says what a failure would look like.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| A foreign pending record no longer blocks renewal | `b9fe695` | sign in as A, interrupt a web refresh so a pending record is left, then 重新登录 into B without logging out: B's cookie refresh must work (playback and any cookie-gated page), and A's record must still be on disk untouched |
+| Account switch retires the old record | `b9fe695` | same setup, but reach B through a switch that commits: A's pending record must be gone, and a failed B login must leave it in place |
+| Dynamics vertical rhythm | `81705a3` | two consecutive cards are about 24px apart instead of 48; the first card is not clipped against the tab bar, and the reading column and horizontal padding look unchanged |
+| Top-nav selection line | `81705a3` | the line under the selected top tab (推荐/热门/番剧…) spans the tab width, sits at the same height, and the other visual states (hover, press, overflow) still look right |
