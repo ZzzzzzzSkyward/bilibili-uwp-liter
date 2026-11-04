@@ -589,11 +589,31 @@ namespace BiliLite.Modules
         public int is_finish { get; set; }
         public int season_id { get; set; }
     }
+    /// <summary>
+    /// 转发展开的层数上限：卡片数据最多两层（外卡 + 一张原卡）。再往下的 orig 不建模型，
+    /// 只把它的动态 ID 留作祖先行目标（CARD_PLAN §3.7）。
+    /// </summary>
+    public static class DynamicCardDepth
+    {
+        /// <summary>原卡所在的深度：0 是外卡，1 是它内嵌的那一张。</summary>
+        public const int Original = 1;
+        /// <summary>只有深度小于上限时才允许再展开一层 orig。</summary>
+        public static bool CanExpandOrig(int depth)
+        {
+            return depth < Original;
+        }
+    }
+
     public class DynamicCardModel2024
     {
         public DynamicCardModel2024_basic basic { get; set; }
         public DynamicCardModel2024_modules modules { get; set; }
         public DynamicCardModel2024 orig { get; set; }
+        /// <summary>
+        /// 映射层截断时记录的祖先动态 ID：服务端不下发这个字段，只在展开到第二层时由映射器填上，
+        /// 供显示层把"转发链还更深"做成一行可跳转的祖先。
+        /// </summary>
+        public string AncestryDynamicID { get; set; }
         public string type { get; set; }
         public string id_str { get; set; }
         public bool visible { get; set; }
@@ -602,6 +622,9 @@ namespace BiliLite.Modules
             get
             {
                 return
+                  // OPUS 卡优先：图文动态的标题只在 major.opus 里，archive/article 都可能同时缺席
+                  modules?.module_dynamic?.major?.opus?.title
+                  ??
                   modules?.module_dynamic?.major?.archive?.title
                   ??
                   modules?.module_dynamic?.major?.live?.title
@@ -1024,7 +1047,15 @@ namespace BiliLite.Modules
         public DynamicCardModel2024_list ugc_season { get; set; }
         public DynamicCardModel2024_list medialist { get; set; }
         public DynamicCardModel2024_live_rcmd live_rcmd { get; set; }
+        /// <summary>图文（OPUS）标题槽：图片走 draw、无图走 article，但标题只在这里，两条路都要读到。</summary>
+        public DynamicCardModel2024_opus opus { get; set; }
         public string type { get; set; }
+    }
+    public class DynamicCardModel2024_opus
+    {
+        public string id { get; set; }
+        public string title { get; set; }
+        public string jump_url { get; set; }
     }
     public class DynamicCardModel2024_live_rcmd
     {

@@ -208,7 +208,7 @@ namespace BiliLite.Helpers
         }
 
 
-        private static DynamicCardModel2024 MapUserCard(DynamicItem source)
+        private static DynamicCardModel2024 MapUserCard(DynamicItem source, int depth = 0)
         {
             if (source == null || source.Extend == null)
             {
@@ -272,8 +272,17 @@ namespace BiliLite.Helpers
 
             if (source.CardType == GrpcDynamicType.Forward)
             {
-                // 原动态可能属于被丢弃的类型，此时用占位卡片保证父卡片仍然可读。
-                card.orig = MapUserCard(dynamic?.DynForward?.Item) ?? MissingCard(source.Extend.OrigDynIdStr);
+                var forwardItem = dynamic?.DynForward?.Item;
+                if (DynamicCardDepth.CanExpandOrig(depth))
+                {
+                    // 原动态可能属于被丢弃的类型，此时用占位卡片保证父卡片仍然可读。
+                    card.orig = MapUserCard(forwardItem, depth + 1) ?? MissingCard(source.Extend.OrigDynIdStr);
+                }
+                else
+                {
+                    // 到顶了：第三层及更深不再搬进模型，只留 ID 给祖先行跳转
+                    card.AncestryDynamicID = FirstNonEmpty(forwardItem?.Extend?.DynIdStr, source.Extend.OrigDynIdStr);
+                }
             }
 
             return card;
@@ -351,6 +360,7 @@ namespace BiliLite.Helpers
                     };
                 }
                 result.major = new DynamicCardModel2024_major();
+                ApplyOpusTitle(result, opusSummary);
                 AppendOpusCovers(result, opusSummary);
                 return result;
             }
@@ -514,6 +524,7 @@ namespace BiliLite.Helpers
                 };
             }
 
+            ApplyOpusTitle(result, opusSummary);
             AppendOpusCovers(result, opusSummary);
             return result;
         }
@@ -572,6 +583,29 @@ namespace BiliLite.Helpers
                     break;
             }
             return node;
+        }
+
+        /// <summary>
+        /// OPUS 标题：Extend.OpusSummary 与 ModuleOpusSummary 两个来源在 MapUserCard 里已合并成同一个对象，
+        /// 标题只进 major.opus.title 这一个槽；正文仍走 desc / summary 段落，不把标题拼进正文。
+        /// </summary>
+        private static void ApplyOpusTitle(DynamicCardModel2024_dynamic result, ModuleOpusSummary opusSummary)
+        {
+            if (result?.major == null || opusSummary == null)
+            {
+                return;
+            }
+            // 标题与摘要一样是段落：文字由 text_nodes 拼出来，不能把 Paragraph 直接当字符串
+            var title = MapParagraph(opusSummary.Title)?.text;
+            if (string.IsNullOrEmpty(title))
+            {
+                return;
+            }
+
+            result.major.opus = new DynamicCardModel2024_opus
+            {
+                title = title,
+            };
         }
 
         /// <summary>

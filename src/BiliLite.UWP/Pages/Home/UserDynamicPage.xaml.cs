@@ -1,9 +1,13 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Modules.User;
 using System;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 
@@ -31,6 +35,7 @@ namespace BiliLite.Pages.Home
                 LogHelper.Log("Main dynamics stage=xaml-initialized", LogType.INFO);
                 dynamicVM.OpenCommentEvent += DynamicVM_OpenCommentEvent;
                 splitView.PaneClosed += SplitView_PaneClosed;
+                HookDynamicListAnchor();
                 this.DataContext = dynamicVM;
                 if (SettingHelper.GetValue<bool>(SettingHelper.UI.CACHE_HOME, true))
                 {
@@ -291,6 +296,147 @@ namespace BiliLite.Pages.Home
             {
                 repost.LoadData(dynamic_id);
             }
+        }
+
+        //滚动页窗口（CARD_PLAN §9）的页面一侧：把当前可见的第一条动态记成锚点（只写 DynamicID，不持有卡片模型），
+        //窗口淘汰页之后再把锚点项滚回顶端，用户看到的位置不变。
+        private ScrollViewer listScrollViewer;
+        private ObservableCollection<Controls.Dynamic.DynamicItemDisplayModel> subscribedItems;
+
+        private void HookDynamicListAnchor()
+        {
+            list.Loaded += DynamicList_Loaded;
+            dynamicVM.PropertyChanged += DynamicVM_PropertyChanged;
+            SubscribeAnchorItems();
+        }
+
+        private void DynamicVM_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName != "Items")
+            {
+                return;
+            }
+            //Items 整体换过（首屏/换源/刷新）：换成新的集合继续听
+            SubscribeAnchorItems();
+        }
+
+        private void SubscribeAnchorItems()
+        {
+            if (subscribedItems != null)
+            {
+                subscribedItems.CollectionChanged -= DynamicVM_ItemsChanged;
+                subscribedItems = null;
+            }
+            subscribedItems = dynamicVM.Items;
+            if (subscribedItems != null)
+            {
+                subscribedItems.CollectionChanged += DynamicVM_ItemsChanged;
+            }
+        }
+
+        private void DynamicList_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (listScrollViewer != null)
+            {
+                return;
+            }
+            listScrollViewer = FindScrollViewer(list);
+            if (listScrollViewer == null)
+            {
+                //模板还没应用：等一次布局再找
+                list.LayoutUpdated += DynamicList_LayoutUpdated;
+                return;
+            }
+            listScrollViewer.ViewChanged += ListScrollViewer_ViewChanged;
+        }
+
+        private void DynamicList_LayoutUpdated(object sender, object e)
+        {
+            listScrollViewer = FindScrollViewer(list);
+            if (listScrollViewer == null)
+            {
+                return;
+            }
+            list.LayoutUpdated -= DynamicList_LayoutUpdated;
+            listScrollViewer.ViewChanged += ListScrollViewer_ViewChanged;
+        }
+
+        private static ScrollViewer FindScrollViewer(DependencyObject root)
+        {
+            if (root == null)
+            {
+                return null;
+            }
+            var count = VisualTreeHelper.GetChildrenCount(root);
+            for (var i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+                var viewer = child as ScrollViewer;
+                if (viewer != null)
+                {
+                    return viewer;
+                }
+                var nested = FindScrollViewer(child);
+                if (nested != null)
+                {
+                    return nested;
+                }
+            }
+            return null;
+        }
+
+        private void ListScrollViewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        {
+            var panel = list.ItemsPanelRoot as ItemsStackPanel;
+            if (panel == null)
+            {
+                //瀑布流面板没有 FirstVisibleIndex：锚点保持上一次的值
+                return;
+            }
+            var items = dynamicVM.Items;
+            var index = panel.FirstVisibleIndex;
+            if (items == null || index < 0 || index >= items.Count)
+            {
+                return;
+            }
+            dynamicVM.AnchorDynamicId = items[index].DynamicID;
+        }
+
+        private void DynamicVM_ItemsChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (e.Action != NotifyCollectionChangedAction.Remove)
+            {
+                return;
+            }
+            var anchorId = dynamicVM.AnchorDynamicId;
+            if (string.IsNullOrEmpty(anchorId))
+            {
+                return;
+            }
+            var anchorItem = FindItemByDynamicId(anchorId);
+            if (anchorItem == null)
+            {
+                //锚点项已经不在列表里：这时不动滚动位置，免得跳到别处
+                return;
+            }
+            list.ScrollIntoView(anchorItem, ScrollIntoViewAlignment.Leading);
+        }
+
+        private Controls.Dynamic.DynamicItemDisplayModel FindItemByDynamicId(string dynamicId)
+        {
+            var items = dynamicVM.Items;
+            if (items == null)
+            {
+                return null;
+            }
+            foreach (var item in items)
+            {
+                if (item != null && string.Equals(item.DynamicID, dynamicId, StringComparison.Ordinal))
+                {
+                    return item;
+                }
+            }
+            return null;
         }
     }
 }

@@ -65,6 +65,13 @@ namespace BiliLite.Modules.User
         private string restOffset;
         //web 聚合动态流的翻页游标（data.offset）：第三套分页，同样不与上面两套互传
         private string polymerOffset;
+        //滚动页窗口（CARD_PLAN §9）：最近 10 页留在列表里，更早的整页淘汰只留检查点；
+        //去重集合也由窗口统一持有，页一淘汰对应 ID 就释放，重载旧页才不会被当成重复丢掉
+        private readonly DynamicFeedWindow feedWindow = new DynamicFeedWindow();
+        //当前窗口里的页由哪一路取数：重新加载更早的页时按这一路回放同一个请求（游标取检查点里记的）
+        private FeedPageKind feedPageKind = FeedPageKind.None;
+        //"重新加载更早的页"在途标记：连点不重复发请求
+        private bool reloadInFlight;
         //本次全部/视频动态流固定的来源：刷新/切分类时由选择器与固定顺序共同决定，翻页沿用；
         //只有同一次请求里前面几路都失败、后面某一路成功时才改到这一路
         private DynamicFeedSource? pinnedFeedSource;
@@ -89,6 +96,25 @@ namespace BiliLite.Modules.User
         private DynamicApiSource? pinnedSpaceSource;
         //spacePage/spaceOffset/pinnedSpaceSource 属于哪个用户；Uid 变了这组状态必须作废
         private string spaceUid;
+
+        /// <summary>
+        /// 当前窗口里的页是哪一路取的。重新加载更早的页时只有这几路能按"页序号 + 游标"回放；
+        /// 旧接口的话题流没有游标，只能拒绝。
+        /// </summary>
+        private enum FeedPageKind
+        {
+            None,
+            Legacy,
+            Article,
+            PolymerAll,
+            PolymerVideo,
+            GrpcAll,
+            GrpcVideo,
+            Rest,
+            SpaceGrpc,
+            SpaceRest
+        }
+
         public DynamicVM()
         {
             dynamicAPI = new Api.User.DynamicAPI();
@@ -111,6 +137,9 @@ namespace BiliLite.Modules.User
             LikeCommand = new RelayCommand<DynamicItemDisplayModel>(DoLike);
             RepostCommand = new RelayCommand<DynamicItemDisplayModel>(OpenSendDynamicDialog);
             DetailCommand = new RelayCommand<DynamicItemDisplayModel>(OpenDetail);
+            // 祖先行只带一个动态 ID，没有整张卡片模型可传
+            DetailByIdCommand = new RelayCommand<string>(OpenDetailById);
+            ReloadEarlierCommand = new RelayCommand(ReloadEarlier);
         }
 
         public async void SaveImage(object obj)
@@ -132,6 +161,25 @@ namespace BiliLite.Modules.User
         public ICommand LikeCommand { get; set; }
         public ICommand DeleteCommand { get; set; }
         public ICommand DetailCommand { get; set; }
+        /// <summary>按动态 ID 打开详情：转发链被截断后的祖先行用。</summary>
+        public ICommand DetailByIdCommand { get; set; }
+        /// <summary>重新加载更早的页：按检查点里的游标把最早一页取回来，插回列表头部。</summary>
+        public ICommand ReloadEarlierCommand { get; private set; }
+        /// <summary>已移出滚动窗口的页数（列表顶部提示用）。</summary>
+        public int EvictedPageCount
+        {
+            get { return feedWindow.EvictedPageCount; }
+        }
+        public bool HasEvictedPages
+        {
+            get { return feedWindow.HasEvictedPages; }
+        }
+        /// <summary>滚动时由页面写入：锚点所在的页永不淘汰，重新加载后锚点也留在这个 ID 上。</summary>
+        public string AnchorDynamicId
+        {
+            get { return feedWindow.AnchorDynamicId; }
+            set { feedWindow.AnchorDynamicId = value; }
+        }
         public DynamicItemDataTemplateSelector dynamicItemDataTemplateSelector { get; set; }
         private bool _loading = true;
         public bool Loading
@@ -190,6 +238,11 @@ namespace BiliLite.Modules.User
             restOffset = null;
             polymerOffset = null;
             consecutiveEmptyPages = 0;
+            //刷新就是新的一屏边界：窗口、淘汰检查点、去重集合一起作废（锚点也跟着清）
+            feedWindow.Reset();
+            feedPageKind = FeedPageKind.None;
+            reloadInFlight = false;
+            RaiseFeedWindowChanged();
             //固定的来源不跨刷新继承：刷新就是新的一屏边界，交回选择器重新决定（一屏之内最多三路）
             pinnedFeedSource = null;
             pinnedSpaceSource = null;
@@ -353,12 +406,27 @@ namespace BiliLite.Modules.User
         }
         public void OpenDetail(DynamicItemDisplayModel data)
         {
+            if (data == null)
+            {
+                return;
+            }
+            OpenDetailById(data.DynamicID);
+        }
+        /// <summary>
+        /// 动态详情的导航入口：参数是动态 ID，不是 aid/rid —— 更深的祖先只有 ID 可传。
+        /// </summary>
+        public void OpenDetailById(string id)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return;
+            }
             MessageCenter.NavigateToPage(this, new NavigationInfo()
             {
                 icon = Symbol.Document,
                 page = typeof(DynamicDetailPage),
                 title = "动态详情",
-                parameters = data.DynamicID
+                parameters = id
             });
         }
         public async void Delete(DynamicItemDisplayModel item)
@@ -510,6 +578,11 @@ namespace BiliLite.Modules.User
                     restOffset = null;
                     polymerOffset = null;
                     consecutiveEmptyPages = 0;
+                    //与刷新同一条边界：非翻页请求重开窗口，旧的淘汰页与去重集合都不能带过来
+                    feedWindow.Reset();
+                    feedPageKind = FeedPageKind.None;
+                    reloadInFlight = false;
+                    RaiseFeedWindowChanged();
                 }
                 LogHelper.Log("User dynamic VM stage=request-start generation=" + generation + " dynamicType=" + requestDynamicType + " itemType=" + requestItemType + " history=" + (idx != ""), LogType.DEBUG);
 
@@ -553,6 +626,8 @@ namespace BiliLite.Modules.User
                     bool hasMore = false;
                     string nextOffset = null;
                     string nextBaseline = null;
+                    //分页进度按解析页/服务端返回的条目数算，不用去重后的幸存数：重叠页不是空页
+                    var pageItemCount = 0;
 
                     //全部/视频的动态流由选择器在每一屏边界决定来源；专栏/番剧的取数来源保持原样
                     var usesGrpcFeed = requestItemType == UserDynamicType.All || requestItemType == UserDynamicType.Video;
@@ -564,7 +639,10 @@ namespace BiliLite.Modules.User
 
                     if (requestItemType == UserDynamicType.Article)
                     {
-                        var articleRequest = WebDynamicFeedApi.CreateFeedRequest(page, loadMore ? articleOffset : null, "article");
+                        //专栏与聚合流共用同一个 web 页解析器；页序号仍走自己的 page 参数，
+                        //游标仍是独立的 articleOffset，绝不与 polymerOffset 互传
+                        var articleCursor = loadMore ? articleOffset : null;
+                        var articleRequest = WebDynamicFeedApi.CreateFeedRequest(page, articleCursor, "article");
                         var response = await articleRequest.Request();
                         if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
                         {
@@ -575,21 +653,20 @@ namespace BiliLite.Modules.User
                         {
                             throw new InvalidOperationException(response.message);
                         }
-                        var data = await response.GetData<JObject>();
-                        if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                        var parsedArticle = WebDynamicFeedParser.Parse(response);
+                        if (!parsedArticle.IsSuccess)
                         {
-                            LogHelper.Log("User dynamic VM stage=feed-request discarded generation=" + generation, LogType.DEBUG);
-                            return;
+                            //与聚合流同一套定位：failure 类别 + 字段路径，再按原有抛错形态交给外层统一提示
+                            LogHelper.Log("User dynamic VM stage=feed-article-failed page=" + page + " generation=" + generation
+                                + " failure=" + parsedArticle.Failure + " field=" + parsedArticle.Stage
+                                + " message=" + parsedArticle.Message, LogType.ERROR);
+                            throw new InvalidOperationException(parsedArticle.Message ?? "Article feed parse failed");
                         }
-                        if (data == null || !data.success || data.data == null)
-                        {
-                            throw new InvalidOperationException(data?.message ?? "Article feed returned no data");
-                        }
-
-                        var articleItems = data.data["items"] as JArray;
-                        grpcCards = WebDynamicFeedMapper.MapToUserFeedCards(articleItems);
-                        hasMore = data.data["has_more"]?.Value<bool>() ?? false;
-                        nextOffset = data.data["offset"]?.ToString();
+                        var articlePage = parsedArticle.Value;
+                        grpcCards = WebDynamicFeedMapper.MapToUserFeedCards(articlePage.Items);
+                        hasMore = articlePage.HasMore;
+                        nextOffset = articlePage.NextCursor;
+                        pageItemCount = articlePage.Items == null ? 0 : articlePage.Items.Count;
                     }
                     else if (requestItemType == UserDynamicType.Season)
                     {
@@ -605,10 +682,11 @@ namespace BiliLite.Modules.User
                         }
                         grpcCards = DynamicGrpcMapper.MapToUserSeasonCards(reply.VideoFollowList?.List);
                         hasMore = false;
+                        pageItemCount = grpcCards.Count;
                     }
 
                     stage = "feed-card-convert";
-                    var mapped = new ObservableCollection<DynamicItemDisplayModel>();
+                    var mapped = new List<DynamicItemDisplayModel>();
                     foreach (var card in grpcCards)
                     {
                         mapped.Add(ConvertToDisplay2024(card));
@@ -620,17 +698,8 @@ namespace BiliLite.Modules.User
                         LogHelper.Log("User dynamic VM stage=feed-items-publish discarded generation=" + generation, LogType.DEBUG);
                         return;
                     }
-                    if (loadMore && Items != null)
-                    {
-                        foreach (var item in mapped)
-                        {
-                            Items.Add(item);
-                        }
-                    }
-                    else
-                    {
-                        Items = mapped;
-                    }
+                    feedPageKind = requestItemType == UserDynamicType.Article ? FeedPageKind.Article : FeedPageKind.GrpcVideo;
+                    PublishFeedPage(page, mapped, requestCursor, nextOffset, loadMore);
                     feedPage = page;
                     historyOffset = nextOffset;
                     updateBaseline = nextBaseline;
@@ -644,7 +713,7 @@ namespace BiliLite.Modules.User
                     var cursorAdvanced = requestItemType == UserDynamicType.Article
                         ? string.IsNullOrEmpty(nextOffset) || !string.Equals(nextOffset, requestCursor, StringComparison.Ordinal)
                         : !string.IsNullOrEmpty(nextOffset) && !string.Equals(nextOffset, requestCursor, StringComparison.Ordinal);
-                    CanLoadMore = CanContinuePaging(hasMore, cursorAdvanced, mapped.Count, requestItemType, generation);
+                    CanLoadMore = CanContinuePaging(hasMore, cursorAdvanced, pageItemCount, requestItemType, generation);
                     lastPageFailed = false;
                     ShowError = false;
                     ErrorMsg = "";
@@ -718,18 +787,10 @@ namespace BiliLite.Modules.User
                         }
                     }
                     stage = "items-publish";
-                    if (Items == null)
-                    {
-
-                        Items = _ls;
-                    }
-                    else
-                    {
-                        foreach (var item in _ls)
-                        {
-                            Items.Add(item);
-                        }
-                    }
+                    //话题流也走同一个去重追加助手：旧接口每次都从第一页返回，重复的卡片不能重复上屏
+                    feedPageKind = FeedPageKind.Legacy;
+                    var appendTopicPage = Items != null;
+                    PublishFeedPage(appendTopicPage ? feedWindow.LastPageNumber + 1 : 1, _ls, null, null, appendTopicPage);
                     LogHelper.Log("User dynamic VM stage=items-published count=" + Items.Count + " generation=" + generation, LogType.DEBUG);
                     lastPageFailed = false;
                     ShowError = false;
@@ -913,7 +974,9 @@ namespace BiliLite.Modules.User
             var parsedPage = parsed.Value;
             bool hasMore;
             string nextOffset;
-            ObservableCollection<DynamicItemDisplayModel> mapped;
+            List<DynamicItemDisplayModel> mapped;
+            //分页进度按解析页的条目数算：去重后的幸存数会把重叠页误判成空页
+            var pageItemCount = parsedPage.Items == null ? 0 : parsedPage.Items.Count;
             try
             {
                 //形状合法不代表每条都能映射：少一层对象或多一个字符串，映射里任何一步都可能抛。
@@ -921,7 +984,7 @@ namespace BiliLite.Modules.User
                 var cards = WebDynamicFeedMapper.MapToUserFeedCards(parsedPage.Items);
                 hasMore = parsedPage.HasMore;
                 nextOffset = parsedPage.NextCursor;
-                mapped = new ObservableCollection<DynamicItemDisplayModel>();
+                mapped = new List<DynamicItemDisplayModel>();
                 foreach (var card in cards)
                 {
                     mapped.Add(ConvertToDisplay2024(card));
@@ -937,17 +1000,8 @@ namespace BiliLite.Modules.User
             {
                 return DynamicApiSourceResult.Superseded();
             }
-            if (polymerLoadMore && Items != null)
-            {
-                foreach (var item in mapped)
-                {
-                    Items.Add(item);
-                }
-            }
-            else
-            {
-                Items = mapped;
-            }
+            feedPageKind = itemType == UserDynamicType.Video ? FeedPageKind.PolymerVideo : FeedPageKind.PolymerAll;
+            PublishFeedPage(page, mapped, cursor, nextOffset, polymerLoadMore && Items != null);
             feedPage = page;
             polymerOffset = nextOffset;
             //换到聚合流之后另外两套游标作废：三种分页不互传
@@ -956,7 +1010,7 @@ namespace BiliLite.Modules.User
             restOffset = null;
             //停止条件统一在 CanContinuePaging 里：服务端没有更多、游标没前进、连续空页到上限都停
             var cursorAdvanced = !string.IsNullOrEmpty(nextOffset) && !string.Equals(nextOffset, cursor, StringComparison.Ordinal);
-            CanLoadMore = CanContinuePaging(hasMore, cursorAdvanced, mapped.Count, itemType, generation);
+            CanLoadMore = CanContinuePaging(hasMore, cursorAdvanced, pageItemCount, itemType, generation);
             lastPageFailed = false;
             ShowError = false;
             ErrorMsg = "";
@@ -1045,7 +1099,7 @@ namespace BiliLite.Modules.User
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
-            var mapped = new ObservableCollection<DynamicItemDisplayModel>();
+            var mapped = new List<DynamicItemDisplayModel>();
             foreach (var card in grpcCards)
             {
                 mapped.Add(ConvertToDisplay2024(card));
@@ -1054,23 +1108,14 @@ namespace BiliLite.Modules.User
             {
                 return DynamicApiSourceResult.Superseded();
             }
-            if (loadMore && Items != null)
-            {
-                foreach (var item in mapped)
-                {
-                    Items.Add(item);
-                }
-            }
-            else
-            {
-                Items = mapped;
-            }
+            feedPageKind = itemType == UserDynamicType.Video ? FeedPageKind.GrpcVideo : FeedPageKind.GrpcAll;
+            PublishFeedPage(page, mapped, requestCursor, nextOffset, loadMore && Items != null);
             feedPage = page;
             historyOffset = nextOffset;
             updateBaseline = nextBaseline;
             //gRPC 动态流只认 history_offset：缺失或重复都说明下一页拿不到（空 offset 会让下一页回到不带 History 的首页）
             var cursorAdvanced = !string.IsNullOrEmpty(nextOffset) && !string.Equals(nextOffset, requestCursor, StringComparison.Ordinal);
-            CanLoadMore = CanContinuePaging(hasMore, cursorAdvanced, mapped.Count, itemType, generation);
+            CanLoadMore = CanContinuePaging(hasMore, cursorAdvanced, grpcCards.Count, itemType, generation);
             lastPageFailed = false;
             ShowError = false;
             ErrorMsg = "";
@@ -1152,22 +1197,14 @@ namespace BiliLite.Modules.User
             {
                 return DynamicApiSourceResult.Superseded();
             }
-            if (restLoadMore && Items != null)
-            {
-                foreach (var item in restMapped)
-                {
-                    Items.Add(item);
-                }
-            }
-            else
-            {
-                Items = restMapped;
-            }
+            feedPageKind = FeedPageKind.Rest;
+            PublishFeedPage(restPage, restMapped, restCursor, nextRestOffset, restLoadMore && Items != null);
             feedPage = restPage;
             restOffset = nextRestOffset;
             //停止条件统一在 CanContinuePaging 里：服务端没有更多、游标没前进、连续空页到上限都停
             var restCursorAdvanced = !string.IsNullOrEmpty(nextRestOffset) && !string.Equals(nextRestOffset, restCursor, StringComparison.Ordinal);
-            CanLoadMore = CanContinuePaging(restHasMore, restCursorAdvanced, restMapped.Count, itemType, generation);
+            //页条目数取解析页的卡片数（含 desc 为空、映射时被跳过的那些），不取去重后的幸存数
+            CanLoadMore = CanContinuePaging(restHasMore, restCursorAdvanced, restCards.Count, itemType, generation);
             lastPageFailed = false;
             ShowError = false;
             ErrorMsg = "";
@@ -1282,7 +1319,7 @@ namespace BiliLite.Modules.User
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
 
-            var spaceMapped = new ObservableCollection<DynamicItemDisplayModel>();
+            var spaceMapped = new List<DynamicItemDisplayModel>();
             foreach (var card in spaceCards)
             {
                 spaceMapped.Add(ConvertToDisplay2024(card));
@@ -1291,17 +1328,10 @@ namespace BiliLite.Modules.User
             {
                 return DynamicApiSourceResult.Superseded();
             }
-            if (spaceLoadMore && spacePage > 1 && Items != null)
-            {
-                foreach (var item in spaceMapped)
-                {
-                    Items.Add(item);
-                }
-            }
-            else
-            {
-                Items = spaceMapped;
-            }
+            feedPageKind = FeedPageKind.SpaceGrpc;
+            //检查点记的是"取这一页时用的游标"：翻页时是上一页留下的 spaceOffset，首页为空
+            PublishFeedPage(spacePage, spaceMapped, spaceLoadMore ? spaceOffset : null, nextOffset,
+                spaceLoadMore && spacePage > 1 && Items != null);
             spaceOffset = nextOffset;
             spacePage++;
             //停止条件只认服务端的 has_more：本页即使被过滤成 0 张卡片也不代表没有下一页
@@ -1359,7 +1389,7 @@ namespace BiliLite.Modules.User
                 return DynamicApiSourceResult.Failed(DynamicApiOutcome.MalformedResponse, failureMessage);
             }
             DynamicApiSelection.Record(attempt, DynamicApiOutcome.Success, stopwatch.Elapsed, stage);
-            var mapped = new ObservableCollection<DynamicItemDisplayModel>();
+            var mapped = new List<DynamicItemDisplayModel>();
             foreach (var item in items)
             {
                 mapped.Add(ConvertToDisplay(item));
@@ -1368,19 +1398,13 @@ namespace BiliLite.Modules.User
             {
                 return DynamicApiSourceResult.Superseded();
             }
-            if (spaceLoadMore && Items != null)
-            {
-                foreach (var item in mapped)
-                {
-                    Items.Add(item);
-                }
-            }
-            else
-            {
-                Items = mapped;
-            }
-            //SpaceHistory 的下一页游标是上一页最后一张卡的动态 ID，本页没有卡片就没有下一页
-            CanLoadMore = mapped.Count > 0;
+            feedPageKind = FeedPageKind.SpaceRest;
+            //SpaceHistory 没有页序号：窗口里的页序号按"上一页 + 1"接着数，检查点用它回放同一页
+            var appendSpacePage = spaceLoadMore && Items != null;
+            PublishFeedPage(appendSpacePage ? feedWindow.LastPageNumber + 1 : 1, mapped, cursor, null, appendSpacePage);
+            //SpaceHistory 的下一页游标是上一页最后一张卡的动态 ID，本页没有卡片就没有下一页；
+            //页条目数取解析页的卡片数，不取去重后的幸存数
+            CanLoadMore = items.Count > 0;
             lastPageFailed = false;
             ShowError = false;
             ErrorMsg = "";
@@ -1436,6 +1460,287 @@ namespace BiliLite.Modules.User
             }
             return true;
         }
+
+        /// <summary>
+        /// 发布一页：列表唯一的追加入口。所有发布点（聚合流/gRPC/REST/空间/专栏/话题）都走这里，
+        /// 顺序是"窗口按 ID 去重 → 上屏 → 按 ID 摘掉被淘汰页的行"。
+        /// 分页进度不在这里算：CanContinuePaging 收的是解析页的条目数，不是去重后的幸存数。
+        /// </summary>
+        private void PublishFeedPage(int pageNumber, IList<DynamicItemDisplayModel> pageItems,
+            string cursorBeforePage, string cursorAfterPage, bool append)
+        {
+            if (!append)
+            {
+                //首屏/换源：窗口整体重开，淘汰检查点与去重集合一起作废
+                feedWindow.Reset();
+            }
+            var survivors = feedWindow.AcceptItems(pageItems);
+            var evicted = feedWindow.AddPage(pageNumber, survivors, cursorBeforePage, cursorAfterPage);
+            if (!append)
+            {
+                var collection = new ObservableCollection<DynamicItemDisplayModel>();
+                foreach (var item in survivors)
+                {
+                    collection.Add(item);
+                }
+                Items = collection;
+            }
+            else
+            {
+                if (Items == null)
+                {
+                    Items = new ObservableCollection<DynamicItemDisplayModel>();
+                }
+                foreach (var item in survivors)
+                {
+                    Items.Add(item);
+                }
+            }
+            //淘汰是整页的：被移出窗口的页按 ID 从列表里摘掉，不按索引猜
+            RemoveEvictedItems(evicted);
+            RaiseFeedWindowChanged();
+        }
+
+        private void RemoveEvictedItems(IList<DynamicFeedPageCheckpoint> evicted)
+        {
+            if (evicted == null || evicted.Count == 0 || Items == null)
+            {
+                return;
+            }
+            //被淘汰页的 ID：只用来从列表里摘行，不进任何长期集合
+            var released = new List<string>();
+            foreach (var checkpoint in evicted)
+            {
+                if (checkpoint.DynamicIds == null)
+                {
+                    continue;
+                }
+                foreach (var id in checkpoint.DynamicIds)
+                {
+                    released.Add(id);
+                }
+            }
+            if (released.Count == 0)
+            {
+                return;
+            }
+            for (var i = Items.Count - 1; i >= 0; i--)
+            {
+                var item = Items[i];
+                if (item != null && !string.IsNullOrEmpty(item.DynamicID) && released.Contains(item.DynamicID))
+                {
+                    Items.RemoveAt(i);
+                }
+            }
+        }
+
+        private void RaiseFeedWindowChanged()
+        {
+            DoPropertyChanged("HasEvictedPages");
+            DoPropertyChanged("EvictedPageCount");
+        }
+
+        /// <summary>
+        /// 重新加载更早的页：取最早一个检查点，按它记的游标重放同一页，成功后插回列表头部。
+        /// 失败不动现有行，只提示一次；检查点留在原地等下次再试。
+        /// </summary>
+        public async void ReloadEarlier()
+        {
+            if (reloadInFlight)
+            {
+                return;
+            }
+            DynamicFeedPageCheckpoint checkpoint;
+            if (!feedWindow.TryPeekCheckpoint(out checkpoint))
+            {
+                return;
+            }
+            if (feedPageKind == FeedPageKind.None || feedPageKind == FeedPageKind.Legacy)
+            {
+                //旧接口的话题流没有游标，回放不了某一页
+                Utils.ShowMessageToast("这条动态流不支持重新加载更早的页");
+                return;
+            }
+            reloadInFlight = true;
+            var generation = requestGeneration;
+            var requestDynamicType = DynamicType;
+            var requestItemType = UserDynamicType;
+            try
+            {
+                LogHelper.Log("User dynamic VM stage=reload-earlier-request page=" + checkpoint.PageNumber
+                    + " offset=" + (checkpoint.CursorBeforePage ?? "") + " generation=" + generation, LogType.DEBUG);
+                var page = await RequestFeedPageAsync(feedPageKind, checkpoint.PageNumber, checkpoint.CursorBeforePage, requestItemType);
+                if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
+                {
+                    LogHelper.Log("User dynamic VM stage=reload-earlier discarded generation=" + generation, LogType.DEBUG);
+                    return;
+                }
+                if (page == null || page.Count == 0)
+                {
+                    LogHelper.Log("User dynamic VM stage=reload-earlier-empty page=" + checkpoint.PageNumber
+                        + " generation=" + generation, LogType.INFO);
+                    Utils.ShowMessageToast("更早的页没有可显示的动态");
+                    return;
+                }
+                //淘汰时这些 ID 已从去重集合释放，这里重新接受；插回窗口最前端且不参与本次淘汰
+                var survivors = feedWindow.AcceptItems(page);
+                DynamicFeedPageCheckpoint taken;
+                if (survivors.Count == 0 || !feedWindow.TryTakeCheckpoint(out taken))
+                {
+                    return;
+                }
+                if (Items == null)
+                {
+                    Items = new ObservableCollection<DynamicItemDisplayModel>();
+                }
+                for (var i = survivors.Count - 1; i >= 0; i--)
+                {
+                    Items.Insert(0, survivors[i]);
+                }
+                feedWindow.ReinsertPage(taken.PageNumber, survivors, taken.CursorBeforePage, taken.CursorAfterPage);
+                RaiseFeedWindowChanged();
+                LogHelper.Log("User dynamic VM stage=reload-earlier-published page=" + taken.PageNumber
+                    + " count=" + survivors.Count + " generation=" + generation, LogType.INFO);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("User dynamic VM stage=reload-earlier-failed page=" + checkpoint.PageNumber, LogType.ERROR, ex);
+                Utils.ShowMessageToast(DescribeFeedFailure("更早的页加载失败", ex.Message));
+            }
+            finally
+            {
+                reloadInFlight = false;
+            }
+        }
+
+        /// <summary>
+        /// 按窗口所属的那一路重放"某一页"：页序号与游标都来自检查点。
+        /// 解析失败/形状不对返回 null（调用方只提示，不动现有行）。
+        /// </summary>
+        private async Task<List<DynamicItemDisplayModel>> RequestFeedPageAsync(FeedPageKind kind, int page, string cursor,
+            UserDynamicType itemType)
+        {
+            switch (kind)
+            {
+                case FeedPageKind.Article:
+                case FeedPageKind.PolymerAll:
+                case FeedPageKind.PolymerVideo:
+                {
+                    var feedType = kind == FeedPageKind.Article
+                        ? "article"
+                        : (kind == FeedPageKind.PolymerVideo ? "video" : "all");
+                    var response = await WebDynamicFeedApi.CreateFeedRequest(page, cursor, feedType).Request();
+                    var parsed = WebDynamicFeedParser.Parse(response);
+                    if (!parsed.IsSuccess)
+                    {
+                        LogHelper.Log("User dynamic VM stage=reload-earlier-parse-failed type=" + feedType + " page=" + page
+                            + " failure=" + parsed.Failure + " field=" + parsed.Stage + " message=" + parsed.Message, LogType.ERROR);
+                        return null;
+                    }
+                    return MapWebCards(parsed.Value.Items);
+                }
+                case FeedPageKind.GrpcAll:
+                {
+                    var reply = await grpcService.GetDynAll(page, cursor);
+                    if (reply == null || reply.DynamicList == null)
+                    {
+                        return null;
+                    }
+                    return MapGrpcCards(DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List));
+                }
+                case FeedPageKind.GrpcVideo:
+                {
+                    var reply = await grpcService.GetDynVideo(page, cursor, null);
+                    if (reply == null || reply.DynamicList == null)
+                    {
+                        return null;
+                    }
+                    return MapGrpcCards(DynamicGrpcMapper.MapToUserCards(reply.DynamicList.List));
+                }
+                case FeedPageKind.Rest:
+                {
+                    var response = await dynamicAPI.DyanmicNew(itemType, cursor).Request();
+                    return MapLegacyPage(response, true);
+                }
+                case FeedPageKind.SpaceGrpc:
+                {
+                    var reply = await grpcService.GetDynSpace(long.Parse(Uid), "space", page, cursor);
+                    if (reply == null)
+                    {
+                        return null;
+                    }
+                    return MapGrpcCards(DynamicGrpcMapper.MapToUserCards(reply.List));
+                }
+                case FeedPageKind.SpaceRest:
+                {
+                    var response = await dynamicAPI.SpaceHistory(Uid, cursor).Request();
+                    return MapLegacyPage(response, false);
+                }
+                default:
+                    return null;
+            }
+        }
+
+        private List<DynamicItemDisplayModel> MapLegacyPage(HttpResults response, bool skipCardsWithoutDesc)
+        {
+            var parsed = LegacyDynamicFeedParser.Parse(response);
+            if (!parsed.IsSuccess)
+            {
+                LogHelper.Log("User dynamic VM stage=reload-earlier-parse-failed failure=" + parsed.Failure
+                    + " field=" + parsed.Stage + " message=" + parsed.Message, LogType.ERROR);
+                return null;
+            }
+            List<DynamicCardModel> cards;
+            if (!LegacyDynamicFeedParser.TryDeserialize(parsed.Value.Cards, jsonSerializerSettings, out cards))
+            {
+                return null;
+            }
+            return MapLegacyCards(cards, skipCardsWithoutDesc);
+        }
+
+        private List<DynamicItemDisplayModel> MapWebCards(JArray items)
+        {
+            var mapped = new List<DynamicItemDisplayModel>();
+            var cards = WebDynamicFeedMapper.MapToUserFeedCards(items);
+            foreach (var card in cards)
+            {
+                mapped.Add(ConvertToDisplay2024(card));
+            }
+            return mapped;
+        }
+
+        private List<DynamicItemDisplayModel> MapGrpcCards(List<DynamicCardModel2024> cards)
+        {
+            var mapped = new List<DynamicItemDisplayModel>();
+            if (cards == null)
+            {
+                return mapped;
+            }
+            foreach (var card in cards)
+            {
+                mapped.Add(ConvertToDisplay2024(card));
+            }
+            return mapped;
+        }
+
+        private List<DynamicItemDisplayModel> MapLegacyCards(List<DynamicCardModel> cards, bool skipCardsWithoutDesc)
+        {
+            var mapped = new List<DynamicItemDisplayModel>();
+            if (cards == null)
+            {
+                return mapped;
+            }
+            foreach (var card in cards)
+            {
+                if (skipCardsWithoutDesc && card?.desc == null)
+                {
+                    continue;
+                }
+                mapped.Add(ConvertToDisplay(card));
+            }
+            return mapped;
+        }
+
         //REST 动态流的 has_more 可能是 true/false，也可能是 0/1
         private static readonly Regex BiliStatusCodePattern = new Regex(@"bili-status-code=(-?\d+)", RegexOptions.Compiled);
         private static readonly Regex GrpcMessageCodePattern = new Regex(@"grpc-message=(-?\d+)", RegexOptions.Compiled);
@@ -1592,7 +1897,11 @@ namespace BiliLite.Modules.User
         }
 
 
-        private DynamicItemDisplayModel ConvertToDisplay(DynamicCardModel item)
+        /// <summary>
+        /// 老接口卡片 → 显示模型。depth 0 是外卡，1 是它内嵌的那张原卡；
+        /// 与 2024 卡片一样到 1 就停，更深的 orig 只留祖先 ID，不建第三层模型。
+        /// </summary>
+        private DynamicItemDisplayModel ConvertToDisplay(DynamicCardModel item, int depth = 0)
         {
             try
             {
@@ -1628,6 +1937,7 @@ namespace BiliLite.Modules.User
                     DeleteCommand = DeleteCommand,
                     RepostCommand = RepostCommand,
                     DetailCommand = DetailCommand,
+                    DetailByIdCommand = DetailByIdCommand,
                     WatchLaterCommand = watchLaterVM.AddCommand,
                     Liked = item.desc.is_liked == 1
                 };
@@ -1638,7 +1948,8 @@ namespace BiliLite.Modules.User
                         Type = DynamicDisplayType.Other,
                         IntType = 999,
                         DynamicID = item.desc.dynamic_id,
-                        ContentStr = ""
+                        ContentStr = "",
+                        DetailByIdCommand = DetailByIdCommand
                     };
                 }
                 data.OneRowInfo = DynamicParse.ParseOneRowInfo(data.Type, card);
@@ -1674,7 +1985,12 @@ namespace BiliLite.Modules.User
 
                 if (data.Type == DynamicDisplayType.Repost)
                 {
-                    if (card.ContainsKey("origin_user"))
+                    if (!DynamicCardDepth.CanExpandOrig(depth))
+                    {
+                        // 到顶了：第三层不再建模型，只留一个祖先行目标（动态 ID，不是 aid/rid）
+                        DynamicCardProjection.ApplyAncestry(data, item.desc.orig_dy_id);
+                    }
+                    else if (card.ContainsKey("origin_user"))
                     {
                         var originUser = JsonConvert.DeserializeObject<DynamicCardDescUserProfileModel>(card["origin_user"].ToString());
                         var originDisplay = ConvertToDisplay(new DynamicCardModel()
@@ -1689,9 +2005,10 @@ namespace BiliLite.Modules.User
                                 dynamic_id = item.desc.orig_dy_id,
                                 type = item.desc.orig_type
                             }
-                        });
+                        }, depth + 1);
                         originDisplay.IsRepost = true;
                         data.OriginInfo = new List<DynamicItemDisplayModel>() { originDisplay };
+                        DynamicCardProjection.HoistAncestry(data, originDisplay);
                     }
                     else
                     {
@@ -1705,7 +2022,8 @@ namespace BiliLite.Modules.User
                         }
                     };
                     }
-
+                    // 有原卡（含 Miss 占位）才有框；到顶没有 OriginInfo 时边框收起
+                    DynamicCardProjection.ApplyOriginVisibility(data);
                 }
                 if (item.desc.comment == 0 && card.ContainsKey("stat"))
                 {
@@ -1849,7 +2167,11 @@ namespace BiliLite.Modules.User
             }
 
         }
-        private DynamicItemDisplayModel ConvertToDisplay2024(DynamicCardModel2024 item)
+        /// <summary>
+        /// 卡片数据 → 显示模型。depth 0 是外卡，1 是它内嵌的那张原卡；
+        /// 到 1 就不再建第三层模型，只把被截断的祖先留成一行可跳转的 ID（CARD_PLAN §3.7）。
+        /// </summary>
+        private DynamicItemDisplayModel ConvertToDisplay2024(DynamicCardModel2024 item, int depth = 0)
         {
             try
             {
@@ -1862,7 +2184,8 @@ namespace BiliLite.Modules.User
                         Type = DynamicDisplayType.Other,
                         IntType = 999,
                         DynamicID = item.id_str,
-                        ContentStr = item.modules?.module_dynamic?.desc?.text ?? ""
+                        ContentStr = item.modules?.module_dynamic?.desc?.text ?? "",
+                        DetailByIdCommand = DetailByIdCommand
                     };
                 }
                 var data = new DynamicItemDisplayModel()
@@ -1892,19 +2215,43 @@ namespace BiliLite.Modules.User
                     DeleteCommand = DeleteCommand,
                     RepostCommand = RepostCommand,
                     DetailCommand = DetailCommand,
+                    DetailByIdCommand = DetailByIdCommand,
                     WatchLaterCommand = watchLaterVM.AddCommand,
                     Liked = item.liked
                 };
                 // 评论目标对、附件摘要与互动可用性都由卡片数据归一化后搬过来，不在这里按显示类型再猜
                 DynamicCardProjection.Apply(data, item);
                 //prefix
-                if(data.Type == DynamicDisplayType.Repost)
+                if (data.Type == DynamicDisplayType.Repost)
                 {
-                    var orig = ConvertToDisplay2024(item.orig);
-                    orig.IsRepost = true;
-                    data.OriginInfo =new List<DynamicItemDisplayModel> { orig };
+                    if (DynamicCardDepth.CanExpandOrig(depth))
+                    {
+                        // 原卡自己也可能是转发卡：它被截断的祖先由 HoistAncestry 搬到外卡上显示一次
+                        var orig = item.orig != null
+                            ? ConvertToDisplay2024(item.orig, depth + 1)
+                            : new DynamicItemDisplayModel
+                            {
+                                Type = DynamicDisplayType.Miss,
+                                IntType = 1024,
+                                DynamicID = item.AncestryDynamicID ?? ""
+                            };
+                        orig.IsRepost = true;
+                        data.OriginInfo = new List<DynamicItemDisplayModel> { orig };
+                        DynamicCardProjection.HoistAncestry(data, orig);
+                    }
+                    else
+                    {
+                        // 到顶了：第三层不再建模型，只留一个祖先行目标（动态 ID，不是 aid/rid）
+                        DynamicCardProjection.ApplyAncestry(data, !string.IsNullOrEmpty(item.AncestryDynamicID)
+                            ? item.AncestryDynamicID
+                            : (item.orig?.id_str ?? ""));
+                    }
+                    // 深度 0 有原卡（含 Miss 占位）才有框；深度到顶没有 OriginInfo 时边框收起
+                    DynamicCardProjection.ApplyOriginVisibility(data);
                 }
                 data.OneRowInfo = DynamicParse.ParseOneRowInfo2024(data, item);
+                // 标题只显示一次：预览模板（OneRow / Reserve）自己有标题槽的卡片，外层标题留空
+                DynamicCardProjection.ApplyTitleSlot(data, item.title, DynamicParse.PreviewShowsTitle(data));
                 //post fix
                 if (data.ImagesInfo != null)
                 {

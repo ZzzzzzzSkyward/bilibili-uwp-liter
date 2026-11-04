@@ -337,6 +337,36 @@ namespace BiliLite.Controls.Dynamic
             return new InlineUIContainer { Child = border };
         }
 
+        /// <summary>
+        /// 预览模板（OneRow / Reserve）自己会渲染 OneRowInfo.Title 的显示类型。
+        /// 这些卡片的标题只由预览模板显示一次，外层卡片标题槽必须留空，否则同一句话出现两遍。
+        /// </summary>
+        public static bool PreviewShowsTitle(DynamicItemDisplayModel data)
+        {
+            if (data == null || data.OneRowInfo == null || string.IsNullOrEmpty(data.OneRowInfo.Title))
+            {
+                return false;
+            }
+
+            switch (data.Type)
+            {
+                case DynamicDisplayType.Reserve:
+                case DynamicDisplayType.Video:
+                case DynamicDisplayType.Season:
+                case DynamicDisplayType.Music:
+                case DynamicDisplayType.Web:
+                case DynamicDisplayType.Article:
+                case DynamicDisplayType.Live:
+                case DynamicDisplayType.LiveShare:
+                case DynamicDisplayType.MediaList:
+                case DynamicDisplayType.CustomSeason:
+                case DynamicDisplayType.Cheese:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         public static DynamicItemDisplayOneRowInfo ParseOneRowInfo2024(DynamicItemDisplayModel data, Modules.DynamicCardModel2024 item)
         {
             var info = new DynamicItemDisplayOneRowInfo()

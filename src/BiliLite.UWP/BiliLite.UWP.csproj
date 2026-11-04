@@ -176,6 +176,7 @@
     <Compile Include="Services\GrpcService.cs" />
     <Compile Include="Services\DynamicApiSelector.cs" />
     <Compile Include="Services\DynamicApiSelection.cs" />
+    <Compile Include="Services\DynamicFeedWindow.cs" />
     <Compile Include="Services\DynamicApiHistoryFileStore.cs" />
     <Compile Include="Services\MediaListService.cs" />
     <Compile Include="Helpers\DynamicImageRules.cs" />
@@ -280,6 +281,9 @@
     </Compile>
     <Compile Include="Controls\Dynamic\DynamicItemControl.xaml.cs">
       <DependentUpon>DynamicItemControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\Dynamic\DynamicPreviewRow.xaml.cs">
+      <DependentUpon>DynamicPreviewRow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\Dynamic\RichTextControl.xaml.cs">
       <DependentUpon>RichTextControl.xaml</DependentUpon>
@@ -749,6 +753,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\Dynamic\DynamicItemControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\Dynamic\DynamicPreviewRow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

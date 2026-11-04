@@ -2,11 +2,14 @@
 using System.Collections.Generic;
 using System.IO;
 using Bilibili.App.Dynamic.V2;
+using BiliLite.Controls.Dynamic;
 using BiliLite.Helpers;
 using BiliLite.Modules;
 using BiliLite.Parsing.Dynamic;
+using BiliLite.Services;
 using Google.Protobuf;
 using Newtonsoft.Json.Linq;
+using Windows.UI.Xaml;
 
 namespace G3Probe
 {
@@ -54,6 +57,17 @@ namespace G3Probe
             GrpcCardKeepsAdditionalModule();
             GrpcStatKeepsForbiddenFlags();
             GrpcEmojiNodeKeepsIconAndText();
+            WebOpusTitleFeedsTheCardTitle();
+            GrpcOpusTitleReachesTheCardFromBothSources();
+            ForwardChainStopsAfterTheSecondCard();
+            DisplayTitleSlotShowsTheTitleOnce();
+            AncestryRowCarriesOnlyTheTruncatedAncestor();
+            CardDepthLimitIsShared();
+            FeedWindowKeepsTenPagesAndEvictsTheOldest();
+            FeedWindowKeepsTheAnchorPage();
+            FeedWindowDropsRepeatedIds();
+            FeedWindowReleasesEvictedIdsForReload();
+            ArticleFeedUsesTheSharedWebParser();
             PlainTextKeepsEveryParagraph();
             BodyIsNotTruncatedAtOneThousandCharacters();
 
@@ -1475,6 +1489,319 @@ namespace G3Probe
         }
 
         // 纯文本兜底（预约卡/旧来源）：来源换行才断行，空行保留
+
+        /// <summary>
+        /// 图文卡的标题只在 major.opus.title 里：有图走 draw、没图走 article，两条路的 card.title
+        /// 都必须等于这个标题；正文仍只有 summary 那一段，标题不拼进正文、不重复出现。
+        /// </summary>
+        private static void WebOpusTitleFeedsTheCardTitle()
+        {
+            var pictureFeed = new JArray
+            {
+                new JObject
+                {
+                    ["id_str"] = "7001",
+                    ["type"] = "DYNAMIC_TYPE_OPUS",
+                    ["modules"] = new JObject
+                    {
+                        ["module_author"] = new JObject { ["mid"] = 7, ["name"] = "图文up" },
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["opus"] = new JObject
+                                {
+                                    ["id"] = "7001",
+                                    ["title"] = "一篇图文的标题",
+                                    ["summary"] = new JObject { ["text"] = "正文只有这一段摘要" },
+                                    ["pics"] = new JArray
+                                    {
+                                        new JObject { ["url"] = "http://pic/1.jpg", ["width"] = 800, ["height"] = 600 },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+            var pictureCard = WebDynamicFeedMapper.MapToUserFeedCards(pictureFeed)[0];
+            Check(pictureCard.modules.module_dynamic.major.opus != null
+                    && pictureCard.modules.module_dynamic.major.opus.title == "一篇图文的标题",
+                "web opus: major.opus.title keeps the opus title on the picture path");
+            Check(pictureCard.title == "一篇图文的标题",
+                "web opus: the picture card title comes from major.opus.title (title=" + pictureCard.title + ")");
+            Check(pictureCard.modules.module_dynamic.desc.text == "正文只有这一段摘要",
+                "web opus: the body is the summary only, the title is not prepended");
+
+            var textFeed = new JArray
+            {
+                new JObject
+                {
+                    ["id_str"] = "7002",
+                    ["type"] = "DYNAMIC_TYPE_OPUS",
+                    ["modules"] = new JObject
+                    {
+                        ["module_author"] = new JObject { ["mid"] = 7, ["name"] = "图文up" },
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["major"] = new JObject
+                            {
+                                ["opus"] = new JObject
+                                {
+                                    ["id"] = "7002",
+                                    ["title"] = "无图图文的标题",
+                                    ["summary"] = new JObject { ["text"] = "无图图文的正文" },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+            var textCard = WebDynamicFeedMapper.MapToUserFeedCards(textFeed)[0];
+            Check(textCard.modules.module_dynamic.major.opus != null
+                    && textCard.modules.module_dynamic.major.opus.title == "无图图文的标题",
+                "web opus: major.opus.title survives when the opus has no pictures");
+            Check(textCard.title == "无图图文的标题",
+                "web opus: the text card title comes from major.opus.title (title=" + textCard.title + ")");
+            Check(textCard.modules.module_dynamic.desc.text == "无图图文的正文",
+                "web opus: the text card body is still the summary only");
+        }
+
+        /// <summary>
+        /// gRPC 的标题有两个来源：Extend.OpusSummary（老形状）与 ModuleOpusSummary 模块。
+        /// 两个来源都要落到 major.opus.title，card.title 才能读到。
+        /// </summary>
+        /// <summary>标题在 proto 里是 Paragraph：用 RawText 节点拼出一段可读标题。</summary>
+        private static Paragraph TitleParagraph(string text)
+        {
+            var paragraph = new Paragraph { Text = new TextParagraph() };
+            paragraph.Text.Nodes.Add(new TextNode { RawText = text });
+            return paragraph;
+        }
+
+        private static void GrpcOpusTitleReachesTheCardFromBothSources()
+        {
+            var extendOnly = new DynamicItem
+            {
+                CardType = DynamicType.Word,
+                Extend = new Extend
+                {
+                    DynIdStr = "7101",
+                    OpusSummary = new ModuleOpusSummary { Title = TitleParagraph("扩展里的标题") },
+                },
+            };
+            var extendCard = DynamicGrpcMapper.MapToUserCards(new[] { extendOnly })[0];
+            Check(extendCard.modules.module_dynamic.major.opus != null
+                    && extendCard.modules.module_dynamic.major.opus.title == "扩展里的标题",
+                "grpc opus: Extend.OpusSummary.Title reaches major.opus.title");
+            Check(extendCard.title == "扩展里的标题",
+                "grpc opus: Extend.OpusSummary.Title reaches card.title (title=" + extendCard.title + ")");
+
+            var moduleOnly = new DynamicItem
+            {
+                CardType = DynamicType.Word,
+                Extend = new Extend { DynIdStr = "7102" },
+            };
+            moduleOnly.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleOpusSummary,
+                ModuleOpusSummary = new ModuleOpusSummary { Title = TitleParagraph("模块里的标题") },
+            });
+            var moduleCard = DynamicGrpcMapper.MapToUserCards(new[] { moduleOnly })[0];
+            Check(moduleCard.modules.module_dynamic.major.opus != null
+                    && moduleCard.modules.module_dynamic.major.opus.title == "模块里的标题",
+                "grpc opus: ModuleOpusSummary.Title reaches major.opus.title");
+            Check(moduleCard.title == "模块里的标题",
+                "grpc opus: ModuleOpusSummary.Title reaches card.title (title=" + moduleCard.title + ")");
+        }
+
+        /// <summary>
+        /// 三层转发 A→B→C：卡片数据只有 A 与 B 两层，B 的 orig 不再搬进模型，
+        /// 只把 C 的动态 ID 记到 B 的祖先槽上，供显示层做一行跳转。
+        /// </summary>
+        private static void ForwardChainStopsAfterTheSecondCard()
+        {
+            var webFeed = new JArray
+            {
+                new JObject
+                {
+                    ["id_str"] = "7201",
+                    ["type"] = "DYNAMIC_TYPE_FORWARD",
+                    ["modules"] = new JObject
+                    {
+                        ["module_author"] = new JObject { ["mid"] = 1, ["name"] = "A" },
+                        ["module_dynamic"] = new JObject
+                        {
+                            ["desc"] = new JObject { ["text"] = "A 的转发语" },
+                        },
+                    },
+                    ["orig"] = new JObject
+                    {
+                        ["id_str"] = "7202",
+                        ["type"] = "DYNAMIC_TYPE_FORWARD",
+                        ["modules"] = new JObject
+                        {
+                            ["module_author"] = new JObject { ["mid"] = 2, ["name"] = "B" },
+                            ["module_dynamic"] = new JObject
+                            {
+                                ["desc"] = new JObject { ["text"] = "B 的转发语" },
+                            },
+                        },
+                        ["orig"] = new JObject
+                        {
+                            ["id_str"] = "7203",
+                            ["type"] = "DYNAMIC_TYPE_WORD",
+                            ["modules"] = new JObject
+                            {
+                                ["module_author"] = new JObject { ["mid"] = 3, ["name"] = "C" },
+                                ["module_dynamic"] = new JObject
+                                {
+                                    ["desc"] = new JObject { ["text"] = "C 的正文" },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+            var webCard = WebDynamicFeedMapper.MapToUserFeedCards(webFeed)[0];
+            Check(webCard.orig != null && webCard.orig.id_str == "7202",
+                "web forward: the outer card keeps exactly the original (B)");
+            Check(webCard.orig.orig == null,
+                "web forward: the third card (C) is not mapped into the model");
+            Check(webCard.orig.AncestryDynamicID == "7203",
+                "web forward: the truncated ancestor id is recorded (id="
+                    + (webCard.orig.AncestryDynamicID ?? "null") + ")");
+
+            var c = new DynamicItem
+            {
+                CardType = DynamicType.Word,
+                Extend = new Extend { DynIdStr = "7303" },
+            };
+            var b = new DynamicItem
+            {
+                CardType = DynamicType.Forward,
+                Extend = new Extend { DynIdStr = "7302", OrigDynIdStr = "7303" },
+            };
+            b.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleDynamic,
+                ModuleDynamic = new ModuleDynamic
+                {
+                    DynForward = new MdlDynForward { Item = c },
+                },
+            });
+            var a = new DynamicItem
+            {
+                CardType = DynamicType.Forward,
+                Extend = new Extend { DynIdStr = "7301", OrigDynIdStr = "7302" },
+            };
+            a.Modules.Add(new Module
+            {
+                ModuleType = DynModuleType.ModuleDynamic,
+                ModuleDynamic = new ModuleDynamic
+                {
+                    DynForward = new MdlDynForward { Item = b },
+                },
+            });
+
+            var grpcCard = DynamicGrpcMapper.MapToUserCards(new[] { a })[0];
+            Check(grpcCard.orig != null && grpcCard.orig.id_str == "7302",
+                "grpc forward: the outer card keeps exactly the original (B)");
+            Check(grpcCard.orig.orig == null,
+                "grpc forward: the third card (C) is not mapped into the model");
+            Check(grpcCard.orig.AncestryDynamicID == "7303",
+                "grpc forward: the truncated ancestor id is recorded (id="
+                    + (grpcCard.orig.AncestryDynamicID ?? "null") + ")");
+        }
+
+        /// <summary>
+        /// 标题只显示一次：预览模板（OneRow / Reserve）自己渲染标题的卡片把标题槽留空，
+        /// 其余卡片把标题放进标题槽；两种情况标题都不进正文。
+        /// </summary>
+        private static void DisplayTitleSlotShowsTheTitleOnce()
+        {
+            var previewCard = new DynamicItemDisplayModel
+            {
+                Type = DynamicDisplayType.Video,
+                OneRowInfo = new DynamicItemDisplayOneRowInfo { Title = "视频标题" },
+            };
+            DynamicCardProjection.ApplyTitleSlot(previewCard, "视频标题", true);
+            Check(previewCard.Title == "" && previewCard.TitleVisibility == Visibility.Collapsed,
+                "title slot: a card whose preview template shows the title keeps the slot empty");
+
+            var photoCard = new DynamicItemDisplayModel
+            {
+                Type = DynamicDisplayType.Photo,
+                OneRowInfo = new DynamicItemDisplayOneRowInfo { Desc = "图片说明" },
+            };
+            DynamicCardProjection.ApplyTitleSlot(photoCard, "图片动态的标题", false);
+            Check(photoCard.Title == "图片动态的标题" && photoCard.TitleVisibility == Visibility.Visible,
+                "title slot: a photo card without a preview title shows the title once");
+
+            var noTitle = new DynamicItemDisplayModel { Type = DynamicDisplayType.Text };
+            DynamicCardProjection.ApplyTitleSlot(noTitle, "", false);
+            Check(noTitle.Title == "" && noTitle.TitleVisibility == Visibility.Collapsed,
+                "title slot: an empty title leaves the slot collapsed");
+
+            Check(new DynamicItemDisplayModel().Title == "",
+                "display model: the title slot defaults to the empty string (no title)");
+            Check(new DynamicItemDisplayModel().AncestryVisibility == Visibility.Collapsed,
+                "display model: the ancestry row is collapsed by default");
+            var wired = new DynamicItemDisplayModel { DetailByIdCommand = new RelayCommand<string>(id => { }) };
+            Check(wired.DetailByIdCommand != null,
+                "display model: DetailByIdCommand takes a string dynamic id");
+        }
+
+        /// <summary>
+        /// A 转发 B 转发 C：模型最外层只有 B，C 只留成一行祖先 ID；
+        /// 祖先行归最外层所有，B 自己不能再出现一遍。
+        /// </summary>
+        private static void AncestryRowCarriesOnlyTheTruncatedAncestor()
+        {
+            var outer = new DynamicItemDisplayModel { Type = DynamicDisplayType.Repost, DynamicID = "7401" };
+            var original = new DynamicItemDisplayModel { Type = DynamicDisplayType.Repost, DynamicID = "7402" };
+            DynamicCardProjection.ApplyAncestry(original, "7403");
+            outer.OriginInfo = new List<DynamicItemDisplayModel> { original };
+
+            DynamicCardProjection.HoistAncestry(outer, original);
+            Check(outer.AncestryDynamicID == "7403" && outer.AncestryVisibility == Visibility.Visible,
+                "ancestry: the outer card carries the truncated ancestor id");
+            Check(original.AncestryDynamicID == "" && original.AncestryVisibility == Visibility.Collapsed,
+                "ancestry: the embedded original does not repeat the ancestor row");
+
+            var twoLevelOuter = new DynamicItemDisplayModel { Type = DynamicDisplayType.Repost };
+            var twoLevelOriginal = new DynamicItemDisplayModel { Type = DynamicDisplayType.Text };
+            DynamicCardProjection.HoistAncestry(twoLevelOuter, twoLevelOriginal);
+            Check(twoLevelOuter.AncestryVisibility == Visibility.Collapsed,
+                "ancestry: a two-level repost shows no ancestry row");
+
+            var orphan = new DynamicItemDisplayModel { Type = DynamicDisplayType.Repost };
+            DynamicCardProjection.ApplyAncestry(orphan, "");
+            Check(orphan.AncestryVisibility == Visibility.Collapsed && orphan.AncestryDynamicID == "",
+                "ancestry: an unknown ancestor id leaves the row collapsed (no dead row)");
+
+            // 深度到顶时 OriginInfo 为空：内嵌原动态那块不能画出一个空框
+            DynamicCardProjection.ApplyOriginVisibility(outer);
+            Check(outer.OriginVisibility == Visibility.Visible,
+                "origin box: a card with an embedded original keeps the bordered block");
+            DynamicCardProjection.ApplyOriginVisibility(original);
+            Check(original.OriginVisibility == Visibility.Collapsed,
+                "origin box: a truncated original with no embedded card collapses the bordered block");
+            Check(new DynamicItemDisplayModel().OriginVisibility == Visibility.Collapsed,
+                "origin box: the bordered block is collapsed by default");
+        }
+
+        /// <summary>深度上限只有一个定义：外卡可以展开一层，原卡不能再展开。</summary>
+        private static void CardDepthLimitIsShared()
+        {
+            Check(DynamicCardDepth.CanExpandOrig(0),
+                "card depth: the outer card may expand one original");
+            Check(!DynamicCardDepth.CanExpandOrig(DynamicCardDepth.Original),
+                "card depth: the original card may not expand a third layer");
+            Check(!DynamicCardDepth.CanExpandOrig(2),
+                "card depth: anything deeper than the original is also refused");
+        }
+
         private static void PlainTextKeepsEveryParagraph()
         {
             var segments = RichTextFlow.Build(null, "第一段\r\n\r\n第二段");
@@ -1515,6 +1842,121 @@ namespace G3Probe
                 dir = dir.Parent;
             }
             throw new InvalidOperationException("repository root not found from " + AppContext.BaseDirectory);
+        }
+
+        /// <summary>一页 5 张卡：ID 按页序号可预测。</summary>
+        private static List<DynamicItemDisplayModel> FeedPageItems(int page, int count)
+        {
+            var items = new List<DynamicItemDisplayModel>();
+            for (var i = 0; i < count; i++)
+            {
+                items.Add(new DynamicItemDisplayModel { DynamicID = "p" + page + "-" + i });
+            }
+            return items;
+        }
+
+        /// <summary>按页请求时的游标（第 1 页也带一个，好断言检查点里记的就是它）。</summary>
+        private static IList<DynamicFeedPageCheckpoint> AddFeedPages(DynamicFeedWindow window, int pageCount, int perPage,
+            List<string> cursorsUsed)
+        {
+            IList<DynamicFeedPageCheckpoint> evicted = null;
+            for (var page = 1; page <= pageCount; page++)
+            {
+                var cursor = "cursor-" + (page - 1);
+                cursorsUsed.Add(cursor);
+                var survivors = window.AcceptItems(FeedPageItems(page, perPage));
+                evicted = window.AddPage(page, survivors, cursor, "cursor-" + page);
+            }
+            return evicted;
+        }
+
+        private static void FeedWindowKeepsTenPagesAndEvictsTheOldest()
+        {
+            var window = new DynamicFeedWindow();
+            var cursors = new List<string>();
+            var evicted = AddFeedPages(window, 11, 5, cursors);
+
+            Check(DynamicFeedWindow.MaxRetainedPages == 10, "feed window: cap starts at 10 pages (CARD_PLAN §9)");
+            Check(window.PageCount == 10, "feed window: 11 pages leave exactly 10 retained");
+            Check(evicted != null && evicted.Count == 1, "feed window: the 11th page evicts exactly one page");
+            Check(evicted[0].PageNumber == 1, "feed window: the evicted page is the oldest one");
+            Check(evicted[0].CursorBeforePage == cursors[0],
+                "feed window: the checkpoint keeps the cursor that page was requested with");
+            Check(evicted[0].FirstDynamicId == "p1-0", "feed window: the checkpoint keeps the page's first dynamic id");
+            Check(evicted[0].Count == 5, "feed window: the checkpoint keeps the page item count");
+            Check(window.EvictedPageCount == 1 && window.HasEvictedPages,
+                "feed window: the evicted page is reported to the view");
+            Check(window.RetainedIdCount == 50, "feed window: the evicted page's ids left the dedupe set");
+        }
+
+        private static void FeedWindowKeepsTheAnchorPage()
+        {
+            var window = new DynamicFeedWindow();
+            window.AnchorDynamicId = "p1-2";
+            var cursors = new List<string>();
+            var evicted = AddFeedPages(window, 11, 5, cursors);
+
+            Check(window.PageCount == 11, "feed window: the anchor page is never evicted, so the window may exceed the cap");
+            Check(evicted != null && evicted.Count == 0, "feed window: nothing is evicted while the anchor sits on the oldest page");
+            Check(window.EvictedPageCount == 0, "feed window: no evicted-page hint while the anchor pins the oldest page");
+
+            window.AnchorDynamicId = "p11-0";
+            var resumed = window.AddPage(12, window.AcceptItems(FeedPageItems(12, 5)), "cursor-11", "cursor-12");
+            Check(resumed.Count == 2, "feed window: moving the anchor off the oldest page lets eviction resume");
+            Check(window.PageCount == 10, "feed window: eviction brings the window back down to the cap");
+        }
+
+        private static void FeedWindowDropsRepeatedIds()
+        {
+            var window = new DynamicFeedWindow();
+            var first = window.AcceptItems(FeedPageItems(1, 5));
+            Check(first.Count == 5, "feed window: a fresh page keeps all of its ids");
+
+            var overlap = new List<DynamicItemDisplayModel>();
+            overlap.Add(new DynamicItemDisplayModel { DynamicID = "p1-4" });
+            overlap.Add(new DynamicItemDisplayModel { DynamicID = "p1-0" });
+            overlap.Add(new DynamicItemDisplayModel { DynamicID = "p2-0" });
+            overlap.Add(new DynamicItemDisplayModel { DynamicID = "p2-0" });
+            overlap.Add(new DynamicItemDisplayModel { DynamicID = "p2-1" });
+            var survivors = window.AcceptItems(overlap);
+            Check(survivors.Count == 2, "feed window: repeated ids are dropped, first occurrence wins");
+            Check(survivors[0].DynamicID == "p2-0" && survivors[1].DynamicID == "p2-1",
+                "feed window: the surviving items keep page order");
+            Check(window.AcceptItems(FeedPageItems(1, 5)).Count == 0,
+                "feed window: an overlapping page publishes no duplicates at all");
+        }
+
+        private static void FeedWindowReleasesEvictedIdsForReload()
+        {
+            var window = new DynamicFeedWindow();
+            var cursors = new List<string>();
+            var evicted = AddFeedPages(window, 11, 5, cursors);
+            Check(evicted.Count == 1, "feed window: reload test starts from exactly one evicted page");
+
+            var reloaded = window.AcceptItems(FeedPageItems(1, 5));
+            Check(reloaded.Count == 5, "feed window: evicted ids are accepted again on reload (dedupe set released)");
+
+            DynamicFeedPageCheckpoint taken;
+            Check(window.TryTakeCheckpoint(out taken), "feed window: the earliest checkpoint is handed out for reload");
+            Check(taken.PageNumber == 1 && taken.CursorBeforePage == cursors[0],
+                "feed window: reload replays the page with the cursor recorded before it");
+
+            window.ReinsertPage(taken.PageNumber, reloaded, taken.CursorBeforePage, "cursor-1");
+            Check(window.PageCount == 11 && window.Pages[0].PageNumber == 1,
+                "feed window: the reloaded page is reinserted at the front and not evicted at once");
+            Check(!window.HasEvictedPages, "feed window: taking the only checkpoint clears the hint");
+        }
+
+        private static void ArticleFeedUsesTheSharedWebParser()
+        {
+            var path = Path.Combine(RepoRoot(), "src", "BiliLite.UWP", "Modules", "User", "DynamicVM.cs");
+            var source = File.ReadAllText(path);
+            Check(!source.Contains("GetData<JObject>"), "article feed no longer reads data.items by hand");
+            Check(!source.Contains("data.data[\"items\"]"), "article feed no longer indexes data.data[\"items\"]");
+            Check(source.Contains("WebDynamicFeedParser.Parse(response)"),
+                "article feed parses through the shared web page parser");
+            Check(source.Contains("articleOffset = nextOffset"), "article keeps its own offset, not the polymer one");
+            Check(!source.Contains("HashSet<"), "the feed VM keeps no permanent dedupe set of its own");
         }
 
         private static void Check(bool condition, string message)

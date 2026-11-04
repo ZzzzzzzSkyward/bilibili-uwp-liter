@@ -117,7 +117,7 @@ namespace BiliLite.Parsing.Dynamic
             return token as JObject;
         }
 
-        private static DynamicCardModel2024 MapWebCard(JObject source)
+        private static DynamicCardModel2024 MapWebCard(JObject source, int depth = 0)
         {
             var id = source["id_str"]?.ToString() ?? "";
             var itemType = source["type"]?.ToString() ?? "";
@@ -171,7 +171,15 @@ namespace BiliLite.Parsing.Dynamic
             {
                 // 原动态可能是任何类型，映射不出来时用占位卡，父卡片照样可读
                 var orig = Obj(source["orig"]);
-                card.orig = orig == null ? MissingCard(card.basic.rid_str) : MapWebCard(orig);
+                if (DynamicCardDepth.CanExpandOrig(depth))
+                {
+                    card.orig = orig == null ? MissingCard(card.basic.rid_str) : MapWebCard(orig, depth + 1);
+                }
+                else
+                {
+                    // 到顶了：第三层及更深不再搬进模型，只留 ID 给祖先行跳转
+                    card.AncestryDynamicID = orig?["id_str"]?.ToString() ?? "";
+                }
             }
 
             return card;
@@ -574,6 +582,20 @@ namespace BiliLite.Parsing.Dynamic
                 return result;
             }
 
+            var opus = Obj(major["opus"]);
+            if (opus != null)
+            {
+                // 图文标题只在 major.opus.title 里：有图走 draw、无图走 article，标题两条路共用这一个槽
+                var opusTitle = opus["title"]?.ToString();
+                result.opus = new DynamicCardModel2024_opus
+                {
+                    id = opus["id"]?.ToString() ?? "",
+                    // 空标题留 null：标题链用 ?? 串起来，空串会把后面的 archive/article 标题挡掉
+                    title = string.IsNullOrEmpty(opusTitle) ? null : opusTitle,
+                    jump_url = NormalizeWebUrl(opus["jump_url"]?.ToString()),
+                };
+            }
+
             var archive = Obj(major["archive"]);
             if (HasPayload(archive, "aid", "bvid", "cover", "title", "jump_url"))
             {
@@ -664,7 +686,6 @@ namespace BiliLite.Parsing.Dynamic
                 return result;
             }
 
-            var opus = Obj(major["opus"]);
             if (opus != null && opusPictures != null && opusPictures.Count > 0)
             {
                 // 新版图文动态的图片就是图片动态的图片：交给 draw 那套渲染，才有九宫格和点开查看

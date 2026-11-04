@@ -191,6 +191,64 @@ namespace BiliLite.Controls.Dynamic
             display.Attachments = DynamicAttachmentSummaries.From(card);
             display.Actions = DynamicCardActions.From(card);
         }
+
+        /// <summary>
+        /// 卡片标题槽：预览模板自己显示标题的卡片（OneRow / Reserve）留空，同一句标题只出现一次；
+        /// 其余卡片把标题放进标题槽。标题从不拼进正文。
+        /// </summary>
+        public static void ApplyTitleSlot(DynamicItemDisplayModel display, string title, bool previewShowsTitle)
+        {
+            if (display == null)
+            {
+                return;
+            }
+            display.Title = previewShowsTitle ? "" : title ?? "";
+            display.TitleVisibility = string.IsNullOrEmpty(display.Title) ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        /// <summary>
+        /// 内嵌原动态那块：OriginInfo 里真有卡片才显示边框。深度到顶（OriginInfo 为空）时收起，
+        /// Miss 占位卡也算一张卡，照旧显示它自己的"资源已失效"。
+        /// </summary>
+        public static void ApplyOriginVisibility(DynamicItemDisplayModel display)
+        {
+            if (display == null)
+            {
+                return;
+            }
+            display.OriginVisibility = display.OriginInfo != null && display.OriginInfo.Count > 0
+                ? Visibility.Visible
+                : Visibility.Collapsed;
+        }
+
+        /// <summary>转发链被截断时的祖先行：只有真实 ID 才显示，空 ID 不留一行点不动的行。</summary>
+        public static void ApplyAncestry(DynamicItemDisplayModel display, string ancestorId)
+        {
+            if (display == null)
+            {
+                return;
+            }
+            display.AncestryDynamicID = ancestorId ?? "";
+            display.AncestryVisibility = string.IsNullOrEmpty(display.AncestryDynamicID)
+                ? Visibility.Collapsed
+                : Visibility.Visible;
+        }
+
+        /// <summary>
+        /// 转发层级收口：原卡里被截断的祖先（A 转发 B 转发 C 的 C）搬到最外层卡片上，
+        /// 祖先只显示一次，原卡自己不再留指向更深一层的行；第三层不会生成模型。
+        /// </summary>
+        public static void HoistAncestry(DynamicItemDisplayModel outer, DynamicItemDisplayModel original)
+        {
+            if (outer == null || original == null)
+            {
+                return;
+            }
+
+            var ancestorId = original.AncestryDynamicID;
+            ApplyAncestry(original, "");
+            ApplyAncestry(outer, ancestorId);
+        }
     }
 
     public class DynamicItemDisplayModel : IModules
@@ -295,6 +353,29 @@ namespace BiliLite.Controls.Dynamic
         /// 发表时间(绝对)
         /// </summary>
         public string Datetime { get; set; }
+        /// <summary>
+        /// 卡片标题槽：预览模板不显示标题的卡片（纯文字/图片等）由这里显示一次；
+        /// 空串表示没有标题，标题不拼进正文。
+        /// </summary>
+        public string Title { get; set; } = "";
+        /// <summary>
+        /// 标题槽是否显示：Title 非空且这一类的预览模板不自己显示标题时为 Visible。
+        /// </summary>
+        public Visibility TitleVisibility { get; set; } = Visibility.Collapsed;
+        /// <summary>
+        /// 转发被截断在第二层时的祖先行：只有一个动态 ID，点击后按 ID 打开详情。
+        /// </summary>
+        public Visibility AncestryVisibility { get; set; } = Visibility.Collapsed;
+        public string AncestryDynamicID { get; set; }
+        /// <summary>
+        /// 按动态 ID 打开详情（祖先行用）。参数是 string 动态 ID，不是 aid/rid。
+        /// </summary>
+        public ICommand DetailByIdCommand { get; set; }
+        /// <summary>
+        /// 内嵌原动态那块的边框是否显示：只有 OriginInfo 里真有一张卡时才 Visible。
+        /// 转发深度到顶时 OriginInfo 为空，边框必须收起来，否则会画出一个空框。
+        /// </summary>
+        public Visibility OriginVisibility { get; set; } = Visibility.Collapsed;
         /// <summary>
         /// 内容
         /// </summary>

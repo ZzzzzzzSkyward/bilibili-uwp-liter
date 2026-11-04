@@ -15,6 +15,7 @@
       正文行高             24 最小    同左          RichTextControl.xaml.cs(BodyLineHeight + MaxHeight 行距策略)
       作者名               15 半粗    同左          HeaderName 两个 TextBlock(单行 + 省略号)
       发表时间             12 常规    同左          HeaderTime
+      卡片标题槽           18 半粗/26 同左          CardTitle(头部下方、正文上方,最多两行;空标题整行不占位)
       预告/OPUS 标题       18 半粗/26 同左          DynamicTemplate.xaml OneRow/Reserve 的标题
       预告描述             14/21      同左          DynamicTemplate.xaml OneRow Subtitle、Reserve Desc
       互动计数/小徽标      13 / 12   同左          ActionRow 内 TextBlock / 作者 TAG 徽标
@@ -40,6 +41,7 @@
     <Border x:Name="CardSurface" CornerRadius="8" Padding="16,8">
       <Grid>
         <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
@@ -153,12 +155,14 @@
             </Button>
           </Grid>
         </Grid>
+        <!--标题槽(CARD_PLAN §5 渲染顺序 header → title → body):空标题时整行 Collapsed,不占位也不留 8px-->
+        <TextBlock x:Name="CardTitle" Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Stretch" Text="{x:Bind Path=Model.Title,Mode=OneWay}" Visibility="{x:Bind Path=Model.TitleVisibility,Mode=OneWay}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
         <!--正文:模板自己渲染正文时(ContentPresenterVisibility=Collapsed)这里的 12px 间距不占位-->
-        <ContentPresenter x:Name="BodyPresenter" Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
+        <ContentPresenter x:Name="BodyPresenter" Grid.Row="2" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
         <!--媒体/预告/附件/转发原动态:占满整宽-->
-        <ContentPresenter x:Name="CardContentPresenter" Grid.Row="2" Margin="0,8,0,0" HorizontalAlignment="Stretch" Content="{x:Bind Path=CardContent,Mode=OneWay}"/>
+        <ContentPresenter x:Name="CardContentPresenter" Grid.Row="3" Margin="0,8,0,0" HorizontalAlignment="Stretch" Content="{x:Bind Path=CardContent,Mode=OneWay}"/>
         <!--互动栏:三等分列,按钮点击区 ≥40×40-->
-        <Grid x:Name="ActionRow" Grid.Row="3" Margin="0,8,0,0" Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}">
+        <Grid x:Name="ActionRow" Grid.Row="4" Margin="0,8,0,0" Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>

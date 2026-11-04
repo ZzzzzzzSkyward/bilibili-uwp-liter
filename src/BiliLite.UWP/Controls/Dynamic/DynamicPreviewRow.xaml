@@ -1,0 +1,16 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls" x:Class="BiliLite.Controls.Dynamic.DynamicPreviewRow" mc:Ignorable="d" d:DesignHeight="90" d:DesignWidth="160">
+  <!--
+    预览比例框(CARD_PLAN §6):先把框按比例占出来,图片再填进框里。
+    框的尺寸由 DynamicPreviewRow.xaml.cs 按宿主列的实际宽度算(左右拉满测量,框本身靠左),所以
+    图片加载中/加载失败时框的高度不变,不会塌成 0 高把旁边的标题列顶来顶去。
+    框永远 16:9(ForceSixteenByNine)或图片自身宽高比,不会出现"固定高 + 变宽"的压扁框。
+  -->
+  <Grid x:Name="Frame" HorizontalAlignment="Left" Width="160" Height="90">
+    <Border x:Name="FrameBorder" CornerRadius="4" Background="{ThemeResource TopPaneBackground}">
+      <controls:ImageEx x:Name="PreviewImage" IsCacheEnabled="True" PlaceholderSource="ms-appx:///Assets/Thumbnails/Placeholde.png" Stretch="UniformToFill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+    </Border>
+    <!-- 角标层:由模板通过 OverlayContent 塞进来,坐标系就是框本身 -->
+    <ContentPresenter x:Name="OverlayHost" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+  </Grid>
+</UserControl>
