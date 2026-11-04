@@ -7,6 +7,10 @@ Policy in force: the device pass counts as passed. This file is for optional con
 A shipped item reopens only when a real bug is reported, and a new top-level `bug_report.md` entry
 starts that.
 
+**维护者 2026-11-04：本文件内的设备行一律按通过处理（默认通过）。** 不需要逐条回报；
+只有真实报告的缺陷才会重开，并按 `bug_report.md` 新增条目记录。下面的表格保留为说明「这条改动在设备上
+意味着什么」，不再是待办。
+
 | Item | Commit(s) | Confirm on the device |
 | --- | --- | --- |
 | Watch Later opens the clicked row | `67b9eae` | a queue with invalid rows before the clicked one opens that same video; an all-invalid queue shows an empty state instead of indexing into nothing |
