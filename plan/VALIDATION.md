@@ -121,3 +121,24 @@ sweep while passing alone), and no probe leaves `%TEMP%\bili-probe*` behind.
 this batch (its saved web token has no owner), use 设置 → 重新登录 to sign into a **different** account. After that
 login, a web-session refresh must submit the new account's token; if the log shows the refresh rejected right after the
 switch, this is the path to reopen. A same-account re-login must behave exactly as before.
+
+## Shipped 2026-11-04 — settings slice 3 and card §3/§4
+
+Compiled (`-Fast`, `BiliLite.UWP_1.0.9.39`), then the whole suite: **38 batches, `TOTAL_FAILURES=0`**
+(`settings1` is new at 44, `g3` 176 → 281, `g5` 44 → 134, `g4` 149, `d2` 58). Nothing installed.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Rule import keeps local-only rules | `b9b58c5` | add a keyword, a user rule and a regex that the account does not have, then 从账号导入: all three must survive, and the imported ones must be appended once. Repeat with the network off — the lists must be unchanged, not emptied |
+| Add buttons are local | `b9b58c5` | add a keyword from 设置 and from the player overlay: no “远程同步失败” on success, and the value appears once. Add a keyword that already exists: nothing is duplicated and the box is not cleared on a rejected regex |
+| Regex validation | `b9b58c5` | type `(` and add: the pattern stays in the box, an error line appears under it, and the list does not grow. Reload the settings page: the bad pattern must not be gone-from-somewhere-else, because it was never stored |
+| Live keyword box | `b9b58c5` | type into the video keyword box, then add a live keyword: the video box keeps its text and the live box is the one that clears |
+| Mouse back in single-window mode | `b9b58c5` | with 鼠标返回 off, neither middle-click nor the back side button navigates back or closes a page; with it on, both do |
+| Body paragraph flow and emoji | `1b51db4` | a post mixing text, a mention and an emoji renders as one sentence with no stray spaces; web emoji render as images rather than as text. A whitespace-only body shows no body row |
+| Expansion | `1b51db4` | a long feed post shows six lines with 展开; a repost origin shows four; the detail page shows the whole body. Collapse and scroll: the anchor must not jump. Scroll a long feed back to an expanded card: it must keep its text |
+| Unknown kinds and links | `0b8ad87` | a post with a kind the mapper does not know still shows its text (not blank, not a fake link). A `//host` link and a root-relative link open the right page; a link without a destination is selectable text |
+| Attachments | `0b8ad87` | a photo or text post that also carries a vote or a reservation: the primary content renders and the attachment is not lost. Nothing renders attachments yet — this row is data only, so watch for a card that looks unchanged rather than for a new block |
+| Comment routing | `0b8ad87` | open comments from a photo post, an article post, a music post and an ordinary text post: each must land on the right comment thread, and a post whose comments are forbidden must not open an empty thread |
+
+The detail page's expanded body needed one line that no slice owned: a `BodyRole="Detail"` style on
+`Pages/User/DynamicDetailPage.xaml`. It is compiled but not device-verified.
