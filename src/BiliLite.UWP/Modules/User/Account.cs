@@ -355,6 +355,11 @@ namespace BiliLite.Modules
             // 紧接着的镜像只接新会话 jar 里的一代。放在提交成功之后，落盘失败时旧记录连同旧凭证原样留着。
             refreshTokenMirror.ResetOnAccountSwitch(previousUserId, userid);
 
+            // 同一个提交点：上个会话的挂起确认也随会话作废。留着它，这个账号的 web 续期会被当成
+            // 「确认在途」而永远开不了新一轮 —— 归属对不上只是不续做，挡住的却是整条刷新。
+            WebRefreshTransaction.DiscardPendingOnAccountSwitch(previousUserId, userid,
+                new LocalFolderWebRefreshStateStore(), LogCommitFailure);
+
             // ac_time_value 只随 cookie 下发，登录成功当场落到设置，否则刷新链永远缺令牌；
             // 但响应令牌已存时它不许覆盖（判定在 RefreshTokenPolicy）
             MirrorRefreshTokenFromJar();

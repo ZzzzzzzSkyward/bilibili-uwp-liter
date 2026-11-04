@@ -47,6 +47,22 @@ namespace BiliLite.Services
         }
     }
 
+    /// <summary>
+    /// 续做挂起确认的结论。一个 bool 同时表示「有在途确认」「记录读不出来」「别人的记录」，
+    /// 调用方分不清该等哪一代：别人的记录必须让开，这一代的确认必须挡住。
+    /// </summary>
+    public enum PendingConfirmationResume
+    {
+        /// <summary>没有属于这一代的挂起确认：可以开新一轮轮换。</summary>
+        None,
+
+        /// <summary>这一代的确认仍在途（本次续做过，成败都算）：这次调用到此为止，不另开一轮。</summary>
+        Pending,
+
+        /// <summary>记录属于另一个账号：不续做、不删除，也不许挡住这一代的轮换。</summary>
+        Foreign,
+    }
+
     /// <summary>Owns browser cookies and the existing browser-cookie refresh lifecycle.</summary>
     public class CookieService
     {
@@ -68,7 +84,7 @@ namespace BiliLite.Services
         private short refreshCheckAttempts;
         private Timer refreshTimer;
         private Task refreshFlow;
-        private Task<bool> resumeFlow;
+        private Task<PendingConfirmationResume> resumeFlow;
         // 一次启动内的确认次数：结果未知才会有下一次，重启后重新计数，避免持久记录把刷新永久钉死
         private int confirmAttempts;
         // 会话是否已死是进程级事实：多个 CookieService 实例（ApiHelper、设置页）看到的是同一个结论
@@ -358,8 +374,9 @@ namespace BiliLite.Services
         /// <summary>校验会话状态并在需要时刷新，供启动、恢复和设置页“刷新登录”共用。</summary>
         public async Task RefreshLoginAsync()
         {
-            // 有挂起确认就先做完那一代：既不开新一轮轮换，也不假装它已经成功
-            if (await TryResumePendingConfirmationAsync()) return;
+            // 这一代的确认在途就先做完它：既不开新一轮轮换，也不假装它已经成功。
+            // 别人的记录不是这一代的确认（Foreign），它不许把这次续期挡死。
+            if (await TryResumePendingConfirmationAsync() == PendingConfirmationResume.Pending) return;
             lock (stateLock)
             {
                 hasInitializedRefreshState = false;
@@ -371,7 +388,7 @@ namespace BiliLite.Services
         {
             try
             {
-                if (await TryResumePendingConfirmationAsync()) return;
+                if (await TryResumePendingConfirmationAsync() == PendingConfirmationResume.Pending) return;
                 await RefreshCookieCoreAsync();
             }
             catch (Exception exception)
@@ -465,16 +482,16 @@ namespace BiliLite.Services
 
         /// <summary>
         /// 单飞：并发调用者等同一次续做，续完（成功、拒绝或未知）才释放槽位。
-        /// 返回值是「本来有挂起确认」，调用方据此不再开新一轮轮换。
+        /// 返回值是这次续做的结论：只有 Pending 才表示「这一代还在等确认」。
         /// </summary>
-        private Task<bool> TryResumePendingConfirmationAsync()
+        private Task<PendingConfirmationResume> TryResumePendingConfirmationAsync()
         {
-            TaskCompletionSource<bool> producer;
-            Task<bool> result;
+            TaskCompletionSource<PendingConfirmationResume> producer;
+            Task<PendingConfirmationResume> result;
             lock (stateLock)
             {
                 if (resumeFlow != null) return resumeFlow;
-                producer = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+                producer = new TaskCompletionSource<PendingConfirmationResume>(TaskCreationOptions.RunContinuationsAsynchronously);
                 resumeFlow = producer.Task;
                 result = resumeFlow;
             }
@@ -482,12 +499,12 @@ namespace BiliLite.Services
             return result;
         }
 
-        private async Task RunResumeAsync(TaskCompletionSource<bool> producer)
+        private async Task RunResumeAsync(TaskCompletionSource<PendingConfirmationResume> producer)
         {
-            var pending = true;
+            var decision = PendingConfirmationResume.Pending;
             try
             {
-                pending = await ResumePendingConfirmationAsync();
+                decision = await ResumePendingConfirmationAsync();
             }
             catch (Exception exception)
             {
@@ -500,14 +517,14 @@ namespace BiliLite.Services
                 {
                     if (ReferenceEquals(resumeFlow, producer.Task)) resumeFlow = null;
                 }
-                producer.TrySetResult(pending);
+                producer.TrySetResult(decision);
             }
         }
 
         /// <summary>
         /// 把挂起确认做完。记录里存着换代前的令牌，所以这里既不用重新刷新，也不会换一枚别的令牌去确认。
         /// </summary>
-        private async Task<bool> ResumePendingConfirmationAsync()
+        private async Task<PendingConfirmationResume> ResumePendingConfirmationAsync()
         {
             WebRefreshPendingRecord record;
             try
@@ -519,34 +536,35 @@ namespace BiliLite.Services
                 // 读不出来的记录已经没法续，留着只会把刷新挡死
                 log("Pending cookie confirmation record was unreadable; dropping it.", exception);
                 ClearPendingRecord("unreadable");
-                return false;
+                return PendingConfirmationResume.None;
             }
             catch (Exception exception)
             {
                 log("Pending cookie confirmation record could not be read; not starting a new rotation.", exception);
-                return true;
+                return PendingConfirmationResume.Pending;
             }
 
-            if (record == null) return false;
+            if (record == null) return PendingConfirmationResume.None;
             if (!WebRefreshTransaction.IsPendingPhase(record.Phase))
             {
                 log("Pending cookie confirmation record was in phase " + record.Phase + "; dropping it.", null);
                 ClearPendingRecord("stale-phase");
-                return false;
+                return PendingConfirmationResume.None;
             }
             if (string.IsNullOrEmpty(record.PreviousToken) || string.IsNullOrEmpty(record.ReplacementToken))
             {
                 log("Pending cookie confirmation record was incomplete; dropping it.", null);
                 ClearPendingRecord("incomplete");
-                return false;
+                return PendingConfirmationResume.None;
             }
 
             var ownerId = ReadSessionOwnerId();
             if (!WebRefreshTransaction.BelongsToSession(record, ownerId))
             {
-                // 另一个账号的挂起确认：不发确认、不删记录、也不替它开始轮换
-                log("Pending cookie confirmation belongs to another session; leaving it untouched.", null);
-                return true;
+                // 另一个账号的挂起确认：不发确认、不删记录、也不替它续做 ——
+                // 但它同样不是这一代的确认，不许把这一代的续期永远挡在门外
+                log("Pending cookie confirmation belongs to another session; leaving it untouched and not blocking this session's renewal.", null);
+                return PendingConfirmationResume.Foreign;
             }
 
             // 崩在本地落盘之前时补上这一代；这一段会话已经有别的令牌就说明记录属于被换掉的旧一代
@@ -562,7 +580,7 @@ namespace BiliLite.Services
             {
                 log("Pending cookie confirmation was superseded by a newer token; dropping it.", null);
                 ClearPendingRecord("superseded");
-                return false;
+                return PendingConfirmationResume.None;
             }
 
             record.Phase = WebRefreshTransaction.FormatPhase(WebRefreshPhase.ConfirmationPending);
@@ -570,7 +588,8 @@ namespace BiliLite.Services
             OnPhase(WebRefreshPhase.ConfirmationPending);
 
             await ConfirmPendingAsync(record);
-            return true;
+            // 发没发出去、结论是什么都不影响这一条：这一代已经续做过，本次调用到此为止
+            return PendingConfirmationResume.Pending;
         }
 
         /// <summary>

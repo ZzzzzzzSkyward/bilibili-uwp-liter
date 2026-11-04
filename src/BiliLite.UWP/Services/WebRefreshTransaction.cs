@@ -352,6 +352,34 @@ namespace BiliLite.Services
             }
         }
 
+        /// <summary>
+        /// 换账号的落盘已经成功：上一个会话的挂起确认随会话一起作废。
+        /// 判据是落盘前后两个已知 uid（和令牌镜像同一把尺子），不看记录自己写的归属 ——
+        /// 旧版本留下的记录归属是 0，按归属判断根本认不出它是别人的。
+        /// 同账号、旧值未知（0）或没有记录时一个字节都不动，调用方可以照常续做自己的确认。
+        /// </summary>
+        public static bool DiscardPendingOnAccountSwitch(long previousOwnerId, long sessionOwnerId,
+            IWebRefreshStateStore store = null, Action<string, Exception> log = null)
+        {
+            if (!RefreshTokenPolicy.OwnerConflicts(previousOwnerId, sessionOwnerId)) return false;
+            var state = store ?? new LocalFolderWebRefreshStateStore();
+            try
+            {
+                if (string.IsNullOrWhiteSpace(state.Read())) return false;
+                state.Clear();
+                if (log != null)
+                    log("Pending cookie confirmation from the previous session was retired on account switch (uid " +
+                        previousOwnerId.ToString(CultureInfo.InvariantCulture) + " → " +
+                        sessionOwnerId.ToString(CultureInfo.InvariantCulture) + ").", null);
+                return true;
+            }
+            catch (Exception exception)
+            {
+                if (log != null) log("Pending cookie confirmation record could not be discarded on account switch.", exception);
+                return false;
+            }
+        }
+
         /// <summary>新建一条挂起记录：换代前的令牌 + 替代会话的身份，阶段从本地落盘开始。</summary>
         public static WebRefreshPendingRecord CreatePendingRecord(string replacementToken, long replacementUserId,
             string csrfDigest, string previousToken, long ownerUserId, WebRefreshPhase phase, DateTimeOffset recordedAt) =>

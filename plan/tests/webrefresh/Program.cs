@@ -39,7 +39,9 @@ internal static class Program
             ("明确拒绝清记录并要求重新登录", ExplicitRejectionClearsTheRecordAndMarksRelogin),
             ("结果未知留着可重试的记录", TransportUncertaintyKeepsARetryableRecord),
             ("一次启动内的重试有上限", RetriesAreBoundedWithinOneRun),
-            ("别人的挂起确认不许续", OwnershipMismatchRefusesToResume),
+            ("别人的挂起确认不许续做", OwnershipMismatchIsNeverConfirmed),
+            ("别人的挂起记录不挡这一代的续期", ForeignPendingRecordDoesNotBlockTheRenewal),
+            ("换账号作废上个会话的挂起确认", AccountSwitchRetiresThePendingConfirmation),
             ("残缺响应不算一次换代", PartialResponseIsNotACommit),
             ("挂起确认挡住 cookie 迁移", PendingRecordBlocksTheCookieMigration),
             ("退出登录作废挂起确认", LogoutDiscardsThePendingRecord),
@@ -250,8 +252,8 @@ internal static class Program
         Check(!File.Exists(RecordPath()), "the retried transition confirms and clears");
     }
 
-    /// <summary>别人的挂起确认：不发确认、不开新一轮、也不删记录。</summary>
-    private static void OwnershipMismatchRefusesToResume()
+    /// <summary>别人的挂起确认：不续做、不发确认、也不删记录；但不许当成本会话的在途确认。</summary>
+    private static void OwnershipMismatchIsNeverConfirmed()
     {
         var fixture = NewFixture();
         WriteRecord("confirmation-pending", "rt-other-account", "rt-other-replacement", "csrf-other", 424242, 1);
@@ -259,10 +261,94 @@ internal static class Program
 
         fixture.Service.RefreshLoginAsync().GetAwaiter().GetResult();
 
-        Check(fixture.Requests.Count == 0,
-            "another session's pending record sends nothing; requests=" + string.Join(" | ", fixture.Requests.Select(api => api.baseUrl)));
+        Check(ConfirmRequests(fixture).Count() == 0, "another session's pending record is never confirmed");
+        Check(RefreshCount(fixture) == 0, "the record's own transition is not resumed on its behalf");
         Check(File.ReadAllText(RecordPath()) == before, "the other session's record is left byte-identical");
         Check(Log.Any(line => line.Contains("belongs to another session")), "the refusal is stated in the log");
+    }
+
+    /// <summary>
+    /// 换账号后用 B 登录：A 的挂起确认若还留着，B 的每一次续期都会被当成「确认在途」而提前返回，
+    /// 重启也救不回来（文件在盘上）。所以 B 的续期必须真的开始。
+    /// </summary>
+    private static void ForeignPendingRecordDoesNotBlockTheRenewal()
+    {
+        var fixture = NewFixture();
+        fixture.CheckCookieInfoBody = CookieInfo(refresh: true, timestamp: 1700000000);
+        WriteRecord("confirmation-pending", "rt-account-a", "rt-account-a-replacement", "csrf-account-a", 424242, 2);
+
+        fixture.Service.RefreshLoginAsync().GetAwaiter().GetResult();
+
+        Check(fixture.Requests.Any(api => api.baseUrl.EndsWith("/cookie/info", StringComparison.Ordinal)),
+            "another session's pending record does not block this account's cookie renewal");
+        Check(RefreshCount(fixture) == 1,
+            "the current account still starts its own rotation; requests=" +
+            string.Join(" | ", fixture.Requests.Select(api => api.baseUrl)));
+        Check(ConfirmRequests(fixture).All(api => !api.body.Contains("rt-account-a")),
+            "the other account's previous token is never confirmed");
+        Check(ConfirmRequests(fixture).Single().body.Contains("refresh_token=" + PreviousToken),
+            "the rotation confirms this session's own previous token");
+        Check(Log.Any(line => line.Contains("belongs to another session") &&
+            line.Contains("not blocking this session's renewal")),
+            "the foreign record is named in the log as not blocking the renewal");
+    }
+
+    /// <summary>
+    /// 换账号的提交点：令牌落盘成功之后、镜像新会话之前，上一个会话的挂起确认随会话作废。
+    /// 判据是落盘前后的两个已知 uid，不是记录自己写的归属 —— 旧版本写的记录归属是 0。
+    /// 同账号、旧值未知、落盘失败都不许动它。
+    /// </summary>
+    private static void AccountSwitchRetiresThePendingConfirmation()
+    {
+        NewFixture();
+        var store = new LocalFolderWebRefreshStateStore();
+        var log = new List<string>();
+
+        // A（424242）留下的挂起确认
+        WriteRecord("confirmation-pending", "rt-account-a", "rt-account-a-replacement", "csrf-account-a", 424242, 1);
+        Check(WebRefreshTransaction.DiscardPendingOnAccountSwitch(424242, 42, store, (message, exception) => log.Add(message)),
+            "a successful account switch retires the previous session's pending confirmation");
+        Check(!File.Exists(RecordPath()), "no confirmation from the left session survives the switch");
+        Check(log.Any(line => line.Contains("account switch") && line.Contains("424242")),
+            "the retirement names the session that left; log=" + string.Join(" || ", log));
+        Check(log.All(line => !line.Contains("rt-account-a")),
+            "the retirement log carries no token");
+
+        // 旧版本写的记录没有归属：按归属判断认不出它是别人的，按 uid 变化就必须作废
+        WriteRecord("confirmation-pending", "rt-legacy", "rt-legacy-replacement", "csrf-legacy", 0, 1);
+        Check(WebRefreshTransaction.DiscardPendingOnAccountSwitch(424242, 42, store, (message, exception) => log.Add(message)),
+            "a record without an owner is retired on the same evidence as an ownerless token");
+        Check(!File.Exists(RecordPath()), "the legacy record does not outlive the switch");
+
+        // 同一账号登录：一个字节都不动，D3 的续做照旧
+        WriteRecord("confirmation-pending", PreviousToken, ReplacementToken, ReplacementCsrf, 42, 1);
+        var sameAccount = File.ReadAllText(RecordPath());
+        Check(!WebRefreshTransaction.DiscardPendingOnAccountSwitch(42, 42, store, (message, exception) => log.Add(message)),
+            "a same-account login retires nothing");
+        Check(File.ReadAllText(RecordPath()) == sameAccount, "the same session's resumable record is left byte-identical");
+
+        // 旧值未知（退出登录后 uid 键还在 0）：不猜，记录留着
+        Check(!WebRefreshTransaction.DiscardPendingOnAccountSwitch(0, 42, store, (message, exception) => log.Add(message)),
+            "an unknown previous uid does not retire anything");
+        Check(File.ReadAllText(RecordPath()) == sameAccount, "the record survives an unknown previous uid");
+
+        // 没有记录：不算失败
+        File.Delete(RecordPath());
+        Check(!WebRefreshTransaction.DiscardPendingOnAccountSwitch(424242, 42, store, (message, exception) => log.Add(message)),
+            "a switch with no pending record is not an error");
+
+        // 提交点接线：作废必须排在「令牌落盘失败就直接返回」之后、镜像新会话之前
+        var persist = Body(ReadSource("src/BiliLite.UWP/Modules/User/Account.cs"),
+            "private static CredentialCommit PersistCredentials(", "private static void LogCommitFailure(");
+        Check(persist.Length > 0, "the probe found PersistCredentials in Account");
+        var commitGuard = persist.IndexOf("if (!commit.TokenSaved) return commit;", StringComparison.Ordinal);
+        var retire = persist.IndexOf("DiscardPendingOnAccountSwitch(previousUserId, userid", StringComparison.Ordinal);
+        var mirror = persist.IndexOf("MirrorRefreshTokenFromJar();", StringComparison.Ordinal);
+        Check(commitGuard >= 0 && retire > commitGuard && mirror > retire,
+            "the switch cleanup runs only after the commit succeeded and before the mirror; guard=" +
+            commitGuard + " retire=" + retire + " mirror=" + mirror);
+        Check(persist.IndexOf("previousUserId", StringComparison.Ordinal) < retire,
+            "the cleanup is driven by the uid read before the commit, not by the record's own field");
     }
 
     /// <summary>
@@ -503,6 +589,10 @@ internal static class Program
 
     private static HttpResults Ok() => new HttpResults { code = 200, status = true, results = "{\"code\":0}" };
 
+    /// <summary>cookie/info 的响应：refresh=true 表示服务端认可这个会话并且要换代。</summary>
+    private static string CookieInfo(bool refresh, long timestamp) =>
+        "{\"code\":0,\"data\":{\"timestamp\":" + timestamp + ",\"refresh\":" + (refresh ? "true" : "false") + "}}";
+
     private static string Setting(Fixture fixture, string key) => fixture.Settings.Read(key, "");
 
     private static JObject LoadRecord() => JObject.Parse(File.ReadAllText(RecordPath()));
@@ -599,6 +689,7 @@ internal static class Program
         public readonly List<ApiModel> Requests = new List<ApiModel>();
 
         public string RefreshBody = "{\"code\":0,\"data\":{\"refresh_token\":\"" + ReplacementToken + "\"}}";
+        public string CheckCookieInfoBody;
         public bool InstallReplacementCookies = true;
         public long ReplacementUserId = 42;
         public Func<ApiModel, HttpResults> Confirm = _ => new HttpResults { code = 200, status = true, results = "{\"code\":0}" };
@@ -620,6 +711,8 @@ internal static class Program
                 return new HttpResults { code = 200, status = true, results = RefreshBody };
             }
             if (api.baseUrl.EndsWith("/confirm/refresh", StringComparison.Ordinal)) return Confirm(api);
+            if (api.baseUrl.EndsWith("/cookie/info", StringComparison.Ordinal))
+                return new HttpResults { code = 200, status = true, results = CheckCookieInfoBody ?? "{}" };
             return new HttpResults { code = 200, status = true, results = "{}" };
         }
 
