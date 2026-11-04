@@ -1,5 +1,6 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Modules;
+using BiliLite.Parsing.Dynamic;
 using System.Collections.Generic;
 using System.Windows.Input;
 using Windows.UI.Xaml;
@@ -7,6 +8,191 @@ using Windows.UI.Xaml.Controls;
 
 namespace BiliLite.Controls.Dynamic
 {
+    /// <summary>正文之外的附件种类；未知种类不丢弃，按 Unsupported 保留原类型名。</summary>
+    public enum DynamicAttachmentKind
+    {
+        Reserve,
+        Vote,
+        CommonLink,
+        Unsupported,
+    }
+
+    /// <summary>
+    /// 附件摘要：正文之外另挂的一张卡。与主载荷分开保存 —— 图片/文字/视频动态都可能同时挂着
+    /// 一张投票或一个预约，附件不是"主载荷的替代品"。
+    /// </summary>
+    public sealed class DynamicAttachmentSummary
+    {
+        public DynamicAttachmentKind Kind { get; set; }
+        /// <summary>来源给的附件类型名，原样保留（未知类型也能被诊断）。</summary>
+        public string RawType { get; set; } = "";
+        /// <summary>附件自己的对象 ID（预约 rid / 投票 id），没有就是空串。</summary>
+        public string Id { get; set; } = "";
+        public string Title { get; set; } = "";
+        /// <summary>可读的一行说明，不参与正文。</summary>
+        public string Desc { get; set; } = "";
+        /// <summary>归一化后的目的地；空串表示没有目的地，只能当文本读。</summary>
+        public string Destination { get; set; } = "";
+        public bool HasDestination { get { return !string.IsNullOrEmpty(Destination); } }
+    }
+
+    /// <summary>
+    /// 附件摘要的固定顺序：预约、投票、通用链接，最后才是原样保留的其它类型。
+    /// 卡片模型的 additional 是"每种一个槽位"，这里把槽位按顺序摊成列表。
+    /// </summary>
+    public static class DynamicAttachmentSummaries
+    {
+        public static List<DynamicAttachmentSummary> From(DynamicCardModel2024 card)
+        {
+            var result = new List<DynamicAttachmentSummary>();
+            var additional = card?.modules?.module_dynamic?.additional;
+            if (additional == null)
+            {
+                return result;
+            }
+
+            var rawType = additional.type ?? "";
+
+            if (additional.reserve != null)
+            {
+                var reserve = additional.reserve;
+                result.Add(new DynamicAttachmentSummary
+                {
+                    Kind = DynamicAttachmentKind.Reserve,
+                    RawType = rawType,
+                    Id = reserve.rid > 0 ? reserve.rid.ToString() : "",
+                    Title = reserve.title ?? "",
+                    Desc = reserve.desc ?? "",
+                    Destination = WireScalars.NormalizeWebUrl(reserve.jump_url),
+                });
+            }
+
+            if (additional.vote != null)
+            {
+                var vote = additional.vote;
+                result.Add(new DynamicAttachmentSummary
+                {
+                    Kind = DynamicAttachmentKind.Vote,
+                    RawType = rawType,
+                    Id = vote.id_str ?? "",
+                    Title = vote.title ?? "",
+                    Desc = WireScalars.JoinText(vote.desc1, vote.desc2),
+                    Destination = WireScalars.NormalizeWebUrl(vote.jump_url),
+                });
+            }
+
+            if (additional.common != null)
+            {
+                var common = additional.common;
+                result.Add(new DynamicAttachmentSummary
+                {
+                    Kind = DynamicAttachmentKind.CommonLink,
+                    RawType = rawType,
+                    Id = common.id_str ?? "",
+                    Title = common.title ?? "",
+                    Desc = WireScalars.JoinText(common.desc1, common.desc2, common.head_text),
+                    Destination = WireScalars.NormalizeWebUrl(common.jump_url),
+                });
+            }
+
+            AppendUnsupported(result, additional.goods, rawType);
+            AppendUnsupported(result, additional.ugc, rawType);
+            if (result.Count == 0)
+            {
+                // 有附件块、但里面没有能认出来的子卡：保留原类型，页面至少知道"这里有东西"
+                result.Add(new DynamicAttachmentSummary
+                {
+                    Kind = DynamicAttachmentKind.Unsupported,
+                    RawType = rawType,
+                    Desc = additional.title ?? "",
+                });
+            }
+
+            return result;
+        }
+
+        private static void AppendUnsupported(
+            List<DynamicAttachmentSummary> target,
+            DynamicCardModel2024_addin addin,
+            string rawType)
+        {
+            if (addin == null)
+            {
+                return;
+            }
+            target.Add(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.Unsupported,
+                RawType = rawType,
+                Id = addin.id_str ?? "",
+                Title = addin.title ?? "",
+                Desc = WireScalars.JoinText(addin.desc1, addin.desc2, addin.head_text),
+                Destination = WireScalars.NormalizeWebUrl(addin.jump_url),
+            });
+        }
+    }
+
+    /// <summary>一项互动是否可用；未知与"明确禁止"是两件事。</summary>
+    public enum DynamicActionAvailability
+    {
+        Unknown,
+        Allowed,
+        Forbidden,
+    }
+
+    /// <summary>
+    /// 互动可用性：服务端报 forbidden=true 时不能把按钮当成会成功的动作展示；
+    /// 字段缺席是未知，既不是"确认可用"也不是"确认不可用"。
+    /// </summary>
+    public sealed class DynamicCardActions
+    {
+        public DynamicActionAvailability Comment { get; private set; }
+        public DynamicActionAvailability Repost { get; private set; }
+
+        public bool CanComment { get { return Comment != DynamicActionAvailability.Forbidden; } }
+        public bool CanRepost { get { return Repost != DynamicActionAvailability.Forbidden; } }
+
+        public static DynamicCardActions From(DynamicCardModel2024 card)
+        {
+            var stat = card?.modules?.module_stat;
+            return new DynamicCardActions
+            {
+                Comment = Availability(stat?.comment),
+                Repost = Availability(stat?.forward),
+            };
+        }
+
+        private static DynamicActionAvailability Availability(DynamicCardModel2024_forward counter)
+        {
+            if (counter == null)
+            {
+                return DynamicActionAvailability.Unknown;
+            }
+            return counter.forbidden ? DynamicActionAvailability.Forbidden : DynamicActionAvailability.Allowed;
+        }
+    }
+
+    /// <summary>
+    /// 卡片数据 → 显示模型的那几样归一化数据：评论目标对、附件摘要、互动可用性。
+    /// 单独放这里而不是塞进 VM，是为了让这一步能被探针直接执行（VM 需要整个 WinRT 环境）。
+    /// </summary>
+    public static class DynamicCardProjection
+    {
+        public static void Apply(DynamicItemDisplayModel display, DynamicCardModel2024 card)
+        {
+            if (display == null || card == null)
+            {
+                return;
+            }
+
+            var basic = card.basic;
+            display.ReplyID = basic?.comment_id_str ?? "";
+            display.ReplyType = basic?.comment_type ?? 0;
+            display.Attachments = DynamicAttachmentSummaries.From(card);
+            display.Actions = DynamicCardActions.From(card);
+        }
+    }
+
     public class DynamicItemDisplayModel : IModules
     {
         /// <summary>
@@ -30,6 +216,23 @@ namespace BiliLite.Controls.Dynamic
         /// 评论类型
         /// </summary>
         public int ReplyType { get; set; }
+        /// <summary>
+        /// 适配器归一化后的评论目标：oid 与评论接口类型成对给出；没有真实一对时为 null，
+        /// 调用方这时才按显示类型走既有映射。
+        /// </summary>
+        public DynamicCommentTarget CommentTarget
+        {
+            get { return DynamicCommentTarget.From(ReplyID, ReplyType); }
+        }
+        /// <summary>正文之外的附件摘要（预约/投票/通用链接/未知类型），与主载荷分开。</summary>
+        public List<DynamicAttachmentSummary> Attachments { get; set; }
+        /// <summary>互动可用性；服务端报禁止时不能当成会成功的动作。</summary>
+        public DynamicCardActions Actions { get; set; }
+        /// <summary>评论不可用时页面不该假装点了会成功；不知道不等于禁止。</summary>
+        public bool CanComment
+        {
+            get { return Actions == null || Actions.CanComment; }
+        }
         /// <summary>
         /// 用户ID
         /// </summary>

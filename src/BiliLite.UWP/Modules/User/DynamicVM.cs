@@ -1611,7 +1611,8 @@ namespace BiliLite.Modules.User
                     Time = Utils.HandelTimestamp(item.desc.timestamp.ToString()),
                     IntType = item.desc.type,
                     ReplyID = item.desc.rid_str,
-                    ReplyType = item.desc.r_type,
+                    // 老接口的 desc.r_type 是 rid 的体裁（转发/分享类型），不是评论接口的类型编号：
+                    // 把它当评论类型会拼出一个错的对，所以这一路只给 oid，由页面按显示类型走既有映射。
                     Type = DynamicParse.ParseType(item.desc.type),
                     UserCommand = UserCommand,
                     LaunchUrlCommand = LaunchUrlCommand,
@@ -1876,8 +1877,6 @@ namespace BiliLite.Modules.User
                         ? (item.pubdate <= 0 ? "" : Utils.HandelTimestamp(item.pubdate.ToString()))
                         : item.modules.module_author.pub_time,
                     IntType = t.ToInt32(),// item.type,
-                    ReplyID = item.basic.rid_str,
-                    ReplyType = item.basic.comment_type,
                     Type = t,
                     UserCommand = UserCommand,
                     LaunchUrlCommand = LaunchUrlCommand,
@@ -1896,6 +1895,8 @@ namespace BiliLite.Modules.User
                     WatchLaterCommand = watchLaterVM.AddCommand,
                     Liked = item.liked
                 };
+                // 评论目标对、附件摘要与互动可用性都由卡片数据归一化后搬过来，不在这里按显示类型再猜
+                DynamicCardProjection.Apply(data, item);
                 //prefix
                 if(data.Type == DynamicDisplayType.Repost)
                 {

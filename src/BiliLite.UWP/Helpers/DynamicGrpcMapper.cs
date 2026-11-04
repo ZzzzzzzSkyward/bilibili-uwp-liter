@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Bilibili.App.Dynamic.V2;
 using BiliLite.Modules;
+using BiliLite.Parsing.Dynamic;
 using static BiliLite.Parsing.Dynamic.WireScalars;
 using GrpcDynamicType = Bilibili.App.Dynamic.V2.DynamicType;
 using Newtonsoft.Json.Linq;
@@ -229,7 +230,8 @@ namespace BiliLite.Helpers
             var opusSummary = GetModule(source, DynModuleType.ModuleOpusSummary)?.ModuleOpusSummary
                 ?? source.Extend.OpusSummary;
 
-            var commentId = GetCommentId(source.CardType, dynamic) ?? source.Extend.DynIdStr;
+            var comment = GetCommentTarget(source.CardType, dynamic, source.Extend.DynIdStr);
+            var commentId = comment == null ? source.Extend.DynIdStr : comment.Oid;
             var card = new DynamicCardModel2024
             {
                 id_str = source.Extend.DynIdStr,
@@ -237,9 +239,11 @@ namespace BiliLite.Helpers
                 visible = true,
                 basic = new DynamicCardModel2024_basic
                 {
+                    // 评论目标是一对 (oid, 评论接口类型)：只写 oid 或把类型固定成占位 1，
+                    // 调用方就只能按显示类型再猜一次。类型未知时才退回 0，交给按类型的老映射。
                     comment_id_str = commentId,
                     rid_str = commentId,
-                    comment_type = 1,
+                    comment_type = comment == null ? 0 : comment.Type,
                 },
                 modules = new DynamicCardModel2024_modules
                 {
@@ -276,31 +280,55 @@ namespace BiliLite.Helpers
         }
 
         /// <summary>
-        /// 评论与详情使用的 oid：视频/番剧/合集用稿件 AID，专栏用 cvid，音乐用歌曲 ID，图片用相册对象 ID；其余卡片退回动态 ID。
+        /// 评论使用的 (oid, 评论接口类型) 这一对：视频/番剧/合集用稿件 AID（1），专栏用 cvid（12），
+        /// 音频用歌曲 ID（14），图片用相册对象 ID（11），其余卡片退回动态 ID（17）。
+        /// 这些是既有文档映射，换成一对之后调用方不必再按显示类型猜一次。
         /// </summary>
-        private static string GetCommentId(GrpcDynamicType cardType, ModuleDynamic dynamic)
+        private static DynamicCommentTarget GetCommentTarget(GrpcDynamicType cardType, ModuleDynamic dynamic, string dynamicId)
         {
-            if (dynamic == null)
+            if (dynamic != null)
             {
-                return null;
+                switch (cardType)
+                {
+                    case GrpcDynamicType.Av:
+                        if (dynamic.DynArchive != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynArchive.Avid.ToString(), 1);
+                        }
+                        break;
+                    case GrpcDynamicType.Article:
+                        if (dynamic.DynArticle != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynArticle.Id.ToString(), 12);
+                        }
+                        break;
+                    case GrpcDynamicType.Pgc:
+                        if (dynamic.DynPgc != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynPgc.Aid.ToString(), 1);
+                        }
+                        break;
+                    case GrpcDynamicType.UgcSeason:
+                        if (dynamic.DynUgcSeason != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynUgcSeason.Avid.ToString(), 1);
+                        }
+                        break;
+                    case GrpcDynamicType.Music:
+                        if (dynamic.DynMusic != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynMusic.Id.ToString(), 14);
+                        }
+                        break;
+                    case GrpcDynamicType.Draw:
+                        if (dynamic.DynDraw != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynDraw.Id.ToString(), 11);
+                        }
+                        break;
+                }
             }
-            switch (cardType)
-            {
-                case GrpcDynamicType.Av:
-                    return dynamic.DynArchive == null ? null : dynamic.DynArchive.Avid.ToString();
-                case GrpcDynamicType.Article:
-                    return dynamic.DynArticle == null ? null : dynamic.DynArticle.Id.ToString();
-                case GrpcDynamicType.Pgc:
-                    return dynamic.DynPgc == null ? null : dynamic.DynPgc.Aid.ToString();
-                case GrpcDynamicType.UgcSeason:
-                    return dynamic.DynUgcSeason == null ? null : dynamic.DynUgcSeason.Avid.ToString();
-                case GrpcDynamicType.Music:
-                    return dynamic.DynMusic == null ? null : dynamic.DynMusic.Id.ToString();
-                case GrpcDynamicType.Draw:
-                    return dynamic.DynDraw == null ? null : dynamic.DynDraw.Id.ToString();
-                default:
-                    return null;
-            }
+            return DynamicCommentTarget.From(dynamicId, 17);
         }
 
         private static DynamicCardModel2024_dynamic MapDynamic(ModuleDynamic source, ModuleDesc moduleDesc, ModuleFold fold,

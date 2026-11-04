@@ -407,8 +407,9 @@ namespace BiliLite.Parsing.Dynamic
         }
 
         /// <summary>
-        /// module_dynamic.additional 是正文之外另挂的一张卡（预约/投票/商品/通用/稿件），
-        /// 以前整块丢掉，能预约的图文会退化成纯文字。这里按 subtype 原样搬进 2024 附件模型。
+        /// module_dynamic.additional 是正文之外另挂的一张附件卡（预约/投票/通用/商品/稿件）。
+        /// 附件是列表不是单选：图片/纯文字动态都可能同时挂着投票与预约，所以每个存在的子卡都映射，
+        /// 不因为先命中一种就把后面的丢掉；type 原样保留，渲染层照旧按它判断子类型。
         /// </summary>
         private static DynamicCardModel2024_add MapWebAdditional(JObject moduleDynamic)
         {
@@ -447,7 +448,6 @@ namespace BiliLite.Parsing.Dynamic
                         uncheck = MapButtonText(Obj(button["uncheck"])),
                     },
                 };
-                return result;
             }
 
             var vote = Obj(source["vote"]);
@@ -455,28 +455,24 @@ namespace BiliLite.Parsing.Dynamic
             {
                 result.vote = MapAddin(vote);
                 result.vote.id_str = vote["vote_id"]?.ToString() ?? "";
-                return result;
             }
 
             var common = Obj(source["common"]);
             if (common != null)
             {
                 result.common = MapAddin(common);
-                return result;
             }
 
             var goods = Obj(source["goods"]);
             if (goods != null)
             {
                 result.goods = MapAddin(goods);
-                return result;
             }
 
             var ugc = Obj(source["ugc"]);
             if (ugc != null)
             {
                 result.ugc = MapAddin(ugc);
-                return result;
             }
 
             return result;
