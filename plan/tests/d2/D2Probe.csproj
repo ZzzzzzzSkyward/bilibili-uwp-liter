@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\..\src\BiliLite.UWP\Modules\SettingVM.cs" Link="SettingVM.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\DanmuFilterRules.cs" Link="DanmuFilterRules.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Modules\IModules.cs" Link="IModules.cs" />
   </ItemGroup>
 

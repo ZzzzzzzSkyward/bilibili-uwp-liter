@@ -3666,19 +3666,18 @@ namespace BiliLite.Controls
 
         private async void DanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(DanmuSettingTxtWord.Text))
+            var word = DanmuSettingTxtWord.Text;
+            if (string.IsNullOrWhiteSpace(word))
             {
                 Utils.ShowMessageToast("关键词不能为空");
                 return;
             }
-            settingVM.ShieldWords.Add(DanmuSettingTxtWord.Text);
-            SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_WORD, settingVM.ShieldWords);
-            var result = await settingVM.AddDanmuFilterItem(DanmuSettingTxtWord.Text, 0);
-            DanmuSettingTxtWord.Text = "";
-            if (!result)
+            if (!await settingVM.AddDanmuFilterItem(word, 0))
             {
-                Utils.ShowMessageToast("已经添加到本地，但远程同步失败");
+                Utils.ShowMessageToast("该关键词已存在");
+                return;
             }
+            DanmuSettingTxtWord.Text = "";
         }
 
         public async void Dispose()

@@ -338,6 +338,7 @@
               <TextBox x:Name="DanmuSettingTxtRegex" PlaceholderText="请输入正则表达式" Width="200"/>
               <Button x:Name="DanmuSettingAddRegex" Click="DanmuSettingAddRegex_Click" Margin="4 0">添加</Button>
             </StackPanel>
+            <TextBlock x:Name="DanmuSettingRegexError" Style="{StaticResource SettingHelp}" Foreground="Red" Visibility="Collapsed"/>
             <TextBlock Style="{StaticResource SettingHelp}" Text="匹配正则表达式的弹幕不显示。"/>
             <ListView x:Name="DanmuSettingListRegulars" ItemContainerStyle="{StaticResource DanmuFilterStyle}" Margin="0 8 0 0" SelectionMode="None" IsItemClickEnabled="False" Width="320" Height="160" HorizontalAlignment="Left" Background="{ThemeResource TopPaneBackground}">
               <ListView.ItemTemplate>

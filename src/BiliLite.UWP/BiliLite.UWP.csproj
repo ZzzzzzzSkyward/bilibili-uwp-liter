@@ -445,6 +445,8 @@
     <Compile Include="Modules\Detail\SeasonDetailVM.cs" />
     <Compile Include="Modules\Season\SeasonIndexVM.cs" />
     <Compile Include="Modules\SettingVM.cs" />
+    <Compile Include="Modules\DanmuFilterRules.cs" />
+    <Compile Include="Helpers\MouseBackPolicy.cs" />
     <Compile Include="Modules\Detail\VideoDetailVM.cs" />
     <Compile Include="Modules\User\MyFollowVideoVM.cs" />
     <Compile Include="Modules\User\SendDynamic\SendDynamicVM.cs" />

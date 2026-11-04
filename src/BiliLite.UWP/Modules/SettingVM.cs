@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Diagnostics;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 
 namespace BiliLite.Modules
 {
@@ -49,7 +48,7 @@ namespace BiliLite.Modules
 
             //正则关键词
             ShieldRegulars = SettingHelper.GetValue<ObservableCollection<string>>(SettingHelper.VideoDanmaku.SHIELD_REGULAR, new ObservableCollection<string>() { });
-            var validRegulars = ShieldRegulars.Where(IsValidDanmuRegex).ToList();
+            var validRegulars = ShieldRegulars.Where(x => DanmuFilterRules.TryValidateRegex(x, out _)).ToList();
             if (validRegulars.Count != ShieldRegulars.Count)
             {
                 ShieldRegulars = new ObservableCollection<string>(validRegulars);
@@ -127,15 +126,15 @@ namespace BiliLite.Modules
                 switch (item.type)
                 {
                     case 0:
-                        added += AddDanmuFilterValue(ShieldWords, item.filter);
+                        added += DanmuFilterRules.AddUnique(ShieldWords, item.filter) ? 1 : 0;
                         break;
                     case 1:
-                        if (!IsValidDanmuRegex(item.filter))
+                        if (!DanmuFilterRules.TryValidateRegex(item.filter, out _))
                             continue;
-                        added += AddDanmuFilterValue(ShieldRegulars, item.filter);
+                        added += DanmuFilterRules.AddUnique(ShieldRegulars, item.filter) ? 1 : 0;
                         break;
                     case 2:
-                        added += AddDanmuFilterValue(ShieldUsers, item.filter);
+                        added += DanmuFilterRules.AddUnique(ShieldUsers, item.filter) ? 1 : 0;
                         break;
                 }
             }
@@ -144,14 +143,6 @@ namespace BiliLite.Modules
             SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_REGULAR, ShieldRegulars);
             SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_USER, ShieldUsers);
             return added;
-        }
-
-        private static int AddDanmuFilterValue(ObservableCollection<string> filters, string value)
-        {
-            if (filters.Contains(value))
-                return 0;
-            filters.Add(value);
-            return 1;
         }
 
         public async Task SyncDanmuFilter()
@@ -165,44 +156,34 @@ namespace BiliLite.Modules
                     return;
                 }
                 var obj = result.GetJObject();
-                if (obj["code"].ToInt32() == 0)
-                {
-                    var items = JsonConvert.DeserializeObject<List<DanmuFilterItem>>(obj["data"]["rule"].ToString());
-                    {
-                        var words = items.Where(x => x.type == 0).Select(x => x.filter).ToList();
-                        var ls = ShieldWords.Union(words);
-                        ShieldWords.Clear();
-                        foreach (var item in ls)
-                        {
-                            ShieldWords.Add(item);
-                        }
-                        SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_WORD, ShieldWords);
-                    }
-                    {
-                        var users = items.Where(x => x.type == 1).Select(x => x.filter).ToList();
-                        var ls = ShieldRegulars.Union(users).Where(IsValidDanmuRegex).ToList();
-                        ShieldRegulars.Clear();
-                        foreach (var item in ls)
-                        {
-                            ShieldRegulars.Add(item);
-                        }
-                        SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_REGULAR, ShieldRegulars);
-                    }
-                    {
-                        var users = items.Where(x => x.type == 2).Select(x => x.filter).ToList();
-                        var ls = ShieldUsers.Union(users);
-                        ShieldUsers.Clear();
-                        foreach (var item in ls)
-                        {
-                            ShieldUsers.Add(item);
-                        }
-                        SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_USER, ShieldUsers);
-                    }
-                }
-                else
+                if (obj["code"].ToInt32() != 0)
                 {
                     Utils.ShowMessageToast(obj["message"].ToString());
+                    return;
                 }
+
+                var items = JsonConvert.DeserializeObject<List<DanmuFilterItem>>(obj["data"]["rule"].ToString());
+                if (items == null)
+                    return;
+
+                EnsureShieldLists();
+
+                // 三类规则各自先形成独立快照，再改动可观察集合：服务器没有的本地规则不会被清空吃掉。
+                var mergedWords = DanmuFilterRules.Merge(ShieldWords,
+                    items.Where(x => x.type == 0).Select(x => x.filter));
+                var mergedRegulars = DanmuFilterRules.Merge(ShieldRegulars,
+                    items.Where(x => x.type == 1).Select(x => x.filter),
+                    x => DanmuFilterRules.TryValidateRegex(x, out _));
+                var mergedUsers = DanmuFilterRules.Merge(ShieldUsers,
+                    items.Where(x => x.type == 2).Select(x => x.filter));
+
+                ResetShieldList(ShieldWords, mergedWords);
+                ResetShieldList(ShieldRegulars, mergedRegulars);
+                ResetShieldList(ShieldUsers, mergedUsers);
+
+                SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_WORD, ShieldWords);
+                SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_REGULAR, ShieldRegulars);
+                SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_USER, ShieldUsers);
             }
             catch (Exception ex)
             {
@@ -210,38 +191,58 @@ namespace BiliLite.Modules
             }
         }
 
-        private static bool IsValidDanmuRegex(string pattern)
+        private void EnsureShieldLists()
         {
-            if (string.IsNullOrEmpty(pattern))
-                return false;
-            try
+            if (ShieldWords == null)
+                ShieldWords = new ObservableCollection<string>();
+            if (ShieldRegulars == null)
+                ShieldRegulars = new ObservableCollection<string>();
+            if (ShieldUsers == null)
+                ShieldUsers = new ObservableCollection<string>();
+        }
+
+        private static void ResetShieldList(ObservableCollection<string> target, List<string> snapshot)
+        {
+            target.Clear();
+            foreach (var item in snapshot)
             {
-                new Regex(pattern);
-                return true;
-            }
-            catch (ArgumentException)
-            {
-                return false;
+                target.Add(item);
             }
         }
 
-        public async Task<bool> AddDanmuFilterItem(string word, int type)
+        /// <summary>
+        /// 把规则加入本地列表并持久化，返回是否新增。空值、重复值和无效正则返回 false，不访问网络。
+        /// </summary>
+        public Task<bool> AddDanmuFilterItem(string word, int type)
         {
-            try
+            EnsureShieldLists();
+            ObservableCollection<string> target;
+            string key;
+            switch (type)
             {
-                var result = await playerAPI.GetDanmuFilterWords().Request();
-                if (!result.status)
-                {
-                    return false;
-                }
-                var obj = result.GetJObject();
-                return obj["code"].ToInt32() == 0;
+                case 0:
+                    target = ShieldWords;
+                    key = SettingHelper.VideoDanmaku.SHIELD_WORD;
+                    break;
+                case 1:
+                    target = ShieldRegulars;
+                    key = SettingHelper.VideoDanmaku.SHIELD_REGULAR;
+                    break;
+                case 2:
+                    target = ShieldUsers;
+                    key = SettingHelper.VideoDanmaku.SHIELD_USER;
+                    break;
+                default:
+                    return Task.FromResult(false);
             }
-            catch (Exception ex)
-            {
-                LogHelper.Log("添加弹幕屏蔽词失败", LogType.ERROR, ex);
-                return false;
-            }
+
+            if (type == 1 && !DanmuFilterRules.TryValidateRegex(word, out _))
+                return Task.FromResult(false);
+            if (!DanmuFilterRules.AddUnique(target, word))
+                return Task.FromResult(false);
+
+            SettingHelper.SetValue(key, target);
+            return Task.FromResult(true);
         }
         /// <summary>
         /// CDN延迟测试

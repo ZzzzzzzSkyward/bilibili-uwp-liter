@@ -849,19 +849,18 @@ namespace BiliLite.Pages
 
         private async void DanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(DanmuSettingTxtWord.Text))
+            var word = DanmuSettingTxtWord.Text;
+            if (string.IsNullOrWhiteSpace(word))
             {
                 Utils.ShowMessageToast("关键词不能为空");
                 return;
             }
-            settingVM.ShieldWords.Add(DanmuSettingTxtWord.Text);
-            SettingHelper.SetValue(VideoDanmaku.SHIELD_WORD, settingVM.ShieldWords);
-            var result = await settingVM.AddDanmuFilterItem(DanmuSettingTxtWord.Text, 0);
-            DanmuSettingTxtWord.Text = "";
-            if (!result)
+            if (!await settingVM.AddDanmuFilterItem(word, 0))
             {
-                Utils.ShowMessageToast("已经添加到本地，但远程同步失败");
+                Utils.ShowMessageToast("该关键词已存在");
+                return;
             }
+            DanmuSettingTxtWord.Text = "";
         }
 
         private async void DanmuSettingSyncWords_Click(object sender, RoutedEventArgs e)
@@ -943,37 +942,52 @@ namespace BiliLite.Pages
 
         private async void DanmuSettingAddRegex_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(DanmuSettingTxtRegex.Text))
+            var txt = DanmuSettingTxtRegex.Text.Trim('/');
+            if (string.IsNullOrEmpty(txt))
             {
-                Utils.ShowMessageToast("正则表达式不能为空");
+                ShowRegexError("正则表达式不能为空");
                 return;
             }
-            var txt = DanmuSettingTxtRegex.Text.Trim('/');
-            settingVM.ShieldRegulars.Add(txt);
-            SettingHelper.SetValue(VideoDanmaku.SHIELD_REGULAR, settingVM.ShieldRegulars);
-            var result = await settingVM.AddDanmuFilterItem(txt, 1);
-            DanmuSettingTxtRegex.Text = "";
-            if (!result)
+            if (!DanmuFilterRules.TryValidateRegex(txt, out var error))
             {
-                Utils.ShowMessageToast("已经添加到本地，但远程同步失败");
+                ShowRegexError(error);
+                return;
             }
+            if (!await settingVM.AddDanmuFilterItem(txt, 1))
+            {
+                ShowRegexError("该正则表达式已存在");
+                return;
+            }
+            HideRegexError();
+            DanmuSettingTxtRegex.Text = "";
+        }
+
+        private void ShowRegexError(string message)
+        {
+            DanmuSettingRegexError.Text = message;
+            DanmuSettingRegexError.Visibility = Visibility.Visible;
+        }
+
+        private void HideRegexError()
+        {
+            DanmuSettingRegexError.Text = "";
+            DanmuSettingRegexError.Visibility = Visibility.Collapsed;
         }
 
         private async void DanmuSettingAddUser_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(DanmuSettingTxtUser.Text))
+            var user = DanmuSettingTxtUser.Text;
+            if (string.IsNullOrWhiteSpace(user))
             {
                 Utils.ShowMessageToast("用户ID不能为空");
                 return;
             }
-            settingVM.ShieldUsers.Add(DanmuSettingTxtUser.Text);
-            SettingHelper.SetValue(VideoDanmaku.SHIELD_USER, settingVM.ShieldUsers);
-            var result = await settingVM.AddDanmuFilterItem(DanmuSettingTxtUser.Text, 2);
-            DanmuSettingTxtUser.Text = "";
-            if (!result)
+            if (!await settingVM.AddDanmuFilterItem(user, 2))
             {
-                Utils.ShowMessageToast("已经添加到本地，但远程同步失败");
+                Utils.ShowMessageToast("该用户标识已存在");
+                return;
             }
+            DanmuSettingTxtUser.Text = "";
         }
 
 
@@ -1139,19 +1153,19 @@ namespace BiliLite.Pages
 
         private void LiveDanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(LiveDanmuSettingTxtWord.Text))
+            var word = LiveDanmuSettingTxtWord.Text;
+            if (string.IsNullOrWhiteSpace(word))
             {
                 Utils.ShowMessageToast("关键字不能为空");
                 return;
             }
-            if (!settingVM.LiveWords.Contains(LiveDanmuSettingTxtWord.Text))
+            if (!DanmuFilterRules.AddUnique(settingVM.LiveWords, word))
             {
-                settingVM.LiveWords.Add(LiveDanmuSettingTxtWord.Text);
-                SettingHelper.SetValue(SettingHelper.Live.SHIELD_WORD, settingVM.LiveWords);
+                Utils.ShowMessageToast("该关键词已存在");
+                return;
             }
-
-            DanmuSettingTxtWord.Text = "";
             SettingHelper.SetValue(SettingHelper.Live.SHIELD_WORD, settingVM.LiveWords);
+            LiveDanmuSettingTxtWord.Text = "";
         }
 
         private void RemoveLiveDanmuWord_Click(object sender, RoutedEventArgs e)
