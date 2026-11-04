@@ -32,7 +32,7 @@
   </Page.Resources>
   <Grid>
     <Pivot x:Name="SettingPivot" SelectionChanged="SettingPivot_SelectionChanged">
-      <PivotItem Margin="0">
+      <PivotItem Margin="0" x:Name="AppearancePivotItem">
         <PivotItem.Header>
           <TextBlock FontSize="15">外观与浏览</TextBlock>
         </PivotItem.Header>
@@ -186,7 +186,7 @@
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
-      <PivotItem Margin="0">
+      <PivotItem Margin="0" x:Name="PlayerPivotItem">
         <PivotItem.Header>
           <TextBlock FontSize="15">播放</TextBlock>
         </PivotItem.Header>
@@ -249,19 +249,21 @@
               </ComboBox.Items>
             </ComboBox>
             <TextBlock Style="{StaticResource SettingHelp}" Text="这里同时选择封装与编码。"/>
-            <RichTextBlock Margin="0 12 0 0">
-              <Paragraph>
-                <Run>视频编码为 HEVC 时系统需要</Run>
-                <Hyperlink NavigateUri="ms-windows-store://pdp/?productid=9n4wgh0z6vhq">安装 HEVC 扩展</Hyperlink>
-              </Paragraph>
-            </RichTextBlock>
-            <RichTextBlock>
-              <Paragraph>
-                <Run>视频编码为 AV1 时系统需要</Run>
-                <Hyperlink NavigateUri="ms-windows-store://pdp/?productid=9MVZQVXJBQ9V">安装 AV1 扩展</Hyperlink>
-                <Run>，部分清晰度可能也需要 HEVC 扩展</Run>
-              </Paragraph>
-            </RichTextBlock>
+            <StackPanel x:Name="VideoCodecHint" Visibility="Collapsed">
+              <RichTextBlock x:Name="VideoCodecHintHevc" Margin="0 12 0 0">
+                <Paragraph>
+                  <Run>视频编码为 HEVC 时系统需要</Run>
+                  <Hyperlink NavigateUri="ms-windows-store://pdp/?productid=9n4wgh0z6vhq">安装 HEVC 扩展</Hyperlink>
+                </Paragraph>
+              </RichTextBlock>
+              <RichTextBlock x:Name="VideoCodecHintAv1" Margin="0 12 0 0" Visibility="Collapsed">
+                <Paragraph>
+                  <Run>视频编码为 AV1 时系统需要</Run>
+                  <Hyperlink NavigateUri="ms-windows-store://pdp/?productid=9MVZQVXJBQ9V">安装 AV1 扩展</Hyperlink>
+                  <Run>，部分清晰度可能也需要 HEVC 扩展</Run>
+                </Paragraph>
+              </RichTextBlock>
+            </StackPanel>
             <TextBlock Style="{StaticResource SettingLabel}" Text="首选播放器"/>
             <ComboBox x:Name="swPriorityPlayer" SelectedIndex="0" MinWidth="200">
               <ComboBox.Items>
@@ -275,7 +277,7 @@
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
-      <PivotItem Margin="0">
+      <PivotItem Margin="0" x:Name="VideoDanmuPivotItem">
         <PivotItem.Header>
           <TextBlock FontSize="15">视频弹幕</TextBlock>
         </PivotItem.Header>
@@ -367,7 +369,7 @@
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
-      <PivotItem Margin="0">
+      <PivotItem Margin="0" x:Name="LiveDanmuPivotItem">
         <PivotItem.Header>
           <TextBlock FontSize="15">直播弹幕</TextBlock>
         </PivotItem.Header>
@@ -398,7 +400,7 @@
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
-      <PivotItem Margin="0">
+      <PivotItem Margin="0" x:Name="DownloadPivotItem">
         <PivotItem.Header>
           <TextBlock FontSize="15">下载</TextBlock>
         </PivotItem.Header>
@@ -500,7 +502,7 @@
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
-      <PivotItem Margin="0">
+      <PivotItem Margin="0" x:Name="NetworkPivotItem">
         <PivotItem.Header>
           <TextBlock FontSize="15">网络与解析</TextBlock>
         </PivotItem.Header>
@@ -518,24 +520,27 @@
               </ComboBox.Items>
             </ComboBox>
             <TextBlock Style="{StaticResource SettingHelp}" Text="尝试使用其他视频节点，效果取决于网络；获取播放地址可能更慢。"/>
-            <TextBlock Style="{StaticResource SettingLabel}" Text="CDN 节点"/>
-            <ComboBox x:Name="RoamingSettingCDNServer" ItemsSource="{x:Bind Path=settingVM.CDNServers,Mode=OneWay}" Margin="0 8 0 8" HorizontalAlignment="Left">
-              <ComboBox.ItemTemplate>
-                <DataTemplate>
-                  <StackPanel>
-                    <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis">
-											【<Run Text="{Binding Path=Remark}"/>】
-											<Run Text="{Binding Path=Server}"/>
-										</TextBlock>
-                    <TextBlock FontSize="12" Foreground="Red" Visibility="{Binding Path=ShowTimeOut,Mode=OneWay}">超时</TextBlock>
-                    <TextBlock FontSize="12" Foreground="Green" Visibility="{Binding Path=ShowDelay,Mode=OneWay}"><Run Text="{Binding Path=Delay,Mode=OneWay}"/> ms
-										</TextBlock>
-                  </StackPanel>
-                </DataTemplate>
-              </ComboBox.ItemTemplate>
-            </ComboBox>
-            <Button x:Name="RoamingSettingTestCDN" Click="RoamingSettingTestCDN_Click">测试延迟</Button>
-            <TextBlock Style="{StaticResource SettingHelp}" Text="显示本次请求耗时或超时，不代表实际播放速度。"/>
+            <StackPanel x:Name="CDNNodeSection">
+              <TextBlock Style="{StaticResource SettingLabel}" Text="CDN 节点"/>
+              <ComboBox x:Name="RoamingSettingCDNServer" ItemsSource="{x:Bind Path=settingVM.CDNServers,Mode=OneWay}" Margin="0 8 0 8" HorizontalAlignment="Left">
+                <ComboBox.ItemTemplate>
+                  <DataTemplate>
+                    <StackPanel>
+                      <TextBlock Margin="0 0 0 4" TextTrimming="CharacterEllipsis">
+                        【<Run Text="{Binding Path=Remark}"/>】
+                        <Run Text="{Binding Path=Server}"/>
+                      </TextBlock>
+                      <TextBlock FontSize="12" Foreground="Red" Visibility="{Binding Path=ShowTimeOut,Mode=OneWay}">超时</TextBlock>
+                      <TextBlock FontSize="12" Foreground="Green" Visibility="{Binding Path=ShowDelay,Mode=OneWay}"><Run Text="{Binding Path=Delay,Mode=OneWay}"/> ms
+                      </TextBlock>
+                    </StackPanel>
+                  </DataTemplate>
+                </ComboBox.ItemTemplate>
+              </ComboBox>
+              <Button x:Name="RoamingSettingTestCDN" Click="RoamingSettingTestCDN_Click">测试延迟</Button>
+              <TextBlock Style="{StaticResource SettingHelp}" Text="显示本次请求耗时或超时，不代表实际播放速度。"/>
+            </StackPanel>
+            <TextBlock x:Name="CDNReplaceHint" Style="{StaticResource SettingHelp}" Visibility="Collapsed" Text="节点与延迟测试只在启用替换后生效。"/>
 
             <TextBlock Style="{StaticResource SettingSectionHeader}" Text="地区解析"/>
             <Border Style="{StaticResource SettingSectionRule}"/>
@@ -567,7 +572,7 @@
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
-      <PivotItem Margin="0">
+      <PivotItem Margin="0" x:Name="DiagnosticsPivotItem">
         <PivotItem.Header>
           <TextBlock FontSize="15">诊断</TextBlock>
         </PivotItem.Header>
@@ -590,7 +595,7 @@
             <TextBlock Style="{StaticResource SettingHelp}" Text="写入 LocalState\log\api；第一份结构作为基线，之后字段变化记为一次漂移。"/>
             <TextBlock Style="{StaticResource SettingLabel}" Text="记录正文样本"/>
             <ToggleSwitch x:Name="swApiCaptureSamples" AutomationProperties.Name="记录正文样本"/>
-            <TextBlock Style="{StaticResource SettingHelp}" Text="每份最多 4 KB，名字像凭据的字段会被替换；需要先开启响应结构记录。"/>
+            <TextBlock x:Name="swApiCaptureSamplesHelp" Style="{StaticResource SettingHelp}" Text="每份最多 4 KB，名字像凭据的字段会被替换。"/>
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
