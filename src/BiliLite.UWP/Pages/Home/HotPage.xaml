@@ -4,14 +4,19 @@
     <covert:ColorConvert x:Key="colorConvert"/>
     <covert:DisplayConvert x:Key="DisplayConvert"/>
     <!--
-      卡片预算（有效像素，100% 文字大小）：
-      宽卡 = 6 外边距 + 12 内边距 + max(封面 90, 文本 88) + 12 内边距 + 6 外边距 = 132；
-      文本 88 = 标题两行 44 + 间距 6 + 元信息 18 + 间距 2 + 元信息 18。
-      竖排卡 = 6 + 12 + 封面 160 + 间距 12 + 文本 88 + 12 + 6 = 296。
-      推荐标签固定在封面上，一行省略号截断，不参与文本列的高度竞争。
+      卡片预算（有效像素，100% 文字大小），一律由 ItemHeight 推导，不靠 MinHeight 兜底：
+      槽位内缩只有 GridViewItem 的 Margin=4 一处，模板根节点 Margin/Padding 均为 0，
+      所以内容高 = ItemHeight − 2×4。
+      宽卡：内容高 = 106 − 8 = 98；
+            文本列高 = 标题两行 54（20px SemiBold，行高 ≈ 27×2）+ 间距 2 + 元信息 18 + 间距 2 + 元信息 18 = 94，余量 4；
+            文本列宽 = 560 − 2×4 − 160（封面列）− 12（列间距）= 380；
+            封面 160×90，推荐标签 MaxWidth = 封面宽 160 − 2×4 = 152，一行省略号截断，不参与文本列高度竞争；
+            封面与文字各自内缩 4px（标签与右下角胶囊各 Margin=4），不贴槽位边缘。
+      竖排卡（窗口 < 480）：内容高 = 278 − 8 = 270 = 封面 160 + 间距 12 + 文本 98（与宽卡文本列同高）；
+            文本列宽 = 320 − 2×4 = 312。
     -->
     <DataTemplate x:Key="hotVideoCardWide" x:DataType="modules:HotDataItemModel">
-      <Grid Background="#00FFFFFF" Margin="6" Padding="12">
+      <Grid Background="#00FFFFFF" Margin="0">
         <Grid.ContextFlyout>
           <MenuFlyout>
             <MenuFlyoutItem Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看"/>
@@ -39,14 +44,14 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
-          <TextBlock MinHeight="44" Margin="0 0 0 6" FontSize="16" FontWeight="SemiBold" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"/>
-          <TextBlock Grid.Row="1" MinHeight="18" Margin="0 0 0 2" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_1}"/>
-          <TextBlock Grid.Row="2" MinHeight="18" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_2}"/>
+          <TextBlock Margin="0 0 0 2" FontSize="20" FontWeight="SemiBold" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"/>
+          <TextBlock Grid.Row="1" Margin="0 0 0 2" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_1}"/>
+          <TextBlock Grid.Row="2" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_2}"/>
         </Grid>
       </Grid>
     </DataTemplate>
     <DataTemplate x:Key="hotVideoCardStacked" x:DataType="modules:HotDataItemModel">
-      <Grid Background="#00FFFFFF" Margin="6" Padding="12">
+      <Grid Background="#00FFFFFF" Margin="0">
         <Grid.ContextFlyout>
           <MenuFlyout>
             <MenuFlyoutItem Click="AddToWatchLater_Click" Icon="Add" Text="添加到稍后再看"/>
@@ -74,9 +79,9 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
-          <TextBlock MinHeight="44" Margin="0 0 0 6" FontSize="16" FontWeight="SemiBold" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"/>
-          <TextBlock Grid.Row="1" MinHeight="18" Margin="0 0 0 2" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_1}"/>
-          <TextBlock Grid.Row="2" MinHeight="18" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_2}"/>
+          <TextBlock Margin="0 0 0 2" FontSize="20" FontWeight="SemiBold" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"/>
+          <TextBlock Grid.Row="1" Margin="0 0 0 2" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_1}"/>
+          <TextBlock Grid.Row="2" FontSize="13" MaxLines="1" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource ForegroundTextColor}" Text="{x:Bind right_desc_2}"/>
         </Grid>
       </Grid>
     </DataTemplate>
@@ -89,7 +94,7 @@
             <AdaptiveTrigger MinWindowWidth="480"/>
           </VisualState.StateTriggers>
           <VisualState.Setters>
-            <Setter Target="gridHot.ItemHeight" Value="132"/>
+            <Setter Target="gridHot.ItemHeight" Value="106"/>
             <Setter Target="gridHot.DesiredWidth" Value="560"/>
             <Setter Target="gridHot.ItemTemplate" Value="{StaticResource hotVideoCardWide}"/>
           </VisualState.Setters>
@@ -99,17 +104,17 @@
             <AdaptiveTrigger MinWindowWidth="0"/>
           </VisualState.StateTriggers>
           <VisualState.Setters>
-            <Setter Target="gridHot.ItemHeight" Value="296"/>
+            <Setter Target="gridHot.ItemHeight" Value="278"/>
             <Setter Target="gridHot.DesiredWidth" Value="320"/>
             <Setter Target="gridHot.ItemTemplate" Value="{StaticResource hotVideoCardStacked}"/>
           </VisualState.Setters>
         </VisualState>
       </VisualStateGroup>
     </VisualStateManager.VisualStateGroups>
-    <controls:MyAdaptiveGridView x:Name="gridHot" ItemClick="gridHot_ItemClick" OneRowModeEnabled="False" Padding="8" StretchContentForSingleRow="False" ItemsSource="{x:Bind Path=hotVM.HotItems,Mode=OneWay}" ItemHeight="132" DesiredWidth="560" ItemTemplate="{StaticResource hotVideoCardWide}" LoadMoreBottomOffset="0" LoadMoreCommand="{x:Bind Path=hotVM.LoadMoreCommand}" CanLoadMore="True" Loading="{x:Bind Path=hotVM.Loading,Mode=OneWay}" SelectionMode="None" IsItemClickEnabled="True">
+    <controls:MyAdaptiveGridView x:Name="gridHot" ItemClick="gridHot_ItemClick" OneRowModeEnabled="False" Padding="8" StretchContentForSingleRow="False" ItemsSource="{x:Bind Path=hotVM.HotItems,Mode=OneWay}" ItemHeight="106" DesiredWidth="560" ItemTemplate="{StaticResource hotVideoCardWide}" LoadMoreBottomOffset="0" LoadMoreCommand="{x:Bind Path=hotVM.LoadMoreCommand}" CanLoadMore="True" Loading="{x:Bind Path=hotVM.Loading,Mode=OneWay}" SelectionMode="None" IsItemClickEnabled="True">
       <toolkit:AdaptiveGridView.ItemContainerStyle>
         <Style TargetType="GridViewItem">
-          <Setter Property="Margin" Value="0"/>
+          <Setter Property="Margin" Value="4"/>
         </Style>
       </toolkit:AdaptiveGridView.ItemContainerStyle>
       <controls:MyAdaptiveGridView.Header>

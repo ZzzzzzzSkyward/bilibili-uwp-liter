@@ -10,7 +10,7 @@
       页面留白             12        8            CardRoot.Margin 左右
       卡片间距             12        12           CardRoot.Margin 下
       卡片内边距           16        12           CardSurface.Padding
-      卡片圆角/分隔线      8 / 1px   —            CardSurface.CornerRadius / BorderThickness(主题 ForegroundBorderColor)
+      卡片圆角             8         —            CardSurface.CornerRadius(无边框,卡片间只靠 CardRoot.Margin 下 12)
       正文                 16 常规    同左          RichTextControl.xaml.cs(BodyFontSize,富文本与纯文本回退同一处)
       正文行高             24 最小    同左          RichTextControl.xaml.cs(BodyLineHeight + MaxHeight 行距策略)
       作者名               15 半粗    同左          HeaderName 两个 TextBlock(单行 + 省略号)
@@ -25,7 +25,7 @@
       响应式断点           480        —            DynamicItemControl.xaml.cs NarrowWidthThreshold
 
     未按计划取值的两处,原因记录在此,不改动数据契约:
-      · 卡片表面没有可用的不透明主题色(App.xaml 的 CardColor/TopPaneBackground 都是全透明),故不加背景,只加底部 1px 分隔线,不引入新颜色。
+      · 卡片表面没有可用的不透明主题色(App.xaml 的 CardColor/TopPaneBackground 都是全透明),故不加背景也不加边框,卡片之间只靠 CardRoot.Margin 的下 12 留白分隔。
       · 图片九宫格仍是固定 100/120 像素瓦片(模板内无法按卡片宽度算列宽,需代码或新文件),不在本次改动内。
   -->
   <UserControl.Resources>
@@ -37,7 +37,7 @@
   </UserControl.Resources>
   <!-- 阅读列:最大 800,宽窗口居中,窄窗口自 stretch 到可用宽度 -->
   <Grid x:Name="CardRoot" Margin="12,0,12,12" MaxWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Top">
-    <Border x:Name="CardSurface" CornerRadius="8" Padding="16" BorderBrush="{ThemeResource ForegroundBorderColor}" BorderThickness="0,0,0,1">
+    <Border x:Name="CardSurface" CornerRadius="8" Padding="16">
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto"/>
