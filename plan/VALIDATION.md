@@ -142,3 +142,18 @@ Compiled (`-Fast`, `BiliLite.UWP_1.0.9.39`), then the whole suite: **38 batches,
 
 The detail page's expanded body needed one line that no slice owned: a `BodyRole="Detail"` style on
 `Pages/User/DynamicDetailPage.xaml`. It is compiled but not device-verified.
+
+## Shipped 2026-11-04 — device reports and diagnostics cleanup (1.0.9.40)
+
+Compiled to `BiliLite.Packages_1.0.9.40_x64.msix` with 0 errors (the first attempt hit `CS2012` on
+`BiliLite.gRPC.dll` because a compiler server from a worker's own MSBuild still held the file; the servers were stopped and
+the rebuild was clean), then the whole suite: **38 batches, `TOTAL_FAILURES=0`** (`g5` 134 → 200).
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Card hairline gone (BR-49) | `57dd521` | the dynamics page has no line under any card, light and dark theme; cards are separated by spacing only |
+| Hot card density (BR-48) | `57dd521` | the Hot page rows are as tight as before BR-47, two-line titles are not clipped, the recommendation tag still sits on the thumbnail, and the stacked layout under 480 is not left at the old height |
+| Live dynamic card (BR-50) | `5a7c0a6` | a live card shows the room's real title, cover, area and viewer label with no 【直播有待修复】, and tapping it opens the matching room — not a wrong or dead one. A card whose stream has ended shows 直播已结束; a card with unknown state shows no badge |
+| Realtime log removed | `0218974` | the diagnostics tab has no 实时日志 switch and no log box; the log file still grows, and 导出日志 / 导出诊断包 still produce files |
+| API parameter editor removed | `0218974` | the diagnostics tab has no 编辑 API 参数; requests still work with the built-in appkeys, and an existing install's old overrides are simply ignored |
+| 打开日志目录 | `0218974` | the button opens the folder with today's `.log` in the file manager; with no log folder yet it still opens after creating it |

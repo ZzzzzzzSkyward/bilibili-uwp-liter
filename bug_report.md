@@ -179,3 +179,32 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 验收仍是真机：裁切、两行标题的完整性、行间距，以及 150%/200% 系统文字大小下的表现
 （`AdaptiveTrigger` 只看窗口宽度，看不到文字大小，这一条和 BR-47 一样需要在设备上确认）。
+
+## BR-49 — 动态卡片底部有一条横贯卡片的白线（维护者 2026-11-04，带截图）
+
+维护者：动态页面有底部白色线条请去除。
+
+来源是卡片外壳自己的分隔线：`Controls/Dynamic/DynamicItemControl.xaml` 的 `CardSurface` 写了
+`BorderThickness="0,0,0,1"` 配 `ForegroundBorderColor`（浅色 `#dddddd`，深色 `#111111`）。
+卡片本来就有 `CardRoot.Margin` 底部 12 的间距，这条线只是重复表达“分隔”，在深色背景上尤其显眼。
+
+处理：去掉边框与画刷，圆角、内边距和 `CardSurface` 名字保留（`DynamicItemControl.xaml.cs` 还在设置它的 Padding）；
+文件头两处描述这条线的注释同步改成现在的样子。转发原动态内部的顶部分隔线与模板里的引用块 1px 边框不动。
+
+## BR-50 — 动态页的直播卡片显示占位符「直播有待修复」（维护者 2026-11-04）
+
+维护者：以前尝试修过动态页面的直播卡片，没成功，现在仍是占位符。
+
+`Controls/Dynamic/DynamicParse.cs` 的现代路径把字段名当成了文案：副标题写成
+`"【直播有待修复】parent_area_name" + " · 人气:" + item.viewtext` 和 `"【直播有待修复】area_v2_name"`，
+身份取 `item.aid`，链接拼成 `https://b23.tv/live<aid>`。解析层其实早就备好了数据：
+web 与 gRPC 两个映射器都往 `major.live` 填了房间号、封面、标题、分区名、人气文案和跳转地址。
+
+链接不只是难看：单行卡把 `OneRowInfo.Url` 交给 `MessageCenter.HandleUrl`，它按 `live(\d+)` 把数字当房间号
+送进 `LiveDetailPage`，于是 aid 会打开错误或不存在的直播间。
+
+处理：新增 `Parsing/Dynamic/LiveCardSummary.cs` 统一决策——房间号只在纯数字时采用；目标地址只接受本身
+能被识别成直播间的那种，否则用 `https://live.bilibili.com/{房间号}`；分区名与人气文案用 ` · ` 连接并跳过空项；
+直播状态三态（1 直播中、0 已结束、其余或缺失为未知），只有确认结束才显示「直播已结束」。
+`live_state` 因此改成 `int?`：`live_rcmd` 分支从来没设置过它，而 web 映射器对缺失的键写 0，会被读成“已结束”。
+两条旧路径只把目标地址统一到 `live.bilibili.com/{房间号}`，字段读取不动。
