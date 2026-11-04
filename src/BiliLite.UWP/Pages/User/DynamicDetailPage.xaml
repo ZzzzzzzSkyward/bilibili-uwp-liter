@@ -8,6 +8,9 @@
       <Style TargetType="HyperlinkButton">
         <Setter Property="Foreground" Value="#178bcf"/>
       </Style>
+      <Style TargetType="dynamic:DynamicItemControl">
+        <Setter Property="BodyRole" Value="Detail"/>
+      </Style>
       <AcrylicBrush x:Key="SystemControlBaseHighAcrylicElementBrush" BackgroundSource="Backdrop" TintColor="{StaticResource SystemChromeAltHighColor}" TintOpacity="0.8" FallbackColor="{StaticResource SystemChromeAltHighColor}"/>
     </ResourceDictionary>
   </Page.Resources>

@@ -73,7 +73,19 @@ namespace BiliLite.Controls.Dynamic
         public static readonly DependencyProperty CardContentProperty =
             DependencyProperty.Register("CardContent", typeof(FrameworkElement), typeof(DynamicItemControl), new PropertyMetadata(null));
 
+        /// <summary>
+        /// 正文位置（CARD_PLAN §4 展开策略）：模板是共享的，所以由承载它的页面决定——
+        /// 详情页在自己的 Resources 里用隐式 Style 把它设成 Detail，正文就不再设行数上限并默认展开。
+        /// 转发原动态的内层卡片仍由嵌套层级识别，无需页面干预。
+        /// </summary>
+        public RichTextBodyRole BodyRole
+        {
+            get { return (RichTextBodyRole)GetValue(BodyRoleProperty); }
+            set { SetValue(BodyRoleProperty, value); }
+        }
 
+        public static readonly DependencyProperty BodyRoleProperty =
+            DependencyProperty.Register("BodyRole", typeof(RichTextBodyRole), typeof(DynamicItemControl), new PropertyMetadata(RichTextBodyRole.Feed));
 
     }
 }

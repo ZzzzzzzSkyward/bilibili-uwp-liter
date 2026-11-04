@@ -58,6 +58,7 @@ namespace G3Probe
             BodyIsNotTruncatedAtOneThousandCharacters();
 
             _passed += RichTextBodyProbe.Run(args);
+            _passed += RichTextFlowProbe.Run();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;

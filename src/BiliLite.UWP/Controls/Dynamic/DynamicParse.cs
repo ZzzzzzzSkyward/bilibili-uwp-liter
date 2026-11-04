@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Input;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Automation;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Documents;
 using Windows.UI.Xaml.Markup;
@@ -206,12 +207,10 @@ namespace BiliLite.Controls.Dynamic
                     return subtype;
             }
         }
-        /// <summary>正文基准字号与 RichTextControl 一致；只用来把表情档位换成 em 倍数。</summary>
-        private const double BodyFontSize = 14;
-
         /// <summary>
         /// 正文渲染：RichTextFlow 给出的片段顺序决定内容，一个段落装下整条正文。
         /// 节点类型切换不断句，只有来源里的换行才产生 LineBreak；不按字符数截断。
+        /// 行数上限不在这里：这里只按内容算出需要的行高，折叠由 RichTextControl 用 MaxLines 做。
         /// </summary>
         public static RichTextBlock BuildRichText(DynamicItemDisplayModel data, Modules.DynamicCardModel2024_desc desc)
         {
@@ -243,12 +242,17 @@ namespace BiliLite.Controls.Dynamic
             {
                 return null;
             }
+
+            // 完整纯文本随块走：折叠只影响可见行数，选中/复制与读屏拿到的仍是整条正文。
+            var plainText = RichTextFlow.PlainText(segments);
             var block = new RichTextBlock
             {
                 HorizontalAlignment = HorizontalAlignment.Stretch,
                 TextWrapping = TextWrapping.Wrap,
-                LineHeight = 20,
+                LineHeight = RichTextFlow.RequiredLineHeight(segments, RichTextControl.BodyFontSize, RichTextControl.BodyLineHeight),
+                Tag = plainText,
             };
+            AutomationProperties.SetName(block, plainText);
             block.Blocks.Add(paragraph);
             return block;
         }
@@ -300,23 +304,28 @@ namespace BiliLite.Controls.Dynamic
         /// </summary>
         private static Inline BuildEmoji(RichTextSegment segment)
         {
-            BitmapImage image = null;
+            var readable = string.IsNullOrEmpty(segment.Text) ? null : new Run { Text = segment.Text };
+            if (!RichTextFlow.IsUsableEmojiImage(segment.ImageUrl))
+            {
+                return readable;
+            }
+
+            BitmapImage image;
             try
             {
                 image = new BitmapImage(new Uri(segment.ImageUrl));
             }
             catch (Exception)
             {
-                image = null;
+                return readable;
             }
-            if (image == null || string.IsNullOrEmpty(segment.ImageUrl))
-            {
-                return string.IsNullOrEmpty(segment.Text) ? null : new Run { Text = segment.Text };
-            }
-            var side = Math.Round(BodyFontSize * (segment.EmojiSize >= 2 ? 1.5 : 1.2));
+
+            // 尺寸只由档位决定（1.2 em / 1.5 em 上限）；底边压到基线以下一个 descender，让图和字同基线。
+            var side = RichTextFlow.EmojiSide(RichTextControl.BodyFontSize, segment.EmojiVariant);
+            var baselineDrop = RichTextFlow.EmojiBaselineOffset(RichTextControl.BodyFontSize);
             var border = new Border
             {
-                Margin = new Thickness(0, -4, 4, -4),
+                Margin = new Thickness(0, 0, 0, -baselineDrop),
                 Child = new Image
                 {
                     Source = image,
