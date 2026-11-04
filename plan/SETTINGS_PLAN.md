@@ -10,7 +10,7 @@
 - 分支：本地 `dev`，跟踪 `origin/dev`；获取、审阅标记、提交和推送均使用这两个名称。
 - 审阅的远端提交：`abea0dee305c3a105e5f77e99509ff13e7f0bf98`。
 - 上次有效源码审阅边界：`63e1765651eb1275f8731be5c45cf8f9427f0a6c`，由只修改 `code_review.md` 的审阅提交 `c6fcbf2a2c9e9506549aa4d75dd486862007e337` 记录。此后只有文档变化，没有新的源码差异。本次按要求另做完整设置盘点，保留原有 `code_review.md`。
-- 已读 `bug_report.md`、`code_review.md` 和 `REFRESH_PLAN.md`。依照 `.agents/skills/work-code-review/SKILL.md`，由 Luna 分别审阅外观与播放、弹幕与下载、账号与诊断，再对照调用处复核。
+- 已读 `bug_report.md`、`code_review.md` 和 `plan/REFRESH_PLAN.md`。依照 `.agents/skills/work-code-review/SKILL.md`，由 Luna 分别审阅外观与播放、弹幕与下载、账号与诊断，再对照调用处复核。
 - 依据为源码和 Git 历史。未运行应用、构建、测试、检查器或真机验证。下文的问题是当前源码中的既有问题，不称为本次新增回归；后面的验收项尚未执行。
 
 主要入口是 [SettingPage.xaml](src/BiliLite.UWP/Pages/SettingPage.xaml)、[SettingPage.xaml.cs](src/BiliLite.UWP/Pages/SettingPage.xaml.cs)、[SettingVM.cs](src/BiliLite.UWP/Modules/SettingVM.cs) 和 [SettingHelper.cs](src/BiliLite.UWP/Helpers/SettingHelper.cs)。设置页之外的播放器浮层设置不在本次搬动范围内；只检查它们是否共用同一个值。
@@ -168,7 +168,7 @@
 | 2.3 | bili_jct | `CookieTextBox` | 网页请求使用的 CSRF 字段 |
 | 2.4 | ac_time_value | `CookieRefreshTokenTextBox` | 网页会话刷新使用的值；获取步骤放在帮助中 |
 
-当前三项输入使用双向绑定，在绑定回写时保存；空值会被忽略，并没有统一“保存”事务。第一轮只搬位置时要保留并说明这一行为，不能摆出一个实际不控制保存的按钮。若以后改成统一保存，须连同绑定、Cookie 写入和成功反馈一起改，按 `REFRESH_PLAN.md` 处理已有认证问题。
+当前三项输入使用双向绑定，在绑定回写时保存；空值会被忽略，并没有统一“保存”事务。第一轮只搬位置时要保留并说明这一行为，不能摆出一个实际不控制保存的按钮。若以后改成统一保存，须连同绑定、Cookie 写入和成功反馈一起改，按 `plan/REFRESH_PLAN.md` 处理已有认证问题。
 
 删除当前大段第一人称登录教程，替换为一句“常规登录不可用时，可手动填写网页会话信息。”获取步骤链接到本地帮助；不保留“无痕模式能确保令牌不会失效”这类保证。
 

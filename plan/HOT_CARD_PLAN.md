@@ -8,8 +8,8 @@ This document proposes a new UI; it does not implement it. The reported overflow
 
 - Main repository: `ZzzzzzzSkyward/bilibili-uwp-liter`, local `dev` tracking `origin/dev`.
 - Reviewed remote tip: `3b006c1585ac9a9284c9330138a735852def8721`, fetched on 2026-11-02, Asia/Shanghai.
-- Continue `.agents/skills/work-code-review/SKILL.md` with the established branch override and this new output path, `HOT_CARD_PLAN.md`. Read `bug_report.md` and `code_review.md`; preserve them and `CARD_PLAN.md`.
-- The latest report-only marker is `3b006c1`, which changes only `CARD_PLAN.md` and records remote `b9b17b9848928ab14f55f70e39c75d94e40e86b9`. Since the `code_review.md` source boundary `63e1765651eb1275f8731be5c45cf8f9427f0a6c`, changes are documentation only. This is a newly requested investigation of existing Hot card behavior, not an introduced regression in those documentation commits.
+- Continue `.agents/skills/work-code-review/SKILL.md` with the established branch override and this new output path, `plan/HOT_CARD_PLAN.md`. Read `bug_report.md` and `code_review.md`; preserve them and `plan/CARD_PLAN.md`.
+- The latest report-only marker is `3b006c1`, which changes only `plan/CARD_PLAN.md` and records remote `b9b17b9848928ab14f55f70e39c75d94e40e86b9`. Since the `code_review.md` source boundary `63e1765651eb1275f8731be5c45cf8f9427f0a6c`, changes are documentation only. This is a newly requested investigation of existing Hot card behavior, not an introduced regression in those documentation commits.
 - A Luna reviewer independently traced the Hot template, model, and actions. No applicable `AGENTS.md` was found. Source/Git review only: no builds, tests, app execution, package inspection, API calls, linters, formatters, or other validation. The future checks below have not been executed.
 - Scope is the video items in `HotPage`, not the top shortcut tiles, rankings, recommendation page, or dynamics cards.
 
