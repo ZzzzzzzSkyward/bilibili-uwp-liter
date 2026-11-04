@@ -1088,7 +1088,8 @@ namespace BiliLite.Modules
         public string desc_second { get; set; }
         public string id { get; set; }
         public string jump_url { get; set; }
-        public int live_state { get; set; }
+        // 可空：live_rcmd 解出来的载荷没有这个字段，缺席就是"不知道"，不能读成 0（已结束）
+        public int? live_state { get; set; }
         public string title { get; set; }
         public int style { get; set; }
 

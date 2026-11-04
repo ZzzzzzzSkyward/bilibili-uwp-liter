@@ -47,6 +47,14 @@ namespace G5Probe
             WebAttachmentsStaySeparate();
             CommentTargetsArePaired();
             CardProjectionCarriesTheContract();
+            LiveSummaryReadsThePayload();
+            LiveSummarySkipsEmptyParts();
+            LiveSummaryNeverInventsARoom();
+            LiveSummaryBadgesOnlyConfirmedEnds();
+            LiveRcmdPayloadMatchesThePlainOne();
+            GrpcLiveCardsMapTheSameWay();
+            LiveWithoutPayloadKeepsThePreview();
+            LiveCardsUseTheSharedSummary();
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
@@ -483,6 +491,284 @@ namespace G5Probe
                 "a card without module_stat reports comment availability as unknown");
             Check(unknownActions.Comment != DynamicActionAvailability.Forbidden,
                 "unknown availability is not reported as forbidden");
+        }
+
+        /// <summary>
+        /// 直播卡只有一行：房间号、目的地、地区·人气、结束角标。旧的占位符（【直播有待修复】）
+        /// 之所以存在，是因为页面拿不到这些字段；现在它们全由 LiveCardSummary 从载荷里读出来。
+        /// </summary>
+        private static void LiveSummaryReadsThePayload()
+        {
+            var summary = LiveCardSummary.From(new DynamicCardModel2024_live
+            {
+                id = "12345",
+                cover = "https://i0.hdslb.com/live.jpg",
+                title = "今晚八点",
+                desc_first = "虚拟主播",
+                desc_second = "1.2万人看过",
+                jump_url = "https://live.bilibili.com/12345",
+                live_state = 1,
+            }, "卡片标题", "https://i0.hdslb.com/pic.jpg");
+
+            Check(summary.RoomId == "12345", "a live payload keeps its room id");
+            Check(summary.Destination == "https://live.bilibili.com/12345",
+                "a live payload points at live.bilibili.com/{room}");
+            Check(summary.Subtitle == "虚拟主播 · 1.2万人看过",
+                "the subtitle joins the area and the watched label");
+            Check(summary.Title == "今晚八点", "the payload title wins over the card preview title");
+            Check(summary.Cover == "https://i0.hdslb.com/live.jpg",
+                "the payload cover wins over the card preview cover");
+            Check(summary.State == DynamicLiveState.Live && summary.CoverText == "",
+                "live_state 1 is live and carries no badge");
+        }
+
+        private static void LiveSummarySkipsEmptyParts()
+        {
+            var areaOnly = LiveCardSummary.From(new DynamicCardModel2024_live { id = "12345", desc_first = "虚拟主播" }, "", "");
+            Check(areaOnly.Subtitle == "虚拟主播", "a payload without a watched label has no dangling separator");
+            Check(!areaOnly.Subtitle.Contains("·"), "no separator survives an absent watched label");
+
+            var watchedOnly = LiveCardSummary.From(new DynamicCardModel2024_live { id = "12345", desc_second = "88人看过" }, "", "");
+            Check(watchedOnly.Subtitle == "88人看过", "a payload with only the watched label yields just that label");
+
+            var neither = LiveCardSummary.From(new DynamicCardModel2024_live { id = "12345" }, "", "");
+            Check(neither.Subtitle == "", "a payload without both parts yields an empty subtitle, not a placeholder");
+            Check(!neither.Subtitle.Contains("有待修复"), "the live subtitle never falls back to a placeholder");
+        }
+
+        private static void LiveSummaryNeverInventsARoom()
+        {
+            var noRoom = LiveCardSummary.From(new DynamicCardModel2024_live { title = "无房间号" }, "", "");
+            Check(noRoom.RoomId == "", "a payload without a room id has no room id");
+            Check(noRoom.Destination == "", "a payload without a room id has no destination");
+
+            var notDigits = LiveCardSummary.From(new DynamicCardModel2024_live { id = "BV1abc" }, "", "");
+            Check(notDigits.RoomId == "", "a non-numeric id is not a room id");
+            Check(notDigits.Destination == "", "a non-numeric id never becomes a destination");
+
+            var idOnly = LiveCardSummary.From(new DynamicCardModel2024_live { id = "654321" }, "", "");
+            Check(idOnly.Destination == "https://live.bilibili.com/654321",
+                "a room id alone yields the canonical live destination");
+
+            var shortLink = LiveCardSummary.From(new DynamicCardModel2024_live
+            {
+                id = "654321",
+                jump_url = "https://b23.tv/AbCdEf",
+            }, "", "");
+            Check(shortLink.Destination == "https://live.bilibili.com/654321",
+                "a b23 short link never becomes the live destination");
+        }
+
+        private static void LiveSummaryBadgesOnlyConfirmedEnds()
+        {
+            var ended = LiveCardSummary.From(new DynamicCardModel2024_live { live_state = 0 }, "", "");
+            Check(ended.State == DynamicLiveState.Ended, "live_state 0 is a confirmed end");
+            Check(ended.CoverText == "直播已结束", "a confirmed end carries the ended badge");
+
+            var live = LiveCardSummary.From(new DynamicCardModel2024_live { live_state = 1 }, "", "");
+            Check(live.CoverText == "", "live_state 1 carries no badge");
+
+            var missing = LiveCardSummary.From(new DynamicCardModel2024_live { live_state = null }, "", "");
+            Check(missing.State == DynamicLiveState.Unknown, "a missing live_state is unknown");
+            Check(missing.CoverText == "", "an unknown live_state carries no badge");
+
+            var other = LiveCardSummary.From(new DynamicCardModel2024_live { live_state = 2 }, "", "");
+            Check(other.State == DynamicLiveState.Unknown, "an unrecognised live_state is unknown, not ended");
+            Check(other.CoverText == "", "an unrecognised live_state carries no badge");
+        }
+
+        private static void LiveRcmdPayloadMatchesThePlainOne()
+        {
+            var rcmd = WebCards(LiveRcmdCard());
+            var payload = rcmd.modules.module_dynamic.major.live;
+            Check(payload != null && payload.id == "9001",
+                "live_rcmd decodes to a live payload with its room id");
+            Check(rcmd.modules.module_dynamic.major.live_rcmd != null,
+                "the raw live_rcmd payload stays beside the decoded one");
+
+            var summary = LiveCardSummary.From(payload, rcmd.title, rcmd.pic);
+            Check(summary.RoomId == "9001", "a live_rcmd payload yields the room id");
+            Check(summary.Destination == "https://live.bilibili.com/9001",
+                "a live_rcmd payload yields the live destination");
+            Check(summary.Subtitle == "单机游戏 · 3.4万人看过",
+                "a live_rcmd payload yields the area · watched subtitle");
+            Check(summary.State == DynamicLiveState.Unknown,
+                "live_rcmd carries no live_state, so the state is unknown");
+            Check(summary.CoverText == "", "an unknown live_rcmd state does not claim the stream ended");
+
+            var plain = LiveCardSummary.From(
+                WebCards(LiveCard("\"id\":\"7001\",\"title\":\"直播标题\",\"cover\":\"https://i0.hdslb.com/live.jpg\"," +
+                                  "\"area_name\":\"单机游戏\",\"watched_show\":{\"text_large\":\"3.4万人看过\"}," +
+                                  "\"live_state\":1")).modules.module_dynamic.major.live,
+                "卡片标题", "https://i0.hdslb.com/pic.jpg");
+            Check(plain.Subtitle == summary.Subtitle,
+                "the plain live payload and the live_rcmd payload present the same subtitle");
+            Check(plain.State == DynamicLiveState.Live,
+                "the plain live payload still keeps its explicit live_state");
+        }
+
+        private static void GrpcLiveCardsMapTheSameWay()
+        {
+            var content = "{\"live_play_info\":{\"room_id\":4321,\"cover\":\"https://i0.hdslb.com/rcmd.jpg\"," +
+                          "\"title\":\"推荐直播\",\"area_name\":\"主机游戏\"," +
+                          "\"watched_show\":{\"text_large\":\"2.1万人看过\"}}}";
+            var rcmd = GrpcCard(DynamicType.LiveRcmd, new ModuleDynamic
+            {
+                DynLiveRcmd = new MdlDynLiveRcmd { Content = content },
+            });
+            var rcmdPayload = rcmd.modules.module_dynamic.major.live;
+            Check(rcmdPayload != null && rcmdPayload.id == "4321",
+                "the gRPC live_rcmd branch decodes the room id");
+            Check(rcmdPayload.live_state == null,
+                "the gRPC live_rcmd branch leaves live_state absent instead of defaulting to 0");
+            var rcmdSummary = LiveCardSummary.From(rcmdPayload, rcmd.title, rcmd.pic);
+            Check(rcmdSummary.Destination == "https://live.bilibili.com/4321",
+                "the gRPC live_rcmd card points at the live room");
+            Check(rcmdSummary.Subtitle == "主机游戏 · 2.1万人看过",
+                "the gRPC live_rcmd card keeps the area · watched subtitle");
+            Check(rcmdSummary.CoverText == "",
+                "the gRPC live_rcmd card does not claim the stream ended");
+
+            var common = GrpcCard(DynamicType.Live, new ModuleDynamic
+            {
+                DynCommonLive = new MdlDynLive
+                {
+                    Id = 8675309,
+                    Uri = "https://live.bilibili.com/8675309",
+                    Title = "直播中",
+                    Cover = "https://i0.hdslb.com/common.jpg",
+                    CoverLabel = "主机游戏",
+                    CoverLabel2 = "1.1万人看过",
+                    LiveState = LiveState.LiveLive,
+                },
+            });
+            var commonSummary = LiveCardSummary.From(
+                common.modules.module_dynamic.major.live, common.title, common.pic);
+            Check(commonSummary.RoomId == "8675309", "the gRPC common live card keeps its room id");
+            Check(commonSummary.Destination == "https://live.bilibili.com/8675309",
+                "the gRPC common live card points at the live room");
+            Check(commonSummary.State == DynamicLiveState.Live && commonSummary.CoverText == "",
+                "the gRPC live_live state carries no ended badge");
+        }
+
+        private static void LiveWithoutPayloadKeepsThePreview()
+        {
+            var summary = LiveCardSummary.From(null, "卡片标题", "https://i0.hdslb.com/pic.jpg");
+            Check(summary.Title == "卡片标题", "a missing live payload falls back to the card title");
+            Check(summary.Cover == "https://i0.hdslb.com/pic.jpg",
+                "a missing live payload falls back to the card cover");
+            Check(summary.Subtitle == "", "a missing live payload yields no placeholder subtitle");
+            Check(summary.RoomId == "" && summary.Destination == "",
+                "a missing live payload yields no room and no destination");
+            Check(summary.State == DynamicLiveState.Unknown && summary.CoverText == "",
+                "a missing live payload is unknown and carries no badge");
+
+            var noState = WebCards(LiveCard("\"id\":\"7001\",\"title\":\"直播标题\",\"area_name\":\"单机游戏\""));
+            Check(noState.modules.module_dynamic.major.live.live_state == null,
+                "a live payload without live_state keeps it absent, not 0");
+            Check(LiveCardSummary.From(noState.modules.module_dynamic.major.live, noState.title, noState.pic).CoverText == "",
+                "an absent live_state is not read as ended");
+        }
+
+        private static void LiveCardsUseTheSharedSummary()
+        {
+            var source = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicParse.cs");
+            Check(!source.Contains("有待修复"), "the dynamic card parser ships no live placeholder");
+            Check(!source.Contains("b23.tv/live"), "the dynamic card parser builds no b23.tv live link");
+
+            var modern = SliceMethod(source, "public static DynamicItemDisplayOneRowInfo ParseOneRowInfo2024(");
+            Check(modern.Contains("case DynamicDisplayType.Live:") && modern.Contains("case DynamicDisplayType.LiveShare:"),
+                "both modern live display types are handled");
+            Check(modern.Contains("LiveCardSummary.From("),
+                "the modern live cases go through LiveCardSummary");
+            Check(CountOf(modern, "LiveCardSummary.From(") == 1,
+                "the two modern live cases share one summary call");
+            Check(modern.Contains("Tag = \"直播\""), "a modern live card still carries the live tag");
+            var liveBlock = Slice(modern, "case DynamicDisplayType.Live:", "case DynamicDisplayType.MediaList:");
+            Check(!liveBlock.Contains("item.aid"), "a modern live card no longer uses the aid as its identity");
+            Check(liveBlock.Contains("ID = live.RoomId"), "a modern live card takes its identity from the room id");
+            Check(liveBlock.Contains("info.Url = live.Destination"), "a modern live card opens the summary destination");
+
+            var legacy = SliceMethod(source, "public static DynamicItemDisplayOneRowInfo ParseOneRowInfo(DynamicDisplayType type, JObject obj)");
+            Check(!legacy.Contains("b23.tv/live"), "the legacy live cards no longer use the short link");
+            Check(CountOf(legacy, "\"https://live.bilibili.com/\" + info.ID") == 2,
+                "both legacy live cases point at live.bilibili.com/{room_id}");
+
+            // 未支持的动态类型仍然需要那句话；它不该再出现在直播卡里。
+            var placeholder = SourceFilesContaining("有待修复");
+            Check(placeholder.Count == 1 && placeholder[0] == "Controls/Dynamic/DynamicTemplate.xaml",
+                "the unsupported-kind placeholder is the only 有待修复 left in product source");
+        }
+
+        private static string LiveCard(string liveBody)
+        {
+            return "{\"id_str\":\"" + DynamicId + "\",\"type\":\"DYNAMIC_TYPE_LIVE\"," +
+                   "\"basic\":{\"comment_id_str\":\"7001\",\"comment_type\":11},\"modules\":{" +
+                   "\"module_author\":{\"mid\":4242,\"name\":\"主播\"},\"module_dynamic\":{" +
+                   "\"major\":{\"type\":\"MAJOR_TYPE_LIVE\",\"live\":{" + liveBody + "}}}}}";
+        }
+
+        private static string LiveRcmdCard()
+        {
+            var content = "{\"live_play_info\":{\"room_id\":9001,\"cover\":\"https://i0.hdslb.com/rcmd.jpg\"," +
+                          "\"title\":\"推荐直播\",\"area_name\":\"单机游戏\"," +
+                          "\"watched_show\":{\"text_large\":\"3.4万人看过\"}}}";
+            return "{\"id_str\":\"" + DynamicId + "\",\"type\":\"DYNAMIC_TYPE_LIVE_RCMD\"," +
+                   "\"basic\":{\"comment_id_str\":\"7001\",\"comment_type\":11},\"modules\":{" +
+                   "\"module_author\":{\"mid\":4242,\"name\":\"主播\"},\"module_dynamic\":{" +
+                   "\"major\":{\"type\":\"MAJOR_TYPE_LIVE_RCMD\",\"live_rcmd\":{\"content\":" +
+                   Newtonsoft.Json.JsonConvert.ToString(content) + "}}}}}";
+        }
+
+        private static string Slice(string source, string from, string to)
+        {
+            var start = source.IndexOf(from, StringComparison.Ordinal);
+            if (start < 0)
+            {
+                Check(false, "expected block start not found in source: " + from);
+                return "";
+            }
+
+            var end = source.IndexOf(to, start + from.Length, StringComparison.Ordinal);
+            return end < 0 ? source.Substring(start) : source.Substring(start, end - start);
+        }
+
+        private static int CountOf(string haystack, string needle)
+        {
+            var count = 0;
+            var index = haystack.IndexOf(needle, StringComparison.Ordinal);
+            while (index >= 0)
+            {
+                count++;
+                index = haystack.IndexOf(needle, index + needle.Length, StringComparison.Ordinal);
+            }
+            return count;
+        }
+
+        private static System.Collections.Generic.List<string> SourceFilesContaining(string needle)
+        {
+            var root = Path.Combine(RepoRoot(), "src", "BiliLite.UWP");
+            var hits = new System.Collections.Generic.List<string>();
+            foreach (var file in Directory.GetFiles(root, "*.*", SearchOption.AllDirectories))
+            {
+                var extension = Path.GetExtension(file);
+                if (extension != ".cs" && extension != ".xaml")
+                {
+                    continue;
+                }
+
+                var relative = Path.GetRelativePath(root, file).Replace('\\', '/');
+                if (relative.StartsWith("obj/", StringComparison.Ordinal) || relative.StartsWith("bin/", StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                if (File.ReadAllText(file).Contains(needle))
+                {
+                    hits.Add(relative);
+                }
+            }
+            return hits;
         }
 
         private static string ForbiddenWordCard()

@@ -701,7 +701,7 @@ namespace BiliLite.Parsing.Dynamic
                     desc_first = live["area_name"]?.ToString() ?? "",
                     desc_second = Obj(live["watched_show"])?["text_large"]?.ToString() ?? "",
                     jump_url = NormalizeWebUrl(live["jump_url"]?.ToString()),
-                    live_state = ToInt(live["live_state"]?.ToString()),
+                    live_state = live["live_state"] == null ? (int?)null : ToInt(live["live_state"].ToString()),
                 };
                 return result;
             }

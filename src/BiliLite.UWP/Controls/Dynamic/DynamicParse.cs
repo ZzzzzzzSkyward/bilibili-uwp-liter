@@ -453,32 +453,24 @@ namespace BiliLite.Controls.Dynamic
                     }
                     break;
                 case DynamicDisplayType.Live:
-                    {
-                        info = new DynamicItemDisplayOneRowInfo()
-                        {
-                            Cover = item.pic,
-                            CoverText = "",
-                            Subtitle = "【直播有待修复】parent_area_name" + " · 人气:" + item.viewtext,
-                            Tag = "直播",
-                            ID = item.aid,
-                            Title = item.title,
-                        };
-                        info.Url = "https://b23.tv/live" + info.ID;
-                    }
-                    break;
                 case DynamicDisplayType.LiveShare:
                     {
+                        // 直播与分享直播的载荷都是 major.live（直播推荐由 Mapper 把 live_rcmd 解进同一处）；
+                        // 房间号、目的地、副标题、结束角标全部由 LiveCardSummary 决定，两条分支不再各写一遍。
+                        var live = LiveCardSummary.From(
+                            item.modules?.module_dynamic?.major?.live,
+                            item.title,
+                            item.pic);
                         info = new DynamicItemDisplayOneRowInfo()
                         {
-                            Cover = item.pic,
-                            //fixme
-                            CoverText = item.modules.module_dynamic.major.live?.live_state == 0 ? "直播已结束" : "",
-                            Subtitle = "【直播有待修复】area_v2_name",
+                            Cover = live.Cover,
+                            CoverText = live.CoverText,
+                            Subtitle = live.Subtitle,
                             Tag = "直播",
-                            ID = item.aid,
-                            Title = item.title,
+                            ID = live.RoomId,
+                            Title = live.Title,
                         };
-                        info.Url = "https://b23.tv/live" + info.ID;
+                        info.Url = live.Destination;
                     }
                     break;
                 case DynamicDisplayType.MediaList:
@@ -677,7 +669,8 @@ namespace BiliLite.Controls.Dynamic
                             ID = obj["live_play_info"]["room_id"].ToString(),
                             Title = obj["live_play_info"]["title"].ToString(),
                         };
-                        info.Url = "https://b23.tv/live" + info.ID;
+                        // 与新版直播卡同一种目的地：MessageCenter 的 live(\d+) 走的就是这条
+                        info.Url = "https://live.bilibili.com/" + info.ID;
                     }
                     return info;
                 case DynamicDisplayType.LiveShare:
@@ -691,7 +684,7 @@ namespace BiliLite.Controls.Dynamic
                             ID = obj["roomid"].ToString(),
                             Title = obj["title"].ToString(),
                         };
-                        info.Url = "https://b23.tv/live" + info.ID;
+                        info.Url = "https://live.bilibili.com/" + info.ID;
                     }
                     return info;
                 case DynamicDisplayType.MediaList:
