@@ -14,8 +14,6 @@ internal static class Program
 {
     private const string TvAppkey = "tv-appkey";
     private const string TvSecret = "tv-secret";
-    private const string AndroidAppkey = "android-appkey";
-    private const string AndroidSecret = "android-secret";
     private const string LoginAppkey = "login-appkey";
     private const string LoginSecret = "login-secret";
 
@@ -30,7 +28,6 @@ internal static class Program
 
     private static void Main()
     {
-        SeedAppKeys();
         // App 的接线：登录事件是唯一清掉「已失效」结论的地方
         MessageCenter.LoginedEvent += (_, __) => BiliLite.Services.CookieService.ClearReloginRequired();
 
@@ -60,20 +57,6 @@ internal static class Program
         SourceChecks();
 
         Console.WriteLine("PASS " + assertions + " assertions");
-    }
-
-    private static void SeedAppKeys()
-    {
-        SettingHelper.SetValue("appkey_android_1", AndroidAppkey);
-        SettingHelper.SetValue("appkey_android_2", AndroidSecret);
-        SettingHelper.SetValue("appkey_login_1", LoginAppkey);
-        SettingHelper.SetValue("appkey_login_2", LoginSecret);
-        SettingHelper.SetValue("appkey_video_1", "video-appkey");
-        SettingHelper.SetValue("appkey_video_2", "video-secret");
-        SettingHelper.SetValue("appkey_tv_1", TvAppkey);
-        SettingHelper.SetValue("appkey_tv_2", TvSecret);
-        SettingHelper.SetValue("appkey_web_1", "web-appkey");
-        SettingHelper.SetValue("appkey_web_2", "web-secret");
     }
 
     private static void RequestShapeAndOneAttemptPerPreflight()
@@ -121,13 +104,13 @@ internal static class Program
             "the request goes to the documented v2 refresh endpoint");
         Check(request.body.StartsWith("access_key=release-ak&", StringComparison.Ordinal),
             "access_key leads the body");
-        Check(request.body.Contains("&appkey=" + TvAppkey + "&"), "the body carries the TV appkey");
+        Check(request.body.Contains("&appkey=" + ApiHelper.DefaultKey.Appkey + "&"), "the body carries the built-in TV appkey");
         Check(request.body.Contains("&refresh_token=rt%2Ffirst"), "the refresh token is form-encoded");
         Check(Regex.Matches(request.body, "access_key=").Count == 1, "access_key appears once");
-        Check(request.body.EndsWith("&sign=" + ExpectedSign(request.body, TvSecret), StringComparison.Ordinal),
-            "sign is the last field and is derived from the TV secret");
-        Check(!request.body.EndsWith("&sign=" + ExpectedSign(request.body, AndroidSecret), StringComparison.Ordinal),
-            "the android secret would produce a different sign");
+        Check(request.body.EndsWith("&sign=" + ExpectedSign(request.body, ApiHelper.DefaultKey.Secret), StringComparison.Ordinal),
+            "sign is the last field and is derived from the built-in TV secret");
+        Check(!request.body.EndsWith("&sign=" + ExpectedSign(request.body, "not-the-built-in-secret"), StringComparison.Ordinal),
+            "any other secret would produce a different sign");
 
         var token = saved.Single().Token;
         var cookie = saved.Single().Cookie;
@@ -1529,7 +1512,6 @@ internal static class Program
     private static void ResetSession()
     {
         SettingHelper.Reset();
-        SeedAppKeys();
         SettingHelper.Account.Logined = false;
         SettingHelper.Account.AccessKey = "";
         SettingHelper.Account.Profile = null;

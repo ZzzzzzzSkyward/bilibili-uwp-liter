@@ -186,6 +186,7 @@
     <Compile Include="Parsing\Dynamic\WebDynamicFeedMapper.cs" />
     <Compile Include="Parsing\Dynamic\WireScalars.cs" />
     <Compile Include="Parsing\Dynamic\RichTextFlow.cs" />
+    <Compile Include="Parsing\Dynamic\LiveCardSummary.cs" />
     <Compile Include="Parsing\Season\WebSeasonEpListParser.cs" />
     <Compile Include="Parsing\Season\WebSeasonEpListMapper.cs" />
     <Compile Include="Parsing\MediaList\MediaListResourceListParser.cs" />
@@ -696,7 +697,6 @@
     <Content Include="Assets\Fonts\vanfont.otf" />
     <Content Include="Assets\Fonts\FansNum.otf" />
     <Content Include="Assets\Fonts\biliicon.ttf" />
-    <Content Include="Assets\Text\dbginfo.md" />
     <Content Include="Assets\Text\info.md" />
     <None Include="Assets\Text\new_version.json" />
     <AppxManifest Include="Package.appxmanifest">

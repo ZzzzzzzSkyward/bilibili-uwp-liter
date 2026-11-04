@@ -45,7 +45,6 @@ namespace BiliLite.Pages
             Title = "设置";
             settingVM = new SettingVM();
             LoadUI();
-            LoadAPI();
             LoadPlayer();
             LoadRoaming();
             LoadDanmu();
@@ -507,16 +506,6 @@ namespace BiliLite.Pages
                     SettingHelper.SetValue(Roaming.TO_SIMPLIFIED, RoamingSettingToSimplified.IsOn);
                 });
             });
-            //日志
-            EnableLog.IsOn = SettingHelper.GetValue("EnableLog", true);
-            EnableLog.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                EnableLog.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue("EnableLog", EnableLog.IsOn);
-                });
-            });
-
 
         }
 
@@ -595,68 +584,6 @@ namespace BiliLite.Pages
             });
             //弹幕关键词
             LiveDanmuSettingListWords.ItemsSource = settingVM.LiveWords;
-        }
-        private void LoadAPI()
-        {
-            LoadSettings();
-            //打开设置页只把已存值装进控件并让运行时用上，不回写存储：
-            //控件里的空值代表“用内置默认值”，写回去会把用户没编辑过的字段一起清掉。
-            InitApi();
-        }
-        private void LoadSettings()
-        {
-            appkey_android_1.Text = SettingHelper.GetValue("appkey_android_1", "");
-            appkey_android_2.Text = SettingHelper.GetValue("appkey_android_2", "");
-            appkey_login_1.Text = SettingHelper.GetValue("appkey_login_1", "");
-            appkey_login_2.Text = SettingHelper.GetValue("appkey_login_2", "");
-            appkey_video_1.Text = SettingHelper.GetValue("appkey_video_1", "");
-            appkey_video_2.Text = SettingHelper.GetValue("appkey_video_2", "");
-            appkey_tv_1.Text = SettingHelper.GetValue("appkey_tv_1", "");
-            appkey_tv_2.Text = SettingHelper.GetValue("appkey_tv_2", "");
-            appkey_web_1.Text = SettingHelper.GetValue("appkey_web_1", "");
-            appkey_web_2.Text = SettingHelper.GetValue("appkey_web_2", "");
-            api_web_top.Text = SettingHelper.GetValue("api_web_top", "");
-            api_web_secondary.Text = SettingHelper.GetValue("api_web_secondary", "");
-        }
-        private void SaveSettings()
-        {
-            SettingHelper.SetValue("appkey_android_1", appkey_android_1.Text);
-            SettingHelper.SetValue("appkey_android_2", appkey_android_2.Text);
-            SettingHelper.SetValue("appkey_login_1", appkey_login_1.Text);
-            SettingHelper.SetValue("appkey_login_2", appkey_login_2.Text);
-            SettingHelper.SetValue("appkey_video_1", appkey_video_1.Text);
-            SettingHelper.SetValue("appkey_video_2", appkey_video_2.Text);
-            SettingHelper.SetValue("appkey_tv_1", appkey_tv_1.Text);
-            SettingHelper.SetValue("appkey_tv_2", appkey_tv_2.Text);
-            SettingHelper.SetValue("appkey_web_1", appkey_web_1.Text);
-            SettingHelper.SetValue("appkey_web_2", appkey_web_2.Text);
-            SettingHelper.SetValue("api_web_top", api_web_top.Text);
-            SettingHelper.SetValue("api_web_secondary", api_web_secondary.Text);
-        }
-        private void ApplyAPI_Click(object sender, RoutedEventArgs e)
-        {
-            //只有这里把控件里的值写回存储：这些值来自用户编辑，而不是页面加载。
-            InitApi();
-            SaveSettings();
-        }
-        private void InitApi() { 
-            var lst = new List<string>();
-
-            lst.Add(appkey_android_1.Text);
-            lst.Add(appkey_android_2.Text);
-            lst.Add(appkey_login_1.Text);
-            lst.Add(appkey_login_2.Text);
-            lst.Add(appkey_video_1.Text);
-            lst.Add(appkey_video_2.Text);
-            lst.Add(appkey_tv_1.Text);
-            lst.Add(appkey_tv_2.Text);
-            lst.Add(appkey_web_1.Text);
-            lst.Add(appkey_web_2.Text);
-            lst.Add(api_web_top.Text);
-            lst.Add(api_web_secondary.Text);
-
-            ApiHelper.Init(lst);
-            Utils.sp = this;
         }
         private void LoadDownlaod()
         {
@@ -812,39 +739,12 @@ namespace BiliLite.Pages
             }
             try
             {
-                dbginfo.Text = await FileIO.ReadTextAsync(await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/Text/dbginfo.md")));
-            }
-            catch (Exception)
-            {
-                //throw;
-            }
-            try
-            {
                 Info.Text = await FileIO.ReadTextAsync(await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/Text/info.md")));
             }
             catch (Exception)
             {
                 //throw;
             }
-        }
-
-        // 在代码中定义一个名为 Log 的方法，用于向日志文本框中添加新的日志
-        private readonly int loglength = 10000;
-        public void Log(StringBuilder logBuilder)
-        {
-            int leng = logBuilder.ToString().Length;
-            if (leng > loglength * 2)
-            {
-                logBuilder.Remove(0, leng - loglength);
-            }
-            //这个地方老是崩
-            try
-            {
-                // 将 StringBuilder 对象中的所有内容显示到日志文本框中
-                if (EnableLog.IsOn)
-                    logTextBox.Text = logBuilder.ToString();
-            }
-            catch (Exception e) { }
         }
 
         private async void DanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
@@ -1047,6 +947,21 @@ namespace BiliLite.Pages
             catch (Exception ex)
             {
                 Utils.ShowMessageToast("导出日志失败", ex.Message);
+            }
+        }
+
+        /// <summary>日志目录可能还没建（应用刚装、还没写过日志），先按 OpenIfExists 拿到再打开。</summary>
+        private async void OpenLogFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var logFolder = await ApplicationData.Current.LocalFolder.CreateFolderAsync("log", CreationCollisionOption.OpenIfExists);
+                await Launcher.LaunchFolderPathAsync(logFolder.Path);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("打开日志目录失败", LogType.ERROR, ex);
+                Utils.ShowMessageToast("打开日志目录失败", ex.Message);
             }
         }
 

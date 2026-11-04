@@ -578,18 +578,10 @@
             <StackPanel Orientation="Horizontal" Margin="0 4 0 8">
               <Button Content="标记问题" Click="MarkProblem_Click" Margin="0 0 8 0"/>
               <Button Content="导出诊断包" Click="ExportBundle_Click" Margin="0 0 8 0"/>
-              <Button Content="导出日志" Click="ExportLogs_Click"/>
+              <Button Content="导出日志" Click="ExportLogs_Click" Margin="0 0 8 0"/>
+              <Button Content="打开日志目录" Click="OpenLogFolder_Click"/>
             </StackPanel>
-            <TextBlock Style="{StaticResource SettingHelp}" Text="复现问题后，标记发生时间并导出诊断包。日志可能包含请求内容，请检查后再分享。"/>
-
-            <TextBlock Style="{StaticResource SettingSectionHeader}" Text="实时日志"/>
-            <Border Style="{StaticResource SettingSectionRule}"/>
-            <StackPanel Orientation="Horizontal" Margin="0 4 0 8">
-              <TextBlock FontSize="16" VerticalAlignment="Center">显示实时日志</TextBlock>
-              <ToggleSwitch Margin="8 0 0 0" x:Name="EnableLog" OnContent="打开" OffContent="关闭" VerticalAlignment="Center" AutomationProperties.Name="显示实时日志"/>
-            </StackPanel>
-            <TextBox Visibility="{x:Bind EnableLog.IsOn}" x:Name="logTextBox" TextWrapping="Wrap" AcceptsReturn="True" IsReadOnly="True"/>
-            <TextBlock Style="{StaticResource SettingHelp}" Text="关闭后仍会写入日志文件；此框只保留最近一段缓冲，不是完整日志。"/>
+            <TextBlock Style="{StaticResource SettingHelp}" Text="复现问题后，标记发生时间并导出诊断包；也可打开日志目录自行查看。日志可能包含请求内容，请检查后再分享。"/>
 
             <TextBlock Style="{StaticResource SettingSectionHeader}" Text="API 采集"/>
             <Border Style="{StaticResource SettingSectionRule}"/>
@@ -599,46 +591,6 @@
             <TextBlock Style="{StaticResource SettingLabel}" Text="记录正文样本"/>
             <ToggleSwitch x:Name="swApiCaptureSamples" AutomationProperties.Name="记录正文样本"/>
             <TextBlock Style="{StaticResource SettingHelp}" Text="每份最多 4 KB，名字像凭据的字段会被替换；需要先开启响应结构记录。"/>
-
-            <TextBlock Style="{StaticResource SettingSectionHeader}" Text="API 参数"/>
-            <Border Style="{StaticResource SettingSectionRule}"/>
-            <controls:Expander Header="编辑 API 参数" IsExpanded="False" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
-              <StackPanel>
-                <Button x:Name="ApplyAPI" Click="ApplyAPI_Click" HorizontalAlignment="Left" Margin="0 8 0 8">应用参数</Button>
-                <TextBlock Style="{StaticResource SettingHelp}" Text="每组两项都填写后才使用自定义值，否则使用内置默认值。" Margin="0 0 0 8"/>
-                <controls1:MarkdownTextBlock x:Name="dbginfo" Background="{ThemeResource TransparentBackground}" Padding="16" LinkClicked="txtHelp_LinkClicked" IsTextSelectionEnabled="True"/>
-                <StackPanel Margin="0 0 8 0">
-                  <TextBlock FontWeight="Bold">Android</TextBlock>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入android APPKEY 4409e2ce8ffd12b8" x:Name="appkey_android_1"/>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入android APPSEC 59b43e04bdc2a02f707f4d86f4c5494a" x:Name="appkey_android_2"/>
-                </StackPanel>
-                <StackPanel Margin="0 0 8 0">
-                  <TextBlock FontWeight="Bold">登录</TextBlock>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入login APPKEY 4409e2ce8ffd12b8" x:Name="appkey_login_1"/>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入login APPSEC 59b43e04bdc2a02f707f4d86f4c5494a" x:Name="appkey_login_2"/>
-                </StackPanel>
-                <StackPanel Margin="0 0 8 0">
-                  <TextBlock FontWeight="Bold">视频</TextBlock>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入video APPKEY 4409e2ce8ffd12b8" x:Name="appkey_video_1"/>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入video APPSEC 59b43e04bdc2a02f707f4d86f4c5494a" x:Name="appkey_video_2"/>
-                </StackPanel>
-                <StackPanel Margin="0 0 8 0">
-                  <TextBlock FontWeight="Bold">TV</TextBlock>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入tv APPKEY 4409e2ce8ffd12b8" x:Name="appkey_tv_1"/>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入tv APPSEC 59b43e04bdc2a02f707f4d86f4c5494a" x:Name="appkey_tv_2"/>
-                </StackPanel>
-                <StackPanel Margin="0 0 8 0">
-                  <TextBlock FontWeight="Bold">Web 视频</TextBlock>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入web APPKEY 4409e2ce8ffd12b8" x:Name="appkey_web_1"/>
-                  <TextBox Margin="0 8 0 0" MinWidth="400" PlaceholderText="请输入web APPSEC 59b43e04bdc2a02f707f4d86f4c5494a" x:Name="appkey_web_2"/>
-                </StackPanel>
-                <TextBlock Style="{StaticResource SettingLabel}" Text="API 地址"/>
-                <TextBox Margin="0 0 0 8" MinWidth="200" PlaceholderText="https://api.bilibili.com" x:Name="api_web_top"/>
-                <TextBlock Style="{StaticResource SettingLabel}" Text="API 路径前缀"/>
-                <TextBox Margin="0 0 0 8" MinWidth="200" PlaceholderText="/x/v2" x:Name="api_web_secondary"/>
-                <TextBlock Style="{StaticResource SettingHelp}" Text="地址与路径任意一项为空时，两项一起恢复默认。"/>
-              </StackPanel>
-            </controls:Expander>
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
