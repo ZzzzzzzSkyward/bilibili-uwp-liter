@@ -15,10 +15,10 @@ namespace BiliLite.Controls.Dynamic
         /// <summary>
         /// 宽态留白就是 DynamicItemControl.xaml 令牌表里的字面量;窄态值集中写在这里,设备联调时和令牌表一起改。
         /// </summary>
-        private static readonly Thickness WideCardMargin = new Thickness(12, 0, 12, 12);
-        private static readonly Thickness NarrowCardMargin = new Thickness(8, 0, 8, 12);
-        private static readonly Thickness WideCardPadding = new Thickness(16);
-        private static readonly Thickness NarrowCardPadding = new Thickness(12);
+        private static readonly Thickness WideCardMargin = new Thickness(12, 0, 12, 4);
+        private static readonly Thickness NarrowCardMargin = new Thickness(8, 0, 8, 4);
+        private static readonly Thickness WideCardPadding = new Thickness(16, 8, 16, 8);
+        private static readonly Thickness NarrowCardPadding = new Thickness(12, 8, 12, 8);
 
         private bool? _isNarrow;
 

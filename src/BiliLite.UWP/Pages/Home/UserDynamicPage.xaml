@@ -92,7 +92,7 @@
               <Style TargetType="ListViewItem">
                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                 <Setter Property="MaxWidth" Value="800"/>
-                <Setter Property="Margin" Value="4"/>
+                <Setter Property="Margin" Value="4,2"/>
               </Style>
             </controls:MyListView.ItemContainerStyle>
             <!--<ListView.ItemsPanel>-->

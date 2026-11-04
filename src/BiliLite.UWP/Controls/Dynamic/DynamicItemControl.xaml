@@ -8,9 +8,9 @@
       令牌                 宽态       窄态(<480)   落点
       阅读列宽             800 最大   —            CardRoot.MaxWidth(本文件);正文不再各自假设 800
       页面留白             12        8            CardRoot.Margin 左右
-      卡片间距             12        12           CardRoot.Margin 下
-      卡片内边距           16        12           CardSurface.Padding
-      卡片圆角             8         —            CardSurface.CornerRadius(无边框,卡片间只靠 CardRoot.Margin 下 12)
+      卡片间距             4         4            CardRoot.Margin 下 4 + ListViewItem 上下 2(相邻两卡内容之间 8+4+2+2+8=24,原为 48)
+      卡片内边距           16,8      12,8         CardSurface.Padding(左右 16/12,上下 8)
+      卡片圆角             8         —            CardSurface.CornerRadius(无边框,卡片间只靠 CardRoot.Margin 下 4)
       正文                 16 常规    同左          RichTextControl.xaml.cs(BodyFontSize,富文本与纯文本回退同一处)
       正文行高             24 最小    同左          RichTextControl.xaml.cs(BodyLineHeight + MaxHeight 行距策略)
       作者名               15 半粗    同左          HeaderName 两个 TextBlock(单行 + 省略号)
@@ -19,13 +19,13 @@
       预告描述             14/21      同左          DynamicTemplate.xaml OneRow Subtitle、Reserve Desc
       互动计数/小徽标      13 / 12   同左          ActionRow 内 TextBlock / 作者 TAG 徽标
       头部头像             40×40      同左          HeaderAvatar(转发原作者行仍为 24×24)
-      区块/细间距          12 / 4     12 / 4       HeaderArea 与 BodyPresenter/CardContentPresenter/ActionRow 之间 12;名字与时间之间 4
+      区块间距/细间距      8 / 4      8 / 4        HeaderArea 与 BodyPresenter/CardContentPresenter/ActionRow 之间 8;名字与时间之间 4
       互动点击区           ≥40×40     同左          ActionRow 各按钮 MinWidth/MinHeight 与头部按钮;
                                                  图标 16(互动栏)/ 14(头部 AppBarButton 自带)
       响应式断点           480        —            DynamicItemControl.xaml.cs NarrowWidthThreshold
 
     未按计划取值的两处,原因记录在此,不改动数据契约:
-      · 卡片表面没有可用的不透明主题色(App.xaml 的 CardColor/TopPaneBackground 都是全透明),故不加背景也不加边框,卡片之间只靠 CardRoot.Margin 的下 12 留白分隔。
+      · 卡片表面没有可用的不透明主题色(App.xaml 的 CardColor/TopPaneBackground 都是全透明),故不加背景也不加边框,卡片之间只靠 CardRoot.Margin 的下 4(加 ListViewItem 上下 2 与卡片上下内边距 8)留白分隔。
       · 图片九宫格仍是固定 100/120 像素瓦片(模板内无法按卡片宽度算列宽,需代码或新文件),不在本次改动内。
   -->
   <UserControl.Resources>
@@ -36,8 +36,8 @@
     </Style>
   </UserControl.Resources>
   <!-- 阅读列:最大 800,宽窗口居中,窄窗口自 stretch 到可用宽度 -->
-  <Grid x:Name="CardRoot" Margin="12,0,12,12" MaxWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Top">
-    <Border x:Name="CardSurface" CornerRadius="8" Padding="16">
+  <Grid x:Name="CardRoot" Margin="12,0,12,4" MaxWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+    <Border x:Name="CardSurface" CornerRadius="8" Padding="16,8">
       <Grid>
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto"/>
@@ -154,11 +154,11 @@
           </Grid>
         </Grid>
         <!--正文:模板自己渲染正文时(ContentPresenterVisibility=Collapsed)这里的 12px 间距不占位-->
-        <ContentPresenter x:Name="BodyPresenter" Grid.Row="1" Margin="0,12,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
+        <ContentPresenter x:Name="BodyPresenter" Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
         <!--媒体/预告/附件/转发原动态:占满整宽-->
-        <ContentPresenter x:Name="CardContentPresenter" Grid.Row="2" Margin="0,12,0,0" HorizontalAlignment="Stretch" Content="{x:Bind Path=CardContent,Mode=OneWay}"/>
+        <ContentPresenter x:Name="CardContentPresenter" Grid.Row="2" Margin="0,8,0,0" HorizontalAlignment="Stretch" Content="{x:Bind Path=CardContent,Mode=OneWay}"/>
         <!--互动栏:三等分列,按钮点击区 ≥40×40-->
-        <Grid x:Name="ActionRow" Grid.Row="3" Margin="0,12,0,0" Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}">
+        <Grid x:Name="ActionRow" Grid.Row="3" Margin="0,8,0,0" Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>
