@@ -1,4 +1,4 @@
-<?xml version='1.0' encoding='UTF-8'?>
+﻿<?xml version='1.0' encoding='UTF-8'?>
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:convert="using:BiliLite.Converters" xmlns:danmaku="using:NSDanmaku.Controls" xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls" xmlns:fa="using:FontAwesome5" xmlns:player="using:BiliLite.Modules.Player" x:Class="BiliLite.Controls.PlayerControl" mc:Ignorable="d" d:DesignHeight="800" d:DesignWidth="1000">
   <UserControl.Resources>
     <SolidColorBrush x:Key="HyperlinkButtonForegroundPointerOver" Color="{ThemeResource HighLightColor}"/>
@@ -201,21 +201,11 @@
       <SplitView.Pane>
         <Grid x:Name="Setting">
           <Pivot x:Name="SettingPivot" RequestedTheme="Dark">
-            <PivotItem x:Name="EpisodePivot">
+            <PivotItem x:Name="NodePivot">
               <PivotItem.Header>
-                <TextBlock Foreground="White" FontSize="18">选集</TextBlock>
+                <TextBlock Foreground="White" FontSize="18">节点</TextBlock>
               </PivotItem.Header>
               <Grid>
-                <ListView Margin="0 4" x:Name="EpisodeList" SelectionChanged="EpisodeList_SelectionChanged" DisplayMemberPath="title">
-                  <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                      <Setter Property="Foreground" Value="White"/>
-                      <Setter Property="Margin" Value="0 4"/>
-                      <Setter Property="BorderThickness" Value="1"/>
-                      <Setter Property="BorderBrush" Value="#33808080"/>
-                    </Style>
-                  </ListView.ItemContainerStyle>
-                </ListView>
                 <ListView Margin="0 4" x:Name="NodeList" Visibility="Collapsed" ItemsSource="{Binding Path=List,Mode=OneWay}" SelectedItem="{Binding Path=Select,Mode=OneWay}" SelectionChanged="NodeList_SelectionChanged" DisplayMemberPath="title">
                   <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
@@ -729,10 +719,7 @@
                       <TextBlock x:Name="BottomBtnDirectoryCaption" VerticalAlignment="Center" FontSize="18" Text="" Margin="8 0 0 0"/>
                     </StackPanel>
                   </Button>
-                  <Button x:Name="BottomBtnList" Click="BottomBtnList_Click" Visibility="{x:Bind ShowPlaylistButton,Mode=OneWay}" ToolTipService.ToolTip="选集" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
-                    <TextBlock VerticalAlignment="Center" FontSize="18">选集</TextBlock>
-                  </Button>
-                  <Button x:Name="BottomBtnNode" Click="BottomBtnNode_Click" Visibility="{x:Bind ShowPlayNodeButton,Mode=OneWay}" ToolTipService.ToolTip="选集" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
+                  <Button x:Name="BottomBtnNode" Click="BottomBtnNode_Click" Visibility="{x:Bind ShowPlayNodeButton,Mode=OneWay}" ToolTipService.ToolTip="节点" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
                     <TextBlock VerticalAlignment="Center" FontSize="18">节点</TextBlock>
                   </Button>
                   <HyperlinkButton x:Name="BottomBtnMiniWindows" Click="BottomBtnMiniWindows_Click" ToolTipService.ToolTip="小窗置顶" Foreground="White" Padding="8" Width="48" Height="48">

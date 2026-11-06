@@ -437,9 +437,8 @@ namespace Ux1bProbe
             var xaml = ReadSource("src/BiliLite.UWP/Controls/PlayerControl.xaml");
 
             var button = xaml.IndexOf("x:Name=\"BottomBtnDirectory\"", StringComparison.Ordinal);
-            var episodeButton = xaml.IndexOf("x:Name=\"BottomBtnList\"", StringComparison.Ordinal);
-            Check(button > 0 && episodeButton > button,
-                "source: the 目录 button sits in the right transport cluster before 选集");
+            Check(button > 0 && !xaml.Contains("BottomBtnList"),
+                "source: the 目录 button is the only list entry in the transport cluster");
             Check(xaml.Contains("AutomationProperties.Name=\"播放目录\"")
                 && xaml.Contains("ToolTipService.ToolTip=\"播放目录\""),
                 "source: the directory button carries one name for screen readers and the tooltip");

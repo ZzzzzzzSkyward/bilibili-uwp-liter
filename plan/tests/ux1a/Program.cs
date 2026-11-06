@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using BiliLite.Models.Common;
 
@@ -458,27 +458,16 @@ namespace Ux1aProbe
                 "source: both part boundary rules read the playing index");
 
             var setItem = Body(player, "private async Task SetPlayItem");
-            Check(setItem.Contains("CurrentPlayIndex = index;") && setItem.Contains("SyncEpisodeListSelection(index);"),
-                "source: the played part is assigned and the list selection mirrors it");
+            Check(setItem.Contains("CurrentPlayIndex = index;"),
+                "source: the played part is assigned in one place");
             Check(CountOf(player, "CurrentPlayIndex = index;") == 1,
                 "source: exactly one place assigns the playing index");
+            // 方案 A:分P 列表在播放目录里,播放器不再自己维护一份选集下标
+            Check(!player.Contains("SyncEpisodeListSelection") && !player.Contains("_syncingEpisodeSelection"),
+                "source: the player keeps no second list selection to mirror");
 
-            var sync = Body(player, "private void SyncEpisodeListSelection");
-            Check(sync.Contains("if (EpisodeList.SelectedIndex == index)")
-                && sync.Contains("_syncingEpisodeSelection = true;") && sync.Contains("finally")
-                && sync.Contains("_syncingEpisodeSelection = false;"),
-                "source: the list selection is synced under a re-entrancy guard that is always released");
-
-            var changed = Body(player, "private async void EpisodeList_SelectionChanged");
-            Check(changed.Contains("if (_syncingEpisodeSelection)") && changed.Contains("return;"),
-                "source: the selection event raised by the sync does not start a second playback");
-            Check(changed.Contains("await SetPlayItem(EpisodeList.SelectedIndex, PlayTargetStart.Resume);"),
-                "source: a user picking a part still goes through the same part switch");
-
-            Check(CountOf(player, "EpisodeList.SelectedIndex = index;") == 1
-                && Body(player, "public void InitializePlayInfo").Contains("_ = SetPlayItem(index, start);")
-                && sync.Contains("EpisodeList.SelectedIndex = index;"),
-                "source: the list selection is written only inside the mirror guard");
+            Check(Body(player, "public void InitializePlayInfo").Contains("_ = SetPlayItem(index, start);"),
+                "source: opening a video goes through the same part switch");
 
             var changeIndex = Body(player, "public void ChangePlayIndex");
             Check(changeIndex.Contains("_ = SetPlayItem(index, start);") && !changeIndex.Contains("EpisodeList.SelectedIndex"),

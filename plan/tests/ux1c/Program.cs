@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -260,9 +260,11 @@ namespace Ux1cProbe
             Check(Body(player, "private async void BottomBtnNext_Click")
                     .Contains("SetPlayItem(CurrentPlayIndex + 1, PlayTargetStart.FromStart);"),
                 "source: the next button starts the next part at 0");
-            Check(Body(player, "private async void EpisodeList_SelectionChanged")
-                    .Contains("SetPlayItem(EpisodeList.SelectedIndex, PlayTargetStart.Resume);"),
-                "source: a part the user picks in the list resumes where it was left");
+            // 方案 A:分P 从播放目录里挑,目录的行处理沿用这一P保存的进度
+            var page = ReadSource("src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs");
+            Check(Body(page, "private async Task ActivateDirectoryRowAsync")
+                    .Contains("player.ChangePlayIndex(rowIndex, PlayTargetStart.Resume);"),
+                "source: a part the user picks in the directory resumes where it was left");
 
             var ended = Body(player, "private async void Player_PlayMediaEnded");
             Check(ended.Contains("ChangePlayIndex(CurrentPlayIndex + 1, PlayTargetStart.FromStart);"),

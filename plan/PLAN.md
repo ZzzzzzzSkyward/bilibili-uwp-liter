@@ -382,3 +382,16 @@ today.
 - **More API/auth variants:** no caller; do not port endpoint classes to mirror the sibling.
 - **Local-library expansion:** the five milestones are done; more discovery/formats/artwork needs its
   own request. Keep the current manifest models as the contract.
+
+## 播放器列表入口合并（维护者 2026-11-06 选定方案 A）
+
+维护者指出「选集」按钮与「播放列表/播放目录」功能重叠。核对源码后的实际情况：
+
+- 播放器底栏有三个列表入口：`BottomBtnDirectory`（播放目录，抽屉里带 分P/合集/播放列表/剧集正片/预告、搜索、
+  定位正在播放、加载更多、按合集/播放列表连播）、`BottomBtnList`（选集，侧栏只列分P）、`BottomBtnNode`（节点）。
+- `PlayerSurfaceVisibility.Decide` 里多P视频会**同时**显示选集与目录，而选集能做的每一件事目录的分P段都能做。
+
+按方案 A 落地：删除 `BottomBtnList`、`EpisodeList`、`EpisodePivot`、`ShowPlaylistButton` 与配套的下标镜像代码；
+侧栏只留 弹幕列表 / 节点 / 本地轨道，`EpisodePivot` 改名 `NodePivot` 且只在互动视频出现；分P 切换统一走播放目录
+（页面 `DirectoryCaption` 本来就在多P时报告目录可用并给出 `3/12` 这样的位置）。`playertoolbar` 90 项重写，
+`--legacy` 基线仍有 22 项失败，说明新断言钉的是这次的行为。

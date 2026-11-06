@@ -259,7 +259,6 @@ namespace BiliLite.Controls
         // 页面报告的"下一个目标"文字;空表示外层没有下一个
         private bool _hasOuterNextTarget;
         // 正在把 CurrentPlayIndex 同步到选集列表:由此产生的 SelectionChanged 不是用户选集,不能再播一次
-        private bool _syncingEpisodeSelection;
         // 页面报告的可跳过剩余分P:有外层来源且本视频还有分P没播完
         private bool _canSkipToNextVideo;
         // 页面报告了目录,以及目录抽屉的开关状态(关门动画在跑时仍算开着)
@@ -1048,10 +1047,9 @@ namespace BiliLite.Controls
             dispRequest.RequestActive();
 
             PlayInfos = playInfos;
-            EpisodeList.ItemsSource = PlayInfos;
             ApplySurfaceVisibility();
-            // 当前分P和开播位置只由 SetPlayItem 认:打开视频这一拍不是用户选集,
-            // 续播策略跟着页面传进来,不让选集列表的事件再猜一次
+            // 当前分P和开播位置只由 SetPlayItem 认:打开视频这一拍不是用户换集,
+            // 续播策略跟着页面传进来
             _ = SetPlayItem(index, start);
         }
 
@@ -1534,8 +1532,7 @@ namespace BiliLite.Controls
                 index = PlayInfos.Count - 1;
             }
             CurrentPlayIndex = index;
-            // 选集列表跟上当前播放的这一P;按钮和快捷键都从这里之后读同一个下标
-            SyncEpisodeListSelection(index);
+            // 分P列表在播放目录里,由目录自己跟随当前这一P;播放器只记下标
             var selectedPlayItem = PlayInfos[index];
             if (CurrentPlayItem == null || CurrentPlayItem.season_id != selectedPlayItem.season_id ||
                 CurrentPlayItem.ep_id != selectedPlayItem.ep_id || CurrentPlayItem.cid != selectedPlayItem.cid)
@@ -1910,43 +1907,6 @@ namespace BiliLite.Controls
             _ = SetPlayItem(index, start);
         }
 
-        /// <summary>
-        /// 选集列表只是当前分P的镜像:换P之后把它的下标对齐。
-        /// 重入保护让这次赋值引起的 SelectionChanged 直接返回,不会播第二次。
-        /// </summary>
-        private void SyncEpisodeListSelection(int index)
-        {
-            if (EpisodeList.SelectedIndex == index)
-            {
-                return;
-            }
-            _syncingEpisodeSelection = true;
-            try
-            {
-                EpisodeList.SelectedIndex = index;
-            }
-            finally
-            {
-                _syncingEpisodeSelection = false;
-            }
-        }
-
-        private async void EpisodeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            //同步当前分P的下标不是用户选集:同一P已经在播,不能再起一次
-            if (_syncingEpisodeSelection)
-            {
-                return;
-            }
-            if (EpisodeList.SelectedItem == null)
-            {
-                return;
-            }
-            DanmuControl.ClearAll();
-            // 用户自己在选集里挑了一P:沿用这一P保存的进度
-            await SetPlayItem(EpisodeList.SelectedIndex, PlayTargetStart.Resume);
-        }
-
         private async void NodeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (NodeList.SelectedItem == null || interactionVideoVM.Loading)
@@ -2038,7 +1998,6 @@ namespace BiliLite.Controls
             _localTrackSwitching = true;
             LocalVideoTrackSelector.IsEnabled = false;
             LocalAudioTrackSelector.IsEnabled = false;
-            EpisodeList.IsEnabled = false;
             BottomBtnNext.IsEnabled = false;
             try
             {
@@ -2099,7 +2058,6 @@ namespace BiliLite.Controls
                 _localTrackSwitching = false;
                 LocalVideoTrackSelector.IsEnabled = true;
                 LocalAudioTrackSelector.IsEnabled = true;
-                EpisodeList.IsEnabled = true;
                 BottomBtnNext.IsEnabled = true;
                 UpdateLocalTrackSelectors();
             }
@@ -2791,15 +2749,6 @@ namespace BiliLite.Controls
 
         #endregion 全屏处理
 
-        public bool ShowPlaylistButton
-        {
-            get { return (bool)GetValue(ShowPlaylistButtonProperty); }
-            set { SetValue(ShowPlaylistButtonProperty, value); }
-        }
-
-        public static readonly DependencyProperty ShowPlaylistButtonProperty =
-            DependencyProperty.Register("ShowPlaylistButton", typeof(bool), typeof(PlayerControl), new PropertyMetadata(false));
-
         public bool ShowPlayNodeButton
         {
             get { return (bool)GetValue(ShowPlayNodeButtonProperty); }
@@ -2863,12 +2812,11 @@ namespace BiliLite.Controls
         private void ApplySurfaceVisibility()
         {
             var verdict = PlayerSurfaceVisibility.Decide(BuildSurfaceSignals());
-            if (ShowPlaylistButton != verdict.ShowPlaylistButton) ShowPlaylistButton = verdict.ShowPlaylistButton;
             if (ShowPlayNodeButton != verdict.ShowPlayNodeButton) ShowPlayNodeButton = verdict.ShowPlayNodeButton;
             if (ShowDanmakuListButton != verdict.ShowDanmakuList) ShowDanmakuListButton = verdict.ShowDanmakuList;
-            if (EpisodePivot != null)
+            if (NodePivot != null)
             {
-                EpisodePivot.Visibility = verdict.ShowEpisodePivot ? Visibility.Visible : Visibility.Collapsed;
+                NodePivot.Visibility = verdict.ShowNodePivot ? Visibility.Visible : Visibility.Collapsed;
             }
             if (LocalTracksPivot != null)
             {
@@ -3250,20 +3198,11 @@ namespace BiliLite.Controls
             }
         }
 
-        private void BottomBtnList_Click(object sender, RoutedEventArgs e)
-        {
-            NodeList.Visibility = Visibility.Collapsed;
-            EpisodeList.Visibility = Visibility.Visible;
-            // 标签按名字找:前两个标签会在没有内容时收掉,写死的下标迟早对不上
-            SettingPivot.SelectedIndex = SettingPivot.Items.IndexOf(EpisodePivot);
-            SplitView.IsPaneOpen = true;
-        }
-
         private void BottomBtnNode_Click(object sender, RoutedEventArgs e)
         {
             NodeList.Visibility = Visibility.Visible;
-            EpisodeList.Visibility = Visibility.Collapsed;
-            SettingPivot.SelectedIndex = SettingPivot.Items.IndexOf(EpisodePivot);
+            // 标签按名字找:前两个标签会在没有内容时收掉,写死的下标迟早对不上
+            SettingPivot.SelectedIndex = SettingPivot.Items.IndexOf(NodePivot);
             SplitView.IsPaneOpen = true;
         }
 

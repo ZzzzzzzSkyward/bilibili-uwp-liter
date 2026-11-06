@@ -1,11 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using BiliLite.Services;
 
 namespace PlayerToolbarProbe
 {
     /// <summary>
-    /// playertoolbar:播放器浮层的去留(弹幕列表 / 选集 + 选集标签 / 节点 / 本地轨道标签),
+    /// playertoolbar:播放器浮层的去留(弹幕列表 / 节点按钮 + 节点标签 / 本地轨道标签),
     /// 入口指向的内容不存在就不该站着。判定在 PlayerSurfaceVisibility 里,探针只喂信号看结论。
     /// --legacy 用改之前的结论跑同一套断言,用来确认这套断言真的会红。
     /// </summary>
@@ -52,8 +53,8 @@ namespace PlayerToolbarProbe
         }
 
         /// <summary>
-        /// 改之前:弹幕列表按钮一直在;选集按钮只看分P(单P互动在打开这一拍也算);
-        /// 选集标签一直在;本地轨道标签只看"是不是合集播放"(这里用有没有可播轨道近似)。
+        /// 改之前:弹幕列表按钮一直在;节点标签一直在;本地轨道标签只看"是不是合集播放"(这里用有没有可播轨道近似)。
+        /// 选集按钮与选集标签已经整条拆掉(方案 A:目录是唯一的列表入口),基线里不再有这两项。
         /// </summary>
         private static PlayerSurfaceVerdicts LegacyDecision(PlayerSurfaceSignals signals)
         {
@@ -61,40 +62,57 @@ namespace PlayerToolbarProbe
             return new PlayerSurfaceVerdicts
             {
                 ShowDanmakuList = true,
-                ShowPlaylistButton = s.PlaylistCount > 1 || (s.PlaylistCount == 1 && s.IsInteraction),
                 ShowPlayNodeButton = s.IsInteraction,
-                ShowEpisodePivot = true,
+                ShowNodePivot = true,
                 ShowLocalTracksPivot = s.VideoTrackCount > 0 || s.AudioTrackCount > 0,
             };
         }
 
-        // ---------- 选集:按钮 + 标签 ----------
+        // ---------- 节点:按钮 + 标签(分P 已交给播放目录) ----------
 
+        /// <summary>产品源码里的播放器 XAML:钉住"没有第二个列表入口"这条决定。</summary>
+        private static string PlayerControlXaml()
+        {
+            var dir = AppContext.BaseDirectory;
+            while (!string.IsNullOrEmpty(dir))
+            {
+                var candidate = Path.Combine(dir, "src", "BiliLite.UWP", "Controls", "PlayerControl.xaml");
+                if (File.Exists(candidate))
+                {
+                    return File.ReadAllText(candidate);
+                }
+                dir = Path.GetDirectoryName(dir);
+            }
+            throw new FileNotFoundException("PlayerControl.xaml not found above " + AppContext.BaseDirectory);
+        }
         private static void PlaylistCases()
         {
             var none = Decide(new PlayerSurfaceSignals { PlaylistCount = 0 });
-            Check("无选集:选集按钮藏", none.ShowPlaylistButton, false);
-            Check("无选集:节点按钮藏", none.ShowPlayNodeButton, false);
-            Check("无选集:选集标签藏", none.ShowEpisodePivot, false);
+            Check("无信号:节点按钮藏", none.ShowPlayNodeButton, false);
+            Check("无信号:节点标签藏", none.ShowNodePivot, false);
 
             var single = Decide(new PlayerSurfaceSignals { PlaylistCount = 1 });
-            Check("单P:选集按钮藏", single.ShowPlaylistButton, false);
-            Check("单P:选集标签藏", single.ShowEpisodePivot, false);
+            Check("单P:节点按钮藏", single.ShowPlayNodeButton, false);
+            Check("单P:节点标签藏", single.ShowNodePivot, false);
 
             var many = Decide(new PlayerSurfaceSignals { PlaylistCount = 12 });
-            Check("多P:选集按钮在", many.ShowPlaylistButton, true);
-            Check("多P:节点按钮藏", many.ShowPlayNodeButton, false);
-            Check("多P:选集标签在", many.ShowEpisodePivot, true);
+            Check("多P:节点按钮藏(分P走播放目录)", many.ShowPlayNodeButton, false);
+            Check("多P:节点标签藏(分P走播放目录)", many.ShowNodePivot, false);
 
             var interaction = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, IsInteraction = true });
-            Check("互动单P:选集按钮藏(节点顶替)", interaction.ShowPlaylistButton, false);
             Check("互动单P:节点按钮在", interaction.ShowPlayNodeButton, true);
-            Check("互动单P:选集标签在(装节点列表)", interaction.ShowEpisodePivot, true);
+            Check("互动单P:节点标签在", interaction.ShowNodePivot, true);
 
             var interactionMany = Decide(new PlayerSurfaceSignals { PlaylistCount = 8, IsInteraction = true });
-            Check("互动多P:选集按钮仍然藏", interactionMany.ShowPlaylistButton, false);
             Check("互动多P:节点按钮在", interactionMany.ShowPlayNodeButton, true);
-            Check("互动多P:选集标签在", interactionMany.ShowEpisodePivot, true);
+            Check("互动多P:节点标签在", interactionMany.ShowNodePivot, true);
+
+            // 方案 A:播放器不再有第二个列表入口
+            var xaml = PlayerControlXaml();
+            Check("播放器底栏没有选集按钮", xaml.Contains("BottomBtnList"), false);
+            Check("播放器侧栏没有选集列表", xaml.Contains("x:Name=\"EpisodeList\""), false);
+            Check("播放器里不再出现「选集」字样", xaml.Contains("Text=\"选集\""), false);
+            Check("互动视频的节点标签仍在", xaml.Contains("x:Name=\"NodePivot\""), true);
         }
 
         // ---------- 本地轨道标签:有轨道才在 ----------
@@ -205,9 +223,9 @@ namespace PlayerToolbarProbe
         private static void NullSignalCases()
         {
             var verdict = Decide(null);
-            Check("没有信号:全部藏(选集按钮)", verdict.ShowPlaylistButton, false);
             Check("没有信号:全部藏(节点按钮)", verdict.ShowPlayNodeButton, false);
-            Check("没有信号:全部藏(选集标签)", verdict.ShowEpisodePivot, false);
+            Check("没有信号:全部藏(节点按钮)", verdict.ShowPlayNodeButton, false);
+            Check("没有信号:全部藏(节点标签)", verdict.ShowNodePivot, false);
             Check("没有信号:全部藏(本地轨道标签)", verdict.ShowLocalTracksPivot, false);
             Check("没有信号:全部藏(弹幕列表)", verdict.ShowDanmakuList, false);
         }

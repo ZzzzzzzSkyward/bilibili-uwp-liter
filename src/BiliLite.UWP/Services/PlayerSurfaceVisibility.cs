@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace BiliLite.Services
 {
@@ -34,9 +34,8 @@ namespace BiliLite.Services
     public sealed class PlayerSurfaceVerdicts
     {
         public bool ShowDanmakuList { get; set; }
-        public bool ShowPlaylistButton { get; set; }
         public bool ShowPlayNodeButton { get; set; }
-        public bool ShowEpisodePivot { get; set; }
+        public bool ShowNodePivot { get; set; }
         public bool ShowLocalTracksPivot { get; set; }
     }
 
@@ -51,15 +50,13 @@ namespace BiliLite.Services
 
         public static PlayerSurfaceVerdicts Decide(PlayerSurfaceSignals signals)
         {
-            var hasPlaylist = signals != null && signals.PlaylistCount > 1;
             var isInteraction = signals != null && signals.IsInteraction;
             return new PlayerSurfaceVerdicts
             {
                 ShowDanmakuList = HasDanmaku(signals),
-                // 互动视频用节点按钮顶替选集:同一个标签里换成节点列表
-                ShowPlaylistButton = hasPlaylist && !isInteraction,
+                // 分P/合集/播放列表都在播放目录里,播放器侧栏只留互动视频的节点树
                 ShowPlayNodeButton = isInteraction,
-                ShowEpisodePivot = hasPlaylist || isInteraction,
+                ShowNodePivot = isInteraction,
                 ShowLocalTracksPivot = HasLocalTrack(signals),
             };
         }
