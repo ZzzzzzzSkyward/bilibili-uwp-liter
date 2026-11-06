@@ -33,27 +33,6 @@ namespace BiliLite
             MessageCenter.ChangeTitleEvent += MessageCenter_ChangeTitleEvent;
             MessageCenter.ViewImageEvent += MessageCenter_ViewImageEvent;
             MessageCenter.MiniWindowEvent += MessageCenter_MiniWindowEvent;
-           // Window.Current.Content.PointerPressed += Content_PointerPressed;
-
-            App.Current.Suspending += Current_Suspending;
-           // Window.Current.Content.PointerPressed += Content_PointerPressed;
-        }
-        private async void Current_Suspending(object sender, Windows.ApplicationModel.SuspendingEventArgs e)
-        {
-            var tabs = tabView.TabItems;
-            foreach (var tab in tabs)
-            {
-                if (!(tab is TabViewItem tabItem)) continue;
-                if (!(tabItem.Content is MyFrame frame)) continue;
-                var page = frame.Content;
-                if (!(page is PlayPage playPage)) continue;
-                //TODO await playPage.ReportHistory();
-            }
-        }
-
-        private void MessageCenter_GoBackEvent(object sender, EventArgs e)
-        {
-            //TODO GoBack();
         }
 
         private void MessageCenter_MiniWindowEvent(object sender, bool e)

@@ -1,4 +1,4 @@
-# Bug report — open items only
+﻿# Bug report — open items only
 
 Branch `dev`. Solved entries were removed on purpose; the fixes and their evidence are one line each in
 `git log`, and the reviewer's findings live in `plan/REVIEW_LOG.md`.
@@ -119,6 +119,12 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 需要的修复：连播/下一个把当前视频换掉之后，把焦点还给播放器；只在焦点落在页签表头（而不是目录抽屉里的
 行、也不是输入框）时纠正，不要靠"定时抢焦点"去覆盖页签的键盘可达性。
+
+已修：`50bb009`。`VideoDetailPage` 在连播/下一个换完视频后判断焦点是否停在页签（`PivotHeaderItem`
+或 `Pivot`，`IsTabStripFocused()`），是则 `player.FocusPlayer()`。**没有**把页签头加进那个每 2 秒的
+焦点回收定时器——那会从页签上抢走键盘切换，`FocusPlayer` 的注释里写着这条边界。目录、播放列表、输入框
+里的焦点一律不打扰。
+
 ## BR-47 — 热门页卡片里推荐理由标签把标题和元信息顶出高度预算（维护者报告，源码定位）
 
 维护者：热门页的视频卡片文字溢出/被裁，标题和下面的两行信息看起来挤在一起，带推荐理由的条目最明显。
@@ -256,9 +262,21 @@ web 与 gRPC 两个映射器都往 `major.live` 填了房间号、封面、标�
   「直播间标题获取失败」，与报告文字不符，但同一处的 `liveRoomVM.LiveInfo.anchor_info.base_info.uname`
   没有 `?.` 保护，若 `LiveInfo` 为空会先抛再被这条 catch 接住。
 
-未处理：先定位，不改代码。下一步需要维护者提供 `%LOCALAPPDATA%` 下应用日志里同一时间段的
-「程序运行出现错误」/`HandelError` 记录（带 `System.NullReferenceException` 与堆栈），才能把范围从
-“整段加载”缩到具体一步；没有堆栈就改代码只能靠猜。
+处理（2026-11-06）：这条路径上所有 `GetData<T>()` 的结果都当非空用——`GetData` 解析失败时返回 null，
+于是 `if (data.success)` 本身就炸成一句看不出位置的 `NullReferenceException`，而外层的 `catch` 只弹
+`ex.Message`。已改三件事：
+
+1. `LoadLiveRoomDetail` 引入 `stage`，在进入主播资料/播放地址/醒目留言/抽奖/礼物/背包/钱包/头衔/进房/连接
+   各步前更新它，`catch` 里连同 `stage` 与房间号一起写 ERROR 日志，toast 文案不变。
+2. 新增 `HasParsedData(data, step)`：`data` 为 null 时记一条带步骤名的日志并跳过该步，不再在
+   `data.success` 上炸；主信息那一步另外挡 `data.data?.room_info` 为空。
+3. 具体空引用一并修掉：背包里存在当前房间礼物配置里没有的礼物时 `_gift.ObjectClone()` 会炸（改为跳过）、
+   多个 `data.data["list"]` 在缺键或 data 为空时炸（改为空列表）。
+
+仍缺的一环：还不知道是哪一个接口的响应解析失败——`HasParsedData` 现在会直接把它写进日志。下次出现时
+日志里会有 `直播接口返回的数据解析失败 step=…` 或 `直播详情加载失败 stage=…`，把那一行发来即可定位；
+本地用真实载荷验过 `getInfoByRoom` 能正常反序列化（`code=0`，`room_info`/`anchor_info` 都在），所以
+不是这个接口的形状问题。
 
 ## BR-54 — 播放器浮层的胶囊太宽，内容块相对背景偏低（维护者 2026-11-06，带截图）
 

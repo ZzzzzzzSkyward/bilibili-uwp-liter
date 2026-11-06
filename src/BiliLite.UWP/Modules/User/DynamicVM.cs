@@ -344,7 +344,6 @@ namespace BiliLite.Modules.User
         }
         public void OpenTag(object name)
         {
-            //TODO 打开话题
             MessageCenter.NavigateToPage(this, new NavigationInfo()
             {
                 icon = Symbol.World,

@@ -719,8 +719,7 @@ namespace BiliLite.Controls.Dynamic
                     return info;
                 case DynamicDisplayType.MediaList:
                     {
-                        //TODO 合集这部分需要重写
-                        //https://t.bilibili.com/625835271145782341
+                        // 合集卡：单集按视频卡渲染，多集走下面的列表；样例 https://t.bilibili.com/625835271145782341
                         if (obj["videos"].ToInt32() == 1)
                         {
                             return ParseOneRowInfo(DynamicDisplayType.Video, obj);

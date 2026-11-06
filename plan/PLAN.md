@@ -1,4 +1,4 @@
-# Plan — open work only
+﻿# Plan — open work only
 
 Updated 2026-11-01 for `dev`. Everything shipped is one line in the commit history. Finished plan
 documents, reports and progress logs were removed on purpose — `git log` has them.
@@ -224,6 +224,20 @@ a `NullReferenceException` message) is recorded in `bug_report.md` and waits for
 code changes; BR-54 (toast pill width and content centring) is fixed in `01e51a7` and waits only for the device
 look.
 Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back.
+
+## 已知债务（2026-11-06，从源码 TODO 收拢）
+
+源码里原先有 10 处 `TODO/FIXME`，已全部清掉。其中三处是真实欠账，记在这里而不是留在代码里：
+
+| 位置 | 欠账 | 为什么现在不做 |
+| --- | --- | --- |
+| `Controls/Player.xaml.cs` | 播放器类写得过于复杂，需要整体重写 | 重写会动到 BR-1/BR-21/BR-43/BR-54 都已验收过的播放路径，没有设备测量支撑不做 |
+| `Controls/Dynamic/DynamicParse.cs`（`MediaList` 分支） | 旧版合集卡的解析仍是逐字段手写，样例 `https://t.bilibili.com/625835271145782341` | 现代合集已走共享解析器；旧路径只在老接口回退时命中 |
+| `Controls/FontAwesome5/FontAwesome.cs` | 多窗口下改字形可能撞线程约束，当前只 `Debug.WriteLine` | 只在多窗口改图标时可能复现，没有设备复现步骤 |
+
+其余 7 处是过时注释或死代码，直接删除：`PlayerControl` 的"本地播放"（该分支已在播）、`VideoPlayHistoryHelper`
+的"或许该用数据库"、`RecommendVM` 的重复加载提示（守卫就在下面）、`DynamicVM.OpenTag`（已经会打开话题页）、
+`NewPage.xaml` 的折叠"自定义快捷入口"菜单项，以及 `MainPage` 里空的挂起循环与从未订阅的 `GoBack` 处理器。
 
 ## 1. Player session ownership
 

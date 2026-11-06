@@ -148,7 +148,7 @@ namespace BiliLite.Modules
             }
            
         }
-        //TODO防止页面无限调用此方法
+        // 同一时间只允许一次加载：列表滚动会连续触发，这里挡掉重复请求
         private bool canloadmore = true;
         private string last_index = "xxx";
 
