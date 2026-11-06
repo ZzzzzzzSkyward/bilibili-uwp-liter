@@ -48,6 +48,8 @@ namespace G5Probe
             CommentTargetsArePaired();
             CardProjectionCarriesTheContract();
             LiveSummaryReadsThePayload();
+            ReserveCardIsAPanelNotBareText();
+            LongTitlesCarryATooltip();
             ImageGridBindsOnlyVisibleTiles();
             LiveSummarySkipsEmptyParts();
             LiveSummaryNeverInventsARoom();
@@ -516,6 +518,52 @@ namespace G5Probe
                 "the panel measures and arranges only the tiles it budgets space for");
         }
 
+        /// <summary>
+        /// BR-55：预约卡以前只有"标题 + 一行说明"两块裸文字，按钮还是注释掉的。
+        /// 现在是一块带边框的预约面板：粉色预约角标、两行标题、两行说明，底部按钮的文案与图标都来自载荷。
+        /// </summary>
+        /// <summary>
+        /// 维护者：长标题被两行省略之后要能用 tooltip 看全文。三处标题都要有：
+        /// 卡片外壳的标题槽、预约/预览模板自己的标题、热门页的 20px 标题。
+        /// </summary>
+        private static void LongTitlesCarryATooltip()
+        {
+            var shell = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicItemControl.xaml");
+            Check(shell.Contains("ToolTipService.ToolTip=\"{x:Bind Path=Model.Title,Mode=OneWay}\"")
+                  && shell.Contains("x:Name=\"CardTitle\""),
+                "the card shell title slot shows the full title on hover");
+
+            var templates = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicTemplate.xaml");
+            Check(CountOf(templates, "ToolTipService.ToolTip=\"{Binding Path=OneRowInfo.Title}\"") >= 2,
+                "both the reserve and the preview title carry a tooltip");
+
+            var hot = ProductSource("src/BiliLite.UWP/Pages/Home/HotPage.xaml");
+            Check(CountOf(hot, "ToolTipService.ToolTip=\"{x:Bind title}\"") == 2,
+                "both hot-card variants carry a title tooltip");
+        }
+        private static void ReserveCardIsAPanelNotBareText()
+        {
+            var template = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicTemplate.xaml");
+            var start = template.IndexOf("<DataTemplate x:Key=\"Reserve\">", StringComparison.Ordinal);
+            Check(start >= 0, "the reserve template exists");
+            var end = template.IndexOf("</DataTemplate>", start, StringComparison.Ordinal);
+            var reserve = template.Substring(start, end - start);
+
+            Check(reserve.Contains("CornerRadius=\"8\"") && reserve.Contains("BorderThickness=\"1\""),
+                "the reserve panel draws a rounded bordered surface");
+            Check(reserve.Contains("Text=\"预约\"") && reserve.Contains("Background=\"HotPink\""),
+                "the reserve panel carries a 预约 chip");
+            Check(reserve.Contains("Command=\"{Binding Path=LaunchUrlCommand}\"")
+                  && reserve.Contains("CommandParameter=\"{Binding Path=OneRowInfo.Url}\""),
+                "the reserve action opens the payload's jump url");
+            Check(reserve.Contains("Visibility=\"{Binding Path=OneRowInfo.ShowCoverText}\"")
+                  && reserve.Contains("OneRowInfo.CoverText"),
+                "the action appears only when the payload carries button text");
+            Check(reserve.Contains("OneRowInfo.Cover, Converter={StaticResource imageConvert2}"),
+                "the action icon goes through the image converter instead of binding a raw string");
+            Check(!reserve.Contains("实际上根本没有办法点击这个按钮"),
+                "the commented-out reserve button is gone");
+        }
         private static void LiveSummaryReadsThePayload()
         {
             var summary = LiveCardSummary.From(new DynamicCardModel2024_live

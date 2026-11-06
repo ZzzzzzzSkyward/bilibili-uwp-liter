@@ -5,17 +5,31 @@
   <DataTemplate x:Key="Reserve">
     <local:DynamicItemControl Model="{Binding}">
       <local:DynamicItemControl.CardContent>
-        <StackPanel>
+        <StackPanel HorizontalAlignment="Stretch">
           <local:RichTextControl Text="{Binding Path=OneRowInfo.Subtitle}" Content="{Binding Path=Content}"/>
-          <Border BorderThickness="1" HorizontalAlignment="Stretch" BorderBrush="{ThemeResource ForegroundTextColor}" CornerRadius="4">
-            <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="4 4 4 4">
-              <TextBlock Margin="0 0 0 0" Text="{Binding Path=OneRowInfo.Title}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
-              <TextBlock Margin="0 8 0 0" Text="{Binding Path=OneRowInfo.Desc}" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
+          <!--
+            预约卡：正文之上是一块带边框的预约面板，而不是一行行裸文字。
+            角标 12 用粉色小块与热门页的推荐理由标签同一种语言；标题 18/26、说明 14/21 各两行省略；
+            底部按钮的文案与图标都来自载荷（reserve.button.text / icon_url），没有载荷就不画按钮。
+          -->
+          <Border Margin="0 8 0 0" Padding="12" HorizontalAlignment="Stretch" CornerRadius="8"
+                  BorderThickness="1" BorderBrush="{ThemeResource ForegroundBorderColor}">
+            <StackPanel HorizontalAlignment="Stretch">
+              <Border HorizontalAlignment="Left" Background="HotPink" CornerRadius="2" Padding="6,1">
+                <TextBlock FontSize="12" Foreground="White" Text="预约"/>
+              </Border>
+              <TextBlock Margin="0 8 0 0" Text="{Binding Path=OneRowInfo.Title}" ToolTipService.ToolTip="{Binding Path=OneRowInfo.Title}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
+              <TextBlock Margin="0 4 0 0" Text="{Binding Path=OneRowInfo.Desc}" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
+              <HyperlinkButton Margin="0 8 0 0" Padding="0" HorizontalAlignment="Left"
+                               Visibility="{Binding Path=OneRowInfo.ShowCoverText}"
+                               Command="{Binding Path=LaunchUrlCommand}" CommandParameter="{Binding Path=OneRowInfo.Url}">
+                <StackPanel Orientation="Horizontal">
+                  <Image Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center"
+                         Source="{Binding Path=OneRowInfo.Cover, Converter={StaticResource imageConvert2}}"/>
+                  <TextBlock VerticalAlignment="Center" FontSize="14" Text="{Binding Path=OneRowInfo.CoverText}"/>
+                </StackPanel>
+              </HyperlinkButton>
             </StackPanel>
-            <!--HyperlinkButton Command="{Binding Path=LaunchUrlCommand}" CommandParameter="{Binding Path=OneRowInfo.Url}" Background="#dd00a9" CornerRadius="2" HorizontalAlignment="Right" Margin="0 0 8 0" Height="40">
-                            //实际上根本没有办法点击这个按钮
-                                <TextBlock FontSize="14" Text="{Binding Path=OneRowInfo.CoverText}" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"></TextBlock>
-                            </HyperlinkButton-->
           </Border>
         </StackPanel>
       </local:DynamicItemControl.CardContent>
@@ -55,7 +69,7 @@
                 </local:DynamicPreviewRow.OverlayContent>
               </local:DynamicPreviewRow>
               <StackPanel HorizontalAlignment="Stretch" Grid.Column="1" Margin="12 0 0 0">
-                <TextBlock FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Text="{Binding Path=OneRowInfo.Title}" Foreground="{ThemeResource TextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
+                <TextBlock FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Text="{Binding Path=OneRowInfo.Title}" ToolTipService.ToolTip="{Binding Path=OneRowInfo.Title}" Foreground="{ThemeResource TextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
                 <TextBlock Visibility="Collapsed" Text="{Binding Path=OneRowInfo.Desc}" Margin="0 4 0 0" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
                 <TextBlock Margin="0 4 0 0" Text="{Binding Path=OneRowInfo.Subtitle}" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" MaxLines="2" TextWrapping="Wrap"/>
               </StackPanel>

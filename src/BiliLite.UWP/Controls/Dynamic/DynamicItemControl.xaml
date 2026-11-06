@@ -157,7 +157,7 @@
           </Grid>
         </Grid>
         <!--标题槽(CARD_PLAN §5 渲染顺序 header → title → body):空标题时整行 Collapsed,不占位也不留 8px-->
-        <TextBlock x:Name="CardTitle" Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Stretch" Text="{x:Bind Path=Model.Title,Mode=OneWay}" Visibility="{x:Bind Path=Model.TitleVisibility,Mode=OneWay}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+        <TextBlock x:Name="CardTitle" Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{x:Bind Path=Model.Title,Mode=OneWay}" Text="{x:Bind Path=Model.Title,Mode=OneWay}" Visibility="{x:Bind Path=Model.TitleVisibility,Mode=OneWay}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
         <!--正文:模板自己渲染正文时(ContentPresenterVisibility=Collapsed)这里的 12px 间距不占位-->
         <ContentPresenter x:Name="BodyPresenter" Grid.Row="2" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
         <!--媒体/预告/附件/转发原动态:占满整宽-->
@@ -179,7 +179,7 @@
                   <StackPanel Orientation="Vertical">
                     <StackPanel Orientation="Horizontal">
                       <TextBlock Text="{Binding KindLabel}" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                      <TextBlock Text="{Binding Title}" Visibility="{Binding TitleVisibility}" FontSize="13" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" Visibility="{Binding TitleVisibility}" FontSize="13" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                     </StackPanel>
                     <TextBlock Text="{Binding Desc}" Visibility="{Binding DescVisibility}" Margin="0,2,0,0" FontSize="12" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
                   </StackPanel>

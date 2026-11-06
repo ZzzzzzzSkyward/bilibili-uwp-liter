@@ -300,3 +300,19 @@ web 与 gRPC 两个映射器都往 `major.live` 填了房间号、封面、标�
 - 已修：`01e51a7`（`toastalign` 41 项，其中 6 项在改动前的源码上失败）。
 
 设备上若仍差一点：宽度只改 `BasePaddingX`，整块上下只改 `BaseContentOpticalOffset`，不要动行框。
+
+## BR-55 — 预约卡只显示普通纯文本，没有样式（维护者 2026-11-06，1.0.9.51）
+
+维护者：预约视频卡片只显示普通纯文本，期望有一定的样式设计、显得更美观。
+
+源码：`Controls/Dynamic/DynamicTemplate.xaml` 的 `Reserve` 模板只有两块裸文字——`OneRowInfo.Title` 与
+`OneRowInfo.Desc`，外面一圈 1px 边框；载荷里的按钮文案（`reserve.button.text`）和按钮图标
+（`reserve.button.icon_url`）虽然已经映射进 `OneRowInfo.CoverText/Cover`，但对应的 `HyperlinkButton` 被整段注释掉，
+注释写着"实际上根本没有办法点击这个按钮"。
+
+处理：改成一块带边框的预约面板——圆角 8、内边距 12、1px `ForegroundBorderColor`；顶部粉色「预约」角标（12px，
+与热门页推荐理由标签同一套语言）；标题 18/26 SemiBold 两行省略，说明 14/21 两行省略；底部按钮用载荷给的文案与
+图标（图标经 `imageConvert2` 转 `ImageSource`），点击走 `LaunchUrlCommand` + `OneRowInfo.Url`，没有按钮文案时不画按钮。
+作者正文仍由 `RichTextControl` 显示在面板之上。
+
+`plan/tests/g5` 新增 7 项钉住这个版式（面板、角标、跳转、按载荷显隐、图标转换器、注释按钮已删除）。
