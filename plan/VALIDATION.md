@@ -191,3 +191,19 @@ No probe run is recorded for this build, and none of the rows below has been on 
 | Preview box reserved | `65fd423` | a long feed post with a video/live preview does not jump or reflow when the cover finishes loading, and the 长图/自然比例 single image keeps its shape |
 | Article feed and dedupe | `65fd423` | the 专栏 tab loads and pages like 全部/投稿视频; paging or refreshing never shows the same dynamic twice |
 | Ten-page window | `65fd423` | scroll past ten response pages of 动态: a 「更早的 N 页已移出」 banner with 重新加载 appears under the tabs, reloading it brings those cards back without duplicating the rows already on screen, the scroll anchor does not jump on expand/collapse, and jumping to an old card from the banner lands on the right one |
+
+## Shipped 2026-11-06 — toast pill, photo grid, attachments, empty player entries (1.0.9.47)
+
+Compiled with `-Fast`, 0 errors; probe batches cover the logic (`toastalign` 41, `cardlayout` 761,
+`playertoolbar` 90, `g3` 342, `g5` 200). None of the rows below has been on a device.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Toast pill width and centring (BR-54) | `01e51a7` | the progress pill (hold/drag the seek bar) hugs the clock and the digits with a narrow margin instead of a wide band of background, and the icon+text pair sits on the pill's centre line instead of low; check the same at a small window and at 200% text size — volume/brightness pills use the same layout |
+| 弹幕列表 hidden without danmaku | `4dc85ce` | open a video whose comment pool has no danmaku: the 弹幕列表 button is absent from the top bar and nothing opens an empty list; open one with danmaku and the button appears after the load; play a downloaded item with a danmaku file and it appears too |
+| 选集 button and tab follow the playlist | `4dc85ce` | a single-part video shows no 选集 button and no 选集 tab in the settings pane; a multi-part video shows both; an interaction video shows 节点 instead and its tab lists the nodes |
+| 本地轨道 follows the tracks | `4dc85ce` | play an ordinary online video: the 本地轨道 tab is gone from the settings pane; play a local/manifest file that has at least one track and it is back and lists them |
+| Hidden tab does not leave a blank pane | `4dc85ce` | open settings on 选集 for a multi-part video, then switch to another episode/source that has no playlist: settings must land on 弹幕 (or the first visible tab), never a blank pane or a tab that is no longer shown |
+| Photo grid by count | `798a03a` | 2 images: one row of two; 3: three across when the window is wide, two columns when narrow; 4: 2×2 with a save menu on long-press/right-click (previously missing); 9 and 12: nine squares, the ninth carrying +N, no horizontal overflow at a narrow window |
+| Gallery order and +N | `798a03a` | tap the ninth square: the viewer opens on that image with the full set available, previous/next in source order; the +N badge disappears on a card with nine or fewer images |
+| Attachment row | `798a03a` | a photo or text post that also carries a vote/reserve shows one quiet row under the body with its kind, title and one description line; 打开 appears only when the source supplied a destination and actually opens it; a post with no attachment shows no empty frame |
