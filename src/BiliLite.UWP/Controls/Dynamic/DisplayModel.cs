@@ -674,6 +674,14 @@ namespace BiliLite.Controls.Dynamic
         {
             get { return !IsRepost && ShowInteractionRow ? Visibility.Visible : Visibility.Collapsed; }
         }
+        /// <summary>
+        /// 不支持的类型也能打开原动态：只有拿到 ID 且页面给了跳转命令时才显示入口，
+        /// 否则按钮点了没反应，比没有按钮更糟。
+        /// </summary>
+        public bool CanOpenOriginal
+        {
+            get { return !string.IsNullOrEmpty(DynamicID) && DetailByIdCommand != null; }
+        }
         public string DynamicUrl { get { return $"https://t.bilibili.com/{DynamicID}"; } }
     }
 

@@ -39,6 +39,8 @@ namespace G3Probe
             ItemWithoutExtendMapsToNothing();
             DrawCardUsesPhotoObjectId();
             UnsupportedCardTypeStaysUnrenderable();
+            UnsupportedCardKeepsAuthorAndText();
+            UnsupportedCardOffersOpenOriginalOnlyWithId();
             DetailOnlyAcceptsRenderableCards();
             WebFeedItemsMapThroughTheSameCardModel();
             WebFeedSurvivesHostileFieldTypes();
@@ -222,6 +224,69 @@ namespace G3Probe
                 "mapper reports DYNAMIC_TYPE_UNSUPPORTED for a type it cannot render");
             Check(cards[0].basic.rid_str == "712345678901237",
                 "unsupported card falls back to the dynamic id for its oid");
+        }
+
+        /// <summary>
+        /// CARD_PLAN §2 P1: an unknown card kind used to reach the Other template as a bare
+        /// "无法显示此动态" box with no author and no way to open the original. The extractor keeps the
+        /// outer card's author/time/text/id so the shell can render who posted it and what it says.
+        /// </summary>
+        private static void UnsupportedCardKeepsAuthorAndText()
+        {
+            var item = new DynamicCardModel2024
+            {
+                id_str = "1248889675504943123",
+                type = "DYNAMIC_TYPE_FUTURE_KIND",
+                modules = new DynamicCardModel2024_modules
+                {
+                    module_author = new DynamicCardModel2024_author
+                    {
+                        mid = 987654321,
+                        name = "示例作者",
+                        face = "https://i0.hdslb.com/bfs/face/example.jpg",
+                        pub_time = "3小时前",
+                        pendant = new DynamicCardModel2024_pendant { image = "https://i0.hdslb.com/bfs/pendant/example.png" },
+                        official_verify = new DynamicCardModel2024_off { type = 1 }
+                    },
+                    module_dynamic = new DynamicCardModel2024_dynamic
+                    {
+                        desc = new DynamicCardModel2024_desc { text = "服务端新类型的正文" }
+                    }
+                }
+            };
+            var fields = UnsupportedCard.From(item);
+            Check(fields.DynamicId == "1248889675504943123", "unknown card keeps its dynamic id");
+            Check(fields.Mid == 987654321, "unknown card keeps the author mid");
+            Check(fields.UserName == "示例作者", "unknown card keeps the author name");
+            Check(fields.Photo.EndsWith("example.jpg"), "unknown card keeps the author face");
+            Check(fields.PendantImage.EndsWith("example.png"), "unknown card keeps the author pendant");
+            Check(fields.OfficialVerifyType == 1, "unknown card keeps the raw verify type");
+            Check(fields.Time == "3小时前", "unknown card keeps the publish time");
+            Check(fields.Text == "服务端新类型的正文", "unknown card keeps the body text");
+            Check(fields.HasDynamicId, "a card with an id can offer the original");
+
+            var empty = UnsupportedCard.From(null);
+            Check(empty.DynamicId == "" && empty.UserName == "" && empty.Text == "",
+                "a missing card degrades to empty fields instead of throwing");
+            Check(!empty.HasDynamicId, "a card without an id cannot offer the original");
+            Check(empty.OfficialVerifyType == 3, "a missing verify type reads as none");
+        }
+
+        /// <summary>
+        /// The open-original button must not appear when there is nothing to open: a dead button is
+        /// worse than no button.
+        /// </summary>
+        private static void UnsupportedCardOffersOpenOriginalOnlyWithId()
+        {
+            var command = new RelayCommand<object>(_ => { });
+            var openable = new DynamicItemDisplayModel { DynamicID = "712345678901237", DetailByIdCommand = command };
+            Check(openable.CanOpenOriginal, "id plus a command shows the open-original action");
+
+            var noCommand = new DynamicItemDisplayModel { DynamicID = "712345678901237" };
+            Check(!noCommand.CanOpenOriginal, "id without a command hides the action");
+
+            var noId = new DynamicItemDisplayModel { DetailByIdCommand = command };
+            Check(!noId.CanOpenOriginal, "a command without an id hides the action");
         }
 
         /// <summary>

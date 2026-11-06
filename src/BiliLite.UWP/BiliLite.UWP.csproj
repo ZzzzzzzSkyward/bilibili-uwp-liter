@@ -188,6 +188,7 @@
     <Compile Include="Parsing\Dynamic\WireScalars.cs" />
     <Compile Include="Parsing\Dynamic\RichTextFlow.cs" />
     <Compile Include="Parsing\Dynamic\LiveCardSummary.cs" />
+    <Compile Include="Parsing\Dynamic\UnsupportedCard.cs" />
     <Compile Include="Parsing\Season\WebSeasonEpListParser.cs" />
     <Compile Include="Parsing\Season\WebSeasonEpListMapper.cs" />
     <Compile Include="Parsing\MediaList\MediaListResourceListParser.cs" />

@@ -2162,7 +2162,10 @@ namespace BiliLite.Modules.User
                     Type = DynamicDisplayType.Other,
                     IntType = 999,
                     DynamicID = item.desc.dynamic_id,
-                    ContentStr = "动态加载失败"
+                    ContentStr = "动态加载失败",
+                    ShowInteractionRow = false,
+                    // 解析失败时正文可能读不到，但原动态本身还在：留一个能打开它的入口
+                    DetailByIdCommand = DetailByIdCommand
                 };
             }
 
@@ -2178,15 +2181,38 @@ namespace BiliLite.Modules.User
                 var t = DynamicParse.ParseType2024(item.type);
                 if (t == DynamicDisplayType.Other)
                 {
-                    // 不认识的卡片类型也留着它的正文与 ID：Other 模板显示 ContentStr，至少还能读到作者写了什么
-                    return new DynamicItemDisplayModel()
+                    // 不认识的卡片类型也要留人能看懂的东西：外卡的作者、时间、正文和 ID。
+                    // 互动栏收起来——计数没有意义，按钮点了也没反应。
+                    var unsupported = UnsupportedCard.From(item);
+                    var placeholder = new DynamicItemDisplayModel()
                     {
                         Type = DynamicDisplayType.Other,
                         IntType = 999,
-                        DynamicID = item.id_str,
-                        ContentStr = item.modules?.module_dynamic?.desc?.text ?? "",
-                        DetailByIdCommand = DetailByIdCommand
+                        DynamicID = unsupported.DynamicId,
+                        Mid = unsupported.Mid,
+                        UserName = unsupported.UserName,
+                        Photo = unsupported.Photo,
+                        Time = unsupported.Time,
+                        ContentStr = unsupported.Text,
+                        ShowInteractionRow = false,
+                        DetailByIdCommand = DetailByIdCommand,
+                        UserCommand = UserCommand,
+                        WebCommand = WebCommand
                     };
+                    if (!string.IsNullOrEmpty(unsupported.PendantImage))
+                    {
+                        placeholder.Pendant = unsupported.PendantImage;
+                    }
+                    switch (unsupported.OfficialVerifyType)
+                    {
+                        case 0:
+                            placeholder.Verify = AppHelper.VERIFY_PERSONAL_IMAGE;
+                            break;
+                        case 1:
+                            placeholder.Verify = AppHelper.VERIFY_OGANIZATION_IMAGE;
+                            break;
+                    }
+                    return placeholder;
                 }
                 var data = new DynamicItemDisplayModel()
                 {

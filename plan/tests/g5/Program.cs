@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Windows.Input;
 using Bilibili.App.Dynamic.V2;
@@ -695,10 +695,12 @@ namespace G5Probe
             Check(CountOf(legacy, "\"https://live.bilibili.com/\" + info.ID") == 2,
                 "both legacy live cases point at live.bilibili.com/{room_id}");
 
-            // 未支持的动态类型仍然需要那句话；它不该再出现在直播卡里。
+            // 未支持的类型不再用"有待修复"占位：卡片改走外壳，写一句说明并提供打开原文。
             var placeholder = SourceFilesContaining("有待修复");
-            Check(placeholder.Count == 1 && placeholder[0] == "Controls/Dynamic/DynamicTemplate.xaml",
-                "the unsupported-kind placeholder is the only 有待修复 left in product source");
+            Check(placeholder.Count == 0, "no product source still ships a 有待修复 placeholder");
+            var template = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicTemplate.xaml");
+            Check(template.Contains("CanOpenOriginal") && template.Contains("DetailByIdCommand"),
+                "the unsupported card offers 打开原文 through the model's open-original state");
         }
 
         private static string LiveCard(string liveBody)

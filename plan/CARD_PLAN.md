@@ -321,3 +321,21 @@ Start from captured, representative payloads already available to the maintainer
 | Feed lifetime | Feed-only 20+ page scroll, expand/collapse, resize, navigate away/back, refresh | Scroll anchor stable; old controls/images released when expected; retained data/UI measured separately from playback/native resources |
 
 Before marking an implementation accepted, compare the same representative cards side by side in feed, user space, and detail, then check the deliberately compact home-video and repost-list projections. The primary success criterion is that useful source content survives parsing and is readable at the width the user actually has.
+
+## 收口记录（2026-11-06）：不认识的卡片类型
+
+§2 里 P1 的「未知类型退化成 Other，模板只显示通用错误、没有打开原文」已修。
+
+改之前：`ConvertToDisplay2024` 的 Other 分支只带 `DynamicID` 与正文文本，模板是一张独立边框，
+写死「无法显示此动态,有待修复」，没有作者行、没有打开原动态的入口；`ConvertToDisplay` 的解析失败兜底
+同样没有出口。
+
+改之后：
+- 新增 `Parsing/Dynamic/UnsupportedCard.cs`：从卡片数据里取外卡的 `id_str`、作者 mid/昵称/头像/装扮/认证类型、
+  发布时间与正文，任何一层缺失都退化成空字段而不抛异常。
+- `Other` 分支把这些字段填进显示模型，并把互动栏收起来（计数没有意义，点了也没反应）。
+- `DisplayModel.CanOpenOriginal`＝有动态 ID 且有 `DetailByIdCommand`；`Other` 模板改用卡片外壳
+  （作者行照常显示），正文可选中，条件满足时出现「打开原文」。
+- 解析失败的兜底卡片同样接上 `DetailByIdCommand`，正文仍写「动态加载失败」。
+
+`plan/tests/g3` 366 项，其中 15 项是这次新增的：字段提取、空卡片退化、无 ID 或无命令时按钮不出现。
