@@ -717,8 +717,10 @@ namespace G5Probe
             var placeholder = SourceFilesContaining("有待修复");
             Check(placeholder.Count == 0, "no product source still ships a 有待修复 placeholder");
             var template = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicTemplate.xaml");
-            Check(template.Contains("CanOpenOriginal") && template.Contains("DetailByIdCommand"),
-                "the unsupported card offers 打开原文 through the model's open-original state");
+            Check(template.Contains("CanOpenOriginal") && template.Contains("WebCommand"),
+                "the unsupported card opens its original on the web through the model's open-original state");
+            Check(!template.Contains("Command=\"{Binding Path=DetailByIdCommand}\" CommandParameter=\"{Binding Path=DynamicID}\""),
+                "the unsupported card no longer routes 打开原文 into the native detail page");
         }
 
         private static string LiveCard(string liveBody)

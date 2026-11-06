@@ -145,7 +145,7 @@
           <!-- 类型不认识，但作者、时间和正文是读得到的：说明一句，原文照贴，给一个打开原动态的出口 -->
           <TextBlock Text="当前版本不支持这种动态，以下是原文" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap"/>
           <TextBlock Margin="0 4 0 0" Text="{Binding Path=ContentStr}" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" IsTextSelectionEnabled="True"/>
-          <Button Margin="0 8 0 0" Padding="12,4" HorizontalAlignment="Left" Content="打开原文" Visibility="{Binding Path=CanOpenOriginal}" Command="{Binding Path=DetailByIdCommand}" CommandParameter="{Binding Path=DynamicID}"/>
+          <Button Margin="0 8 0 0" Padding="12,4" HorizontalAlignment="Left" Content="打开原文" Visibility="{Binding Path=CanOpenOriginal}" Command="{Binding Path=WebCommand}" CommandParameter="{Binding Path=DynamicUrl}"/>
         </StackPanel>
       </local:DynamicItemControl.CardContent>
     </local:DynamicItemControl>

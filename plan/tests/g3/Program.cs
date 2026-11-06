@@ -72,6 +72,7 @@ namespace G3Probe
             FeedWindowReloadsTheNearestEvictedPageFirst();
             FeedWindowTakesOnlyTheRequestedCheckpoint();
             FeedWindowReturnsACheckpointToItsPlace();
+            FeedWindowDropsCheckpointsFromABeforeResetEpoch();
             ArticleFeedUsesTheSharedWebParser();
             PlainTextKeepsEveryParagraph();
             BodyIsNotTruncatedAtOneThousandCharacters();
@@ -281,14 +282,24 @@ namespace G3Probe
         private static void UnsupportedCardOffersOpenOriginalOnlyWithId()
         {
             var command = new RelayCommand<object>(_ => { });
-            var openable = new DynamicItemDisplayModel { DynamicID = "712345678901237", DetailByIdCommand = command };
-            Check(openable.CanOpenOriginal, "id plus a command shows the open-original action");
+            var openable = new DynamicItemDisplayModel { DynamicID = "712345678901237", WebCommand = command };
+            Check(openable.CanOpenOriginal, "id plus the web command shows the open-original action");
 
             var noCommand = new DynamicItemDisplayModel { DynamicID = "712345678901237" };
             Check(!noCommand.CanOpenOriginal, "id without a command hides the action");
 
-            var noId = new DynamicItemDisplayModel { DetailByIdCommand = command };
+            var noId = new DynamicItemDisplayModel { WebCommand = command };
             Check(!noId.CanOpenOriginal, "a command without an id hides the action");
+
+            // 打开原文必须走网页：原生详情页对不认识的类型只会再显示一张占位卡（评审 52a29f1）
+            var nativeOnly = new DynamicItemDisplayModel
+            {
+                DynamicID = "712345678901237",
+                DetailByIdCommand = command
+            };
+            Check(!nativeOnly.CanOpenOriginal, "a native-detail command alone does not offer the original");
+            Check(openable.DynamicUrl == "https://t.bilibili.com/712345678901237",
+                "the open-original parameter is the dynamic's web address");
         }
 
         /// <summary>
@@ -2032,7 +2043,7 @@ namespace G3Probe
 
             // 模拟请求期间又淘汰了一页：直接登记一个更新的检查点
             var later = new DynamicFeedPageCheckpoint { PageNumber = 3, CursorBeforePage = "cursor-3" };
-            window.ReturnCheckpoint(later);
+            window.ReturnCheckpoint(later, window.Epoch);
             Check(window.EvictedPageCount == 3, "feed window: a later eviction adds a third checkpoint");
 
             Check(!window.TryTakeCheckpoint(page2), "feed window: taking page 2 after page 3 was evicted is refused");
@@ -2045,6 +2056,33 @@ namespace G3Probe
             Check(window.EvictedPageCount == 2, "feed window: the successful take removes exactly one checkpoint");
         }
 
+        /// <summary>
+        /// 评审 52a29f1:重载请求在途时刷新/换分类会 Reset 并换代,回来的检查点属于上一代,
+        /// 再放回去就会让"更早的页"按旧游标重放。
+        /// </summary>
+        private static void FeedWindowDropsCheckpointsFromABeforeResetEpoch()
+        {
+            var window = new DynamicFeedWindow();
+            var cursors = new List<string>();
+            AddFeedPages(window, 12, 5, cursors);
+
+            DynamicFeedPageCheckpoint page2;
+            window.TryPeekCheckpoint(out page2);
+            var epoch = window.Epoch;
+            Check(window.TryTakeCheckpoint(page2), "feed window: page 2 is taken before the refresh");
+
+            window.Reset();
+            Check(window.EvictedPageCount == 0, "feed window: reset clears the checkpoints");
+
+            window.ReturnCheckpoint(page2, epoch);
+            Check(window.EvictedPageCount == 0,
+                "feed window: a checkpoint from the previous epoch is not restored after a reset");
+
+            // 同一代内的失败仍然要放回去
+            window.ReturnCheckpoint(page2, window.Epoch);
+            Check(window.EvictedPageCount == 1,
+                "feed window: a checkpoint from the current epoch is restored");
+        }
         /// <summary>
         /// 取走之后没成功（失败/换代/空页/全重复）要放回原位：追加到末尾会让它变成"最近淘汰的一页"，
         /// 抢在真正紧邻窗口的那一页前面被重载。
@@ -2061,8 +2099,8 @@ namespace G3Probe
             Check(window.EvictedPageCount == 1, "feed window: one checkpoint left after taking page 2");
 
             // 请求期间又淘汰了一页
-            window.ReturnCheckpoint(new DynamicFeedPageCheckpoint { PageNumber = 3, CursorBeforePage = "cursor-3" });
-            window.ReturnCheckpoint(page2);
+            window.ReturnCheckpoint(new DynamicFeedPageCheckpoint { PageNumber = 3, CursorBeforePage = "cursor-3" }, window.Epoch);
+            window.ReturnCheckpoint(page2, window.Epoch);
             Check(window.EvictedPageCount == 3, "feed window: returning page 2 puts it back next to page 3");
             Check(window.EvictedPages[1].PageNumber == 2 && window.EvictedPages[2].PageNumber == 3,
                 "feed window: the returned checkpoint sits before the newer page, in page order");
@@ -2071,7 +2109,7 @@ namespace G3Probe
             Check(window.TryPeekCheckpoint(out next) && next.PageNumber == 3,
                 "feed window: the page next to the window stays the one offered for reload");
 
-            window.ReturnCheckpoint(page2);
+            window.ReturnCheckpoint(page2, window.Epoch);
             Check(window.EvictedPageCount == 3, "feed window: returning the same checkpoint twice is a no-op");
         }
 

@@ -99,6 +99,12 @@ namespace BiliLite.Services
         /// <summary>锚点所在页永不淘汰；由页面在滚动时写入。</summary>
         public string AnchorDynamicId { get; set; }
 
+        /// <summary>
+        /// 每次 Reset（刷新/换分类/换用户）加一。检查点属于某一代窗口：跨代还回去会把旧游标
+        /// 塞进已经清空的窗口，下一轮的"更早的页"就按旧游标重放。
+        /// </summary>
+        public int Epoch { get; private set; }
+
         /// <summary>去重集合当前记住的 ID 数（探针用）。</summary>
         public int RetainedIdCount
         {
@@ -108,6 +114,7 @@ namespace BiliLite.Services
         /// <summary>刷新/换分类/换用户：窗口、检查点、去重集合整体作废。</summary>
         public void Reset()
         {
+            Epoch++;
             _pages.Clear();
             _evicted.Clear();
             _seenIds.Clear();
@@ -243,10 +250,11 @@ namespace BiliLite.Services
         /// 不能简单追加到末尾——那会让它变成"最近淘汰的一页"，抢在更新的页前面被重载。
         /// 淘汰顺序是从窗口顶部逐页往前，所以列表按页号升序，按页号插回即可。
         /// </summary>
-        public void ReturnCheckpoint(DynamicFeedPageCheckpoint checkpoint)
+        public void ReturnCheckpoint(DynamicFeedPageCheckpoint checkpoint, int epoch)
         {
-            if (checkpoint == null)
+            if (checkpoint == null || epoch != Epoch)
             {
+                // 窗口已经换代：这一页连同行号都属于上一代，不再放回
                 return;
             }
             for (var i = 0; i < _evicted.Count; i++)

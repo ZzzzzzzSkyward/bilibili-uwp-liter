@@ -1563,6 +1563,8 @@ namespace BiliLite.Modules.User
             // 先把检查点取走：请求期间 LoadMore 可能再淘汰一页，取走之后它就不会被换成别的一页。
             // 取不回来（已被别的路径取走）就什么都不做。
             var held = checkpoint;
+            // 记住取走时的窗口代次：请求期间刷新/换分类会 Reset 并换代，那时这一页不能再放回去
+            var heldEpoch = feedWindow.Epoch;
             if (!feedWindow.TryTakeCheckpoint(checkpoint))
             {
                 return;
@@ -1579,7 +1581,7 @@ namespace BiliLite.Modules.User
                 if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
                 {
                     LogHelper.Log("User dynamic VM stage=reload-earlier discarded generation=" + generation, LogType.DEBUG);
-                    feedWindow.ReturnCheckpoint(held);
+                    feedWindow.ReturnCheckpoint(held, heldEpoch);
                     return;
                 }
                 if (page == null || page.Count == 0)
@@ -1587,7 +1589,7 @@ namespace BiliLite.Modules.User
                     LogHelper.Log("User dynamic VM stage=reload-earlier-empty page=" + checkpoint.PageNumber
                         + " generation=" + generation, LogType.INFO);
                     Utils.ShowMessageToast("更早的页没有可显示的动态");
-                    feedWindow.ReturnCheckpoint(held);
+                    feedWindow.ReturnCheckpoint(held, heldEpoch);
                     return;
                 }
                 //淘汰时这些 ID 已从去重集合释放，这里重新接受；插回窗口最前端且不参与本次淘汰
@@ -1595,7 +1597,7 @@ namespace BiliLite.Modules.User
                 if (survivors.Count == 0)
                 {
                     // 整页都是重复内容：把它放回去，下次还能再试，不要让这一页静默消失
-                    feedWindow.ReturnCheckpoint(held);
+                    feedWindow.ReturnCheckpoint(held, heldEpoch);
                     return;
                 }
                 if (Items == null)
@@ -1615,7 +1617,7 @@ namespace BiliLite.Modules.User
             {
                 LogHelper.Log("User dynamic VM stage=reload-earlier-failed page=" + checkpoint.PageNumber, LogType.ERROR, ex);
                 Utils.ShowMessageToast(DescribeFeedFailure("更早的页加载失败", ex.Message));
-                feedWindow.ReturnCheckpoint(held);
+                feedWindow.ReturnCheckpoint(held, heldEpoch);
             }
             finally
             {
@@ -2174,8 +2176,8 @@ namespace BiliLite.Modules.User
                     DynamicID = item.desc.dynamic_id,
                     ContentStr = "动态加载失败",
                     ShowInteractionRow = false,
-                    // 解析失败时正文可能读不到，但原动态本身还在：留一个能打开它的入口
-                    DetailByIdCommand = DetailByIdCommand
+                    // 解析失败时正文可能读不到，但原动态本身还在：留一个能打开它的网页入口
+                    WebCommand = WebCommand
                 };
             }
 

@@ -675,12 +675,13 @@ namespace BiliLite.Controls.Dynamic
             get { return !IsRepost && ShowInteractionRow ? Visibility.Visible : Visibility.Collapsed; }
         }
         /// <summary>
-        /// 不支持的类型也能打开原动态：只有拿到 ID 且页面给了跳转命令时才显示入口，
-        /// 否则按钮点了没反应，比没有按钮更糟。
+        /// 不支持的类型没有能渲染它的页面：打开原动态要走网页。用 DetailByIdCommand 会进原生详情页，
+        /// 那边同样认不出这个类型，只会再显示一张占位卡（评审 52a29f1）。
+        /// 所以入口只在"有 ID 且有网页命令"时出现，否则按钮点了没反应，比没有按钮更糟。
         /// </summary>
         public bool CanOpenOriginal
         {
-            get { return !string.IsNullOrEmpty(DynamicID) && DetailByIdCommand != null; }
+            get { return !string.IsNullOrEmpty(DynamicID) && WebCommand != null; }
         }
         public string DynamicUrl { get { return $"https://t.bilibili.com/{DynamicID}"; } }
     }
