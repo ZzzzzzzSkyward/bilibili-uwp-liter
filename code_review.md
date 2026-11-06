@@ -25,3 +25,26 @@ Location: `src/BiliLite.UWP/Assets/Text/info.md:7` and `:11`.
 Trigger: open Settings → About and click the source or Releases link. Both now pass through the new link handler, but their targets use `ZzzzzzzSkyward/biliuwp-liter`; origin and `README.md:30` identify this project as `ZzzzzzzSkyward/bilibili-uwp-liter`. The app therefore directs users looking for its source or installation packages to a different repository address.
 
 Suggested fix: use `https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter` and its `/releases` URL for both the displayed source address and link destinations. This mismatch is established from repository text; no network link check was performed.
+
+## Dispositions (2026-11-06, dispatcher, review `a27125d`)
+
+All three findings were correct; none is contested.
+
+1. **Tiles past the ninth were laid out outside the grid's height.** `DynamicImageGrid.Rebuild` computed the layout from
+   the full count (correct for columns and `+N`) and then bound every tile, while `DynamicImageGridPanel` measured and
+   arranged `Children.Count` children and returned a height for nine. With twelve images the last three were arranged
+   below the reported height. Fixed in `1410710`: the control hands the panel only `layout.VisibleCount` tiles
+   (`GetRange(0, VisibleCount)`), the badge is placed on `VisibleCount - 1` from the full-count layout, and the panel
+   loops over `Math.Min(Children.Count, layout.VisibleCount)` so a future over-binding cannot escape the budget either.
+   The dropped tiles keep their `ImagesInfo` entries, so the viewer still opens the full set at the right index.
+2. **Paging during an earlier-page reload consumed the wrong checkpoint.** `ReloadEarlier` peeked, awaited, then took
+   "whatever was last", which `LoadMore` may have replaced in the meantime, and reinserted the page under another page's
+   number and cursors. Fixed in `bdc837d`: `TryTakeCheckpoint(expected)` removes only the checkpoint whose page number and
+   before-cursor match the request; `ReturnCheckpoint` puts it back in page order (appending would make it the newest
+   eviction and jump the queue). The VM now takes before the request and returns it on every early exit — wrong
+   generation, empty page, all-duplicates, or exception — so a failed reload keeps both checkpoints.
+3. **About links used the wrong repository name.** Correct, and my mistake: `info.md` pointed at
+   `ZzzzzzzSkyward/biliuwp-liter` while `origin` and `README.md` say `bilibili-uwp-liter`. Fixed in `9b3dda2`.
+
+Probe coverage: `g5` 202 → 207 (grid wiring), `g3` 366 → 380 (checkpoint identity, ordered return, idempotent return).
+Compiled into `BiliLite.Packages_1.0.9.51_x64.msix`; no device run, per the maintainer's 2026-11-04 default-pass rule.

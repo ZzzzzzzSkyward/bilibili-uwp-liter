@@ -339,3 +339,11 @@ Before marking an implementation accepted, compare the same representative cards
 - 解析失败的兜底卡片同样接上 `DetailByIdCommand`，正文仍写「动态加载失败」。
 
 `plan/tests/g3` 366 项，其中 15 项是这次新增的：字段提取、空卡片退化、无 ID 或无命令时按钮不出现。
+
+## 复核处置（2026-11-06，评审 `a27125d`）
+
+| 发现 | 结论 | 处理 |
+| --- | --- | --- |
+| 12 张图时后三张摆在网格高度之外 | **属实** | `DynamicImageGrid.Rebuild` 现在只把前 `VisibleCount` 张交给面板，+N 仍按原始张数算并落在第九张；`DynamicImageGridPanel` 只为预算了空间的子项测量与摆位。收起的三张仍在 `ImagesInfo` 里，查看器照旧能翻到。`g5` 207 项（新增 3 项钉住这条接线） |
+| 重载早页期间 LoadMore 会换掉检查点 | **属实** | 取检查点改为核对身份（页号 + 页前游标），对不上就两个都留着；`ReloadEarlier` 在请求前取走、失败/换代/空页/全重复时按页号插回原位，不再"取最近淘汰的那个"。`g3` 380 项（新增 14 项：身份不匹配时拒绝取走、按页号插回、重复插回无副作用） |
+| 关于页的仓库名写错 | **属实，是我写错的** | `info.md` 两处地址改为 `ZzzzzzzSkyward/bilibili-uwp-liter`，与 `origin`、`README.md` 一致 |
