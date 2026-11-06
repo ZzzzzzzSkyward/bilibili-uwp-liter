@@ -614,7 +614,7 @@
         <ScrollViewer Padding="12 0" VerticalScrollBarVisibility="Auto">
           <StackPanel>
             <TextBlock x:Name="version" Margin="0 16 0 8" FontSize="16"/>
-            <controls1:MarkdownTextBlock x:Name="Info" Background="{ThemeResource TransparentBackground}" Padding="16" IsTextSelectionEnabled="True"/>
+            <controls1:MarkdownTextBlock x:Name="Info" Background="{ThemeResource TransparentBackground}" Padding="16" LinkClicked="txtHelp_LinkClicked" IsTextSelectionEnabled="True"/>
           </StackPanel>
         </ScrollViewer>
       </PivotItem>
