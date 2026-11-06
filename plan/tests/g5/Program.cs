@@ -50,6 +50,7 @@ namespace G5Probe
             LiveSummaryReadsThePayload();
             ReserveCardIsAPanelNotBareText();
             LongTitlesCarryATooltip();
+            UnsupportedCardsAlwaysCarryTheWebCommand();
             ImageGridBindsOnlyVisibleTiles();
             LiveSummarySkipsEmptyParts();
             LiveSummaryNeverInventsARoom();
@@ -526,6 +527,26 @@ namespace G5Probe
         /// 维护者：长标题被两行省略之后要能用 tooltip 看全文。三处标题都要有：
         /// 卡片外壳的标题槽、预约/预览模板自己的标题、热门页的 20px 标题。
         /// </summary>
+        /// <summary>
+        /// 评审 8d496eb:旧接口那条普通 Other 分支原来只给 DetailByIdCommand,而 CanOpenOriginal 认的是 WebCommand,
+        /// 于是这类卡片没有可用的"打开原文"。三条退化成 Other 的路径都必须带网页命令。
+        /// </summary>
+        private static void UnsupportedCardsAlwaysCarryTheWebCommand()
+        {
+            var source = ProductSource("src/BiliLite.UWP/Modules/User/DynamicVM.cs");
+            Check(CountOf(source, "WebCommand = WebCommand") >= 3,
+                "every unsupported-card branch carries the web command");
+            Check(!source.Contains("DetailByIdCommand = DetailByIdCommand\r\n                    };")
+                  && !source.Contains("DetailByIdCommand = DetailByIdCommand\n                    };"),
+                "no unsupported-card branch stops at the native detail command alone");
+
+            // 直播侧:解析失败要直接返回,不能落到读 data.message 的 else 分支
+            var live = ProductSource("src/BiliLite.UWP/Modules/Detail/LiveRoomVM.cs");
+            Check(CountOf(live, "if (!HasParsedData(") >= 6,
+                "the live steps bail out when the response did not parse");
+            Check(!live.Contains("HasParsedData(data, \"anchor\") && data.success"),
+                "the anchor step no longer falls through to the error branch on a null model");
+        }
         private static void LongTitlesCarryATooltip()
         {
             var shell = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicItemControl.xaml");

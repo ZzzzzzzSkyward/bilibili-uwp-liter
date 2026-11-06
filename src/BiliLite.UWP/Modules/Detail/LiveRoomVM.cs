@@ -737,7 +737,11 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<JObject>();
-                    if (HasParsedData(data, "superchat") && data.success)
+                    if (!HasParsedData(data, "superchat"))
+                    {
+                        return;
+                    }
+                    if (data.success)
                     {
                         SuperChats.Clear();
                         var ls = JsonConvert.DeserializeObject<List<LiveRoomSuperChatModel>>(data.data?["list"]?.ToString() ?? "[]");
@@ -809,7 +813,11 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<LiveWalletInfo>();
-                    if (HasParsedData(data, "wallet") && data.success)
+                    if (!HasParsedData(data, "wallet"))
+                    {
+                        return;
+                    }
+                    if (data.success)
                     {
                         WalletInfo = data.data;
                     }
@@ -845,7 +853,11 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<JObject>();
-                    if (HasParsedData(data, "bag-gifts") && data.success)
+                    if (!HasParsedData(data, "bag-gifts"))
+                    {
+                        return;
+                    }
+                    if (data.success)
                     {
                         var list = JsonConvert.DeserializeObject<List<LiveGiftItem>>(data.data?["list"]?.ToString() ?? "[]");
 
@@ -853,7 +865,11 @@ namespace BiliLite.Modules
                         if (bag_result.status)
                         {
                             var bag_data = await bag_result.GetData<JObject>();
-                            if (HasParsedData(bag_data, "bag-list") && bag_data.success)
+                            if (!HasParsedData(bag_data, "bag-list"))
+                            {
+                                return;
+                            }
+                            if (bag_data.success)
                             {
                                 BagGifts.Clear();
                                 var ls = JsonConvert.DeserializeObject<List<LiveBagGiftItem>>(bag_data.data["list"]?.ToString()??"[]");
@@ -905,7 +921,11 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<LiveAnchorProfile>();
-                    if (HasParsedData(data, "anchor") && data.success)
+                    if (!HasParsedData(data, "anchor"))
+                    {
+                        return;
+                    }
+                    if (data.success)
                     {
                         Profile = data.data;
                         Attention = Profile.relation_status >1;
@@ -938,7 +958,11 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<JObject>();
-                    if (HasParsedData(data, "gift-config") && data.success)
+                    if (!HasParsedData(data, "gift-config"))
+                    {
+                        return;
+                    }
+                    if (data.success)
                     {
                         var list = JsonConvert.DeserializeObject<List<LiveGiftItem>>(data.data?["list"]?.ToString() ?? "[]");
                         if (_allGifts == null || _allGifts.Count == 0) { _allGifts = list; }

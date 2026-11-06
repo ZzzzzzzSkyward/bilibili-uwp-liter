@@ -1955,13 +1955,16 @@ namespace BiliLite.Modules.User
                 };
                 if (data.Type == DynamicDisplayType.Other)
                 {
+                    // 旧接口里不认识的类型同样只能去网页看：打开原文走 WebCommand + DynamicUrl，
+                    // 原生详情页对不认识的类型只会再显示一张占位卡（评审 8d496eb）
                     return new DynamicItemDisplayModel()
                     {
                         Type = DynamicDisplayType.Other,
                         IntType = 999,
                         DynamicID = item.desc.dynamic_id,
                         ContentStr = "",
-                        DetailByIdCommand = DetailByIdCommand
+                        DetailByIdCommand = DetailByIdCommand,
+                        WebCommand = WebCommand
                     };
                 }
                 data.OneRowInfo = DynamicParse.ParseOneRowInfo(data.Type, card);
