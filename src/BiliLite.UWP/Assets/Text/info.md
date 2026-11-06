@@ -4,11 +4,11 @@
 
 ## 源码
 
-[https://github.com/ZzzzzzzSkyward/biliuwp-liter](https://github.com/ZzzzzzzSkyward/biliuwp-liter)
+[https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter)
 
 ## 发布页
 
-安装包从 [Releases](https://github.com/ZzzzzzzSkyward/biliuwp-liter/releases) 获取。开发构建与已发布版本不是一回事，以发布页上的说明为准。
+安装包从 [Releases](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/releases) 获取。开发构建与已发布版本不是一回事，以发布页上的说明为准。
 
 ## 致谢
 
