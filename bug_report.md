@@ -230,3 +230,53 @@ web 与 gRPC 两个映射器都往 `major.live` 填了房间号、封面、标�
 
 处理：纵向节奏改成 8 + 4 + 2 + 2 + 8 = 24 —— 卡片内边距 `16,8`、卡片外边距 `12,0,12,4`、列表项 margin `4,2`、
 区块间距 8；横向数值、800 的阅读列宽和列表 `Padding="4"` 不变，窄窗口的 `ApplyWidthState` 与文件头的令牌表同步。
+
+## BR-53 — 打开任意直播间都报 Object reference not set to an instance（维护者 2026-11-06）
+
+维护者：打开任意直播都会出现 `Object reference not set to an instance`。报告没有任何附加条件——不是某个房间、
+某个分区或某个入口，所以按“直播间打开路径上的无条件步骤”处理，而不是按数据差异处理。
+
+现象文字有两处来源，都只说了一半：
+
+- `Modules/Detail/LiveRoomVM.cs:642-648` 的 `LoadLiveRoomDetail` 用 `catch (Exception ex)` 把整段加载包住，最后
+  `Utils.ShowMessageToast(ex.Message)` 只弹 `ex.Message`；英文区域下这正是
+  `Object reference not set to an instance of an object.`，堆栈不进提示，只进日志（`HandelError`）。
+- `App.xaml.cs:158-168` 的异步异常通道会弹「程序出现一个错误，已记录」并把 `e.Exception.ToString()` 作为第二行，
+  那里会带 `System.NullReferenceException`。报告里没有这句前缀，更接近第一种。
+
+因此目前能确定的是：`NullReferenceException` 发生在 `LoadLiveRoomDetail` 的
+`await` 链里，或紧随其后的 `OnNavigatedTo` 标题段。
+
+已核对的无条件步骤（都在 `LoadLiveRoomDetail` 成功分支里，任何房间都会走）：
+
+- `RoomID/Online/Liveing/LiveInfo` 来自 `data.data.room_info`，缺字段会先在取值处炸，但接口成功时才走；
+- `LoadAnchorProfile()`、`GetRoomGiftList()`、`LoadBag()`、`LoadWalletInfo()`、`GetTitles()`、`EntryRoom()`、
+  `ReceiveMessage(room_id)` 是 `Liveing` 之外的固定步骤，其中只要有一个读了空模型就会落到同一个 toast；
+- `OnNavigatedTo` 的标题段（`Pages/LiveDetailPage.xaml.cs:455-479`）已有 try/catch，弹出的是
+  「直播间标题获取失败」，与报告文字不符，但同一处的 `liveRoomVM.LiveInfo.anchor_info.base_info.uname`
+  没有 `?.` 保护，若 `LiveInfo` 为空会先抛再被这条 catch 接住。
+
+未处理：先定位，不改代码。下一步需要维护者提供 `%LOCALAPPDATA%` 下应用日志里同一时间段的
+「程序运行出现错误」/`HandelError` 记录（带 `System.NullReferenceException` 与堆栈），才能把范围从
+“整段加载”缩到具体一步；没有堆栈就改代码只能靠猜。
+
+## BR-54 — 播放器浮层的胶囊太宽，内容块相对背景偏低（维护者 2026-11-06，带截图）
+
+维护者：进度浮层（`00:00:43` + 时钟图标）的胶囊左右各挂了一大截背景，宽度需要收窄到截图红框；另外
+「图标和文本都需要移动，图标和文本已经对齐，但和背景不对齐」——即两块彼此的墨迹已在一条线上，
+偏低的是整块内容相对胶囊背景。
+
+这与 BR-43 第二轮的前提不同：那一轮把两块的行框钉成同一高度后，偏差出现在两块之间；这一轮两块之间没有问题，
+所以不能再用文字单独位移去补，否则会把已经对齐的两块重新拆开。
+
+处理：
+
+- 横向内边距 `BasePaddingX` 16 → 6。胶囊宽度只由内容 + 横向内边距决定，纵向 `BasePaddingY`（8）与
+  `ToastRoot.MinHeight`（内容 22 + 上下 16 = 38）都没动，所以只是收窄，没有压扁。
+- 新增 `BaseContentOpticalOffset = -1`，通过 `StackPanel` 上的 `ContentOffset` 平移整块内容（图标 + 文字一起），
+  随同一个 `scale` 缩放；`BaseIconOpticalOffset` 仍为 0，两块之间的对齐规则不变。
+- `plan/tests/toastalign` 从 36 项扩到 41 项：两个位移载体必须分别存在且各只有一个来源、内容常量必须为负、
+  横向内边距必须小于纵向，且内边距仍左右/上下对称、仍随 scale 缩放。六项新断言的其中四项在改动前的源码上直接
+  失败（`FAIL —— 6 / 41`），说明它们钉的是这次的行为而不是复述现状。
+
+设备上若仍差一点：宽度只改 `BasePaddingX`，整块上下只改 `BaseContentOpticalOffset`，不要动行框。

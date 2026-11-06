@@ -173,3 +173,21 @@ Every row below is 默认通过 per the maintainer's instruction; the text says 
 | Account switch retires the old record | `b9fe695` | same setup, but reach B through a switch that commits: A's pending record must be gone, and a failed B login must leave it in place |
 | Dynamics vertical rhythm | `81705a3` | two consecutive cards are about 24px apart instead of 48; the first card is not clipped against the tab bar, and the reading column and horizontal padding look unchanged |
 | Top-nav selection line | `81705a3` | the line under the selected top tab (推荐/热门/番剧…) spans the tab width, sits at the same height, and the other visual states (hover, press, overflow) still look right |
+
+## Shipped 2026-11-05 — settings gating, card title/repost/window (1.0.9.42)
+
+`BiliLite.Packages_1.0.9.42_x64.msix` exists in `Z:\BiliLite.Packages_1.0.9.42_x64_Test` (2026-11-05 00:22).
+No probe run is recorded for this build, and none of the rows below has been on a device yet.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Codec hints follow the format | `7e628c3` | 设置 → 播放: the HEVC 扩展 note appears only when DASH / HEVC (or M4S / HEVC) is the selected format and the AV1 note only for AV1; switching to H.264/Auto leaves no orphaned note or gap |
+| CDN list collapses with replacement | `7e628c3` | with 视频 CDN →「CDN 替换」set to 关闭, the CDN 节点 list and 测试延迟 are not shown at all; turning replacement back on restores the saved node as selected |
+| Sampling switch keeps its saved value | `7e628c3` | with 「记录 API 响应结构」off, 「记录正文样本」is visibly disabled and its help line says to enable the former first; toggle the sample switch on, turn capture off, reboot the app: the sample switch is still disabled, and turning capture back on shows the value that was saved — opening the page alone must not rewrite it |
+| Pivot re-entry keeps inputs | `7e628c3` | type in a rule/keyword box, switch to another 设置 tab and back: the text is refilled from storage and adding one rule does not add it twice |
+| Local help matches the tabs | `7e628c3` | open 设置 → 帮助: the text names only the current tabs and controls, no removed 实时日志 / 编辑 API 参数 / 语言 dropdown |
+| One card title | `65fd423` | a video/OPUS card whose preview already prints a title shows it once, not twice; a repost's origin keeps its own title |
+| Repost depth | `65fd423` | a three-level repost chain shows the outer card, one inset original and a 查看原动态 row (which opens the right dynamic); a missing original shows no empty frame and keeps the reposter's prose |
+| Preview box reserved | `65fd423` | a long feed post with a video/live preview does not jump or reflow when the cover finishes loading, and the 长图/自然比例 single image keeps its shape |
+| Article feed and dedupe | `65fd423` | the 专栏 tab loads and pages like 全部/投稿视频; paging or refreshing never shows the same dynamic twice |
+| Ten-page window | `65fd423` | scroll past ten response pages of 动态: a 「更早的 N 页已移出」 banner with 重新加载 appears under the tabs, reloading it brings those cards back without duplicating the rows already on screen, the scroll anchor does not jump on expand/collapse, and jumping to an old card from the banner lands on the right one |

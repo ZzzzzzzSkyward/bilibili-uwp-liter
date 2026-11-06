@@ -25,8 +25,20 @@ Newest first; every one of these is device-accepted per the policy above, except
 device-confirmed, while P4 step 1, BR-45 and the second BR-43 attempt are compiled and probe-covered only — their
 device rows are still open in `plan/VALIDATION.md`. The 2026-11-02 entries are compiled
 (`-Fast`, 0 errors, package 1.0.9.35), probe-covered and covered by one unified run of all 35 probe batches
-(`TOTAL_FAILURES=0`), but none of them has been on a device.
+(`TOTAL_FAILURES=0`), but none of them has been on a device. The 2026-11-05 entries (`7e628c3`, `65fd423`) are
+compiled into `BiliLite.Packages_1.0.9.42_x64.msix` (package directory dated 2026-11-05 00:22); their device rows
+are the new section in `plan/VALIDATION.md` and have not been run, and no probe run is recorded for them.
 
+- **Feed window and repost bound:** `65fd423` — cards get one shell title slot fed by `major.opus.title` (web and both
+  gRPC opus summary sources), so a preview that prints its own title stays single; originals stop at two card-data
+  levels with the deeper ancestor collapsed into one 查看原动态 row carrying its dynamic id, and an origin block with
+  no card draws no empty frame; previews reserve a 16:9 or natural box before the image loads; the article feed
+  parses through the shared web page parser; every publish point dedupes by dynamic id; the list keeps a ten-page
+  rolling window with anchor protection and reload checkpoints.
+- **Settings gating:** `7e628c3` — the video-format hints render only for HEVC/AV1, the CDN node list and latency test
+  collapse while replacement is off, the sample switch disables itself without rewriting the saved value, re-entering
+  a pivot refills the page from storage behind a guard instead of re-subscribing every `Loaded` handler, and the
+  local `Assets/Text/help.md` is rewritten against the current tabs and controls.
 - **Review finding — a login no longer inherits the previous account's token:** `14ac4c3` — `RefreshTokenPolicy`
   decides the owner mismatch before the response-authoritative branch, `PersistCredentials` deletes the previous
   generation's `ac_time_value` when the uid changes, `ReadToken(sessionOwnerId)` refuses a contradictory record,
@@ -184,14 +196,17 @@ device rows are still open in `plan/VALIDATION.md`. The 2026-11-02 entries are c
 | 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; its device rows are 默认通过（维护者 2026-11-04） |
 | 6 | Auth refresh defects — `plan/REFRESH_PLAN.md` | **shipped**: D2 `6ee8a81`, D4/D5 `75fe40f`, review findings `b4cd995` (rejected cookie write) and `14ac4c3` (a login is a new credential session), D3 `bba2df4` (explicit, resumable web-refresh transaction with a persisted pending record) and D1 `000bfd0` (cookie-to-app bridge plus one recovery decision table for Home and startup), logout cleanup `e0e454e`, and the review finding `ff26db7` (an account switch drops the saved web token even when the record carries no owner). Device rows are in `VALIDATION.md` and are 默认通过. P4 step 4 (account) stays held back by the maintainer |
 | 7 | Hot tab card overflow — `plan/HOT_CARD_PLAN.md` | **shipped** in `3ec04aa` (BR-47). Layout-visible; its device rows are 默认通过（维护者 2026-11-04）, including the 150%/200% text-size case |
-| 8 | Settings reorganization — `plan/SETTINGS_PLAN.md` | slices 1–4 shipped: `ed5fe9f` (tabs, moves, grouping, labels), `c4c683f` (dead controls, the `api_web_secondary` save bug), `b9b58c5` (rule merge snapshots, local add buttons, live-input reset, regex validation, mouse-back switch) and `0f11162` (realtime log and the API parameter editor deleted, 打开日志目录 added). Remaining: the HEVC/AV1 hint, the capture-sample dependency on 响应结构, CDN collapse, the cross-page input reset, and the `Assets/Text/help.md` rewrite |
-| 9 | Dynamics card contract — `plan/CARD_PLAN.md` | slices 1–4 and three review findings shipped: `2d1c4b3` (data), `48c5df5` (layout), `2072d64` (body mounting on reuse + the reservation lottery line), `1b51db4` (§4 renderer: paragraph flow, emoji variants, measured expansion, empty-body collapse) and `0b8ad87` (§3: explicit wire kinds, URL normalisation, attachments, comment-target pairs). Remaining: the Opus title slot, the preview ratio box (§6), bounded repost depth, the memory page window (§9), the article branch through the shared page parser and ID dedupe on append, plus the layout items, whose device rows are 默认通过 |
+| 8 | Settings reorganization — `plan/SETTINGS_PLAN.md` | **shipped through 1.0.9.42**: slices 1–4 (`ed5fe9f`, `c4c683f`, `b9b58c5`, `0f11162`) plus `7e628c3` (HEVC/AV1 hints only for those formats, the CDN list and latency test collapse while replacement is off, the sample switch disables itself without rewriting the saved value, re-entering a pivot refills from storage instead of re-subscribing every `Loaded`, and `Assets/Text/help.md` rewritten against the current tabs). Device rows are the 1.0.9.42 section in `VALIDATION.md` and have not been run |
+| 9 | Dynamics card contract — `plan/CARD_PLAN.md` | slices 1–4 and three review findings shipped: `2d1c4b3` (data), `48c5df5` (layout), `2072d64` (body mounting on reuse + the reservation lottery line), `1b51db4` (§4 renderer: paragraph flow, emoji variants, measured expansion, empty-body collapse) and `0b8ad87` (§3: explicit wire kinds, URL normalisation, attachments, comment-target pairs); `65fd423` closed the Opus title slot, the preview ratio box (§6), the two-level repost bound, the article branch through the shared page parser, ID dedupe on append and the ten-page feed window (§9). Remaining: the §6 multi-image grid (2/3/4/5–9/>9, `+N` over the ninth, width-derived tiles, the four-image save flyout) and §7 attachment rendering — attachments are still data-only per the `0b8ad87` device row — plus the §9 measurement, which needs a device journey |
 
 **Order** (dispatcher, 2026-11-02, updated after the parallel wave): the engine-fallback disposal finding
 (`0b70113`) is closed; D2 and D4/D5 are in; the first slices of the Hot-card, settings and dynamics plans are in
 and were 默认通过. `plan/REFRESH_PLAN.md` is fully shipped (D1 `000bfd0`, D3 `bba2df4`, logout cleanup `e0e454e`), so the auth
-row has no code left, and its device rows are 默认通过. `plan/SETTINGS_PLAN.md` slice 3 (`b9b58c5`) and `plan/CARD_PLAN.md` §3/§4 (`1b51db4`, `0b8ad87`) are in and were 默认通过. Next, still file-disjoint: the rest of the settings behaviour dependencies with the `help.md` rewrite, and
-`plan/CARD_PLAN.md` §6 preview ratio box with bounded repost depth.
+row has no code left, and its device rows are 默认通过. `plan/SETTINGS_PLAN.md` slice 3 (`b9b58c5`) and `plan/CARD_PLAN.md` §3/§4 (`1b51db4`, `0b8ad87`) are in and were 默认通过. `7e628c3` then closed the settings row and
+`65fd423` closed all but two card items. Next: `plan/CARD_PLAN.md` §6 multi-image grid and §7 attachment rendering
+(in flight, one owner because both touch `DynamicTemplate.xaml`), then the §9 measurement with BR-21. BR-53
+(any live room shows a `NullReferenceException` message) is recorded in `bug_report.md` and waits for a log line
+before any live-room code changes.
 Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back.
 
 ## 1. Player session ownership
