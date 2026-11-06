@@ -1,3 +1,4 @@
+﻿using System;
 using Windows.Foundation;
 using Windows.UI.Xaml.Controls;
 
@@ -14,7 +15,9 @@ namespace BiliLite.Controls.Dynamic
         {
             var layout = DynamicImageGridLayout.Create(Children.Count, availableSize.Width);
             var cell = new Size(layout.TileSize, layout.TileSize);
-            for (var i = 0; i < Children.Count; i++)
+            // 只为预算了空间的瓦片测量:超过 MaxVisibleTiles 的子项没有行列预算,量了也摆不下
+            var count = Math.Min(Children.Count, layout.VisibleCount);
+            for (var i = 0; i < count; i++)
             {
                 Children[i].Measure(cell);
             }
@@ -24,7 +27,8 @@ namespace BiliLite.Controls.Dynamic
         protected override Size ArrangeOverride(Size finalSize)
         {
             var layout = DynamicImageGridLayout.Create(Children.Count, finalSize.Width);
-            for (var i = 0; i < Children.Count; i++)
+            var count = Math.Min(Children.Count, layout.VisibleCount);
+            for (var i = 0; i < count; i++)
             {
                 var row = i / layout.Columns;
                 var column = i % layout.Columns;

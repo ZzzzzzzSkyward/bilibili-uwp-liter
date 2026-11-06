@@ -48,6 +48,7 @@ namespace G5Probe
             CommentTargetsArePaired();
             CardProjectionCarriesTheContract();
             LiveSummaryReadsThePayload();
+            ImageGridBindsOnlyVisibleTiles();
             LiveSummarySkipsEmptyParts();
             LiveSummaryNeverInventsARoom();
             LiveSummaryBadgesOnlyConfirmedEnds();
@@ -498,6 +499,23 @@ namespace G5Probe
         /// 直播卡只有一行：房间号、目的地、地区·人气、结束角标。旧的占位符（【直播有待修复】）
         /// 之所以存在，是因为页面拿不到这些字段；现在它们全由 LiveCardSummary 从载荷里读出来。
         /// </summary>
+        /// <summary>
+        /// 复核意见:12 张图时网格按九张算高度,却把 12 张都交给面板,后三张摆到网格高度之外压住下面的内容。
+        /// 现在只绑定前 VisibleCount 张,面板也只为预算了空间的子项测量与摆位。
+        /// </summary>
+        private static void ImageGridBindsOnlyVisibleTiles()
+        {
+            var grid = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicImageGrid.xaml.cs");
+            Check(grid.Contains("tiles.GetRange(0, layout.VisibleCount)"),
+                "the image grid hands only the visible tiles to the panel");
+            Check(grid.Contains("var lastVisible = layout.VisibleCount - 1"),
+                "the +N badge goes on the last visible tile, computed from the full count");
+
+            var panel = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicImageGridPanel.cs");
+            Check(CountOf(panel, "Math.Min(Children.Count, layout.VisibleCount)") == 2,
+                "the panel measures and arranges only the tiles it budgets space for");
+        }
+
         private static void LiveSummaryReadsThePayload()
         {
             var summary = LiveCardSummary.From(new DynamicCardModel2024_live

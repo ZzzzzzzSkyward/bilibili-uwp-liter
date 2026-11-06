@@ -1,4 +1,4 @@
-using BiliLite.Converters;
+﻿using BiliLite.Converters;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -74,8 +74,11 @@ namespace BiliLite.Controls.Dynamic
                 }
             }
 
+            // 布局按原始张数算(+N 与列数都要它),但只把真正画出来的前九张交给面板:
+            // DynamicImageGridPanel 按 Children.Count 摆位,多绑的瓦片会落到网格报告的高度之外,
+            // 压到下面的内容上。收起的那几张仍留在 ImagesInfo 里,查看器照样能翻到。
             var layout = DynamicImageGridLayout.Create(tiles.Count, ResolveWidth());
-            var lastVisible = Math.Min(tiles.Count, DynamicImageGridLayout.MaxVisibleTiles) - 1;
+            var lastVisible = layout.VisibleCount - 1;
             if (lastVisible >= 0 && layout.HasOverflow)
             {
                 tiles[lastVisible].OverflowText = "+" + layout.OverflowCount;
@@ -83,7 +86,9 @@ namespace BiliLite.Controls.Dynamic
                 tiles[lastVisible].AccessibilityName = "还有 " + layout.OverflowCount + " 张图片,查看第 " + (lastVisible + 1) + " 张";
             }
 
-            _tiles = tiles;
+            _tiles = layout.VisibleCount > 0 && layout.VisibleCount < tiles.Count
+                ? tiles.GetRange(0, layout.VisibleCount)
+                : tiles;
             Tiles.ItemsSource = _tiles;
             ApplyTileSize(layout);
         }
