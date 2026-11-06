@@ -132,6 +132,63 @@ namespace BiliLite.Controls.Dynamic
         }
     }
 
+    /// <summary>
+    /// 附件行的一项（CARD_PLAN §7）：短标题 + 一行说明 + 一个只在真有目的地时才出现的打开动作。
+    /// 没有目的地时只剩可读文本，不做成按了没反应的按钮；未知种类原样保留来源类型名当标签，
+    /// 没有类型名时退回"附件"，不替来源编造种类，也不生成投票/预约的写入动作。
+    /// </summary>
+    public sealed class DynamicAttachmentDisplay
+    {
+        public DynamicAttachmentDisplay(DynamicAttachmentSummary summary, ICommand openCommand)
+        {
+            if (summary == null)
+            {
+                summary = new DynamicAttachmentSummary();
+            }
+            KindLabel = KindLabelOf(summary.Kind, summary.RawType);
+            Title = Clean(summary.Title);
+            Desc = Clean(summary.Desc);
+            Destination = summary.Destination ?? "";
+            OpenCommand = openCommand;
+            TitleVisibility = string.IsNullOrEmpty(Title) ? Visibility.Collapsed : Visibility.Visible;
+            DescVisibility = string.IsNullOrEmpty(Desc) ? Visibility.Collapsed : Visibility.Visible;
+            // 有目的地也得有真正可用的路由才画按钮:没有命令时宁可不显示,也不留一个点了没反应的"打开"
+            OpenVisibility = summary.HasDestination && openCommand != null ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        /// <summary>种类标签：已知种类给中文短标签，未知种类原样用来源的类型名。</summary>
+        public string KindLabel { get; private set; }
+        public string Title { get; private set; }
+        public Visibility TitleVisibility { get; private set; }
+        /// <summary>可读的一行说明；空串表示这行不占位。</summary>
+        public string Desc { get; private set; }
+        public Visibility DescVisibility { get; private set; }
+        public string Destination { get; private set; }
+        /// <summary>打开动作走既有 LaunchUrlCommand（MessageCenter.HandleUrl），不另建一套导航。</summary>
+        public ICommand OpenCommand { get; private set; }
+        public Visibility OpenVisibility { get; private set; }
+
+        private static string KindLabelOf(DynamicAttachmentKind kind, string rawType)
+        {
+            switch (kind)
+            {
+                case DynamicAttachmentKind.Reserve:
+                    return "预约";
+                case DynamicAttachmentKind.Vote:
+                    return "投票";
+                case DynamicAttachmentKind.CommonLink:
+                    return "链接";
+                default:
+                    return string.IsNullOrEmpty(rawType) ? "附件" : rawType;
+            }
+        }
+
+        private static string Clean(string value)
+        {
+            return value == null ? "" : value.Trim();
+        }
+    }
+
     /// <summary>一项互动是否可用；未知与"明确禁止"是两件事。</summary>
     public enum DynamicActionAvailability
     {
@@ -283,7 +340,53 @@ namespace BiliLite.Controls.Dynamic
             get { return DynamicCommentTarget.From(ReplyID, ReplyType); }
         }
         /// <summary>正文之外的附件摘要（预约/投票/通用链接/未知类型），与主载荷分开。</summary>
-        public List<DynamicAttachmentSummary> Attachments { get; set; }
+        public List<DynamicAttachmentSummary> Attachments
+        {
+            get { return _attachments; }
+            set
+            {
+                _attachments = value;
+                _attachmentItems = null;
+            }
+        }
+        private List<DynamicAttachmentSummary> _attachments;
+        private List<DynamicAttachmentDisplay> _attachmentItems;
+        /// <summary>
+        /// 附件行的显示项。首次读取时按摘要和当前 LaunchUrlCommand 生成一次；Attachments 变了就重算，
+        /// 打开动作仍走既有的 LaunchUrlCommand（MessageCenter.HandleUrl），没有第二套导航。
+        /// </summary>
+        public List<DynamicAttachmentDisplay> AttachmentItems
+        {
+            get
+            {
+                if (_attachmentItems == null)
+                {
+                    _attachmentItems = BuildAttachmentItems();
+                }
+                return _attachmentItems;
+            }
+        }
+        /// <summary>附件区是否占位：列表为空时整块收起，不画空行。</summary>
+        public Visibility AttachmentRowVisibility
+        {
+            get { return AttachmentItems.Count > 0 ? Visibility.Visible : Visibility.Collapsed; }
+        }
+        private List<DynamicAttachmentDisplay> BuildAttachmentItems()
+        {
+            var result = new List<DynamicAttachmentDisplay>();
+            if (_attachments == null)
+            {
+                return result;
+            }
+            foreach (var summary in _attachments)
+            {
+                if (summary != null)
+                {
+                    result.Add(new DynamicAttachmentDisplay(summary, LaunchUrlCommand));
+                }
+            }
+            return result;
+        }
         /// <summary>互动可用性；服务端报禁止时不能当成会成功的动作。</summary>
         public DynamicCardActions Actions { get; set; }
         /// <summary>评论不可用时页面不该假装点了会成功；不知道不等于禁止。</summary>

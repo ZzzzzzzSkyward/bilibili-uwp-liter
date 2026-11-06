@@ -27,7 +27,7 @@
 
     未按计划取值的两处,原因记录在此,不改动数据契约:
       · 卡片表面没有可用的不透明主题色(App.xaml 的 CardColor/TopPaneBackground 都是全透明),故不加背景也不加边框,卡片之间只靠 CardRoot.Margin 的下 4(加 ListViewItem 上下 2 与卡片上下内边距 8)留白分隔。
-      · 图片九宫格仍是固定 100/120 像素瓦片(模板内无法按卡片宽度算列宽,需代码或新文件),不在本次改动内。
+      · 图片网格的列数与瓦片边长不再写在模板里:规则在 Controls/Dynamic/DynamicImageGridLayout,模板只给图片列表(DynamicTemplate.xaml 的 PhotoGrid)。
   -->
   <UserControl.Resources>
     <converters:CountOrTextConvert x:Name="countConvert"/>
@@ -41,6 +41,7 @@
     <Border x:Name="CardSurface" CornerRadius="8" Padding="16,8">
       <Grid>
         <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
           <RowDefinition Height="Auto"/>
@@ -161,8 +162,35 @@
         <ContentPresenter x:Name="BodyPresenter" Grid.Row="2" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
         <!--媒体/预告/附件/转发原动态:占满整宽-->
         <ContentPresenter x:Name="CardContentPresenter" Grid.Row="3" Margin="0,8,0,0" HorizontalAlignment="Stretch" Content="{x:Bind Path=CardContent,Mode=OneWay}"/>
+        <!--
+          附件(CARD_PLAN §7):放在共享外壳里,所以每个模板都拿到同一行。
+          每项只有短标签/标题、一行说明和"真有目的地才出现"的打开动作;没有目的地时就是可读文本。
+          列表为空(或附件摘要没被填)时整块 Collapsed,Auto 行随之收成 0,不画空框、不替正文占位。
+        -->
+        <ItemsControl x:Name="AttachmentRow" Grid.Row="4" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.AttachmentRowVisibility,Mode=OneWay}" ItemsSource="{x:Bind Path=Model.AttachmentItems,Mode=OneWay}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Background="{ThemeResource TopPaneBackground}" CornerRadius="4" Padding="8,6" Margin="0,0,0,4">
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                  </Grid.ColumnDefinitions>
+                  <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Horizontal">
+                      <TextBlock Text="{Binding KindLabel}" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                      <TextBlock Text="{Binding Title}" Visibility="{Binding TitleVisibility}" FontSize="13" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    <TextBlock Text="{Binding Desc}" Visibility="{Binding DescVisibility}" Margin="0,2,0,0" FontSize="12" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+                  </StackPanel>
+                  <HyperlinkButton Grid.Column="1" Margin="8,0,0,0" Padding="8,0" MinWidth="40" MinHeight="24" VerticalAlignment="Center" FontSize="12" Content="打开" Visibility="{Binding OpenVisibility}" Command="{Binding OpenCommand}" CommandParameter="{Binding Destination}" AutomationProperties.Name="打开附件"/>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
         <!--互动栏:三等分列,按钮点击区 ≥40×40-->
-        <Grid x:Name="ActionRow" Grid.Row="4" Margin="0,8,0,0" Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}">
+        <Grid x:Name="ActionRow" Grid.Row="5" Margin="0,8,0,0" Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"/>
             <ColumnDefinition Width="*"/>

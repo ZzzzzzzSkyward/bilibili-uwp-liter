@@ -472,7 +472,8 @@ namespace G5Probe
             Check(DynamicCommentTarget.From("66001", 8) == null,
                 "a rid genre number is not accepted as a comment type");
             var legacySource = ProductSource("src/BiliLite.UWP/Modules/User/DynamicVM.cs");
-            Check(!SliceMethod(legacySource, "private DynamicItemDisplayModel ConvertToDisplay(DynamicCardModel item)")
+            // 签名尾巴按前缀匹配:65fd423 之后多了一个 int depth 参数,断言要测的是这个方法体本身
+            Check(!SliceMethod(legacySource, "private DynamicItemDisplayModel ConvertToDisplay(DynamicCardModel item")
                     .Contains("ReplyType = item.desc.r_type"),
                 "the legacy adapter does not pass its rid genre off as a comment type");
 

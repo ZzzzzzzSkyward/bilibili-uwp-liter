@@ -285,6 +285,11 @@
     <Compile Include="Controls\Dynamic\DynamicPreviewRow.xaml.cs">
       <DependentUpon>DynamicPreviewRow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\Dynamic\DynamicImageGrid.xaml.cs">
+      <DependentUpon>DynamicImageGrid.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\Dynamic\DynamicImageGridLayout.cs" />
+    <Compile Include="Controls\Dynamic\DynamicImageGridPanel.cs" />
     <Compile Include="Controls\Dynamic\RichTextControl.xaml.cs">
       <DependentUpon>RichTextControl.xaml</DependentUpon>
     </Compile>
@@ -757,6 +762,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\Dynamic\DynamicPreviewRow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\Dynamic\DynamicImageGrid.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
