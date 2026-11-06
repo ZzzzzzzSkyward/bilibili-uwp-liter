@@ -67,6 +67,7 @@ namespace G3Probe
             FeedWindowKeepsTheAnchorPage();
             FeedWindowDropsRepeatedIds();
             FeedWindowReleasesEvictedIdsForReload();
+            FeedWindowReloadsTheNearestEvictedPageFirst();
             ArticleFeedUsesTheSharedWebParser();
             PlainTextKeepsEveryParagraph();
             BodyIsNotTruncatedAtOneThousandCharacters();
@@ -1937,7 +1938,7 @@ namespace G3Probe
             Check(reloaded.Count == 5, "feed window: evicted ids are accepted again on reload (dedupe set released)");
 
             DynamicFeedPageCheckpoint taken;
-            Check(window.TryTakeCheckpoint(out taken), "feed window: the earliest checkpoint is handed out for reload");
+            Check(window.TryTakeCheckpoint(out taken), "feed window: the single evicted page's checkpoint is handed out for reload");
             Check(taken.PageNumber == 1 && taken.CursorBeforePage == cursors[0],
                 "feed window: reload replays the page with the cursor recorded before it");
 
@@ -1945,6 +1946,53 @@ namespace G3Probe
             Check(window.PageCount == 11 && window.Pages[0].PageNumber == 1,
                 "feed window: the reloaded page is reinserted at the front and not evicted at once");
             Check(!window.HasEvictedPages, "feed window: taking the only checkpoint clears the hint");
+        }
+
+        /// <summary>
+        /// 复核意见:一次点两次「重新加载」时,两次都取最早的检查点,再都插到最前面,
+        /// 列表顺序会变成 2,1,3… ;补页要从紧邻窗口的那一页开始往前。
+        /// </summary>
+        private static void FeedWindowReloadsTheNearestEvictedPageFirst()
+        {
+            var window = new DynamicFeedWindow();
+            var cursors = new List<string>();
+            var evicted = AddFeedPages(window, 12, 5, cursors);
+            Check(evicted != null && evicted.Count == 1 && evicted[0].PageNumber == 2,
+                "feed window: reaching 12 pages evicts page 2 on this append (page 1 went on the previous one)");
+            Check(window.EvictedPageCount == 2, "feed window: both evicted pages stay on the hint");
+
+            DynamicFeedPageCheckpoint peeked;
+            Check(window.TryPeekCheckpoint(out peeked) && peeked.PageNumber == 2,
+                "feed window: the checkpoint offered for reload is the page next to the window, not the oldest one");
+            Check(window.EvictedPageCount == 2, "feed window: peeking does not consume the checkpoint (a failed reload keeps it)");
+
+            var page2 = window.AcceptItems(FeedPageItems(2, 5));
+            DynamicFeedPageCheckpoint taken;
+            var tookSecond = window.TryTakeCheckpoint(out taken);
+            Check(page2.Count == 5 && tookSecond && taken.PageNumber == 2,
+                "feed window: taking after a peek hands out the same page 2 checkpoint");
+            window.ReinsertPage(taken.PageNumber, page2, taken.CursorBeforePage, "cursor-2");
+            Check(window.Pages[0].PageNumber == 2, "feed window: page 2 comes back at the front");
+
+            var page1 = window.AcceptItems(FeedPageItems(1, 5));
+            var tookFirst = window.TryTakeCheckpoint(out taken);
+            Check(tookFirst && taken.PageNumber == 1 && taken.CursorBeforePage == cursors[0],
+                "feed window: the second reload replays page 1 with its own cursor");
+            window.ReinsertPage(taken.PageNumber, page1, taken.CursorBeforePage, "cursor-1");
+
+            var order = new List<int>();
+            foreach (var page in window.Pages)
+            {
+                order.Add(page.PageNumber);
+            }
+            var expected = "";
+            for (var i = 1; i <= 12; i++)
+            {
+                expected += (i == 1 ? "" : ",") + i;
+            }
+            Check(string.Join(",", order) == expected,
+                "feed window: reloading twice restores 1,2,3,… (actual " + string.Join(",", order) + ")");
+            Check(!window.HasEvictedPages, "feed window: both checkpoints are consumed once their pages are back");
         }
 
         private static void ArticleFeedUsesTheSharedWebParser()

@@ -203,7 +203,11 @@ namespace BiliLite.Services
             });
         }
 
-        /// <summary>看最早一个检查点但不取走：请求失败时检查点要留着。</summary>
+        /// <summary>
+        /// 看最近淘汰的一页但不取走：请求失败时检查点要留着。
+        /// 淘汰是从窗口顶部逐页往前的，所以最近淘汰的那一页正是紧邻当前窗口的那一页；
+        /// 先补它，补回来的页再插到最前面，列表顺序才与原始分页一致（1,2,3,…）。
+        /// </summary>
         public bool TryPeekCheckpoint(out DynamicFeedPageCheckpoint checkpoint)
         {
             if (_evicted.Count == 0)
@@ -211,11 +215,11 @@ namespace BiliLite.Services
                 checkpoint = null;
                 return false;
             }
-            checkpoint = _evicted[0];
+            checkpoint = _evicted[_evicted.Count - 1];
             return true;
         }
 
-        /// <summary>取走最早一个检查点：这一页已经重新进窗口。</summary>
+        /// <summary>取走最近淘汰的一个检查点：这一页已经重新进窗口。</summary>
         public bool TryTakeCheckpoint(out DynamicFeedPageCheckpoint checkpoint)
         {
             if (_evicted.Count == 0)
@@ -223,8 +227,8 @@ namespace BiliLite.Services
                 checkpoint = null;
                 return false;
             }
-            checkpoint = _evicted[0];
-            _evicted.RemoveAt(0);
+            checkpoint = _evicted[_evicted.Count - 1];
+            _evicted.RemoveAt(_evicted.Count - 1);
             return true;
         }
 
