@@ -8,12 +8,13 @@ using System.Xml.Linq;
 namespace ToastAlignProbe
 {
     /// <summary>
-    /// BR-43 探针:直接读真实的 Controls/PlayerToast.xaml 和 PlayerToast.xaml.cs,钉住浮层里
+    /// BR-43/BR-54 探针:直接读真实的 Controls/PlayerToast.xaml 和 PlayerToast.xaml.cs,钉住浮层里
     /// "图标与文字的墨迹中心对齐"这件事的实现形状。两轮真机都栽在同一类假设上:
     ///   第一轮:两种字体行框落点不同,内容整体偏移;
     ///   第二轮:把两块的行框钉成同一高度(BlockLineHeight + LineHeight),盒子等高但墨迹不等高,文字更偏下。
-    /// 所以这里不允许任何 LineStackingStrategy/LineHeight,两块必须 TextLineBounds="Tight",
-    /// 垂直方向只留一个命名的光学常量,并且胶囊外框靠 ToastRoot.MinHeight 维持旧尺寸。
+    /// 所以这里不允许任何 LineStackingStrategy/LineHeight,两块必须 TextLineBounds="Tight"。
+    /// 第三轮(BR-54)真机上两块彼此已对齐,剩下的偏差是"整块内容相对胶囊背景偏低",并且胶囊左右留白太宽,
+    /// 因此垂直方向有两个载体:图标自己的光学常量(现为 0)和整块内容的位移;横向内边距必须明显小于纵向。
     /// </summary>
     internal static class Program
     {
@@ -24,7 +25,11 @@ namespace ToastAlignProbe
         private const string TextName = "TxtToast";
         private const string RootName = "ToastRoot";
         private const string OffsetName = "IconOffset";
+        private const string ContentOffsetName = "ContentOffset";
         private const string OpticalConstant = "BaseIconOpticalOffset";
+        private const string ContentOffsetConstant = "BaseContentOpticalOffset";
+        private const string PaddingXConstant = "BasePaddingX";
+        private const string PaddingYConstant = "BasePaddingY";
         private const string ContentConstant = "BaseContentHeight";
 
         private static int Main(string[] args)
@@ -118,10 +123,12 @@ namespace ToastAlignProbe
             Check(parts != null && parts[0] == parts[2] && parts[1] == parts[3],
                 RootName + ".Padding 初值上下对称(实际 \"" + padding + "\")");
 
-            // 垂直方向唯一允许的位移载体就是载着 IconOffset 的那个 TranslateTransform
+            // 垂直方向只剩两个载体:图标自己的光学位移,以及整块内容相对背景的位移
             var transforms = doc.Descendants().Where(e => e.Name.LocalName == "TranslateTransform").ToList();
-            Check(transforms.Count == 1 && NameOf(transforms[0]) == OffsetName,
-                "XAML 里只有一个 TranslateTransform,且名为 " + OffsetName + "(实际 " + transforms.Count + " 个)");
+            var names = transforms.Select(NameOf).OrderBy(n => n, StringComparer.Ordinal).ToList();
+            Check(transforms.Count == 2 && names.SequenceEqual(new[] { ContentOffsetName, OffsetName }),
+                "XAML 里只有两个 TranslateTransform,名称为 " + OffsetName + " 与 " + ContentOffsetName
+                + "(实际 " + transforms.Count + " 个: " + string.Join(", ", names) + ")");
             var origins = doc.Descendants().Where(e => e.Attribute("RenderTransformOrigin") != null).ToList();
             Check(origins.Count == 0, "XAML 里没有 RenderTransformOrigin 参与对齐(实际 " + origins.Count + " 处)");
         }
@@ -152,14 +159,18 @@ namespace ToastAlignProbe
                 .Where(c => c.Name.IndexOf("Offset", StringComparison.Ordinal) >= 0
                             || c.Name.IndexOf("Optical", StringComparison.Ordinal) >= 0)
                 .ToList();
-            Check(optical.Count == 1,
-                "只有一个光学/位移常量(实际 " + optical.Count + " 个"
+            Check(optical.Count == 2,
+                "只有两个光学/位移常量(实际 " + optical.Count + " 个"
                 + (optical.Count == 0 ? "" : ": " + string.Join(", ", optical.Select(c => c.Name))) + ")");
-            Check(optical.Count == 1 && optical[0].Name == OpticalConstant,
-                "那个常量叫 " + OpticalConstant);
-            // 视觉残差归零:紧墨迹对齐之后,除非真机上还看得出 FA 的不对称,不该再预先补偿
-            Check(optical.Count == 1 && optical[0].Value == "0",
-                OpticalConstant + " 为 0(实际 \"" + (optical.Count == 1 ? optical[0].Value : "?") + "\")");
+            Check(optical.Count == 2 && optical.Any(c => c.Name == OpticalConstant) && optical.Any(c => c.Name == ContentOffsetConstant),
+                "两个常量分别是 " + OpticalConstant + " 与 " + ContentOffsetConstant);
+            // 图标与文字之间的残差仍为零:第三轮报告的是整块内容与背景的关系,不是两块之间
+            Check(optical.Any(c => c.Name == OpticalConstant && c.Value == "0"),
+                OpticalConstant + " 为 0(实际 \"" + (optical.FirstOrDefault(c => c.Name == OpticalConstant)?.Value ?? "?") + "\")");
+            // 内容块必须往上挪,常量必须是负值;真机复核的是这一个数
+            Check(optical.Any(c => c.Name == ContentOffsetConstant && c.Value.StartsWith("-", StringComparison.Ordinal)),
+                ContentOffsetConstant + " 是负值(实际 \""
+                + (optical.FirstOrDefault(c => c.Name == ContentOffsetConstant)?.Value ?? "?") + "\")");
         }
 
         private static void CheckIconVerticalMove(string code)
@@ -172,6 +183,15 @@ namespace ToastAlignProbe
             Check(writes.Count == 1 && writes[0] == "hasText?BaseIconOpticalOffset*_scale:0",
                 "IconOffset.Y 的唯一来源是 " + OpticalConstant + "×scale,且无文本时为 0(实际 \""
                 + (writes.Count == 1 ? writes[0] : "?") + "\")");
+
+            // 整块内容相对背景的位移:不受有无文本影响,永远乘同一个 scale
+            var contentWrites = Regex.Matches(code, @"ContentOffset\.Y\s*=\s*([^;]+);")
+                .Cast<Match>()
+                .Select(m => Normalize(m.Groups[1].Value))
+                .ToList();
+            Check(contentWrites.Count == 1 && contentWrites[0] == ContentOffsetConstant + "*_scale",
+                "ContentOffset.Y 的唯一来源是 " + ContentOffsetConstant + "×scale(实际 \""
+                + (contentWrites.Count == 1 ? contentWrites[0] : "?") + "\")");
 
             // 不许再有第二条垂直通路:TranslateY / 图标上下 Margin / 上下不对称的内边距
             Check(!Regex.IsMatch(code, @"\bTranslateY\b"), "代码里没有 TranslateY");
@@ -201,6 +221,17 @@ namespace ToastAlignProbe
                 "ToastRoot.Padding 上下相等 —— 不靠不对称内边距顶位置(" + (args.Length == 4 ? args[1] + " vs " + args[3] : "?") + ")");
             Check(args.Length == 4 && args[0].EndsWith("*scale", StringComparison.Ordinal) && args[0] != args[1],
                 "ToastRoot.Padding 随 scale 缩放(横向 " + (args.Length == 4 ? args[0] : "?") + ")");
+            Check(args.Length == 4 && args[0] == PaddingXConstant + "*scale" && args[1] == PaddingYConstant + "*scale",
+                "内边距分别来自 " + PaddingXConstant + " 与 " + PaddingYConstant + "(实际 \""
+                + (args.Length == 4 ? args[0] + " / " + args[1] : "?") + "\")");
+
+            // BR-54:胶囊左右留白太宽,横向必须明显小于纵向才算收窄
+            var paddingConstants = Regex.Matches(code, @"private\s+const\s+double\s+(" + PaddingXConstant + "|" + PaddingYConstant + @")\s*=\s*([0-9.]+);")
+                .Cast<Match>()
+                .ToDictionary(m => m.Groups[1].Value, m => double.Parse(m.Groups[2].Value, System.Globalization.CultureInfo.InvariantCulture));
+            Check(paddingConstants.Count == 2, "两个内边距常量都声明为数字(实际 " + paddingConstants.Count + " 个)");
+            Check(paddingConstants.Count == 2 && paddingConstants[PaddingXConstant] < paddingConstants[PaddingYConstant],
+                "横向内边距小于纵向(" + (paddingConstants.Count == 2 ? paddingConstants[PaddingXConstant] + " < " + paddingConstants[PaddingYConstant] : "?") + ")");
 
             var fontSizes = new[] { TextName, IconName }
                 .Select(name => Regex.Matches(code, Regex.Escape(name) + @"\.FontSize\s*=\s*([^;]+);")

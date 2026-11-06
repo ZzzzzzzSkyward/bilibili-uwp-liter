@@ -15,7 +15,8 @@ namespace BiliLite.Controls
     public sealed partial class PlayerToast : UserControl
     {
         private const double BaseFontSize = 20;
-        private const double BasePaddingX = 16;
+        //横向只留一点呼吸:胶囊要贴着内容收窄,而不是左右各挂一大截背景
+        private const double BasePaddingX = 6;
         private const double BasePaddingY = 8;
         private const double BaseIconSpacing = 10;
         private const double BaseCornerRadius = 8;
@@ -23,6 +24,8 @@ namespace BiliLite.Controls
         private const double BaseContentHeight = BaseFontSize * 1.1;
         //唯一的视觉补偿常量：FA 字形的墨迹与度量框本身不对称。它只补图标、不改测量尺寸和图标右侧间距；设备上若仍差一点就只改它
         private const double BaseIconOpticalOffset = 0;
+        //图标与文字彼此已对齐，但整块内容相对胶囊背景偏低；这条只移动内容块，不参与两个块之间的对齐
+        private const double BaseContentOpticalOffset = -1;
 
         //淡出期间元素必须留在布局里，否则居中的父级会重新居中，正在变透明的浮层会跟着往右挪
         private static readonly TimeSpan ShowFadeDuration = TimeSpan.FromMilliseconds(150);
@@ -86,6 +89,8 @@ namespace BiliLite.Controls
             IconGlyph.FontSize = BaseFontSize * scale;
             ApplyIconLayout();
             ToastRoot.Padding = new Thickness(BasePaddingX * scale, BasePaddingY * scale, BasePaddingX * scale, BasePaddingY * scale);
+            //整块内容相对背景的微调随同一个 scale 缩放，否则小窗和大窗的观感会分叉
+            ContentOffset.Y = BaseContentOpticalOffset * _scale;
             //墨迹收紧后内容变矮，用最小高度把胶囊的外框恢复成旧尺寸（内容 22 + 上下内边距），随同一个 scale 缩放
             ToastRoot.MinHeight = (BaseContentHeight + BasePaddingY * 2) * scale;
             ToastRoot.CornerRadius = new CornerRadius(BaseCornerRadius * scale);
