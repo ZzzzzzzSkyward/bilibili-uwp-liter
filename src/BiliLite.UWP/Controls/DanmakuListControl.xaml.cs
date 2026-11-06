@@ -26,10 +26,37 @@ namespace BiliLite.Controls
         {
             this.InitializeComponent();
             TxtTitle.Text = TitleForMode(mode);
+            // 判定结果出来之前不占位置:没有弹幕的集不该留一个点开是空的入口
+            ApplyShowButton(false);
         }
 
         /// <summary>The player control whose loaded pool and play item this list reads.</summary>
         public PlayerControl Owner { get; set; }
+
+        /// <summary>
+        /// 本集有没有弹幕可以列。由播放器判定后设置,控件自己不去猜;
+        /// 默认藏,第一次判定之前保持藏。
+        /// </summary>
+        public bool ShowButton
+        {
+            get { return (bool)GetValue(ShowButtonProperty); }
+            set { SetValue(ShowButtonProperty, value); }
+        }
+
+        public static readonly DependencyProperty ShowButtonProperty =
+            DependencyProperty.Register("ShowButton", typeof(bool), typeof(DanmakuListControl),
+                new PropertyMetadata(false, OnShowButtonChanged));
+
+        private static void OnShowButtonChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
+        {
+            ((DanmakuListControl)sender).ApplyShowButton(e.NewValue is bool show && show);
+        }
+
+        private void ApplyShowButton(bool show)
+        {
+            if (BtnOpenDanmakuList == null) return;
+            BtnOpenDanmakuList.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+        }
 
         private static string TitleForMode(DanmakuListMode listMode)
         {

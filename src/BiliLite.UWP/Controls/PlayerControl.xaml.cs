@@ -303,6 +303,11 @@ namespace BiliLite.Controls
         private IDictionary<int, List<NSDanmaku.Model.DanmakuModel>> danmakuPool = new Dictionary<int, List<NSDanmaku.Model.DanmakuModel>>();
 
         private List<int> danmakuLoadedSegment;
+        /// <summary>当前这一集的弹幕已经跑过一次加载(成功或失败都算),第一次结果出来之前浮层保持藏。</summary>
+        private bool _danmakuLoadSettled;
+
+        /// <summary>池子里的弹幕属于哪一集:换集之后旧内容还不代表新内容,判定要先归零。</summary>
+        private PlayInfo _danmakuPoolItem;
         private SettingVM settingVM;
         private DisplayRequest dispRequest;
         private SystemMediaTransportControls _systemMediaTransportControls;
@@ -1044,18 +1049,7 @@ namespace BiliLite.Controls
 
             PlayInfos = playInfos;
             EpisodeList.ItemsSource = PlayInfos;
-            if (PlayInfos.Count > 1)
-            {
-                ShowPlaylistButton = true;
-            }
-            else if (PlayInfos.Count == 1 && PlayInfos[0].is_interaction)
-            {
-                ShowPlaylistButton = true;
-            }
-            else
-            {
-                ShowPlaylistButton = false;
-            }
+            ApplySurfaceVisibility();
             // 当前分P和开播位置只由 SetPlayItem 认:打开视频这一拍不是用户选集,
             // 续播策略跟着页面传进来,不让选集列表的事件再猜一次
             _ = SetPlayItem(index, start);
@@ -1551,6 +1545,8 @@ namespace BiliLite.Controls
             CurrentPlayItem = selectedPlayItem;
             _subtitleTicket = _subtitleLoadGuard.Begin(selectedPlayItem);
             _danmakuLoadGuard.Begin(selectedPlayItem);
+            // 换集:上一集的弹幕结果不再代表这一集,浮层重新判定
+            _danmakuLoadSettled = false;
             _enabledManifestDanmaku.Clear();
             if (selectedPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
             {
@@ -1558,11 +1554,6 @@ namespace BiliLite.Controls
                     if (track.Track.EnabledByDefault) _enabledManifestDanmaku.Add(track.Track.Id);
             }
             UpdateLocalTrackSelectors();
-            if (CurrentPlayItem.is_interaction)
-            {
-                ShowPlaylistButton = false;
-                ShowPlayNodeButton = true;
-            }
             //设置标题
             TopTitle.Text = CurrentPlayItem.title;
             if (_systemMediaTransportControls != null)
@@ -1997,7 +1988,6 @@ namespace BiliLite.Controls
         {
             var localInfo = CurrentPlayItem?.LocalPlayInfo;
             var isManifest = localInfo?.IsManifestPlayback == true;
-            LocalTracksPivot.Visibility = isManifest ? Visibility.Visible : Visibility.Collapsed;
             _updatingLocalTrackSelectors = true;
             try
             {
@@ -2013,6 +2003,8 @@ namespace BiliLite.Controls
             {
                 _updatingLocalTrackSelectors = false;
             }
+            // 轨道列表就是判定要的信号:本地轨道全没有,本地轨道标签一起收掉
+            ApplySurfaceVisibility();
         }
 
         private async void LocalVideoTrackSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -2179,6 +2171,8 @@ namespace BiliLite.Controls
         {
             var loadingItem = CurrentPlayItem;
             var loadingTicket = 0;
+            // 这次加载的结果还没出来:在它回来之前,入口不能凭上一集的结论站着
+            _danmakuLoadSettled = false;
             try
             {
                 if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
@@ -2186,6 +2180,7 @@ namespace BiliLite.Controls
                     var item = CurrentPlayItem;
                     var generation = loadingTicket = _danmakuLoadGuard.Begin(item);
                     danmakuPool = new Dictionary<int, List<DanmakuModel>>();
+                    _danmakuPoolItem = item;
                     DanmuControl.ClearAll();
                     TxtDanmuCount.Text = "0";
                     var tracks = (CurrentPlayItem.LocalPlayInfo.DanmakuFiles ?? new List<LocalMediaPlaybackTrack>())
@@ -2195,6 +2190,7 @@ namespace BiliLite.Controls
                         list =>
                         {
                             danmakuPool = list.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
+                            _danmakuPoolItem = item;
                             danmakuLoadedSegment = new List<int>();
                             TxtDanmuCount.Text = list.Count.ToString();
                         });
@@ -2217,6 +2213,7 @@ namespace BiliLite.Controls
                     }, danmuList =>
                     {
                         danmakuPool = danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
+                        _danmakuPoolItem = loadingItem;
                         TxtDanmuCount.Text = danmuList.Count.ToString();
                     });
                 }
@@ -2249,6 +2246,15 @@ namespace BiliLite.Controls
                     (loadingItem?.LocalPlayInfo?.IsManifestPlayback != true || _danmakuLoadGuard.IsCurrent(loadingTicket, loadingItem)))
                     Utils.ShowMessageToast("弹幕加载失败");
             }
+            finally
+            {
+                // 这一集的第一份结果出来了(有弹幕、空弹幕、读失败都算):弹幕列表入口跟着改
+                if (ReferenceEquals(loadingItem, CurrentPlayItem))
+                {
+                    _danmakuLoadSettled = true;
+                    ApplySurfaceVisibility();
+                }
+            }
         }
 
         private async void ManifestDanmakuTrack_Click(object sender, RoutedEventArgs e)
@@ -2278,6 +2284,9 @@ namespace BiliLite.Controls
 
         private async Task LoadDanmaku(int segmentIndex)
         {
+            // 这次加载认的是哪一集:在 try 外面就定下来,finally 里的重判要用它(当前可能已经换集)
+            var requestedItem = CurrentPlayItem;
+            var requestedGeneration = _playItemGeneration;
             try
             {
                 if (CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true) return;
@@ -2286,10 +2295,10 @@ namespace BiliLite.Controls
                 if (segmentIndex <= 1)
                 {
                     danmakuPool.Clear();
+                    // 池子从这一刻起只装这一集的弹幕,判定才敢按条数说话
+                    _danmakuPoolItem = requestedItem;
                     segmentIndex = 1;
                 }
-                var requestedItem = CurrentPlayItem;
-                var requestedGeneration = _playItemGeneration;
                 var danmuList = await playerHelper.GetDanmaku(requestedItem.cid, segmentIndex);
                 if (!ReferenceEquals(requestedItem, CurrentPlayItem) || requestedGeneration != _playItemGeneration) return;
                 foreach (var item in danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList()))
@@ -2320,6 +2329,8 @@ namespace BiliLite.Controls
             finally
             {
                 loadingDanmaku = false;
+                // 分段补弹幕也会把空列表补成有内容,顺带重判一次
+                if (ReferenceEquals(requestedItem, CurrentPlayItem)) ApplySurfaceVisibility();
             }
         }
 
@@ -2538,7 +2549,6 @@ namespace BiliLite.Controls
                     interactionVideoVM = new InteractionVideoVM(CurrentPlayItem.avid, player_info.interaction.graph_version);
                     NodeList.DataContext = interactionVideoVM;
                     InteractionChoices.DataContext = interactionVideoVM;
-                    ShowPlaylistButton = false;
                     await interactionVideoVM.GetNodes();
                     TopTitle.Text = interactionVideoVM.Select.title;
                 }
@@ -2799,6 +2809,93 @@ namespace BiliLite.Controls
 
         public static readonly DependencyProperty ShowPlayNodeButtonProperty =
             DependencyProperty.Register("ShowPlayNodeButton", typeof(bool), typeof(PlayerControl), new PropertyMetadata(false));
+
+        /// <summary>本集有没有弹幕可以列:没有就不显示弹幕列表按钮。</summary>
+        public bool ShowDanmakuListButton
+        {
+            get { return (bool)GetValue(ShowDanmakuListButtonProperty); }
+            set { SetValue(ShowDanmakuListButtonProperty, value); }
+        }
+
+        public static readonly DependencyProperty ShowDanmakuListButtonProperty =
+            DependencyProperty.Register("ShowDanmakuListButton", typeof(bool), typeof(PlayerControl), new PropertyMetadata(false));
+
+        /// <summary>
+        /// 把播放器已经有的信号凑成一份判定输入:选集数量、互动、本地轨道、已加载弹幕、本地弹幕文件。
+        /// 判定在 PlayerSurfaceVisibility 里,这里只取数,不自己算去留。
+        /// </summary>
+        private PlayerSurfaceSignals BuildSurfaceSignals()
+        {
+            var item = CurrentPlayItem;
+            var localInfo = item?.LocalPlayInfo;
+            return new PlayerSurfaceSignals
+            {
+                PlaylistCount = PlayInfos?.Count ?? 0,
+                IsInteraction = item?.is_interaction == true,
+                VideoTrackCount = localInfo?.VideoTracks?.Count ?? 0,
+                AudioTrackCount = localInfo?.AudioTracks?.Count ?? 0,
+                SubtitleTrackCount = localInfo?.SubtitleTracks?.Count ?? 0,
+                DanmakuTrackCount = localInfo?.DanmakuTracks?.Count ?? 0,
+                // 池子里的东西还得是这一集的:换集之后旧内容不算新内容的弹幕
+                DanmakuRowCount = ReferenceEquals(item, _danmakuPoolItem) ? CountLoadedDanmaku() : 0,
+                // 下载自带的弹幕文件,或者合集里开着的弹幕轨道:都算本地有一个弹幕来源
+                HasLocalDanmakuFile = !string.IsNullOrEmpty(localInfo?.DanmakuPath) || _enabledManifestDanmaku.Count > 0,
+                DanmakuLoadSettled = _danmakuLoadSettled,
+            };
+        }
+
+        /// <summary>已经挂在播放器里的弹幕条数,按槽位数出来,不复制。</summary>
+        private int CountLoadedDanmaku()
+        {
+            var pool = danmakuPool;
+            if (pool == null) return 0;
+            var count = 0;
+            foreach (var group in pool)
+            {
+                if (group.Value != null) count += group.Value.Count;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// 判定一次,落到控件上:两个按钮走原来的依赖属性,弹幕列表走它自己的依赖属性,
+        /// 两个标签走可见性。藏掉就收位置,不留洞。
+        /// </summary>
+        private void ApplySurfaceVisibility()
+        {
+            var verdict = PlayerSurfaceVisibility.Decide(BuildSurfaceSignals());
+            if (ShowPlaylistButton != verdict.ShowPlaylistButton) ShowPlaylistButton = verdict.ShowPlaylistButton;
+            if (ShowPlayNodeButton != verdict.ShowPlayNodeButton) ShowPlayNodeButton = verdict.ShowPlayNodeButton;
+            if (ShowDanmakuListButton != verdict.ShowDanmakuList) ShowDanmakuListButton = verdict.ShowDanmakuList;
+            if (EpisodePivot != null)
+            {
+                EpisodePivot.Visibility = verdict.ShowEpisodePivot ? Visibility.Visible : Visibility.Collapsed;
+            }
+            if (LocalTracksPivot != null)
+            {
+                LocalTracksPivot.Visibility = verdict.ShowLocalTracksPivot ? Visibility.Visible : Visibility.Collapsed;
+            }
+            EnsurePivotSelectionVisible();
+        }
+
+        /// <summary>刚被藏起来的标签不能还停在选中位置:退回弹幕标签,再不行退到第一个看得见的。</summary>
+        private void EnsurePivotSelectionVisible()
+        {
+            if (SettingPivot == null || SettingPivot.Items.Count == 0) return;
+            var visible = new List<bool>(SettingPivot.Items.Count);
+            foreach (var entry in SettingPivot.Items)
+            {
+                visible.Add(entry is PivotItem pivotItem && pivotItem.Visibility == Visibility.Visible);
+            }
+            var fallback = DanmakuPivot == null
+                ? PlayerSurfaceVisibility.NoVisiblePivot
+                : SettingPivot.Items.IndexOf(DanmakuPivot);
+            var target = PlayerSurfaceVisibility.ResolvePivotSelection(visible, SettingPivot.SelectedIndex, fallback);
+            if (target >= 0 && target != SettingPivot.SelectedIndex)
+            {
+                SettingPivot.SelectedIndex = target;
+            }
+        }
 
         private bool _buffering = false;
 
@@ -3158,7 +3255,8 @@ namespace BiliLite.Controls
         {
             NodeList.Visibility = Visibility.Collapsed;
             EpisodeList.Visibility = Visibility.Visible;
-            SettingPivot.SelectedIndex = 0;
+            // 标签按名字找:前两个标签会在没有内容时收掉,写死的下标迟早对不上
+            SettingPivot.SelectedIndex = SettingPivot.Items.IndexOf(EpisodePivot);
             SplitView.IsPaneOpen = true;
         }
 
@@ -3166,13 +3264,18 @@ namespace BiliLite.Controls
         {
             NodeList.Visibility = Visibility.Visible;
             EpisodeList.Visibility = Visibility.Collapsed;
-            SettingPivot.SelectedIndex = 0;
+            SettingPivot.SelectedIndex = SettingPivot.Items.IndexOf(EpisodePivot);
             SplitView.IsPaneOpen = true;
         }
 
         private void TopBtnMore_Click(object sender, RoutedEventArgs e)
         {
-            SettingPivot.SelectedIndex = CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true ? 1 : 3;
+            var target = CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true ? LocalTracksPivot : PlaybackPivot;
+            var index = SettingPivot.Items.IndexOf(target);
+            if (index >= 0 && target.Visibility == Visibility.Visible)
+            {
+                SettingPivot.SelectedIndex = index;
+            }
             SplitView.IsPaneOpen = true;
         }
 
@@ -3709,6 +3812,7 @@ namespace BiliLite.Controls
                 danmuTimer = null;
             }
             danmakuPool = null;
+            _danmakuPoolItem = null;
             if (dispRequest != null)
             {
                 dispRequest = null;
@@ -3925,16 +4029,27 @@ namespace BiliLite.Controls
             {
                 if (item?.LocalPlayInfo != null) item.LocalPlayInfo.DanmakuPath = file.Path;
                 danmakuPool = new Dictionary<int, List<DanmakuModel>>();
+                _danmakuPoolItem = item;
                 DanmuControl.ClearAll();
                 await _danmakuLoadGuard.LoadAndApplyAsync(ticket, item, () => danmakuParse.ParseBiliBili(file), danmuList =>
                 {
                     danmakuPool = danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
+                    _danmakuPoolItem = item;
                     TxtDanmuCount.Text = danmuList.Count.ToString();
                 });
             }
             catch (Exception ex)
             {
                 if (_danmakuLoadGuard.IsCurrent(ticket, item)) Utils.ShowMessageToast("加载弹幕文件失败", $"{ex.Message}");
+            }
+            finally
+            {
+                // 导入的弹幕进了同一个池子:有内容就立刻给入口
+                if (ReferenceEquals(item, CurrentPlayItem))
+                {
+                    _danmakuLoadSettled = true;
+                    ApplySurfaceVisibility();
+                }
             }
         }
 

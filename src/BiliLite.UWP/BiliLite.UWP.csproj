@@ -213,6 +213,7 @@
     <Compile Include="Parsing\Video\FavoriteCreatedListMapper.cs" />
 
     <Compile Include="Services\PlayerSessionState.cs" />
+    <Compile Include="Services\PlayerSurfaceVisibility.cs" />
     <Compile Include="Services\CookieAppKeyBridge.cs" />
     <Compile Include="Services\CredentialCommitter.cs" />
     <Compile Include="Services\RefreshCredentialPolicy.cs" />

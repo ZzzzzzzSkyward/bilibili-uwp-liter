@@ -201,7 +201,7 @@
       <SplitView.Pane>
         <Grid x:Name="Setting">
           <Pivot x:Name="SettingPivot" RequestedTheme="Dark">
-            <PivotItem>
+            <PivotItem x:Name="EpisodePivot">
               <PivotItem.Header>
                 <TextBlock Foreground="White" FontSize="18">选集</TextBlock>
               </PivotItem.Header>
@@ -245,7 +245,7 @@
                 </StackPanel>
               </ScrollViewer>
             </PivotItem>
-            <PivotItem Foreground="White">
+            <PivotItem x:Name="DanmakuPivot" Foreground="White">
               <PivotItem.Header>
                 <TextBlock Foreground="White" FontSize="18">弹幕</TextBlock>
               </PivotItem.Header>
@@ -365,7 +365,7 @@
                 </StackPanel>
               </ScrollViewer>
             </PivotItem>
-            <PivotItem Foreground="White">
+            <PivotItem x:Name="PlaybackPivot" Foreground="White">
               <PivotItem.Header>
                 <TextBlock Foreground="White" FontSize="18">播放</TextBlock>
               </PivotItem.Header>
@@ -641,7 +641,7 @@
                   <Button x:Name="TopBtnCloseDanmaku" Click="TopBtnCloseDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay}" BorderThickness="0" Background="Transparent" Padding="0" Width="48" Height="48">
                     <Image Width="28" Height="28" Source="/Assets/Icon/icon_danmaku_close.png"/>
                   </Button>
-                  <local:DanmakuListControl x:Name="DanmakuListButton"/>
+                  <local:DanmakuListControl x:Name="DanmakuListButton" ShowButton="{x:Bind ShowDanmakuListButton,Mode=OneWay}"/>
                   <!--<HyperlinkButton x:Name="BottomBtnSendDanmaku" Foreground="White" Padding="8" Width="48" Height="48">
                                     <fa:FontAwesome Icon="Solid_Comments" FontSize="20"></fa:FontAwesome>
                                 </HyperlinkButton>-->
