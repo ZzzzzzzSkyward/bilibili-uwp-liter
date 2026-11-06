@@ -219,17 +219,53 @@ namespace BiliLite.Services
             return true;
         }
 
-        /// <summary>取走最近淘汰的一个检查点：这一页已经重新进窗口。</summary>
-        public bool TryTakeCheckpoint(out DynamicFeedPageCheckpoint checkpoint)
+        /// <summary>
+        /// 取走指定的检查点。请求期间 LoadMore 还可能淘汰别的页，所以只有"取走的正是请求的那一页"
+        /// 才能把回来的内容按它的页号和游标放回窗口；对不上就什么都不动，两个检查点都留着。
+        /// </summary>
+        public bool TryTakeCheckpoint(DynamicFeedPageCheckpoint expected)
         {
-            if (_evicted.Count == 0)
+            if (expected == null || _evicted.Count == 0)
             {
-                checkpoint = null;
                 return false;
             }
-            checkpoint = _evicted[_evicted.Count - 1];
+            var last = _evicted[_evicted.Count - 1];
+            if (last.PageNumber != expected.PageNumber || last.CursorBeforePage != expected.CursorBeforePage)
+            {
+                return false;
+            }
             _evicted.RemoveAt(_evicted.Count - 1);
             return true;
+        }
+
+        /// <summary>
+        /// 取走之后没成功（请求失败、换代、空页、回来的全是重复）：放回原来的位置。
+        /// 不能简单追加到末尾——那会让它变成"最近淘汰的一页"，抢在更新的页前面被重载。
+        /// 淘汰顺序是从窗口顶部逐页往前，所以列表按页号升序，按页号插回即可。
+        /// </summary>
+        public void ReturnCheckpoint(DynamicFeedPageCheckpoint checkpoint)
+        {
+            if (checkpoint == null)
+            {
+                return;
+            }
+            for (var i = 0; i < _evicted.Count; i++)
+            {
+                if (_evicted[i].PageNumber == checkpoint.PageNumber)
+                {
+                    return;
+                }
+            }
+            var index = _evicted.Count;
+            for (var i = 0; i < _evicted.Count; i++)
+            {
+                if (_evicted[i].PageNumber > checkpoint.PageNumber)
+                {
+                    index = i;
+                    break;
+                }
+            }
+            _evicted.Insert(index, checkpoint);
         }
 
         private DynamicFeedPageCheckpoint Evict(DynamicFeedWindowPage page)

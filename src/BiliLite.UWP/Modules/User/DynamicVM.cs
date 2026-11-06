@@ -1561,6 +1561,13 @@ namespace BiliLite.Modules.User
                 Utils.ShowMessageToast("这条动态流不支持重新加载更早的页");
                 return;
             }
+            // 先把检查点取走：请求期间 LoadMore 可能再淘汰一页，取走之后它就不会被换成别的一页。
+            // 取不回来（已被别的路径取走）就什么都不做。
+            var held = checkpoint;
+            if (!feedWindow.TryTakeCheckpoint(checkpoint))
+            {
+                return;
+            }
             reloadInFlight = true;
             var generation = requestGeneration;
             var requestDynamicType = DynamicType;
@@ -1573,6 +1580,7 @@ namespace BiliLite.Modules.User
                 if (!IsCurrentRequest(generation, requestDynamicType, requestItemType))
                 {
                     LogHelper.Log("User dynamic VM stage=reload-earlier discarded generation=" + generation, LogType.DEBUG);
+                    feedWindow.ReturnCheckpoint(held);
                     return;
                 }
                 if (page == null || page.Count == 0)
@@ -1580,13 +1588,15 @@ namespace BiliLite.Modules.User
                     LogHelper.Log("User dynamic VM stage=reload-earlier-empty page=" + checkpoint.PageNumber
                         + " generation=" + generation, LogType.INFO);
                     Utils.ShowMessageToast("更早的页没有可显示的动态");
+                    feedWindow.ReturnCheckpoint(held);
                     return;
                 }
                 //淘汰时这些 ID 已从去重集合释放，这里重新接受；插回窗口最前端且不参与本次淘汰
                 var survivors = feedWindow.AcceptItems(page);
-                DynamicFeedPageCheckpoint taken;
-                if (survivors.Count == 0 || !feedWindow.TryTakeCheckpoint(out taken))
+                if (survivors.Count == 0)
                 {
+                    // 整页都是重复内容：把它放回去，下次还能再试，不要让这一页静默消失
+                    feedWindow.ReturnCheckpoint(held);
                     return;
                 }
                 if (Items == null)
@@ -1597,15 +1607,16 @@ namespace BiliLite.Modules.User
                 {
                     Items.Insert(0, survivors[i]);
                 }
-                feedWindow.ReinsertPage(taken.PageNumber, survivors, taken.CursorBeforePage, taken.CursorAfterPage);
+                feedWindow.ReinsertPage(held.PageNumber, survivors, held.CursorBeforePage, held.CursorAfterPage);
                 RaiseFeedWindowChanged();
-                LogHelper.Log("User dynamic VM stage=reload-earlier-published page=" + taken.PageNumber
+                LogHelper.Log("User dynamic VM stage=reload-earlier-published page=" + held.PageNumber
                     + " count=" + survivors.Count + " generation=" + generation, LogType.INFO);
             }
             catch (Exception ex)
             {
                 LogHelper.Log("User dynamic VM stage=reload-earlier-failed page=" + checkpoint.PageNumber, LogType.ERROR, ex);
                 Utils.ShowMessageToast(DescribeFeedFailure("更早的页加载失败", ex.Message));
+                feedWindow.ReturnCheckpoint(held);
             }
             finally
             {
