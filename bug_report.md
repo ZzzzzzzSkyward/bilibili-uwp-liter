@@ -148,3 +148,23 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 `plan/tests/g5` 需要钉住：预约附件渲染成面板、投票/链接仍是行、按钮按载荷与路由显隐、图标走 `imageConvert2`；
 反向断言在改回旧映射时失败。
+
+## BR-57 — 预约文案要按【时间开播】【人数已预约】排，附件不要打印 wire 类型名（维护者 2026-11-07）
+
+维护者两条要求：
+
+1. 预约卡的说明行改成两个标签：`【11-13 20:00 开播】【175人已预约】`（标题行保持 `reserve.title` 不变）。
+   选中方案 A：标题不动；时间取 `desc1`（把「直播」改为「开播」），人数取 `reserve_total` / `desc2`
+   （「预约」改为「已预约」）；`desc3` 抽奖文案非空时追加第三个标签。
+2. 有的卡片会显示 `ADDITIONAL_TYPE_GOODS` 这一行原始类型名。选中方案 A：`GOODS` 显示「商品」、`UGC` 显示
+   「合集」、其它未知种类显示「附件」，任何用户可见文案都不再出现 wire 类型名；标题/说明/目的地全空的附件行
+   整行不渲染。
+
+源码：`DynamicAttachmentSummaries.From` 把 `desc1/desc2/desc3` 用 `JoinText` 拼成一句写进 `Desc`；
+`DynamicAttachmentDisplay.KindLabelOf` 对未知种类直接返回 `RawType`；`AppendUnsupported` 无条件加行。
+独立预约卡（`DynamicParse` 的 `Reserve` 分支）同样写 `reserve.desc`，两处要共用同一份文案规则。
+
+处理：新增 `Parsing/Dynamic/ReserveCardCopy.cs`（纯函数，输入 `reserve`，输出标签行），附件摘要与独立预约卡都用它；
+`KindLabelOf` 按上表映射，未知种类不再回退 `RawType`；`From` 末尾丢掉无标题、无说明、无目的地的 Unsupported 行。
+`plan/tests/g5` 钉住标签格式、时间/人数改写、desc3 追加、无结构化字段时的回退，以及 `KindLabel` 不含
+`ADDITIONAL_TYPE_`；旧断言 `Desc == "明天 20:00 1.2万人预约"` 同步改成新文案。
