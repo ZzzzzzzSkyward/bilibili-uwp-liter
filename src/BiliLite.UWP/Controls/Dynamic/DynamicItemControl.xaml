@@ -1,5 +1,5 @@
 ﻿<?xml version='1.0' encoding='UTF-8'?>
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls.Dynamic" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:BiliLite.Controls.Dynamic" xmlns:fa="using:FontAwesome5" xmlns:converters="using:BiliLite.Converters" x:Class="BiliLite.Controls.Dynamic.DynamicItemControl" mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls.Dynamic" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:BiliLite.Controls.Dynamic" xmlns:fa="using:FontAwesome5" xmlns:converters="using:BiliLite.Converters" xmlns:helpers="using:BiliLite.Helpers" x:Class="BiliLite.Controls.Dynamic.DynamicItemControl" mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400">
   <!--
     动态卡片排版令牌 —— 来源 CARD_PLAN.md §5(CARD_PLAN §5「Layout and typography tokens」「Responsive behavior」)。
     所有数字都是 UWP 有效像素的起始值,设备联调时按这张表改;窄态(<480)的值由
@@ -52,7 +52,7 @@
           <Border HorizontalAlignment="Left" Background="HotPink" CornerRadius="2" Padding="6,1">
             <TextBlock FontSize="12" Foreground="White" Text="预约"/>
           </Border>
-          <TextBlock Margin="0 8 0 0" Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" Visibility="{Binding TitleVisibility}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
+          <TextBlock Margin="0 8 0 0" Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" helpers:TapToolTip.Enabled="True" Visibility="{Binding TitleVisibility}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
           <TextBlock Margin="0 4 0 0" Text="{Binding Desc}" Visibility="{Binding DescVisibility}" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
           <HyperlinkButton Margin="0 8 0 0" Padding="0" HorizontalAlignment="Left" Visibility="{Binding ButtonVisibility}" Command="{Binding OpenCommand}" CommandParameter="{Binding Destination}">
             <StackPanel Orientation="Horizontal">
@@ -73,7 +73,7 @@
           <StackPanel Orientation="Vertical">
             <StackPanel Orientation="Horizontal">
               <TextBlock Text="{Binding KindLabel}" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-              <TextBlock Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" Visibility="{Binding TitleVisibility}" FontSize="13" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" helpers:TapToolTip.Enabled="True" Visibility="{Binding TitleVisibility}" FontSize="13" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
             </StackPanel>
             <TextBlock Text="{Binding Desc}" Visibility="{Binding DescVisibility}" Margin="0,2,0,0" FontSize="12" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
           </StackPanel>
@@ -204,7 +204,7 @@
           </Grid>
         </Grid>
         <!--标题槽(CARD_PLAN §5 渲染顺序 header → title → body):空标题时整行 Collapsed,不占位也不留 8px-->
-        <TextBlock x:Name="CardTitle" Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{x:Bind Path=Model.Title,Mode=OneWay}" Text="{x:Bind Path=Model.Title,Mode=OneWay}" Visibility="{x:Bind Path=Model.TitleVisibility,Mode=OneWay}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+        <TextBlock x:Name="CardTitle" Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{x:Bind Path=Model.Title,Mode=OneWay}" helpers:TapToolTip.Enabled="True" Text="{x:Bind Path=Model.Title,Mode=OneWay}" Visibility="{x:Bind Path=Model.TitleVisibility,Mode=OneWay}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
         <!--正文:模板自己渲染正文时(ContentPresenterVisibility=Collapsed)这里的 12px 间距不占位-->
         <ContentPresenter x:Name="BodyPresenter" Grid.Row="2" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
         <!--媒体/预告/附件/转发原动态:占满整宽-->

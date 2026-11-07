@@ -6,7 +6,7 @@ namespace BiliLite.Parsing.Dynamic
     /// <summary>
     /// 预约卡的说明行：来源把时间（desc1）、预约人数（desc2）、抽奖文案（desc3）分成三个槽位，
     /// 拼成一句"12-01 20:00 1.2万人预约"读不出哪段是哪段，也和按钮上的「预约」用词不一致。
-    /// 这里按槽位给标签：【时间 开播】【N人已预约】【抽奖文案】，标签之间不隔字符；
+    /// 这里按槽位给标签：时间 开播 / N人已预约 / 抽奖文案，标签之间用一个空格分隔，不加括号；
     /// 一段都取不到时退回来源给的整句（reserve.desc），不替来源编造文案。
     /// 纯函数：不读卡片其它字段，也不做 URL/命令判断。
     /// </summary>
@@ -92,7 +92,11 @@ namespace BiliLite.Parsing.Dynamic
             {
                 return;
             }
-            copy.Append('【').Append(text).Append('】');
+            if (copy.Length > 0)
+            {
+                copy.Append(' ');
+            }
+            copy.Append(text);
         }
 
         private static string Trimmed(string text)

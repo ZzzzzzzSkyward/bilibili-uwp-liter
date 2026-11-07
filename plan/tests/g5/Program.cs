@@ -442,8 +442,8 @@ namespace G5Probe
             Check(bothDisplay.Attachments[0].Kind == DynamicAttachmentKind.Reserve
                   && bothDisplay.Attachments[1].Kind == DynamicAttachmentKind.Vote,
                 "attachments keep the reserve-then-vote order");
-            Check(bothDisplay.Attachments[0].Desc == "【明天 20:00 开播】【1.2万人已预约】",
-                "the reservation description is tagged by slot, not joined into one sentence");
+            Check(bothDisplay.Attachments[0].Desc == "明天 20:00 开播 1.2万人已预约",
+                "the reservation description is tagged by slot, not joined into one sentence, and carries no brackets");
             Check(bothDisplay.Attachments[0].Id == "321", "the reservation keeps its object id");
 
             var unknownDisplay = new DynamicItemDisplayModel();
@@ -579,6 +579,58 @@ namespace G5Probe
             var hot = ProductSource("src/BiliLite.UWP/Pages/Home/HotPage.xaml");
             Check(CountOf(hot, "ToolTipService.ToolTip=\"{x:Bind title}\"") == 2,
                 "both hot-card variants carry a title tooltip");
+
+            // BR-58：ToolTipService 只认指针悬停，触摸/手柄点开的卡片看不到全文。
+            // 会截断的标题都挂上 TapToolTip：点击打开同一个 ToolTip，悬停路径保持不动。
+            const string tap = "helpers:TapToolTip.Enabled=\"True\"";
+            Check(shell.Contains("xmlns:helpers=\"using:BiliLite.Helpers\"")
+                  && templates.Contains("xmlns:helpers=\"using:BiliLite.Helpers\""),
+                "both dynamic XAML files declare the helpers namespace");
+            var panel = Slice(shell, "<DataTemplate x:Key=\"AttachmentPanelTemplate\">", "</DataTemplate>");
+            var row = Slice(shell, "<DataTemplate x:Key=\"AttachmentRowTemplate\">", "</DataTemplate>");
+            Check(panel.Contains(tap) && panel.Contains("ToolTipService.ToolTip=\"{Binding Title}\""),
+                "the attachment panel title opens its tooltip on tap and keeps the hover binding");
+            Check(row.Contains(tap) && row.Contains("ToolTipService.ToolTip=\"{Binding Title}\""),
+                "the attachment row title opens its tooltip on tap and keeps the hover binding");
+            var cardAtIndex = shell.IndexOf("x:Name=\"CardTitle\"", StringComparison.Ordinal);
+            var cardTitle = cardAtIndex < 0
+                ? ""
+                : shell.Substring(cardAtIndex, Math.Min(640, shell.Length - cardAtIndex));
+            Check(cardTitle.Contains(tap), "the card title slot opens its tooltip on tap");
+            Check(CountOf(shell, tap) == 3,
+                "exactly the three truncating titles in the card shell carry the tap behaviour");
+            Check(CountOf(templates, tap) == 2,
+                "both OneRowInfo titles open their tooltip on tap");
+            Check(!hot.Contains("TapToolTip"),
+                "the hot card keeps whole-card navigation instead of a tap tooltip");
+
+            var helper = ProductSource("src/BiliLite.UWP/Helpers/TapToolTip.cs");
+            Check(helper.Contains("EnabledProperty") && helper.Contains("typeof(bool)")
+                  && helper.Contains("DependencyProperty.RegisterAttached"),
+                "the tap behaviour is an attached bool property");
+            Check(helper.Contains("element.Tapped += OnTapped;")
+                  && helper.Contains("element.PointerExited += OnPointerExited;")
+                  && helper.Contains("element.Unloaded += OnUnloaded;"),
+                "tap, pointer exit and unload are all wired on attach");
+            Check(helper.Contains("ToolTipService.GetToolTip(element)")
+                  && helper.Contains("ConditionalWeakTable<FrameworkElement, ToolTip>"),
+                "each element keeps its own tap tooltip beside the hover binding");
+            Check(!helper.Contains("ToolTipService.SetToolTip")
+                  && helper.Contains("tooltip.Content = text;"),
+                "the tap tooltip takes the current text instead of overwriting the hover value");
+            Check(helper.Contains("PlacementTarget = element"), "the tap tooltip is placed on its own element");
+            Check(helper.Contains("tooltip.IsOpen = true;"), "a tap opens the tooltip");
+            Check(helper.Contains("TimeSpan.FromSeconds(4)"), "the tooltip closes itself after four seconds");
+            Check(helper.Contains("PointerDeviceType.Mouse"),
+                "only a mouse leaving closes the tooltip; touch and pen rely on the timer");
+            Check(helper.Contains("ConditionalWeakTable<ToolTip, DispatcherTimer>"),
+                "each tooltip owns its timer, so repeated taps restart rather than stack");
+            Check(helper.Contains("timer.Stop();") && helper.Contains("tooltip.IsOpen = false;"),
+                "repeated taps restart the timer and closing stops it");
+            Check(!helper.Contains("e.Handled"),
+                "the tap behaviour does not swallow the tap");
+            Check(ProductSource("src/BiliLite.UWP/BiliLite.UWP.csproj").Contains("Helpers\\TapToolTip.cs"),
+                "the tap behaviour is compiled into the app");
         }
         private static void ReserveCardIsAPanelNotBareText()
         {
@@ -811,7 +863,7 @@ namespace G5Probe
         }
 
         /// <summary>
-        /// BR-57：预约说明行按槽位给标签 —— 【时间 开播】【N人已预约】【抽奖文案】。
+        /// BR-57：预约说明行按槽位给标签 —— 时间 开播 / N人已预约 / 抽奖文案，标签之间一个空格、不加括号。
         /// 时间槽把「直播」改成「开播」、已经写「开播」的不重复加，状态词「直播中」「预约中」原样保留；
         /// 人数优先用结构化 reserve_total，没有才读 desc2 并把「预约」补成「已预约」；desc3 原样做第三个标签。
         /// </summary>
@@ -821,34 +873,38 @@ namespace G5Probe
                 "a missing reservation yields no copy");
 
             var live = ReserveCardCopy.Format(ReserveOf("11-13 20:00 直播", "175人预约", null, 0));
-            Check(live == "【11-13 20:00 开播】【175人已预约】",
+            Check(live == "11-13 20:00 开播 175人已预约",
                 "the time slot rewrites 直播 to 开播 and the count slot rewrites 预约 to 已预约");
+            Check(!live.Contains("【") && !live.Contains("】"),
+                "the copy joins its labels with a space instead of wrapping them in brackets");
+            Check(!live.Contains("  ") && live.StartsWith("11-13 20:00 开播 "),
+                "labels are separated by exactly one space and no separator leads the line");
             Check(ReserveSummaryOf(ReserveOf("11-13 20:00 直播", "175人预约", null, 0)).Desc == live,
                 "the reserve attachment description is the shared copy, not the raw joined text");
 
-            Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00", null, null, 0)) == "【11-13 20:00 开播】",
-                "a bare time gains 开播");
-            Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00 开播", null, null, 0)) == "【11-13 20:00 开播】",
+            Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00", null, null, 0)) == "11-13 20:00 开播",
+                "a bare time gains 开播 and the line starts without a leading space");
+            Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00 开播", null, null, 0)) == "11-13 20:00 开播",
                 "a time that already says 开播 is not rewritten twice");
-            Check(ReserveCardCopy.Format(ReserveOf("直播中", null, null, 0)) == "【直播中】",
+            Check(ReserveCardCopy.Format(ReserveOf("直播中", null, null, 0)) == "直播中",
                 "a live-state word stays as it is instead of becoming 直播中 开播");
-            Check(ReserveCardCopy.Format(ReserveOf("预约中", null, null, 0)) == "【预约中】",
+            Check(ReserveCardCopy.Format(ReserveOf("预约中", null, null, 0)) == "预约中",
                 "a pending-state word stays as it is");
 
             Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00", "175人预约", null, 4866))
-                    == "【11-13 20:00 开播】【4866人已预约】",
+                    == "11-13 20:00 开播 4866人已预约",
                 "the structured reserve_total wins over the desc2 copy");
-            Check(ReserveCardCopy.Format(ReserveOf(null, "175人已预约", null, 0)) == "【175人已预约】",
+            Check(ReserveCardCopy.Format(ReserveOf(null, "175人已预约", null, 0)) == "175人已预约",
                 "a desc2 that already says 已预约 is left alone");
-            Check(ReserveCardCopy.Format(ReserveOf(null, "175", null, 0)) == "【175人已预约】",
+            Check(ReserveCardCopy.Format(ReserveOf(null, "175", null, 0)) == "175人已预约",
                 "a count without any suffix gains 人已预约");
 
             Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00", "175人预约", "预约可参与抽奖", 0))
-                    == "【11-13 20:00 开播】【175人已预约】【预约可参与抽奖】",
-                "the lottery copy becomes the third tag, unchanged");
+                    == "11-13 20:00 开播 175人已预约 预约可参与抽奖",
+                "the lottery copy becomes the third label, separated by one space and unchanged");
             var blank = ReserveCardCopy.Format(ReserveOf("  ", "  ", "  ", 0));
-            Check(!blank.Contains("【") && blank.Trim() == "",
-                "blank slots produce no empty 【】 tags and no stray separators");
+            Check(blank.Trim() == "" && !blank.Contains("【") && !blank.Contains("】"),
+                "blank slots produce no empty tags and no stray separators");
         }
 
         /// <summary>
