@@ -31,6 +31,11 @@ are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no p
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
 
+- **Reservation copy and attachment labels (BR-57):** `93c69de` — `Parsing/Dynamic/ReserveCardCopy.cs` formats the
+  description as `【<time> 开播】【<n>人已预约】` (+ a third tag for `desc3`), rewriting a trailing 直播 and a
+  pending 预约 while leaving 直播中/预约中 untouched; both the attachment summary and the standalone Reserve card
+  use it. Attachment labels map `GOODS`→商品、`UGC`→合集、unknown→附件 and never print a wire type; an unsupported
+  row with no title, description or destination is dropped. `g5` 265 → 293.
 - **Local playback keeps its directory (review `dae62b7`):** `9c8920f` — `LocalPlayerPage` builds
   `PlayDirectoryBuilder.FromParts` rows from the `PlayInfos` it is handed (title/cid/duration), reports
   availability only above one item, opens and refreshes the drawer on request, switches Parts rows through

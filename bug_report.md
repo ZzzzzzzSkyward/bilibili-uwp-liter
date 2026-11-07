@@ -168,3 +168,6 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 `KindLabelOf` 按上表映射，未知种类不再回退 `RawType`；`From` 末尾丢掉无标题、无说明、无目的地的 Unsupported 行。
 `plan/tests/g5` 钉住标签格式、时间/人数改写、desc3 追加、无结构化字段时的回退，以及 `KindLabel` 不含
 `ADDITIONAL_TYPE_`；旧断言 `Desc == "明天 20:00 1.2万人预约"` 同步改成新文案。
+
+- 已修：`93c69de`（`g5` 265 → 293）。`ReserveCardCopy` 对 `直播`/`预约` 只改结尾词，`直播中`/`预约中` 原样保留；
+  `商品`/`合集`/`附件` 三个标签与空行不渲染都有锚点。
