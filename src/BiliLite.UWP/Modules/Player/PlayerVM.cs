@@ -54,7 +54,11 @@ namespace BiliLite.Modules
             return result;
         }
 
-        public async Task ReportHistory(PlayInfo playInfo, double progress)
+        /// <summary>
+        /// 上报观看进度。<paramref name="reportErrors"/> 为假时失败只记调试输出——30s 检查点与关闭时的 flush
+        /// 走这条路,不然网络一抖每半分钟弹一次提示;离开页面和播完那两次仍然弹。
+        /// </summary>
+        public async Task ReportHistory(PlayInfo playInfo, double progress, bool reportErrors = true)
         {
             try
             {
@@ -64,6 +68,11 @@ namespace BiliLite.Modules
             }
             catch (Exception ex)
             {
+                if (!reportErrors)
+                {
+                    Debug.WriteLine(ex.Message);
+                    return;
+                }
                 var handel = HandelError<AnimeHomeModel>(ex);
                 Utils.ShowMessageToast(handel.message);
             }

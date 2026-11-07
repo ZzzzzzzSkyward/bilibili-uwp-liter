@@ -582,6 +582,23 @@ namespace G5Probe
             Check(CountOf(hot, "ToolTipService.ToolTip=\"{x:Bind title}\"") == 2,
                 "both hot-card variants carry a title tooltip");
 
+            // BR-59：推荐页的两张卡片模板标题都截断，却没有 tooltip，只有这里缺。
+            // 整张卡是 ItemClick 跳转，不加 TapToolTip：点一下既弹提示又跳页。
+            var recommend = ProductSource("src/BiliLite.UWP/Pages/Home/RecommendPage.xaml");
+            var titleLines = 0;
+            var tooltipped = 0;
+            foreach (var line in recommend.Split('\n'))
+            {
+                if (!line.Contains("Text=\"{x:Bind title}\"") || !line.Contains("MaxLines=")) continue;
+                titleLines++;
+                if (line.Contains("ToolTipService.ToolTip=\"{x:Bind title}\"")) tooltipped++;
+            }
+            Check(titleLines == 2 && tooltipped == 2,
+                "both recommend card titles (grid MaxLines=2, list MaxLines=3) carry ToolTipService.ToolTip (titles=" +
+                titleLines + ", tooltiped=" + tooltipped + ")");
+            Check(!recommend.Contains("TapToolTip"),
+                "the recommend card does not open its tooltip on tap: the card itself is ItemClick-navigated");
+
             // BR-58：ToolTipService 只认指针悬停，触摸/手柄点开的卡片看不到全文。
             // 会截断的标题都挂上 TapToolTip：点击打开同一个 ToolTip，悬停路径保持不动。
             const string tap = "helpers:TapToolTip.Enabled=\"True\"";

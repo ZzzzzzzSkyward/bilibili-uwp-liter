@@ -1,4 +1,5 @@
 ﻿using BiliLite.Api;
+using BiliLite.Controls;
 using BiliLite.Helpers;
 using BiliLite.Modules;
 using BiliLite.Services;
@@ -328,11 +329,13 @@ namespace BiliLite
         /// </summary>
         /// <param name="sender">挂起的请求的源。</param>
         /// <param name="e">有关挂起请求的详细信息。</param>
-        private void OnSuspending(object sender, SuspendingEventArgs e)
+        private async void OnSuspending(object sender, SuspendingEventArgs e)
         {
             LogHelper.Log("Application suspending", LogType.INFO);
             LogHelper.Flush();
             var deferral = e.SuspendingOperation.GetDeferral();
+            // 正在播的进度在 deferral 里存下来并上报一次:挂起之后进程可能直接没了
+            await PlayerControl.FlushActivePlaybackAsync();
             GC.Collect();
             GC.WaitForPendingFinalizers();
             deferral.Complete();
@@ -424,6 +427,8 @@ namespace BiliLite
                 }
             }
             catch (Exception ex) { }
+            // 关窗口不走 OnNavigatedFrom:在这里把当前进度存下来并报一次
+            await PlayerControl.FlushActivePlaybackAsync();
             LogHelper.Flush();
             deferral.Complete();
         }

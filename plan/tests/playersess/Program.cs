@@ -57,6 +57,7 @@ namespace PlayersessProbe
             PublishOrderCases();
             AttemptCases();
             AttemptSourceCases();
+            ProgressCheckpointCases();
 
             Console.WriteLine();
             if (failures.Count == 0)
@@ -411,6 +412,93 @@ namespace PlayersessProbe
                 "DASH 回退 FFmpeg 用的还是同一个票据");
             Check(Regex.IsMatch(changeQuality, @"PlaySingleFlvUseFFmpegInterop\([^;]*session: session"),
                 "单段 FLV 回退 FFmpeg 用的还是同一个票据");
+        }
+
+        /// <summary>
+        /// BR-60:关窗口时正在播的视频不记进度。检查点(30s + 暂停补存)与 App 侧 flush 都得在,
+        /// 而且只有一份本地键、只有一份上报实现(检查点走静默,离开页面/播完仍旧弹提示)。
+        /// </summary>
+        private static void ProgressCheckpointCases()
+        {
+            var repo = FindRepoRoot();
+            var control = File.ReadAllText(Path.Combine(repo, "src", "BiliLite.UWP", "Controls", "PlayerControl.xaml.cs"));
+            var app = File.ReadAllText(Path.Combine(repo, "src", "BiliLite.UWP", "App.xaml.cs"));
+            var vm = File.ReadAllText(Path.Combine(repo, "src", "BiliLite.UWP", "Modules", "Player", "PlayerVM.cs"));
+            var controlCode = Code(control);
+
+            // 计时器:30 秒、构造里只建一次、播起来才开、Dispose 停
+            Check(Regex.IsMatch(controlCode, @"_historyCheckpointTimer = new DispatcherTimer\(\) \{ Interval = TimeSpan\.FromSeconds\(30\) \};"),
+                "进度检查点计时器是 30 秒的 DispatcherTimer");
+            var constructor = Code(Section(control, "public PlayerControl()", "private void Timer_focus_Tick"));
+            Check(CountOf(constructor, "_historyCheckpointTimer = new DispatcherTimer()") == 1,
+                "计时器在构造里只建一次(实际 " + CountOf(constructor, "_historyCheckpointTimer = new DispatcherTimer()") + " 次)");
+            var playState = Code(Section(control, "private void Player_PlayStateChanged", "private void Player_PlayBufferStart"));
+            Check(playState.Contains("_historyCheckpointTimer?.Start();"), "播放状态到 Playing 就把检查点计时器开起来");
+            Check(playState.IndexOf("_hasPlayedCurrentItem = true;") < playState.IndexOf("_historyCheckpointTimer?.Start();"),
+                "开计时器排在记下\"播过了\"之后");
+            var pause = Section(playState, "case PlayState.Pause:", "break;");
+            Check(pause.Contains("SaveHistoryCheckpoint();"), "暂停时补存一次位置");
+            Check(!pause.Contains("ReportHistory"), "暂停只存位置,不上报历史");
+            var dispose = Code(Section(control, "public async void Dispose()", "private void GridViewSelectColor_ItemClick"));
+            Check(dispose.Contains("_historyCheckpointTimer?.Stop();"), "Dispose 停掉检查点计时器");
+            Check(!dispose.Contains("_historyCheckpointTimer.Tick -="), "Dispose 只停不拆 Tick:同一个控件关掉还能再打开");
+            Check(CountOf(controlCode, "_historyCheckpointTimer.Tick +=") == 1, "Tick 只订阅一次(不在 Loaded 里重复挂)");
+
+            // 检查点的判定集
+            var checkpoint = Code(Section(control, "private async Task CheckpointHistoryAsync", "private async void HistoryCheckpointTimer_Tick"));
+            Check(checkpoint.Length > 0, "找得到检查点实现");
+            Check(checkpoint.Contains("if (_historyCheckpointRunning) return;"), "检查点有在飞判定,慢 POST 不叠加");
+            Check(checkpoint.Contains("CurrentPlayItem == null"), "没有当前播放条目时检查点跳过");
+            Check(checkpoint.Contains("!_hasPlayedCurrentItem"), "还没播过当前条目时检查点跳过");
+            Check(checkpoint.Contains("LocalPlayInfo?.IsManifestPlayback == true"), "清单播放(本地媒体)不做检查点");
+            Check(checkpoint.Contains("position < 5"), "位置不到 5 秒不做检查点");
+            var save = checkpoint.IndexOf("SettingHelper.SetValue<double>(HistoryKey(item), position);", StringComparison.Ordinal);
+            var localOnly = checkpoint.IndexOf("string.IsNullOrEmpty(item.avid)", StringComparison.Ordinal);
+            Check(save >= 0 && localOnly > save, "先写本地位置,再看 avid 决定要不要上报(本地文件照存)");
+            Check(Regex.IsMatch(checkpoint, @"ReportHistory\(item, position, reportErrors: false\)"), "检查点用静默上报(不弹提示)");
+            Check(Regex.IsMatch(checkpoint, @"catch \(Exception\)\s*\{"), "检查点自己吞掉异常,不会把播放带崩");
+            Check(checkpoint.Contains("_historyCheckpointRunning = false;"), "在飞标记在 finally 里放开");
+            Check(checkpoint.Contains("Player.PlayState == PlayState.Playing"), "定时检查点只在真正播着的时候上报");
+
+            // 本地键只有一份,Dispose 与检查点/flush 共用
+            Check(controlCode.Contains("private static string HistoryKey(PlayInfo item)"), "HistoryKey 是唯一的本地进度键");
+            Check(controlCode.Contains("return item.season_id != 0 ? \"ep\" + item.ep_id : item.cid;"), "HistoryKey 番剧按 ep、普通视频按 cid");
+            Check(dispose.Contains("SettingHelper.SetValue<double>(HistoryKey(historyItem), historyPosition);"), "Dispose 用同一个 HistoryKey");
+            Check(!controlCode.Contains("historyItem.season_id != 0"), "Dispose 里不再有第二份内联拼键");
+            Check(CountOf(controlCode, "HistoryKey(") >= 3, "HistoryKey 被 Dispose、检查点、flush 共用(实际 " +
+                CountOf(controlCode, "HistoryKey(") + " 处)");
+            Check(controlCode.Contains("SettingHelper.GetValue<double>(HistoryKey(CurrentPlayItem), 0)"),
+                "续播读位置也用同一个 HistoryKey");
+
+            // 静态 flush:App 从正在显示的播放器上补齐最后一次
+            Check(controlCode.Contains("public static async Task FlushActivePlaybackAsync()"), "暴露异步 FlushActivePlaybackAsync 给 App");
+            Check(controlCode.Contains("public static void FlushActivePlayback()"), "暴露同步 FlushActivePlayback(位置当场写、上报后台)");
+            Check(controlCode.Contains("_activeInstance = this;"), "Loaded 记下当前播放器实例");
+            Check(Regex.IsMatch(controlCode, @"if \(ReferenceEquals\(_activeInstance, this\)\)\s*_activeInstance = null;"),
+                "Unloaded 只清自己那一个实例");
+            Check(Regex.IsMatch(controlCode, @"if \(player == null\) return;"), "没有正在显示的播放器时 flush 什么都不做");
+            Check(controlCode.Contains("FlushPlaybackAsync();"), "flush 与检查点共用同一段保存/上报");
+            var flush = Code(Section(control, "private async Task FlushPlaybackAsync()", "private async void FlushPlayback()"));
+            Check(flush.Contains("reportWhilePaused: true"), "flush 那次暂停着也要上报(报告一次当前位置)");
+
+            // App 的两个生命周期钩子
+            var suspending = Code(Section(app, "private async void OnSuspending", "public static void ExtendAcrylicIntoTitleBar"));
+            Check(suspending.Contains("await PlayerControl.FlushActivePlaybackAsync();"), "OnSuspending await 一次 flush");
+            var suspendFlush = suspending.IndexOf("await PlayerControl.FlushActivePlaybackAsync();", StringComparison.Ordinal);
+            Check(suspendFlush >= 0 && suspendFlush < suspending.IndexOf("deferral.Complete();", StringComparison.Ordinal),
+                "OnSuspending 的 flush 在 deferral.Complete 之前");
+            var exiting = Code(Section(app, "private async void OnExiting", "public string ThemeXamlPath"));
+            Check(exiting.Contains("await PlayerControl.FlushActivePlaybackAsync();"), "OnExiting await 一次 flush");
+            var exitFlush = exiting.IndexOf("await PlayerControl.FlushActivePlaybackAsync();", StringComparison.Ordinal);
+            Check(exitFlush >= 0 && exitFlush < exiting.IndexOf("deferral.Complete();", StringComparison.Ordinal),
+                "OnExiting 的 flush 在 deferral.Complete 之前");
+
+            // 上报只有一份实现:检查点静默,离开页面/播完仍然弹提示
+            Check(CountOf(vm, "public async Task ReportHistory(") == 1, "ReportHistory 只有一份实现");
+            Check(vm.Contains("bool reportErrors = true"), "ReportHistory 多了 reportErrors 开关");
+            Check(Code(vm).Contains("if (!reportErrors)"), "静默上报不弹 Toast");
+            Check(controlCode.Contains("await playerHelper.ReportHistory(CurrentPlayItem, Player.Duration);"), "播完那次仍然带提示上报");
+            Check(controlCode.Contains("await playerHelper.ReportHistory(historyItem, historyPosition);"), "Dispose 那次仍然带提示上报");
         }
 
         private static void CheckAbandon(string player, string start, string end, string name)

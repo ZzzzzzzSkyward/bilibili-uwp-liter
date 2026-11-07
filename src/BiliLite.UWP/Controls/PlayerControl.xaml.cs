@@ -311,6 +311,8 @@ namespace BiliLite.Controls
         private DisplayRequest dispRequest;
         private SystemMediaTransportControls _systemMediaTransportControls;
         private DispatcherTimer timer_focus;
+        /// <summary>播放中每 30s 记一次进度(本地位置 + 历史上报),关窗口不再丢掉看了一半的位置。</summary>
+        private DispatcherTimer _historyCheckpointTimer;
 
         public Player PlayerInstance
         { get { return Player; } }
@@ -349,6 +351,8 @@ namespace BiliLite.Controls
             danmuTimer = new DispatcherTimer();
             danmuTimer.Interval = TimeSpan.FromSeconds(1);
             danmuTimer.Tick += DanmuTimer_Tick;
+            _historyCheckpointTimer = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(30) };
+            _historyCheckpointTimer.Tick += HistoryCheckpointTimer_Tick;
             this.Loaded += PlayerControl_Loaded;
             this.Unloaded += PlayerControl_Unloaded;
             gestureRecognizer = new GestureRecognizer();
@@ -403,6 +407,8 @@ namespace BiliLite.Controls
 
         private void PlayerControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (ReferenceEquals(_activeInstance, this))
+                _activeInstance = null;
             Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
             Window.Current.CoreWindow.KeyDown -= PlayerControl_KeyDown;
             if (_systemMediaTransportControls != null)
@@ -417,6 +423,7 @@ namespace BiliLite.Controls
 
         private void PlayerControl_Loaded(object sender, RoutedEventArgs e)
         {
+            _activeInstance = this;
             DanmuControl.ClearAll();
             Window.Current.CoreWindow.KeyDown += PlayerControl_KeyDown;
             BtnFoucs.Focus(FocusState.Programmatic);
@@ -1573,7 +1580,7 @@ namespace BiliLite.Controls
             // 开播位置由调用方明说:往前走的续播移动从 0 开始,只有"续播"才跳到保存的进度
             if (PlayContinuationPolicy.RestoresPosition(start, SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_TO_POSITION, true)))
             {
-                _position = SettingHelper.GetValue<double>(CurrentPlayItem.season_id != 0 ? "ep" + CurrentPlayItem.ep_id : CurrentPlayItem.cid, 0);
+                _position = SettingHelper.GetValue<double>(HistoryKey(CurrentPlayItem), 0);
                 //减去两秒防止视频直接结束了
                 if (_position >= 2) _position -= 2;
             }
@@ -2082,6 +2089,10 @@ namespace BiliLite.Controls
         private double _position = 0;
         private bool _autoPlay = false;
         private bool _hasPlayedCurrentItem = false;
+        /// <summary>一次检查点还没回来(慢 POST)时,下一次 tick 直接跳过,不叠加请求。</summary>
+        private bool _historyCheckpointRunning = false;
+        /// <summary>正在显示的播放器实例:App 退出/挂起时从这里 flush 一次进度。</summary>
+        private static PlayerControl _activeInstance;
 
         /// <summary>
         /// The comments the player already holds, oldest first, for the danmaku list. Reads the
@@ -3361,6 +3372,88 @@ namespace BiliLite.Controls
             }
         }
 
+        /// <summary>
+        /// 进度的本地存储键:番剧按分集,普通视频按 cid。Dispose、30s 检查点、关闭时的 flush 共用这一个。
+        /// </summary>
+        private static string HistoryKey(PlayInfo item)
+        {
+            return item.season_id != 0 ? "ep" + item.ep_id : item.cid;
+        }
+
+        /// <summary>
+        /// 记一次进度:本地位置当场写,需要时再上报一次历史。永不抛出——网络问题不能把播放带崩。
+        /// </summary>
+        /// <param name="report">是否上报历史;暂停那次只存位置。</param>
+        /// <param name="reportWhilePaused">关窗口/挂起那次为真:暂停着被关掉也要把最后位置报上去(播完除外)。</param>
+        private async Task CheckpointHistoryAsync(bool report, bool reportWhilePaused = false)
+        {
+            if (_historyCheckpointRunning) return;
+            if (CurrentPlayItem == null || !_hasPlayedCurrentItem) return;
+            // 从这里开始占住判定:慢 POST 没回来之前,下一次 tick 不叠加
+            _historyCheckpointRunning = true;
+            try
+            {
+                var item = CurrentPlayItem;
+                if (item.LocalPlayInfo?.IsManifestPlayback == true) return;
+                var position = Player.Position;
+                if (position < 5) return;
+                SettingHelper.SetValue<double>(HistoryKey(item), position);
+                if (!report) return;
+                // 本地文件没有 avid,报上去只会在服务端失败:位置照存,历史不报
+                if (string.IsNullOrEmpty(item.avid)) return;
+                var reportable = reportWhilePaused ? Player.PlayState != PlayState.End : Player.PlayState == PlayState.Playing;
+                if (!reportable) return;
+                await playerHelper.ReportHistory(item, position, reportErrors: false);
+            }
+            catch (Exception)
+            {
+                // 检查点失败就算了:位置下次还会写,上报的失败由静默上报自己记着
+            }
+            finally
+            {
+                _historyCheckpointRunning = false;
+            }
+        }
+
+        private async void HistoryCheckpointTimer_Tick(object sender, object e)
+        {
+            await CheckpointHistoryAsync(report: true);
+        }
+
+        /// <summary>暂停时补存位置,不上报。</summary>
+        private async void SaveHistoryCheckpoint()
+        {
+            await CheckpointHistoryAsync(report: false);
+        }
+
+        private async Task FlushPlaybackAsync()
+        {
+            await CheckpointHistoryAsync(report: true, reportWhilePaused: true);
+        }
+
+        private async void FlushPlayback()
+        {
+            await FlushPlaybackAsync();
+        }
+
+        /// <summary>
+        /// 挂起/退出前把当前进度存下来并上报一次(报告一次当前位置)。没有正在显示的播放器或还没播过就什么都不做。
+        /// </summary>
+        public static async Task FlushActivePlaybackAsync()
+        {
+            var player = _activeInstance;
+            if (player == null) return;
+            await player.FlushPlaybackAsync();
+        }
+
+        /// <summary>同步版 flush:位置当场写,上报丢到后台。给不能 await 的退出路径用。</summary>
+        public static void FlushActivePlayback()
+        {
+            var player = _activeInstance;
+            if (player == null) return;
+            player.FlushPlayback();
+        }
+
         private void Player_PlayStateChanged(object sender, PlayState e)
         {
             if (CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true)
@@ -3371,6 +3464,8 @@ namespace BiliLite.Controls
             if (e == PlayState.Playing)
             {
                 _hasPlayedCurrentItem = true;
+                // 一开始播就把 30s 检查点挂上:关窗口前的每一次 tick 都是一次可恢复的落点
+                _historyCheckpointTimer?.Start();
             }
             BottomImageBtnPlay.Visibility = Visibility.Collapsed;
             switch (e)
@@ -3411,6 +3506,8 @@ namespace BiliLite.Controls
                     {
                         _systemMediaTransportControls.PlaybackStatus = MediaPlaybackStatus.Paused;
                     }
+                    // 暂停可能一直停到关窗口:这里补存一次位置(不上报)
+                    SaveHistoryCheckpoint();
                     BottomImageBtnPlay.Visibility = Visibility.Visible;
                     BottomBtnLoading.Visibility = Visibility.Collapsed;
                     BottomBtnPlay.Visibility = Visibility.Visible;
@@ -3734,7 +3831,7 @@ namespace BiliLite.Controls
             var historyPosition = Player.Position;
             var shouldReportHistory = historyItem != null && historyItem.LocalPlayInfo?.IsManifestPlayback != true && _hasPlayedCurrentItem && Player.PlayState != PlayState.End;
             if (historyItem != null)
-                SettingHelper.SetValue<double>(historyItem.season_id != 0 ? "ep" + historyItem.ep_id : historyItem.cid, historyPosition);
+                SettingHelper.SetValue<double>(HistoryKey(historyItem), historyPosition);
 
             Player.PlayStateChanged -= Player_PlayStateChanged;
             Player.PlayMediaEnded -= Player_PlayMediaEnded;
@@ -3744,6 +3841,8 @@ namespace BiliLite.Controls
             //Player.PlayBufferStart -= Player_PlayBufferStart;
             //Player.PlayBuffering -= Player_PlayBuffering;
             Player.Dispose();
+            // 只停不拆:Tick 挂在构造里,页面关掉还能再打开,同一个控件要能重新跑检查点
+            _historyCheckpointTimer?.Stop();
             if (danmuTimer != null)
             {
                 danmuTimer.Stop();

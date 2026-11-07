@@ -69,7 +69,7 @@
             </Grid>
           </Grid>
         </Border>
-        <TextBlock Grid.Row="1" Margin="4 4 4 0" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"/>
+        <TextBlock Grid.Row="1" Margin="4 4 4 0" MaxLines="2" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind title}" Text="{x:Bind title}"/>
         <StackPanel Grid.Row="2" Margin="4 0 4 4" Orientation="Horizontal">
           <Border Visibility="{x:Bind showRcmd}" Margin="0 0 8 0" BorderThickness="1" BorderBrush="{x:Bind Path=rcmd_reason_style.border_color,Converter={StaticResource colorConvert}}" Background="{x:Bind Path=rcmd_reason_style.bg_color,Converter={StaticResource colorConvert}}" HorizontalAlignment="Left" Padding="4 0" CornerRadius="2">
             <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{x:Bind Path=rcmd_reason_style.text_color,Converter={StaticResource colorConvert}}" TextTrimming="CharacterEllipsis" Text="{x:Bind Path=rcmd_reason_style.text}"/>
@@ -119,7 +119,7 @@
             <RowDefinition/>
             <RowDefinition Height="Auto"/>
           </Grid.RowDefinitions>
-          <TextBlock MaxLines="3" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" Text="{x:Bind title}"/>
+          <TextBlock MaxLines="3" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" ToolTipService.ToolTip="{x:Bind title}" Text="{x:Bind title}"/>
           <TextBlock Grid.Row="1" Margin="0 4" Foreground="{ThemeResource ForegroundTextColor}" FontSize="12" Text="{x:Bind left_text}"/>
           <StackPanel Grid.Row="2" Margin="0 0 0 4" Orientation="Horizontal">
             <Border Visibility="{x:Bind showRcmd}" Margin="0 0 8 0" BorderThickness="1" BorderBrush="{x:Bind Path=rcmd_reason_style.border_color,Converter={StaticResource colorConvert}}" Background="{x:Bind Path=rcmd_reason_style.bg_color,Converter={StaticResource colorConvert}}" HorizontalAlignment="Left" Padding="4 0" CornerRadius="2">
