@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Windows.Input;
 using Bilibili.App.Dynamic.V2;
@@ -52,6 +53,7 @@ namespace G5Probe
             ReserveCardIsAPanelNotBareText();
             ReserveAttachmentMapsTheButton();
             ReserveAttachmentBecomesAPanel();
+            ReserveCardOwnsItsAttachment();
             ReserveCopyLabelsTimeAndCount();
             AttachmentLabelsHideWireTypes();
             LongTitlesCarryATooltip();
@@ -860,6 +862,90 @@ namespace G5Probe
             }, command);
             Check(noIcon.IconVisibility == Visibility.Collapsed,
                 "a button without an icon hides the icon instead of drawing a placeholder");
+        }
+
+        /// <summary>
+        /// 复核:一条文字动态的 additional.type 是预约,会被预览解析提升成 Reserve,于是独立模板和附件行
+        /// 各画一次。现在提升之后只摘掉预约摘要,投票/未知种类照旧上屏;图片动态不提升,预约留在附件行。
+        /// </summary>
+        private static void ReserveCardOwnsItsAttachment()
+        {
+            var textCard = WebCards(WordCard(
+                "\"desc\":{\"text\":\"今晚开播\"}," +
+                "\"additional\":{\"type\":\"ADDITIONAL_TYPE_RESERVE\"," +
+                "\"reserve\":{\"title\":\"预约标题\",\"rid\":321," +
+                "\"desc1\":{\"text\":\"11-13 20:00\"},\"desc2\":{\"text\":\"175人预约\"}," +
+                "\"jump_url\":\"//www.bilibili.com/reserve/321\"," +
+                "\"button\":{\"status\":1,\"jump_url\":\"//live.bilibili.com/123\"," +
+                "\"uncheck\":{\"text\":\"预约\",\"icon_url\":\"https://i0.hdslb.com/reserve.png\"}}}," +
+                "\"vote\":{\"vote_id\":123,\"title\":\"投票标题\",\"desc1\":\"投票说明\"," +
+                "\"jump_url\":\"//www.bilibili.com/vote/123\"}," +
+                "\"goods\":{\"id_str\":\"5\",\"title\":\"赛事直播\"}}"));
+            var display = new DynamicItemDisplayModel { Type = DynamicDisplayType.Text };
+            DynamicCardProjection.Apply(display, textCard);
+            Check(display.Attachments.Count == 3,
+                "a text card with a reservation, a vote and an unsupported attachment starts with three summaries");
+            // 先读一次：AttachmentItems 的缓存必须是归属收口能清掉的那份
+            Check(display.AttachmentItems.Count == 3 && display.AttachmentItems[0].ShowPanel,
+                "before the promotion the attachment row still draws the reservation panel");
+
+            // ParseOneRowInfo2024 在 Text 分支里把类型提升成 Reserve；这里是提升后的状态
+            display.Type = DynamicDisplayType.Reserve;
+            DynamicCardProjection.ApplyAttachmentOwnership(display);
+
+            Check(display.Attachments.Count == 2, "the promoted reserve card keeps the two non-reservation attachments");
+            Check(display.Attachments.TrueForAll(x => x.Kind != DynamicAttachmentKind.Reserve),
+                "the reservation summary is dropped from the attachment list");
+            Check(display.Attachments[0].Kind == DynamicAttachmentKind.Vote,
+                "the vote attachment survives the hand-off");
+            Check(display.Attachments[1].Kind == DynamicAttachmentKind.Unsupported,
+                "the unsupported attachment survives the hand-off");
+            Check(display.AttachmentItems.Count == 2
+                  && display.AttachmentItems[0].KindLabel == "投票"
+                  && display.AttachmentItems[1].KindLabel == "附件",
+                "the built attachment rows are rebuilt after the reservation is dropped");
+
+            var withNull = new DynamicItemDisplayModel
+            {
+                Type = DynamicDisplayType.Reserve,
+                Attachments = new List<DynamicAttachmentSummary>
+                {
+                    null,
+                    new DynamicAttachmentSummary { Kind = DynamicAttachmentKind.Reserve, Title = "预约" },
+                    new DynamicAttachmentSummary { Kind = DynamicAttachmentKind.Vote, Title = "投票" },
+                },
+            };
+            DynamicCardProjection.ApplyAttachmentOwnership(withNull);
+            Check(withNull.Attachments.Count == 2
+                  && withNull.Attachments[0] == null
+                  && withNull.Attachments[1].Kind == DynamicAttachmentKind.Vote,
+                "the hand-off keeps a null placeholder and drops only the reservation");
+
+            var photo = new DynamicItemDisplayModel { Type = DynamicDisplayType.Photo };
+            DynamicCardProjection.Apply(photo, WebCards(PhotoCard("\"additional\":" + ReserveButtonAdditional())));
+            DynamicCardProjection.ApplyAttachmentOwnership(photo);
+            Check(photo.Type == DynamicDisplayType.Photo,
+                "a photo card is not promoted to the reserve template");
+            Check(photo.Attachments.Count == 1
+                  && photo.Attachments[0].Kind == DynamicAttachmentKind.Reserve
+                  && photo.AttachmentItems.Count == 1
+                  && photo.AttachmentItems[0].ShowPanel,
+                "a photo grid keeps its reservation attachment");
+
+            var parse = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicParse.cs");
+            var textCase = Slice(SliceMethod(parse, "public static DynamicItemDisplayOneRowInfo ParseOneRowInfo2024("),
+                "case DynamicDisplayType.Text:", "case DynamicDisplayType.Video:");
+            Check(textCase.Contains("data.Type = DynamicDisplayType.Reserve;"),
+                "the text-to-reserve promotion still happens in the preview parse");
+
+            var convert = SliceMethod(ProductSource("src/BiliLite.UWP/Modules/User/DynamicVM.cs"),
+                "private DynamicItemDisplayModel ConvertToDisplay2024(DynamicCardModel2024 item");
+            var parseLine = convert.IndexOf("data.OneRowInfo = DynamicParse.ParseOneRowInfo2024(data, item);",
+                StringComparison.Ordinal);
+            var ownershipLine = convert.IndexOf("DynamicCardProjection.ApplyAttachmentOwnership(data);",
+                StringComparison.Ordinal);
+            Check(parseLine >= 0 && ownershipLine > parseLine,
+                "the conversion hands attachment ownership over after the promotion");
         }
 
         /// <summary>

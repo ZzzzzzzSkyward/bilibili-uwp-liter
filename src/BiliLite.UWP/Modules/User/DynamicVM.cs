@@ -2291,6 +2291,8 @@ namespace BiliLite.Modules.User
                     DynamicCardProjection.ApplyOriginVisibility(data);
                 }
                 data.OneRowInfo = DynamicParse.ParseOneRowInfo2024(data, item);
+                // 预约摘要的唯一主人是提升后的 Reserve 模板，附件行让位；其余附件种类不受影响
+                DynamicCardProjection.ApplyAttachmentOwnership(data);
                 // 标题只显示一次：预览模板（OneRow / Reserve）自己有标题槽的卡片，外层标题留空
                 DynamicCardProjection.ApplyTitleSlot(data, item.title, DynamicParse.PreviewShowsTitle(data));
                 //post fix

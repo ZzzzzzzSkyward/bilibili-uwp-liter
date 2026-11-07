@@ -310,6 +310,31 @@ namespace BiliLite.Controls.Dynamic
         }
 
         /// <summary>
+        /// 预约卡只有一个主人：文本动态被提升成 Reserve 之后由独立模板画预约面板，而附件投影是在提升之前
+        /// 跑完的，那条预约摘要必须在这里摘掉，否则同一张预约会画两遍。只摘预约，投票/链接/未知种类照旧
+        /// 留在附件行。赋值 Attachments 会清掉已经建好的 AttachmentItems 缓存。
+        /// </summary>
+        public static void ApplyAttachmentOwnership(DynamicItemDisplayModel display)
+        {
+            if (display == null
+                || display.Type != DynamicDisplayType.Reserve
+                || display.Attachments == null)
+            {
+                return;
+            }
+
+            var kept = new List<DynamicAttachmentSummary>(display.Attachments.Count);
+            foreach (var summary in display.Attachments)
+            {
+                if (summary == null || summary.Kind != DynamicAttachmentKind.Reserve)
+                {
+                    kept.Add(summary);
+                }
+            }
+            display.Attachments = kept;
+        }
+
+        /// <summary>
         /// 卡片标题槽：预览模板自己显示标题的卡片（OneRow / Reserve）留空，同一句标题只出现一次；
         /// 其余卡片把标题放进标题槽。标题从不拼进正文。
         /// </summary>
