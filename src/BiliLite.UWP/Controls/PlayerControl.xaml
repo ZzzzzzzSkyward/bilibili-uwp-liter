@@ -1,8 +1,11 @@
-<?xml version='1.0' encoding='UTF-8'?>
+﻿<?xml version='1.0' encoding='UTF-8'?>
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:convert="using:BiliLite.Converters" xmlns:danmaku="using:NSDanmaku.Controls" xmlns:toolkit="using:Microsoft.Toolkit.Uwp.UI.Controls" xmlns:fa="using:FontAwesome5" xmlns:player="using:BiliLite.Modules.Player" x:Class="BiliLite.Controls.PlayerControl" mc:Ignorable="d" d:DesignHeight="800" d:DesignWidth="1000">
   <UserControl.Resources>
     <SolidColorBrush x:Key="HyperlinkButtonForegroundPointerOver" Color="{ThemeResource HighLightColor}"/>
     <SolidColorBrush x:Key="ButtonForegroundPointerOver" Color="{ThemeResource HighLightColor}"/>
+    <!--抽屉开着时"目录"按钮的底色,收起时换回透明-->
+    <SolidColorBrush x:Key="DirectoryButtonActiveBrush" Color="#33FFFFFF"/>
+    <SolidColorBrush x:Key="DirectoryButtonIdleBrush" Color="Transparent"/>
     <Style TargetType="ComboBox" x:Key="PlayerComboBoxStyle">
       <Setter Property="Padding" Value="8,0"/>
       <Setter Property="MinWidth" Value="{ThemeResource ComboBoxThemeMinWidth}"/>
@@ -198,21 +201,11 @@
       <SplitView.Pane>
         <Grid x:Name="Setting">
           <Pivot x:Name="SettingPivot" RequestedTheme="Dark">
-            <PivotItem>
+            <PivotItem x:Name="NodePivot">
               <PivotItem.Header>
-                <TextBlock Foreground="White" FontSize="18">选集</TextBlock>
+                <TextBlock Foreground="White" FontSize="18">节点</TextBlock>
               </PivotItem.Header>
               <Grid>
-                <ListView Margin="0 4" x:Name="EpisodeList" SelectionChanged="EpisodeList_SelectionChanged" DisplayMemberPath="title">
-                  <ListView.ItemContainerStyle>
-                    <Style TargetType="ListViewItem">
-                      <Setter Property="Foreground" Value="White"/>
-                      <Setter Property="Margin" Value="0 4"/>
-                      <Setter Property="BorderThickness" Value="1"/>
-                      <Setter Property="BorderBrush" Value="#33808080"/>
-                    </Style>
-                  </ListView.ItemContainerStyle>
-                </ListView>
                 <ListView Margin="0 4" x:Name="NodeList" Visibility="Collapsed" ItemsSource="{Binding Path=List,Mode=OneWay}" SelectedItem="{Binding Path=Select,Mode=OneWay}" SelectionChanged="NodeList_SelectionChanged" DisplayMemberPath="title">
                   <ListView.ItemContainerStyle>
                     <Style TargetType="ListViewItem">
@@ -242,7 +235,7 @@
                 </StackPanel>
               </ScrollViewer>
             </PivotItem>
-            <PivotItem Foreground="White">
+            <PivotItem x:Name="DanmakuPivot" Foreground="White">
               <PivotItem.Header>
                 <TextBlock Foreground="White" FontSize="18">弹幕</TextBlock>
               </PivotItem.Header>
@@ -295,7 +288,7 @@
                   <Slider x:Name="DanmuSettingOpacity" Value="{x:Bind Path=DanmuControl.Opacity,Mode=TwoWay}" Minimum="0.1" Maximum="1" StepFrequency="0.1"/>
                   <TextBlock Margin="0 4 0 0">弹幕顶部距离 <Run Text="{x:Bind Path=DanmuControl.Margin.Top,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
                   <Slider x:Name="DanmuTopMargin" Value="0" Minimum="0" Maximum="200" StepFrequency="4"/>
-                  <TextBlock Margin="0 4 0 0">弹幕每秒数量(0为不限制) <Run Text="{x:Bind Path=DanmuSettingMaxNum.Value,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
+                  <TextBlock Margin="0 4 0 0">弹幕每秒数量 <Run Text="{x:Bind Path=DanmuSettingMaxNum.Value,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/></TextBlock>
                   <Slider x:Name="DanmuSettingMaxNum" Value="0" Minimum="0" Maximum="50" StepFrequency="1"/>
                   <Grid Margin="0 4 0 0">
                     <Grid.ColumnDefinitions>
@@ -330,7 +323,7 @@
                       </ToggleSwitch.Header>
                     </ToggleSwitch>
                   </Grid>
-                  <TextBlock Margin="0 8">屏蔽等级(0为不屏蔽) <Run Text="{x:Bind Path=DanmuSettingShieldLevel.Value,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>级</TextBlock>
+                  <TextBlock Margin="0 8">屏蔽等级 <Run Text="{x:Bind Path=DanmuSettingShieldLevel.Value,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>级</TextBlock>
                   <Slider x:Name="DanmuSettingShieldLevel" Minimum="0" Maximum="10" StepFrequency="1"/>
                   <TextBlock Margin="0 8">关键词屏蔽</TextBlock>
                   <Grid>
@@ -362,7 +355,7 @@
                 </StackPanel>
               </ScrollViewer>
             </PivotItem>
-            <PivotItem Foreground="White">
+            <PivotItem x:Name="PlaybackPivot" Foreground="White">
               <PivotItem.Header>
                 <TextBlock Foreground="White" FontSize="18">播放</TextBlock>
               </PivotItem.Header>
@@ -389,7 +382,7 @@
                   </ToggleSwitch>
                   <ToggleSwitch x:Name="PlayerSettingAutoNext" Margin="0 8" Foreground="White">
                     <ToggleSwitch.Header>
-                      <TextBlock Foreground="White">自动播放下一P</TextBlock>
+                      <TextBlock Foreground="White">自动连播</TextBlock>
                     </ToggleSwitch.Header>
                   </ToggleSwitch>
                   <TextBlock Margin="0 8">播放模式</TextBlock>
@@ -518,6 +511,19 @@
         <Grid x:Name="BrightnessShield" Tapped="Grid_Tapped" Background="#99000000" Opacity="0"/>
         <!--播放器浮层提示-->
         <Grid x:Name="ToastHost" IsHitTestVisible="False"/>
+        <!--换目标在路上:一个转圈加目标标题。只写目标本身,不再加"正在切换"这类前缀,
+            读屏通过这一块的名称听到状态,画面上的字仍然只有目标-->
+        <Border x:Name="TransitionPendingHost" Visibility="Collapsed" IsHitTestVisible="False"
+                HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0 56 0 0"
+                Padding="12 6" CornerRadius="16" Background="#99000000"
+                AutomationProperties.LiveSetting="Polite">
+          <StackPanel Orientation="Horizontal">
+            <ProgressRing x:Name="TransitionPendingRing" Width="18" Height="18" IsActive="True" Foreground="White"
+                          AutomationProperties.AccessibilityView="Raw"/>
+            <TextBlock x:Name="TransitionPendingText" Margin="8 0 0 0" VerticalAlignment="Center" FontSize="14" Foreground="White"
+                       TextTrimming="CharacterEllipsis" MaxLines="1" AutomationProperties.AccessibilityView="Raw"/>
+          </StackPanel>
+        </Border>
         <Grid>
           <StackPanel VerticalAlignment="Center" Visibility="{Binding ElementName=Player,Path=Buffering,Mode=OneWay}" x:Name="GridBuffering">
             <ProgressRing IsActive="True" Width="36" Height="36" Foreground="{ThemeResource HighLightColor}"/>
@@ -612,7 +618,7 @@
                     <fa:FontAwesome Icon="Solid_Play" FontSize="20"/>
                   </HyperlinkButton>
                   <ProgressRing IsActive="True" x:Name="BottomBtnLoading" Visibility="Collapsed" Foreground="White" Padding="8" Width="48" Height="48"/>
-                  <HyperlinkButton x:Name="BottomBtnNext" Click="BottomBtnNext_Click" Visibility="Collapsed" Foreground="White" Padding="8" Width="48" Height="48">
+                  <HyperlinkButton x:Name="BottomBtnNext" Click="BottomBtnNext_Click" Visibility="Collapsed" Foreground="White" Padding="8" Width="48" Height="48" ToolTipService.ToolTip="下一P">
                     <fa:FontAwesome Icon="Solid_StepForward" FontSize="18"/>
                   </HyperlinkButton>
                   <TextBlock x:Name="BottomTextPostion" VerticalAlignment="Center" Foreground="White" Margin="8 0" FontSize="18"><Run Text="{Binding ElementName=Player,Path=Position,Mode=OneWay,Converter={StaticResource progress}}"/> / <Run Text="{Binding ElementName=Player,Path=Duration,Mode=OneWay,Converter={StaticResource progress}}"/></TextBlock>
@@ -625,7 +631,7 @@
                   <Button x:Name="TopBtnCloseDanmaku" Click="TopBtnCloseDanmaku_Click" Visibility="{x:Bind Path=DanmuControl.Visibility,Mode=OneWay}" BorderThickness="0" Background="Transparent" Padding="0" Width="48" Height="48">
                     <Image Width="28" Height="28" Source="/Assets/Icon/icon_danmaku_close.png"/>
                   </Button>
-                  <local:DanmakuListControl x:Name="DanmakuListButton"/>
+                  <local:DanmakuListControl x:Name="DanmakuListButton" ShowButton="{x:Bind ShowDanmakuListButton,Mode=OneWay}"/>
                   <!--<HyperlinkButton x:Name="BottomBtnSendDanmaku" Foreground="White" Padding="8" Width="48" Height="48">
                                     <fa:FontAwesome Icon="Solid_Comments" FontSize="20"></fa:FontAwesome>
                                 </HyperlinkButton>-->
@@ -704,10 +710,16 @@
                       <ComboBoxItem Content="0.5x"/>
                     </ComboBox.Items>
                   </ComboBox>
-                  <Button x:Name="BottomBtnList" Click="BottomBtnList_Click" Visibility="{x:Bind ShowPlaylistButton,Mode=OneWay}" ToolTipService.ToolTip="选集" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
-                    <TextBlock VerticalAlignment="Center" FontSize="18">选集</TextBlock>
+                  <Button x:Name="BottomBtnDirectory" Click="BottomBtnDirectory_Click" Visibility="Collapsed" ToolTipService.ToolTip="播放目录" AutomationProperties.Name="播放目录" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
+                    <StackPanel x:Name="BottomBtnDirectoryPressHost" Orientation="Horizontal" RenderTransformOrigin="0.5,0.5">
+                      <StackPanel.RenderTransform>
+                        <CompositeTransform x:Name="BottomBtnDirectoryPress"/>
+                      </StackPanel.RenderTransform>
+                      <fa:FontAwesome Icon="Solid_ListUl" FontSize="18" VerticalAlignment="Center"/>
+                      <TextBlock x:Name="BottomBtnDirectoryCaption" VerticalAlignment="Center" FontSize="18" Text="" Margin="8 0 0 0"/>
+                    </StackPanel>
                   </Button>
-                  <Button x:Name="BottomBtnNode" Click="BottomBtnNode_Click" Visibility="{x:Bind ShowPlayNodeButton,Mode=OneWay}" ToolTipService.ToolTip="选集" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
+                  <Button x:Name="BottomBtnNode" Click="BottomBtnNode_Click" Visibility="{x:Bind ShowPlayNodeButton,Mode=OneWay}" ToolTipService.ToolTip="节点" BorderThickness="0" Background="Transparent" Foreground="White" Padding="12" Height="48">
                     <TextBlock VerticalAlignment="Center" FontSize="18">节点</TextBlock>
                   </Button>
                   <HyperlinkButton x:Name="BottomBtnMiniWindows" Click="BottomBtnMiniWindows_Click" ToolTipService.ToolTip="小窗置顶" Foreground="White" Padding="8" Width="48" Height="48">
@@ -760,6 +772,17 @@
           <Image Source="ms-appx:///Assets/Icon/ic_play.png"/>
         </HyperlinkButton>
         <Button x:Name="BtnFoucs" Width="0" Height="0" VerticalAlignment="Top" HorizontalAlignment="Left" Margin="-8 -8 0 0" Background="Transparent" BorderThickness="0"/>
+        <!--抽屉外的空白:点一下就收。摆在抽屉之前,抽屉的 380 像素盖在它上面,点抽屉不会被它抢走-->
+        <Grid x:Name="DirectoryScrim" Visibility="Collapsed" Opacity="0" Background="#66000000"
+              Tapped="DirectoryScrim_Tapped" DoubleTapped="DirectoryScrim_DoubleTapped"
+              PointerPressed="DirectoryScrim_PointerPressed" PointerReleased="DirectoryScrim_PointerReleased"/>
+        <!--播放目录:播放器内部的全高抽屉。只盖住视频,不碰播放、全屏、铺满和设置面板-->
+        <Grid x:Name="DirectoryHost" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Stretch" Width="380" BorderBrush="#33FFFFFF" BorderThickness="1 0 0 0" Opacity="0">
+          <Grid.RenderTransform>
+            <CompositeTransform x:Name="DirectoryHostTranslate" TranslateX="380"/>
+          </Grid.RenderTransform>
+          <local:PlayDirectoryControl x:Name="DirectoryDrawer" RowActivated="DirectoryDrawer_RowActivated" ContinuationSourceRequested="DirectoryDrawer_ContinuationSourceRequested" LoadMoreRequested="DirectoryDrawer_LoadMoreRequested" LoadAllRequested="DirectoryDrawer_LoadAllRequested" CancelLoadAllRequested="DirectoryDrawer_CancelLoadAllRequested" ScopeChanged="DirectoryDrawer_ScopeChanged" CloseRequested="DirectoryDrawer_CloseRequested"/>
+        </Grid>
       </Grid>
     </SplitView>
   </Grid>

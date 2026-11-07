@@ -25,6 +25,10 @@ param(
     [switch]$NoVersionBump,
     [switch]$Fast,
     [switch]$Restore,
+    # 显式指定 MSBuild.exe（vswhere 查不到 VS 时用）
+    [string]$MSBuildPath = '',
+    # 依赖项目（BiliLite.gRPC 等 SDK 风格项目）已单独生成时跳过它们，只编译 BiliLite.UWP
+    [switch]$SkipProjectReferences,
     # CS2012（中间产物被占用）时的等待上限与重试前的额外停顿，秒
     [int]$LockWaitSeconds = 90,
     [int]$LockRetryDelay = 3
@@ -102,14 +106,30 @@ if (-not $NoVersionBump) {
     }
 }
 
-# 通过 vswhere 定位 Visual Studio 自带的 MSBuild
-$vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
-if (-not (Test-Path $vswhere)) {
-    throw "找不到 vswhere.exe，请安装 Visual Studio 2022（含 UWP 工作负载）：$vswhere"
+# 通过 vswhere 定位 Visual Studio 自带的 MSBuild；vswhere 查不到时回落到 VS2022 的默认安装路径
+$msbuild = $MSBuildPath
+if ($msbuild) {
+    if (-not (Test-Path $msbuild)) {
+        throw "找不到指定的 MSBuild.exe：$msbuild"
+    }
 }
-$msbuild = & $vswhere -latest -prerelease -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
-if (-not $msbuild) {
-    throw '找不到 MSBuild.exe，请安装 Visual Studio 2022（含 MSBuild 组件）。'
+else {
+    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    if (Test-Path $vswhere) {
+        $msbuild = & $vswhere -latest -prerelease -requires Microsoft.Component.MSBuild -find 'MSBuild\**\Bin\MSBuild.exe' | Select-Object -First 1
+    }
+    if (-not $msbuild) {
+        foreach ($edition in @('Community', 'Professional', 'Enterprise', 'BuildTools')) {
+            $candidate = Join-Path ${env:ProgramFiles} "Microsoft Visual Studio\2022\$edition\MSBuild\Current\Bin\MSBuild.exe"
+            if (Test-Path $candidate) {
+                $msbuild = $candidate
+                break
+            }
+        }
+    }
+    if (-not $msbuild) {
+        throw '找不到 MSBuild.exe，请安装 Visual Studio 2022（含 MSBuild 组件），或用 -MSBuildPath 指定路径。'
+    }
 }
 
 $target = if ($Clean) { 'Rebuild' } else { 'Build' }
@@ -126,6 +146,28 @@ else {
     Write-Host "包版本  : $current -> $next（两个清单已更新）"
 }
 
+# 依赖项目仍要被求值(取引用路径),所以 VS 里没有 Microsoft.NET.Sdk 时改用已安装的 dotnet SDK。
+# 必须赶在还原之前设置：SDK 风格的 gRPC 项目在 -t:Restore 时同样要解析 Microsoft.NET.Sdk，
+# 早先放在生成参数里时 -Fast -Restore 会先用 VS 的 MSBuild 还原、然后才轮到这个兜底，等于没兜住。
+if ($Fast -and $SkipProjectReferences) {
+    $vsSdks = Join-Path (Split-Path -Parent (Split-Path -Parent $msbuild)) 'Sdks\Microsoft.NET.Sdk'
+    if (-not (Test-Path $vsSdks) -and -not $env:MSBuildSDKsPath) {
+        $dotnetSdkRoot = Join-Path ${env:ProgramFiles} 'dotnet\sdk'
+        if (Test-Path $dotnetSdkRoot) {
+            $newestSdk = Get-ChildItem $dotnetSdkRoot -Directory |
+                Where-Object { (Test-Path (Join-Path $_.FullName 'Sdks\Microsoft.NET.Sdk')) -and $_.Name -match '^\d+\.\d+\.\d+$' } |
+                Sort-Object { [version]$_.Name } -Descending |
+                Select-Object -First 1
+            if ($newestSdk) {
+                $env:MSBuildSDKsPath = Join-Path $newestSdk.FullName 'Sdks'
+                # dotnet SDK 的工作负载导入器只存在于 dotnet 自己的 MSBuild 里
+                $env:MSBuildEnableWorkloadResolver = 'false'
+                Write-Host "SDK 路径 : $env:MSBuildSDKsPath（VS 未安装 .NET SDK 组件）"
+            }
+        }
+    }
+}
+
 # 还原 NuGet 包：packages.config 与 PackageReference 两种项目都要覆盖
 if ($Fast -and -not $Restore) {
     Write-Host '还原    : 已跳过（-Fast，需要时加 -Restore）'
@@ -140,6 +182,10 @@ else {
 # nodeReuse:false 与关闭编译服务器: 复用的 MSBuild 节点会持有 intermediatexaml\BiliLiter.exe,
 # 让紧随其后的第二次生成因 CS2012 失败
 $buildArgs = @($buildItem, "-t:$target", '-p:Configuration=Release', '-p:Platform=x64', '-v:m', '-nologo', '-m', '-nodeReuse:false', '-p:UseSharedCompilation=false')
+if ($Fast -and $SkipProjectReferences) {
+    # 已单独生成过的 SDK 风格依赖不再参与本次生成（SDK 路径已在还原之前设好）
+    $buildArgs += '-p:BuildProjectReferences=false'
+}
 if (-not $Fast) {
     $buildArgs += "-p:AppxPackageDir=$OutputDir"
 }
@@ -292,9 +338,36 @@ if ($LASTEXITCODE -ne 0) {
     throw "生成失败（退出码 $LASTEXITCODE）。"
 }
 
+# ---------- 清理副产物 ----------
+# BiliLite.UWP_*.msix 能编出来却装不上（包里没有 entrypoint/），留在输出目录只会继续被误装（BR-41）。
+# 只清「本次构建的版本」不够：-Fast 编译和任何一次生成都会往当前版本的
+# BiliLite.UWP_<版本>_x64_Test 里写包，一次 -Fast 就能让上一个版本的清理白做，
+# 所以改成扫描输出根下的所有副产物目录，按名字认，不看版本号。
+# 守卫：只认目录名 ^BiliLite\.UWP_.*_x64_Test$；目录里一旦有 BiliLite.Packages_* 或 .appxsym
+# （交付包的符号），说明它不是纯副产物目录，整目录跳过——绝不碰交付包目录、.appxsym、.cer、Dependencies。
+function Remove-ByproductFolders {
+    param([string]$Root)
+    $removed = @()
+    $folders = @(Get-ChildItem -LiteralPath $Root -Directory -ErrorAction SilentlyContinue |
+        Where-Object { $_.Name -match '^BiliLite\.UWP_.*_x64_Test$' })
+    foreach ($folder in $folders) {
+        $guarded = @(Get-ChildItem -LiteralPath $folder.FullName -File -ErrorAction SilentlyContinue |
+            Where-Object { $_.Name -match '^(BiliLite\.Packages_.*|.*\.appxsym)$' })
+        if ($guarded) { continue }
+        Remove-Item -LiteralPath $folder.FullName -Recurse -Force
+        $removed += $folder.Name
+    }
+    # 没有可删的就一个字都不打，避免日志里出现空操作
+    if ($removed) {
+        Write-Host "已清理副产物：$($removed -join '、')（共 $($removed.Count) 个目录）"
+    }
+}
+
 if ($Fast) {
     Write-Host ''
     Write-Host '快速编译完成（未生成 MSIX）。'
+    # 编译同样会留下副产物目录，顺手清掉，别让它被当成可安装包
+    Remove-ByproductFolders -Root $OutputDir
     return
 }
 
@@ -305,24 +378,30 @@ $packages = @()
 foreach ($line in $buildOutput) {
     if ($line -match '->\s+(.+\.msix)\s*$') { $packages += $Matches[1].Trim() }
 }
-foreach ($name in @('BiliLite.UWP', 'BiliLite.Packages')) {
+foreach ($name in @('BiliLite.Packages', 'BiliLite.UWP')) {
     $expected = Join-Path $OutputDir ("{0}_{1}_x64_Test\{0}_{1}_x64.msix" -f $name, $builtVersion)
     if (Test-Path -LiteralPath $expected) { $packages += $expected }
 }
 $packages = @($packages | Select-Object -Unique)
-if ($packages) {
-    Write-Host ''
-    Write-Host '生成产物：'
-    $packages | ForEach-Object { Write-Host "  $_" }
-}
-else {
+if (-not $packages) {
     throw "生成成功，但在 $OutputDir 里没有找到任何 MSIX（版本 $builtVersion）。不要交付空结果。"
 }
+# 只公布 BiliLite.Packages 包：BiliLite.UWP 包缺 entrypoint/，装上去停在启动图就闪退，
+# 它一旦出现在"生成产物"里就会被人当成可安装的交付包（bug_report BR-41 就是这么装错的）。
+$deliverables = @($packages | Where-Object { $_ -match 'BiliLite\.Packages_.*\.msix$' })
+if (-not $deliverables) {
+    throw "找到的 MSIX 里没有 BiliLite.Packages_*.msix（$($packages -join '; ')），自检过的完整包不存在，不要交付。"
+}
+Write-Host ''
+Write-Host '生成产物：'
+$deliverables | ForEach-Object { Write-Host "  $_" }
 
 # ---------- 打包布局校验 ----------
 # 1.0.9.12 把 4MB 的托管主程序放在包根、且没有 entrypoint/，装上去就停在启动图闪退；
-# 能正常启动的布局是「根目录 8KB 启动器 + entrypoint\BiliLiter.exe」。
-# 两个打包工程都会往同一个目录写同名 MSIX，谁后写谁赢，所以最后一个文件不能直接交付。
+# 能正常启动的布局是「根目录 8KB 启动器 + entrypoint\BiliLiter.exe + Win32Tools + fullTrustProcess 扩展」，
+# 这个布局只会出现在 BiliLite.Packages 包里，所以只校验它。
+# 原逻辑假设两个打包工程往同一个目录写同名 MSIX、后者覆盖前者，实测各自写自己的目录，
+# 于是 BiliLite.UWP 包永远没有 entrypoint/，拿它当校验对象只会让正确构建报错，这里不再校验它。
 Add-Type -AssemblyName System.IO.Compression.FileSystem -ErrorAction SilentlyContinue | Out-Null
 
 function Read-AppxPackageLayout {
@@ -344,15 +423,6 @@ function Read-AppxPackageLayout {
     }
 }
 
-function Test-UwpPackageLayout {
-    param([string]$Path)
-    $layout = Read-AppxPackageLayout -Path $Path
-    if (-not $layout.Entries.ContainsKey('entrypoint/BiliLiter.exe')) { return '缺少 entrypoint/BiliLiter.exe' }
-    if (-not $layout.Entries.ContainsKey('BiliLiter.exe')) { return '缺少根 BiliLiter.exe' }
-    if ($layout.Entries['BiliLiter.exe'] -ge 65536) { return "根 BiliLiter.exe 是 $($layout.Entries['BiliLiter.exe']) 字节的托管主程序，不是启动器" }
-    return $null
-}
-
 function Test-FullPackageLayout {
     param([string]$Path)
     $layout = Read-AppxPackageLayout -Path $Path
@@ -362,27 +432,14 @@ function Test-FullPackageLayout {
     return $null
 }
 
-$uwpPackage = $packages | Where-Object { $_ -match 'BiliLite\.UWP_.*\.msix$' } | Select-Object -First 1
-$fullPackage = $packages | Where-Object { $_ -match 'BiliLite\.Packages_.*\.msix$' } | Select-Object -First 1
-if (-not $uwpPackage -and -not $fullPackage) {
-    throw "找到的 MSIX 里没有 BiliLite.UWP_* 或 BiliLite.Packages_*（$($packages -join '; ')），布局无法校验，不要交付。"
+$fullPackage = $deliverables | Select-Object -First 1
+$problem = Test-FullPackageLayout -Path $fullPackage
+if ($problem) {
+    throw "完整包布局不对（$problem）：$fullPackage。"
 }
-if ($uwpPackage) {
-    $problem = Test-UwpPackageLayout -Path $uwpPackage
-    if ($problem) {
-        # 另一个打包工程会把同名文件覆盖成正确布局：重跑它一次再检查
-        Write-Warning "UWP 包布局不对（$problem），重跑 BiliLite.Packages 打包修正。"
-        $wapproj = Join-Path $root 'src\BiliLite.Packages\BiliLite.Packages.wapproj'
-        & $msbuild $wapproj -t:Package '-p:Configuration=Release' '-p:Platform=x64' '-v:m' '-nologo' '-m' '-nodeReuse:false' "-p:AppxPackageDir=$OutputDir" | Out-Null
-        $problem = Test-UwpPackageLayout -Path $uwpPackage
-        if ($problem) {
-            throw "UWP 包布局仍然不对（$problem）：$uwpPackage。这个包装上去会停在启动图，不要交付。"
-        }
-    }
-}
-if ($fullPackage) {
-    $problem = Test-FullPackageLayout -Path $fullPackage
-    if ($problem) {
-        throw "完整包布局不对（$problem）：$fullPackage。"
-    }
-}
+
+Write-Host ''
+Write-Host "交付包：$fullPackage"
+
+# 完整包已通过布局校验、路径也已打印，此时删副产物不影响任何交付信息
+Remove-ByproductFolders -Root $OutputDir

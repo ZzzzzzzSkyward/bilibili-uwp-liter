@@ -265,7 +265,7 @@
         <StackPanel>
           <TextBlock FontSize="15" Margin="0 8 0 0" Text="视频标题"/>
           <TextBox FontSize="15" Margin="0 8 0 0" x:Name="TitleTextBox"/>
-          <TextBlock FontSize="15" Margin="0 8 0 0" Text="视频链接（b站网址）"/>
+          <TextBlock FontSize="15" Margin="0 8 0 0" Text="视频链接"/>
           <TextBox FontSize="15" Margin="0 8 0 0" x:Name="LinkTextBox"/>
           <TextBlock FontSize="15" Margin="0 8 0 0" Text="预览图链接"/>
           <TextBox FontSize="15" Margin="0 8 0 0" x:Name="ImageTextBox"/>

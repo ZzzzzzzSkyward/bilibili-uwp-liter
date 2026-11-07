@@ -1,25 +1,35 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 namespace BiliLite.Models.Common
 {
     /// <summary>
-    /// /x/v2/medialist/resource/list 的响应,字段名与请求参数以外的服务端键保持一致
+    /// 远程播放列表的一页,已经归一化:线上键名只活在 Models/Api/MediaList 的 DTO 里,
+    /// 由 Parsing/MediaList/MediaListResourceListMapper 填进来,这里不再直接反序列化。
     /// </summary>
     public class MediaListResources
     {
-        [JsonProperty("media_list")]
+        /// <summary>
+        /// 这一页的行;空表是合法的空页,缺列表在解析层就已经是失败,不走这里
+        /// </summary>
         public List<MediaListItem> MediaList { get; set; }
 
-        [JsonProperty("has_more")]
+        /// <summary>
+        /// 服务端说还有下一页;线上没报时是 false
+        /// </summary>
         public bool HasMore { get; set; }
 
-        [JsonProperty("total_count")]
+        /// <summary>
+        /// 服务端报的总数;0 表示没报过(与 MediaListPagingState.HasKnownTotal 一致)
+        /// </summary>
         public int TotalCount { get; set; }
     }
 
+    /// <summary>
+    /// 播放列表里的一行
+    /// </summary>
     public class MediaListItem
     {
         /// <summary>
@@ -196,6 +206,11 @@ namespace BiliLite.Models.Common
         public int TotalCount { get; private set; }
 
         /// <summary>
+        /// 总数只认服务端报过的值;没报过就一直是未知,不能拿已加载行数顶上
+        /// </summary>
+        public bool HasKnownTotal { get; private set; }
+
+        /// <summary>
         /// 上一页响应里最后一条的 aid,下一次请求的 oid;与选中的播放行无关
         /// </summary>
         public string LastAid { get; private set; }
@@ -205,9 +220,27 @@ namespace BiliLite.Models.Common
         /// </summary>
         public bool LastLoadFailed { get; private set; }
 
+        /// <summary>
+        /// 有一次取页还在路上。footer 和抽屉据此显示"加载中",不再开第二个请求。
+        /// </summary>
+        public bool IsLoading { get; private set; }
+
         public void MarkLoadFailed()
         {
             LastLoadFailed = true;
+        }
+
+        public void MarkLoading()
+        {
+            IsLoading = true;
+        }
+
+        /// <summary>
+        /// 请求结束(成功或失败)都要调,否则状态会停在"加载中"
+        /// </summary>
+        public void MarkLoadFinished()
+        {
+            IsLoading = false;
         }
 
         public IReadOnlyList<MediaListItem> Rows
@@ -240,7 +273,7 @@ namespace BiliLite.Models.Common
         {
             get
             {
-                return TotalCount > 0
+                return HasKnownTotal
                     ? m_rows.Count.ToString(CultureInfo.InvariantCulture) + " / " + TotalCount.ToString(CultureInfo.InvariantCulture)
                     : m_rows.Count.ToString(CultureInfo.InvariantCulture);
             }
@@ -276,13 +309,83 @@ namespace BiliLite.Models.Common
 
             // has_more 以最新一页为准
             HasMore = page.HasMore;
-            TotalCount = page.TotalCount > 0 ? page.TotalCount : m_rows.Count;
+            // 总数只认服务端报过的值:后面的页没带总数时保留上一页已知的值,别把已知改回未知
+            if (page.TotalCount > 0)
+            {
+                TotalCount = page.TotalCount;
+                HasKnownTotal = true;
+            }
             return added;
         }
 
         public bool ContainsId(long id)
         {
             return m_rows.Exists(x => x.Id == id);
+        }
+    }
+
+    /// <summary>
+    /// 取页的单飞通道:详情列 footer、抽屉和连播边界共用同一个在途请求,
+    /// 后到的调用者等这一次的结果,不另开第二个请求。
+    /// 失败只记账,已加载的行和游标都不动,"加载更多"留给用户重试。
+    /// </summary>
+    public sealed class MediaListPageLoader
+    {
+        private readonly MediaListPagingState m_state;
+        private readonly Func<Task<MediaListResources>> m_fetch;
+        private Task<bool> m_running;
+
+        public MediaListPageLoader(MediaListPagingState state, Func<Task<MediaListResources>> fetch)
+        {
+            m_state = state;
+            m_fetch = fetch;
+        }
+
+        /// <summary>
+        /// 取一页。已经有请求在路上时返回同一个请求,所以两个入口同时点只会取一次。
+        /// 返回 true 表示这一页真的追加进了状态。
+        /// </summary>
+        public Task<bool> LoadAsync()
+        {
+            var running = m_running;
+            if (running != null) return running;
+            var task = RunAsync();
+            m_running = task;
+            return ClearWhenDone(task);
+        }
+
+        private async Task<bool> ClearWhenDone(Task<bool> task)
+        {
+            try
+            {
+                return await task;
+            }
+            finally
+            {
+                // 只有开这一次请求的调用者清标记,后到的调用者不碰
+                if (ReferenceEquals(m_running, task)) m_running = null;
+            }
+        }
+
+        private async Task<bool> RunAsync()
+        {
+            m_state.MarkLoading();
+            try
+            {
+                var page = await m_fetch();
+                // 失败已经由服务按现有提示方式上报:记号留着,"加载更多"就是重试入口
+                if (page == null)
+                {
+                    m_state.MarkLoadFailed();
+                    return false;
+                }
+                m_state.Append(page);
+                return true;
+            }
+            finally
+            {
+                m_state.MarkLoadFinished();
+            }
         }
     }
 }

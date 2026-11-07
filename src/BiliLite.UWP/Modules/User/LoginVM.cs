@@ -686,7 +686,9 @@ namespace BiliLite.Modules.User
                     if (result.token_info == null || string.IsNullOrWhiteSpace(result.token_info.access_token) || result.token_info.mid <= 0)
                         return new LoginCallbackModel { status = LoginStatus.Fail, message = "登录响应缺少有效会话信息" };
                     var saved = await account.SaveLogin(result.token_info.access_token, result.token_info.refresh_token,
-                        result.token_info.expires_in, result.token_info.mid, result.sso, result.cookie_info);
+                        result.token_info.expires_in, result.token_info.mid, result.sso, result.cookie_info,
+                        // 走到这里的两个流程（DoSMSLogin 的 SMSLogin 与密码登录的 LoginV3）都由 LoginKey 换令牌
+                        AppkeyIdentity.Login);
                     if (!saved)
                         return new LoginCallbackModel { status = LoginStatus.Fail, message = "登录信息保存失败，请重试" };
                     return new LoginCallbackModel()

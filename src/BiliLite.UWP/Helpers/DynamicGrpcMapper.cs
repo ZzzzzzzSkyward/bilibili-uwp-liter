@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Bilibili.App.Dynamic.V2;
 using BiliLite.Modules;
+using BiliLite.Parsing.Dynamic;
 using static BiliLite.Parsing.Dynamic.WireScalars;
 using GrpcDynamicType = Bilibili.App.Dynamic.V2.DynamicType;
 using Newtonsoft.Json.Linq;
@@ -207,7 +208,7 @@ namespace BiliLite.Helpers
         }
 
 
-        private static DynamicCardModel2024 MapUserCard(DynamicItem source)
+        private static DynamicCardModel2024 MapUserCard(DynamicItem source, int depth = 0)
         {
             if (source == null || source.Extend == null)
             {
@@ -224,8 +225,13 @@ namespace BiliLite.Helpers
             var stat = GetModule(source, DynModuleType.ModuleStat)?.ModuleStat;
             var moduleDesc = GetModule(source, DynModuleType.ModuleDesc)?.ModuleDesc;
             var fold = GetModule(source, DynModuleType.ModuleFold)?.ModuleFold;
+            // 正文之外的两块：附件卡（预约/投票/通用卡）与图文摘要。以前都不读，卡片就少了一截内容。
+            var additional = GetModule(source, DynModuleType.ModuleAdditional)?.ModuleAdditional;
+            var opusSummary = GetModule(source, DynModuleType.ModuleOpusSummary)?.ModuleOpusSummary
+                ?? source.Extend.OpusSummary;
 
-            var commentId = GetCommentId(source.CardType, dynamic) ?? source.Extend.DynIdStr;
+            var comment = GetCommentTarget(source.CardType, dynamic, source.Extend.DynIdStr);
+            var commentId = comment == null ? source.Extend.DynIdStr : comment.Oid;
             var card = new DynamicCardModel2024
             {
                 id_str = source.Extend.DynIdStr,
@@ -233,70 +239,118 @@ namespace BiliLite.Helpers
                 visible = true,
                 basic = new DynamicCardModel2024_basic
                 {
+                    // 评论目标是一对 (oid, 评论接口类型)：只写 oid 或把类型固定成占位 1，
+                    // 调用方就只能按显示类型再猜一次。类型未知时才退回 0，交给按类型的老映射。
                     comment_id_str = commentId,
                     rid_str = commentId,
-                    comment_type = 1,
+                    comment_type = comment == null ? 0 : comment.Type,
                 },
                 modules = new DynamicCardModel2024_modules
                 {
                     module_author = MapAuthor(author),
                     module_stat = new DynamicCardModel2024_stat
                     {
-                        comment = new DynamicCardModel2024_comment { count = ToInt(stat?.Reply ?? 0) },
-                        forward = new DynamicCardModel2024_forward { count = ToInt(stat?.Repost ?? 0) },
+                        comment = new DynamicCardModel2024_comment
+                        {
+                            count = ToInt(stat?.Reply ?? 0),
+                            forbidden = stat?.NoComment ?? false,
+                        },
+                        forward = new DynamicCardModel2024_forward
+                        {
+                            count = ToInt(stat?.Repost ?? 0),
+                            forbidden = stat?.NoForward ?? false,
+                        },
                         like = new DynamicCardModel2024_like
                         {
                             count = ToInt(stat?.Like ?? 0),
                             status = stat?.LikeInfo?.IsLike ?? false,
                         },
                     },
-                    module_dynamic = MapDynamic(dynamic, moduleDesc, fold),
+                    module_dynamic = MapDynamic(dynamic, moduleDesc, fold, additional, opusSummary),
                 }
             };
 
             if (source.CardType == GrpcDynamicType.Forward)
             {
-                // 原动态可能属于被丢弃的类型，此时用占位卡片保证父卡片仍然可读。
-                card.orig = MapUserCard(dynamic?.DynForward?.Item) ?? MissingCard(source.Extend.OrigDynIdStr);
+                var forwardItem = dynamic?.DynForward?.Item;
+                if (DynamicCardDepth.CanExpandOrig(depth))
+                {
+                    // 原动态可能属于被丢弃的类型，此时用占位卡片保证父卡片仍然可读。
+                    card.orig = MapUserCard(forwardItem, depth + 1) ?? MissingCard(source.Extend.OrigDynIdStr);
+                }
+                else
+                {
+                    // 到顶了：第三层及更深不再搬进模型，只留 ID 给祖先行跳转
+                    card.AncestryDynamicID = FirstNonEmpty(forwardItem?.Extend?.DynIdStr, source.Extend.OrigDynIdStr);
+                }
             }
 
             return card;
         }
 
         /// <summary>
-        /// 评论与详情使用的 oid：视频/番剧/合集用稿件 AID，专栏用 cvid，音乐用歌曲 ID，图片用相册对象 ID；其余卡片退回动态 ID。
+        /// 评论使用的 (oid, 评论接口类型) 这一对：视频/番剧/合集用稿件 AID（1），专栏用 cvid（12），
+        /// 音频用歌曲 ID（14），图片用相册对象 ID（11），其余卡片退回动态 ID（17）。
+        /// 这些是既有文档映射，换成一对之后调用方不必再按显示类型猜一次。
         /// </summary>
-        private static string GetCommentId(GrpcDynamicType cardType, ModuleDynamic dynamic)
+        private static DynamicCommentTarget GetCommentTarget(GrpcDynamicType cardType, ModuleDynamic dynamic, string dynamicId)
         {
-            if (dynamic == null)
+            if (dynamic != null)
             {
-                return null;
+                switch (cardType)
+                {
+                    case GrpcDynamicType.Av:
+                        if (dynamic.DynArchive != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynArchive.Avid.ToString(), 1);
+                        }
+                        break;
+                    case GrpcDynamicType.Article:
+                        if (dynamic.DynArticle != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynArticle.Id.ToString(), 12);
+                        }
+                        break;
+                    case GrpcDynamicType.Pgc:
+                        if (dynamic.DynPgc != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynPgc.Aid.ToString(), 1);
+                        }
+                        break;
+                    case GrpcDynamicType.UgcSeason:
+                        if (dynamic.DynUgcSeason != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynUgcSeason.Avid.ToString(), 1);
+                        }
+                        break;
+                    case GrpcDynamicType.Music:
+                        if (dynamic.DynMusic != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynMusic.Id.ToString(), 14);
+                        }
+                        break;
+                    case GrpcDynamicType.Draw:
+                        if (dynamic.DynDraw != null)
+                        {
+                            return DynamicCommentTarget.From(dynamic.DynDraw.Id.ToString(), 11);
+                        }
+                        break;
+                }
             }
-            switch (cardType)
-            {
-                case GrpcDynamicType.Av:
-                    return dynamic.DynArchive == null ? null : dynamic.DynArchive.Avid.ToString();
-                case GrpcDynamicType.Article:
-                    return dynamic.DynArticle == null ? null : dynamic.DynArticle.Id.ToString();
-                case GrpcDynamicType.Pgc:
-                    return dynamic.DynPgc == null ? null : dynamic.DynPgc.Aid.ToString();
-                case GrpcDynamicType.UgcSeason:
-                    return dynamic.DynUgcSeason == null ? null : dynamic.DynUgcSeason.Avid.ToString();
-                case GrpcDynamicType.Music:
-                    return dynamic.DynMusic == null ? null : dynamic.DynMusic.Id.ToString();
-                case GrpcDynamicType.Draw:
-                    return dynamic.DynDraw == null ? null : dynamic.DynDraw.Id.ToString();
-                default:
-                    return null;
-            }
+            return DynamicCommentTarget.From(dynamicId, 17);
         }
 
-        private static DynamicCardModel2024_dynamic MapDynamic(ModuleDynamic source, ModuleDesc moduleDesc, ModuleFold fold)
+        private static DynamicCardModel2024_dynamic MapDynamic(ModuleDynamic source, ModuleDesc moduleDesc, ModuleFold fold,
+            ModuleAdditional additional, ModuleOpusSummary opusSummary)
         {
             var result = new DynamicCardModel2024_dynamic();
+            result.additional = MapAdditional(additional);
+            // gRPC 的图文常常没有 ModuleDesc：正文只在 Extend.OpusSummary / ModuleOpusSummary 的摘要段落里，
+            // 不读它，一张 OPUS 卡片就只剩作者和时间。
+            var desc = MapDescription(moduleDesc) ?? MapParagraph(opusSummary?.Summary);
             if (source == null)
             {
-                result.desc = MapDescription(moduleDesc);
+                result.desc = desc;
                 if (fold != null && result.desc == null)
                 {
                     result.desc = new DynamicCardModel2024_desc
@@ -305,10 +359,13 @@ namespace BiliLite.Helpers
                         rich_text_nodes = new List<DynamicCardModel2024_node>(),
                     };
                 }
+                result.major = new DynamicCardModel2024_major();
+                ApplyOpusTitle(result, opusSummary);
+                AppendOpusCovers(result, opusSummary);
                 return result;
             }
 
-            result.desc = MapDescription(moduleDesc);
+            result.desc = desc;
             result.major = new DynamicCardModel2024_major();
             if (result.desc == null && fold != null)
             {
@@ -467,7 +524,261 @@ namespace BiliLite.Helpers
                 };
             }
 
+            ApplyOpusTitle(result, opusSummary);
+            AppendOpusCovers(result, opusSummary);
             return result;
+        }
+
+        /// <summary>
+        /// OPUS 的摘要段落 → 与 ModuleDesc 同一套 desc：节点顺序、表情、@ 目标都照搬。
+        /// 只读文本段落，图片与分割线段落不是正文。
+        /// </summary>
+        private static DynamicCardModel2024_desc MapParagraph(Paragraph source)
+        {
+            var text = source?.Text;
+            if (text == null || text.Nodes.Count == 0)
+            {
+                return null;
+            }
+            var nodes = text.Nodes.Select(MapTextNode).ToList();
+            return new DynamicCardModel2024_desc
+            {
+                text = string.Concat(nodes.Select(x => x.text)),
+                rich_text_nodes = nodes,
+            };
+        }
+
+        private static DynamicCardModel2024_node MapTextNode(TextNode source)
+        {
+            var node = new DynamicCardModel2024_node
+            {
+                text = source.RawText,
+                orig_text = source.RawText,
+                type = "RICH_TEXT_NODE_TYPE_TEXT",
+            };
+            switch (source.NodeType)
+            {
+                case TextNode.Types.TextNodeType.Emote:
+                    var emote = source.Emote;
+                    if (emote != null && !string.IsNullOrEmpty(emote.EmoteUrl))
+                    {
+                        node.type = "RICH_TEXT_NODE_TYPE_EMOJI";
+                        node.emoji = new DynamicCardModel2024_emojiinfo
+                        {
+                            icon_url = emote.EmoteUrl,
+                            text = source.RawText,
+                            size = emote.EmoteWidth == null ? 0 : emote.EmoteWidth.EmojiSize,
+                        };
+                    }
+                    break;
+                case TextNode.Types.TextNodeType.At:
+                    // 目标放在 rid 上；没有 biz_id 时正文层会把它降级成普通文本
+                    node.type = "RICH_TEXT_NODE_TYPE_AT";
+                    node.rid = source.Link?.BizId ?? "";
+                    node.jump_url = source.Link?.Link ?? "";
+                    break;
+                case TextNode.Types.TextNodeType.BizLink:
+                    node.type = "RICH_TEXT_NODE_TYPE_WEB";
+                    node.jump_url = source.Link?.Link ?? "";
+                    break;
+            }
+            return node;
+        }
+
+        /// <summary>
+        /// OPUS 标题：Extend.OpusSummary 与 ModuleOpusSummary 两个来源在 MapUserCard 里已合并成同一个对象，
+        /// 标题只进 major.opus.title 这一个槽；正文仍走 desc / summary 段落，不把标题拼进正文。
+        /// </summary>
+        private static void ApplyOpusTitle(DynamicCardModel2024_dynamic result, ModuleOpusSummary opusSummary)
+        {
+            if (result?.major == null || opusSummary == null)
+            {
+                return;
+            }
+            // 标题与摘要一样是段落：文字由 text_nodes 拼出来，不能把 Paragraph 直接当字符串
+            var title = MapParagraph(opusSummary.Title)?.text;
+            if (string.IsNullOrEmpty(title))
+            {
+                return;
+            }
+
+            result.major.opus = new DynamicCardModel2024_opus
+            {
+                title = title,
+            };
+        }
+
+        /// <summary>
+        /// OPUS 封面在 ModuleOpusSummary.Covers 里：这张卡没有别的卡片载荷时才当成图片补上，
+        /// 不覆盖 archive/pgc/draw/article 已经拿到的内容。
+        /// </summary>
+        private static void AppendOpusCovers(DynamicCardModel2024_dynamic result, ModuleOpusSummary opusSummary)
+        {
+            var major = result?.major;
+            if (major == null || opusSummary == null)
+            {
+                return;
+            }
+            if (major.archive != null || major.pgc != null || major.ugc_season != null || major.medialist != null
+                || major.article != null || major.draw != null || major.live != null || major.live_rcmd != null)
+            {
+                return;
+            }
+            var items = opusSummary.Covers
+                .Where(x => !string.IsNullOrEmpty(x.Src))
+                .Select(x => new DynamicCardModel2024_pic
+                {
+                    src = x.Src,
+                    width = ToInt(x.Width),
+                    height = ToInt(x.Height),
+                    size = x.Size,
+                })
+                .ToList();
+            if (items.Count > 0)
+            {
+                major.draw = new DynamicCardModel2024_draw { items = items };
+            }
+        }
+
+        /// <summary>
+        /// 附件卡（ModuleAdditional）：预约/投票/通用/商品/稿件，正文之外单独一张卡。
+        /// 以前整块不读，一条能预约的动态和一条纯文字动态在卡片里长得一样。
+        /// </summary>
+        private static DynamicCardModel2024_add MapAdditional(ModuleAdditional source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+
+            var result = new DynamicCardModel2024_add
+            {
+                type = MapAdditionalType(source.Type),
+            };
+
+            if (source.Up != null)
+            {
+                var up = source.Up;
+                result.reserve = new DynamicCardModel2024_addin_reserve
+                {
+                    title = up.Title,
+                    jump_url = up.Url,
+                    rid = up.Rid,
+                    reserve_total = ToInt(up.ReserveTotal),
+                    desc1 = new DynamicCardModel2024_reservetext { text = up.DescText1?.Text ?? "" },
+                    desc2 = new DynamicCardModel2024_reservetext { text = up.DescText2 ?? "" },
+                    desc3 = new DynamicCardModel2024_reservetext { text = up.DescText3?.Text ?? "" },
+                    button = MapAdditionalButton(up.Button),
+                };
+                return result;
+            }
+
+            if (source.Vote2 != null)
+            {
+                var vote = source.Vote2;
+                result.vote = new DynamicCardModel2024_addin
+                {
+                    title = vote.Title,
+                    desc1 = vote.Label,
+                    id_str = vote.VoteId.ToString(),
+                    state = (int)vote.State,
+                };
+                return result;
+            }
+
+            if (source.Common != null)
+            {
+                var common = source.Common;
+                result.common = new DynamicCardModel2024_addin
+                {
+                    cover = common.ImageUrl,
+                    desc1 = common.DescText1,
+                    desc2 = common.DescText2,
+                    head_text = common.HeadText,
+                    jump_url = common.Url,
+                    sub_type = common.CardType,
+                    title = common.Title,
+                    button = MapAdditionalButton(common.Button),
+                };
+                return result;
+            }
+
+            if (source.Ugc != null)
+            {
+                var ugc = source.Ugc;
+                result.ugc = new DynamicCardModel2024_addin
+                {
+                    cover = ugc.Cover,
+                    desc1 = ugc.DescText1,
+                    desc2 = ugc.DescText2,
+                    head_text = ugc.HeadText,
+                    jump_url = ugc.Uri,
+                    sub_type = ugc.CardType,
+                    title = ugc.Title,
+                };
+                return result;
+            }
+
+            if (source.Goods != null)
+            {
+                var goods = source.Goods;
+                result.goods = new DynamicCardModel2024_addin
+                {
+                    jump_url = goods.Uri,
+                    sub_type = goods.CardType,
+                    title = goods.RcmdDesc,
+                };
+                return result;
+            }
+
+            return result;
+        }
+
+        private static DynamicCardModel2024_button2 MapAdditionalButton(AdditionalButton source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+            return new DynamicCardModel2024_button2
+            {
+                status = (int)source.Status,
+                jump_url = source.JumpUrl,
+                jump_style = MapButtonText(source.JumpStyle),
+                check = MapButtonText(source.Check),
+                uncheck = MapButtonText(source.Uncheck),
+            };
+        }
+
+        private static DynamicCardModel2024_buttontext MapButtonText(AdditionalButtonStyle source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+            return new DynamicCardModel2024_buttontext
+            {
+                icon_url = source.Icon,
+                text = source.Text,
+            };
+        }
+
+        /// <summary>gRPC 的附件类型名换成 web 那套字符串，渲染层的 subtype 判断不区分来源。</summary>
+        private static string MapAdditionalType(AdditionalType type)
+        {
+            switch (type)
+            {
+                case AdditionalType.AdditionalNone: return "ADDITIONAL_TYPE_NONE";
+                case AdditionalType.Pgc: return "ADDITIONAL_TYPE_PGC";
+                case AdditionalType.Goods: return "ADDITIONAL_TYPE_GOODS";
+                case AdditionalType.Vote: return "ADDITIONAL_TYPE_VOTE";
+                case AdditionalType.Common: return "ADDITIONAL_TYPE_COMMON";
+                case AdditionalType.Esport: return "ADDITIONAL_TYPE_ESPORTS";
+                case AdditionalType.UpRcmd: return "ADDITIONAL_TYPE_UP_RCMD";
+                case AdditionalType.Ugc: return "ADDITIONAL_TYPE_UGC";
+                case AdditionalType.UpReservation: return "ADDITIONAL_TYPE_RESERVE";
+                default: return type.ToString();
+            }
         }
 
         private static DynamicCardModel2024_desc MapDescription(Bilibili.App.Dynamic.V2.ModuleDesc source)

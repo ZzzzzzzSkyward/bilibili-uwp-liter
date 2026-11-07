@@ -68,14 +68,11 @@ internal static class Program
         Check(sendsBeforeRetry == 4, "the first refresh attempt dispatched the correspond page, refresh and confirm requests");
 
         await service.RefreshCookieAsync();
-        Check(sent.Count - sendsBeforeRetry == 3 &&
-            sent[sendsBeforeRetry].method == RestSharp.Method.Get &&
-            sent[sendsBeforeRetry].baseUrl.Contains("/correspond/") &&
-            sent[sendsBeforeRetry + 1].method == RestSharp.Method.Post &&
-            sent[sendsBeforeRetry + 1].baseUrl.EndsWith("/cookie/refresh") &&
-            sent[sendsBeforeRetry + 2].method == RestSharp.Method.Post &&
-            sent[sendsBeforeRetry + 2].baseUrl.EndsWith("/confirm/refresh"),
-            "a retry re-dispatches the whole refresh flow instead of short-circuiting");
+        Check(sent.Count - sendsBeforeRetry == 1 &&
+            sent[sendsBeforeRetry].method == RestSharp.Method.Post &&
+            sent[sendsBeforeRetry].baseUrl.EndsWith("/confirm/refresh") &&
+            sent[sendsBeforeRetry].body.Contains("refresh_token=old-token"),
+            "a retry finishes the pending confirmation instead of starting another refresh");
 
         Check(notifications.Count == 0, "failed refresh attempts never raise the re-login toast");
     }

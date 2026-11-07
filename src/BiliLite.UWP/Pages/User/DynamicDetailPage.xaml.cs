@@ -29,11 +29,24 @@ namespace BiliLite.Pages.User
         string dynamic_id;
         private void DynamicVM_OpenCommentEvent(object sender, Controls.Dynamic.DynamicItemDisplayModel e)
         {
+            // forbidden=true 是服务端明确的"不许评论"：不能把按钮当成一个会成功的动作
+            if (!e.CanComment)
+            {
+                Utils.ShowMessageToast("这条动态已关闭评论");
+                return;
+            }
             //splitView.IsPaneOpen = true;
             dynamic_id = e.DynamicID;
             pivotRight.SelectedIndex = 1;
             repostCount.Text = e.ShareCount.ToString();
             commentCount.Text = e.CommentCount.ToString();
+            var target = e.CommentTarget;
+            if (target != null)
+            {
+                // 适配器给的是真实的一对 (oid, 评论类型)：直接用，不按显示类型再猜
+                Utils.ShowComment(target.Oid, target.Type, Api.CommentApi.CommentSort.Hot);
+                return;
+            }
             Api.CommentApi.CommentType commentType = Api.CommentApi.CommentType.Dynamic;
             var id = e.ReplyID;
             switch (e.Type)

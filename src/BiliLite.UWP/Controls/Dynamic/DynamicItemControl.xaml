@@ -1,112 +1,261 @@
 ﻿<?xml version='1.0' encoding='UTF-8'?>
-<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls.Dynamic" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:BiliLite.Controls.Dynamic" xmlns:fa="using:FontAwesome5" xmlns:converters="using:BiliLite.Converters" x:Class="BiliLite.Controls.Dynamic.DynamicItemControl" mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400">
+<UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls.Dynamic" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:controls="using:BiliLite.Controls.Dynamic" xmlns:fa="using:FontAwesome5" xmlns:converters="using:BiliLite.Converters" xmlns:helpers="using:BiliLite.Helpers" x:Class="BiliLite.Controls.Dynamic.DynamicItemControl" mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400">
+  <!--
+    动态卡片排版令牌 —— 来源 CARD_PLAN.md §5(CARD_PLAN §5「Layout and typography tokens」「Responsive behavior」)。
+    所有数字都是 UWP 有效像素的起始值,设备联调时按这张表改;窄态(<480)的值由
+    DynamicItemControl.xaml.cs 的 ApplyWidthState 统一写出,宽态值就是下面各处的字面量。
+
+      令牌                 宽态       窄态(<480)   落点
+      阅读列宽             800 最大   —            CardRoot.MaxWidth(本文件);正文不再各自假设 800
+      页面留白             12        8            CardRoot.Margin 左右
+      卡片间距             4         4            CardRoot.Margin 下 4 + ListViewItem 上下 2(相邻两卡内容之间 8+4+2+2+8=24,原为 48)
+      卡片内边距           16,8      12,8         CardSurface.Padding(左右 16/12,上下 8)
+      卡片圆角             8         —            CardSurface.CornerRadius(无边框,卡片间只靠 CardRoot.Margin 下 4)
+      正文                 16 常规    同左          RichTextControl.xaml.cs(BodyFontSize,富文本与纯文本回退同一处)
+      正文行高             24 最小    同左          RichTextControl.xaml.cs(BodyLineHeight + MaxHeight 行距策略)
+      作者名               15 半粗    同左          HeaderName 两个 TextBlock(单行 + 省略号)
+      发表时间             12 常规    同左          HeaderTime
+      卡片标题槽           18 半粗/26 同左          CardTitle(头部下方、正文上方,最多两行;空标题整行不占位)
+      预告/OPUS 标题       18 半粗/26 同左          DynamicTemplate.xaml OneRow/Reserve 的标题
+      预告描述             14/21      同左          DynamicTemplate.xaml OneRow Subtitle、Reserve Desc
+      互动计数/小徽标      13 / 12   同左          ActionRow 内 TextBlock / 作者 TAG 徽标
+      头部头像             40×40      同左          HeaderAvatar(转发原作者行仍为 24×24)
+      区块间距/细间距      8 / 4      8 / 4        HeaderArea 与 BodyPresenter/CardContentPresenter/ActionRow 之间 8;名字与时间之间 4
+      互动点击区           ≥40×40     同左          ActionRow 各按钮 MinWidth/MinHeight 与头部按钮;
+                                                 图标 16(互动栏)/ 14(头部 AppBarButton 自带)
+      响应式断点           480        —            DynamicItemControl.xaml.cs NarrowWidthThreshold
+
+    未按计划取值的两处,原因记录在此,不改动数据契约:
+      · 卡片表面没有可用的不透明主题色(App.xaml 的 CardColor/TopPaneBackground 都是全透明),故不加背景也不加边框,卡片之间只靠 CardRoot.Margin 的下 4(加 ListViewItem 上下 2 与卡片上下内边距 8)留白分隔。
+      · 图片网格的列数与瓦片边长不再写在模板里:规则在 Controls/Dynamic/DynamicImageGridLayout,模板只给图片列表(DynamicTemplate.xaml 的 PhotoGrid)。
+  -->
   <UserControl.Resources>
     <converters:CountOrTextConvert x:Name="countConvert"/>
     <converters:ColorConvert x:Name="colorConvert"/>
     <Style TargetType="HyperlinkButton">
       <Setter Property="Foreground" Value="#178bcf"/>
     </Style>
+    <!--
+      附件区(CARD_PLAN §7)的两套模板,由 DynamicAttachmentDataTemplateSelector 按显示模型的 ShowPanel 选:
+      预约附件用 BR-55 的预约面板,投票/链接/未知种类仍走下面这一行。
+      ItemTemplateSelector 是元素属性,在 UserControl.Resources 里声明才能在属性解析时找得到。
+    -->
+    <DataTemplate x:Key="AttachmentPanelTemplate">
+      <!--
+        预约附件:与独立预约动态(DynamicTemplate.xaml 的 Reserve)同一套语言 ——
+        圆角 8、内边距 12、1px 边框、粉色「预约」角标,标题 18/26、说明 14/21 各两行;
+        按钮的文案与图标都来自载荷(reserve.button),没有文案、没有可用路由时不画按钮。
+        图标必须过 imageConvert2:这里是地址字符串,不是可直接绑定的图片。
+      -->
+      <Border Margin="0 8 0 0" Padding="12" HorizontalAlignment="Stretch" CornerRadius="8" BorderThickness="1" BorderBrush="{ThemeResource ForegroundBorderColor}">
+        <StackPanel HorizontalAlignment="Stretch">
+          <Border HorizontalAlignment="Left" Background="HotPink" CornerRadius="2" Padding="6,1">
+            <TextBlock FontSize="12" Foreground="White" Text="预约"/>
+          </Border>
+          <TextBlock Margin="0 8 0 0" Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" helpers:TapToolTip.Enabled="True" Visibility="{Binding TitleVisibility}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
+          <TextBlock Margin="0 4 0 0" Text="{Binding Desc}" Visibility="{Binding DescVisibility}" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
+          <HyperlinkButton Margin="0 8 0 0" Padding="0" HorizontalAlignment="Left" Visibility="{Binding ButtonVisibility}" Command="{Binding OpenCommand}" CommandParameter="{Binding Destination}">
+            <StackPanel Orientation="Horizontal">
+              <Image Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" Visibility="{Binding IconVisibility}" Source="{Binding ButtonIcon, Converter={StaticResource imageConvert2}, ConverterParameter='64h.png'}"/>
+              <TextBlock VerticalAlignment="Center" FontSize="14" Text="{Binding ButtonText}"/>
+            </StackPanel>
+          </HyperlinkButton>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+    <DataTemplate x:Key="AttachmentRowTemplate">
+      <Border Background="{ThemeResource TopPaneBackground}" CornerRadius="4" Padding="8,6" Margin="0,0,0,4">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{Binding KindLabel}" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" helpers:TapToolTip.Enabled="True" Visibility="{Binding TitleVisibility}" FontSize="13" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock Text="{Binding Desc}" Visibility="{Binding DescVisibility}" Margin="0,2,0,0" FontSize="12" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+          </StackPanel>
+          <HyperlinkButton Grid.Column="1" Margin="8,0,0,0" Padding="8,0" MinWidth="40" MinHeight="24" VerticalAlignment="Center" FontSize="12" Content="打开" Visibility="{Binding OpenVisibility}" Command="{Binding OpenCommand}" CommandParameter="{Binding Destination}" AutomationProperties.Name="打开附件"/>
+        </Grid>
+      </Border>
+    </DataTemplate>
+    <local:DynamicAttachmentDataTemplateSelector x:Key="attachmentTemplateSelect" PanelTemplate="{StaticResource AttachmentPanelTemplate}" RowTemplate="{StaticResource AttachmentRowTemplate}"/>
   </UserControl.Resources>
-  <Grid>
-    <Border CornerRadius="4" Padding="8">
+  <!-- 阅读列:最大 800,宽窗口居中,窄窗口自 stretch 到可用宽度 -->
+  <Grid x:Name="CardRoot" Margin="12,0,12,4" MaxWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Top">
+    <Border x:Name="CardSurface" CornerRadius="8" Padding="16,8">
       <Grid>
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto"/>
-          <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-        <HyperlinkButton Visibility="{x:Bind Path=Model.AuthorHeaderVisibility,Mode=OneWay}" Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}" Padding="0" VerticalAlignment="Top">
-          <Grid>
-            <Ellipse Width="40" Height="40" Stroke="WhiteSmoke" StrokeThickness="1">
-              <Ellipse.Fill>
-                <ImageBrush ImageSource="{x:Bind Path=Model.Photo,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='64h'}"/>
-              </Ellipse.Fill>
-            </Ellipse>
-            <Image Width="56" Height="56" Source="{x:Bind Path=Model.Pendant,Mode=OneWay}"/>
-            <Image Width="16" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0 0 4 4" Height="16" Source="{x:Bind Path=Model.Verify,Mode=OneWay}"/>
-          </Grid>
-        </HyperlinkButton>
-        <StackPanel Grid.Column="1" Margin="12 0">
-          <!--用户信息-->
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <!--头部行:头像 | 昵称/时间 | 可选装扮 | 操作。正文与媒体从下一行起占满整宽-->
+        <Grid x:Name="HeaderArea" Grid.Row="0">
           <Grid Visibility="{x:Bind Path=Model.AuthorHeaderVisibility,Mode=OneWay}">
             <Grid.ColumnDefinitions>
-              <ColumnDefinition/>
+              <ColumnDefinition Width="Auto"/>
+              <ColumnDefinition Width="*"/>
               <ColumnDefinition Width="Auto"/>
               <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <HyperlinkButton Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}" Padding="0" VerticalAlignment="Top" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left">
-              <Grid Height="56">
-                <StackPanel VerticalAlignment="Center">
-                  <StackPanel Orientation="Horizontal">
-                    <Border Visibility="{x:Bind Path=Model.ShowTag,Mode=OneWay}" Margin="0 0 4 0" Background="HotPink" CornerRadius="2">
-                      <TextBlock Foreground="White" FontSize="12" Margin="4 2" Text="{x:Bind Path=Model.TagName,Mode=OneWay}"/>
-                    </Border>
-                    <TextBlock Text="{x:Bind Path=Model.UserName,Mode=OneWay}" Foreground="{ThemeResource HighLightTextColor}" Opacity=".8" Visibility="{x:Bind Path=Model.IsYearVip,Mode=OneWay}"/>
-                    <TextBlock Text="{x:Bind Path=Model.UserName,Mode=OneWay}" Foreground="{ThemeResource TextColor}" Visibility="{x:Bind Path=Model.IsYearVip,Mode=OneWay,Converter={StaticResource display}}"/>
-                  </StackPanel>
-                  <TextBlock Margin="0 4 0 0" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" ToolTipService.ToolTip="{x:Bind Path=Model.Datetime,Mode=OneWay}" Text="{x:Bind Path=Model.Time,Mode=OneWay}"/>
-                </StackPanel>
+            <HyperlinkButton x:Name="HeaderAvatar" Grid.Column="0" Margin="0,0,12,0" Padding="0" VerticalAlignment="Top" Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}">
+              <!-- 头像格固定 40,装扮挂件只是叠在上面的装饰,不再单独占一列挤压正文 -->
+              <Grid Width="40" Height="40">
+                <Ellipse Width="40" Height="40" Stroke="WhiteSmoke" StrokeThickness="1">
+                  <Ellipse.Fill>
+                    <ImageBrush ImageSource="{x:Bind Path=Model.Photo,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='64h'}"/>
+                  </Ellipse.Fill>
+                </Ellipse>
+                <Image Width="56" Height="56" HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False" Source="{x:Bind Path=Model.Pendant,Mode=OneWay}"/>
+                <Image Width="16" Height="16" VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="0,0,4,4" Source="{x:Bind Path=Model.Verify,Mode=OneWay}"/>
               </Grid>
             </HyperlinkButton>
-            <Grid Grid.Column="1" HorizontalAlignment="Right" ToolTipService.ToolTip="{x:Bind Path=Model.DecorateName,Mode=OneWay}" Visibility="{x:Bind Path=Model.ShowDecorate,Mode=OneWay}" VerticalAlignment="Center">
-              <Image Height="44" Source="{x:Bind Path=Model.DecorateImage,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='64h.png'}"/>
-              <TextBlock FontSize="12" Visibility="{x:Bind Path=Model.ShowDecorateText,Mode=OneWay}" FontFamily="{StaticResource FansNum}" VerticalAlignment="Center" Margin="0 0 40 0" HorizontalAlignment="Right" Foreground="{x:Bind Path=Model.DecorateColor,Mode=OneWay,Converter={StaticResource colorConvert}}" Text="{x:Bind Path=Model.DecorateText,Mode=OneWay}"/>
+            <!-- 昵称列:星号宽度 + 单行省略号,完整昵称在 ToolTip -->
+            <HyperlinkButton Grid.Column="1" Padding="0" VerticalAlignment="Top" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}" ToolTipService.ToolTip="{x:Bind Path=Model.UserName,Mode=OneWay}">
+              <StackPanel>
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                  </Grid.ColumnDefinitions>
+                  <Border Grid.Column="0" Visibility="{x:Bind Path=Model.ShowTag,Mode=OneWay}" Margin="0,0,4,0" VerticalAlignment="Center" Background="HotPink" CornerRadius="2">
+                    <TextBlock Foreground="White" FontSize="12" Margin="4,2" Text="{x:Bind Path=Model.TagName,Mode=OneWay}"/>
+                  </Border>
+                  <Grid Grid.Column="1">
+                    <TextBlock x:Name="HeaderName" Text="{x:Bind Path=Model.UserName,Mode=OneWay}" FontSize="15" FontWeight="SemiBold" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource HighLightTextColor}" Opacity=".8" Visibility="{x:Bind Path=Model.IsYearVip,Mode=OneWay}"/>
+                    <TextBlock x:Name="HeaderNamePlain" Text="{x:Bind Path=Model.UserName,Mode=OneWay}" FontSize="15" FontWeight="SemiBold" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" Foreground="{ThemeResource TextColor}" Visibility="{x:Bind Path=Model.IsYearVip,Mode=OneWay,Converter={StaticResource display}}"/>
+                  </Grid>
+                </Grid>
+                <TextBlock x:Name="HeaderTime" Margin="0,4,0,0" FontSize="12" TextWrapping="Wrap" Foreground="{ThemeResource ForegroundTextColor}" ToolTipService.ToolTip="{x:Bind Path=Model.Datetime,Mode=OneWay}" Text="{x:Bind Path=Model.Time,Mode=OneWay}"/>
+              </StackPanel>
+            </HyperlinkButton>
+            <!-- 装扮:窄态整格收起,信息移到头部溢出菜单 -->
+            <Grid x:Name="DecorationSlot" Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center">
+              <Grid HorizontalAlignment="Right" ToolTipService.ToolTip="{x:Bind Path=Model.DecorateName,Mode=OneWay}" Visibility="{x:Bind Path=Model.ShowDecorate,Mode=OneWay}">
+                <Image Height="44" Source="{x:Bind Path=Model.DecorateImage,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='64h.png'}"/>
+                <TextBlock FontSize="12" Visibility="{x:Bind Path=Model.ShowDecorateText,Mode=OneWay}" FontFamily="{StaticResource FansNum}" VerticalAlignment="Center" Margin="0,0,40,0" HorizontalAlignment="Right" Foreground="{x:Bind Path=Model.DecorateColor,Mode=OneWay,Converter={StaticResource colorConvert}}" Text="{x:Bind Path=Model.DecorateText,Mode=OneWay}"/>
+              </Grid>
             </Grid>
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Grid.Column="2" Opacity="0.5">
-              <AppBarButton Icon="OpenFile" ToolTipService.ToolTip="打开详情" Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Width="30"/>
-              <AppBarButton Icon="Globe" ToolTipService.ToolTip="网页打开" Command="{x:Bind Path=Model.WebCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.DynamicUrl,Mode=OneWay}" Width="30"/>
-              <AppBarButton Icon="Flag" ToolTipService.ToolTip="举报" Visibility="Collapsed" Width="30"/>
-              <AppBarButton Icon="Delete" ToolTipService.ToolTip="删除" Command="{x:Bind Path=Model.DeleteCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Visibility="{x:Bind Path=Model.IsSelf,Mode=OneWay}" Width="30"/>
+            <!-- 宽态:详情/网页/删除各自独立一格,不再和昵称挤在同一个横向 StackPanel -->
+            <StackPanel x:Name="HeaderActions" Grid.Column="3" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top" Opacity="0.5">
+              <AppBarButton Icon="OpenFile" ToolTipService.ToolTip="打开详情" Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" MinWidth="40" MinHeight="40"/>
+              <AppBarButton Icon="Globe" ToolTipService.ToolTip="网页打开" Command="{x:Bind Path=Model.WebCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.DynamicUrl,Mode=OneWay}" MinWidth="40" MinHeight="40"/>
+              <AppBarButton Icon="Flag" ToolTipService.ToolTip="举报" Visibility="Collapsed" MinWidth="40" MinHeight="40"/>
+              <AppBarButton Icon="Delete" ToolTipService.ToolTip="删除" Command="{x:Bind Path=Model.DeleteCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Visibility="{x:Bind Path=Model.IsSelf,Mode=OneWay}" MinWidth="40" MinHeight="40"/>
             </StackPanel>
+            <!-- 窄态:一个溢出入口,同样的命令,不再挤压昵称 -->
+            <Button x:Name="HeaderOverflow" Grid.Column="3" Visibility="Collapsed" HorizontalAlignment="Right" VerticalAlignment="Top" MinWidth="40" MinHeight="40" Padding="0" Background="Transparent" BorderThickness="0" AutomationProperties.Name="更多操作">
+              <SymbolIcon Symbol="More"/>
+              <Button.Flyout>
+                <MenuFlyout>
+                  <MenuFlyoutItem Text="打开详情" Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}">
+                    <MenuFlyoutItem.Icon>
+                      <SymbolIcon Symbol="OpenFile"/>
+                    </MenuFlyoutItem.Icon>
+                  </MenuFlyoutItem>
+                  <MenuFlyoutItem Text="网页打开" Command="{x:Bind Path=Model.WebCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.DynamicUrl,Mode=OneWay}">
+                    <MenuFlyoutItem.Icon>
+                      <SymbolIcon Symbol="Globe"/>
+                    </MenuFlyoutItem.Icon>
+                  </MenuFlyoutItem>
+                  <MenuFlyoutItem Text="删除" Command="{x:Bind Path=Model.DeleteCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Visibility="{x:Bind Path=Model.IsSelf,Mode=OneWay}">
+                    <MenuFlyoutItem.Icon>
+                      <SymbolIcon Symbol="Delete"/>
+                    </MenuFlyoutItem.Icon>
+                  </MenuFlyoutItem>
+                  <MenuFlyoutSeparator Visibility="{x:Bind Path=Model.ShowDecorate,Mode=OneWay}"/>
+                  <MenuFlyoutItem Text="{x:Bind Path=Model.DecorateName,Mode=OneWay}" IsEnabled="False" Visibility="{x:Bind Path=Model.ShowDecorate,Mode=OneWay}"/>
+                </MenuFlyout>
+              </Button.Flyout>
+            </Button>
           </Grid>
-          <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.RepostAuthorVisibility,Mode=OneWay}" Padding="0" Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}">
-            <Grid>
-              <StackPanel VerticalAlignment="Center" Orientation="Horizontal">
-                <Ellipse Width="24" Height="24" Margin="0 0 8 0">
+          <!--转发作者的头部:头像/昵称与“打开详情”是并列的两个控件,不再嵌套按钮-->
+          <Grid Visibility="{x:Bind Path=Model.RepostAuthorVisibility,Mode=OneWay}">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*"/>
+              <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <HyperlinkButton Grid.Column="0" Padding="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Command="{x:Bind Path=Model.UserCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model.Mid,Mode=OneWay}" ToolTipService.ToolTip="{x:Bind Path=Model.UserName,Mode=OneWay}">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="Auto"/>
+                  <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Ellipse Grid.Column="0" Width="24" Height="24" Margin="0,0,8,0">
                   <Ellipse.Fill>
                     <ImageBrush ImageSource="{x:Bind Path=Model.Photo,Mode=OneWay,Converter={StaticResource imageConvert2},ConverterParameter='64w'}"/>
                   </Ellipse.Fill>
                 </Ellipse>
-                <TextBlock VerticalAlignment="Center" Foreground="#178bcf">
+                <TextBlock Grid.Column="1" VerticalAlignment="Center" TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" MaxLines="1" Foreground="#178bcf">
                   <Run Text="{x:Bind Path=Model.UserName,Mode=OneWay}"/>
                   <Run Text="{x:Bind Path=Model.Tooltip,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" FontSize="12"/>
                 </TextBlock>
-              </StackPanel>
-              <Button Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" HorizontalAlignment="Right" Foreground="{ThemeResource ForegroundTextColor}" Background="Transparent" Visibility="{x:Bind Path=Model.RepostAuthorVisibility,Mode=OneWay}">
-                <FontIcon FontFamily="Segoe MDL2 Assets" Glyph=""/>
-              </Button>
-            </Grid>
-          </HyperlinkButton>
-          <!--内容-->
-          <ContentPresenter Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Margin="0 4" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
-          <!--卡片-->
-          <ContentPresenter Content="{x:Bind Path=CardContent,Mode=OneWay}" Padding="0 4 0 0"/>
-          <StackPanel Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}" Margin="0 4 0 0" Orientation="Horizontal">
-            <HyperlinkButton Width="100" Command="{x:Bind Path=Model.RepostCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left">
+              </Grid>
+            </HyperlinkButton>
+            <Button Grid.Column="1" Margin="8,0,0,0" MinWidth="40" MinHeight="40" Padding="0" Background="Transparent" BorderThickness="0" Command="{x:Bind Path=Model.DetailCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" AutomationProperties.Name="打开详情">
+              <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="&#xE17C;"/>
+            </Button>
+          </Grid>
+        </Grid>
+        <!--标题槽(CARD_PLAN §5 渲染顺序 header → title → body):空标题时整行 Collapsed,不占位也不留 8px-->
+        <TextBlock x:Name="CardTitle" Grid.Row="1" Margin="0,8,0,0" HorizontalAlignment="Stretch" ToolTipService.ToolTip="{x:Bind Path=Model.Title,Mode=OneWay}" helpers:TapToolTip.Enabled="True" Text="{x:Bind Path=Model.Title,Mode=OneWay}" Visibility="{x:Bind Path=Model.TitleVisibility,Mode=OneWay}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+        <!--正文:模板自己渲染正文时(ContentPresenterVisibility=Collapsed)这里的 12px 间距不占位-->
+        <ContentPresenter x:Name="BodyPresenter" Grid.Row="2" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.ContentPresenterVisibility,Mode=OneWay}" Content="{x:Bind Path=Model.PresenterContent,Mode=OneWay}"/>
+        <!--媒体/预告/附件/转发原动态:占满整宽-->
+        <ContentPresenter x:Name="CardContentPresenter" Grid.Row="3" Margin="0,8,0,0" HorizontalAlignment="Stretch" Content="{x:Bind Path=CardContent,Mode=OneWay}"/>
+        <!--
+          附件(CARD_PLAN §7):放在共享外壳里,所以每个模板都拿到同一块。
+          预约附件(图文/文字动态里挂的直播预约)选中 UserControl.Resources 的预约面板:
+          角标、标题、说明和载荷自带的按钮;投票/链接/未知种类仍是安静的一行
+          (短标签 + 标题、一行说明、"真有目的地才出现"的打开动作;没有目的地时就是可读文本)。
+          选面板还是选行只由 DynamicAttachmentDisplay.ShowPanel 决定(模板选择器),模板里不写条件。
+          列表为空(或附件摘要没被填)时整块 Collapsed,Auto 行随之收成 0,不画空框、不替正文占位。
+        -->
+        <ItemsControl x:Name="AttachmentRow" Grid.Row="4" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.AttachmentRowVisibility,Mode=OneWay}" ItemsSource="{x:Bind Path=Model.AttachmentItems,Mode=OneWay}" ItemTemplateSelector="{StaticResource attachmentTemplateSelect}"/>
+        <!--互动栏:三等分列,按钮点击区 ≥40×40-->
+        <Grid x:Name="ActionRow" Grid.Row="5" Margin="0,8,0,0" Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+          </Grid.ColumnDefinitions>
+          <Grid Grid.Column="0">
+            <HyperlinkButton MinWidth="40" MinHeight="40" Padding="0" Command="{x:Bind Path=Model.RepostCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left">
               <StackPanel Orientation="Horizontal">
-                <fa:FontAwesome Icon="Solid_Share" Margin="0 2 0 0" FontSize="14"/>
-                <TextBlock Margin="8 0" Text="{x:Bind Path=Model.ShareCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='转发'}"/>
+                <fa:FontAwesome Icon="Solid_Share" Margin="0,2,0,0" FontSize="16"/>
+                <TextBlock Margin="8,0,0,0" FontSize="13" VerticalAlignment="Center" Text="{x:Bind Path=Model.ShareCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='转发'}"/>
               </StackPanel>
             </HyperlinkButton>
-            <HyperlinkButton Width="100" Command="{x:Bind Path=Model.CommentCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left">
+          </Grid>
+          <Grid Grid.Column="1">
+            <HyperlinkButton MinWidth="40" MinHeight="40" Padding="0" Command="{x:Bind Path=Model.CommentCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left">
               <StackPanel Orientation="Horizontal">
-                <fa:FontAwesome Icon="Regular_Comment" Margin="0 2 0 0" FontSize="14"/>
-                <TextBlock Margin="8 0" Text="{x:Bind Path=Model.CommentCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='评论'}"/>
+                <fa:FontAwesome Icon="Regular_Comment" Margin="0,2,0,0" FontSize="16"/>
+                <TextBlock Margin="8,0,0,0" FontSize="13" VerticalAlignment="Center" Text="{x:Bind Path=Model.CommentCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='评论'}"/>
               </StackPanel>
             </HyperlinkButton>
-            <HyperlinkButton Width="100" Visibility="{x:Bind Path=Model.Liked,Mode=OneWay,Converter={StaticResource display}}" Command="{x:Bind Path=Model.LikeCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left">
+          </Grid>
+          <Grid Grid.Column="2">
+            <HyperlinkButton MinWidth="40" MinHeight="40" Padding="0" Visibility="{x:Bind Path=Model.Liked,Mode=OneWay,Converter={StaticResource display}}" Command="{x:Bind Path=Model.LikeCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalContentAlignment="Left">
               <StackPanel Orientation="Horizontal">
-                <fa:FontAwesome Icon="Regular_ThumbsUp" Margin="0 2 0 0" FontSize="14"/>
-                <TextBlock Margin="8 0" Text="{x:Bind Path=Model.LikeCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='点赞'}"/>
+                <fa:FontAwesome Icon="Regular_ThumbsUp" Margin="0,2,0,0" FontSize="16"/>
+                <TextBlock Margin="8,0,0,0" FontSize="13" VerticalAlignment="Center" Text="{x:Bind Path=Model.LikeCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='点赞'}"/>
               </StackPanel>
             </HyperlinkButton>
-            <HyperlinkButton Width="100" Visibility="{x:Bind Path=Model.Liked,Mode=OneWay}" Command="{x:Bind Path=Model.LikeCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource HighLightColor}" HorizontalContentAlignment="Left">
+            <HyperlinkButton MinWidth="40" MinHeight="40" Padding="0" Visibility="{x:Bind Path=Model.Liked,Mode=OneWay}" Command="{x:Bind Path=Model.LikeCommand,Mode=OneWay}" CommandParameter="{x:Bind Path=Model,Mode=OneWay}" Foreground="{ThemeResource HighLightColor}" HorizontalContentAlignment="Left">
               <StackPanel Orientation="Horizontal">
-                <fa:FontAwesome Icon="Regular_ThumbsUp" Margin="0 2 0 0" FontSize="14"/>
-                <TextBlock Margin="8 0" Text="{x:Bind Path=Model.LikeCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='点赞'}"/>
+                <fa:FontAwesome Icon="Regular_ThumbsUp" Margin="0,2,0,0" FontSize="16"/>
+                <TextBlock Margin="8,0,0,0" FontSize="13" VerticalAlignment="Center" Text="{x:Bind Path=Model.LikeCount,Mode=OneWay,Converter={StaticResource countConvert},ConverterParameter='点赞'}"/>
               </StackPanel>
             </HyperlinkButton>
-          </StackPanel>
-        </StackPanel>
+          </Grid>
+        </Grid>
       </Grid>
     </Border>
   </Grid>

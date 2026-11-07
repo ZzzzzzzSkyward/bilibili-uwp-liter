@@ -117,7 +117,7 @@ namespace BiliLite.Parsing.Dynamic
             return token as JObject;
         }
 
-        private static DynamicCardModel2024 MapWebCard(JObject source)
+        private static DynamicCardModel2024 MapWebCard(JObject source, int depth = 0)
         {
             var id = source["id_str"]?.ToString() ?? "";
             var itemType = source["type"]?.ToString() ?? "";
@@ -162,6 +162,7 @@ namespace BiliLite.Parsing.Dynamic
                     {
                         desc = desc,
                         major = MapWebMajor(major, opusPictures),
+                        additional = MapWebAdditional(moduleDynamic),
                     },
                 },
             };
@@ -170,7 +171,15 @@ namespace BiliLite.Parsing.Dynamic
             {
                 // 原动态可能是任何类型，映射不出来时用占位卡，父卡片照样可读
                 var orig = Obj(source["orig"]);
-                card.orig = orig == null ? MissingCard(card.basic.rid_str) : MapWebCard(orig);
+                if (DynamicCardDepth.CanExpandOrig(depth))
+                {
+                    card.orig = orig == null ? MissingCard(card.basic.rid_str) : MapWebCard(orig, depth + 1);
+                }
+                else
+                {
+                    // 到顶了：第三层及更深不再搬进模型，只留 ID 给祖先行跳转
+                    card.AncestryDynamicID = orig?["id_str"]?.ToString() ?? "";
+                }
             }
 
             return card;
@@ -271,7 +280,7 @@ namespace BiliLite.Parsing.Dynamic
                         text = node["text"]?.ToString() ?? "",
                         orig_text = node["orig_text"]?.ToString() ?? "",
                         type = MapDescriptionType(node["type"]?.ToString()),
-                        jump_url = node["jump_url"]?.ToString() ?? "",
+                        jump_url = NormalizeWebUrl(node["jump_url"]?.ToString()),
                         icon_name = node["icon_name"]?.ToString() ?? "",
                         rid = node["rid"]?.ToString() ?? "",
                         emoji = emoji == null ? null : new DynamicCardModel2024_emojiinfo
@@ -332,16 +341,238 @@ namespace BiliLite.Parsing.Dynamic
                 }
                 pictures.Add(new DynamicCardModel2024_pic
                 {
-                    src = src,
+                    src = NormalizeWebUrl(src),
                     width = ToInt(pic["width"]?.ToString()),
                     height = ToInt(pic["height"]?.ToString()),
                 });
             }
             return pictures;
         }
+
+        /// <summary>
+        /// major.draw.items 的图片：没有地址的条目不进图库，否则渲染层会得到一个点不开的空图。
+        /// 丢掉之后剩下的图片仍是连续下标，点开图集时的顺序不变。
+        /// </summary>
+        private static List<DynamicCardModel2024_pic> ReadDrawPictures(JObject draw)
+        {
+            var pictures = new List<DynamicCardModel2024_pic>();
+            var items = draw?["items"] as JArray;
+            if (items == null)
+            {
+                return pictures;
+            }
+            foreach (var token in items)
+            {
+                var pic = Obj(token);
+                if (pic == null)
+                {
+                    continue;
+                }
+                var src = pic["src"]?.ToString();
+                if (string.IsNullOrEmpty(src))
+                {
+                    src = pic["url"]?.ToString();
+                }
+                if (string.IsNullOrEmpty(src))
+                {
+                    continue;
+                }
+                pictures.Add(new DynamicCardModel2024_pic
+                {
+                    src = NormalizeWebUrl(src),
+                    width = ToInt(pic["width"]?.ToString()),
+                    height = ToInt(pic["height"]?.ToString()),
+                });
+            }
+            return pictures;
+        }
+
+        /// <summary>major 的每一路只有"带内容"才算存在：空对象不占用固定顺序里的位置。</summary>
+        private static bool HasPayload(JObject source, params string[] fields)
+        {
+            if (source == null)
+            {
+                return false;
+            }
+            foreach (var field in fields)
+            {
+                var value = source[field];
+                if (value == null || value.Type == JTokenType.Null)
+                {
+                    continue;
+                }
+                if (value.Type == JTokenType.String && string.IsNullOrEmpty(value.ToString()))
+                {
+                    continue;
+                }
+                if (value.Type == JTokenType.Array && ((JArray)value).Count == 0)
+                {
+                    continue;
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// module_dynamic.additional 是正文之外另挂的一张附件卡（预约/投票/通用/商品/稿件）。
+        /// 附件是列表不是单选：图片/纯文字动态都可能同时挂着投票与预约，所以每个存在的子卡都映射，
+        /// 不因为先命中一种就把后面的丢掉；type 原样保留，渲染层照旧按它判断子类型。
+        /// </summary>
+        private static DynamicCardModel2024_add MapWebAdditional(JObject moduleDynamic)
+        {
+            var source = Obj(moduleDynamic?["additional"]);
+            if (source == null)
+            {
+                return null;
+            }
+
+            var result = new DynamicCardModel2024_add
+            {
+                type = source["type"]?.ToString() ?? "",
+            };
+
+            var reserve = Obj(source["reserve"]);
+            if (reserve != null)
+            {
+                var button = Obj(reserve["button"]);
+                result.reserve = new DynamicCardModel2024_addin_reserve
+                {
+                    title = reserve["title"]?.ToString() ?? "",
+                    jump_url = NormalizeWebUrl(reserve["jump_url"]?.ToString()),
+                    rid = ToLong(reserve["rid"]?.ToString()),
+                    up_mid = ToLong(reserve["up_mid"]?.ToString()),
+                    reserve_total = ToInt(reserve["reserve_total"]?.ToString()),
+                    desc1 = MapReserveText(reserve["desc1"]),
+                    desc2 = MapReserveText(reserve["desc2"]),
+                    desc3 = MapReserveText(reserve["desc3"]),
+                    button = button == null ? null : new DynamicCardModel2024_button2
+                    {
+                        status = ToInt(button["status"]?.ToString()),
+                        icon_url = Obj(button["uncheck"])?["icon_url"]?.ToString() ?? "",
+                        jump_url = NormalizeWebUrl(button["jump_url"]?.ToString()),
+                        jump_style = MapButtonText(Obj(button["jump_style"])),
+                        check = MapButtonText(Obj(button["check"])),
+                        uncheck = MapButtonText(Obj(button["uncheck"])),
+                    },
+                };
+            }
+
+            var vote = Obj(source["vote"]);
+            if (vote != null)
+            {
+                result.vote = MapAddin(vote);
+                result.vote.id_str = vote["vote_id"]?.ToString() ?? "";
+            }
+
+            var common = Obj(source["common"]);
+            if (common != null)
+            {
+                result.common = MapAddin(common);
+            }
+
+            var goods = Obj(source["goods"]);
+            if (goods != null)
+            {
+                result.goods = MapAddin(goods);
+            }
+
+            var ugc = Obj(source["ugc"]);
+            if (ugc != null)
+            {
+                result.ugc = MapAddin(ugc);
+            }
+
+            return result;
+        }
+
+        /// <summary>通用附件卡：各 subtype 之间只有 desc 的写法不同，统一读成可读文本。</summary>
+        private static DynamicCardModel2024_addin MapAddin(JObject source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+            var button = Obj(source["button"]);
+            return new DynamicCardModel2024_addin
+            {
+                cover = FirstNonEmpty(source["cover"]?.ToString(), source["image_url"]?.ToString()),
+                desc1 = ReadText(source["desc1"]),
+                desc2 = ReadText(source["desc2"]),
+                head_text = source["head_text"]?.ToString() ?? "",
+                id_str = source["id_str"]?.ToString() ?? "",
+                jump_url = NormalizeWebUrl(source["jump_url"]?.ToString()),
+                style = ToInt(source["style"]?.ToString()),
+                sub_type = source["sub_type"]?.ToString() ?? "",
+                title = source["title"]?.ToString() ?? "",
+                rid = ToLong(source["rid"]?.ToString()),
+                state = ToInt(source["state"]?.ToString()),
+                stype = ToInt(source["stype"]?.ToString()),
+                button = button == null ? null : new DynamicCardModel2024_button
+                {
+                    status = ToInt(button["status"]?.ToString()),
+                    type = button["type"]?.ToString() ?? "",
+                    jump_url = NormalizeWebUrl(button["jump_url"]?.ToString()),
+                    jump_style = MapButtonText(Obj(button["jump_style"])),
+                    check = MapButtonText(Obj(button["check"])),
+                    uncheck = MapButtonText(Obj(button["uncheck"])),
+                },
+            };
+        }
+
+        /// <summary>线上附件描述有"字符串"和"{text,style}"两种形状，取可读文本。</summary>
+        private static string ReadText(JToken token)
+        {
+            if (token == null || token.Type == JTokenType.Null)
+            {
+                return "";
+            }
+            var source = token as JObject;
+            return source == null ? token.ToString() : source["text"]?.ToString() ?? "";
+        }
+
+        private static DynamicCardModel2024_reservetext MapReserveText(JToken token)
+        {
+            if (token == null || token.Type == JTokenType.Null)
+            {
+                return null;
+            }
+            var source = token as JObject;
+            return new DynamicCardModel2024_reservetext
+            {
+                text = ReadText(token),
+                style = source == null ? 0 : ToInt(source["style"]?.ToString()),
+            };
+        }
+
+        private static DynamicCardModel2024_buttontext MapButtonText(JObject source)
+        {
+            if (source == null)
+            {
+                return null;
+            }
+            return new DynamicCardModel2024_buttontext
+            {
+                icon_url = source["icon_url"]?.ToString() ?? "",
+                text = source["text"]?.ToString() ?? "",
+            };
+        }
+
+        private static string FirstNonEmpty(params string[] values)
+        {
+            foreach (var value in values)
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    return value;
+                }
+            }
+            return "";
+        }
+
         /// <summary>
         /// web 的 major 是"字段全在、只有一个非空"的结构，与 gRPC 的 ModuleDynamic 一一对应，
-        /// 所以这里按同样的优先级挑出非空的那一路。
+        /// 所以这里按同样的优先级挑出非空的那一路。空对象不算这一路：一个空的 archive 不该挡住后面的 draw。
         /// </summary>
         private static DynamicCardModel2024_major MapWebMajor(JObject major, List<DynamicCardModel2024_pic> opusPictures)
         {
@@ -351,8 +582,22 @@ namespace BiliLite.Parsing.Dynamic
                 return result;
             }
 
+            var opus = Obj(major["opus"]);
+            if (opus != null)
+            {
+                // 图文标题只在 major.opus.title 里：有图走 draw、无图走 article，标题两条路共用这一个槽
+                var opusTitle = opus["title"]?.ToString();
+                result.opus = new DynamicCardModel2024_opus
+                {
+                    id = opus["id"]?.ToString() ?? "",
+                    // 空标题留 null：标题链用 ?? 串起来，空串会把后面的 archive/article 标题挡掉
+                    title = string.IsNullOrEmpty(opusTitle) ? null : opusTitle,
+                    jump_url = NormalizeWebUrl(opus["jump_url"]?.ToString()),
+                };
+            }
+
             var archive = Obj(major["archive"]);
-            if (archive != null)
+            if (HasPayload(archive, "aid", "bvid", "cover", "title", "jump_url"))
             {
                 result.archive = new DynamicCardModel2024_archive
                 {
@@ -373,7 +618,7 @@ namespace BiliLite.Parsing.Dynamic
             }
 
             var pgc = Obj(major["pgc"]);
-            if (pgc != null)
+            if (HasPayload(pgc, "aid", "cover", "title", "season_id", "epid", "jump_url"))
             {
                 result.pgc = new DynamicCardModel2024_season
                 {
@@ -394,37 +639,19 @@ namespace BiliLite.Parsing.Dynamic
             }
 
             var draw = Obj(major["draw"]);
-            if (draw != null)
+            var drawPictures = ReadDrawPictures(draw);
+            if (drawPictures.Count > 0)
             {
-                var pics = new List<DynamicCardModel2024_pic>();
-                var drawItems = draw["items"] as JArray;
-                if (drawItems != null)
-                {
-                    foreach (var token in drawItems)
-                    {
-                        var pic = Obj(token);
-                        if (pic == null)
-                        {
-                            continue;
-                        }
-                        pics.Add(new DynamicCardModel2024_pic
-                        {
-                            src = pic["src"]?.ToString() ?? "",
-                            width = ToInt(pic["width"]?.ToString()),
-                            height = ToInt(pic["height"]?.ToString()),
-                        });
-                    }
-                }
                 result.draw = new DynamicCardModel2024_draw
                 {
                     id = ToLong(draw["id"]?.ToString()),
-                    items = pics,
+                    items = drawPictures,
                 };
                 return result;
             }
 
             var article = Obj(major["article"]);
-            if (article != null)
+            if (HasPayload(article, "id", "title", "covers", "desc", "jump_url"))
             {
                 result.article = new DynamicCardModel2024_article
                 {
@@ -438,7 +665,27 @@ namespace BiliLite.Parsing.Dynamic
                 return result;
             }
 
-            var opus = Obj(major["opus"]);
+            var ugcSeason = Obj(major["ugc_season"]);
+            if (HasPayload(ugcSeason, "aid", "title", "cover", "jump_url"))
+            {
+                result.ugc_season = new DynamicCardModel2024_list
+                {
+                    id = ToLong(ugcSeason["id"]?.ToString()),
+                    aid = ToLong(ugcSeason["aid"]?.ToString()),
+                    cover = ugcSeason["cover"]?.ToString() ?? "",
+                    desc = ugcSeason["desc"]?.ToString() ?? "",
+                    duration_text = ugcSeason["duration_text"]?.ToString() ?? "",
+                    jump_url = NormalizeWebUrl(ugcSeason["jump_url"]?.ToString()),
+                    title = ugcSeason["title"]?.ToString() ?? "",
+                    stat = new DynamicCardModel2024_astat
+                    {
+                        play = Obj(ugcSeason["stat"])?["play"]?.ToString() ?? "",
+                        danmaku = Obj(ugcSeason["stat"])?["danmaku"]?.ToString() ?? "",
+                    },
+                };
+                return result;
+            }
+
             if (opus != null && opusPictures != null && opusPictures.Count > 0)
             {
                 // 新版图文动态的图片就是图片动态的图片：交给 draw 那套渲染，才有九宫格和点开查看
@@ -451,15 +698,9 @@ namespace BiliLite.Parsing.Dynamic
             }
             if (opus != null)
             {
-                // 没有图片的图文当作专栏那张卡：封面取首图，正文取 summary.text
-                var covers = new List<string>();
-                var opusPics = opus["pics"] as JArray;
-                if (opusPics != null)
-                {
-                    covers.AddRange(opusPics
-                        .Select(x => Obj(x)?["url"]?.ToString())
-                        .Where(x => !string.IsNullOrEmpty(x)));
-                }
+                // 没有图片的图文当作专栏那张卡：封面取首图，正文取 summary.text。
+                // pics[].url 与 pics[].src 两种形状都要认，丢掉没有地址的条目，封面顺序不变。
+                var covers = ReadOpusPictures(opus).Select(x => x.src).ToList();
                 result.article = new DynamicCardModel2024_article
                 {
                     covers = covers,
@@ -471,7 +712,7 @@ namespace BiliLite.Parsing.Dynamic
             }
 
             var live = Obj(major["live"]);
-            if (live != null)
+            if (HasPayload(live, "id", "title", "cover", "jump_url"))
             {
                 result.live = new DynamicCardModel2024_live
                 {
@@ -481,7 +722,7 @@ namespace BiliLite.Parsing.Dynamic
                     desc_first = live["area_name"]?.ToString() ?? "",
                     desc_second = Obj(live["watched_show"])?["text_large"]?.ToString() ?? "",
                     jump_url = NormalizeWebUrl(live["jump_url"]?.ToString()),
-                    live_state = ToInt(live["live_state"]?.ToString()),
+                    live_state = live["live_state"] == null ? (int?)null : ToInt(live["live_state"].ToString()),
                 };
                 return result;
             }
@@ -517,7 +758,7 @@ namespace BiliLite.Parsing.Dynamic
             }
 
             var music = Obj(major["music"]);
-            if (music != null)
+            if (HasPayload(music, "id", "title", "cover", "jump_url"))
             {
                 // 音乐卡借的是专栏那张卡，与 gRPC 的 DynMusic 映射一致
                 result.article = new DynamicCardModel2024_article
@@ -549,6 +790,7 @@ namespace BiliLite.Parsing.Dynamic
                 case "DYNAMIC_TYPE_PGC":
                 case "DYNAMIC_TYPE_PGC_UNION": return "DYNAMIC_TYPE_PGC_UNION";
                 case "DYNAMIC_TYPE_ARTICLE": return "DYNAMIC_TYPE_ARTICLE";
+                case "DYNAMIC_TYPE_UGC_SEASON": return "DYNAMIC_TYPE_UGC_SEASON";
                 // DYNAMIC_TYPE_OPUS 在 MapWebCard 里按有没有图先定成 DRAW/WORD，走不到这张表
                 default: return "DYNAMIC_TYPE_UNSUPPORTED";
             }

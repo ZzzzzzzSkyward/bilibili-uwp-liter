@@ -226,7 +226,11 @@ namespace D1Probe
             var page = ReadSource("src/BiliLite.UWP/Controls/PlayerControl.xaml");
             var code = ReadSource("src/BiliLite.UWP/Controls/PlayerControl.xaml.cs");
 
-            Check(page.Contains("<local:DanmakuListControl x:Name=\"DanmakuListButton\"/>"),
+            // 工具栏必须仍然承载列表控件;判断入口的可见性属性是后来加的,锚点不能钉死在整行字面量上
+            var controlTagAt = page.IndexOf("<local:DanmakuListControl", StringComparison.Ordinal);
+            var controlNameAt = page.IndexOf("x:Name=\"DanmakuListButton\"", StringComparison.Ordinal);
+            var controlTagEnd = controlTagAt >= 0 ? page.IndexOf('>', controlTagAt) : -1;
+            Check(controlTagAt >= 0 && controlNameAt > controlTagAt && controlTagEnd > controlNameAt,
                 "source: the player toolbar hosts the list control");
 
             var controlAt = page.IndexOf("<local:DanmakuListControl", StringComparison.Ordinal);

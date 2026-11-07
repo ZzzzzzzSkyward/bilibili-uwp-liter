@@ -21,6 +21,32 @@ namespace BiliLite.Parsing.Dynamic
     /// <summary>
     /// x/polymer/web-dynamic/v1/feed/{all,space} 的解析：解码一次、查信封、查字段形状。
     /// 不判断要不要换源，也不发布任何东西。
+    ///
+    /// 字段/行为约定（媒体：web 聚合流、gRPC DynamicItem、legacy cards 的同一套卡片字段；夹具见 plan/tests/g3）
+    /// 1. 信封与游标各归各的来源：web 的 items/has_more/offset、gRPC 的 history offset、legacy 的
+    ///    cards/offset 互不挪用；本文件只查形状，不选源、不翻页。
+    /// 2. 字段表（✓=映射层已搬进卡片模型；—=来源没有该字段；✗=仍未搬，行尾给出原因）：
+    ///
+    ///    卡片种类          web                                   gRPC                                   legacy
+    ///    正文节点          ✓ desc 与 major.opus.summary 的节点都搬；   ✓ ModuleDesc；本轮补 OPUS 摘要段落     ✓ desc.text + emoji_details
+    ///                       节点类型显式归一，emoji 保留 icon/size
+    ///    图片数组          ✓ opus.pics 认 url 与 src；draw.items 过滤空地址  ✓ DynDraw.Items；本轮补 OPUS Covers  ✓ card.item.pictures
+    ///    视频 / 合集       ✓ archive / ugc_season                ✓ DynArchive / DynUgcSeason             ✓ card → DynamicVideoCardModel
+    ///    番剧              ✓ pgc                                 ✓ DynPgc                                ✓ apiSeasonInfo
+    ///    专栏              ✓ article                             ✓ DynArticle                            ✓ card.item
+    ///    音频              ✓ music（借 article 槽）               ✓ DynMusic（同上）                       ✓ card 音频字段
+    ///    直播              ✓ live；live_rcmd 解嵌套 content      ✓ DynCommonLive / DynLiveRcmd           ✓ live_play_info
+    ///    转发原卡          ✓ orig 递归同一映射                   ✓ DynForward.Item 递归                   ✓ origin + origin_extend_json
+    ///    附件卡            ✓ 本轮搬 additional（预约/投票/通用/商品/稿件） ✓ 本轮搬 ModuleAdditional        ✗ 只读了 add_on_card_info 的 reserve 子集
+    ///     └ 预约说明       ✓ reserve.desc1/desc2/desc3 的 text（时间/预  ✓ AdditionUP.DescText1/2/3（desc_   — 旧接口没有这三段
+    ///                       约量/抽奖），三段拼成一行、重复只显示一次        text1/2 是时间与预约量，desc_text3
+    ///                                                                        是抽奖文案）
+    ///    计数 / 禁评禁转   ✓ count + forbidden + liked          ✓ 本轮补 no_comment / no_forward         ✓ desc.comment/like/repost
+    ///    OPUS 标题         ✗ draw 槽只有 items，标题要等卡数据契约    ✗ Paragraph.Title 无槽位                — 旧接口没有 OPUS
+    ///    绝对发布时间      ✓ module_author.pub_ts                ✗ 只有 ptime_label_text                  ✓ desc.timestamp
+    /// 3. 正文句子流不在这里拼 XAML 字符串：节点顺序由 RichTextFlow 归一成片段（Text/LineBreak/
+    ///    Mention/Topic/Link/Emoji），只有来源里的换行产生 LineBreak，也不按字符数截断；
+    ///    链接的标签进正文、目标地址只做跳转目标。
     /// </summary>
     public static class WebDynamicFeedParser
     {

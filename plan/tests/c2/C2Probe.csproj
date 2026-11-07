@@ -17,6 +17,16 @@
 
   <ItemGroup>
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\MediaListResources.cs" Link="MediaListResources.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\MediaList\MediaListResourceListDto.cs" Link="MediaListResourceListDto.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\MediaList\FavoriteResourceListDto.cs" Link="FavoriteResourceListDto.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\MediaList\WatchLaterListDto.cs" Link="WatchLaterListDto.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiEnvelope.cs" Link="ApiEnvelope.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\MediaList\MediaListResourceListParser.cs" Link="MediaListResourceListParser.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\MediaList\MediaListResourceListMapper.cs" Link="MediaListResourceListMapper.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\MediaList\FavoriteResourceListParser.cs" Link="FavoriteResourceListParser.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\MediaList\WatchLaterListParser.cs" Link="WatchLaterListParser.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\MediaList\MediaListFailureText.cs" Link="MediaListFailureText.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\MediaListService.cs" Link="MediaListService.cs" />
   </ItemGroup>
 

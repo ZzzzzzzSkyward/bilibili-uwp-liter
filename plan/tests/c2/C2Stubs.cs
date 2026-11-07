@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace RestSharp
 {
@@ -51,23 +51,6 @@ namespace BiliLite.Api
     }
 }
 
-namespace BiliLite.Models
-{
-    public class ApiDataModel<T>
-    {
-        public int code { get; set; }
-        public string message { get; set; }
-        public string msg { get; set; }
-
-        public bool success
-        {
-            get { return code == 0; }
-        }
-
-        public T data { get; set; }
-    }
-}
-
 namespace BiliLite.Helpers
 {
     public enum LogType
@@ -78,15 +61,30 @@ namespace BiliLite.Helpers
         FATAL,
     }
 
+    /// <summary>
+    /// Mirrors the product HttpResults fields the envelope reader uses: transport status, message,
+    /// HTTP code and the raw body. TryGetJObject is the silent decode the parsing layer relies on.
+    /// </summary>
     public class HttpResults
     {
         public bool status { get; set; } = true;
         public string message { get; set; }
+        public int code { get; set; }
         public string results { get; set; }
 
-        public Task<BiliLite.Models.ApiDataModel<T>> GetData<T>()
+        public bool TryGetJObject(out JObject value)
         {
-            return Task.FromResult(JsonConvert.DeserializeObject<BiliLite.Models.ApiDataModel<T>>(results));
+            value = null;
+            if (string.IsNullOrEmpty(results)) return false;
+            try
+            {
+                value = JObject.Parse(results);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
     }
 
@@ -110,6 +108,9 @@ namespace BiliLite.Helpers
             return C2Probe.FakeTransport.Handle(api);
         }
 
+        /// <summary>
+        /// Nothing compiled by this probe may publish: Toasts stays empty unless a publisher ran.
+        /// </summary>
         public static void ShowMessageToast(string message)
         {
             C2Probe.FakeTransport.Toasts.Add(message);

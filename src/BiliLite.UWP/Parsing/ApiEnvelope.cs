@@ -4,12 +4,24 @@ using Newtonsoft.Json.Linq;
 namespace BiliLite.Parsing
 {
     /// <summary>
-    /// REST 信封：传输状态、JSON、业务码、data 对象，四步分开判断。
-    /// web 聚合流与旧动态接口这一层完全一样，差别只在 data 里面的字段，所以只在这里做一次。
+    /// REST 信封：传输状态、JSON、业务码、载荷对象，四步分开判断。
+    /// 载荷是 data 还是 result 由端点决定，调用方按名字选一个 reader，不做"两个都试一下"。
     /// </summary>
     public static class ApiEnvelope
     {
+        /// <summary>data 信封：web 聚合流、旧动态接口这类端点。</summary>
         public static ApiParseResult<JObject> Read(HttpResults response)
+        {
+            return ReadPayload(response, "data");
+        }
+
+        /// <summary>result 信封：pgc/web 番剧类端点。</summary>
+        public static ApiParseResult<JObject> ReadResult(HttpResults response)
+        {
+            return ReadPayload(response, "result");
+        }
+
+        private static ApiParseResult<JObject> ReadPayload(HttpResults response, string field)
         {
             if (response == null)
             {
@@ -21,8 +33,9 @@ namespace BiliLite.Parsing
                     response.message, 0, response.code);
             }
 
-            var body = response.GetJObject();
-            if (body == null)
+            //静默解码：正文不是 JSON 对象是信封结论，要提示什么由调用方决定，解析层不弹 toast
+            JObject body;
+            if (!response.TryGetJObject(out body))
             {
                 return ApiParseResult<JObject>.Fail(ApiParseFailure.Envelope, "envelope.json", "响应正文不是 JSON 对象");
             }
@@ -44,17 +57,17 @@ namespace BiliLite.Parsing
                 return ApiParseResult<JObject>.Fail(ApiParseFailure.Rejected, "envelope.code", message, code, 0);
             }
 
-            var dataToken = body["data"];
-            if (dataToken == null || dataToken.Type == JTokenType.Null)
+            var payloadToken = body[field];
+            if (payloadToken == null || payloadToken.Type == JTokenType.Null)
             {
-                return ApiParseResult<JObject>.Fail(ApiParseFailure.Envelope, "data", "响应里没有 data");
+                return ApiParseResult<JObject>.Fail(ApiParseFailure.Envelope, field, "响应里没有 " + field);
             }
-            if (dataToken.Type != JTokenType.Object)
+            if (payloadToken.Type != JTokenType.Object)
             {
-                return ApiParseResult<JObject>.Fail(ApiParseFailure.Payload, "data",
-                    "data 不是对象（实际是 " + dataToken.Type + "）");
+                return ApiParseResult<JObject>.Fail(ApiParseFailure.Payload, field,
+                    field + " 不是对象（实际是 " + payloadToken.Type + "）");
             }
-            return ApiParseResult<JObject>.Success((JObject)dataToken);
+            return ApiParseResult<JObject>.Success((JObject)payloadToken);
         }
     }
 }

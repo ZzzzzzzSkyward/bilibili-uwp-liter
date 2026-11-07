@@ -1,10 +1,22 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <UserControl xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls.Dynamic" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" x:Class="BiliLite.Controls.Dynamic.RichTextControl" mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="400">
-  <Grid x:Name="Parent">
-    <Grid.Resources>
-      <Style TargetType="RichTextBlock">
-        <Setter Property="TextWrapping" Value="Wrap"/>
-      </Style>
-    </Grid.Resources>
+  <!--
+    正文宿主只做两件事:把当前卡片的一条正文挂到 BodyHost,并在内容真的超出行数上限时露出"展开/收起"。
+    正文与切换按钮分两行,清空正文(复用换身份)时不会连按钮一起清掉。
+  -->
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+    <Grid x:Name="BodyHost" Grid.Row="0" HorizontalAlignment="Stretch">
+      <Grid.Resources>
+        <Style TargetType="RichTextBlock">
+          <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+      </Grid.Resources>
+    </Grid>
+    <!-- 折叠策略见 RichTextBodyState.cs 的 RichTextBodyPolicy;这里只负责显示,默认不占位 -->
+    <Button x:Name="ExpandToggle" Grid.Row="1" Visibility="Collapsed" HorizontalAlignment="Left" Margin="0,4,0,0" Padding="0" MinWidth="0" MinHeight="32" Background="Transparent" BorderThickness="0" FontSize="13" Foreground="{ThemeResource HighLightColor}" AutomationProperties.Name="展开或收起正文" Click="OnExpandToggleClick"/>
   </Grid>
 </UserControl>

@@ -1,0 +1,628 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Text.RegularExpressions;
+using BiliLite.Services;
+
+namespace PlayersessProbe
+{
+    /// <summary>
+    /// 计数用的假资源:释放几次由它自己记着,"恰好一次"才有得断言。
+    /// </summary>
+    internal sealed class FakeResource : IDisposable
+    {
+        private readonly bool throws;
+
+        public FakeResource(string name, bool throws = false)
+        {
+            Name = name;
+            this.throws = throws;
+        }
+
+        public string Name { get; }
+
+        public int DisposeCount { get; private set; }
+
+        public void Dispose()
+        {
+            DisposeCount++;
+            if (throws) throw new InvalidOperationException("dispose failed: " + Name);
+        }
+    }
+
+    internal static class Program
+    {
+        private static int checks;
+        private static readonly List<string> failures = new List<string>();
+        // 默认读仓库里的 Player.xaml.cs;--player 换一份(比如 git show HEAD:... 拷出来的旧文件)就能验红
+        private static string playerPath;
+
+        private static int Main(string[] args)
+        {
+            playerPath = Path.Combine(FindRepoRoot(), "src", "BiliLite.UWP", "Controls", "Player.xaml.cs");
+            for (var i = 0; i < args.Length; i++)
+            {
+                if (args[i] != "--player") continue;
+                if (i + 1 >= args.Length)
+                {
+                    Fail("--player 后面要跟一个源文件路径");
+                    return 1;
+                }
+                playerPath = args[i + 1];
+            }
+
+            StateCases();
+            ResumeAfterReplacementCases();
+            SourceCases();
+            PublishOrderCases();
+            AttemptCases();
+            AttemptSourceCases();
+            ProgressCheckpointCases();
+
+            Console.WriteLine();
+            if (failures.Count == 0)
+            {
+                Console.WriteLine("全部通过:" + checks + " 项");
+                return 0;
+            }
+            Console.WriteLine("失败 " + failures.Count + " 项(共 " + checks + " 项):");
+            foreach (var failure in failures) Console.WriteLine("  - " + failure);
+            return 1;
+        }
+
+        private static void StateCases()
+        {
+            // 一次打开:Begin 发 id、记下原因、还是当前的那一次
+            var state = new PlayerSessionState();
+            Check(state.CurrentId == 0, "没有打开过时 CurrentId 是 0");
+            Check(state.Current == null, "没有打开过时 Current 是 null");
+            var first = state.Begin(PlayerSessionReason.QualityChange);
+            Check(first.Id == 1, "第一次 Begin 拿到 id 1");
+            Check(first.Reason == PlayerSessionReason.QualityChange, "票据记下 Begin 给的原因");
+            Check(state.CurrentId == 1, "CurrentId 跟着当前会话");
+            Check(first.IsCurrent, "刚开始的会话是当前的");
+            Check(state.IsCurrent(first.Id), "IsCurrent(id) 认得当前会话");
+            Check(state.IsPending(first.Id), "刚开始的会话还没结束");
+            Check(!state.IsCurrent(999), "没发过的 id 不是当前会话");
+
+            // 两次重叠打开:只有第二次被接受,第一次的 Accept 被拒
+            var stale = first;
+            var second = state.Begin(PlayerSessionReason.QualityChange);
+            Check(second.Id == 2, "第二次 Begin 的 id 递增");
+            Check(!stale.Accept(), "被取代的那一次 Accept 被拒");
+            Check(second.Accept(), "当前的那一次 Accept 通过");
+            Check(!second.Accept(), "同一次会话不会接受第二个 Accept");
+            Check(!state.IsPending(second.Id), "接受之后不再算没结束");
+            Check(second.IsCurrent, "接受之后仍是当前会话(还在播)");
+
+            // 作废:Accept 被拒、资源释放一次、当前会话没了
+            var third = state.Begin(PlayerSessionReason.Open);
+            var pendingResource = new FakeResource("pending-source");
+            Check(third.Hold(pendingResource), "在飞的时候资源挂到会话名下");
+            Check(pendingResource.DisposeCount == 0, "挂着的资源还没释放");
+            Check(state.Invalidate(), "作废当前会话返回真");
+            Check(!third.Accept(), "作废之后它的 Accept 被拒");
+            Check(!third.IsCurrent, "作废之后 IsCurrent 是假");
+            Check(state.Current == null, "作废之后没有当前会话");
+            Check(state.CurrentId == 0, "作废之后 CurrentId 回到 0");
+            Check(pendingResource.DisposeCount == 1, "在飞的那次挂着的资源被释放一次");
+            Check(!state.Invalidate(), "重复作废返回假");
+            Check(pendingResource.DisposeCount == 1, "重复作废不再释放第二次");
+            Check(!third.Release(), "作废之后再 Release 什么都不做");
+            Check(pendingResource.DisposeCount == 1, "作废之后再 Release 不释放第二次");
+
+            // 释放:失败路径由调用方调,一次有效第二次落空
+            var fourth = state.Begin(PlayerSessionReason.EngineFallback);
+            var failedResource = new FakeResource("failed-source");
+            Check(fourth.Hold(failedResource), "换引擎重开也能挂资源");
+            Check(fourth.Release(), "Release 释放这次挂着的资源");
+            Check(failedResource.DisposeCount == 1, "Release 释放了一次");
+            Check(!fourth.Release(), "重复 Release 返回假");
+            Check(failedResource.DisposeCount == 1, "重复 Release 不释放第二次");
+            Check(!fourth.IsCurrent, "Release 之后这次打开不再是当前的");
+            Check(!fourth.Accept(), "Release 之后 Accept 被拒");
+            Check(!fourth.Hold(new FakeResource("late")), "Release 之后再挂资源被拒");
+
+            // 迟到的资源:会话作废之后才建出来的东西当场释放
+            var fifth = state.Begin(PlayerSessionReason.LocalOpen);
+            state.Invalidate();
+            var late = new FakeResource("late-source");
+            Check(!fifth.Hold(late), "作废之后 Hold 返回假");
+            Check(late.DisposeCount == 1, "作废之后才建出来的资源当场释放");
+
+            // 已经交给播放器的资源不归会话:作废时不碰
+            var sixth = state.Begin(PlayerSessionReason.Open);
+            var published = new FakeResource("published-source");
+            Check(sixth.Hold(published), "发布之前挂到会话名下");
+            Check(sixth.Accept(), "资源进字段时接受这次会话");
+            Check(published.DisposeCount == 0, "接受时不动已经交给播放器的资源");
+            state.Invalidate();
+            Check(published.DisposeCount == 0, "作废时不释放已经交给播放器的资源");
+            Check(!state.IsCurrent(sixth.Id), "关掉之后旧 id 全都不是当前的");
+            Check(!state.IsCurrent(fifth.Id), "更早的 id 也不是当前的");
+
+            // 释放异常不挡住后面的资源:关页时该清干净
+            var seventh = state.Begin(PlayerSessionReason.Open);
+            var broken = new FakeResource("broken-source", true);
+            var healthy = new FakeResource("healthy-source");
+            seventh.Hold(broken);
+            seventh.Hold(healthy);
+            state.Invalidate();
+            Check(broken.DisposeCount == 1, "释放抛异常的资源也只释放一次");
+            Check(healthy.DisposeCount == 1, "前一个释放抛异常不影响后一个");
+
+            // 重叠打开:上一次挂着的资源在新 Begin 处释放
+            var eighth = state.Begin(PlayerSessionReason.Open);
+            var orphan = new FakeResource("orphan-source");
+            eighth.Hold(orphan);
+            var ninth = state.Begin(PlayerSessionReason.Open);
+            Check(orphan.DisposeCount == 1, "新 Begin 释放上一次还挂着的资源");
+            Check(!eighth.Accept(), "新 Begin 之后上一次的 Accept 被拒");
+            Check(ninth.Accept(), "新 Begin 的那一次可以接受");
+            Check(orphan.DisposeCount == 1, "换会话没有再释放一次");
+            Check(!state.Hold(ninth.Id, null), "空资源不算挂上");
+        }
+
+        /// <summary>
+        /// 复核意见里的场景:A 还挂在 SaveAndGetFileUriAsync(或者本地多段的文件解析)上时,
+        /// 换视频把 A 作废、B 打开并且已经把自己的播放器接进 _playerVideo;A 的 await 回来时必须放弃自己那一份。
+        /// 会话本身是真代码(PlayerSessionState),这里按 Player 的发布顺序走一遍:A 先 Hold,等完源再判定,
+        /// 判定过了才 Accept + 发布;B 已经发布之后 A 再回来。
+        /// </summary>
+        private static void ResumeAfterReplacementCases()
+        {
+            var state = new PlayerSessionState();
+            var field = "none"; // 正在播的播放器(_playerVideo)
+
+            // A:打开开始,建出来的播放器先挂在自己的会话名下,然后去等源
+            var a = state.Begin(PlayerSessionReason.Open);
+            var aPlayer = new FakeResource("player-A");
+            Check(a.Hold(aPlayer), "A 建出来的播放器挂到 A 名下");
+            Check(field == "none", "A 等源的时候还没有接进正在播的播放器");
+
+            // SetPlayItem 换视频:先作废在飞的 A(_playerSessions.Invalidate()),B 再开自己的会话
+            Check(state.Invalidate(), "换视频作废还在等源的 A");
+            Check(aPlayer.DisposeCount == 1, "A 被丢下的播放器在作废时释放一次");
+            var b = state.Begin(PlayerSessionReason.Open);
+            var bPlayer = new FakeResource("player-B");
+            Check(b.Hold(bPlayer), "B 的播放器挂到 B 名下");
+            Check(b.Accept(), "B 在发布之前接受会话");
+            field = bPlayer.Name; // B 接进 _playerVideo
+            Check(field == "player-B", "B 已经把自己装进正在播的播放器");
+
+            // A 的 await 回来了:判定在会话上,不读也不写正在播的播放器
+            Check(!a.IsCurrent, "A 回来时已经不是当前的会话");
+            Check(aPlayer.DisposeCount == 1, "A 的播放器已经释放过,回来时不再释放第二次");
+            if (a.IsCurrent) field = aPlayer.Name; // 旧的接线:判定排在发布后面,这里就会把 B 顶掉
+            Check(field == "player-B", "A 迟到不覆盖 B 已经装好的播放器");
+            Check(!a.Accept(), "A 迟到的 Accept 被拒");
+            Check(aPlayer.DisposeCount == 1, "A 迟到的 Accept 不会再释放一次");
+            Check(!a.Release(), "A 迟到的 Release 落空");
+            Check(aPlayer.DisposeCount == 1, "A 被丢下的播放器恰好释放一次");
+            Check(state.Current == b, "当前会话还是 B");
+            Check(bPlayer.DisposeCount == 0, "A 的收尾不碰 B 的播放器");
+            Check(field == bPlayer.Name, "正在播的播放器还是 B 的");
+
+            // 关页/换视频照旧:交给过播放器的 B 不归会话,作废时不再由会话释放它(ClosePlay 管)
+            state.Invalidate();
+            Check(bPlayer.DisposeCount == 0, "已经交给播放器的 B 不在作废时由会话释放");
+            Check(aPlayer.DisposeCount == 1, "关掉 B 时不动已经释放过的 A");
+        }
+
+        /// <summary>
+        /// 源码接线:会话本身在 probe 里跑,这里只钉住"每条打开路径都带着它走"。
+        /// </summary>
+        private static void SourceCases()
+        {
+            var repo = FindRepoRoot();
+            var controlPath = Path.Combine(repo, "src", "BiliLite.UWP", "Controls", "PlayerControl.xaml.cs");
+            var control = File.ReadAllText(controlPath);
+            if (!File.Exists(playerPath))
+            {
+                Fail("读不到 Player 源文件:" + playerPath);
+                return;
+            }
+            var player = File.ReadAllText(playerPath);
+
+            Check(control.Contains("await ChangeQuality(info.CurrentQuality);"), "SetQuality 等切清晰度收尾,不再 fire-and-forget");
+            Check(CountOf(control, "ChangeQuality(info.CurrentQuality);") == CountOf(control, "await ChangeQuality(info.CurrentQuality);"),
+                "SetQuality 里没有不带 await 的 ChangeQuality 调用");
+            Check(control.Contains("if (_engineFallbackRunning) return;"), "换引擎重开有在飞判定");
+            Check(control.Contains("_engineFallbackRunning = false;"), "换引擎重开的在飞标记会放开");
+            Check(control.Contains("PlayerSessionReason.EngineFallback"), "换引擎重开开了自己的会话");
+            Check(control.Contains("PlayerSessionReason.QualityChange"), "切清晰度开了自己的会话");
+            Check(control.Contains("PlayerSessionReason.LocalOpen"), "本地文件打开开了自己的会话");
+
+            var disposeStart = control.IndexOf("public async void Dispose()", StringComparison.Ordinal);
+            Check(disposeStart > 0, "找得到 PlayerControl.Dispose");
+            if (disposeStart > 0)
+            {
+                var disposeEnd = control.IndexOf("private void GridViewSelectColor_ItemClick", disposeStart, StringComparison.Ordinal);
+                var dispose = disposeEnd > disposeStart ? control.Substring(disposeStart, disposeEnd - disposeStart) : control.Substring(disposeStart);
+                Check(dispose.Contains("_playerSessions.Invalidate();"), "关页在 Dispose 里作废在飞的那次打开");
+            }
+
+            var setPlayItem = Section(control, "private async Task SetPlayItem(int index, PlayTargetStart start)", "private SubtitleModel subtitles;");
+            Check(setPlayItem.Contains("_playerSessions.Invalidate();"), "换P/换视频作废在飞的那次打开");
+
+            var openCalls = Regex.Matches(control, @"await Player\.(PlayDashUseNative|PlayDashUseFFmpegInterop|PlayDashUrlUseFFmpegInterop|PlaySingleFlvUseFFmpegInterop|PlaySingleFlvUseSYEngine|PlayVideoUseSYEngine|PlayerSingleMp4UseNativeAsync)\(");
+            var live = 0;
+            var withoutSession = 0;
+            foreach (Match call in openCalls)
+            {
+                // 注释掉的旧调用不算打开路径
+                var lineStart = control.LastIndexOf('\n', call.Index) + 1;
+                if (control.Substring(lineStart, call.Index - lineStart).TrimStart().StartsWith("//")) continue;
+                live++;
+                var end = control.IndexOf(");", call.Index, StringComparison.Ordinal);
+                if (end < 0 || !control.Substring(call.Index, end - call.Index).Contains("session: session")) withoutSession++;
+            }
+            Check(live == 12, "PlayerControl 里 12 条打开路径都被数到(实际 " + live + ")");
+            Check(withoutSession == 0, "每个打开调用都带着会话(漏了 " + withoutSession + " 个)");
+
+            var staleChecks = Regex.Matches(control, @"if \(!session\.IsCurrent\) return");
+            Check(staleChecks.Count >= 5, "打开之后的继续处都拒收旧会话(实际 " + staleChecks.Count + " 处)");
+
+            Check(CountOf(player, "PlayerSessionTicket session = null") >= 7, "Player 的每条打开路径都收会话参数");
+            Check(CountOf(player, "if (IsSessionStale(session)) return;") >= 9, "播放器回调按会话拒收");
+            Check(player.Contains("if (!HoldSessionResource(session, videoSource)) return SupersededOpen();"), "FFmpeg 源在发布前挂在会话名下");
+            Check(player.Contains("if (!session.Hold(") || player.Contains("HoldSessionResource("), "Player 通过会话托管资源");
+            Check(CountOf(player, "session?.Accept();") >= 3, "源进字段之前接受会话");
+            Check(player.Contains("using BiliLite.Services;"), "Player 引用了会话所在命名空间");
+        }
+
+        /// <summary>
+        /// 发布顺序:播放器先建在本地并挂到会话名下,等完源再判定会话,判定过了才装源、接受会话、接进 _playerVideo。
+        /// 对着四条打开路径钉顺序;--player 换一份旧文件跑,这几条就会红。
+        /// </summary>
+        private static void PublishOrderCases()
+        {
+            if (!File.Exists(playerPath))
+            {
+                Fail("读不到 Player 源文件:" + playerPath);
+                return;
+            }
+            var player = File.ReadAllText(playerPath);
+
+            CheckPublishOrder(player, "PlayDashUseNative(", "PlayerSingleMp4UseNativeAsync(", "PlayDashUseNative");
+            CheckPublishOrder(player, "PlayerSingleMp4UseNativeAsync(", "PlayDashUseFFmpegInterop(", "PlayerSingleMp4UseNativeAsync");
+            CheckPublishOrder(player, "PlaySingleFlvUseSYEngine(", "PlayVideoUseSYEngine(", "PlaySingleFlvUseSYEngine");
+            CheckPublishOrder(player, "PlayVideoUseSYEngine(", "public void SetRatioMode(", "PlayVideoUseSYEngine");
+
+            // 三条 FFmpeg 路径本来就把源挂在会话名下、接受之后才建播放器:这次不动它们,只钉住没退化
+            CheckHeldThenAccepted(player, "PlayDashUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop(", "PlayDashUseFFmpegInterop");
+            CheckHeldThenAccepted(player, "PlayDashUrlUseFFmpegInterop(", "PlaySingleFlvUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop");
+            CheckHeldThenAccepted(player, "PlaySingleFlvUseFFmpegInterop(", "PlaySingleFlvUseSYEngine(", "PlaySingleFlvUseFFmpegInterop");
+        }
+
+        /// <summary>
+        /// 复核意见里的 ownership 场景:一次引擎尝试失败时只放掉它自己建出来的那份,票据还是当前的、还没结束,
+        /// 回退的那次尝试接着用同一个票据;成功那次的资源照旧在 Accept 时交给播放器字段。
+        /// </summary>
+        private static void AttemptCases()
+        {
+            var state = new PlayerSessionState();
+            var field = "none"; // 正在播的播放器(_playerVideo)
+
+            // 原生 DASH 建不出源 → 同票据上回退 FFmpeg 成功
+            var session = state.Begin(PlayerSessionReason.QualityChange);
+            var abandoned = new FakeResource("native-player");
+            Check(session.Hold(abandoned), "原生尝试的播放器先挂到票据名下");
+            Check(session.Abandon(), "失败尝试调 Abandon 返回真");
+            Check(abandoned.DisposeCount == 1, "失败那次尝试的播放器放掉恰好一次");
+            Check(session.IsCurrent, "失败之后票据还是当前的");
+            Check(state.IsPending(session.Id), "失败之后票据还是没结束,回退能接着用它");
+            Check(state.Current == session, "失败之后 Current 还是这个票据");
+
+            var fallbackSource = new FakeResource("ffmpeg-source");
+            Check(session.Hold(fallbackSource), "回退的那次尝试用同一个票据挂自己的源");
+            Check(session.Accept(), "回退成功之后接受这次打开");
+            field = fallbackSource.Name; // 接进 _playerVideo
+            Check(field == "ffmpeg-source", "正在播的是回退接进来的源");
+            Check(fallbackSource.DisposeCount == 0, "回退的源交给播放器之后还活着");
+            Check(abandoned.DisposeCount == 1, "接受回退时没有再碰失败那次已经放掉的播放器");
+            Check(!session.Abandon(), "接受之后再 Abandon 落空");
+            Check(fallbackSource.DisposeCount == 0, "接受之后的失败收尾不碰已经交给播放器的源");
+            state.Invalidate();
+            Check(fallbackSource.DisposeCount == 0, "关页不释放已经交给播放器的源");
+            Check(abandoned.DisposeCount == 1, "关页不再释放失败那次已经放掉的播放器");
+
+            // 连失败两次再成功:每次只放掉自己那份
+            var twice = state.Begin(PlayerSessionReason.EngineFallback);
+            var firstPlayer = new FakeResource("player-1");
+            var secondPlayer = new FakeResource("player-2");
+            Check(twice.Hold(firstPlayer), "第一次尝试的播放器挂到票据名下");
+            Check(twice.Abandon(), "第一次尝试失败时放掉自己的播放器");
+            Check(firstPlayer.DisposeCount == 1, "第一次尝试的播放器放掉一次");
+            Check(!twice.Abandon(), "已经放干净再 Abandon 返回假");
+            Check(firstPlayer.DisposeCount == 1, "重复 Abandon 不释放第二次");
+            Check(twice.IsCurrent && state.IsPending(twice.Id), "重复 Abandon 之后票据还是当前、还没结束");
+            Check(twice.Hold(secondPlayer), "第二次尝试还能挂自己的播放器");
+            Check(firstPlayer.DisposeCount == 1, "挂第二份的时候不动已经放掉的第一份");
+            Check(twice.Abandon(), "第二次尝试失败时放掉自己的播放器");
+            Check(secondPlayer.DisposeCount == 1, "第二次尝试的播放器放掉一次");
+            Check(firstPlayer.DisposeCount == 1, "第二次失败不再碰第一份");
+            var thirdSource = new FakeResource("player-3");
+            Check(twice.Hold(thirdSource), "第三次尝试挂自己的源");
+            Check(twice.Accept(), "第三次成功之后接受这次打开");
+            field = thirdSource.Name;
+            Check(thirdSource.DisposeCount == 0, "第三次的源交给播放器之后还活着");
+            Check(firstPlayer.DisposeCount == 1 && secondPlayer.DisposeCount == 1, "两次失败各自只放掉一次");
+            state.Invalidate();
+            Check(thirdSource.DisposeCount == 0, "关页不释放已经交给播放器的源");
+
+            // 等源期间被取代:Invalidate 放一次,迟到的 Abandon 不再放第二次
+            var superseded = state.Begin(PlayerSessionReason.Open);
+            var awaiting = new FakeResource("awaiting-player");
+            Check(superseded.Hold(awaiting), "等源的播放器挂到票据名下");
+            Check(state.Invalidate(), "换视频/关页作废这次打开");
+            Check(awaiting.DisposeCount == 1, "被取代时放掉一次");
+            Check(!superseded.Abandon(), "被取代之后 Abandon 落空");
+            Check(awaiting.DisposeCount == 1, "新的收尾路径不再释放第二次");
+            Check(!superseded.IsCurrent, "被取代之后票据不是当前的");
+            var late = new FakeResource("late-source");
+            Check(!superseded.Hold(late), "被取代之后 Hold 落空");
+            Check(late.DisposeCount == 1, "被取代之后才建出来的资源当场释放");
+            Check(late.DisposeCount == 1, "迟到的资源不会由 Abandon 再释放一次");
+
+            // Abandon 不关掉票据:整次打开最后还是走 Release
+            var terminal = state.Begin(PlayerSessionReason.LocalOpen);
+            var failed = new FakeResource("failed-source");
+            Check(terminal.Hold(failed), "失败尝试的资源挂到票据名下");
+            Check(terminal.Abandon(), "失败尝试放掉自己那份");
+            var retry = new FakeResource("retry-source");
+            Check(terminal.Hold(retry), "Abandon 之后还能挂新的资源");
+            Check(terminal.Release(), "整次打开放弃的时候用 Release");
+            Check(retry.DisposeCount == 1, "Release 放掉最后一次尝试的东西");
+            Check(failed.DisposeCount == 1, "Release 不再碰 Abandon 已经放掉的那份");
+            Check(!terminal.IsCurrent, "Release 之后票据作废");
+            Check(!terminal.Accept(), "Release 之后 Accept 被拒");
+        }
+
+        /// <summary>
+        /// 源码接线:每条引擎打开路径的失败返回都先 Abandon 自己那次尝试,不再直接丢下一份还活着的资源。
+        /// </summary>
+        private static void AttemptSourceCases()
+        {
+            if (!File.Exists(playerPath))
+            {
+                Fail("读不到 Player 源文件:" + playerPath);
+                return;
+            }
+            var player = File.ReadAllText(playerPath);
+
+            CheckAbandon(player, "PlayDashUseNative(", "PlayerSingleMp4UseNativeAsync(", "PlayDashUseNative");
+            CheckAbandon(player, "PlayerSingleMp4UseNativeAsync(", "PlayDashUseFFmpegInterop(", "PlayerSingleMp4UseNativeAsync");
+            CheckAbandon(player, "PlayDashUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop(", "PlayDashUseFFmpegInterop");
+            CheckAbandon(player, "PlayDashUrlUseFFmpegInterop(", "PlaySingleFlvUseFFmpegInterop(", "PlayDashUrlUseFFmpegInterop");
+            CheckAbandon(player, "PlaySingleFlvUseFFmpegInterop(", "PlaySingleFlvUseSYEngine(", "PlaySingleFlvUseFFmpegInterop");
+            CheckAbandon(player, "PlaySingleFlvUseSYEngine(", "PlayVideoUseSYEngine(", "PlaySingleFlvUseSYEngine");
+            CheckAbandon(player, "PlayVideoUseSYEngine(", "public void SetRatioMode(", "PlayVideoUseSYEngine");
+
+            Check(CountOf(Code(player), "session?.Abandon();") == 8, "Abandon 只出现在 7 个 catch 和原生 DASH 建不出源那一处(实际 " +
+                CountOf(Code(player), "session?.Abandon();") + " 处)");
+
+            var nativeBody = Code(Section(player, "PlayDashUseNative(", "PlayerSingleMp4UseNativeAsync("));
+            Check(Regex.IsMatch(nativeBody, @"session\?\.Abandon\(\);\s*return new PlayerOpenResult\(\)"),
+                "原生 DASH 建不出源的那条失败返回之前先 Abandon");
+
+            var control = File.ReadAllText(Path.Combine(FindRepoRoot(), "src", "BiliLite.UWP", "Controls", "PlayerControl.xaml.cs"));
+            var changeQuality = Code(Section(control, "private async Task ChangeQuality(", "private void ShowErrorDialog"));
+            Check(Regex.IsMatch(changeQuality, @"PlayDashUrlUseFFmpegInterop\([^;]*session: session"),
+                "DASH 回退 FFmpeg 用的还是同一个票据");
+            Check(Regex.IsMatch(changeQuality, @"PlaySingleFlvUseFFmpegInterop\([^;]*session: session"),
+                "单段 FLV 回退 FFmpeg 用的还是同一个票据");
+        }
+
+        /// <summary>
+        /// BR-60:关窗口时正在播的视频不记进度。检查点(30s + 暂停补存)与 App 侧 flush 都得在,
+        /// 而且只有一份本地键、只有一份上报实现(检查点走静默,离开页面/播完仍旧弹提示)。
+        /// </summary>
+        private static void ProgressCheckpointCases()
+        {
+            var repo = FindRepoRoot();
+            var control = File.ReadAllText(Path.Combine(repo, "src", "BiliLite.UWP", "Controls", "PlayerControl.xaml.cs"));
+            var app = File.ReadAllText(Path.Combine(repo, "src", "BiliLite.UWP", "App.xaml.cs"));
+            var vm = File.ReadAllText(Path.Combine(repo, "src", "BiliLite.UWP", "Modules", "Player", "PlayerVM.cs"));
+            var controlCode = Code(control);
+
+            // 计时器:30 秒、构造里只建一次、播起来才开、Dispose 停
+            Check(Regex.IsMatch(controlCode, @"_historyCheckpointTimer = new DispatcherTimer\(\) \{ Interval = TimeSpan\.FromSeconds\(30\) \};"),
+                "进度检查点计时器是 30 秒的 DispatcherTimer");
+            var constructor = Code(Section(control, "public PlayerControl()", "private void Timer_focus_Tick"));
+            Check(CountOf(constructor, "_historyCheckpointTimer = new DispatcherTimer()") == 1,
+                "计时器在构造里只建一次(实际 " + CountOf(constructor, "_historyCheckpointTimer = new DispatcherTimer()") + " 次)");
+            var playState = Code(Section(control, "private void Player_PlayStateChanged", "private void Player_PlayBufferStart"));
+            Check(playState.Contains("_historyCheckpointTimer?.Start();"), "播放状态到 Playing 就把检查点计时器开起来");
+            Check(playState.IndexOf("_hasPlayedCurrentItem = true;") < playState.IndexOf("_historyCheckpointTimer?.Start();"),
+                "开计时器排在记下\"播过了\"之后");
+            var pause = Section(playState, "case PlayState.Pause:", "break;");
+            Check(pause.Contains("SaveHistoryCheckpoint();"), "暂停时补存一次位置");
+            Check(!pause.Contains("ReportHistory"), "暂停只存位置,不上报历史");
+            var dispose = Code(Section(control, "public async void Dispose()", "private void GridViewSelectColor_ItemClick"));
+            Check(dispose.Contains("_historyCheckpointTimer?.Stop();"), "Dispose 停掉检查点计时器");
+            Check(!dispose.Contains("_historyCheckpointTimer.Tick -="), "Dispose 只停不拆 Tick:同一个控件关掉还能再打开");
+            Check(CountOf(controlCode, "_historyCheckpointTimer.Tick +=") == 1, "Tick 只订阅一次(不在 Loaded 里重复挂)");
+
+            // 检查点的判定集
+            var checkpoint = Code(Section(control, "private async Task CheckpointHistoryAsync", "private async void HistoryCheckpointTimer_Tick"));
+            Check(checkpoint.Length > 0, "找得到检查点实现");
+            Check(checkpoint.Contains("if (_historyCheckpointRunning) return;"), "检查点有在飞判定,慢 POST 不叠加");
+            Check(checkpoint.Contains("CurrentPlayItem == null"), "没有当前播放条目时检查点跳过");
+            Check(checkpoint.Contains("!_hasPlayedCurrentItem"), "还没播过当前条目时检查点跳过");
+            Check(checkpoint.Contains("LocalPlayInfo?.IsManifestPlayback == true"), "清单播放(本地媒体)不做检查点");
+            Check(checkpoint.Contains("position < 5"), "位置不到 5 秒不做检查点");
+            var save = checkpoint.IndexOf("SettingHelper.SetValue<double>(HistoryKey(item), position);", StringComparison.Ordinal);
+            var localOnly = checkpoint.IndexOf("string.IsNullOrEmpty(item.avid)", StringComparison.Ordinal);
+            Check(save >= 0 && localOnly > save, "先写本地位置,再看 avid 决定要不要上报(本地文件照存)");
+            Check(Regex.IsMatch(checkpoint, @"ReportHistory\(item, position, reportErrors: false\)"), "检查点用静默上报(不弹提示)");
+            Check(Regex.IsMatch(checkpoint, @"catch \(Exception\)\s*\{"), "检查点自己吞掉异常,不会把播放带崩");
+            Check(checkpoint.Contains("_historyCheckpointRunning = false;"), "在飞标记在 finally 里放开");
+            Check(checkpoint.Contains("Player.PlayState == PlayState.Playing"), "定时检查点只在真正播着的时候上报");
+
+            // 本地键只有一份,Dispose 与检查点/flush 共用
+            Check(controlCode.Contains("private static string HistoryKey(PlayInfo item)"), "HistoryKey 是唯一的本地进度键");
+            Check(controlCode.Contains("return item.season_id != 0 ? \"ep\" + item.ep_id : item.cid;"), "HistoryKey 番剧按 ep、普通视频按 cid");
+            Check(dispose.Contains("SettingHelper.SetValue<double>(HistoryKey(historyItem), historyPosition);"), "Dispose 用同一个 HistoryKey");
+            Check(!controlCode.Contains("historyItem.season_id != 0"), "Dispose 里不再有第二份内联拼键");
+            Check(CountOf(controlCode, "HistoryKey(") >= 3, "HistoryKey 被 Dispose、检查点、flush 共用(实际 " +
+                CountOf(controlCode, "HistoryKey(") + " 处)");
+            Check(controlCode.Contains("SettingHelper.GetValue<double>(HistoryKey(CurrentPlayItem), 0)"),
+                "续播读位置也用同一个 HistoryKey");
+
+            // 静态 flush:App 从正在显示的播放器上补齐最后一次
+            Check(controlCode.Contains("public static async Task FlushActivePlaybackAsync()"), "暴露异步 FlushActivePlaybackAsync 给 App");
+            Check(controlCode.Contains("public static void FlushActivePlayback()"), "暴露同步 FlushActivePlayback(位置当场写、上报后台)");
+            Check(controlCode.Contains("_activeInstance = this;"), "Loaded 记下当前播放器实例");
+            Check(Regex.IsMatch(controlCode, @"if \(ReferenceEquals\(_activeInstance, this\)\)\s*_activeInstance = null;"),
+                "Unloaded 只清自己那一个实例");
+            Check(Regex.IsMatch(controlCode, @"if \(player == null\) return;"), "没有正在显示的播放器时 flush 什么都不做");
+            Check(controlCode.Contains("FlushPlaybackAsync();"), "flush 与检查点共用同一段保存/上报");
+            var flush = Code(Section(control, "private async Task FlushPlaybackAsync()", "private async void FlushPlayback()"));
+            Check(flush.Contains("reportWhilePaused: true"), "flush 那次暂停着也要上报(报告一次当前位置)");
+
+            // App 的两个生命周期钩子
+            var suspending = Code(Section(app, "private async void OnSuspending", "public static void ExtendAcrylicIntoTitleBar"));
+            Check(suspending.Contains("await PlayerControl.FlushActivePlaybackAsync();"), "OnSuspending await 一次 flush");
+            var suspendFlush = suspending.IndexOf("await PlayerControl.FlushActivePlaybackAsync();", StringComparison.Ordinal);
+            Check(suspendFlush >= 0 && suspendFlush < suspending.IndexOf("deferral.Complete();", StringComparison.Ordinal),
+                "OnSuspending 的 flush 在 deferral.Complete 之前");
+            var exiting = Code(Section(app, "private async void OnExiting", "public string ThemeXamlPath"));
+            Check(exiting.Contains("await PlayerControl.FlushActivePlaybackAsync();"), "OnExiting await 一次 flush");
+            var exitFlush = exiting.IndexOf("await PlayerControl.FlushActivePlaybackAsync();", StringComparison.Ordinal);
+            Check(exitFlush >= 0 && exitFlush < exiting.IndexOf("deferral.Complete();", StringComparison.Ordinal),
+                "OnExiting 的 flush 在 deferral.Complete 之前");
+
+            // 上报只有一份实现:检查点静默,离开页面/播完仍然弹提示
+            Check(CountOf(vm, "public async Task ReportHistory(") == 1, "ReportHistory 只有一份实现");
+            Check(vm.Contains("bool reportErrors = true"), "ReportHistory 多了 reportErrors 开关");
+            Check(Code(vm).Contains("if (!reportErrors)"), "静默上报不弹 Toast");
+            Check(controlCode.Contains("await playerHelper.ReportHistory(CurrentPlayItem, Player.Duration);"), "播完那次仍然带提示上报");
+            Check(controlCode.Contains("await playerHelper.ReportHistory(historyItem, historyPosition);"), "Dispose 那次仍然带提示上报");
+        }
+
+        private static void CheckAbandon(string player, string start, string end, string name)
+        {
+            var body = Code(Section(player, start, end));
+            if (body.Length == 0)
+            {
+                Fail(name + " 找不到方法体");
+                return;
+            }
+            var accept = body.IndexOf("session?.Accept();", StringComparison.Ordinal);
+            var preAccept = accept >= 0 ? body.Substring(0, accept) : body;
+            // 接受之前失败的返回都先 Abandon(被取代的那几条走 SupersededOpen,资源已经由会话放掉)
+            var dropped = CountOf(preAccept, "return new PlayerOpenResult()");
+            var abandoned = CountOf(preAccept, "session?.Abandon();");
+            Check(dropped == abandoned, name + " 接受之前没有不加收拾就丢下的失败返回(失败返回 " + dropped +
+                " 处,先 Abandon 的 " + abandoned + " 处)");
+            var lastCatch = body.LastIndexOf("catch (Exception ex)", StringComparison.Ordinal);
+            Check(lastCatch >= 0 && body.LastIndexOf("session?.Abandon();", StringComparison.Ordinal) > lastCatch,
+                name + " 的异常路径也放掉这次尝试的资源");
+        }
+
+        private static void CheckPublishOrder(string player, string start, string end, string name)
+        {
+            var body = Code(Section(player, start, end));
+            if (body.Length == 0)
+            {
+                Fail(name + " 找不到方法体");
+                return;
+            }
+            var problem = PublishOrderProblem(body);
+            Check(problem == null, name + " 的发布顺序(先挂会话名下、等完源再判定、判定过了才接进播放器)" + (problem == null ? "" : ": " + problem));
+        }
+
+        /// <summary>
+        /// 返回第一条不满足的说明,null 表示顺序对。
+        /// </summary>
+        private static string PublishOrderProblem(string body)
+        {
+            if (body.Contains("_playerVideo = new MediaPlayer()")) return "播放器直接建进 _playerVideo,判定之前就顶掉了正在播的那一份";
+            if (body.Contains("_playerVideo.Source =")) return "源直接装在 _playerVideo 上,判定之前就可能改到别人的播放器";
+            var hold = body.IndexOf("HoldSessionPlayer(session, video)", StringComparison.Ordinal);
+            if (hold < 0) return "建出来的播放器没有先挂到会话名下";
+            var stale = body.IndexOf("if (IsSessionStale(session)) return SupersededOpen();", StringComparison.Ordinal);
+            if (stale < 0) return "等完源之后没有判定会话";
+            var source = body.IndexOf("video.Source =", StringComparison.Ordinal);
+            if (source < 0) return "没有给本地播放器装源";
+            var accept = body.IndexOf("session?.Accept();", StringComparison.Ordinal);
+            if (accept < 0) return "接进播放器之前没有接受会话";
+            var publish = body.IndexOf("_playerVideo = video;", StringComparison.Ordinal);
+            if (publish < 0) return "没有把本地这一份接进 _playerVideo";
+            if (hold > stale) return "判定会话排在挂到会话名下之前";
+            if (stale > source) return "装源排在判定会话之前";
+            if (source > accept) return "接受会话排在装源之前";
+            if (accept > publish) return "接进 _playerVideo 排在接受会话之前";
+            return null;
+        }
+
+        private static void CheckHeldThenAccepted(string player, string start, string end, string name)
+        {
+            var body = Code(Section(player, start, end));
+            if (body.Length == 0)
+            {
+                Fail(name + " 找不到方法体");
+                return;
+            }
+            var hold = body.IndexOf("HoldSessionResource(session, videoSource)", StringComparison.Ordinal);
+            var accept = body.IndexOf("session?.Accept();", StringComparison.Ordinal);
+            var publish = body.IndexOf("_playerVideo = new MediaPlayer()", StringComparison.Ordinal);
+            Check(hold >= 0 && accept > hold && publish > accept,
+                name + " 没动:源先挂会话名下,接受之后才建播放器(hold=" + hold + " accept=" + accept + " publish=" + publish + ")");
+        }
+
+        /// <summary>
+        /// 顺序判定只看代码:注释里的旧写法不算数。
+        /// </summary>
+        private static string Code(string text)
+        {
+            return Regex.Replace(text, @"^[ \t]*//.*$", "", RegexOptions.Multiline);
+        }
+
+        private static string Section(string text, string start, string end)
+        {
+            var from = text.IndexOf(start, StringComparison.Ordinal);
+            if (from < 0) return "";
+            var to = text.IndexOf(end, from, StringComparison.Ordinal);
+            return to > from ? text.Substring(from, to - from) : text.Substring(from);
+        }
+
+        private static int CountOf(string haystack, string needle)
+        {
+            var count = 0;
+            var index = 0;
+            while ((index = haystack.IndexOf(needle, index, StringComparison.Ordinal)) >= 0)
+            {
+                count++;
+                index += needle.Length;
+            }
+            return count;
+        }
+
+        private static void Check(bool ok, string message)
+        {
+            checks++;
+            if (ok) Console.WriteLine("[ok] " + message);
+            else Fail(message);
+        }
+
+        private static void Fail(string message)
+        {
+            failures.Add(message);
+            Console.WriteLine("[FAIL] " + message);
+        }
+
+        private static string FindRepoRoot()
+        {
+            var dir = new DirectoryInfo(AppContext.BaseDirectory);
+            while (dir != null)
+            {
+                if (File.Exists(Path.Combine(dir.FullName, "src", "BiliLite.UWP", "Controls", "PlayerControl.xaml")))
+                    return dir.FullName;
+                dir = dir.Parent;
+            }
+            throw new InvalidOperationException("找不到仓库根目录(向上找 src/BiliLite.UWP/Controls/PlayerControl.xaml)");
+        }
+    }
+}

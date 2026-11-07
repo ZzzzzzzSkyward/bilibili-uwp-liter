@@ -1,0 +1,1292 @@
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Globalization;
+using System.Threading.Tasks;
+
+namespace BiliLite.Models.Common
+{
+    /// <summary>
+    /// 目录里的一段:当前视频的分P、详情里的合集、打开时的播放列表
+    /// </summary>
+    public enum PlayDirectorySectionKind
+    {
+        Parts = 0,
+        UgcSeason = 1,
+        Playlist = 2,
+        /// <summary>
+        /// 剧集页的正片。和预告是两段,不合成一段,也不按播出时间重排
+        /// </summary>
+        SeasonEpisodes = 3,
+        /// <summary>
+        /// 剧集页的预告/花絮。预告不是正片的一集,段和行都分开
+        /// </summary>
+        SeasonPreviews = 4,
+    }
+
+    /// <summary>
+    /// 目录的一行。身份是 Key(分P用 cid,合集/播放列表用 aid),Ordinal 只是展示位置;
+    /// 标题重复、翻页追加、封面裁剪都不会改变 Key。
+    /// 行对象跟着抽屉那张列表一起活着:重画只把改动的字段写回原对象,
+    /// 界面按属性通知就地更新,行对象和滚动位置都不用重建。
+    /// </summary>
+    public sealed class PlayDirectoryRow : INotifyPropertyChanged
+    {
+        private string m_key;
+        private string m_title;
+        private string m_cover;
+        private string m_subtitle;
+        private string m_positionText;
+        private string m_duration;
+        private int m_ordinal;
+        private bool m_isCurrent;
+        private string m_currentBadge;
+        private bool m_isPending;
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public string Key
+        {
+            get { return m_key; }
+            set { Set(ref m_key, value, "Key"); }
+        }
+
+        public string Title
+        {
+            get { return m_title; }
+            set { if (Set(ref m_title, value, "Title")) Raise("AutomationName"); }
+        }
+
+        public string Cover
+        {
+            get { return m_cover; }
+            set { Set(ref m_cover, value, "Cover"); }
+        }
+
+        /// <summary>
+        /// 次要信息:合集的分区名、UP主
+        /// </summary>
+        public string Subtitle
+        {
+            get { return m_subtitle; }
+            set { Set(ref m_subtitle, value, "Subtitle"); }
+        }
+
+        /// <summary>
+        /// 位置文字,例如 合集 7/24、第7项
+        /// </summary>
+        public string PositionText
+        {
+            get { return m_positionText; }
+            set { Set(ref m_positionText, value, "PositionText"); }
+        }
+
+        public string Duration
+        {
+            get { return m_duration; }
+            set { Set(ref m_duration, value, "Duration"); }
+        }
+
+        /// <summary>
+        /// 1 起的序号,只是展示用
+        /// </summary>
+        public int Ordinal
+        {
+            get { return m_ordinal; }
+            set { Set(ref m_ordinal, value, "Ordinal"); }
+        }
+
+        public bool IsCurrent
+        {
+            get { return m_isCurrent; }
+            set { if (Set(ref m_isCurrent, value, "IsCurrent")) Raise("AutomationName"); }
+        }
+
+        /// <summary>
+        /// 当前行的文字标记("正在播放"),不是当前行时为空;界面直接按这个字符串显隐
+        /// </summary>
+        public string CurrentBadge
+        {
+            get { return m_currentBadge; }
+            set { Set(ref m_currentBadge, value, "CurrentBadge"); }
+        }
+
+        /// <summary>
+        /// 正在换到这一行。等待的行不是正在播放的行:它只挂转圈,不挂"正在播放"的条和字
+        /// </summary>
+        public bool IsPending
+        {
+            get { return m_isPending; }
+            set { if (Set(ref m_isPending, value, "IsPending")) Raise("AutomationName"); }
+        }
+
+        /// <summary>
+        /// 读屏读到的这一行:标题,再加上它现在的状态。
+        /// 状态只在这里出现,行上的可见文字不再自己复述一遍标题
+        /// </summary>
+        public string AutomationName
+        {
+            get
+            {
+                var title = Title ?? "";
+                if (IsPending) return title + " 正在切换";
+                if (IsCurrent) return title + " 正在播放";
+                return title;
+            }
+        }
+
+        /// <summary>
+        /// 把另一份模型里同一个 Key 的行写到这一行上;Key 是身份,不动。
+        /// 只有真的变了才发通知:一页落下来时整张列表不必逐行重画。
+        /// </summary>
+        internal void CopyFrom(PlayDirectoryRow other)
+        {
+            if (other == null) return;
+            Title = other.Title;
+            Cover = other.Cover;
+            Subtitle = other.Subtitle;
+            PositionText = other.PositionText;
+            Duration = other.Duration;
+            Ordinal = other.Ordinal;
+            IsCurrent = other.IsCurrent;
+            CurrentBadge = other.CurrentBadge;
+            IsPending = other.IsPending;
+        }
+
+        private bool Set<T>(ref T field, T value, string name)
+        {
+            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
+            field = value;
+            Raise(name);
+            return true;
+        }
+
+        private void Raise(string name)
+        {
+            var handler = PropertyChanged;
+            if (handler == null) return;
+            handler(this, new PropertyChangedEventArgs(name));
+        }
+    }
+
+    public sealed class PlayDirectorySection
+    {
+        public PlayDirectorySectionKind Kind { get; set; }
+        public string Title { get; set; }
+        /// <summary>
+        /// 这一段背后的名字:合集名、播放列表名。页头按用户正在浏览的那一段写名字,
+        /// 所以名字得跟着段走,不能只留一份活动来源的
+        /// </summary>
+        public string SourceTitle { get; set; }
+        public IList<PlayDirectoryRow> Rows { get; set; }
+    }
+
+    /// <summary>
+    /// 目录里远程播放列表的翻页状态。只有背后有 MediaListPagingState 的播放列表会用到;
+    /// 固定内存队列和没有播放列表时是 None,目录不摆翻页 footer。
+    /// </summary>
+    public enum PlayDirectoryPagingState
+    {
+        /// <summary>
+        /// 没有可翻的页:固定内存队列,或者根本没有播放列表
+        /// </summary>
+        None = 0,
+        /// <summary>
+        /// 还有下一页,footer 上是"加载更多"
+        /// </summary>
+        More = 1,
+        /// <summary>
+        /// 有一页在路上,footer 上只有转圈
+        /// </summary>
+        Loading = 2,
+        /// <summary>
+        /// 上一次取失败了,footer 上是"重试"
+        /// </summary>
+        Failed = 3,
+        /// <summary>
+        /// 已经取到头,footer 不留东西
+        /// </summary>
+        Exhausted = 4,
+    }
+
+    /// <summary>
+    /// 抽屉里"加载全部"的进行状态。Idle 时 footer 照常是加载更多/重试,
+    /// Running 和 Stopping 都在跑:手上这一页还没回来,footer 上只有"取消"。
+    /// </summary>
+    public enum LoadAllState
+    {
+        /// <summary>
+        /// 没在跑
+        /// </summary>
+        Idle = 0,
+        /// <summary>
+        /// 一页接一页地取,直到到头、失败或取消
+        /// </summary>
+        Running = 1,
+        /// <summary>
+        /// 用户已经点了取消:手上这一页走完就停,停完回到 Idle
+        /// </summary>
+        Stopping = 2,
+    }
+
+    /// <summary>
+    /// 抽屉翻页 footer 这一拍该摆什么。两个按钮最多各一个,转圈只在取页时出现:
+    /// 文案就是按钮要做的事,不带任何解释。
+    /// </summary>
+    public struct PlayDirectoryFooter
+    {
+        /// <summary>
+        /// 一次取页在路上,没有可点的动作
+        /// </summary>
+        public bool ShowRing;
+
+        /// <summary>
+        /// 主按钮上的字:加载更多、重试或者取消;空表示不摆
+        /// </summary>
+        public string PrimaryText;
+
+        /// <summary>
+        /// "加载全部";空表示不摆
+        /// </summary>
+        public string SecondaryText;
+
+        public bool HasContent
+        {
+            get
+            {
+                return ShowRing || !string.IsNullOrEmpty(PrimaryText) || !string.IsNullOrEmpty(SecondaryText);
+            }
+        }
+    }
+
+    /// <summary>
+    /// 一份完整的目录。Caption 是播放器"目录"按钮上的短标签,CountText 是页头的数量说明,
+    /// CurrentPositionText 是"现在播到哪"的一句话;三者都跟着活动来源。
+    /// </summary>
+    public sealed class PlayDirectoryModel
+    {
+        public string SourceTitle { get; set; }
+        public string Caption { get; set; }
+        public string CountText { get; set; }
+        /// <summary>
+        /// 活动分段里当前行的 Key,定位正在播放时用它
+        /// </summary>
+        public string CurrentKey { get; set; }
+        public string CurrentPositionText { get; set; }
+        /// <summary>
+        /// 页头那行来源:合集《标题》、播放列表《标题》、分P
+        /// </summary>
+        public string HeaderText { get; set; }
+        public PlayDirectorySectionKind ActiveKind { get; set; }
+        public IList<PlayDirectorySection> Sections { get; set; }
+        /// <summary>
+        /// 这一次是新开目录,不是重画。界面只在为真时把浏览的分段拉回连播来源,
+        /// 重画要留着用户正在看的那一段。
+        /// </summary>
+        public bool IsFreshOpen { get; set; }
+
+        /// <summary>
+        /// 远程播放列表的翻页状态。固定内存队列是 None:没有更多页可取,界面上什么都不摆。
+        /// </summary>
+        public PlayDirectoryPagingState Paging { get; set; }
+
+        /// <summary>
+        /// 正在换到的那一行(Key)。空表示没有换目标在路上;
+        /// 界面上这一行挂转圈,不当成正在播放
+        /// </summary>
+        public string PendingKey { get; set; }
+
+        /// <summary>
+        /// 生效的搜索词,空表示没过滤。过滤出来的是另一份模型:
+        /// 未过滤的那份留在抽屉里,清空搜索就原样拿回来
+        /// </summary>
+        public string Query { get; set; }
+
+        /// <summary>
+        /// "加载全部"进行到哪一步。footer 据此在加载更多/重试和"取消"之间换,
+        /// 进度不另说一遍:页头的数量就是进度。
+        /// </summary>
+        public LoadAllState LoadAll { get; set; }
+
+        public bool IsLoadingAll
+        {
+            get { return LoadAll != LoadAllState.Idle; }
+        }
+
+        public bool IsFiltered
+        {
+            get { return !string.IsNullOrEmpty(Query); }
+        }
+
+        /// <summary>
+        /// 一段都没有时不弹空抽屉
+        /// </summary>
+        public bool HasSections
+        {
+            get { return Sections != null && Sections.Count > 0; }
+        }
+    }
+
+    /// <summary>
+    /// 抽屉里正在显示的行。ListView 的 ItemsSource 一直是这同一个集合:
+    /// 翻页只在末尾追加,已经显示的行对象一个都不换,所以滚动位置保得住,虚拟化也不会被关掉。
+    /// 行集合真的换了(过滤、换段、来源里的行被砍短)才整批替换。
+    /// </summary>
+    public sealed class PlayDirectoryRows : ObservableCollection<PlayDirectoryRow>
+    {
+        /// <summary>
+        /// 换成另一份行。同一个位置上还是同一个 Key 就算没换:只把改动的字段写回原对象,
+        /// 末尾多出来的行追加。行真的变了才整批替换。
+        /// </summary>
+        public void Sync(IList<PlayDirectoryRow> rows)
+        {
+            var next = rows;
+            var nextCount = next == null ? 0 : next.Count;
+            var shared = 0;
+            var limit = Math.Min(Count, nextCount);
+            while (shared < limit && SameKey(this[shared], next[shared])) shared++;
+
+            // 前面的行对不上了:这是一份别的行集合,整批替换
+            if (shared < Count)
+            {
+                Clear();
+                for (var i = 0; i < nextCount; i++)
+                {
+                    if (next[i] != null) Add(next[i]);
+                }
+                return;
+            }
+
+            // 已经显示的行留在原地,只把标记和文字写回去
+            for (var i = 0; i < shared; i++) this[i].CopyFrom(next[i]);
+            // 新取回来的一页接在后面
+            for (var i = shared; i < nextCount; i++)
+            {
+                if (next[i] != null) Add(next[i]);
+            }
+        }
+
+        private static bool SameKey(PlayDirectoryRow left, PlayDirectoryRow right)
+        {
+            if (left == null || right == null) return false;
+            return string.Equals(left.Key ?? "", right.Key ?? "", StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
+    /// 一键把列表剩下的页取完。走的是取页的单飞通道:一页回来才取下一页,任何时刻只有一页在路上。
+    /// 到头、失败或取消就停;取消只让手上这一页走完,已经取回来的行一条都不掉。
+    /// 它只补行:不起播、不换连播来源、不换浏览的分段。
+    /// </summary>
+    public sealed class PlayDirectoryLoadAll
+    {
+        private readonly Func<bool> m_haveMore;
+        private readonly Func<bool> m_busy;
+        private readonly Func<Task<bool>> m_loadPage;
+
+        public PlayDirectoryLoadAll(Func<bool> haveMore, Func<bool> busy, Func<Task<bool>> loadPage)
+        {
+            m_haveMore = haveMore;
+            m_busy = busy;
+            m_loadPage = loadPage;
+        }
+
+        public LoadAllState State { get; private set; }
+
+        public bool IsRunning
+        {
+            get { return State != LoadAllState.Idle; }
+        }
+
+        /// <summary>
+        /// 开始。已经在跑(这时候 footer 上只有"取消")、通道上已经有一页在路上、
+        /// 或者已经没有下一页时都不开始:两个请求永远不叠在一起。
+        /// </summary>
+        public bool TryStart()
+        {
+            if (State != LoadAllState.Idle) return false;
+            if (m_busy()) return false;
+            if (!m_haveMore()) return false;
+            State = LoadAllState.Running;
+            return true;
+        }
+
+        /// <summary>
+        /// 收手:手上这一页走完就停,已经到手的行都留着。没在跑时什么也不做。
+        /// </summary>
+        public void RequestCancel()
+        {
+            if (State == LoadAllState.Running) State = LoadAllState.Stopping;
+        }
+
+        /// <summary>
+        /// 一页一页走到停为止,返回真正取回来的页数。没开始时直接返回 0。
+        /// </summary>
+        public async Task<int> RunAsync()
+        {
+            // 没开始就没什么可走的;已经在上一步取消过一次的话,这里把状态落回 Idle
+            if (State == LoadAllState.Idle) return 0;
+            var pages = 0;
+            try
+            {
+                while (State == LoadAllState.Running)
+                {
+                    // 取一页再看结果:失败就停在原地,footer 换回"重试",这一轮不再自己往下走
+                    if (!await m_loadPage()) break;
+                    pages++;
+                    // 已经取到头:没有下一页了
+                    if (!m_haveMore()) break;
+                }
+            }
+            finally
+            {
+                // 取消也只停在这里:状态回到 Idle,footer 回到加载更多/重试
+                State = LoadAllState.Idle;
+            }
+            return pages;
+        }
+    }
+
+    /// <summary>
+    /// 页面手上的这一份播放队列:启动带来的队列、翻页状态、已加载的行,以及"加载全部"。
+    /// 四样东西一起建、一起拆:页面是缓存实例,漏掉一样,下一个视频就会接着用上一个视频的队列。
+    /// 拆只放掉引用,不清行里的内容:内存队列的行是启动器给的,那边还在用。
+    /// </summary>
+    public sealed class PlayQueueState
+    {
+        public VideoPlaylist Playlist { get; set; }
+
+        public MediaListPagingState Paging { get; set; }
+
+        public ObservableCollection<VideoPlaylistItem> Rows { get; set; }
+
+        public PlayDirectoryLoadAll LoadAll { get; set; }
+
+        public bool IsEmpty
+        {
+            get { return Playlist == null && Paging == null && Rows == null && LoadAll == null; }
+        }
+
+        /// <summary>
+        /// 拆掉这一份:在跑的"加载全部"先收手,四样引用一起放掉。
+        /// 没建过、或者已经拆过时再拆一次什么都不做,返回 false。
+        /// </summary>
+        public bool Clear()
+        {
+            if (IsEmpty) return false;
+            // 手上这一页走完就停;请求本身收不回来,但它再回来时已经找不到这一份
+            if (LoadAll != null) LoadAll.RequestCancel();
+            Playlist = null;
+            Paging = null;
+            Rows = null;
+            LoadAll = null;
+            return true;
+        }
+    }
+
+    /// <summary>
+    /// 分P的最小输入:只有目录需要的字段,构建器不碰播放器的 PlayInfo
+    /// </summary>
+    public sealed class PlayDirectoryPart
+    {
+        public string Cid { get; set; }
+        public string Title { get; set; }
+        /// <summary>
+        /// 秒
+        /// </summary>
+        public long DurationSeconds { get; set; }
+    }
+
+    /// <summary>
+    /// 剧集页一集的最小输入。身份是分集 id:正片和预告各自一段,id 在两段里都不重复,
+    /// 所以同一个 id 只会在它自己那一段里被标成当前行。
+    /// </summary>
+    public sealed class PlayDirectorySeasonEpisode
+    {
+        public string EpId { get; set; }
+        public string Title { get; set; }
+        public string Cover { get; set; }
+    }
+
+    /// <summary>
+    /// 目录的组装。纯函数:只读传进来的顺序、合集和队列,不取页、不改播放、不决定下一步播什么。
+    /// </summary>
+    public static class PlayDirectoryBuilder
+    {
+        public const string PartsSectionTitle = "分P";
+        public const string CollectionSectionTitle = "合集";
+        public const string PlaylistSectionTitle = "播放列表";
+        public const string SeasonEpisodesSectionTitle = "正片";
+        public const string SeasonPreviewsSectionTitle = "预告";
+        public const string NowPlayingBadge = "正在播放";
+        public const string LoadMoreText = "加载更多";
+        public const string RetryText = "重试";
+        public const string LoadAllText = "加载全部";
+        public const string CancelText = "取消";
+
+        /// <summary>
+        /// 当前视频的分P。只有一个分P的普通视频没有这一段;互动视频除外。
+        /// </summary>
+        public static PlayDirectoryModel FromParts(IList<PlayDirectoryPart> parts, int currentIndex, string sourceTitle, bool interactionVideo)
+        {
+            var count = parts == null ? 0 : parts.Count;
+            var index = count == 0 ? -1 : Math.Min(Math.Max(0, currentIndex), count - 1);
+
+            var rows = new List<PlayDirectoryRow>();
+            var currentKey = "";
+            for (var i = 0; i < count; i++)
+            {
+                var part = parts[i];
+                var key = PartKey(part, i);
+                if (i == index) currentKey = key;
+                rows.Add(new PlayDirectoryRow
+                {
+                    Key = key,
+                    Title = part == null ? "" : part.Title,
+                    Duration = FormatDuration(part == null ? 0 : part.DurationSeconds),
+                    Ordinal = i + 1,
+                    IsCurrent = i == index,
+                    CurrentBadge = i == index ? NowPlayingBadge : "",
+                });
+            }
+
+            var partText = PartText(index, count);
+            var model = new PlayDirectoryModel
+            {
+                SourceTitle = sourceTitle ?? "",
+                Caption = Caption(PlayDirectorySectionKind.Parts, index + 1, count),
+                CountText = count.ToString(CultureInfo.InvariantCulture),
+                CurrentKey = currentKey,
+                CurrentPositionText = partText,
+                ActiveKind = PlayDirectorySectionKind.Parts,
+                Sections = new List<PlayDirectorySection>(),
+            };
+
+            if (count > 1 || interactionVideo)
+            {
+                model.Sections.Add(new PlayDirectorySection()
+                {
+                    Kind = PlayDirectorySectionKind.Parts,
+                    Title = PartsSectionTitle,
+                    SourceTitle = sourceTitle ?? "",
+                    Rows = rows,
+                });
+            }
+            return model;
+        }
+
+        /// <summary>
+        /// 详情里的合集。行顺序和连播顺序一样(分区、分集),身份是 aid。
+        /// 合集分集只带时长,没有别的视频的分P数,所以位置文字只写视频位置。
+        /// </summary>
+        public static PlayDirectoryModel FromUgcSeason(VideoUgcSeason season, string currentAid)
+        {
+            var episodes = new List<EpisodeRow>();
+            if (season != null && season.Sections != null)
+            {
+                foreach (var section in season.Sections)
+                {
+                    if (section == null || section.Episodes == null) continue;
+                    foreach (var episode in section.Episodes)
+                    {
+                        if (episode == null || string.IsNullOrEmpty(episode.Aid)) continue;
+                        episodes.Add(new EpisodeRow()
+                        {
+                            Aid = episode.Aid,
+                            SectionTitle = section.Title,
+                            Title = episode.Title,
+                            Author = episode.Author == null ? null : episode.Author.Name,
+                            Cover = episode.Cover,
+                            Duration = episode.Page == null ? 0 : episode.Page.Duration,
+                        });
+                    }
+                }
+            }
+
+            var total = episodes.Count;
+            var rows = new List<PlayDirectoryRow>();
+            var currentIndex = -1;
+            for (var i = 0; i < total; i++)
+            {
+                var episode = episodes[i];
+                var isCurrent = currentIndex < 0 && !string.IsNullOrEmpty(currentAid)
+                    && string.Equals(episode.Aid, currentAid, StringComparison.Ordinal);
+                if (isCurrent) currentIndex = i;
+                rows.Add(new PlayDirectoryRow()
+                {
+                    Key = episode.Aid,
+                    Title = episode.Title,
+                    Cover = episode.Cover,
+                    Subtitle = Join(episode.SectionTitle, episode.Author),
+                    PositionText = PositionOf(CollectionSectionTitle, i + 1, total),
+                    Duration = FormatDuration(episode.Duration),
+                    Ordinal = i + 1,
+                    IsCurrent = isCurrent,
+                    CurrentBadge = isCurrent ? NowPlayingBadge : "",
+                });
+            }
+
+            var model = new PlayDirectoryModel()
+            {
+                SourceTitle = season == null ? "" : season.Title,
+                Caption = Caption(PlayDirectorySectionKind.UgcSeason, currentIndex + 1, total),
+                CountText = total.ToString(CultureInfo.InvariantCulture),
+                CurrentKey = currentIndex < 0 ? "" : rows[currentIndex].Key,
+                CurrentPositionText = currentIndex < 0 ? "" : PositionOf(CollectionSectionTitle, currentIndex + 1, total),
+                ActiveKind = PlayDirectorySectionKind.UgcSeason,
+                Sections = new List<PlayDirectorySection>(),
+            };
+
+            if (total > 0)
+            {
+                model.Sections.Add(new PlayDirectorySection()
+                {
+                    Kind = PlayDirectorySectionKind.UgcSeason,
+                    Title = CollectionSectionTitle,
+                    SourceTitle = season == null ? "" : season.Title,
+                    Rows = rows,
+                });
+            }
+            return model;
+        }
+
+        /// <summary>
+        /// 打开视频时带的队列。带了翻页状态的是远程 medialist:数量按已加载和已知总数写,
+        /// 不把已加载数冒充总数;没有翻页状态的固定队列直接写可播放总量。
+        /// 当前行只认正在播的 aid:队列游标(playlist.Index)是连播的续播位置,它会停在旧的一行,
+        /// 拿它标"正在播放"会让用户看到一条假的高亮。
+        /// </summary>
+        public static PlayDirectoryModel FromPlaylist(VideoPlaylist playlist, MediaListPagingState paging, string currentAid)
+        {
+            var items = playlist == null ? null : playlist.Playlist;
+            var total = items == null ? 0 : items.Count;
+
+            var rows = new List<PlayDirectoryRow>();
+            var index = -1;
+            for (var i = 0; i < total; i++)
+            {
+                var item = items[i];
+                var isCurrent = index < 0 && !string.IsNullOrEmpty(currentAid) && item != null
+                    && string.Equals(item.ID, currentAid, StringComparison.Ordinal);
+                if (isCurrent) index = i;
+                rows.Add(new PlayDirectoryRow()
+                {
+                    Key = item == null ? "" : item.ID,
+                    Title = item == null ? "" : item.Title,
+                    Cover = item == null ? "" : item.Cover,
+                    Subtitle = item == null ? "" : item.Author,
+                    PositionText = "",
+                    Duration = item == null ? "" : item.Duration,
+                    Ordinal = i + 1,
+                    IsCurrent = isCurrent,
+                    CurrentBadge = isCurrent ? NowPlayingBadge : "",
+                });
+            }
+
+            var ordinal = index + 1;
+            // 页头写的是用户认得的名字:远程列表的占位词不算名字,没有名字就留空,不编一个
+            var title = PlaylistTitleOf(playlist, paging);
+
+            var model = new PlayDirectoryModel()
+            {
+                SourceTitle = title,
+                Caption = Caption(PlayDirectorySectionKind.Playlist, ordinal, total),
+                CountText = paging != null
+                    ? CountText(paging.LoadedCount, paging.HasKnownTotal, paging.TotalCount)
+                    : FixedCountText(ordinal, total),
+                CurrentKey = index < 0 ? "" : rows[index].Key,
+                CurrentPositionText = ordinal > 0 ? OrdinalText(ordinal) : "",
+                ActiveKind = PlayDirectorySectionKind.Playlist,
+                Sections = new List<PlayDirectorySection>(),
+                Paging = PagingOf(paging),
+            };
+
+            if (total > 0)
+            {
+                model.Sections.Add(new PlayDirectorySection()
+                {
+                    Kind = PlayDirectorySectionKind.Playlist,
+                    Title = PlaylistSectionTitle,
+                    SourceTitle = title,
+                    Rows = rows,
+                });
+            }
+            return model;
+        }
+
+        /// <summary>
+        /// 剧集页的一段(正片或预告)。行顺序就是详情页选集列里的顺序,不按播出时间重排;
+        /// 身份是分集 id,当前行只在这一段里按正在播的分集 id 标。
+        /// 这一段背后是一次拿全的列表,所以没有翻页状态:footer 不留东西。
+        /// </summary>
+        public static PlayDirectoryModel FromSeasonSection(PlayDirectorySectionKind kind,
+            IList<PlayDirectorySeasonEpisode> episodes, string currentEpId, string sourceTitle)
+        {
+            var count = episodes == null ? 0 : episodes.Count;
+            var rows = new List<PlayDirectoryRow>();
+            var index = -1;
+            for (var i = 0; i < count; i++)
+            {
+                var episode = episodes[i];
+                var key = episode == null ? "" : episode.EpId ?? "";
+                var isCurrent = index < 0 && !string.IsNullOrEmpty(currentEpId)
+                    && string.Equals(key, currentEpId, StringComparison.Ordinal);
+                if (isCurrent) index = i;
+                rows.Add(new PlayDirectoryRow()
+                {
+                    Key = key,
+                    Title = episode == null ? "" : episode.Title,
+                    Cover = episode == null ? "" : episode.Cover,
+                    Ordinal = i + 1,
+                    IsCurrent = isCurrent,
+                    CurrentBadge = isCurrent ? NowPlayingBadge : "",
+                });
+            }
+
+            var model = new PlayDirectoryModel()
+            {
+                SourceTitle = sourceTitle ?? "",
+                Caption = Caption(kind, index + 1, count),
+                // 位置只说这一段里的第几个;这一段的总量就是页头那行数字,不再写两遍
+                CurrentKey = index < 0 ? "" : rows[index].Key,
+                CurrentPositionText = index < 0 ? "" : CountPosition(index + 1, count),
+                HeaderText = HeaderOf(kind, sourceTitle),
+                ActiveKind = kind,
+                Sections = new List<PlayDirectorySection>(),
+                Paging = PlayDirectoryPagingState.None,
+            };
+
+            if (count > 0)
+            {
+                model.Sections.Add(new PlayDirectorySection()
+                {
+                    Kind = kind,
+                    Title = SeasonSectionTitle(kind),
+                    SourceTitle = sourceTitle ?? "",
+                    Rows = rows,
+                });
+            }
+            return model;
+        }
+
+        /// <summary>
+        /// 剧集页的目录:正片、预告各成一段,顺序固定正片在前,空段不摆,两段的行永不合在一起。
+        /// 活动段跟着正在播的那一条走(在预告里播着就是预告段),位置和按钮标签只算活动段里的位置。
+        /// </summary>
+        public static PlayDirectoryModel CombineSeason(PlayDirectoryModel episodes, PlayDirectoryModel previews, bool previewsActive)
+        {
+            var sections = new List<PlayDirectorySection>();
+            AppendSections(sections, episodes);
+            AppendSections(sections, previews);
+
+            var activeKind = previewsActive && SectionOf(sections, PlayDirectorySectionKind.SeasonPreviews) != null
+                ? PlayDirectorySectionKind.SeasonPreviews
+                : (SectionOf(sections, PlayDirectorySectionKind.SeasonEpisodes) != null
+                    ? PlayDirectorySectionKind.SeasonEpisodes
+                    : PlayDirectorySectionKind.SeasonPreviews);
+            var model = activeKind == PlayDirectorySectionKind.SeasonPreviews ? previews : episodes;
+            var sourceTitle = model == null ? "" : model.SourceTitle;
+
+            return new PlayDirectoryModel()
+            {
+                SourceTitle = sourceTitle,
+                Caption = model == null ? "" : model.Caption,
+                CountText = model == null ? "" : model.CountText,
+                CurrentKey = model == null ? "" : model.CurrentKey,
+                CurrentPositionText = model == null ? "" : model.CurrentPositionText,
+                HeaderText = HeaderOf(activeKind, sourceTitle),
+                ActiveKind = activeKind,
+                Sections = sections,
+                // 剧集页的列表是一次拿全的:没有页可翻,footer 不留东西
+                Paging = PlayDirectoryPagingState.None,
+            };
+        }
+
+        /// <summary>
+        /// 把三段拼成一份目录:分段顺序固定为分P、合集、播放列表,只收有内容的分段。
+        /// 活动分段优先跟随连播来源,没有外层来源时落在分P上。
+        /// </summary>
+        public static PlayDirectoryModel Combine(PlayDirectoryModel parts, PlayDirectoryModel collection,
+            PlayDirectoryModel playlist, WatchSequenceSourceKind activeSource)
+        {
+            var sections = new List<PlayDirectorySection>();
+            AppendSections(sections, parts);
+            AppendSections(sections, collection);
+            AppendSections(sections, playlist);
+
+            var activeKind = ResolveActiveKind(sections, activeSource);
+            var model = ModelOf(activeKind, parts, collection, playlist);
+
+            var sourceTitle = model == null ? "" : model.SourceTitle;
+            // 页头只写来源本身;下一集在"下一个"按钮上,分P位置在分P页签里
+            var header = HeaderOf(activeKind, sourceTitle);
+
+            return new PlayDirectoryModel()
+            {
+                SourceTitle = sourceTitle,
+                Caption = model == null ? "" : model.Caption,
+                CountText = model == null ? "" : model.CountText,
+                CurrentKey = model == null ? "" : model.CurrentKey,
+                CurrentPositionText = model == null ? "" : model.CurrentPositionText,
+                HeaderText = header,
+                ActiveKind = activeKind,
+                Sections = sections,
+                // 翻页属于播放列表那一段,与当前跟哪个来源连播无关:合集在连载时播放列表照样还有页
+                Paging = playlist == null ? PlayDirectoryPagingState.None : playlist.Paging,
+            };
+        }
+
+        /// <summary>
+        /// 把"正在换到这一行"标进目录:等待的行只多一个标记,
+        /// 当前行(正在播放)的条和字都不动,等待的行也不会被标成当前行。
+        /// </summary>
+        public static PlayDirectoryModel ApplyPending(PlayDirectoryModel model, string pendingKey)
+        {
+            if (model == null) return null;
+            var key = pendingKey ?? "";
+            model.PendingKey = key;
+            if (model.Sections == null) return model;
+            foreach (var section in model.Sections)
+            {
+                if (section == null || section.Rows == null) continue;
+                foreach (var row in section.Rows)
+                {
+                    if (row == null) continue;
+                    row.IsPending = !string.IsNullOrEmpty(key) && string.Equals(row.Key, key, StringComparison.Ordinal);
+                }
+            }
+            return model;
+        }
+
+        /// <summary>
+        /// 页头那一行。外层来源写"合集《标题》"/"播放列表《标题》",没有名字就只写来源;
+        /// 剧集页两段只写段名,剧名在页头下面一行,不在这里重复。
+        /// </summary>
+        public static string HeaderOf(PlayDirectorySectionKind kind, string sourceTitle)
+        {
+            if (IsSeasonKind(kind)) return SeasonSectionTitle(kind);
+            if (kind == PlayDirectorySectionKind.Parts) return PartsSectionTitle;
+            var label = SourceLabelOf(kind);
+            return string.IsNullOrEmpty(sourceTitle) ? label : label + "《" + sourceTitle + "》";
+        }
+
+        /// <summary>
+        /// 来源名要不要另起一行。页头自己带着来源(合集《X》、播放列表《X》)就不再写一遍;
+        /// 分P 的页头只有段名,行标题本来就在来源里,也不写;只有剧集页的段名不带剧名。
+        /// </summary>
+        public static bool ShowsSourceTitle(string headerText, string sourceTitle)
+        {
+            if (string.IsNullOrWhiteSpace(sourceTitle)) return false;
+            var header = headerText ?? "";
+            return string.Equals(header, SeasonEpisodesSectionTitle, StringComparison.Ordinal)
+                || string.Equals(header, SeasonPreviewsSectionTitle, StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// 把页头换成用户正在浏览的那一段。只改这一行字:行、当前标记、翻页状态都还是这一份;
+        /// 那一段不在目录里时什么都不改。
+        /// </summary>
+        public static PlayDirectoryModel WithHeader(PlayDirectoryModel model, PlayDirectorySectionKind browsed)
+        {
+            if (model == null) return null;
+            var section = SectionOf(model.Sections, browsed);
+            if (section == null) return model;
+            model.HeaderText = HeaderOf(section.Kind, section.SourceTitle);
+            return model;
+        }
+
+        /// <summary>
+        /// 剧集页有没有目录:只有一集、又没有预告的剧集没有可翻的东西。
+        /// 和视频页"只有一个分P就没有目录"同一条规则,这里两段合起来算。
+        /// </summary>
+        public static bool HasSeasonDirectory(int episodeCount, int previewCount)
+        {
+            return Math.Max(0, episodeCount) + Math.Max(0, previewCount) > 1;
+        }
+
+        /// <summary>
+        /// 剧集页的段名。别的分段没有这个名字,返回空
+        /// </summary>
+        public static string SeasonSectionTitle(PlayDirectorySectionKind kind)
+        {
+            switch (kind)
+            {
+                case PlayDirectorySectionKind.SeasonEpisodes: return SeasonEpisodesSectionTitle;
+                case PlayDirectorySectionKind.SeasonPreviews: return SeasonPreviewsSectionTitle;
+                default: return "";
+            }
+        }
+
+        /// <summary>
+        /// 剧集页的分段(正片、预告)。它们不是连播来源,也不是播放列表,页头写段名不写来源
+        /// </summary>
+        public static bool IsSeasonKind(PlayDirectorySectionKind kind)
+        {
+            return kind == PlayDirectorySectionKind.SeasonEpisodes || kind == PlayDirectorySectionKind.SeasonPreviews;
+        }
+
+        /// <summary>
+        /// 播放列表的名字:页面给的队列标题优先,其次是翻页状态里的名字。
+        /// 翻页状态在没给名字时填的是占位词,那不是用户认得的名字,当成没有。
+        /// </summary>
+        public static string PlaylistTitleOf(VideoPlaylist playlist, MediaListPagingState paging)
+        {
+            if (playlist != null && !string.IsNullOrEmpty(playlist.Title)) return playlist.Title;
+            if (paging == null || string.IsNullOrEmpty(paging.Title)) return "";
+            return string.Equals(paging.Title, MediaListPagingState.DefaultTitle, StringComparison.Ordinal) ? "" : paging.Title;
+        }
+
+        /// <summary>
+        /// 在已经拿到手的目录里搜索。纯函数:只按标题筛手里的行,不取页、不换来源、不动播放,
+        /// 也不改传进来的那份模型。
+        /// 分段顺序不变,一段没命中就留一个空段(用户要看得见它还在,只是没有结果);
+        /// 活下来的行还是原来那些对象,Key/Ordinal/当前/等待都跟着它们走。
+        /// </summary>
+        public static PlayDirectoryModel Filter(PlayDirectoryModel model, string query)
+        {
+            if (model == null) return null;
+            var needle = (query ?? "").Trim();
+            if (needle.Length == 0) return model;
+
+            var sections = new List<PlayDirectorySection>();
+            if (model.Sections != null)
+            {
+                foreach (var section in model.Sections)
+                {
+                    if (section == null) continue;
+                    var rows = new List<PlayDirectoryRow>();
+                    if (section.Rows != null)
+                    {
+                        foreach (var row in section.Rows)
+                        {
+                            if (row == null || !TitleMatches(row.Title, needle)) continue;
+                            rows.Add(row);
+                        }
+                    }
+                    sections.Add(new PlayDirectorySection()
+                    {
+                        Kind = section.Kind,
+                        Title = section.Title,
+                        SourceTitle = section.SourceTitle,
+                        Rows = rows,
+                    });
+                }
+            }
+
+            // 其余字段照抄:活动来源、翻页状态、当前行和等待行都还是这份目录的
+            return new PlayDirectoryModel()
+            {
+                SourceTitle = model.SourceTitle,
+                Caption = model.Caption,
+                CountText = model.CountText,
+                CurrentKey = model.CurrentKey,
+                CurrentPositionText = model.CurrentPositionText,
+                HeaderText = model.HeaderText,
+                ActiveKind = model.ActiveKind,
+                Sections = sections,
+                IsFreshOpen = model.IsFreshOpen,
+                Paging = model.Paging,
+                PendingKey = model.PendingKey,
+                Query = needle,
+                // 过滤只换行,这一轮"加载全部"还在跑:footer 不能因为搜索一下就把"取消"换掉
+                LoadAll = model.LoadAll,
+            };
+        }
+
+        /// <summary>
+        /// 行在它自己来源里的下标。身份只认 Key:过滤之后 Ordinal 还是原来源里的位置,
+        /// 行的位置却变了,拿它当下标就会播错一条。来源里已经没有这个 Key 时返回 -1(过期行)。
+        /// </summary>
+        public static int SourceIndexOf(string key, IList<string> sourceKeys)
+        {
+            if (sourceKeys == null || string.IsNullOrEmpty(key)) return -1;
+            for (var i = 0; i < sourceKeys.Count; i++)
+            {
+                var candidate = sourceKeys[i];
+                if (string.IsNullOrEmpty(candidate)) continue;
+                if (string.Equals(candidate, key, StringComparison.Ordinal)) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// 播放器按钮上的短标签:7/24、第7项、2/3。
+        /// 当前位置不在这一段里(没有当前行)时不写位置。
+        /// </summary>
+        public static string Caption(PlayDirectorySectionKind kind, int ordinal, int count)
+        {
+            if (ordinal <= 0 || count <= 0) return "";
+            switch (kind)
+            {
+                case PlayDirectorySectionKind.UgcSeason:
+                    return CountPosition(ordinal, count);
+                case PlayDirectorySectionKind.SeasonEpisodes:
+                case PlayDirectorySectionKind.SeasonPreviews:
+                    // 剧集页只说这一段里的位置:段名在页头和页签上,不重复
+                    return CountPosition(ordinal, count);
+                case PlayDirectorySectionKind.Playlist:
+                    return OrdinalText(ordinal);
+                default:
+                    return CountPosition(Math.Max(1, ordinal), count);
+            }
+        }
+
+        /// <summary>
+        /// 远程队列的数量:已加载/已知总数,总数未知时只写已加载数
+        /// </summary>
+        public static string CountText(int loadedCount, bool hasKnownTotal, int totalCount)
+        {
+            if (loadedCount < 0) loadedCount = 0;
+            var loaded = loadedCount.ToString(CultureInfo.InvariantCulture);
+            return hasKnownTotal
+                ? loaded + "/" + Math.Max(0, totalCount).ToString(CultureInfo.InvariantCulture)
+                : loaded;
+        }
+
+        /// <summary>
+        /// 远程列表的翻页状态。取页在路上时就是"加载中";失败要先于"还有下一页"判定,
+        /// 否则重试入口会被 has_more 盖掉;首页还没取过时也还有东西可取。
+        /// </summary>
+        public static PlayDirectoryPagingState PagingOf(MediaListPagingState paging)
+        {
+            if (paging == null) return PlayDirectoryPagingState.None;
+            if (paging.IsLoading) return PlayDirectoryPagingState.Loading;
+            if (paging.LastLoadFailed) return PlayDirectoryPagingState.Failed;
+            if (paging.IsFirstPage || paging.HasMore) return PlayDirectoryPagingState.More;
+            return PlayDirectoryPagingState.Exhausted;
+        }
+
+        /// <summary>
+        /// 抽屉翻页 footer 这一拍摆什么:转圈、一个主按钮、或者主按钮加"加载全部"。
+        /// footer 只属于会产生新行的远程播放列表那一段;平时跟着用户浏览的分段,
+        /// "加载全部"跑着时整份目录都算它,不然用户切个页签就找不到取消。
+        /// </summary>
+        public static PlayDirectoryFooter FooterOf(PlayDirectoryPagingState paging, LoadAllState loadAll,
+            bool hasPlaylistSection, PlayDirectorySectionKind browsed)
+        {
+            var footer = new PlayDirectoryFooter() { PrimaryText = "", SecondaryText = "" };
+            if (!hasPlaylistSection || paging == PlayDirectoryPagingState.None) return footer;
+
+            // 跑着的时候只有一件事可做:取消。进度是页头那个数量,这里不再说一遍
+            if (loadAll != LoadAllState.Idle)
+            {
+                footer.PrimaryText = CancelText;
+                return footer;
+            }
+
+            if (browsed != PlayDirectorySectionKind.Playlist) return footer;
+
+            switch (paging)
+            {
+                case PlayDirectoryPagingState.Loading:
+                    // 一页在路上:只有一个转圈,按钮都收起来
+                    footer.ShowRing = true;
+                    break;
+                case PlayDirectoryPagingState.Failed:
+                    footer.PrimaryText = RetryText;
+                    footer.SecondaryText = LoadAllText;
+                    break;
+                case PlayDirectoryPagingState.More:
+                    footer.PrimaryText = LoadMoreText;
+                    footer.SecondaryText = LoadAllText;
+                    break;
+            }
+            return footer;
+        }
+
+        /// <summary>
+        /// 固定内存队列没有翻页:写当前项/总量,没有当前项时只写总量
+        /// </summary>
+        public static string FixedCountText(int ordinal, int count)
+        {
+            if (count < 0) count = 0;
+            var total = count.ToString(CultureInfo.InvariantCulture);
+            return ordinal > 0 ? CountPosition(ordinal, count) : total;
+        }
+
+        /// <summary>
+        /// 某一段里的当前行。只在这一段里找:合集和播放列表可以同时有当前行,
+        /// 扫全部分段就会把正在浏览的段换成排在前面的分段。
+        /// </summary>
+        public static PlayDirectoryRow CurrentRowOf(PlayDirectoryModel model, PlayDirectorySectionKind kind)
+        {
+            var section = SectionOf(model == null ? null : model.Sections, kind);
+            if (section == null || section.Rows == null) return null;
+            foreach (var row in section.Rows)
+            {
+                if (row != null && row.IsCurrent) return row;
+            }
+            return null;
+        }
+
+        /// <summary>
+        /// 定位正在播放该落在哪一段:先看用户正在浏览的段,这一段没有当前行
+        /// (视频不在这一段里)才退到连播来源那一段;两段都没有当前行时不动浏览的分段。
+        /// </summary>
+        public static PlayDirectorySectionKind LocateSection(PlayDirectoryModel model, PlayDirectorySectionKind browsed)
+        {
+            if (CurrentRowOf(model, browsed) != null) return browsed;
+            if (model != null && CurrentRowOf(model, model.ActiveKind) != null) return model.ActiveKind;
+            return browsed;
+        }
+
+        /// <summary>
+        /// 重画之后该停在哪一段:用户正在浏览的段还在就留在那里,只有新开目录
+        /// (browsed 为空)或那一段消失了才跟随连播来源。
+        /// </summary>
+        public static PlayDirectorySectionKind ResolveBrowsedSection(PlayDirectoryModel model, PlayDirectorySectionKind? browsed)
+        {
+            var sections = model == null ? null : model.Sections;
+            if (browsed.HasValue && SectionOf(sections, browsed.Value) != null) return browsed.Value;
+
+            var active = model == null ? PlayDirectorySectionKind.Parts : model.ActiveKind;
+            if (SectionOf(sections, active) != null) return active;
+            if (sections != null)
+            {
+                foreach (var section in sections)
+                {
+                    if (section != null) return section.Kind;
+                }
+            }
+            return PlayDirectorySectionKind.Parts;
+        }
+
+        /// <summary>
+        /// 秒数写成 mm:ss,超过一小时写成 hh:mm:ss
+        /// </summary>
+        public static string FormatDuration(long seconds)
+        {
+            if (seconds < 0) seconds = 0;
+            var duration = TimeSpan.FromSeconds(seconds);
+            return seconds >= 3600 ? duration.ToString(@"hh\:mm\:ss") : duration.ToString(@"mm\:ss");
+        }
+
+        /// <summary>
+        /// 标题命中:不分大小写,词两头的空白不算内容。空词已经在外层挡掉了
+        /// </summary>
+        private static bool TitleMatches(string title, string needle)
+        {
+            return !string.IsNullOrEmpty(title) && title.IndexOf(needle, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        /// <summary>
+        /// 分P行的身份键:有 cid 就是 cid;详情没给 cid 时退到位置,至少不会和别的行撞成同一个 Key。
+        /// 解析来源下标时用同一条规则,行的 Key 才总能回到它自己的来源位置
+        /// </summary>
+        public static string PartKey(string cid, int index)
+        {
+            if (!string.IsNullOrEmpty(cid)) return cid;
+            return "part-" + (index + 1).ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string PartKey(PlayDirectoryPart part, int index)
+        {
+            return PartKey(part == null ? null : part.Cid, index);
+        }
+
+        private static string PartText(int index, int count)
+        {
+            if (count <= 0 || index < 0) return "";
+            return "P" + (index + 1).ToString(CultureInfo.InvariantCulture)
+                + "/" + count.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string CountPosition(int ordinal, int count)
+        {
+            return ordinal.ToString(CultureInfo.InvariantCulture) + "/" + count.ToString(CultureInfo.InvariantCulture);
+        }
+
+        private static string PositionOf(string label, int ordinal, int count)
+        {
+            if (count <= 0) return label;
+            return label + " " + CountPosition(ordinal, count);
+        }
+
+        private static string OrdinalText(int ordinal)
+        {
+            return "第" + ordinal.ToString(CultureInfo.InvariantCulture) + "项";
+        }
+
+        private static string SourceLabelOf(PlayDirectorySectionKind kind)
+        {
+            switch (kind)
+            {
+                case PlayDirectorySectionKind.UgcSeason: return CollectionSectionTitle;
+                case PlayDirectorySectionKind.Playlist: return PlaylistSectionTitle;
+                // 剧集页的段名就是来源本身
+                case PlayDirectorySectionKind.SeasonEpisodes:
+                case PlayDirectorySectionKind.SeasonPreviews:
+                    return SeasonSectionTitle(kind);
+                default: return PartsSectionTitle;
+            }
+        }
+
+        private static void AppendSections(List<PlayDirectorySection> target, PlayDirectoryModel model)
+        {
+            if (model == null || model.Sections == null) return;
+            foreach (var section in model.Sections)
+            {
+                if (section == null || section.Rows == null || section.Rows.Count == 0) continue;
+                target.Add(section);
+            }
+        }
+
+        private static PlayDirectorySectionKind ResolveActiveKind(IList<PlayDirectorySection> sections, WatchSequenceSourceKind activeSource)
+        {
+            if (activeSource == WatchSequenceSourceKind.UgcSeason && SectionOf(sections, PlayDirectorySectionKind.UgcSeason) != null)
+            {
+                return PlayDirectorySectionKind.UgcSeason;
+            }
+            if (activeSource == WatchSequenceSourceKind.Playlist && SectionOf(sections, PlayDirectorySectionKind.Playlist) != null)
+            {
+                return PlayDirectorySectionKind.Playlist;
+            }
+            // 活动来源不在目录里时,先开还有什么外层列表;都没有外层列表才落在分P上
+            if (SectionOf(sections, PlayDirectorySectionKind.UgcSeason) != null) return PlayDirectorySectionKind.UgcSeason;
+            if (SectionOf(sections, PlayDirectorySectionKind.Playlist) != null) return PlayDirectorySectionKind.Playlist;
+            return PlayDirectorySectionKind.Parts;
+        }
+
+        private static PlayDirectorySection SectionOf(IList<PlayDirectorySection> sections, PlayDirectorySectionKind kind)
+        {
+            if (sections == null) return null;
+            foreach (var section in sections)
+            {
+                if (section != null && section.Kind == kind) return section;
+            }
+            return null;
+        }
+
+        private static PlayDirectoryModel ModelOf(PlayDirectorySectionKind kind, PlayDirectoryModel parts,
+            PlayDirectoryModel collection, PlayDirectoryModel playlist)
+        {
+            switch (kind)
+            {
+                case PlayDirectorySectionKind.UgcSeason: return collection ?? parts ?? playlist;
+                case PlayDirectorySectionKind.Playlist: return playlist ?? parts ?? collection;
+                default: return parts ?? collection ?? playlist;
+            }
+        }
+
+        /// <summary>
+        /// 行副标题的两段(合集分区、UP主)。分隔只用空格:"·"是把两个事实拼成一句话的写法。
+        /// </summary>
+        private static string Join(string left, string right)
+        {
+            if (string.IsNullOrEmpty(left)) return right ?? "";
+            if (string.IsNullOrEmpty(right)) return left;
+            return left + " " + right;
+        }
+
+        private sealed class EpisodeRow
+        {
+            public string Aid;
+            public string SectionTitle;
+            public string Title;
+            public string Author;
+            public string Cover;
+            public long Duration;
+        }
+    }
+}

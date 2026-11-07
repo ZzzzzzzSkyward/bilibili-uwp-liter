@@ -15,10 +15,17 @@ namespace BiliLite.Controls
     public sealed partial class PlayerToast : UserControl
     {
         private const double BaseFontSize = 20;
-        private const double BasePaddingX = 16;
+        //横向只留一点呼吸:胶囊要贴着内容收窄,而不是左右各挂一大截背景
+        private const double BasePaddingX = 6;
         private const double BasePaddingY = 8;
         private const double BaseIconSpacing = 10;
         private const double BaseCornerRadius = 8;
+        //收紧到墨迹后块高会缩，胶囊外框沿用旧的 22 DIP 内容高度，只作为 ToastRoot 的最小高度
+        private const double BaseContentHeight = BaseFontSize * 1.1;
+        //唯一的视觉补偿常量：FA 字形的墨迹与度量框本身不对称。它只补图标、不改测量尺寸和图标右侧间距；设备上若仍差一点就只改它
+        private const double BaseIconOpticalOffset = 0;
+        //图标与文字彼此已对齐，但整块内容相对胶囊背景偏低；这条只移动内容块，不参与两个块之间的对齐
+        private const double BaseContentOpticalOffset = -1;
 
         //淡出期间元素必须留在布局里，否则居中的父级会重新居中，正在变透明的浮层会跟着往右挪
         private static readonly TimeSpan ShowFadeDuration = TimeSpan.FromMilliseconds(150);
@@ -28,6 +35,7 @@ namespace BiliLite.Controls
         private readonly Storyboard _hideFade;
 
         private bool _hiding;
+        private double _scale = 1;
 
         public PlayerToast()
         {
@@ -55,7 +63,10 @@ namespace BiliLite.Controls
 
         public void SetContent(string text, EFontAwesomeIcon icon)
         {
+            //没有文本时不留空位：折叠文本块同时收掉图标右侧间距，否则纯图标浮层右边挂一条空白
             TxtToast.Text = text ?? "";
+            TxtToast.Visibility = string.IsNullOrEmpty(text) ? Visibility.Collapsed : Visibility.Visible;
+            ApplyIconLayout();
             if (icon == EFontAwesomeIcon.None)
             {
                 IconGlyph.Text = "";
@@ -73,11 +84,24 @@ namespace BiliLite.Controls
             {
                 scale = 1;
             }
+            _scale = scale;
             TxtToast.FontSize = BaseFontSize * scale;
             IconGlyph.FontSize = BaseFontSize * scale;
-            IconGlyph.Margin = new Thickness(0, 0, BaseIconSpacing * scale, 0);
+            ApplyIconLayout();
             ToastRoot.Padding = new Thickness(BasePaddingX * scale, BasePaddingY * scale, BasePaddingX * scale, BasePaddingY * scale);
+            //整块内容相对背景的微调随同一个 scale 缩放，否则小窗和大窗的观感会分叉
+            ContentOffset.Y = BaseContentOpticalOffset * _scale;
+            //墨迹收紧后内容变矮，用最小高度把胶囊的外框恢复成旧尺寸（内容 22 + 上下内边距），随同一个 scale 缩放
+            ToastRoot.MinHeight = (BaseContentHeight + BasePaddingY * 2) * scale;
             ToastRoot.CornerRadius = new CornerRadius(BaseCornerRadius * scale);
+        }
+
+        private void ApplyIconLayout()
+        {
+            var hasText = TxtToast.Visibility == Visibility.Visible;
+            //两个块都只按自己的墨迹测量，盒子等高即墨迹等高；唯一的垂直位移来自那个光学常量，纯图标时归零
+            IconOffset.Y = hasText ? BaseIconOpticalOffset * _scale : 0;
+            IconGlyph.Margin = new Thickness(0, 0, hasText ? BaseIconSpacing * _scale : 0, 0);
         }
 
         public void ShowToast()

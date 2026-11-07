@@ -3,10 +3,16 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Windows.Input;
+using Windows.UI.Xaml;
+using Windows.UI.Xaml.Automation;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Documents;
 using Windows.UI.Xaml.Markup;
+using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Imaging;
 using BiliLite.Helpers;
+using BiliLite.Parsing.Dynamic;
 using Newtonsoft.Json;
 using BiliLite.Models.Dynamic;
 using System.Xml;
@@ -201,21 +207,166 @@ namespace BiliLite.Controls.Dynamic
                     return subtype;
             }
         }
-        public static RichTextBlock Render(string t)
+        /// <summary>
+        /// 正文渲染：RichTextFlow 给出的片段顺序决定内容，一个段落装下整条正文。
+        /// 节点类型切换不断句，只有来源里的换行才产生 LineBreak；不按字符数截断。
+        /// 行数上限不在这里：这里只按内容算出需要的行高，折叠由 RichTextControl 用 MaxLines 做。
+        /// </summary>
+        public static RichTextBlock BuildRichText(DynamicItemDisplayModel data, Modules.DynamicCardModel2024_desc desc)
         {
+            return BuildBlock(RichTextFlow.Build(desc?.rich_text_nodes, desc?.text), data);
+        }
+
+        /// <summary>纯文本正文：同样只按来源换行断行，没有正文时不建空块。</summary>
+        public static RichTextBlock BuildPlainText(string text)
+        {
+            return BuildBlock(RichTextFlow.Build(null, text), null);
+        }
+
+        private static RichTextBlock BuildBlock(List<RichTextSegment> segments, DynamicItemDisplayModel data)
+        {
+            if (segments == null || segments.Count == 0)
+            {
+                return null;
+            }
+            var paragraph = new Paragraph();
+            foreach (var segment in segments)
+            {
+                var inline = BuildInline(segment, data);
+                if (inline != null)
+                {
+                    paragraph.Inlines.Add(inline);
+                }
+            }
+            if (paragraph.Inlines.Count == 0)
+            {
+                return null;
+            }
+
+            // 完整纯文本随块走：折叠只影响可见行数，选中/复制与读屏拿到的仍是整条正文。
+            var plainText = RichTextFlow.PlainText(segments);
+            var block = new RichTextBlock
+            {
+                HorizontalAlignment = HorizontalAlignment.Stretch,
+                TextWrapping = TextWrapping.Wrap,
+                LineHeight = RichTextFlow.RequiredLineHeight(segments, RichTextControl.BodyFontSize, RichTextControl.BodyLineHeight),
+                Tag = plainText,
+            };
+            AutomationProperties.SetName(block, plainText);
+            block.Blocks.Add(paragraph);
+            return block;
+        }
+
+        private static Inline BuildInline(RichTextSegment segment, DynamicItemDisplayModel data)
+        {
+            switch (segment.Kind)
+            {
+                case RichTextSegmentKind.LineBreak:
+                    return new LineBreak();
+                case RichTextSegmentKind.Mention:
+                    return BuildAction(segment.Text, segment.Target, data?.UserCommand);
+                case RichTextSegmentKind.Topic:
+                    // 话题走 App 自己的话题页，参数是去掉 # 的名字
+                    return BuildAction(segment.Text, segment.Text?.Trim('#'), data?.TagCommand);
+                case RichTextSegmentKind.Link:
+                    return BuildAction(segment.Text, segment.Target, data?.LaunchUrlCommand);
+                case RichTextSegmentKind.Emoji:
+                    return BuildEmoji(segment);
+                default:
+                    return string.IsNullOrEmpty(segment.Text) ? null : new Run { Text = segment.Text };
+            }
+        }
+
+        /// <summary>可点片段用文字 Hyperlink 内联，不塞 HyperlinkButton：链接跟着正文换行流动。</summary>
+        private static Inline BuildAction(string text, string target, ICommand command)
+        {
+            if (command == null || string.IsNullOrEmpty(target) || string.IsNullOrEmpty(text))
+            {
+                return string.IsNullOrEmpty(text) ? null : new Run { Text = text };
+            }
+            var link = new Hyperlink
+            {
+                Foreground = Utils.GetBrush("HighLightColor"),
+            };
+            link.Inlines.Add(new Run { Text = text });
+            link.Click += (sender, args) =>
+            {
+                if (command.CanExecute(target))
+                {
+                    command.Execute(target);
+                }
+            };
+            return link;
+        }
+
+        /// <summary>
+        /// 表情图片：wire 的 size 是语义档位（普通/大表情），不是像素倍数；图片不可用时退回它的可读文本。
+        /// </summary>
+        private static Inline BuildEmoji(RichTextSegment segment)
+        {
+            var readable = string.IsNullOrEmpty(segment.Text) ? null : new Run { Text = segment.Text };
+            if (!RichTextFlow.IsUsableEmojiImage(segment.ImageUrl))
+            {
+                return readable;
+            }
+
+            BitmapImage image;
             try
             {
-                var xaml = string.Format(@"<RichTextBlock HorizontalAlignment=""Stretch"" TextWrapping=""Wrap""  xmlns=""http://schemas.microsoft.com/winfx/2006/xaml/presentation""
-                                            xmlns:x=""http://schemas.microsoft.com/winfx/2006/xaml"" xmlns:d=""http://schemas.microsoft.com/expression/blend/2008""
-    xmlns:mc = ""http://schemas.openxmlformats.org/markup-compatibility/2006"" LineHeight=""20"">{0}</RichTextBlock>", t);
-                return (RichTextBlock)XamlReader.Load(xaml);
+                image = new BitmapImage(new Uri(segment.ImageUrl));
             }
-            catch
+            catch (Exception)
             {
-                Utils.AddALog("无法解析动态 "+t);
+                return readable;
             }
-            return null;
+
+            // 尺寸只由档位决定（1.2 em / 1.5 em 上限）；底边压到基线以下一个 descender，让图和字同基线。
+            var side = RichTextFlow.EmojiSide(RichTextControl.BodyFontSize, segment.EmojiVariant);
+            var baselineDrop = RichTextFlow.EmojiBaselineOffset(RichTextControl.BodyFontSize);
+            var border = new Border
+            {
+                Margin = new Thickness(0, 0, 0, -baselineDrop),
+                Child = new Image
+                {
+                    Source = image,
+                    Width = side,
+                    Height = side,
+                    Stretch = Stretch.Uniform,
+                },
+            };
+            return new InlineUIContainer { Child = border };
         }
+
+        /// <summary>
+        /// 预览模板（OneRow / Reserve）自己会渲染 OneRowInfo.Title 的显示类型。
+        /// 这些卡片的标题只由预览模板显示一次，外层卡片标题槽必须留空，否则同一句话出现两遍。
+        /// </summary>
+        public static bool PreviewShowsTitle(DynamicItemDisplayModel data)
+        {
+            if (data == null || data.OneRowInfo == null || string.IsNullOrEmpty(data.OneRowInfo.Title))
+            {
+                return false;
+            }
+
+            switch (data.Type)
+            {
+                case DynamicDisplayType.Reserve:
+                case DynamicDisplayType.Video:
+                case DynamicDisplayType.Season:
+                case DynamicDisplayType.Music:
+                case DynamicDisplayType.Web:
+                case DynamicDisplayType.Article:
+                case DynamicDisplayType.Live:
+                case DynamicDisplayType.LiveShare:
+                case DynamicDisplayType.MediaList:
+                case DynamicDisplayType.CustomSeason:
+                case DynamicDisplayType.Cheese:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         public static DynamicItemDisplayOneRowInfo ParseOneRowInfo2024(DynamicItemDisplayModel data, Modules.DynamicCardModel2024 item)
         {
             var info = new DynamicItemDisplayOneRowInfo()
@@ -227,25 +378,26 @@ namespace BiliLite.Controls.Dynamic
                 Desc = item.desc,
                 Title = item.title,
             };
-            data.Content = Render(item.richtext);
+            data.Content = BuildRichText(data, item.modules?.module_dynamic?.desc);
             switch (data.Type)
             {
                 case DynamicDisplayType.Text:
                     {
-                        if (GetDynamicSubType(item.modules.module_dynamic.additional?.type ?? "") == "reserve")
+                        var additional = item.modules?.module_dynamic?.additional;
+                        if (GetDynamicSubType(additional?.type ?? "") == "reserve")
                         {
+                            var reserve = additional?.reserve;
                             data.Type = DynamicDisplayType.Reserve;
                             info = new DynamicItemDisplayOneRowInfo()
                             {
                                 Title = item.title,
-                                Desc = item.modules.module_dynamic.additional.reserve.desc1?.text ?? "" + " " +
-                                item.modules.module_dynamic.additional.reserve.desc2?.text ?? "",
+                                Desc = ReserveCardCopy.Format(reserve),
                                 Subtitle = item.desc,
-                                CoverText = item.modules.module_dynamic.additional.reserve.button?.text,
-                                Cover = item.modules.module_dynamic.additional.reserve.button?.icon_url,
-                                Url = item.modules.module_dynamic.additional.reserve.jump_url ?? item.jumpurl ?? "",
+                                CoverText = reserve?.button?.text,
+                                Cover = reserve?.button?.icon_url,
+                                Url = reserve?.jump_url ?? item.jumpurl ?? "",
                             };
-                            data.Content = Render(Parser.ParseText(info.Subtitle));
+                            data.Content = BuildPlainText(info.Subtitle);
                         }
                     }
                     break;
@@ -275,7 +427,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = "播放:" + item.viewtext + " 弹幕:" + item.danmakutext,
                             ID = item.aid,
                             Title = item.title,
-                            CoverWidth = 160,
                             AID = item.aid,
                         };
                         if (string.IsNullOrEmpty(info.Title))
@@ -294,7 +445,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = "播放:" + item.viewtext + " 评论:" + item.comment.ToCountString(),
                             ID = item.aid,
                             Title = item.title,
-                            CoverWidth = 80,
                             Tag = "音频",
 
                         };
@@ -310,7 +460,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = item.desc,
                             ID = item.aid,//fixme
                             Title = item.title,
-                            CoverWidth = 80,
                         };
                         info.Url = info.ID.ToString();
                     }
@@ -334,32 +483,24 @@ namespace BiliLite.Controls.Dynamic
                     }
                     break;
                 case DynamicDisplayType.Live:
-                    {
-                        info = new DynamicItemDisplayOneRowInfo()
-                        {
-                            Cover = item.pic,
-                            CoverText = "",
-                            Subtitle = "【直播有待修复】parent_area_name" + " · 人气:" + item.viewtext,
-                            Tag = "直播",
-                            ID = item.aid,
-                            Title = item.title,
-                        };
-                        info.Url = "https://b23.tv/live" + info.ID;
-                    }
-                    break;
                 case DynamicDisplayType.LiveShare:
                     {
+                        // 直播与分享直播的载荷都是 major.live（直播推荐由 Mapper 把 live_rcmd 解进同一处）；
+                        // 房间号、目的地、副标题、结束角标全部由 LiveCardSummary 决定，两条分支不再各写一遍。
+                        var live = LiveCardSummary.From(
+                            item.modules?.module_dynamic?.major?.live,
+                            item.title,
+                            item.pic);
                         info = new DynamicItemDisplayOneRowInfo()
                         {
-                            Cover = item.pic,
-                            //fixme
-                            CoverText = item.modules.module_dynamic.major.live?.live_state == 0 ? "直播已结束" : "",
-                            Subtitle = "【直播有待修复】area_v2_name",
+                            Cover = live.Cover,
+                            CoverText = live.CoverText,
+                            Subtitle = live.Subtitle,
                             Tag = "直播",
-                            ID = item.aid,
-                            Title = item.title,
+                            ID = live.RoomId,
+                            Title = live.Title,
                         };
-                        info.Url = "https://b23.tv/live" + info.ID;
+                        info.Url = live.Destination;
                     }
                     break;
                 case DynamicDisplayType.MediaList:
@@ -400,7 +541,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = item.modules?.module_dynamic?.major?.pgc?.stat?.play ?? "",
                             ID = item.aid,
                             Title = item.title,
-                            CoverWidth = 160,
                         };
                         info.Url = item.jumpurl;
                         // 合成卡片没有作者，也没有可以转发的动态，隐藏作者栏与互动栏。
@@ -494,7 +634,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = "播放:" + obj["play_count"].ToCountString() + " 弹幕:" + obj["bullet_count"].ToCountString(),
                             ID = obj["apiSeasonInfo"]["season_id"].ToString(),
                             Title = obj["new_desc"].ToString(),
-                            CoverWidth = 160,
                             AID = obj["aid"].ToString(),
                         };
                         if (string.IsNullOrEmpty(info.Title))
@@ -513,7 +652,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = "播放:" + obj["playCnt"].ToCountString() + " 评论:" + obj["replyCnt"].ToCountString(),
                             ID = obj["id"].ToString(),
                             Title = obj["title"].ToString(),
-                            CoverWidth = 80,
                             Tag = "音频",
 
                         };
@@ -529,7 +667,6 @@ namespace BiliLite.Controls.Dynamic
                             Subtitle = obj["sketch"]["desc_text"]?.ToString() ?? "",
                             ID = obj["sketch"]["target_url"]?.ToString() ?? "",
                             Title = obj["sketch"]["title"]?.ToString() ?? "",
-                            CoverWidth = 80,
                         };
                         info.Url = info.ID.ToString();
                     }
@@ -562,7 +699,8 @@ namespace BiliLite.Controls.Dynamic
                             ID = obj["live_play_info"]["room_id"].ToString(),
                             Title = obj["live_play_info"]["title"].ToString(),
                         };
-                        info.Url = "https://b23.tv/live" + info.ID;
+                        // 与新版直播卡同一种目的地：MessageCenter 的 live(\d+) 走的就是这条
+                        info.Url = "https://live.bilibili.com/" + info.ID;
                     }
                     return info;
                 case DynamicDisplayType.LiveShare:
@@ -576,13 +714,12 @@ namespace BiliLite.Controls.Dynamic
                             ID = obj["roomid"].ToString(),
                             Title = obj["title"].ToString(),
                         };
-                        info.Url = "https://b23.tv/live" + info.ID;
+                        info.Url = "https://live.bilibili.com/" + info.ID;
                     }
                     return info;
                 case DynamicDisplayType.MediaList:
                     {
-                        //TODO 合集这部分需要重写
-                        //https://t.bilibili.com/625835271145782341
+                        // 合集卡：单集按视频卡渲染，多集走下面的列表；样例 https://t.bilibili.com/625835271145782341
                         if (obj["videos"].ToInt32() == 1)
                         {
                             return ParseOneRowInfo(DynamicDisplayType.Video, obj);

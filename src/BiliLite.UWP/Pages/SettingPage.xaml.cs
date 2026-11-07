@@ -1,6 +1,5 @@
 ﻿using BiliLite.Api;
 using BiliLite.Helpers;
-using BiliLite.Models;
 using BiliLite.Modules;
 using BiliLite.Modules.User;
 using System.IO;
@@ -12,24 +11,18 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.Foundation;
-using Windows.Security.Cryptography.Core;
 using Windows.Storage;
 using Windows.Storage.Pickers;
-using Windows.Storage.Streams;
 using Windows.System;
-using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using Windows.Web.Http.Filters;
-using ZXing;
 using static BiliLite.Helpers.SettingHelper;
 
 // https://go.microsoft.com/fwlink/?LinkId=234238 上介绍了“空白页”项模板
@@ -41,531 +34,633 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class SettingPage : BasePage
     {
+        /// <summary>设置 ⇄ 令牌记录的接线：判定在 RefreshTokenPolicy，这里只读写设置。</summary>
+        private static readonly RefreshTokenMirror refreshTokenMirror = new RefreshTokenMirror(
+            key => SettingHelper.GetValue(key, ""), (key, value) => SettingHelper.SetValue(key, value));
+
         SettingVM settingVM;
+        /// <summary>按存储值填充控件期间为 true：处理器直接返回，不写存储、不跑副作用。</summary>
+        private bool _applyingStoredValues;
+
         public SettingPage()
         {
             this.InitializeComponent();
             Title = "设置";
             settingVM = new SettingVM();
-            LoadUI();
-            LoadAPI();
-            LoadPlayer();
-            LoadRoaming();
-            LoadDanmu();
-            LoadLiveDanmu();
-            LoadDownlaod();
-            api = new Api.AccountApi();
-        }
-        private void LoadUI()
-        {
-            //主题
-            cbTheme.SelectedIndex = SettingHelper.GetValue(UI.THEME, 0);
-            cbTheme.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                cbTheme.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.THEME, cbTheme.SelectedIndex);
-                    Frame rootFrame = Window.Current.Content as Frame;
-                    switch (cbTheme.SelectedIndex)
-                    {
-                        case 1:
-                            rootFrame.RequestedTheme = ElementTheme.Light;
-                            break;
-                        case 2:
-                            rootFrame.RequestedTheme = ElementTheme.Dark;
-                            break;
-                        case 3:
-                            rootFrame.RequestedTheme = (ElementTheme)AppTheme.TransparentDark; break;
-                        case 4:
-                            rootFrame.RequestedTheme = (ElementTheme)AppTheme.TransparentLight; break;
-                        default:
-                            rootFrame.RequestedTheme = ElementTheme.Default;
-                            break;
-                    }
-                    App.ExtendAcrylicIntoTitleBar();
-                });
-            });
-
-            cbColor.SelectedIndex = SettingHelper.GetValue(UI.THEME_COLOR, 0);
-            cbColor.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                cbColor.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.THEME_COLOR, cbColor.SelectedIndex);
-                    Color color = new Color();
-                    if (cbColor.SelectedIndex == 0)
-                    {
-                        var uiSettings = new Windows.UI.ViewManagement.UISettings();
-                        color = uiSettings.GetColorValue(Windows.UI.ViewManagement.UIColorType.Accent);
-                    }
-                    else
-                    {
-                        color = Utils.ToColor((cbColor.SelectedItem as AppThemeColor).color);
-
-                    }
-                    (Application.Current.Resources["SystemControlHighlightAltAccentBrush"] as SolidColorBrush).Color = color;
-                    (Application.Current.Resources["SystemControlHighlightAccentBrush"] as SolidColorBrush).Color = color;
-                    //(App.Current.Resources.ThemeDictionaries["Light"] as ResourceDictionary)["SystemAccentColor"] = Utils.ToColor(item.color);
-
-                });
-            });
-
-
-            //显示模式
-            cbDisplayMode.SelectedIndex = SettingHelper.GetValue(UI.DISPLAY_MODE, 0);
-            cbDisplayMode.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                cbDisplayMode.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.DISPLAY_MODE, cbDisplayMode.SelectedIndex);
-                    if (cbDisplayMode.SelectedIndex == 2)
-                    {
-                        Utils.ShowMessageToast("多窗口模式正在开发测试阶段，可能会有一堆问题");
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast("重启生效");
-                    }
-
-                });
-            });
-            //加载原图
-            swPictureQuality.IsOn = SettingHelper.GetValue(UI.ORTGINAL_IMAGE, false);
-            swPictureQuality.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swPictureQuality.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.ORTGINAL_IMAGE, swPictureQuality.IsOn);
-                    UI._loadOriginalImage = null;
-                });
-            });
-            //缓存页面
-            swHomeCache.IsOn = SettingHelper.GetValue(UI.CACHE_HOME, true);
-            swHomeCache.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swHomeCache.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.CACHE_HOME, swHomeCache.IsOn);
-
-                });
-            });
-
-            //右侧详情宽度
-            numRightWidth.Value = GetValue<double>(UI.RIGHT_DETAIL_WIDTH, 320);
-            numRightWidth.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-
-                numRightWidth.ValueChanged += new TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs>((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.RIGHT_DETAIL_WIDTH, args.NewValue);
-                });
-            });
-            //图片圆角半径
-            numImageCornerRadius.Value = GetValue<double>(UI.IMAGE_CORNER_RADIUS, 0);
-            ImageCornerRadiusExample.CornerRadius = new CornerRadius(numImageCornerRadius.Value);
-            numImageCornerRadius.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                numImageCornerRadius.ValueChanged += new TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs>((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.IMAGE_CORNER_RADIUS, args.NewValue);
-                    ImageCornerRadiusExample.CornerRadius = new CornerRadius(args.NewValue);
-                    Application.Current.Resources["ImageCornerRadius"] = new CornerRadius(args.NewValue);
-                });
-            });
-
-            //显示视频封面
-            swVideoDetailShowCover.IsOn = SettingHelper.GetValue(UI.SHOW_DETAIL_COVER, true);
-            swVideoDetailShowCover.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swVideoDetailShowCover.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.SHOW_DETAIL_COVER, swVideoDetailShowCover.IsOn);
-                });
-            });
-
-            //新窗口浏览图片
-            swPreviewImageNavigateToPage.IsOn = SettingHelper.GetValue(UI.NEW_WINDOW_PREVIEW_IMAGE, false);
-            swPreviewImageNavigateToPage.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swPreviewImageNavigateToPage.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.NEW_WINDOW_PREVIEW_IMAGE, swPreviewImageNavigateToPage.IsOn);
-                });
-            });
-            //鼠标侧键返回
-            swMouseClosePage.IsOn = SettingHelper.GetValue(UI.MOUSE_BACK, true);
-            swMouseClosePage.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swMouseClosePage.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.MOUSE_BACK, swMouseClosePage.IsOn);
-                });
-            });
-
-            //动态显示
-            cbDetailDisplay.SelectedIndex = SettingHelper.GetValue(UI.DETAIL_DISPLAY, 0);
-            cbDetailDisplay.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                cbDetailDisplay.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.DETAIL_DISPLAY, cbDetailDisplay.SelectedIndex);
-                });
-            });
-
-            //动态显示
-            cbDynamicDisplayMode.SelectedIndex = SettingHelper.GetValue(UI.DYNAMIC_DISPLAY_MODE, 0);
-            cbDynamicDisplayMode.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                cbDynamicDisplayMode.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.DYNAMIC_DISPLAY_MODE, cbDynamicDisplayMode.SelectedIndex);
-                });
-            });
-
-            //推荐显示
-            cbRecommendDisplayMode.SelectedIndex = SettingHelper.GetValue(UI.RECMEND_DISPLAY_MODE, 0);
-            cbRecommendDisplayMode.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                cbRecommendDisplayMode.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.RECMEND_DISPLAY_MODE, cbRecommendDisplayMode.SelectedIndex);
-                });
-            });
-
-            //浏览器打开无法处理的链接
-            swOpenUrlWithBrowser.IsOn = SettingHelper.GetValue(UI.OPEN_URL_BROWSER, false);
-            swOpenUrlWithBrowser.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swOpenUrlWithBrowser.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(UI.OPEN_URL_BROWSER, swOpenUrlWithBrowser.IsOn);
-                });
-            });
-
-            //隐藏横幅
-            swHideBanner.IsOn = SettingHelper.GetValue("dontloadbanner", false);
-            swHideBanner.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swHideBanner.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue("dontloadbanner", swHideBanner.IsOn);
-                });
-            }); 
-            //背景动态
-            swShowBGOnDynamic.IsOn = SettingHelper.GetValue("showbgondynamic", false);
-            swShowBGOnDynamic.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swShowBGOnDynamic.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue("showbgondynamic", swShowBGOnDynamic.IsOn);
-                });
-            });
-
-            swApiCapture.IsOn = SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE, false);
-            swApiCapture.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swApiCapture.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Diagnostics.API_CAPTURE, swApiCapture.IsOn);
-                });
-            });
-            swApiCaptureSamples.IsOn = SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, false);
-            swApiCaptureSamples.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swApiCaptureSamples.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, swApiCaptureSamples.IsOn);
-                });
-            });
-
-            gridHomeCustom.ItemsSource = SettingHelper.GetValue(UI.HOEM_ORDER, HomeVM.GetAllNavItems());
-            ExceptHomeNavItems();
-
-            //背景
+            BindShieldLists();
+            WireEvents();
+            ApplyAppearance();
+            ApplyPlayer();
+            ApplyVideoDanmu();
+            ApplyLiveDanmu();
+            ApplyDownload();
+            ApplyNetwork();
+            ApplyDiagnostics();
+            RefreshAccountState();
+            ApplyAccountFields();
             SetBackground();
-
-            //默认主题
-            LoadDefaultThemeText();
         }
-        private void LoadDefaultThemeText()
+
+        /// <summary>弹幕屏蔽列表由 SettingVM 直接写存储，绑一次即可，切页签不重复赋值。</summary>
+        private void BindShieldLists()
         {
-            DefaultThemeText.Content = @" <Color x:Key=""HighLightTextColor"">#d0318c</Color>
-<Color x:Key=""TopPaneBackground"">#00F7F7F7</Color>
-<Color x:Key=""HighLightColor"">#ec407a</Color>
-<Color x:Key=""TextColor"">#CC000000</Color>
-<Color x:Key=""DefaultTextColor"">#CC000000</Color>
-<Color x:Key=""SystemColorHighLightColor"">#ec407a</Color>
-<Color x:Key=""CardColor"">#00FFFFFF</Color>
-<Color x:Key=""ForegroundGridColor"">#aaaaaa</Color>
-<Color x:Key=""ForegroundBorderColor"">#111111</Color>
-<Color x:Key=""ForegroundTextColor"">#333333</Color>
-<Color x:Key=""ForegroundBackColor"">#555555</Color>
-<Color x:Key=""ForegroundTransparentColor"">#aaffffff</Color>
-<Color x:Key=""SolidTransparentBackground"">#00ffffff</Color>
-<Color x:Key=""SolidHalfTransparentBackground"">#a0ffffff</Color>
-<AcrylicBrush x:Key=""TransparentLayer"" TintColor=""White"" TintOpacity=""0.1"" TintLuminosityOpacity=""0.5"" FallbackColor=""#a0ffffff"" BackgroundSource=""Backdrop""></AcrylicBrush>
-<AcrylicBrush x:Key=""TransparentBackground""
-BackgroundSource=""HostBackdrop""
-TintColor=""#ffffff""
-TintOpacity=""0.5""
-TintLuminosityOpacity=""0.5""
-FallbackColor=""#ffffff"" />
-";
+            DanmuSettingListWords.ItemsSource = settingVM.ShieldWords;
+            DanmuSettingListRegulars.ItemsSource = settingVM.ShieldRegulars;
+            DanmuSettingListUsers.ItemsSource = settingVM.ShieldUsers;
+            LiveDanmuSettingListWords.ItemsSource = settingVM.LiveWords;
         }
-        private void LoadPlayer()
+
+        /// <summary>切回页签时按存储值重填；按 PivotItem 身份判断，不依赖序号。</summary>
+        private void SettingPivot_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            //播放类型
-            cbVideoType.SelectedIndex = SettingHelper.GetValue(SettingHelper.Player.DEFAULT_VIDEO_TYPE, 1);
-            cbVideoType.Loaded += new RoutedEventHandler((sender, e) =>
+            // Pivot 在 InitializeComponent 内就可能触发一次，那时 settingVM 还没建
+            if (settingVM == null) return;
+            var item = SettingPivot.SelectedItem;
+            if (ReferenceEquals(item, AppearancePivotItem)) ApplyAppearance();
+            else if (ReferenceEquals(item, PlayerPivotItem)) ApplyPlayer();
+            else if (ReferenceEquals(item, VideoDanmuPivotItem)) ApplyVideoDanmu();
+            else if (ReferenceEquals(item, LiveDanmuPivotItem)) ApplyLiveDanmu();
+            else if (ReferenceEquals(item, DownloadPivotItem)) ApplyDownload();
+            else if (ReferenceEquals(item, AccountPivotItem))
             {
-                cbVideoType.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.DEFAULT_VIDEO_TYPE, cbVideoType.SelectedIndex);
-                });
-            });
-            //视频倍速
-            cbVideoSpeed.SelectedIndex = SettingHelper.Player.VideoSpeed.IndexOf(SettingHelper.GetValue(SettingHelper.Player.DEFAULT_VIDEO_SPEED, 1.0d));
-            cbVideoSpeed.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                cbVideoSpeed.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.DEFAULT_VIDEO_SPEED, SettingHelper.Player.VideoSpeed[cbVideoSpeed.SelectedIndex]);
-                });
-            });
-            //播放器
-            swPriorityPlayer.SelectedIndex = SettingHelper.GetValue("playertype", 0);
-            swPriorityPlayer.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swPriorityPlayer.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue("playertype", swPriorityPlayer.SelectedIndex);
-                });
-            });
+                RefreshAccountState();
+                ApplyAccountFields();
+            }
+            else if (ReferenceEquals(item, NetworkPivotItem)) ApplyNetwork();
+            else if (ReferenceEquals(item, DiagnosticsPivotItem)) ApplyDiagnostics();
+        }
 
-            //自动播放
-            swAutoPlay.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_PLAY, false);
-            swAutoPlay.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swAutoPlay.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.AUTO_PLAY, swAutoPlay.IsOn);
-                });
-            });
-            //自动跳转下一P
-            swAutoNext.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_NEXT, true);
-            swAutoNext.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swAutoNext.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.AUTO_NEXT, swAutoNext.IsOn);
-                });
-            });
-            //使用其他网站
-            //swPlayerSettingUseOtherSite.IsOn = SettingHelper.GetValue<bool>(SettingHelper.Player.USE_OTHER_SITEVIDEO, false);
-            //swPlayerSettingUseOtherSite.Loaded += new RoutedEventHandler((sender, e) =>
-            //{
-            //    swPlayerSettingUseOtherSite.Toggled += new RoutedEventHandler((obj, args) =>
-            //    {
-            //        SettingHelper.SetValue(SettingHelper.Player.USE_OTHER_SITEVIDEO, swPlayerSettingUseOtherSite.IsOn);
-            //    });
-            //});
+        /// <summary>每次切到账号页都重新读一遍，登录状态可能已被其它页面或后台刷新改掉。</summary>
+        private void RefreshAccountState()
+        {
+            var loggedIn = SettingHelper.Account.Logined;
+            var state = "未登录";
+            if (loggedIn) state = BiliLite.Services.CookieService.NeedsRelogin ? "已失效" : "已登录";
+            AccountStateText.Text = state;
+            // 未登录时刷新和退出都没有意义
+            RefreshLoginButton.IsEnabled = loggedIn;
+            LogoutButton.IsEnabled = loggedIn;
+        }
 
-            //自动跳转进度
-            swPlayerSettingAutoToPosition.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_TO_POSITION, true);
-            swPlayerSettingAutoToPosition.Loaded += new RoutedEventHandler((sender, e) =>
+        private async void RefreshLogin_Click(object sender, RoutedEventArgs e)
+        {
+            RefreshLoginButton.IsEnabled = false;
+            try
             {
-                swPlayerSettingAutoToPosition.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.AUTO_TO_POSITION, swPlayerSettingAutoToPosition.IsOn);
-                });
-            });
-            //自动铺满屏幕
-            swPlayerSettingAutoFullWindows.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_FULL_WINDOW, false);
-            swPlayerSettingAutoFullWindows.Loaded += new RoutedEventHandler((sender, e) =>
+                await ApiHelper.Cookie.RefreshLoginAsync();
+            }
+            catch (Exception ex)
             {
-                swPlayerSettingAutoFullWindows.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.AUTO_FULL_WINDOW, swPlayerSettingAutoFullWindows.IsOn);
-                });
-            });
-            //自动全屏
-            swPlayerSettingAutoFullScreen.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_FULL_SCREEN, false);
-            swPlayerSettingAutoFullScreen.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swPlayerSettingAutoFullScreen.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.AUTO_FULL_SCREEN, swPlayerSettingAutoFullScreen.IsOn);
-                });
-            });
+                LogHelper.Log("Setting page login refresh failed.", LogType.ERROR, ex);
+            }
+            RefreshAccountState();
+        }
 
+        private async void Relogin_Click(object sender, RoutedEventArgs e)
+        {
+            await Utils.ShowLoginDialog();
+            RefreshAccountState();
+        }
 
-            //双击全屏
-            swPlayerSettingDoubleClickFullScreen.IsOn = SettingHelper.GetValue(SettingHelper.Player.DOUBLE_CLICK_FULL_SCREEN, false);
-            swPlayerSettingDoubleClickFullScreen.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                swPlayerSettingDoubleClickFullScreen.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.DOUBLE_CLICK_FULL_SCREEN, swPlayerSettingDoubleClickFullScreen.IsOn);
-                });
-            });
+        private void Logout_Click(object sender, RoutedEventArgs e)
+        {
+            MessageCenter.SendLogout();
+            RefreshAccountState();
+        }
 
-            //自动打开AI字幕
-            swPlayerSettingAutoOpenAISubtitle.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_OPEN_AI_SUBTITLE, false);
-            swPlayerSettingAutoOpenAISubtitle.Loaded += new RoutedEventHandler((sender, e) =>
+        /// <summary>手填会话字段是 x:Bind 双向绑定，按当前值重填即可丢弃未提交的文本。</summary>
+        private void ApplyAccountFields()
+        {
+            _applyingStoredValues = true;
+            try
             {
-                swPlayerSettingAutoOpenAISubtitle.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.AUTO_OPEN_AI_SUBTITLE, swPlayerSettingAutoOpenAISubtitle.IsOn);
-                });
-            });
-            //替换CDN
-            cbPlayerReplaceCDN.SelectedIndex = SettingHelper.GetValue(SettingHelper.Player.REPLACE_CDN, 3);
-            cbPlayerReplaceCDN.Loaded += new RoutedEventHandler((sender, e) =>
+                SESSDATATextBox.Text = CookieSESSDATA;
+                CookieTextBox.Text = Cookie;
+                CookieRefreshTokenTextBox.Text = CookieRefreshToken;
+            }
+            finally
             {
-                cbPlayerReplaceCDN.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(SettingHelper.Player.REPLACE_CDN, cbPlayerReplaceCDN.SelectedIndex);
-                });
-            });
-            //CDN服务器
-            var cdnServer = SettingHelper.GetValue(SettingHelper.Player.CDN_SERVER, "upos-sz-mirrorhwo1.bilivideo.com");
-            RoamingSettingCDNServer.SelectedIndex = settingVM.CDNServers.FindIndex(x => x.Server == cdnServer);
-            RoamingSettingCDNServer.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                RoamingSettingCDNServer.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    var server = settingVM.CDNServers[RoamingSettingCDNServer.SelectedIndex];
-                    SettingHelper.SetValue(SettingHelper.Player.CDN_SERVER, server.Server);
-
-                });
-            });
-            //直播视频格式
-            var list = SettingHelper.GetValue("livevideoformat", "0");
-            var videolist = list.Split(",");
-            videofmt.Clear();
-            foreach (var i in videolist)
-            {
-                var id = i.ToInt32();
-                videofmt.Add(id);
-                var item=swLiveVideoFormat.Items[id] as ListViewItem;
-                if (item!=null)
-                {
-                    item.IsSelected = true;
-                }
-                OnPropertyChanged(nameof(videotext));
+                _applyingStoredValues = false;
             }
         }
-        private void LoadRoaming()
+
+        /// <summary>用户操作入口只在这里挂一次；切页签不再重复订阅，也不再重复写盘。</summary>
+        private void WireEvents()
         {
-            //使用自定义服务器
+            //外观
+            cbTheme.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.THEME, cbTheme.SelectedIndex);
+                Frame rootFrame = Window.Current.Content as Frame;
+                switch (cbTheme.SelectedIndex)
+                {
+                    case 1:
+                        rootFrame.RequestedTheme = ElementTheme.Light;
+                        break;
+                    case 2:
+                        rootFrame.RequestedTheme = ElementTheme.Dark;
+                        break;
+                    case 3:
+                        rootFrame.RequestedTheme = (ElementTheme)AppTheme.TransparentDark; break;
+                    case 4:
+                        rootFrame.RequestedTheme = (ElementTheme)AppTheme.TransparentLight; break;
+                    default:
+                        rootFrame.RequestedTheme = ElementTheme.Default;
+                        break;
+                }
+                App.ExtendAcrylicIntoTitleBar();
+            });
+            cbDisplayMode.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.DISPLAY_MODE, cbDisplayMode.SelectedIndex);
+                if (cbDisplayMode.SelectedIndex == 2)
+                {
+                    Utils.ShowMessageToast("多窗口模式正在开发测试阶段，可能会有一堆问题");
+                }
+                else
+                {
+                    Utils.ShowMessageToast("重启生效");
+                }
+            });
+            swPictureQuality.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.ORTGINAL_IMAGE, swPictureQuality.IsOn);
+                UI._loadOriginalImage = null;
+            });
+            swHomeCache.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.CACHE_HOME, swHomeCache.IsOn);
+            });
+            numRightWidth.ValueChanged += new TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs>((sender, args) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.RIGHT_DETAIL_WIDTH, args.NewValue);
+            });
+            numImageCornerRadius.ValueChanged += new TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs>((sender, args) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.IMAGE_CORNER_RADIUS, args.NewValue);
+                ImageCornerRadiusExample.CornerRadius = new CornerRadius(args.NewValue);
+                Application.Current.Resources["ImageCornerRadius"] = new CornerRadius(args.NewValue);
+            });
+            swVideoDetailShowCover.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.SHOW_DETAIL_COVER, swVideoDetailShowCover.IsOn);
+            });
+            swPreviewImageNavigateToPage.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.NEW_WINDOW_PREVIEW_IMAGE, swPreviewImageNavigateToPage.IsOn);
+            });
+            swMouseClosePage.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.MOUSE_BACK, swMouseClosePage.IsOn);
+            });
+            cbDetailDisplay.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.DETAIL_DISPLAY, cbDetailDisplay.SelectedIndex);
+            });
+            cbDynamicDisplayMode.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.DYNAMIC_DISPLAY_MODE, cbDynamicDisplayMode.SelectedIndex);
+            });
+            cbRecommendDisplayMode.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.RECMEND_DISPLAY_MODE, cbRecommendDisplayMode.SelectedIndex);
+            });
+            swOpenUrlWithBrowser.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(UI.OPEN_URL_BROWSER, swOpenUrlWithBrowser.IsOn);
+            });
+            swHideBanner.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue("dontloadbanner", swHideBanner.IsOn);
+            });
+            swShowBGOnDynamic.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue("showbgondynamic", swShowBGOnDynamic.IsOn);
+            });
+
+            //播放
+            cbVideoType.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Player.DEFAULT_VIDEO_TYPE, cbVideoType.SelectedIndex);
+                UpdateVideoCodecHint();
+            });
+            cbVideoSpeed.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                if (cbVideoSpeed.SelectedIndex < 0 || cbVideoSpeed.SelectedIndex >= SettingHelper.Player.VideoSpeed.Count) return;
+                SettingHelper.SetValue(SettingHelper.Player.DEFAULT_VIDEO_SPEED, SettingHelper.Player.VideoSpeed[cbVideoSpeed.SelectedIndex]);
+            });
+            swPriorityPlayer.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue("playertype", swPriorityPlayer.SelectedIndex);
+            });
+            swAutoPlay.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Player.AUTO_PLAY, swAutoPlay.IsOn);
+            });
+            swAutoNext.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Player.AUTO_NEXT, swAutoNext.IsOn);
+            });
+            swPlayerSettingAutoToPosition.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Player.AUTO_TO_POSITION, swPlayerSettingAutoToPosition.IsOn);
+            });
+            swPlayerSettingAutoFullWindows.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Player.AUTO_FULL_WINDOW, swPlayerSettingAutoFullWindows.IsOn);
+            });
+            swPlayerSettingAutoFullScreen.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Player.AUTO_FULL_SCREEN, swPlayerSettingAutoFullScreen.IsOn);
+            });
+            swPlayerSettingDoubleClickFullScreen.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Player.DOUBLE_CLICK_FULL_SCREEN, swPlayerSettingDoubleClickFullScreen.IsOn);
+            });
+            swPlayerSettingAutoOpenAISubtitle.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Player.AUTO_OPEN_AI_SUBTITLE, swPlayerSettingAutoOpenAISubtitle.IsOn);
+            });
+            RoamingSettingToSimplified.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(Roaming.TO_SIMPLIFIED, RoamingSettingToSimplified.IsOn);
+            });
+
+            //视频弹幕
+            DanmuSettingState.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(VideoDanmaku.SHOW, DanmuSettingState.IsOn ? Visibility.Visible : Visibility.Collapsed);
+            });
+            numDanmakuTopMargin.ValueChanged += new TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs>((sender, args) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(VideoDanmaku.TOP_MARGIN, args.NewValue);
+            });
+            numDanmakuMaxNum.ValueChanged += new TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs>((sender, args) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(VideoDanmaku.MAX_NUM, args.NewValue);
+            });
+
+            //直播弹幕
+            LiveDanmuSettingState.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Live.SHOW, LiveDanmuSettingState.IsOn ? Visibility.Visible : Visibility.Collapsed);
+            });
+
+            //下载
+            DownloadOpenPath.Click += new RoutedEventHandler(async (sender, args) =>
+            {
+                if (txtDownloadPath.Text == Download.DEFAULT_PATH)
+                {
+                    var videosLibrary = KnownFolders.VideosLibrary;
+                    videosLibrary = await videosLibrary.CreateFolderAsync("哔哩哔哩下载", CreationCollisionOption.OpenIfExists);
+
+                    await Launcher.LaunchFolderAsync(videosLibrary);
+                }
+                else
+                {
+                    await Launcher.LaunchFolderPathAsync(txtDownloadPath.Text);
+                }
+            });
+            DownloadChangePath.Click += new RoutedEventHandler(async (sender, args) =>
+            {
+                FolderPicker folderPicker = new FolderPicker();
+                folderPicker.FileTypeFilter.Add("*");
+                folderPicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+                var folder = await folderPicker.PickSingleFolderAsync();
+                if (folder != null)
+                {
+                    SettingHelper.SetValue(Download.DOWNLOAD_PATH, folder.Path);
+                    txtDownloadPath.Text = folder.Path;
+                    Windows.Storage.AccessCache.StorageApplicationPermissions.FutureAccessList.Add(folder);
+                    DownloadVM.Instance.RefreshDownloaded();
+                }
+            });
+            DownloadOpenOldPath.Click += new RoutedEventHandler(async (sender, args) =>
+            {
+                if (txtDownloadOldPath.Text == Download.DEFAULT_OLD_PATH)
+                {
+                    var videosLibrary = KnownFolders.VideosLibrary;
+                    videosLibrary = await videosLibrary.CreateFolderAsync("BiliBiliDownload", CreationCollisionOption.OpenIfExists);
+                    await Launcher.LaunchFolderAsync(videosLibrary);
+                }
+                else
+                {
+                    await Launcher.LaunchFolderPathAsync(txtDownloadOldPath.Text);
+                }
+            });
+            DownloadChangeOldPath.Click += new RoutedEventHandler(async (sender, args) =>
+            {
+                FolderPicker folderPicker = new FolderPicker();
+                folderPicker.FileTypeFilter.Add("*");
+                folderPicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
+                var folder = await folderPicker.PickSingleFolderAsync();
+                if (folder != null)
+                {
+                    SettingHelper.SetValue(Download.OLD_DOWNLOAD_PATH, folder.Path);
+                    txtDownloadOldPath.Text = folder.Path;
+                    Windows.Storage.AccessCache.StorageApplicationPermissions.FutureAccessList.Add(folder);
+                }
+            });
+            swDownloadParallelDownload.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(Download.PARALLEL_DOWNLOAD, swDownloadParallelDownload.IsOn);
+                DownloadVM.Instance.UpdateSetting();
+            });
+            swDownloadAllowCostNetwork.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(Download.ALLOW_COST_NETWORK, swDownloadAllowCostNetwork.IsOn);
+                DownloadVM.Instance.UpdateSetting();
+            });
+            swDownloadSendToast.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(Download.SEND_TOAST, swDownloadSendToast.IsOn);
+            });
+            cbDownloadVideoType.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(Download.DEFAULT_VIDEO_TYPE, cbDownloadVideoType.SelectedIndex);
+            });
+            swDownloadLoadOld.Toggled += new RoutedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(Download.LOAD_OLD_DOWNLOAD, swDownloadLoadOld.IsOn);
+            });
+
+            //网络与解析
+            cbPlayerReplaceCDN.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Player.REPLACE_CDN, cbPlayerReplaceCDN.SelectedIndex);
+                UpdateCDNSection();
+            });
+            RoamingSettingCDNServer.SelectionChanged += new SelectionChangedEventHandler((sender, e) =>
+            {
+                if (_applyingStoredValues) return;
+                var index = RoamingSettingCDNServer.SelectedIndex;
+                // 存储里的节点已不在列表时这里就是 -1，不能拿去索引，也不回写
+                if (index < 0 || index >= settingVM.CDNServers.Count) return;
+                SettingHelper.SetValue(SettingHelper.Player.CDN_SERVER, settingVM.CDNServers[index].Server);
+            });
             RoamingSettingSetDefault.Click += RoamingSettingSetDefault_Click;
-            RoamingSettingCustomServer.Text = SettingHelper.GetValue(Roaming.CUSTOM_SERVER_URL, ApiHelper.ROMAING_PROXY_URL);
-            RoamingSettingCustomServer.Loaded += new RoutedEventHandler((sender, e) =>
+            RoamingSettingCustomServer.QuerySubmitted += RoamingSettingCustomServer_QuerySubmitted;
+            RoamingSettingCustomServerHK.QuerySubmitted += new TypedEventHandler<AutoSuggestBox, AutoSuggestBoxQuerySubmittedEventArgs>((sender, args) =>
             {
-                RoamingSettingCustomServer.QuerySubmitted += RoamingSettingCustomServer_QuerySubmitted;
+                SaveRegionServer(RoamingSettingCustomServerHK, Roaming.CUSTOM_SERVER_URL_HK, "已取消自定义香港代理服务器");
+            });
+            RoamingSettingCustomServerTW.QuerySubmitted += new TypedEventHandler<AutoSuggestBox, AutoSuggestBoxQuerySubmittedEventArgs>((sender, args) =>
+            {
+                SaveRegionServer(RoamingSettingCustomServerTW, Roaming.CUSTOM_SERVER_URL_TW, "已取消自定义台湾代理服务器");
+            });
+            RoamingSettingCustomServerCN.QuerySubmitted += new TypedEventHandler<AutoSuggestBox, AutoSuggestBoxQuerySubmittedEventArgs>((sender, args) =>
+            {
+                SaveRegionServer(RoamingSettingCustomServerCN, Roaming.CUSTOM_SERVER_URL_CN, "已取消自定义大陆代理服务器");
             });
 
-            //自定义HK服务器
-            RoamingSettingCustomServerHK.Text = SettingHelper.GetValue(Roaming.CUSTOM_SERVER_URL_HK, "");
-            RoamingSettingCustomServerHK.Loaded += new RoutedEventHandler((sender, e) =>
+            //诊断
+            swApiCapture.Toggled += new RoutedEventHandler((sender, e) =>
             {
-                RoamingSettingCustomServerHK.QuerySubmitted += new TypedEventHandler<AutoSuggestBox, AutoSuggestBoxQuerySubmittedEventArgs>((sender2, args) =>
-                 {
-                     var text = sender2.Text;
-                     if (string.IsNullOrEmpty(text))
-                     {
-                         Utils.ShowMessageToast("已取消自定义香港代理服务器");
-                         SettingHelper.SetValue(Roaming.CUSTOM_SERVER_URL_HK, "");
-                         return;
-                     }
-                     if (!text.Contains("http"))
-                     {
-                         text = "https://" + text;
-                     }
-                     SettingHelper.SetValue(Roaming.CUSTOM_SERVER_URL_HK, text);
-                     sender2.Text = text;
-                     Utils.ShowMessageToast("保存成功");
-                 });
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Diagnostics.API_CAPTURE, swApiCapture.IsOn);
+                UpdateApiCaptureSamplesState();
             });
-
-            //自定义TW服务器
-            RoamingSettingCustomServerTW.Text = SettingHelper.GetValue(Roaming.CUSTOM_SERVER_URL_TW, "");
-            RoamingSettingCustomServerTW.Loaded += new RoutedEventHandler((sender, e) =>
+            swApiCaptureSamples.Toggled += new RoutedEventHandler((sender, e) =>
             {
-                RoamingSettingCustomServerTW.QuerySubmitted += new TypedEventHandler<AutoSuggestBox, AutoSuggestBoxQuerySubmittedEventArgs>((sender2, args) =>
-                {
-                    var text = sender2.Text;
-                    if (string.IsNullOrEmpty(text))
-                    {
-                        Utils.ShowMessageToast("已取消自定义台湾代理服务器");
-                        SettingHelper.SetValue(Roaming.CUSTOM_SERVER_URL_TW, "");
-                        return;
-                    }
-                    if (!text.Contains("http"))
-                    {
-                        text = "https://" + text;
-                    }
-                    SettingHelper.SetValue(Roaming.CUSTOM_SERVER_URL_TW, text);
-                    sender2.Text = text;
-                    Utils.ShowMessageToast("保存成功");
-                });
+                if (_applyingStoredValues) return;
+                SettingHelper.SetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, swApiCaptureSamples.IsOn);
             });
-
-            //自定义大陆服务器
-            RoamingSettingCustomServerCN.Text = SettingHelper.GetValue(Roaming.CUSTOM_SERVER_URL_CN, "");
-            RoamingSettingCustomServerCN.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                RoamingSettingCustomServerCN.QuerySubmitted += new TypedEventHandler<AutoSuggestBox, AutoSuggestBoxQuerySubmittedEventArgs>((sender2, args) =>
-                {
-                    var text = sender2.Text;
-                    if (string.IsNullOrEmpty(text))
-                    {
-                        Utils.ShowMessageToast("已取消自定义大陆代理服务器");
-                        SettingHelper.SetValue(Roaming.CUSTOM_SERVER_URL_CN, "");
-                        return;
-                    }
-                    if (!text.Contains("http"))
-                    {
-                        text = "https://" + text;
-                    }
-                    SettingHelper.SetValue(Roaming.CUSTOM_SERVER_URL_CN, text);
-                    sender2.Text = text;
-                    Utils.ShowMessageToast("保存成功");
-                });
-            });
-
-            //Akamai
-            //RoamingSettingAkamaized.IsOn = SettingHelper.GetValue<bool>(SettingHelper.Roaming.AKAMAI_CDN, false);
-            //RoamingSettingAkamaized.Loaded += new RoutedEventHandler((sender, e) =>
-            //{
-            //    RoamingSettingAkamaized.Toggled += new RoutedEventHandler((obj, args) =>
-            //    {
-            //        SettingHelper.SetValue(SettingHelper.Roaming.AKAMAI_CDN, RoamingSettingAkamaized.IsOn);
-            //    });
-            //});
-            //转简体
-            RoamingSettingToSimplified.IsOn = SettingHelper.GetValue(Roaming.TO_SIMPLIFIED, true);
-            RoamingSettingToSimplified.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                RoamingSettingToSimplified.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(Roaming.TO_SIMPLIFIED, RoamingSettingToSimplified.IsOn);
-                });
-            });
-            //日志
-            EnableLog.IsOn = SettingHelper.GetValue("EnableLog", true);
-            EnableLog.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                EnableLog.Toggled += new RoutedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue("EnableLog", EnableLog.IsOn);
-                });
-            });
-
-
         }
 
+        private void ApplyAppearance()
+        {
+            _applyingStoredValues = true;
+            try
+            {
+                cbTheme.SelectedIndex = SettingHelper.GetValue(UI.THEME, 0);
+                cbDisplayMode.SelectedIndex = SettingHelper.GetValue(UI.DISPLAY_MODE, 0);
+                swPictureQuality.IsOn = SettingHelper.GetValue(UI.ORTGINAL_IMAGE, false);
+                swHomeCache.IsOn = SettingHelper.GetValue(UI.CACHE_HOME, true);
+                numRightWidth.Value = GetValue<double>(UI.RIGHT_DETAIL_WIDTH, 320);
+                numImageCornerRadius.Value = GetValue<double>(UI.IMAGE_CORNER_RADIUS, 0);
+                ImageCornerRadiusExample.CornerRadius = new CornerRadius(numImageCornerRadius.Value);
+                swVideoDetailShowCover.IsOn = SettingHelper.GetValue(UI.SHOW_DETAIL_COVER, true);
+                swPreviewImageNavigateToPage.IsOn = SettingHelper.GetValue(UI.NEW_WINDOW_PREVIEW_IMAGE, false);
+                swMouseClosePage.IsOn = SettingHelper.GetValue(UI.MOUSE_BACK, true);
+                cbDetailDisplay.SelectedIndex = SettingHelper.GetValue(UI.DETAIL_DISPLAY, 0);
+                cbDynamicDisplayMode.SelectedIndex = SettingHelper.GetValue(UI.DYNAMIC_DISPLAY_MODE, 0);
+                cbRecommendDisplayMode.SelectedIndex = SettingHelper.GetValue(UI.RECMEND_DISPLAY_MODE, 0);
+                swOpenUrlWithBrowser.IsOn = SettingHelper.GetValue(UI.OPEN_URL_BROWSER, false);
+                swHideBanner.IsOn = SettingHelper.GetValue("dontloadbanner", false);
+                swShowBGOnDynamic.IsOn = SettingHelper.GetValue("showbgondynamic", false);
+                gridHomeCustom.ItemsSource = SettingHelper.GetValue(UI.HOEM_ORDER, HomeVM.GetAllNavItems());
+                ExceptHomeNavItems();
+            }
+            finally
+            {
+                _applyingStoredValues = false;
+            }
+        }
 
+        private void ApplyPlayer()
+        {
+            _applyingStoredValues = true;
+            try
+            {
+                cbVideoType.SelectedIndex = SettingHelper.GetValue(SettingHelper.Player.DEFAULT_VIDEO_TYPE, 1);
+                cbVideoSpeed.SelectedIndex = SettingHelper.Player.VideoSpeed.IndexOf(SettingHelper.GetValue(SettingHelper.Player.DEFAULT_VIDEO_SPEED, 1.0d));
+                swPriorityPlayer.SelectedIndex = SettingHelper.GetValue("playertype", 0);
+                swAutoPlay.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_PLAY, false);
+                swAutoNext.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_NEXT, true);
+                swPlayerSettingAutoToPosition.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_TO_POSITION, true);
+                swPlayerSettingAutoFullWindows.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_FULL_WINDOW, false);
+                swPlayerSettingAutoFullScreen.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_FULL_SCREEN, false);
+                swPlayerSettingDoubleClickFullScreen.IsOn = SettingHelper.GetValue(SettingHelper.Player.DOUBLE_CLICK_FULL_SCREEN, false);
+                swPlayerSettingAutoOpenAISubtitle.IsOn = SettingHelper.GetValue(SettingHelper.Player.AUTO_OPEN_AI_SUBTITLE, false);
+                RoamingSettingToSimplified.IsOn = SettingHelper.GetValue(Roaming.TO_SIMPLIFIED, true);
+            }
+            finally
+            {
+                _applyingStoredValues = false;
+            }
+            UpdateVideoCodecHint();
+        }
+
+        private void ApplyVideoDanmu()
+        {
+            _applyingStoredValues = true;
+            try
+            {
+                var state = SettingHelper.GetValue(VideoDanmaku.SHOW, Visibility.Visible) == Visibility.Visible;
+                DanmuSettingState.IsOn = state;
+                numDanmakuTopMargin.Value = GetValue<double>(VideoDanmaku.TOP_MARGIN, 0);
+                numDanmakuMaxNum.Value = GetValue<double>(VideoDanmaku.MAX_NUM, 0);
+                // 未提交的新条目不算数：输入框回到空，错误提示一并复位
+                DanmuSettingTxtWord.Text = "";
+                DanmuSettingTxtRegex.Text = "";
+                DanmuSettingTxtUser.Text = "";
+                HideRegexError();
+            }
+            finally
+            {
+                _applyingStoredValues = false;
+            }
+        }
+
+        private void ApplyLiveDanmu()
+        {
+            _applyingStoredValues = true;
+            try
+            {
+                var state = SettingHelper.GetValue(SettingHelper.Live.SHOW, Visibility.Visible) == Visibility.Visible;
+                LiveDanmuSettingState.IsOn = state;
+                LiveDanmuSettingTxtWord.Text = "";
+            }
+            finally
+            {
+                _applyingStoredValues = false;
+            }
+        }
+
+        private void ApplyDownload()
+        {
+            _applyingStoredValues = true;
+            try
+            {
+                txtDownloadPath.Text = SettingHelper.GetValue(Download.DOWNLOAD_PATH, Download.DEFAULT_PATH);
+                txtDownloadOldPath.Text = SettingHelper.GetValue(Download.OLD_DOWNLOAD_PATH, Download.DEFAULT_OLD_PATH);
+                cbDownloadVideoType.SelectedIndex = SettingHelper.GetValue(Download.DEFAULT_VIDEO_TYPE, 1);
+                swDownloadParallelDownload.IsOn = SettingHelper.GetValue(Download.PARALLEL_DOWNLOAD, true);
+                swDownloadAllowCostNetwork.IsOn = SettingHelper.GetValue(Download.ALLOW_COST_NETWORK, false);
+                swDownloadSendToast.IsOn = SettingHelper.GetValue(Download.SEND_TOAST, false);
+                swDownloadLoadOld.IsOn = SettingHelper.GetValue(Download.LOAD_OLD_DOWNLOAD, false);
+            }
+            finally
+            {
+                _applyingStoredValues = false;
+            }
+        }
+
+        private void ApplyNetwork()
+        {
+            _applyingStoredValues = true;
+            try
+            {
+                cbPlayerReplaceCDN.SelectedIndex = SettingHelper.GetValue(SettingHelper.Player.REPLACE_CDN, 3);
+                var cdnServer = SettingHelper.GetValue(SettingHelper.Player.CDN_SERVER, "upos-sz-mirrorhwo1.bilivideo.com");
+                var cdnIndex = settingVM.CDNServers.FindIndex(x => x.Server == cdnServer);
+                // 节点已不在列表时保持未选中（-1），原来的存储值不动
+                RoamingSettingCDNServer.SelectedIndex = cdnIndex;
+                RoamingSettingCustomServer.Text = SettingHelper.GetValue(Roaming.CUSTOM_SERVER_URL, ApiHelper.ROMAING_PROXY_URL);
+                RoamingSettingCustomServerHK.Text = SettingHelper.GetValue(Roaming.CUSTOM_SERVER_URL_HK, "");
+                RoamingSettingCustomServerTW.Text = SettingHelper.GetValue(Roaming.CUSTOM_SERVER_URL_TW, "");
+                RoamingSettingCustomServerCN.Text = SettingHelper.GetValue(Roaming.CUSTOM_SERVER_URL_CN, "");
+            }
+            finally
+            {
+                _applyingStoredValues = false;
+            }
+            UpdateCDNSection();
+        }
+
+        private void ApplyDiagnostics()
+        {
+            _applyingStoredValues = true;
+            try
+            {
+                swApiCapture.IsOn = SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE, false);
+                swApiCaptureSamples.IsOn = SettingHelper.GetValue(SettingHelper.Diagnostics.API_CAPTURE_SAMPLES, false);
+            }
+            finally
+            {
+                _applyingStoredValues = false;
+            }
+            UpdateApiCaptureSamplesState();
+        }
+
+        /// <summary>只有选 HEVC / AV1 时才显示对应的扩展说明，其它选项两条都不占位。</summary>
+        private void UpdateVideoCodecHint()
+        {
+            var index = cbVideoType.SelectedIndex;
+            var showHevc = index == 2;
+            var showAv1 = index == 3;
+            VideoCodecHintHevc.Visibility = showHevc ? Visibility.Visible : Visibility.Collapsed;
+            VideoCodecHintAv1.Visibility = showAv1 ? Visibility.Visible : Visibility.Collapsed;
+            VideoCodecHint.Visibility = (showHevc || showAv1) ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        /// <summary>不替换时不占位；只改可见性，已保存的节点和选择都不动。</summary>
+        private void UpdateCDNSection()
+        {
+            var replaceEnabled = cbPlayerReplaceCDN.SelectedIndex > 0;
+            CDNNodeSection.Visibility = replaceEnabled ? Visibility.Visible : Visibility.Collapsed;
+            CDNReplaceHint.Visibility = replaceEnabled ? Visibility.Collapsed : Visibility.Visible;
+        }
+
+        /// <summary>样本开关依赖结构记录：只改可用性和说明，绝不改写已保存的样本值。</summary>
+        private void UpdateApiCaptureSamplesState()
+        {
+            var available = swApiCapture.IsOn;
+            swApiCaptureSamples.IsEnabled = available;
+            if (available)
+            {
+                swApiCaptureSamplesHelp.Text = "每份最多 4 KB，名字像凭据的字段会被替换。";
+            }
+            else
+            {
+                swApiCaptureSamplesHelp.Text = "需要先开启『记录 API 响应结构』后才会写入。";
+            }
+        }
+
+        /// <summary>地区服务器留空＝清掉该地区设置，非空则补协议后保存。</summary>
+        private void SaveRegionServer(AutoSuggestBox box, string key, string clearedMessage)
+        {
+            var text = box.Text;
+            if (string.IsNullOrEmpty(text))
+            {
+                Utils.ShowMessageToast(clearedMessage);
+                SettingHelper.SetValue(key, "");
+                return;
+            }
+            if (!text.Contains("http"))
+            {
+                text = "https://" + text;
+            }
+            SettingHelper.SetValue(key, text);
+            box.Text = text;
+            Utils.ShowMessageToast("保存成功");
+        }
 
         private void RoamingSettingSetDefault_Click(object sender, RoutedEventArgs e)
         {
@@ -590,212 +685,6 @@ FallbackColor=""#ffffff"" />
             SettingHelper.SetValue(Roaming.CUSTOM_SERVER_URL, text);
             sender.Text = text;
             Utils.ShowMessageToast("保存成功");
-        }
-
-        private void LoadDanmu()
-        {
-            //弹幕开关
-            var state = SettingHelper.GetValue(VideoDanmaku.SHOW, Visibility.Visible) == Visibility.Visible;
-            DanmuSettingState.IsOn = state;
-            DanmuSettingState.Toggled += new RoutedEventHandler((e, args) =>
-            {
-                SettingHelper.SetValue(VideoDanmaku.SHOW, DanmuSettingState.IsOn ? Visibility.Visible : Visibility.Collapsed);
-            });
-            //弹幕关键词
-            DanmuSettingListWords.ItemsSource = settingVM.ShieldWords;
-
-            //正则关键词
-            DanmuSettingListRegulars.ItemsSource = settingVM.ShieldRegulars;
-
-            //用户
-            DanmuSettingListUsers.ItemsSource = settingVM.ShieldUsers;
-
-            //弹幕顶部距离
-            numDanmakuTopMargin.Value = GetValue<double>(VideoDanmaku.TOP_MARGIN, 0);
-            numDanmakuTopMargin.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                numDanmakuTopMargin.ValueChanged += new TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs>((obj, args) =>
-                {
-                    SettingHelper.SetValue(VideoDanmaku.TOP_MARGIN, args.NewValue);
-                });
-            });
-            //弹幕最大数量
-            numDanmakuMaxNum.Value = GetValue<double>(VideoDanmaku.MAX_NUM, 0);
-            numDanmakuMaxNum.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                numDanmakuMaxNum.ValueChanged += new TypedEventHandler<NumberBox, NumberBoxValueChangedEventArgs>((obj, args) =>
-                {
-                    SettingHelper.SetValue(VideoDanmaku.MAX_NUM, args.NewValue);
-                });
-            });
-        }
-        private void LoadLiveDanmu()
-        {
-            //弹幕开关
-            var state = SettingHelper.GetValue(SettingHelper.Live.SHOW, Visibility.Visible) == Visibility.Visible;
-            LiveDanmuSettingState.IsOn = state;
-            LiveDanmuSettingState.Toggled += new RoutedEventHandler((e, args) =>
-            {
-                SettingHelper.SetValue(SettingHelper.Live.SHOW, LiveDanmuSettingState.IsOn ? Visibility.Visible : Visibility.Collapsed);
-            });
-            //弹幕关键词
-            LiveDanmuSettingListWords.ItemsSource = settingVM.LiveWords;
-        }
-        private void LoadAPI()
-        {
-            LoadSettings();
-            InitApi();
-        }
-        private void LoadSettings()
-        {
-            appkey_android_1.Text = SettingHelper.GetValue("appkey_android_1", "");
-            appkey_android_2.Text = SettingHelper.GetValue("appkey_android_2", "");
-            appkey_login_1.Text = SettingHelper.GetValue("appkey_login_1", "");
-            appkey_login_2.Text = SettingHelper.GetValue("appkey_login_2", "");
-            appkey_video_1.Text = SettingHelper.GetValue("appkey_video_1", "");
-            appkey_video_2.Text = SettingHelper.GetValue("appkey_video_2", "");
-            appkey_tv_1.Text = SettingHelper.GetValue("appkey_tv_1", "");
-            appkey_tv_2.Text = SettingHelper.GetValue("appkey_tv_2", "");
-            appkey_web_1.Text = SettingHelper.GetValue("appkey_web_1", "");
-            appkey_web_2.Text = SettingHelper.GetValue("appkey_web_2", "");
-            api_web_top.Text = SettingHelper.GetValue("api_web_top", "");
-            api_web_secondary.Text = SettingHelper.GetValue("api_web_top", "");
-        }
-        private void SaveSettings()
-        {
-            SettingHelper.SetValue("appkey_android_1", appkey_android_1.Text);
-            SettingHelper.SetValue("appkey_android_2", appkey_android_2.Text);
-            SettingHelper.SetValue("appkey_login_1", appkey_login_1.Text);
-            SettingHelper.SetValue("appkey_login_2", appkey_login_2.Text);
-            SettingHelper.SetValue("appkey_video_1", appkey_video_1.Text);
-            SettingHelper.SetValue("appkey_video_2", appkey_video_2.Text);
-            SettingHelper.SetValue("appkey_tv_1", appkey_tv_1.Text);
-            SettingHelper.SetValue("appkey_tv_2", appkey_tv_2.Text);
-            SettingHelper.SetValue("appkey_web_1", appkey_web_1.Text);
-            SettingHelper.SetValue("appkey_web_2", appkey_web_2.Text);
-            SettingHelper.SetValue("api_web_top", api_web_top.Text);
-            SettingHelper.SetValue("api_web_secondary", api_web_secondary.Text);
-        }
-        private void ApplyAPI_Click(object sender, RoutedEventArgs e)
-        {
-            InitApi();
-        }
-        private void InitApi() { 
-            var lst = new List<string>();
-
-            lst.Add(appkey_android_1.Text);
-            lst.Add(appkey_android_2.Text);
-            lst.Add(appkey_login_1.Text);
-            lst.Add(appkey_login_2.Text);
-            lst.Add(appkey_video_1.Text);
-            lst.Add(appkey_video_2.Text);
-            lst.Add(appkey_tv_1.Text);
-            lst.Add(appkey_tv_2.Text);
-            lst.Add(appkey_web_1.Text);
-            lst.Add(appkey_web_2.Text);
-            lst.Add(api_web_top.Text);
-            lst.Add(api_web_secondary.Text);
-
-            ApiHelper.Init(lst);
-            SaveSettings();
-            Utils.sp = this;
-        }
-        private void LoadDownlaod()
-        {
-            //下载路径
-            txtDownloadPath.Text = SettingHelper.GetValue(Download.DOWNLOAD_PATH, Download.DEFAULT_PATH);
-            DownloadOpenPath.Click += new RoutedEventHandler(async (e, args) =>
-            {
-                if (txtDownloadPath.Text == Download.DEFAULT_PATH)
-                {
-                    var videosLibrary = KnownFolders.VideosLibrary;
-                    videosLibrary = await videosLibrary.CreateFolderAsync("哔哩哔哩下载", CreationCollisionOption.OpenIfExists);
-
-                    await Launcher.LaunchFolderAsync(videosLibrary);
-                }
-                else
-                {
-                    await Launcher.LaunchFolderPathAsync(txtDownloadPath.Text);
-                }
-            });
-            DownloadChangePath.Click += new RoutedEventHandler(async (e, args) =>
-            {
-                FolderPicker folderPicker = new FolderPicker();
-                folderPicker.FileTypeFilter.Add("*");
-                folderPicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
-                var folder = await folderPicker.PickSingleFolderAsync();
-                if (folder != null)
-                {
-                    SettingHelper.SetValue(Download.DOWNLOAD_PATH, folder.Path);
-                    txtDownloadPath.Text = folder.Path;
-                    Windows.Storage.AccessCache.StorageApplicationPermissions.FutureAccessList.Add(folder);
-                    DownloadVM.Instance.RefreshDownloaded();
-                }
-            });
-            //旧版下载目录
-            txtDownloadOldPath.Text = SettingHelper.GetValue(Download.OLD_DOWNLOAD_PATH, Download.DEFAULT_OLD_PATH);
-            DownloadOpenOldPath.Click += new RoutedEventHandler(async (e, args) =>
-            {
-                if (txtDownloadOldPath.Text == Download.DEFAULT_OLD_PATH)
-                {
-                    var videosLibrary = KnownFolders.VideosLibrary;
-                    videosLibrary = await videosLibrary.CreateFolderAsync("BiliBiliDownload", CreationCollisionOption.OpenIfExists);
-                    await Launcher.LaunchFolderAsync(videosLibrary);
-                }
-                else
-                {
-                    await Launcher.LaunchFolderPathAsync(txtDownloadOldPath.Text);
-                }
-            });
-            DownloadChangeOldPath.Click += new RoutedEventHandler(async (e, args) =>
-            {
-                FolderPicker folderPicker = new FolderPicker();
-                folderPicker.FileTypeFilter.Add("*");
-                folderPicker.SuggestedStartLocation = PickerLocationId.VideosLibrary;
-                var folder = await folderPicker.PickSingleFolderAsync();
-                if (folder != null)
-                {
-                    SettingHelper.SetValue(Download.OLD_DOWNLOAD_PATH, folder.Path);
-                    txtDownloadOldPath.Text = folder.Path;
-                    Windows.Storage.AccessCache.StorageApplicationPermissions.FutureAccessList.Add(folder);
-                }
-            });
-
-            //并行下载
-            swDownloadParallelDownload.IsOn = SettingHelper.GetValue(Download.PARALLEL_DOWNLOAD, true);
-            swDownloadParallelDownload.Toggled += new RoutedEventHandler((e, args) =>
-            {
-                SettingHelper.SetValue(Download.PARALLEL_DOWNLOAD, swDownloadParallelDownload.IsOn);
-                DownloadVM.Instance.UpdateSetting();
-            });
-            //付费网络下载
-            swDownloadAllowCostNetwork.IsOn = SettingHelper.GetValue(Download.ALLOW_COST_NETWORK, false);
-            swDownloadAllowCostNetwork.Toggled += new RoutedEventHandler((e, args) =>
-            {
-                SettingHelper.SetValue(Download.ALLOW_COST_NETWORK, swDownloadAllowCostNetwork.IsOn);
-                DownloadVM.Instance.UpdateSetting();
-            });
-            //下载完成发送通知
-            swDownloadSendToast.IsOn = SettingHelper.GetValue(Download.SEND_TOAST, false);
-            swDownloadSendToast.Toggled += new RoutedEventHandler((e, args) =>
-            {
-                SettingHelper.SetValue(Download.SEND_TOAST, swDownloadSendToast.IsOn);
-            });
-            //下载类型
-            cbDownloadVideoType.SelectedIndex = SettingHelper.GetValue(Download.DEFAULT_VIDEO_TYPE, 1);
-            cbDownloadVideoType.Loaded += new RoutedEventHandler((sender, e) =>
-            {
-                cbDownloadVideoType.SelectionChanged += new SelectionChangedEventHandler((obj, args) =>
-                {
-                    SettingHelper.SetValue(Download.DEFAULT_VIDEO_TYPE, cbDownloadVideoType.SelectedIndex);
-                });
-            });
-            //加载旧版本下载的视频
-            swDownloadLoadOld.IsOn = SettingHelper.GetValue(Download.LOAD_OLD_DOWNLOAD, false);
-            swDownloadLoadOld.Toggled += new RoutedEventHandler((e, args) =>
-            {
-                SettingHelper.SetValue(Download.LOAD_OLD_DOWNLOAD, swDownloadLoadOld.IsOn);
-            });
         }
 
         private void ExceptHomeNavItems()
@@ -854,14 +743,6 @@ FallbackColor=""#ffffff"" />
             }
             try
             {
-                dbginfo.Text = await FileIO.ReadTextAsync(await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/Text/dbginfo.md")));
-            }
-            catch (Exception)
-            {
-                //throw;
-            }
-            try
-            {
                 Info.Text = await FileIO.ReadTextAsync(await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/Text/info.md")));
             }
             catch (Exception)
@@ -870,40 +751,20 @@ FallbackColor=""#ffffff"" />
             }
         }
 
-        // 在代码中定义一个名为 Log 的方法，用于向日志文本框中添加新的日志
-        private readonly int loglength = 10000;
-        public void Log(StringBuilder logBuilder)
-        {
-            int leng = logBuilder.ToString().Length;
-            if (leng > loglength * 2)
-            {
-                logBuilder.Remove(0, leng - loglength);
-            }
-            //这个地方老是崩
-            try
-            {
-                // 将 StringBuilder 对象中的所有内容显示到日志文本框中
-                if (EnableLog.IsOn)
-                    logTextBox.Text = logBuilder.ToString();
-            }
-            catch (Exception e) { }
-        }
-
         private async void DanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(DanmuSettingTxtWord.Text))
+            var word = DanmuSettingTxtWord.Text;
+            if (string.IsNullOrWhiteSpace(word))
             {
                 Utils.ShowMessageToast("关键词不能为空");
                 return;
             }
-            settingVM.ShieldWords.Add(DanmuSettingTxtWord.Text);
-            SettingHelper.SetValue(VideoDanmaku.SHIELD_WORD, settingVM.ShieldWords);
-            var result = await settingVM.AddDanmuFilterItem(DanmuSettingTxtWord.Text, 0);
-            DanmuSettingTxtWord.Text = "";
-            if (!result)
+            if (!await settingVM.AddDanmuFilterItem(word, 0))
             {
-                Utils.ShowMessageToast("已经添加到本地，但远程同步失败");
+                Utils.ShowMessageToast("该关键词已存在");
+                return;
             }
+            DanmuSettingTxtWord.Text = "";
         }
 
         private async void DanmuSettingSyncWords_Click(object sender, RoutedEventArgs e)
@@ -985,37 +846,52 @@ FallbackColor=""#ffffff"" />
 
         private async void DanmuSettingAddRegex_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(DanmuSettingTxtRegex.Text))
+            var txt = DanmuSettingTxtRegex.Text.Trim('/');
+            if (string.IsNullOrEmpty(txt))
             {
-                Utils.ShowMessageToast("正则表达式不能为空");
+                ShowRegexError("正则表达式不能为空");
                 return;
             }
-            var txt = DanmuSettingTxtRegex.Text.Trim('/');
-            settingVM.ShieldRegulars.Add(txt);
-            SettingHelper.SetValue(VideoDanmaku.SHIELD_REGULAR, settingVM.ShieldRegulars);
-            var result = await settingVM.AddDanmuFilterItem(txt, 1);
-            DanmuSettingTxtRegex.Text = "";
-            if (!result)
+            if (!DanmuFilterRules.TryValidateRegex(txt, out var error))
             {
-                Utils.ShowMessageToast("已经添加到本地，但远程同步失败");
+                ShowRegexError(error);
+                return;
             }
+            if (!await settingVM.AddDanmuFilterItem(txt, 1))
+            {
+                ShowRegexError("该正则表达式已存在");
+                return;
+            }
+            HideRegexError();
+            DanmuSettingTxtRegex.Text = "";
+        }
+
+        private void ShowRegexError(string message)
+        {
+            DanmuSettingRegexError.Text = message;
+            DanmuSettingRegexError.Visibility = Visibility.Visible;
+        }
+
+        private void HideRegexError()
+        {
+            DanmuSettingRegexError.Text = "";
+            DanmuSettingRegexError.Visibility = Visibility.Collapsed;
         }
 
         private async void DanmuSettingAddUser_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(DanmuSettingTxtUser.Text))
+            var user = DanmuSettingTxtUser.Text;
+            if (string.IsNullOrWhiteSpace(user))
             {
                 Utils.ShowMessageToast("用户ID不能为空");
                 return;
             }
-            settingVM.ShieldUsers.Add(DanmuSettingTxtUser.Text);
-            SettingHelper.SetValue(VideoDanmaku.SHIELD_USER, settingVM.ShieldUsers);
-            var result = await settingVM.AddDanmuFilterItem(DanmuSettingTxtUser.Text, 2);
-            DanmuSettingTxtUser.Text = "";
-            if (!result)
+            if (!await settingVM.AddDanmuFilterItem(user, 2))
             {
-                Utils.ShowMessageToast("已经添加到本地，但远程同步失败");
+                Utils.ShowMessageToast("该用户标识已存在");
+                return;
             }
+            DanmuSettingTxtUser.Text = "";
         }
 
 
@@ -1075,6 +951,21 @@ FallbackColor=""#ffffff"" />
             catch (Exception ex)
             {
                 Utils.ShowMessageToast("导出日志失败", ex.Message);
+            }
+        }
+
+        /// <summary>日志目录可能还没建（应用刚装、还没写过日志），先按 OpenIfExists 拿到再打开。</summary>
+        private async void OpenLogFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var logFolder = await ApplicationData.Current.LocalFolder.CreateFolderAsync("log", CreationCollisionOption.OpenIfExists);
+                await Launcher.LaunchFolderPathAsync(logFolder.Path);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("打开日志目录失败", LogType.ERROR, ex);
+                Utils.ShowMessageToast("打开日志目录失败", ex.Message);
             }
         }
 
@@ -1181,19 +1072,19 @@ FallbackColor=""#ffffff"" />
 
         private void LiveDanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(LiveDanmuSettingTxtWord.Text))
+            var word = LiveDanmuSettingTxtWord.Text;
+            if (string.IsNullOrWhiteSpace(word))
             {
                 Utils.ShowMessageToast("关键字不能为空");
                 return;
             }
-            if (!settingVM.LiveWords.Contains(LiveDanmuSettingTxtWord.Text))
+            if (!DanmuFilterRules.AddUnique(settingVM.LiveWords, word))
             {
-                settingVM.LiveWords.Add(LiveDanmuSettingTxtWord.Text);
-                SettingHelper.SetValue(SettingHelper.Live.SHIELD_WORD, settingVM.LiveWords);
+                Utils.ShowMessageToast("该关键词已存在");
+                return;
             }
-
-            DanmuSettingTxtWord.Text = "";
             SettingHelper.SetValue(SettingHelper.Live.SHIELD_WORD, settingVM.LiveWords);
+            LiveDanmuSettingTxtWord.Text = "";
         }
 
         private void RemoveLiveDanmuWord_Click(object sender, RoutedEventArgs e)
@@ -1253,208 +1144,9 @@ FallbackColor=""#ffffff"" />
             }
 
         }
-        private async Task<LoginCallbackModel> HandleLoginResult(int code, string message, LoginResultModel result)
-        {
-            if (code == 0)
-            {
-                if (result.status == 0)
-                {
-                    dbgacc.Text = result.token_info.access_token;
-                    dbgtoken.Text = result.token_info.refresh_token;
-                    dbgmsg.Text = result.token_info.mid + "&" + result.sso + "&" + result.cookie_info;
-                    return new LoginCallbackModel()
-                    {
-                        status = LoginStatus.Success,
-                        message = "登录成功"
-                    };
-                }
-                if (result.status == 1 || result.status == 2)
-                {
-                    dbgmsg.Text = "需要安全验证";
-                    return new LoginCallbackModel()
-                    {
-                        status = LoginStatus.NeedValidate,
-                        message = "本次登录需要安全验证",
-                        url = result.url
-                    };
-                }
-                dbgmsg.Text = result.message;
-                return new LoginCallbackModel()
-                {
-                    status = LoginStatus.Fail,
-                    message = result.message
-                };
-            }
-            else if (code == -105)
-            {
-                dbgmsg.Text = "需要验证码";
-                return new LoginCallbackModel()
-                {
-                    status = LoginStatus.NeedCaptcha,
-                    url = result.url,
-                    message = "登录需要验证码"
-                };
-            }
-            else
-            {
-                dbgmsg.Text = message;
-                return new LoginCallbackModel()
-                {
-                    status = LoginStatus.Fail,
-                    message = message
-                };
-            }
-
-        }
-        Api.AccountApi api;
-        public async Task<string> EncryptedPassword(string passWord)
-        {
-            string base64String;
-            try
-            {
-                HttpBaseProtocolFilter httpBaseProtocolFilter = new HttpBaseProtocolFilter();
-                httpBaseProtocolFilter.IgnorableServerCertificateErrors.Add(Windows.Security.Cryptography.Certificates.ChainValidationResult.Expired);
-                httpBaseProtocolFilter.IgnorableServerCertificateErrors.Add(Windows.Security.Cryptography.Certificates.ChainValidationResult.Untrusted);
-                var jObjects = (await api.GetKey2023().Request()).GetJObject();
-                string str = jObjects["data"]["hash"].ToString();
-                string str1 = jObjects["data"]["key"].ToString();
-                string str2 = string.Concat(str, passWord);
-                string str3 = Regex.Match(str1, "BEGIN PUBLIC KEY-----(?<key>[\\s\\S]+)-----END PUBLIC KEY").Groups["key"].Value.Trim();
-                byte[] numArray = Convert.FromBase64String(str3);
-                AsymmetricKeyAlgorithmProvider asymmetricKeyAlgorithmProvider = AsymmetricKeyAlgorithmProvider.OpenAlgorithm(AsymmetricAlgorithmNames.RsaPkcs1);
-                CryptographicKey cryptographicKey = asymmetricKeyAlgorithmProvider.ImportPublicKey(WindowsRuntimeBufferExtensions.AsBuffer(numArray), 0);
-                IBuffer buffer = CryptographicEngine.Encrypt(cryptographicKey, WindowsRuntimeBufferExtensions.AsBuffer(Encoding.UTF8.GetBytes(str2)), null);
-                base64String = Convert.ToBase64String(WindowsRuntimeBufferExtensions.ToArray(buffer));
-            }
-            catch (Exception)
-            {
-                base64String = passWord;
-            }
-            return base64String;
-        }
-        private async void DoLogin(object sender, RoutedEventArgs e) {
-            var user = dbguser.Text;
-            var password = dbgpwd.Text;
-            var val=dbgval.Text;
-            var cap = dbgcap.Text;
-            var challenge = dbgch.Text;
-            if (string.IsNullOrEmpty(val))
-            {
-                //第一步，啥都没
-                var pwd = await EncryptedPassword(password);
-                var results = await api.Login2023(user, pwd).Request();
-                if (results.status)
-                {
-                    var data = await results.GetData<LoginResultModel>();
-                    var result = await HandleLoginResult(data.code, data.message, data.data);
-                    HandleResult(result);
-                }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
-                }
-            }
-            else
-            {
-                //带验证码登录
-                var pwd = await EncryptedPassword(password);
-                var results = await api.Login2023(user, pwd,challenge,cap,val).Request();
-                if (results.status)
-                {
-                    var data = await results.GetData<LoginResultModel>();
-                    var result = await HandleLoginResult(data.code, data.message, data.data);
-                    HandleResult(result);
-                }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
-                }
-            }
-
-
-
-        }
-        private void HandleResult(LoginCallbackModel result)
-        {
-            var uri = new Uri(string.IsNullOrEmpty(result.url) ? "https://www.bilibili.com" : result.url);
-            switch (result.status)
-            {
-                case LoginStatus.Success:
-                    break;
-                case LoginStatus.Fail:
-                case LoginStatus.Error:
-                    break;
-                case LoginStatus.NeedCaptcha:
-                    string gt = Regex.Match(uri.Query, "gee_gt=(.*?)&").Groups[1].Value;
-                    string cha = Regex.Match(uri.Query, "gee_challenge=(.*?)&").Groups[1].Value;
-                    string cap= Regex.Match(uri.Query, "recaptcha_token=(.*?)&").Groups[1].Value;
-                    dbggt.Text = gt;
-                    dbgch.Text = cha;
-                    dbgcap.Text = cap;
-                    break;
-                case LoginStatus.NeedValidate:
-                    dbgcap.Text = result.url;
-                    break;
-                default:
-                    break;
-            }
-        }
         private void ShowTokenButton_Click(object sender, RoutedEventArgs e)
         {
             TokenTextBox.Text = SettingHelper.Account.AccessKey;
-        }
-
-        private async void OpenTheme_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                var folder = await Windows.ApplicationModel.Package.Current.InstalledLocation.GetFolderAsync("Themes");
-                var success = await Windows.System.Launcher.LaunchFolderAsync(folder);
-                if (!success)
-                {
-                    Utils.ShowMessageToast("无法打开Themes文件夹");
-                }
-            }
-            catch(Exception ex)
-            {
-                Utils.ShowMessageToast("找不到Themes文件夹");
-            }
-        }
-
-        private async void BurnTokenButton_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
-        public List<int> videofmt = new List<int> {0 };//flv and ts/m3u8 is not supported by ffmpeg 
-        public static List<string> videofmtnames = new List<string>{ "FLV", "TS", "MP4" };
-        public static string videotextfmt = "已选择格式为{0}";
-        public string videotext
-        {
-            get
-            {
-                var videostrs = new List<string>();
-                foreach(var i in videofmt)
-                {
-                    videostrs.Add(videofmtnames[i]);
-                }
-                return string.Format(videotextfmt, string.Join(">", videostrs));
-            }
-        }
-        private void swLiveVideoFormat_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var l = new List<int>();
-            foreach(var item in swLiveVideoFormat.SelectedItems)
-            {
-                var o = item as ListViewItem;
-                l.Add(o.AccessKey.ToInt32());
-            }
-            if (l.Count > 0)
-            {
-                videofmt.Clear();
-                videofmt.AddRange(l);
-                SettingHelper.SetValue("livevideoformat", string.Join(",",videofmt));
-                OnPropertyChanged(nameof(videotext));
-            }
         }
 
         public event System.ComponentModel.PropertyChangedEventHandler PropertyChanged;
@@ -1471,6 +1163,8 @@ FallbackColor=""#ffffff"" />
             }
             set
             {
+                // 重填控件期间的回写不算用户修改
+                if (_applyingStoredValues) return;
                 if (String.IsNullOrEmpty(value)) return;
                 SettingHelper.SetValue<string>("CookieCSRF",value);
                 var filter = new HttpBaseProtocolFilter();
@@ -1508,6 +1202,8 @@ FallbackColor=""#ffffff"" />
             }
             set
             {
+                // 重填控件期间的回写不算用户修改
+                if (_applyingStoredValues) return;
                 if (String.IsNullOrEmpty(value)) return;
                 var filter = new HttpBaseProtocolFilter();
                 var cookies = filter.CookieManager.GetCookies(new Uri("https://bilibili.com"));
@@ -1529,15 +1225,15 @@ FallbackColor=""#ffffff"" />
 
         public string CookieRefreshToken
         {
-            get
-            {
-                var cookie = SettingHelper.GetValue<string>("CookieRefreshToken", "");
-                return cookie;
-            }
+            get => SettingHelper.GetValue<string>(RefreshTokenMirror.TokenKey, "");
             set
             {
-                if (String.IsNullOrEmpty(value)) return;
-                SettingHelper.SetValue<string>("CookieRefreshToken", value);
+                // 重填控件期间的回写不算用户修改，避免把自动刷新的来源改成 manual
+                if (_applyingStoredValues) return;
+                // 手填的就是本会话的令牌：来源记 manual、归属记当前 uid，读令牌时不会被当成别人的；
+                // 清空输入框＝清掉记录，值、来源、归属一起走（判定和落盘都在 RefreshTokenMirror）
+                refreshTokenMirror.RecordManual(value,
+                    SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L));
                 OnPropertyChanged(nameof(CookieRefreshToken));
             }
         }

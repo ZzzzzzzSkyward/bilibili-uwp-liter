@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Globalization;
 using Newtonsoft.Json;
 
 namespace BiliLite.Models.Common
@@ -158,6 +159,38 @@ namespace BiliLite.Models.Common
             var index = aids.IndexOf(currentAid);
             if (index < 0 || index == aids.Count - 1) return null;
             return aids[index + 1];
+        }
+    }
+
+    /// <summary>
+    /// 播放队列的行身份。稍后再看会把"已失效视频"剔出队列,源列表里的下标和队列里的下标对不上,
+    /// 所以点击时只能按 aid 重新定位。纯函数,便于在 UWP 之外验证。
+    /// </summary>
+    public static class VideoPlaylistOrder
+    {
+        /// <summary>
+        /// 队列里 ID 等于 aid 的行号;aid 无效或队列里没有这一行时返回 -1
+        /// </summary>
+        public static int IndexOfItem(IReadOnlyList<string> ids, string aid)
+        {
+            long target;
+            if (ids == null || !TryParseId(aid, out target)) return -1;
+
+            for (var i = 0; i < ids.Count; i++)
+            {
+                long id;
+                if (!TryParseId(ids[i], out id)) continue;
+                if (id == target) return i;
+            }
+            return -1;
+        }
+
+        /// <summary>
+        /// aid 是字符串协议字段,按数字比较,前后空格和 "0012" 这种写法都不该算成另一行
+        /// </summary>
+        private static bool TryParseId(string text, out long id)
+        {
+            return long.TryParse((text ?? "").Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out id) && id > 0;
         }
     }
 }

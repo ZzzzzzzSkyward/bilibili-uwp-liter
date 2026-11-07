@@ -1,67 +1,31 @@
 # Review log — cached reviewer outcomes
 
-Each row is a reviewer commit on `origin/work`, what it found, and what happened. Read this before
+Each row is a reviewer commit on `origin/dev`, what it found, and what happened. Read this before
 re-opening an area: it records findings that are already fixed so they are not re-litigated, and
-findings that were deliberately not fixed so they are not silently dropped.
+findings that were deliberately not fixed so they are not silently dropped. Rows older than the ones
+below were removed on purpose — they are all fixed and `git log` has them.
 
 | Review commit | Reviewed head | Finding | Disposition |
 | --- | --- | --- | --- |
-| `22f3a63` | `f84ab1b` | Retry counter counted successes; `/confirm/refresh` never sent; `cookie_timestamp` zeroed before refresh | All three fixed — the first two in the API-01 work, the residual (counter reset + timestamp lifetime) in `7f167d2`. Probe `plan/tests/api02`. |
-| `d68fe0a` | `d4c6345` | (1) Draw/photo posts sent the dynamic id as the comment oid; (2) a single unreachable gRPC detail card suppressed the REST fallback | Both fixed in `6ae1981`: `GetCommentId` gained the `Draw` case, and the detail branch requires `display.Type != Other` before publishing. Probe `plan/tests/g3`. |
-| `96c26cd` | `6ae1981` | `DynSpaceReq` did not send `local_time`, so space responses used a UTC day boundary while the other dynamic requests send 8 | Fixed in `4fca416`; `plan/tests/g4` now pins all three `local_time` assignments. Review explicitly confirmed both earlier detail findings as addressed and found nothing in D2/G5 wiring. |
-| `bf03273` | `96de3fc` | After a gRPC repost page, switching to REST appended REST page 1 to the already-loaded gRPC rows, duplicating entries; a later gRPC page mapping to zero cards took the same path | Fixed in `9fb3d16` by replacing the list with the first REST page on the switch, as the reviewer preferred over per-id deduplication. Probe `plan/tests/g5`. |
-| `465aa55` | `1dcf688` | Closing the detail tab while an automatic next-page request was pending resumed `AdvancePlaylistAsync`, selected a row and called `InitializeVideo` on a disposed page (`dispRequest` was null) | Fixed in `18f71dc` + `db1b348`: `_isClosed` latch set first in `ClosePage()`, reset on navigation entry (the page is `NavigationCacheMode.Enabled`), and checked after every playlist/detail await. Probe `plan/tests/stab`. |
-| `df790a4` | `5e36ec2` | `BiliLite.UWP.csproj` compiled `Services\DynamicApiSelector.cs`, which was absent from that tree — the entry landed in the danmaku commit, the file one commit later | Resolved by `797dc3a`: tree `HEAD` contains both the file and the entry. No code change needed. |
-| `3b95659` | `3665bdb` | Eight async helpers took `out` parameters (CS1988), so the UWP tree could not compile | Fixed in `058c899` with `DynamicApiSourceResult`; scan shows no `async` method with `out` left in the tree. |
-| `168ee8e` | `765be46` | A failed gRPC append cleared `_historyOffset`/`_updateBaseline`, so the footer retry sent `null` into protobuf string properties and that page could never recover | Fixed in `261317f`: `ClearGrpcCursorOnRestart` keeps the last good cursor for appends and clears only on a page-1 restart or a row-replacing source switch. `plan/tests/g4` now executes the retry (`offset=hist-1`); verified by reverting the fix and watching the assertion fail. |
-| `7dbdcbe` | `15af573` | (1) `OnHolding` returned early when the player was no longer `Playing`, so a hold released after playback ended never closed the held 3x overlay; (2) `sync-work.ps1` could report success after three rejected pushes because the third round left the loop after a rebase without pushing | (1) `14995ab`: the `Playing` check now gates only `Started`; `Completed`/`Canceled` always clear the hold and close the overlay, and `Player_PlayMediaEnded`/`SetPlayItem` release it too. (2) the script tracks `$pushed`, reports "本地提交仍未发布" and exits 1 when no round succeeded. |
-| `df790a4` (same review) | `5e36ec2` | Confirmed resolved: playlist continuation guards; nothing else found in the loaded-danmaku list | No action. |
+| `ac6867c` | `33debce` | Text reservation posts rendered the reservation twice: `DynamicCardProjection.Apply` projects `additional.reserve` into `Attachments` before `ParseOneRowInfo2024` promotes a text card to `DynamicDisplayType.Reserve`, so the standalone template and the shared attachment panel both draw the same panel | Fixed in `95934db`: `DynamicCardProjection.ApplyAttachmentOwnership` runs immediately after the parse and drops only the `Reserve` summary when the type is `Reserve`; vote/link/unsupported stay and photo posts keep their panel. `g5` 316 → 332, with the conversion anchor failing when the call is removed |
+| `dae62b7` | `284a714` | Local playback lost its episode picker: `35f6905` deleted the shared list population and `EpisodeList`/`BottomBtnList`, but `LocalPlayerPage` (the download/local-collection caller) never subscribed `DirectoryRequested`/`DirectoryRowRequested` and never reported `UpdateDirectoryInfo`, so its directory button stayed collapsed | Fixed in `9c8920f`: the page builds `PlayDirectoryBuilder.FromParts` rows from its supplied `PlayInfos`, reports availability above one item, opens/refreshes the drawer, switches Parts rows through `ChangePlayIndex(index, PlayTargetStart.Resume)` and refreshes from `ChangeEpisodeEvent`; `plan/tests/localdir` 50 assertions, 28 of 32 page anchors red on the pre-change body |
+| `924d1ab` | `4db379c` | `ResumeInterruptedAdvanceAsync` replays a saved step against the *current* continuation source, so switching source between the failure and the retry advances the wrong list | Fixed in `d0d6bd9` (`bug_report.md` BR-32): the record pins its row key, `DecideResume` drops it when identity/source/key changed, and a source switch invalidates it at the switch on the same generation that rejects page responses. `plan/tests/uxfix` executes the 9-cell table and the reviewer's scenario. |
+| `4bc8cb9` | `d905726` | The widened `自动连播` label promised automatic continuation while the outer source still advanced regardless of `AUTO_NEXT` | Fixed in `1dd359c`: `PlayContinuationPolicy.AdvanceAllowed(manual, AUTO_NEXT)` gates the automatic path, manual next/previous stay ungated, `plan/tests/ux1c` pins both. |
+| `edfd08c`, `08f64dd`, `78f8950`, `7cb4ba6` | — | Empty review markers (no findings) | No action. |
+| `b7fb5bc` | `0839615` | No findings: the pass emptied `code_review.md` (106 lines) and touched nothing else — no code, no `bug_report.md` entry, no probe | No action. The four P4-season findings and the BR-44/BR-45 dispositions it read were closed in `0839615`; that commit's `code_review.md` is the evidence now that the working file is empty. |
+| `37a39f4` | `2fdcb8a` | Reloading multiple evicted pages reverses their order: `DynamicFeedWindow` handed out `_evicted[0]` for peek and take while every reloaded page is inserted at the front, so two 重新加载 clicks produced `[2, 1, 3, …]` | Fixed in `4fb7cf4`: peek and take consume the end of the list (the page adjacent to the window), so reloads restore 1,2,3,… in order and a failed request still keeps its checkpoint. `g3` 342 → 351; putting `_evicted[0]` back fails the "page next to the window" assertion. The same review's BR-21 note is not a finding — it restates that evicted card models are dropped and repost depth is bounded, which is what `65fd423` does |
+| `89ece7a` | `456d920` | Player session guard ordering: `PlayVideoUseSYEngine` (both branches) and three other native paths wrote the shared `_playerVideo` before checking the ticket, so a superseded open could still replace the selected video's source | Fixed in `340a031`: the player and its source stay in locals, the ticket is checked after every await and before any shared assignment, publishing waits for `Accept()`, and an abandoned player is released exactly once by the session. `plan/tests/playersess` (69 -> 95 checks) adds the reviewer's resume-after-replacement scenario plus order checks that fail 4 ways against the previous body. |
+| `ad1bb39` | `094cdb0` | Empty review marker (no findings) | No action. |
+| `8d496eb` | `09ee480` | The live-room parse guards still dereferenced null in their error branches (`data.message` on a failed model), and the ordinary legacy unsupported card had no `WebCommand`, so it had no web escape | Fixed in `2276f28`; `g5` pins both, BR-53 keeps its open status until the device log names the failing step. |
 
 ## Standing review notes
 
-- Reviews are static source inspection only: no build, no launch, no API call. A finding marked here
+- **The external reviewer is off duty as of 2026-11-01**; no further review commits are expected unless
+  the maintainer asks for one. Rows above stay as the record of what was already found and fixed. A pass
+  did land afterwards on its own — `b7fb5bc`, no findings — so the note describes the schedule, not a promise.
+- Reviews were static source inspection only: no build, no launch, no API call. A finding marked here
   as fixed means "fixed in source", not "verified on device".
-- The reviewer re-reads earlier findings every round, so a row stays useful for a long time.
-- New findings become plan entries: append a row here when a review is acted on, and add the
-  corresponding item to `plan/PLAN.md` when the finding is deliberately deferred.
-- Known reviewer-blind spots (state them when a batch relies on them): UWP XAML/visual layout,
-  server behaviour, timing under a real device, and anything that needs an account.
-
-## Probe maintenance (2026-10-30, after API-SMART-01)
-
-The selector batches rewrote internals that several probes pinned as source text, so the suite was
-reconciled: `g3` 34, `g5` 44 (was 65), `smart1` 160, everything else unchanged, all green.
-`g4` has since grown to 75 by executing the BR-16 quiet-failure contract (`LoadMoreFailureStaysQuiet`) and
-the append-retry cursor contract (`AppendFailureKeepsTheGrpcCursor`).
-
-- `g3`/`g4`/`g5` now compile the selector sources with a probe-local in-memory store and stub
-  `SettingHelper`/`ApiHelper`/`HttpResults.code`, because the home VM references them.
-- Retired assertions that pinned removed internals (`useRestFallback`, `replaceListOnRestPage`,
-  `spaceRestMode` and the `stage=rest-fallback` log line). The behaviour they guarded is now covered
-  by executed assertions (REST called once, rows published/replaced, cursor not taken from the
-  response offset) plus the selector probe.
-- Kept: every executed assertion over real product code, plus the csproj compile checks.
-
-The lesson: source-text assertions survive refactors badly. Prefer executed assertions over real
-product types, and text checks only for wiring that cannot run outside UWP.
-
-## 2026-10-31 — diagnostic bundle + REST parser extraction
-
-Two review rounds, four findings, all fixed in the same day:
-
-- **Replacing an existing zip left the old tail** (`SettingPage.xaml.cs`): the destination was opened
-  `ReadWrite` without truncation, so a smaller new archive kept the previous central directory. Fixed
-  by `stream.Size = 0; stream.Seek(0);` before creating the `ZipArchive`; `cap` asserts the order
-  (truncate before create) because the write itself only runs in UWP.
-- **An unpacked bundle could not be imported** (`tools/import-capture.ps1`): only the zip path
-  selected `api/`. Both inputs now go through `Select-CaptureDir`; verified by running the tool on an
-  unpacked bundle directory.
-- **A card-deserialization failure could not update the selector** (`Modules/User/DynamicVM.cs`,
-  `Modules/Home/DynamicVM.cs`, `Modules/User/DynamicRepostVM.cs`): the legs recorded `Success` before
-  `TryDeserialize`, and the selector ignores a second record for the same attempt, so a legacy source
-  that only produced unreadable cards still learned "success". Fixed by deserializing first and
-  recording exactly one outcome; `g4` asserts the single record is `MalformedResponse` (it fails on
-  the old ordering, proven by temporarily reverting the home leg).
-
-The lesson: when a helper decides an attempt's verdict, the call that *uses* the payload must sit
-inside the verdict, not after it.
+- The reviewer re-reads earlier findings every round, so an open row must stay accurate; close it in
+  the same commit that fixes it.
+- Known reviewer-blind spots (state them when a batch relies on them): UWP XAML/visual layout, server
+  behaviour, timing on a real device, and anything that needs an account.

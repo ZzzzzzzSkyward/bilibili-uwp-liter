@@ -49,7 +49,11 @@ namespace BiliLite
         private void Content_PointerPressed(object sender, PointerRoutedEventArgs e)
         {
             var par = e.GetCurrentPoint(sender as Frame).Properties.PointerUpdateKind;
-            if (SettingHelper.GetValue<bool>(SettingHelper.UI.MOUSE_BACK, true) && par == Windows.UI.Input.PointerUpdateKind.XButton1Pressed || par == Windows.UI.Input.PointerUpdateKind.MiddleButtonPressed)
+            var handle = MouseBackPolicy.ShouldHandle(
+                SettingHelper.GetValue<bool>(SettingHelper.UI.MOUSE_BACK, true),
+                par == Windows.UI.Input.PointerUpdateKind.XButton1Pressed,
+                par == Windows.UI.Input.PointerUpdateKind.MiddleButtonPressed);
+            if (handle)
             {
                 //如果打开了图片浏览，则关闭图片浏览
                 if (gridViewer.Visibility == Visibility.Visible)

@@ -561,12 +561,29 @@ namespace BiliLite.Modules
             }
         }
         /// <summary>
+        /// GetData 解析失败时返回 null，直接读 data.success 会变成一句看不出位置的空引用。
+        /// 统一在这里挡一次，并把步骤名写进日志。
+        /// </summary>
+        private static bool HasParsedData<T>(ApiDataModel<T> data, string step)
+        {
+            if (data != null)
+            {
+                return true;
+            }
+            LogHelper.Log("直播接口返回的数据解析失败 step=" + step, LogType.ERROR);
+            return false;
+        }
+
+        /// <summary>
         /// 读取直播间详细信息
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
         public async Task LoadLiveRoomDetail(string id)
         {
+            // 每一步都记一个阶段名：这条路径上只要有一处空引用，日志能直接指到是哪一步，
+            // 而不是只留一句 "Object reference not set"。声明在 try 外，catch 才看得到。
+            var stage = "info";
             try
             {
                 if (cancelSource != null)
@@ -590,8 +607,22 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<LiveInfoModel>();
+                    if (data == null)
+                    {
+                        // GetData 在解析失败时返回 null（原因已由 HttpHelper 记在日志里），
+                        // 以前这里直接读 data.success，整条路径变成一个看不出位置的空引用
+                        LogHelper.Log("直播间信息解析失败 room=" + id + " endpoint=xlive/app-room/v1/index/getInfoByRoom", LogType.ERROR);
+                        Utils.ShowMessageToast("直播间信息解析失败，请导出诊断包反馈");
+                        return;
+                    }
                     if (data.success)
                     {
+                        if (data.data?.room_info == null)
+                        {
+                            LogHelper.Log("直播间信息缺少 room_info room=" + id, LogType.ERROR);
+                            Utils.ShowMessageToast("直播间信息不完整，请导出诊断包反馈");
+                            return;
+                        }
                         RoomID = data.data.room_info.room_id;
                         Online = data.data.room_info.online;
                         Liveing = data.data.room_info.live_status == 1;
@@ -607,26 +638,36 @@ namespace BiliLite.Modules
                         }
 
 
+                        stage = "anchor";
                         await LoadAnchorProfile();
                         if (Liveing)
                         {
+                            stage = "playurl";
                             timer.Start();
                             await GetPlayUrl(RoomID, SettingHelper.GetValue(SettingHelper.Live.DEFAULT_QUALITY,10000));
                             //GetFreeSilverTime(); 
+                            stage = "superchat";
                             await LoadSuperChat();
                             if (ReceiveLotteryMsg)
                             {
-                                anchorLotteryVM.LoadLotteryInfo(RoomID);
+                                stage = "lottery";
+                                anchorLotteryVM?.LoadLotteryInfo(RoomID);
                             }
                         }
+                        stage = "gifts";
                         await GetRoomGiftList();
+                        stage = "bag";
                         await LoadBag();
+                        stage = "wallet";
                         await LoadWalletInfo();
                         if (Titles == null)
                         {
+                            stage = "titles";
                             await GetTitles();
                         }
+                        stage = "entry";
                         EntryRoom();
+                        stage = "connect";
                         ReceiveMessage(data.data.room_info.room_id);
                     }
                     else
@@ -641,6 +682,7 @@ namespace BiliLite.Modules
             }
             catch (Exception ex)
             {
+                LogHelper.Log("直播详情加载失败 stage=" + stage + " room=" + id, LogType.ERROR, ex);
                 var result = HandelError<object>(ex);
                 Utils.ShowMessageToast(ex.Message);
             }
@@ -695,10 +737,14 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<JObject>();
+                    if (!HasParsedData(data, "superchat"))
+                    {
+                        return;
+                    }
                     if (data.success)
                     {
                         SuperChats.Clear();
-                        var ls = JsonConvert.DeserializeObject<List<LiveRoomSuperChatModel>>(data.data["list"]?.ToString()??"[]");
+                        var ls = JsonConvert.DeserializeObject<List<LiveRoomSuperChatModel>>(data.data?["list"]?.ToString() ?? "[]");
                         foreach (var item in ls)
                         {
                             SuperChats.Add(new SuperChatMsgModel() { 
@@ -767,6 +813,10 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<LiveWalletInfo>();
+                    if (!HasParsedData(data, "wallet"))
+                    {
+                        return;
+                    }
                     if (data.success)
                     {
                         WalletInfo = data.data;
@@ -803,14 +853,22 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<JObject>();
+                    if (!HasParsedData(data, "bag-gifts"))
+                    {
+                        return;
+                    }
                     if (data.success)
                     {
-                        var list = JsonConvert.DeserializeObject<List<LiveGiftItem>>(data.data["list"].ToString());
+                        var list = JsonConvert.DeserializeObject<List<LiveGiftItem>>(data.data?["list"]?.ToString() ?? "[]");
 
                         var bag_result = await liveRoomAPI.BagList(RoomID).Request();
                         if (bag_result.status)
                         {
                             var bag_data = await bag_result.GetData<JObject>();
+                            if (!HasParsedData(bag_data, "bag-list"))
+                            {
+                                return;
+                            }
                             if (bag_data.success)
                             {
                                 BagGifts.Clear();
@@ -819,6 +877,11 @@ namespace BiliLite.Modules
                                 foreach (var item in ls)
                                 {
                                     var _gift = list.FirstOrDefault(x => x.id == item.gift_id);
+                                    if (_gift == null)
+                                    {
+                                        // 背包里可能留着一个当前房间礼物配置里没有的礼物：跳过它，不让整包读取失败
+                                        continue;
+                                    }
                                     var gift = _gift.ObjectClone();
                                     gift.gift_num = item.gift_num;
                                     gift.corner_mark = item.corner_mark;
@@ -858,6 +921,10 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<LiveAnchorProfile>();
+                    if (!HasParsedData(data, "anchor"))
+                    {
+                        return;
+                    }
                     if (data.success)
                     {
                         Profile = data.data;
@@ -891,15 +958,23 @@ namespace BiliLite.Modules
                 if (result.status)
                 {
                     var data = await result.GetData<JObject>();
+                    if (!HasParsedData(data, "gift-config"))
+                    {
+                        return;
+                    }
                     if (data.success)
                     {
-                        var list = JsonConvert.DeserializeObject<List<LiveGiftItem>>(data.data["list"].ToString());
+                        var list = JsonConvert.DeserializeObject<List<LiveGiftItem>>(data.data?["list"]?.ToString() ?? "[]");
                         if (_allGifts == null || _allGifts.Count == 0) { _allGifts = list; }
 
                         var result_room = await liveRoomAPI.RoomGifts(LiveInfo.room_info.area_id, LiveInfo.room_info.parent_area_id, RoomID).Request();
                         if (result_room.status)
                         {
                             var data_room = await result_room.GetData<JObject>();
+                            if (!HasParsedData(data_room, "gift-room") || data_room.data?["list"] == null)
+                            {
+                                return;
+                            }
                             var list_room = JsonConvert.DeserializeObject<List<LiveRoomGiftItem>>(data_room.data["list"].ToString());
                             List<LiveGiftItem> ls = new List<LiveGiftItem>() {
                                list.FirstOrDefault(x=>x.id==1)

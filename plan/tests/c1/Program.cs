@@ -1,6 +1,9 @@
 using System;
 using System.IO;
+using BiliLite.Helpers;
 using BiliLite.Modules;
+using BiliLite.Parsing;
+using BiliLite.Parsing.Video;
 using Newtonsoft.Json;
 
 namespace C1Probe
@@ -27,6 +30,18 @@ namespace C1Probe
             DetailWithoutCollectionHasNoCollection();
             SingleSectionAndEpisode();
             EmptySectionsHideTheCollection();
+            NullRelatesDoesNotThrow();
+            WebViewParsesIntoTheWireShape();
+            WebViewShapeMistakesArePayloadFailures();
+            MapperSynthesisesShortLinkAndDefaults();
+            AppViewKeepsOwnerExtAndIgnoresWireReqUser();
+            RelatesFailureKeepsThePage();
+            RejectedAndNonJsonBodiesAreSilent();
+            TagsRelationAndStatesParseTheirScalars();
+            ActionsReportWhatTheServerSaid();
+            FavoriteCreatedListParsesWithoutReindexingJson();
+            ParsersDoNotReachTheUi();
+            ViewModelWiringDecidesOnParseResults();
             PageReadsTheCollectionFromTheDetailResponse();
             PageShowsTheCollection();
 
@@ -149,8 +164,8 @@ namespace C1Probe
             Check(page.Contains("FirstOrDefault(x => x.Aid == ugcSeasonAid"), "source: the entry matching that aid is selected");
             Check(page.Contains("if (!pivot.Items.Contains(ugcSeasonPivotItem))"),
                 "source: refreshes reuse the existing collection tab instead of adding another");
-            Check(page.Contains("await InitializeVideo(item.Aid);"),
-                "source: clicking an episode plays it through InitializeVideo(aid)");
+            Check(page.Contains("await InitializeVideo(item.Aid, PlayTargetStart.Resume);"),
+                "source: clicking an episode plays it through InitializeVideo with the user's resume");
             Check(page.Contains("if (item == null || item.Aid == ugcSeasonAid) return;"),
                 "source: programmatic selection of the current video does not reload it");
             Check(page.Contains("new TextBlock() { Text = \"合集\", FontSize = 18 }"), "source: the collection is its own pivot tab");
@@ -165,9 +180,342 @@ namespace C1Probe
             Check(xaml.Contains("x:Key=\"UgcSeasonEpisodeTpl\""), "source: the episode row template exists");
             var template = xaml.Substring(xaml.IndexOf("x:Key=\"UgcSeasonEpisodeTpl\"", StringComparison.Ordinal));
             template = template.Substring(0, template.IndexOf("</DataTemplate>", StringComparison.Ordinal));
-            Check(template.Contains("{Binding Cover}") && template.Contains("{Binding Title}")
+            Check(template.Contains("{Binding Cover, Converter={StaticResource imageConvert2}") && template.Contains("{Binding Title}")
                 && template.Contains("{Binding Author}") && template.Contains("{Binding Duration}"),
-                "source: the row shows cover, title, author and duration like the playlist template");
+                "source: the row shows a converted cover, title, author and duration like the playlist template");
+        }
+
+        /// <summary>
+        /// The trap this migration had to fix: VideoDetailModel.relates used to dereference value
+        /// without a null check, so a wire "relates": null threw inside deserialization and the old
+        /// VM folded that into a null page. Run against the pre-change source this method fails on
+        /// its first check.
+        /// </summary>
+        private static void NullRelatesDoesNotThrow()
+        {
+            VideoDetailModel detail = null;
+            try
+            {
+                detail = JsonConvert.DeserializeObject<VideoDetailModel>(RelatesNullDetailJson);
+            }
+            catch (Exception ex)
+            {
+                Check(false, "a wire relates: null no longer throws inside deserialization (" + ex.GetType().Name + ")");
+            }
+
+            Check(detail != null, "a wire relates: null still decodes the detail model");
+            Check(detail.relates == null, "a wire relates: null leaves no related list instead of throwing");
+            Check(detail.bvid == "BV1GJ411x7h7" && detail.title == "只有一条推荐为 null 的详情",
+                "the rest of the model survives relates: null");
+
+            //同一条响应走解析+映射:视图里的 relates 不属于这个端点,由相关视频那条读合并
+            var parsed = WebVideoViewParser.ParseWebVideoView(Ok(RelatesNullEnvelopeJson));
+            Check(parsed.IsSuccess, "a view body that carries relates: null still parses");
+            var page = WebVideoViewMapper.MapWebVideoView(parsed.Value);
+            Check(page != null, "a view body that carries relates: null still maps to a page");
+            page.relates = WebVideoViewMapper.MapWebVideoRelates(null);
+            Check(page.relates != null && page.relates.Count == 0,
+                "a failed related read leaves an empty list, not a null page");
+        }
+
+        private static void WebViewParsesIntoTheWireShape()
+        {
+            var parsed = WebVideoViewParser.ParseWebVideoView(Ok(ViewEnvelopeJson));
+
+            Check(parsed.IsSuccess, "web view: a code-0 envelope parses");
+            Check(parsed.Value.Bvid == "BV1iv4y1M7iu", "web view: bvid is kept");
+            Check(parsed.Value.Aid == "555272312", "web view: aid stays a string");
+            Check(parsed.Value.Stat != null && parsed.Value.Stat.Aid == "555272312",
+                "web view: stat.aid stays a string");
+            Check(parsed.Value.Owner != null && parsed.Value.Owner.Mid == "2267573",
+                "web view: owner.mid stays a string");
+            Check(parsed.Value.Pages != null && parsed.Value.Pages.Count == 2, "web view: both parts are kept");
+            Check(parsed.Value.Pages[1].Cid == "756877510" && parsed.Value.Pages[1].Page == "2",
+                "web view: each part keeps cid as a string and its page number");
+            Check(parsed.Value.Staff == null, "web view: a body without staff leaves staff null");
+            Check(parsed.Value.OwnerExt == null, "web view: the web endpoint carries no owner_ext");
+            Check(parsed.Value.UgcSeason != null && parsed.Value.UgcSeason.Title == "DIY 的 VLOG",
+                "web view: ugc_season is kept");
+            Check(parsed.Value.UgcSeason.Sections[0].Episodes[0].Aid == "555272312",
+                "web view: a collection episode keeps its aid as a string");
+        }
+
+        private static void WebViewShapeMistakesArePayloadFailures()
+        {
+            CheckPayloadFailure(WebVideoViewParser.ParseWebVideoView(Ok(BadPagesEnvelopeJson)), "data.pages");
+            CheckPayloadFailure(WebVideoViewParser.ParseWebVideoView(Ok(BadStaffEnvelopeJson)), "data.staff");
+            CheckPayloadFailure(WebVideoViewParser.ParseWebVideoView(Ok(BadSeasonEnvelopeJson)), "data.ugc_season");
+            CheckPayloadFailure(WebVideoViewParser.ParseWebVideoView(Ok(BadSectionsEnvelopeJson)),
+                "data.ugc_season.sections");
+        }
+
+        private static void MapperSynthesisesShortLinkAndDefaults()
+        {
+            var detail = WebVideoViewMapper.MapWebVideoView(
+                WebVideoViewParser.ParseWebVideoView(Ok(ViewEnvelopeJson)).Value);
+
+            Check(detail.short_link == "https://b23.tv/BV1iv4y1M7iu", "mapper: short_link is synthesised from bvid");
+            Check(detail.req_user != null, "mapper: req_user is never null");
+            Check(detail.req_user.attention == 0 && detail.req_user.like == 0 && detail.req_user.coin == 0
+                && detail.req_user.favorite == 0,
+                "mapper: wire req_user values are not copied (it is local UI state)");
+            Check(detail.owner_ext != null && detail.owner_ext.fans == 0 && !detail.owner_ext.HasFans,
+                "mapper: a missing owner_ext becomes an all-default owner (fans label hides)");
+            Check(detail.pages != null && detail.pages.Count == 2, "mapper: pages are carried over");
+            Check(detail.aid == "555272312" && detail.stat.aid == "555272312" && detail.owner.mid == "2267573",
+                "mapper: every id stays a string");
+            Check(detail.stat != null && detail.stat.like == 6 && detail.stat.favorite == 3,
+                "mapper: stat counters are carried over");
+            Check(detail.rights != null && detail.rights.elec == 1, "mapper: rights are carried over");
+            Check(detail.UgcSeason != null && detail.showUgcSeason, "mapper: ugc_season keeps the collection shown");
+            Check(detail.tag == null && detail.relates == null,
+                "mapper: tags and relates stay with their own reads");
+        }
+
+        private static void AppViewKeepsOwnerExtAndIgnoresWireReqUser()
+        {
+            var detail = WebVideoViewMapper.MapWebVideoView(
+                WebVideoViewParser.ParseWebVideoView(Ok(AppViewEnvelopeJson)).Value);
+
+            Check(detail.aid == "80433022", "app view: aid stays a string");
+            Check(detail.owner_ext.fans == 4321 && detail.owner_ext.HasFans, "app view: owner_ext.fans is kept");
+            Check(detail.owner_ext.vip != null && detail.owner_ext.vip.vipType == 1,
+                "app view: owner_ext.vip is carried over");
+            Check(detail.owner_ext.official_verify != null && detail.owner_ext.official_verify.desc == "个人认证",
+                "app view: owner_ext.official_verify is carried over");
+            Check(detail.staff != null && detail.staff.Count == 1 && detail.showStaff,
+                "app view: staff is kept and shows");
+            Check(detail.staff[0].mid == "11002" && detail.staff[0].title == "编剧" && detail.staff[0].attention == 2,
+                "app view: each staff member keeps its string mid, role and attention");
+            Check(detail.interaction != null && detail.interaction.graph_version == 77
+                && detail.interaction.history_node.cid == 900,
+                "app view: the interaction graph and its history node are carried over");
+            Check(detail.history != null && detail.history.cid == "756877509" && detail.history.progress == 120,
+                "app view: the resume position keeps its string cid");
+            Check(detail.argue_msg == "有争议" && detail.showArgueMsg, "app view: argue_msg is kept");
+            Check(detail.share_subtitle == "分享副标题", "app view: share_subtitle is kept");
+            Check(detail.pages != null && detail.pages.Count == 0 && !detail.showPages,
+                "app view: an empty pages array becomes an empty list, not null");
+            Check(detail.req_user.attention == 0 && detail.req_user.like == 0,
+                "app view: the wire req_user is ignored here too");
+        }
+
+        private static void RelatesFailureKeepsThePage()
+        {
+            var parsed = WebVideoRelatesParser.ParseWebVideoRelates(Ok(RelatesEnvelopeJson));
+            Check(parsed.IsSuccess && parsed.Value.Count == 3, "related: every row is parsed");
+
+            var related = WebVideoViewMapper.MapWebVideoRelates(parsed.Value);
+            Check(related[0].aid == "111" && related[0].owner.mid == "1" && related[0].stat.view == 10,
+                "related: ids stay strings and owner/stat are carried over");
+
+            var page = WebVideoViewMapper.MapWebVideoView(
+                WebVideoViewParser.ParseWebVideoView(Ok(ViewEnvelopeJson)).Value);
+            page.relates = related;
+            Check(page.relates.Count == 2 && page.relates[1].aid == "222",
+                "related: the model still drops rows without an aid");
+
+            CheckPayloadFailure(WebVideoRelatesParser.ParseWebVideoRelates(Ok(RelatesNullDocumentEnvelopeJson)), "data");
+            CheckPayloadFailure(WebVideoRelatesParser.ParseWebVideoRelates(Ok(RelatesObjectEnvelopeJson)), "data");
+            Check(WebVideoViewMapper.MapWebVideoRelates(null) != null,
+                "related: a null list still maps to an empty list");
+        }
+
+        private static void RejectedAndNonJsonBodiesAreSilent()
+        {
+            var rejected = WebVideoViewParser.ParseWebVideoView(Ok(RejectedEnvelopeJson));
+            Check(!rejected.IsSuccess && rejected.Failure == ApiParseFailure.Rejected,
+                "rejected: a non-zero code is a Rejected envelope");
+            Check(rejected.BusinessCode == -404 && rejected.Stage == "envelope.code",
+                "rejected: the business code and stage are reported");
+            Check(VideoFailureText.For(rejected) == "啥都木有",
+                "rejected: the server's own message is what the user is shown");
+
+            var nonJson = WebVideoViewParser.ParseWebVideoView(Ok(NonJsonBody));
+            Check(!nonJson.IsSuccess && nonJson.Failure == ApiParseFailure.Envelope
+                && nonJson.Stage == "envelope.json",
+                "non-json: a body that is not JSON is an envelope failure, not an exception");
+
+            var noResponse = WebVideoViewParser.ParseWebVideoView(null);
+            Check(!noResponse.IsSuccess && noResponse.Failure == ApiParseFailure.Transport,
+                "transport: a missing response is a transport failure");
+            Check(VideoFailureText.For(noResponse) == VideoFailureText.TransportText,
+                "transport: the user is told to check the connection, not shown the diagnostic");
+
+            var httpFail = WebVideoViewParser.ParseWebVideoView(HttpFail("HTTP 404"));
+            Check(httpFail.Failure == ApiParseFailure.Transport && VideoFailureText.For(httpFail) == "HTTP 404",
+                "transport: the transport message itself is shown when it is a sentence");
+
+            var tagsNonJson = WebVideoTagsParser.ParseWebVideoTags(Ok(NonJsonBody));
+            Check(!tagsNonJson.IsSuccess && tagsNonJson.Failure == ApiParseFailure.Envelope,
+                "non-json: the tag read fails the same silent way");
+        }
+
+        private static void TagsRelationAndStatesParseTheirScalars()
+        {
+            var tags = WebVideoTagsParser.ParseWebVideoTags(Ok(TagsEnvelopeJson));
+            Check(tags.IsSuccess && tags.Value.Count == 2, "tags: the array is parsed");
+            Check(tags.Value[0].TagId == 123 && tags.Value[0].TagName == "VLOG", "tags: tag_id and tag_name are kept");
+            CheckPayloadFailure(WebVideoTagsParser.ParseWebVideoTags(Ok(TagsNullEnvelopeJson)), "data");
+
+            var stat = WebRelationParser.ParseWebRelationStat(Ok(RelationStatEnvelopeJson));
+            Check(stat.IsSuccess && stat.Value == 98765, "relation stat: data.follower is read");
+            var statMissing = WebRelationParser.ParseWebRelationStat(Ok(RelationStatMissingEnvelopeJson));
+            Check(statMissing.IsSuccess && statMissing.Value == 0,
+                "relation stat: a missing follower count is 0, not a failure");
+            CheckPayloadFailure(WebRelationParser.ParseWebRelationStat(Ok(RelationStatBadEnvelopeJson)),
+                "data.follower");
+
+            var attribute = WebRelationParser.ParseWebRelationAttribute(Ok(RelationAttributeEnvelopeJson));
+            Check(attribute.IsSuccess && attribute.Value == 6, "relation: data.attribute is read");
+            CheckPayloadFailure(WebRelationParser.ParseWebRelationAttribute(Ok(RelationAttributeMissingEnvelopeJson)),
+                "data.attribute");
+
+            var like = WebVideoStateParser.ParseWebVideoStateLike(Ok(LikeEnvelopeJson));
+            Check(like.IsSuccess && like.Value == 1, "state like: a scalar 1 is read");
+            var notLiked = WebVideoStateParser.ParseWebVideoStateLike(Ok(LikeZeroEnvelopeJson));
+            Check(notLiked.IsSuccess && notLiked.Value == 0, "state like: a scalar 0 is read");
+            CheckPayloadFailure(WebVideoStateParser.ParseWebVideoStateLike(Ok(LikeNullEnvelopeJson)), "data");
+            CheckPayloadFailure(WebVideoStateParser.ParseWebVideoStateLike(Ok(LikeObjectEnvelopeJson)), "data");
+
+            var coin = WebVideoStateParser.ParseWebVideoStateCoin(Ok(CoinEnvelopeJson));
+            Check(coin.IsSuccess && coin.Value == 2, "state coin: data.multiply is read");
+            Check(!WebVideoStateParser.ParseWebVideoStateCoin(Ok(CoinNullEnvelopeJson)).IsSuccess,
+                "state coin: a null data is an envelope failure");
+
+            var favoured = WebVideoStateParser.ParseWebVideoStateFavoured(Ok(FavouredEnvelopeJson));
+            Check(favoured.IsSuccess && favoured.Value, "state favoured: data.favoured is read");
+            CheckPayloadFailure(WebVideoStateParser.ParseWebVideoStateFavoured(Ok(FavouredMissingEnvelopeJson)),
+                "data.favoured");
+        }
+
+        private static void ActionsReportWhatTheServerSaid()
+        {
+            var toast = WebVideoActionParser.ParseWebVideoAction(Ok(ActionToastEnvelopeJson));
+            Check(toast.IsSuccess && toast.Value == "已点赞", "action: data.toast becomes the message");
+
+            //改造前这里是 data.data["toast"],data 为 null 时 NRE 再被 catch 成"操作失败"
+            var noData = WebVideoActionParser.ParseWebVideoAction(Ok(ActionNullDataEnvelopeJson));
+            Check(noData.IsSuccess && noData.Value == "",
+                "action: a successful action with a null data has no message instead of throwing");
+
+            var rejected = WebVideoActionParser.ParseWebVideoAction(Ok(ActionRejectedEnvelopeJson));
+            Check(!rejected.IsSuccess && rejected.Failure == ApiParseFailure.Rejected
+                && rejected.BusinessCode == -101,
+                "action: a rejected action reports its business code");
+            Check(VideoFailureText.For(rejected) == "账号未登录", "action: the rejection message is what the user sees");
+
+            var nonJson = WebVideoActionParser.ParseWebVideoAction(Ok(NonJsonBody));
+            Check(!nonJson.IsSuccess && nonJson.Failure == ApiParseFailure.Envelope,
+                "action: a non-json body is an envelope failure");
+        }
+
+        private static void FavoriteCreatedListParsesWithoutReindexingJson()
+        {
+            var parsed = FavoriteCreatedListParser.ParseFavoriteCreatedList(Ok(FavoriteListEnvelopeJson));
+            Check(parsed.IsSuccess && parsed.Value.List.Count == 2, "favourite list: data.list is parsed");
+
+            var favorites = FavoriteCreatedListMapper.Map(parsed.Value);
+            Check(favorites.Count == 2 && favorites[0].id == "101" && favorites[0].fid == "101",
+                "favourite list: folder ids stay strings");
+            Check(favorites[0].title == "默认收藏夹" && favorites[0].media_count == 3,
+                "favourite list: title and media_count are carried over");
+            Check(favorites[0].fav_state == 1 && favorites[1].fav_state == 0,
+                "favourite list: fav_state tells which folders already hold the video");
+            Check(favorites[1].attr == 2, "favourite list: attr is carried over (privacy is derived from it)");
+
+            var empty = FavoriteCreatedListParser.ParseFavoriteCreatedList(Ok(FavoriteListEmptyEnvelopeJson));
+            Check(empty.IsSuccess && FavoriteCreatedListMapper.Map(empty.Value).Count == 0,
+                "favourite list: a response without list is an empty folder list, not an error");
+            CheckPayloadFailure(FavoriteCreatedListParser.ParseFavoriteCreatedList(Ok(FavoriteListBadEnvelopeJson)),
+                "data.list");
+        }
+
+        /// <summary>解析层不弹提示、不记日志:证据是这一层根本不引用那些入口。</summary>
+        private static void ParsersDoNotReachTheUi()
+        {
+            var folder = Path.Combine(RepoRoot(), "src", "BiliLite.UWP", "Parsing", "Video");
+            var files = Directory.GetFiles(folder, "*.cs");
+            Check(files.Length >= 8, "source: Parsing/Video holds the entry points");
+
+            var offenders = new System.Collections.Generic.List<string>();
+            foreach (var file in files)
+            {
+                var text = File.ReadAllText(file);
+                if (text.Contains("ShowMessageToast") || text.Contains("LogHelper") || text.Contains("Debug.WriteLine")
+                    || text.Contains("Console.WriteLine"))
+                {
+                    offenders.Add(Path.GetFileName(file));
+                }
+            }
+            Check(offenders.Count == 0, "source: no parser toasts or logs (" + string.Join(",", offenders) + ")");
+            Check(Utils.Toasts.Count == 0, "no parser raised a toast while the probe parsed fixtures");
+        }
+
+        private static void ViewModelWiringDecidesOnParseResults()
+        {
+            var vm = ReadSource("src/BiliLite.UWP/Modules/Detail/VideoDetailVM.cs");
+
+            Check(vm.Contains("var parsed = WebVideoViewParser.ParseWebVideoView(webResult);"),
+                "source: the web view source is decided on its parse result");
+            Check(vm.Contains("parsed = WebVideoViewParser.ParseWebVideoView(await videoAPI.Detail(id, isbvid).Request());"),
+                "source: the signed app view is the second source");
+            Check(vm.Contains("parsed = WebVideoViewParser.ParseWebVideoView(await videoAPI.DetailProxy(id, isbvid).Request());"),
+                "source: the proxy is the last source");
+            Check(vm.Contains("第三方代理(biliproxy.iill.moe)") && vm.Contains("只在前两源都解不出来时才会被请求"),
+                "source: the third-party proxy is documented as a last resort");
+            Check(vm.Contains("ErrorMsg = VideoFailureText.For(parsed);"),
+                "source: the error panel text comes from the parse failure category");
+            Check(vm.Contains("detail.relates = WebVideoViewMapper.MapWebVideoRelates(parsedRelates.Value);"),
+                "source: a parsed related read is merged into the page");
+            Check(vm.Contains("detail.relates = new List<VideoDetailRelatesModel>();"),
+                "source: a failed related read still leaves a usable page");
+            Check(vm.Contains("LogParseFailure(\"relates\", parsedRelates);"),
+                "source: a failed related read logs its category");
+            Check(!vm.Contains("data.data.relates = relatesData.data;"), "source: the old relates merge is gone");
+            Check(!vm.Contains("GetJson<ApiDataModel<VideoDetailModel>>"),
+                "source: the detail is no longer decoded straight into the bound model");
+            Check(!vm.Contains("data[\"list\"]"), "source: the favourite list is no longer re-serialised by hand");
+            Check(vm.Contains("FavoriteCreatedListParser.ParseFavoriteCreatedList("),
+                "source: the favourite list goes through its parser");
+            Check(vm.Contains("WebRelationParser.ParseWebRelationAttribute("),
+                "source: the follow state goes through its parser");
+            Check(vm.Contains("WebVideoStateParser.ParseWebVideoStateLike("),
+                "source: the like state goes through its parser");
+            Check(vm.Contains("WebVideoActionParser.ParseWebVideoAction("),
+                "source: every action endpoint goes through one parser");
+            Check(!vm.Contains("value.Where(x => !string.IsNullOrEmpty(x.aid)).ToList();"),
+                "source: the relates setter no longer assumes a non-null argument");
+
+            var mapper = ReadSource("src/BiliLite.UWP/Parsing/Video/WebVideoViewMapper.cs");
+            Check(mapper.Contains("short_link = \"https://b23.tv/\" + (source.Bvid ?? \"\")"),
+                "source: the mapper owns the short_link rule");
+            Check(mapper.Contains("req_user = new VideoDetailReqUserModel(),"),
+                "source: the mapper defaults req_user without copying the wire value");
+            Check(mapper.Contains("if (source == null) return new VideoDetailOwnerExtModel();"),
+                "source: the mapper owns the owner_ext default");
+            Check(vm.Contains("value == null ? null : value.Where"),
+                "source: the model setter tolerates a null relates argument");
+
+            var videoApi = ReadSource("src/BiliLite.UWP/Api/VideoAPI.cs");
+            Check(videoApi.Contains("第三方代理") && videoApi.Contains("biliproxy.iill.moe"),
+                "source: the proxy builder records that it is third-party");
+        }
+
+        private static void CheckPayloadFailure<T>(ApiParseResult<T> result, string stage)
+        {
+            Check(!result.IsSuccess && result.Failure == ApiParseFailure.Payload && result.Stage == stage,
+                "payload: " + stage + " is reported as a shape failure (" + result.Failure + " " + result.Stage + ")");
+        }
+
+        private static HttpResults Ok(string json)
+        {
+            return new HttpResults { status = true, message = "0", results = json };
+        }
+
+        private static HttpResults HttpFail(string message)
+        {
+            return new HttpResults { status = false, message = message, results = "" };
         }
 
         private static VideoDetailModel ParseDetail(string json)
@@ -373,5 +721,177 @@ namespace C1Probe
     ""sections"": []
   }
 }";
+
+        /// <summary>直接按线上形状读模型:relates 为 null 的详情体(改造前在反序列化里 NRE)</summary>
+        private const string RelatesNullDetailJson = @"{
+  ""bvid"": ""BV1GJ411x7h7"",
+  ""aid"": 80433022,
+  ""title"": ""只有一条推荐为 null 的详情"",
+  ""relates"": null,
+  ""pages"": [ { ""cid"": 1, ""page"": 1, ""part"": ""P1"", ""duration"": 10 } ]
+}";
+
+        private const string RelatesNullEnvelopeJson = @"{
+  ""code"": 0,
+  ""message"": ""0"",
+  ""data"": {
+    ""bvid"": ""BV1GJ411x7h7"",
+    ""aid"": 80433022,
+    ""title"": ""视图里带着 relates: null"",
+    ""relates"": null
+  }
+}";
+
+        private const string ViewEnvelopeJson = @"{
+  ""code"": 0,
+  ""message"": ""0"",
+  ""data"": {
+    ""bvid"": ""BV1iv4y1M7iu"",
+    ""aid"": 555272312,
+    ""videos"": 2,
+    ""tid"": 21,
+    ""tname"": ""日常"",
+    ""pic"": ""http://i0.hdslb.com/bfs/archive/top.jpg"",
+    ""title"": ""英国旅游VLOG"",
+    ""pubdate"": 1656292469,
+    ""ctime"": 1656292469,
+    ""desc"": ""详情"",
+    ""state"": 0,
+    ""duration"": 1126,
+    ""rights"": { ""bp"": 0, ""elec"": 1, ""download"": 1, ""movie"": 0, ""pay"": 0 },
+    ""owner"": { ""mid"": 2267573, ""name"": ""DIYgod"", ""face"": ""http://i0.hdslb.com/bfs/face/face.jpg"" },
+    ""stat"": { ""aid"": 555272312, ""view"": 1000, ""danmaku"": 1, ""reply"": 2, ""favorite"": 3, ""coin"": 4, ""share"": 5, ""like"": 6 },
+    ""req_user"": { ""attention"": 1, ""guest_attention"": 1, ""favorite"": 1, ""like"": 1, ""coin"": 1, ""dislike"": 1 },
+    ""pages"": [
+      { ""cid"": 756877509, ""page"": 1, ""part"": ""P1"", ""duration"": 500 },
+      { ""cid"": 756877510, ""page"": 2, ""part"": ""P2"", ""duration"": 626 }
+    ],
+    ""ugc_season"": {
+      ""id"": 514597,
+      ""title"": ""DIY 的 VLOG"",
+      ""intro"": ""记录日常"",
+      ""sections"": [
+        {
+          ""id"": 595012,
+          ""title"": ""正片"",
+          ""type"": 1,
+          ""episodes"": [
+            { ""id"": 7593506, ""aid"": 555272312, ""cid"": 756877509, ""bvid"": ""BV1iv4y1M7iu"", ""title"": ""第一集"" }
+          ]
+        }
+      ]
+    }
+  }
+}";
+
+        private const string AppViewEnvelopeJson = @"{
+  ""code"": 0,
+  ""message"": ""0"",
+  ""data"": {
+    ""bvid"": ""BV1GJ411x7h7"",
+    ""aid"": 80433022,
+    ""title"": ""app 端点"",
+    ""owner"": { ""mid"": 11001, ""name"": ""app UP"" },
+    ""owner_ext"": {
+      ""fans"": 4321,
+      ""vip"": { ""vipType"": 1, ""vipStatus"": 1 },
+      ""official_verify"": { ""type"": 0, ""desc"": ""个人认证"" }
+    },
+    ""stat"": { ""aid"": 80433022, ""view"": 10, ""like"": 2 },
+    ""req_user"": { ""attention"": 1, ""like"": 1, ""coin"": 1, ""favorite"": 1 },
+    ""pages"": [],
+    ""staff"": [ { ""mid"": 11002, ""title"": ""编剧"", ""name"": ""合作者"", ""face"": ""x.jpg"", ""attention"": 2 } ],
+    ""interaction"": { ""graph_version"": 77, ""history_node"": { ""node_id"": 3, ""title"": ""节点"", ""cid"": 900 } },
+    ""history"": { ""cid"": 756877509, ""progress"": 120 },
+    ""argue_msg"": ""有争议"",
+    ""share_subtitle"": ""分享副标题"",
+    ""redirect_url"": """"
+  }
+}";
+
+        private const string RelatesEnvelopeJson = @"{
+  ""code"": 0,
+  ""data"": [
+    { ""aid"": 111, ""pic"": ""a.jpg"", ""title"": ""相关一"", ""owner"": { ""mid"": 1, ""name"": ""UP1"" }, ""stat"": { ""aid"": 111, ""view"": 10 } },
+    { ""aid"": 222, ""title"": ""相关二"" },
+    { ""aid"": """", ""title"": ""没有 aid 的一条"" }
+  ]
+}";
+
+        private const string RelatesNullDocumentEnvelopeJson = @"{ ""code"": 0, ""message"": ""0"", ""data"": null }";
+
+        private const string RelatesObjectEnvelopeJson = @"{ ""code"": 0, ""data"": { ""aid"": 1 } }";
+
+        private const string RejectedEnvelopeJson = @"{ ""code"": -404, ""message"": ""啥都木有"", ""data"": null }";
+
+        private const string NonJsonBody = @"<html><body>502 Bad Gateway</body></html>";
+
+        private const string TagsEnvelopeJson = @"{
+  ""code"": 0,
+  ""data"": [
+    { ""tag_id"": 123, ""tag_name"": ""VLOG"" },
+    { ""tag_id"": 456, ""tag_name"": ""旅行"" }
+  ]
+}";
+
+        private const string TagsNullEnvelopeJson = @"{ ""code"": 0, ""data"": null }";
+
+        private const string RelationStatEnvelopeJson = @"{
+  ""code"": 0,
+  ""data"": { ""mid"": 2267573, ""follower"": 98765, ""following"": 12 }
+}";
+
+        private const string RelationStatMissingEnvelopeJson = @"{ ""code"": 0, ""data"": { ""mid"": 2267573 } }";
+
+        private const string RelationStatBadEnvelopeJson = @"{ ""code"": 0, ""data"": { ""follower"": ""很多"" } }";
+
+        private const string RelationAttributeEnvelopeJson = @"{ ""code"": 0, ""data"": { ""mid"": 2267573, ""attribute"": 6 } }";
+
+        private const string RelationAttributeMissingEnvelopeJson = @"{ ""code"": 0, ""data"": { ""mid"": 2267573 } }";
+
+        private const string LikeEnvelopeJson = @"{ ""code"": 0, ""data"": 1 }";
+
+        private const string LikeZeroEnvelopeJson = @"{ ""code"": 0, ""data"": 0 }";
+
+        private const string LikeNullEnvelopeJson = @"{ ""code"": 0, ""data"": null }";
+
+        private const string LikeObjectEnvelopeJson = @"{ ""code"": 0, ""data"": { ""like"": 1 } }";
+
+        private const string CoinEnvelopeJson = @"{ ""code"": 0, ""data"": { ""multiply"": 2 } }";
+
+        private const string CoinNullEnvelopeJson = @"{ ""code"": 0, ""data"": null }";
+
+        private const string FavouredEnvelopeJson = @"{ ""code"": 0, ""data"": { ""count"": 1, ""favoured"": true } }";
+
+        private const string FavouredMissingEnvelopeJson = @"{ ""code"": 0, ""data"": { ""count"": 1 } }";
+
+        private const string ActionToastEnvelopeJson = @"{ ""code"": 0, ""data"": { ""toast"": ""已点赞"" } }";
+
+        private const string ActionNullDataEnvelopeJson = @"{ ""code"": 0, ""data"": null }";
+
+        private const string ActionRejectedEnvelopeJson = @"{ ""code"": -101, ""message"": ""账号未登录"", ""data"": null }";
+
+        private const string FavoriteListEnvelopeJson = @"{
+  ""code"": 0,
+  ""data"": {
+    ""count"": 2,
+    ""list"": [
+      { ""id"": 101, ""fid"": 101, ""mid"": 5, ""attr"": 0, ""title"": ""默认收藏夹"", ""type"": 11, ""media_count"": 3, ""fav_state"": 1 },
+      { ""id"": 102, ""fid"": 102, ""mid"": 5, ""attr"": 2, ""title"": ""私密夹"", ""type"": 11, ""media_count"": 0, ""fav_state"": 0 }
+    ]
+  }
+}";
+
+        private const string FavoriteListEmptyEnvelopeJson = @"{ ""code"": 0, ""data"": { ""count"": 0 } }";
+
+        private const string FavoriteListBadEnvelopeJson = @"{ ""code"": 0, ""data"": { ""list"": { ""id"": 1 } } }";
+
+        private const string BadPagesEnvelopeJson = @"{ ""code"": 0, ""data"": { ""pages"": ""P1"" } }";
+
+        private const string BadStaffEnvelopeJson = @"{ ""code"": 0, ""data"": { ""staff"": ""DIYgod"" } }";
+
+        private const string BadSeasonEnvelopeJson = @"{ ""code"": 0, ""data"": { ""ugc_season"": [] } }";
+
+        private const string BadSectionsEnvelopeJson = @"{ ""code"": 0, ""data"": { ""ugc_season"": { ""id"": 1, ""sections"": { ""id"": 2 } } } }";
     }
 }

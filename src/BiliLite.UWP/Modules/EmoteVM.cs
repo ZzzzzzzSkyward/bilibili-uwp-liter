@@ -45,7 +45,25 @@ namespace BiliLite.Modules
                     var data = await results.GetJson<ApiDataModel<JObject>>();
                     if (data.success)
                     {
-                        Packages = JsonConvert.DeserializeObject<List<EmotePackageModel>>(data.data["packages"].ToString());
+                        //packages 为 null 时原来直接把 null 赋给 Packages，选择器空白且没有任何痕迹
+                        var packages = data.data?["packages"] as JArray;
+                        if (packages == null || packages.Count == 0)
+                        {
+                            Packages = new List<EmotePackageModel>();
+                            LogHelper.Log("表情包接口没有返回 packages，选择器按无表情处理", LogType.INFO);
+                        }
+                        else
+                        {
+                            Packages = JsonConvert.DeserializeObject<List<EmotePackageModel>>(packages.ToString());
+                            foreach (var item in Packages)
+                            {
+                                if (item.emote == null) continue;
+                                foreach (var emote in item.emote)
+                                {
+                                    emote.url = CommentRichText.NormalizeImageUrl(emote.url);
+                                }
+                            }
+                        }
                     }
                     else
                     {

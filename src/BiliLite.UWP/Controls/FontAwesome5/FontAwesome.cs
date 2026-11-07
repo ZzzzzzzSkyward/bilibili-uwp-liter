@@ -71,7 +71,7 @@ namespace FontAwesome5
             }
             catch (Exception ex)
             {
-                //TODO 在新窗口中存在线程问题，待解决
+                // 多窗口下改字形可能撞上线程约束：这一处失败只影响图标，记一笔就够
                 Debug.WriteLine(ex.Message);
             }
             

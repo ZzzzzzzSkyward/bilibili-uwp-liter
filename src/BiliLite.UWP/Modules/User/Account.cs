@@ -18,6 +18,10 @@ namespace BiliLite.Modules
 {
     public class Account
     {
+        /// <summary>设置 ⇄ jar 的接线：判定在 RefreshTokenPolicy，这里只读 jar、读写设置。</summary>
+        private static readonly RefreshTokenMirror refreshTokenMirror = new RefreshTokenMirror(
+            key => SettingHelper.GetValue(key, ""), (key, value) => SettingHelper.SetValue(key, value));
+
         private SettingVM settingVM;
         public AccountApi accountApi;
         string guid = "";
@@ -72,6 +76,9 @@ namespace BiliLite.Modules
                     SettingHelper.SetValue(SettingHelper.Account.USER_ID, m.data.mid);
                     SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.Now.AddSeconds(m.data.expires_in));
                     SettingHelper.SetValue(SettingHelper.Account.REFRESH_KEY, m.data.refresh_token);
+                    // 这一对来自 app 令牌响应：到期时间是服务端给的，来历也照实记
+                    SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false);
+                    CookieAppKeyBridge.RecordProvenance(AppKeyProvenance.AppResponse);
 
                     //执行SSO
                     //await accountApi.SSO(m.data.access_token).Request();
@@ -141,7 +148,7 @@ namespace BiliLite.Modules
                     {
                         if (m.data.status == 0)
                         {
-                            await SaveLogin(m.data.token_info.access_token, m.data.token_info.refresh_token, m.data.token_info.expires_in, m.data.token_info.mid, m.data.sso,m.data.cookie_info);
+                            await SaveLogin(m.data.token_info.access_token, m.data.token_info.refresh_token, m.data.token_info.expires_in, m.data.token_info.mid, m.data.sso,m.data.cookie_info, AppkeyIdentity.Login);
                             return new LoginCallbackModel()
                             {
                                 status = LoginStatus.Success,
@@ -220,7 +227,7 @@ namespace BiliLite.Modules
                     {
                         if (m.data.status == 0)
                         {
-                            await SaveLogin(m.data.token_info.access_token, m.data.token_info.refresh_token, m.data.token_info.expires_in, m.data.token_info.mid, m.data.sso,m.data.cookie_info);
+                            await SaveLogin(m.data.token_info.access_token, m.data.token_info.refresh_token, m.data.token_info.expires_in, m.data.token_info.mid, m.data.sso,m.data.cookie_info, AppkeyIdentity.Login);
                             return new LoginCallbackModel()
                             {
                                 status = LoginStatus.Success,
@@ -284,78 +291,154 @@ namespace BiliLite.Modules
 
 
         /// <summary>
-        /// 安全验证后保存状态
+        /// 安全验证后保存状态。acquiredWith 记录这一对令牌是哪把配置 appkey 换来的，续期必须用同一把；
+        /// 没记来历的调用方保持旧语义（UnknownLegacy），续期沿用修复前的 TV 键。
         /// </summary>
         /// <param name="access_key"></param>
         /// <param name="refresh_token"></param>
         /// <param name="expires"></param>
         /// <param name="userid"></param>
         /// <returns></returns>
-        public async Task<bool> SaveLogin(string access_key, string refresh_token, int expires, long userid, List<string> sso,LoginCookieInfo cookie)
+        public async Task<bool> SaveLogin(string access_key, string refresh_token, int expires, long userid, List<string> sso,LoginCookieInfo cookie, AppkeyIdentity acquiredWith = AppkeyIdentity.UnknownLegacy)
         {
+            // sso 参数只是历史遗留：OpenAPI 的 SSO 调用早就不发了，原来的默认地址既没被读过也没被发出去
+            var commit = PersistCredentials(access_key, refresh_token, expires, userid, cookie);
+            if (!commit.TokenSaved) return false;
+            // 只有令牌真的落盘才记来历：写失败时旧凭证明明还在，来历也不能跟着改
+            SettingHelper.SetValue(AppkeyPolicy.SettingKey, AppkeyPolicy.Format(acquiredWith));
+            await AnnounceLoginAsync();
+            return true;
+        }
+
+        /// <summary>设置项的接线：判定单元只认接口，不认 SettingHelper 的静态口。</summary>
+        private static readonly ICredentialSettings credentialSettings = new CredentialSettings();
+
+        private sealed class CredentialSettings : ICredentialSettings
+        {
+            public T Read<T>(string key, T fallback)
+            {
+                return SettingHelper.GetValue(key, fallback);
+            }
+
+            public void Write<T>(string key, T value)
+            {
+                SettingHelper.SetValue(key, value);
+            }
+        }
+
+        /// <summary>
+        /// 令牌四件套整组落盘，cookie 单独装 jar，两件事分开报（判定在 CredentialCommitter）。
+        /// 写入中途抛出就把四件套整组退回旧值，宁可全旧也不留半套凭证；
+        /// 但这只是本机回滚 —— 服务端已经轮换掉的 refresh_token 回不来，只能下次重新续期。
+        /// </summary>
+        private static CredentialCommit PersistCredentials(string access_key, string refresh_token, int expires,
+            long userid, LoginCookieInfo cookie)
+        {
+            // 换账号：上一代 ac_time_value 只是副本、本身不带归属，jar 里留着就会被镜像当成新会话的令牌。
+            // 先删再落盘，之后镜像只可能接住这次响应下发的 ac_time_value（或什么都接不到）。
+            var previousUserId = SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L);
+            if (RefreshTokenPolicy.OwnerConflicts(previousUserId, userid))
+                DeleteJarRefreshToken();
+
+            var commit = CredentialCommitter.Commit(access_key, refresh_token, DateTime.Now.AddSeconds(expires),
+                userid, cookie?.cookies != null && cookie.cookies.Count > 0, CookieWrites(cookie),
+                credentialSettings, CookieJarWriter(), LogCommitFailure);
+            // 令牌没落盘就别镜像：旧凭证明明还在，jar 里的一代不能跟着换
+            if (!commit.TokenSaved) return commit;
+
+            // 这一对来自 app/令牌响应的 token_info：到期时间是服务端给的，来历一起记，
+            // 恢复路径才不会拿 cookie 兑换去顶一把本来有 app 刷新令牌的 key
+            SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false);
+            CookieAppKeyBridge.RecordProvenance(AppKeyProvenance.AppResponse);
+
+            // 换账号的落盘已经成功：上个账号的记录（含旧版本没写归属的那份）连值带来源带归属整组作废，
+            // 紧接着的镜像只接新会话 jar 里的一代。放在提交成功之后，落盘失败时旧记录连同旧凭证原样留着。
+            refreshTokenMirror.ResetOnAccountSwitch(previousUserId, userid);
+
+            // 同一个提交点：上个会话的挂起确认也随会话作废。留着它，这个账号的 web 续期会被当成
+            // 「确认在途」而永远开不了新一轮 —— 归属对不上只是不续做，挡住的却是整条刷新。
+            WebRefreshTransaction.DiscardPendingOnAccountSwitch(previousUserId, userid,
+                new LocalFolderWebRefreshStateStore(), LogCommitFailure);
+
+            // ac_time_value 只随 cookie 下发，登录成功当场落到设置，否则刷新链永远缺令牌；
+            // 但响应令牌已存时它不许覆盖（判定在 RefreshTokenPolicy）
+            MirrorRefreshTokenFromJar();
+            return commit;
+        }
+
+        private static void LogCommitFailure(string message, Exception exception)
+        {
+            LogHelper.Log(message, LogType.ERROR, exception);
+        }
+
+        /// <summary>cookie_info 展开成写入清单：每个域名 × 每个 cookie 各一次，跟原来写 jar 的次数一致。</summary>
+        private static List<CookieWrite> CookieWrites(LoginCookieInfo cookie)
+        {
+            var writes = new List<CookieWrite>();
+            if (cookie?.cookies == null) return writes;
+            foreach (var domain in cookie.domains ?? new List<string>())
+            {
+                foreach (var cookieItem in cookie.cookies)
+                {
+                    writes.Add(new CookieWrite
+                    {
+                        Name = cookieItem.name,
+                        Domain = domain,
+                        Path = "/",
+                        Value = cookieItem.value,
+                        HttpOnly = cookieItem.http_only == 1,
+                        Secure = cookieItem.secure == 1,
+                        Expires = Utils.TimestampToDatetime(cookieItem.expires),
+                    });
+                }
+            }
+            return writes;
+        }
+
+        /// <summary>jar 的接线：SetCookie 的 bool 原样交回去，拒收由判定单元当失败算。</summary>
+        private static Func<CookieWrite, bool> CookieJarWriter()
+        {
+            HttpBaseProtocolFilter filter;
             try
             {
-                //设置登录状态
-
-                SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY, access_key);
-                SettingHelper.SetValue(SettingHelper.Account.USER_ID, userid);
-                SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.Now.AddSeconds(expires));
-                SettingHelper.SetValue(SettingHelper.Account.REFRESH_KEY, refresh_token);
-                var data = new LoginTokenInfo()
-                {
-                    access_token = access_key,
-                    expires_datetime = DateTime.Now.AddSeconds(expires),
-                    expires_in = expires,
-                    mid = userid,
-                    refresh_token = refresh_token
-                };
-                // 好像没啥用...
-                if (sso == null)
-                {
-                    sso = new List<string>() {
-                        "https://passport.bilibili.com/api/v2/sso",
-                        "https://passport.biligame.com/api/v2/sso",
-                        "https://passport.bigfunapp.cn/api/v2/sso",
-                    };
-                }
-                try
-                {
-                    //设置Cookie
-                    if (cookie!=null)
-                    {
-                        HttpBaseProtocolFilter filter = new HttpBaseProtocolFilter();
-                        foreach (var item in cookie.domains)
-                        {
-                            foreach (var cookieItem in cookie.cookies)
-                            {
-                                filter.CookieManager.SetCookie(new Windows.Web.Http.HttpCookie(cookieItem.name, item,"/")
-                                {
-                                    HttpOnly=cookieItem.http_only==1,
-                                    Secure=cookieItem.secure==1,
-                                    Expires=Utils.TimestampToDatetime(cookieItem.expires),
-                                    Value=cookieItem.value,
-                                });
-                            }
-                        }
-                    }
-                    //执行SSO
-                    //await accountApi.SSO(access_key).Request();
-                }
-                catch (Exception ex)
-                {
-                    LogHelper.Log($"SSO失败", LogType.ERROR, ex);
-                }
-
-                //读取个人资料
-                await GetProfile();
-                MessageCenter.SendLogined();
-                return true;
-
+                filter = new HttpBaseProtocolFilter();
             }
             catch (Exception ex)
             {
-                LogHelper.Log("安全验证后设置保存信息失败", LogType.ERROR, ex);
-                return false;
+                LogHelper.Log("装 cookie 失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+                return write =>
+                {
+                    throw new InvalidOperationException("cookie jar unavailable", ex);
+                };
+            }
+            return write => filter.CookieManager.SetCookie(
+                new Windows.Web.Http.HttpCookie(write.Name, write.Domain, write.Path)
+                {
+                    HttpOnly = write.HttpOnly,
+                    Secure = write.Secure,
+                    Expires = write.Expires,
+                    Value = write.Value,
+                });
+        }
+
+        /// <summary>读资料和广播都不属于凭证结论：资料拿不到只是没有头像，登录事件没人接也不该回滚令牌。</summary>
+        private async Task AnnounceLoginAsync()
+        {
+            try
+            {
+                await GetProfile();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("读取个人资料失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+            }
+            try
+            {
+                MessageCenter.SendLogined();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("登录事件广播失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
             }
         }
 
@@ -401,8 +484,12 @@ namespace BiliLite.Modules
                 AccessKey = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY, ""),
                 UserId = SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L),
                 Expiry = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue),
+                ExpiryEstimated = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false),
+                AccessKeySource = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_SOURCE, ""),
                 OAuthRefreshToken = SettingHelper.GetValue(SettingHelper.Account.REFRESH_KEY, ""),
-                CookieRefreshToken = SettingHelper.GetValue("CookieRefreshToken", ""),
+                CookieRefreshToken = SettingHelper.GetValue(RefreshTokenMirror.TokenKey, ""),
+                CookieRefreshTokenSource = SettingHelper.GetValue(RefreshTokenMirror.SourceKey, ""),
+                CookieRefreshTokenOwner = RefreshTokenPolicy.ParseOwner(SettingHelper.GetValue(RefreshTokenMirror.OwnerKey, "")),
                 CookieSession = SettingHelper.GetValue("CookieSESSDATA", ""),
                 CookieCsrf = SettingHelper.GetValue("CookieCSRF", ""),
                 Profile = SettingHelper.GetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, null)
@@ -437,11 +524,74 @@ namespace BiliLite.Modules
             SettingHelper.SetValue(SettingHelper.Account.USER_ID, session.UserId);
             // Browser-cookie refresh tokens are separate from the target's OAuth refresh token.
             SettingHelper.SetValue(SettingHelper.Account.REFRESH_KEY, "");
+            // 兑换拿不到真实有效期：240 小时只是本地估算，标记出来，别当成服务端承诺
             SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.Now.AddHours(240));
-            SettingHelper.SetValue("CookieRefreshToken", session.CookieRefreshToken);
+            SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, true);
+            CookieAppKeyBridge.RecordProvenance(AppKeyProvenance.CookieConversion);
+            // 交换回来的令牌来自响应 JSON：来源和 uid 一起记，紧接着的 cookie 镜像就不会拿旧 ac_time_value 覆盖它
+            refreshTokenMirror.RecordResponse(session.CookieRefreshToken, session.UserId);
             SettingHelper.SetValue("CookieSESSDATA", sessdata);
             SettingHelper.SetValue("CookieCSRF", csrf);
             SettingHelper.SetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, null);
+            // 交换回来的令牌为空时，cookie 里的 ac_time_value 才是唯一来源
+            MirrorRefreshTokenFromJar();
+        }
+
+        /// <summary>
+        /// 删掉 jar 里所有 ac_time_value：换账号的落盘前调用一次，别让上一代的副本被镜像认领。
+        /// cookie 导入那条路在 ApplyCookieLogin 里已经按名字删过一遍，这里补上 SaveLogin 这一路。
+        /// </summary>
+        private static void DeleteJarRefreshToken()
+        {
+            try
+            {
+                var filter = new HttpBaseProtocolFilter();
+                foreach (var origin in CookieLoginOrigins())
+                    foreach (var current in filter.CookieManager.GetCookies(origin).ToList())
+                        if (string.Equals(current.Name, "ac_time_value", StringComparison.OrdinalIgnoreCase))
+                            filter.CookieManager.DeleteCookie(current);
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("清理旧 ac_time_value 失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+            }
+        }
+
+        /// <summary>
+        /// jar 里的 ac_time_value 只作为旧会话的迁移来源：设置里已有本会话的响应令牌、有挂起确认或
+        /// jar 归属对不上时，一个键都不动。QR 登录这类拿不到响应令牌的会话靠它补齐。
+        /// 这是所有登录路径（密码/短信/扫码/cookie 导入）共用的那一次镜像，记录的 uid 与刚落盘的
+        /// uid 不同时，判定就在这里把上个账号的令牌整组作废 —— 登录完成即是新会话。
+        /// </summary>
+        private static void MirrorRefreshTokenFromJar()
+        {
+            try
+            {
+                var sessionOwnerId = SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L);
+                refreshTokenMirror.MirrorFromCookie(ReadJarCookie("ac_time_value"),
+                    RefreshTokenPolicy.ParseOwner(ReadJarCookie("DedeUserID")),
+                    sessionOwnerId,
+                    // 挂起确认（D3）就在这个会话名下时，jar 里的 ac_time_value 不许改写正在轮换的那一代；
+                    // 别的账号的记录读不到这个会话头上，记录读不出来时按「有」处理
+                    WebRefreshTransaction.HasPendingConfirmation(new LocalFolderWebRefreshStateStore(), sessionOwnerId,
+                        (message, exception) => LogHelper.Log(message, LogType.ERROR, exception)));
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("ac_time_value 同步失败 exceptionType=" + ex.GetType().FullName, LogType.ERROR);
+            }
+        }
+
+        private static string ReadJarCookie(string name)
+        {
+            var filter = new HttpBaseProtocolFilter();
+            foreach (var origin in CookieLoginOrigins())
+            {
+                var cookie = filter.CookieManager.GetCookies(origin)
+                    .FirstOrDefault(x => x.Name == name);
+                if (cookie != null && !string.IsNullOrEmpty(cookie.Value)) return cookie.Value;
+            }
+            return "";
         }
 
         private static void RestoreCookieLoginSnapshot(CookieLoginSnapshot snapshot)
@@ -471,8 +621,12 @@ namespace BiliLite.Modules
             RestoreSetting(SettingHelper.Account.ACCESS_KEY, snapshot.AccessKey, failures);
             RestoreSetting(SettingHelper.Account.USER_ID, snapshot.UserId, failures);
             RestoreSetting(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, snapshot.Expiry, failures);
+            RestoreSetting(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, snapshot.ExpiryEstimated, failures);
+            RestoreSetting(SettingHelper.Account.ACCESS_KEY_SOURCE, snapshot.AccessKeySource, failures);
             RestoreSetting(SettingHelper.Account.REFRESH_KEY, snapshot.OAuthRefreshToken, failures);
-            RestoreSetting("CookieRefreshToken", snapshot.CookieRefreshToken, failures);
+            RestoreSetting(RefreshTokenMirror.TokenKey, snapshot.CookieRefreshToken, failures);
+            RestoreSetting(RefreshTokenMirror.SourceKey, snapshot.CookieRefreshTokenSource, failures);
+            RestoreSetting(RefreshTokenMirror.OwnerKey, snapshot.CookieRefreshTokenOwner.ToString(System.Globalization.CultureInfo.InvariantCulture), failures);
             RestoreSetting("CookieSESSDATA", snapshot.CookieSession, failures);
             RestoreSetting("CookieCSRF", snapshot.CookieCsrf, failures);
             RestoreSetting(SettingHelper.Account.USER_PROFILE, snapshot.Profile, failures);
@@ -485,11 +639,7 @@ namespace BiliLite.Modules
             catch (Exception ex) { failures.Add("setting-" + key + "=" + ex.GetType().FullName); }
         }
 
-        private static List<Uri> CookieLoginOrigins() => new[]
-        {
-            "https://bilibili.com/", "https://www.bilibili.com/",
-            "https://passport.bilibili.com/", "https://api.bilibili.com/"
-        }.Select(x => new Uri(x)).ToList();
+        private static List<Uri> CookieLoginOrigins() => CookieOrigins.All.Select(x => new Uri(x)).ToList();
 
         private static HashSet<string> CookieLoginReplacedNames() => new HashSet<string>(new[]
         {
@@ -506,8 +656,12 @@ namespace BiliLite.Modules
             public string AccessKey { get; set; }
             public long UserId { get; set; }
             public DateTime Expiry { get; set; }
+            public bool ExpiryEstimated { get; set; }
+            public string AccessKeySource { get; set; }
             public string OAuthRefreshToken { get; set; }
             public string CookieRefreshToken { get; set; }
+            public string CookieRefreshTokenSource { get; set; }
+            public long CookieRefreshTokenOwner { get; set; }
             public string CookieSession { get; set; }
             public string CookieCsrf { get; set; }
             public MyProfileModel Profile { get; set; }
@@ -669,7 +823,7 @@ namespace BiliLite.Modules
                     if (data.success)
                     {
                         
-                        await SaveLogin(data.data.token_info.access_token, data.data.token_info.refresh_token, data.data.token_info.expires_in, data.data.token_info.mid, data.data.sso,data.data.cookie_info);
+                        await SaveLogin(data.data.token_info.access_token, data.data.token_info.refresh_token, data.data.token_info.expires_in, data.data.token_info.mid, data.data.sso,data.data.cookie_info, AppkeyIdentity.Tv);
                         return new LoginCallbackModel()
                         {
                             status = LoginStatus.Success,
@@ -733,41 +887,28 @@ namespace BiliLite.Modules
             }
         }
         /// <summary>
-        /// 刷新Token
+        /// 刷新Token。解析出来的令牌和 cookie_info 一起交给落盘，jar、ACCESS_KEY、轮换后的 REFRESH_KEY
+        /// 和到期时间才会同步换新；结果如实带回调用方，网络失败和会话失效不是同一件事。
         /// </summary>
         /// <returns></returns>
-        public async Task<bool> RefreshToken()
+        public async Task<RenewalResult> RefreshToken()
         {
-            try
-            {
-                var req = await accountApi.RefreshToken().Request();
+            return await AccessKeyRenewal.RunAsync(
+                SettingHelper.Account.AccessKey,
+                SettingHelper.GetValue<string>(SettingHelper.Account.REFRESH_KEY, ""),
+                (accessKey, refreshToken) => accountApi.RefreshToken(accessKey, refreshToken).Request(),
+                SaveRenewedLoginAsync,
+                (message, exception) => LogHelper.Log(message, exception == null ? LogType.INFO : LogType.ERROR, exception));
+        }
 
-                if (req.status)
-                {
-                    var obj = req.GetJObject();
-                    if (obj["code"].ToInt32() == 0)
-                    {
-                        var data = JsonConvert.DeserializeObject<LoginTokenInfo>(obj["data"].ToString());
-                        await SaveLogin(data.access_token, data.refresh_token, data.expires_in, data.mid, null,null);
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    throw new Exception(req.message);
-                    // return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-                //LogHelper.Log("读取access_key信息失败", LogType.ERROR, ex);
-                //return false;
-            }
+        /// <summary>续期的落盘回调：只报令牌和 cookie 有没有写成功，读资料留在凭证之外。</summary>
+        private async Task<CredentialCommit> SaveRenewedLoginAsync(LoginTokenInfo token, LoginCookieInfo cookie)
+        {
+            var userId = token.mid > 0 ? token.mid : SettingHelper.GetValue(SettingHelper.Account.USER_ID, 0L);
+            var commit = PersistCredentials(token.access_token, token.refresh_token, token.expires_in, userId, cookie);
+            if (!commit.TokenSaved) return commit;
+            await AnnounceLoginAsync();
+            return commit;
         }
     }
 

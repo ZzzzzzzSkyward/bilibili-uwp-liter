@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>WEBREFRESH</AssemblyName>
+    <RootNamespace>WEBREFRESH</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\CookieOrigins.cs" Link="CookieOrigins.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\RefreshCredentialPolicy.cs" Link="RefreshCredentialPolicy.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\PasswordLoginSession.cs" Link="PasswordLoginSession.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\WebRefreshTransaction.cs" Link="WebRefreshTransaction.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\CookieService.cs" Link="CookieService.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\WbiKeyService.cs" Link="WbiKeyService.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Api\ApiHelper.cs" Link="ApiHelper.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Api\AccountApi.cs" Link="AccountApi.cs" />
+  </ItemGroup>
+
+  <!-- RED 基线：用 git 里的修复前 CookieService 编译同一批断言，见 run.sh -->
+  <PropertyGroup Condition="'$(BiliLitePreFix)' == '1'">
+    <DefineConstants>$(DefineConstants);PRE_FIX</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(BiliLitePreFix)' == '1'">
+    <Compile Remove="..\..\..\src\BiliLite.UWP\Services\CookieService.cs" />
+    <Compile Include="obj\prefix\CookieService.pre-fix.cs" Link="CookieService.cs" />
+  </ItemGroup>
+
+</Project>

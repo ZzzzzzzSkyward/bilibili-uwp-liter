@@ -145,12 +145,14 @@
     <Compile Include="Models\Requests\Api\EmoteApi.cs" />
     <Compile Include="Models\Requests\Api\DanmakuApi.cs" />
     <Compile Include="Services\CookieService.cs" />
+    <Compile Include="Services\AccessKeyRenewal.cs" />
     <Compile Include="Services\HttpLogSanitizer.cs" />
     <Compile Include="Services\ApiShape.cs" />
     <Compile Include="Services\ApiCapture.cs" />
     <Compile Include="Services\DiagnosticBundle.cs" />
     <Compile Include="Services\PasswordLoginSession.cs" />
     <Compile Include="Services\IsolatedPasswordLoginTransport.cs" />
+    <Compile Include="Services\WebRefreshTransaction.cs" />
     <Compile Include="Services\WbiKeyService.cs" />
     <Compile Include="Api\GitApi.cs" />
     <Compile Include="Api\Home\AnimeAPI.cs" />
@@ -174,6 +176,7 @@
     <Compile Include="Services\GrpcService.cs" />
     <Compile Include="Services\DynamicApiSelector.cs" />
     <Compile Include="Services\DynamicApiSelection.cs" />
+    <Compile Include="Services\DynamicFeedWindow.cs" />
     <Compile Include="Services\DynamicApiHistoryFileStore.cs" />
     <Compile Include="Services\MediaListService.cs" />
     <Compile Include="Helpers\DynamicImageRules.cs" />
@@ -183,6 +186,39 @@
     <Compile Include="Parsing\Dynamic\WebDynamicFeedParser.cs" />
     <Compile Include="Parsing\Dynamic\WebDynamicFeedMapper.cs" />
     <Compile Include="Parsing\Dynamic\WireScalars.cs" />
+    <Compile Include="Parsing\Dynamic\RichTextFlow.cs" />
+    <Compile Include="Parsing\Dynamic\LiveCardSummary.cs" />
+    <Compile Include="Parsing\Dynamic\ReserveCardCopy.cs" />
+    <Compile Include="Parsing\Dynamic\UnsupportedCard.cs" />
+    <Compile Include="Parsing\Season\WebSeasonEpListParser.cs" />
+    <Compile Include="Parsing\Season\WebSeasonEpListMapper.cs" />
+    <Compile Include="Parsing\MediaList\MediaListResourceListParser.cs" />
+    <Compile Include="Parsing\MediaList\MediaListResourceListMapper.cs" />
+    <Compile Include="Parsing\MediaList\FavoriteResourceListParser.cs" />
+    <Compile Include="Parsing\MediaList\FavoriteResourceListMapper.cs" />
+    <Compile Include="Parsing\MediaList\WatchLaterListParser.cs" />
+    <Compile Include="Parsing\MediaList\WatchLaterListMapper.cs" />
+    <Compile Include="Parsing\MediaList\MediaListFailureText.cs" />
+    <Compile Include="Parsing\Comment\WebCommentPageParser.cs" />
+    <Compile Include="Parsing\Comment\WebCommentActionParser.cs" />
+    <Compile Include="Parsing\Comment\WebCommentPageMapper.cs" />
+    <Compile Include="Parsing\Video\VideoEnvelope.cs" />
+    <Compile Include="Parsing\Video\VideoFailureText.cs" />
+    <Compile Include="Parsing\Video\WebVideoViewParser.cs" />
+    <Compile Include="Parsing\Video\WebVideoViewMapper.cs" />
+    <Compile Include="Parsing\Video\WebVideoRelatesParser.cs" />
+    <Compile Include="Parsing\Video\WebVideoTagsParser.cs" />
+    <Compile Include="Parsing\Video\WebRelationParser.cs" />
+    <Compile Include="Parsing\Video\WebVideoStateParser.cs" />
+    <Compile Include="Parsing\Video\WebVideoActionParser.cs" />
+    <Compile Include="Parsing\Video\FavoriteCreatedListParser.cs" />
+    <Compile Include="Parsing\Video\FavoriteCreatedListMapper.cs" />
+
+    <Compile Include="Services\PlayerSessionState.cs" />
+    <Compile Include="Services\PlayerSurfaceVisibility.cs" />
+    <Compile Include="Services\CookieAppKeyBridge.cs" />
+    <Compile Include="Services\CredentialCommitter.cs" />
+    <Compile Include="Services\RefreshCredentialPolicy.cs" />
     <Compile Include="Services\PlayerToastOverlay.cs" />
     <Compile Include="Services\PlayerToastService.cs" />
     <Compile Include="Services\LocalMedia\LocalMediaManifestLoader.cs" />
@@ -249,11 +285,20 @@
     <Compile Include="Controls\Dynamic\DynamicItemControl.xaml.cs">
       <DependentUpon>DynamicItemControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\Dynamic\DynamicPreviewRow.xaml.cs">
+      <DependentUpon>DynamicPreviewRow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\Dynamic\DynamicImageGrid.xaml.cs">
+      <DependentUpon>DynamicImageGrid.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\Dynamic\DynamicImageGridLayout.cs" />
+    <Compile Include="Controls\Dynamic\DynamicImageGridPanel.cs" />
     <Compile Include="Controls\Dynamic\RichTextControl.xaml.cs">
       <DependentUpon>RichTextControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\Dynamic\DynamicItemDataTemplateSelector.cs" />
     <Compile Include="Controls\Dynamic\DynamicParse.cs" />
+    <Compile Include="Controls\Dynamic\RichTextBodyState.cs" />
     <Compile Include="Controls\ImageViewerControl.xaml.cs">
       <DependentUpon>ImageViewerControl.xaml</DependentUpon>
     </Compile>
@@ -274,6 +319,9 @@
     </Compile>
     <Compile Include="Controls\PlayerControl.xaml.cs">
       <DependentUpon>PlayerControl.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Controls\PlayDirectoryControl.xaml.cs">
+      <DependentUpon>PlayDirectoryControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Controls\PlayerToast.xaml.cs">
       <DependentUpon>PlayerToast.xaml</DependentUpon>
@@ -311,6 +359,7 @@
     <Compile Include="Helpers\AppHelper.cs" />
     <Compile Include="Helpers\CCToSrt.cs" />
     <Compile Include="Helpers\ChineseConverter.cs" />
+    <Compile Include="Helpers\CommentRichText.cs" />
     <Compile Include="Helpers\ControlHelper.cs" />
     <Compile Include="Helpers\DownloadHelper.cs" />
     <Compile Include="Helpers\ExceptionHandler.cs" />
@@ -322,13 +371,30 @@
     <Compile Include="Helpers\MessageCenter.cs" />
     <Compile Include="Helpers\SettingHelper.cs" />
     <Compile Include="Helpers\SqlHelper.cs" />
+    <Compile Include="Helpers\TapToolTip.cs" />
     <Compile Include="Helpers\Utils.cs" />
     <Compile Include="Helpers\VideoPlayHistoryHelper.cs" />
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Models\ApiModel.cs" />
+    <Compile Include="Models\Api\Season\Web\WebSeasonEpListDto.cs" />
+    <Compile Include="Models\Api\MediaList\MediaListResourceListDto.cs" />
+    <Compile Include="Models\Api\MediaList\FavoriteResourceListDto.cs" />
+    <Compile Include="Models\Api\MediaList\WatchLaterListDto.cs" />
+    <Compile Include="Models\Api\Comment\WebCommentPageDto.cs" />
+    <Compile Include="Models\Api\Comment\WebCommentReplyDto.cs" />
+    <Compile Include="Models\Api\Comment\WebCommentReplyListDto.cs" />
+    <Compile Include="Models\Api\Comment\WebCommentActionResultDto.cs" />
+    <Compile Include="Models\Api\Video\WebVideoViewDto.cs" />
+    <Compile Include="Models\Api\Video\WebVideoRelateDto.cs" />
+    <Compile Include="Models\Api\Video\WebVideoTagDto.cs" />
+    <Compile Include="Models\Api\Video\WebRelationDto.cs" />
+    <Compile Include="Models\Api\Video\WebVideoStateDto.cs" />
+    <Compile Include="Models\Api\Video\FavoriteCreatedListDto.cs" />
+
     <Compile Include="Models\Common.cs" />
+    <Compile Include="Models\CookieOrigins.cs" />
     <Compile Include="Models\Common\User\SubmitVideoItemModel.cs" />
     <Compile Include="Models\Common\Danmaku\DanmakuListSnapshot.cs" />
     <Compile Include="Models\LocalMedia\LocalMediaItem.cs" />
@@ -342,6 +408,11 @@
     <Compile Include="Models\UserModels.cs" />
     <Compile Include="Models\VideoCollections.cs" />
     <Compile Include="Models\MediaListResources.cs" />
+    <Compile Include="Models\WatchSequence.cs" />
+    <Compile Include="Models\VideoQueue.cs" />
+    <Compile Include="Models\PlayDirectory.cs" />
+    <Compile Include="Models\DirectoryDrawerMotion.cs" />
+    <Compile Include="Models\PlayContinuation.cs" />
     <Compile Include="Modules\Detail\FavoriteDetailVM.cs" />
     <Compile Include="Modules\DownloadVM.cs" />
     <Compile Include="Modules\EmoteVM.cs" />
@@ -360,6 +431,7 @@
     <Compile Include="Modules\Player\Playurl\BiliPayUrlRequest.cs" />
     <Compile Include="Modules\Player\Playurl\BiliPlayUrl.cs" />
     <Compile Include="Modules\Player\Playurl\BiliPlayUrlInfo.cs" />
+    <Compile Include="Modules\Player\Playurl\PlayUrlFallback.cs" />
     <Compile Include="Modules\RegionDetailVM.cs" />
     <Compile Include="Modules\SearchVM.cs" />
     <Compile Include="Modules\Season\SeasonRankVM.cs" />
@@ -387,6 +459,8 @@
     <Compile Include="Modules\Detail\SeasonDetailVM.cs" />
     <Compile Include="Modules\Season\SeasonIndexVM.cs" />
     <Compile Include="Modules\SettingVM.cs" />
+    <Compile Include="Modules\DanmuFilterRules.cs" />
+    <Compile Include="Helpers\MouseBackPolicy.cs" />
     <Compile Include="Modules\Detail\VideoDetailVM.cs" />
     <Compile Include="Modules\User\MyFollowVideoVM.cs" />
     <Compile Include="Modules\User\SendDynamic\SendDynamicVM.cs" />
@@ -636,7 +710,6 @@
     <Content Include="Assets\Fonts\vanfont.otf" />
     <Content Include="Assets\Fonts\FansNum.otf" />
     <Content Include="Assets\Fonts\biliicon.ttf" />
-    <Content Include="Assets\Text\dbginfo.md" />
     <Content Include="Assets\Text\info.md" />
     <None Include="Assets\Text\new_version.json" />
     <AppxManifest Include="Package.appxmanifest">
@@ -692,6 +765,14 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Controls\Dynamic\DynamicPreviewRow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\Dynamic\DynamicImageGrid.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Controls\Dynamic\RichTextControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -721,6 +802,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\PlayerControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Controls\PlayDirectoryControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

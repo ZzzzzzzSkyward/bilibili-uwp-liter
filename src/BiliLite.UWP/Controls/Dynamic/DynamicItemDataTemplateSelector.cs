@@ -8,8 +8,7 @@ namespace BiliLite.Controls.Dynamic
         public DataTemplate RepostTemplate { get; set; }
         public DataTemplate MissTemplate { get; set; }
         public DataTemplate TextTemplate { get; set; }
-        public DataTemplate Photo2x2Template { get; set; }
-        public DataTemplate Photo3x3Template { get; set; }
+        public DataTemplate PhotoGridTemplate { get; set; }
         public DataTemplate ShortVideoTemplate { get; set; }
         public DataTemplate Photo1x1Template { get; set; }
         public DataTemplate OneRowTemplate { get; set; }
@@ -38,11 +37,8 @@ namespace BiliLite.Controls.Dynamic
                         {
                             return Photo1x1Template;
                         }
-                        if (model.ImagesInfo.Count ==4)
-                        {
-                            return Photo2x2Template;
-                        }
-                        return Photo3x3Template;
+                        // 2 张以上共用一份网格：列数、+N 与保存菜单不再按张数各写一个模板
+                        return PhotoGridTemplate;
                     }
                    
                 case Dynamic.DynamicDisplayType.ShortVideo:
@@ -63,6 +59,22 @@ namespace BiliLite.Controls.Dynamic
                 default:
                     return OtherTemplate;
             }
+        }
+    }
+
+    /// <summary>
+    /// 附件区（DynamicItemControl.xaml 的 AttachmentRow）的模板选择：预约附件用 BR-55 的预约面板，
+    /// 投票/链接/未知种类仍走安静的一行。判断只在显示模型上做（ShowPanel），模板里不写条件。
+    /// </summary>
+    public sealed class DynamicAttachmentDataTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate PanelTemplate { get; set; }
+        public DataTemplate RowTemplate { get; set; }
+
+        protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
+        {
+            var display = item as DynamicAttachmentDisplay;
+            return display != null && display.ShowPanel ? PanelTemplate : RowTemplate;
         }
     }
 }

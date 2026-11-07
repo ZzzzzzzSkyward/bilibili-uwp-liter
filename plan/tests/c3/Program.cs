@@ -1,7 +1,9 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using BiliLite.Helpers;
 using BiliLite.Models.Common;
+using BiliLite.Parsing.MediaList;
 
 namespace C3Probe
 {
@@ -27,8 +29,10 @@ namespace C3Probe
             NextActionAfterAFailedPage();
             FailedPageKeepsRowsAndCursor();
             CollectionOrder();
+            ParsedPageFeedsTheRouteState();
             MessageCenterSourceWiring();
             PageSourceWiring();
+            DecodersAreWired();
             ProjectEntries();
 
             Console.WriteLine("PASS " + _passed + " assertions");
@@ -209,19 +213,56 @@ namespace C3Probe
             Check(VideoUgcSeasonOrder.AidOrder(new VideoUgcSeason()).Count == 0, "an empty collection has no order");
         }
 
+        /// <summary>
+        /// The link route -> paging state path with the real parser: the page the link pre-fetches is
+        /// decoded, appended and turned into a cursor, and a page without media_list keeps both.
+        /// </summary>
+        private static void ParsedPageFeedsTheRouteState()
+        {
+            MediaListRoute route;
+            MediaListRoute.TryParse("bilibili://music/playlist/playpage/159001856", out route);
+            var state = new MediaListPagingState(route.MediaListId, route.MediaListType, MediaListSourceKind.MediaList);
+
+            var parsed = MediaListResourceListParser.Parse(Response(RoutePageJson));
+            Check(parsed.IsSuccess, "the link's first page decodes through the parser");
+            Check(parsed.Value.HasMore == true && parsed.Value.TotalCount == 3,
+                "the parsed page keeps has_more and the total as reported");
+
+            state.Append(MediaListResourceListMapper.Map(parsed.Value));
+            Check(state.LoadedCount == 2 && state.NextCursor == "2002",
+                "the parsed page fills the rows and the cursor");
+            Check(state.HasMore && state.HasKnownTotal,
+                "the parsed page carries has_more and a known total");
+            Check(state.CountText == "2 / 3", "the parsed total reaches the footer text");
+
+            var missing = MediaListResourceListParser.Parse(Response(RouteNoListJson));
+            Check(!missing.IsSuccess && missing.Stage == MediaListResourceListParser.NoMediaListStage,
+                "a page without media_list is a failure, not an empty page");
+            state.MarkLoadFailed();
+            Check(state.LoadedCount == 2 && state.NextCursor == "2002" && state.HasMore && state.LastLoadFailed,
+                "a failed page keeps the rows, the last cursor and HasMore");
+            Check(MediaListFailureText.For(missing) == MediaListFailureText.NoMediaListText,
+                "the missing list keeps its own sentence on the link path");
+            Check(MediaListFailureText.For(MediaListResourceListParser.Parse(null)) == MediaListFailureText.TransportText,
+                "a missing response reads as a connection check, not as a shape problem");
+            Check(MediaListQueue.NextAction(1, state.LoadedCount, state.HasMore, state.LastLoadFailed)
+                    == MediaListNextAction.RetryNextPage,
+                "after the failed page the queue asks for a retry instead of finishing");
+        }
+
         private static void MessageCenterSourceWiring()
         {
             var center = ReadSource("src/BiliLite.UWP/Helpers/MessageCenter.cs");
 
             Check(center.Contains("MediaListRoute.TryParse(url, out mediaListRoute)"),
                 "source: MessageCenter asks the route parser before the other routes");
-            Check(center.Contains("await OpenMediaListPlaylist(mediaListRoute);"),
+            Check(center.Contains("await OpenMediaListPlaylist(mediaListRoute, PlaylistTitleOf(url));"),
                 "source: a matched playpage link opens the playlist instead of falling through");
             Check(center.Contains("GetMediaList(route.MediaListId, route.MediaListType)"),
                 "source: the first page is loaded with the link's own id and page type");
-            Check(center.Contains("state.Append(page);") && center.Contains("if (state.LoadedCount == 0)"),
+            Check(center.Contains("state.Append(page.Value);") && center.Contains("if (state.LoadedCount == 0)"),
                 "source: the first page is appended and an empty playlist is reported instead of opening");
-            Check(center.Contains("if (page == null) return;"), "source: a failed first page does not open an empty queue");
+            Check(center.Contains("if (!page.IsSuccess)"), "source: a failed first page does not open an empty queue");
             Check(center.Contains("parameters = new VideoPlaylist()") && center.Contains("MediaListId = route.MediaListId,")
                 && center.Contains("MediaListType = route.MediaListType,") && center.Contains("MediaListState = state,"),
                 "source: the navigation carries the remote id, type and the paging state");
@@ -232,61 +273,101 @@ namespace C3Probe
             Check(center.Contains("page = typeof(FavoriteDetailPage),") && center.Contains("Id = medialist_id,"),
                 "source: the ml favorite-folder route still opens the favorite page with the ml id");
             Check(!center.Contains("MediaListId = medialist_id"), "source: a favorite-folder id is never used as a medialist id");
-            Check(center.Contains("private static async Task OpenMediaListPlaylist(MediaListRoute route)"),
+            Check(center.Contains("private static async Task OpenMediaListPlaylist(MediaListRoute route, string title)"),
                 "source: the playlist opening is one helper, not inline page logic");
         }
 
         private static void PageSourceWiring()
         {
             var page = ReadSource("src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs");
+            // 队列类型搬进了模型层,携带字段的断言跟着读新文件
+            var queue = ReadSource("src/BiliLite.UWP/Models/VideoQueue.cs");
 
-            Check(page.Contains("public MediaListPagingState MediaListState { get; set; }"),
+            Check(queue.Contains("public MediaListPagingState MediaListState { get; set; }"),
                 "source: VideoPlaylist carries the paging state");
             Check(page.Contains("mediaListState = playlist.MediaListState ?? new MediaListPagingState(playlist.MediaListId, playlist.MediaListType, MediaListSourceKind.MediaList, playlist.Title);"),
                 "source: the page reuses the state the link supplied");
-            Check(page.Contains("AppendMediaListRows(0);") && page.Contains("if (mediaListState.LoadedCount == 0 && !await LoadMediaListPage())"),
+            Check(page.Contains("AppendMediaListRows();") && page.Contains("if (mediaListState.LoadedCount == 0 && !await LoadMediaListPage())"),
                 "source: rows already in the state are bound without a second first-page request");
             Check(page.Contains("playlist.MediaListId = mediaListState.MediaListId;") && page.Contains("playlist.MediaListType = mediaListState.MediaListType;"),
                 "source: the page takes the id and type from the supported source");
-            Check(page.Contains("mediaListState.MarkLoadFailed();"),
-                "source: a failed page request is recorded on the state");
+            Check(ReadSource("src/BiliLite.UWP/Models/MediaListResources.cs")
+                    .Contains("m_state.MarkLoadFailed();"),
+                "source: a failed page request is recorded on the state by the one loader");
             Check(page.Contains("if (!mediaListState.HasMore && !mediaListState.LastLoadFailed) return;"),
                 "source: the Load more action retries a failed page without waiting for HasMore");
-            Check(page.Contains("if (mediaListState.LastLoadFailed)")
-                && page.Contains("mediaListLoadMoreButton.Visibility = Visibility.Visible;"),
+            Check(page.Contains("var state = PlayDirectoryBuilder.PagingOf(mediaListState);")
+                && page.Contains("PlayDirectoryPagingState.Failed"),
                 "source: a failed page keeps the retry action visible after the source runs out");
-            Check(page.Contains("var action = MediaListQueue.NextAction(")
+            Check(page.Contains("WatchSequenceOrder.Next(sequence.Position, skipRemainingParts)")
                 && page.Contains("mediaListState != null && mediaListState.HasMore,")
                 && page.Contains("mediaListState != null && mediaListState.LastLoadFailed);"),
-                "source: auto-advance asks the queue decision with the paging state");
-            Check(page.Contains("case MediaListNextAction.LoadNextPage:") && page.Contains("if (await LoadMediaListPage())"),
+                "source: advancing asks the sequence, whose paging flags come from the paging state");
+            Check(page.Contains("case WatchSequenceMove.LoadNextPage:") && page.Contains("if (await LoadMediaListPage())"),
                 "source: the last loaded row fetches the next page before advancing");
-            Check(page.Contains("case MediaListNextAction.RetryNextPage:") && page.Contains("RefreshMediaListChrome();")
+            Check(page.Contains("case WatchSequenceMove.RetryNextPage:") && page.Contains("RefreshMediaListChrome();")
                 && page.Contains("下一页加载失败,点\\\"加载更多\\\"重试"),
                 "source: a failed next page leaves the Load more retry visible and does not finish playback");
-            Check(page.Contains("private async Task SelectPlaylistRowAsync(int index)")
-                && page.Contains("listView.SelectedIndex = index;"),
-                "source: advancing selects the next row through the existing selection handler");
-            Check(page.Contains("var next = VideoUgcSeasonOrder.NextAid(videoDetailVM?.VideoInfo?.UgcSeason, ugcSeasonAid);"),
+            Check(page.Contains("private async Task<bool> SelectPlaylistRowAsync(int index, PlayTargetStart start)")
+                && page.Contains("SelectPlaylistRow(listView, index);")
+                && page.Contains("return await InitializeVideo(playlist.Playlist[index].ID, start);"),
+                "source: advancing moves the row highlight under a guard and starts the row itself");
+            Check(page.Contains("var aids = VideoUgcSeasonOrder.AidOrder(videoDetailVM?.VideoInfo?.UgcSeason);")
+                && page.Contains("var rowIndex = aids.IndexOf(videoDetailVM?.VideoInfo?.aid);"),
                 "source: a collection continues in section/episode order");
-            Check(page.Contains("playFromUgcSeason = true;") && page.Contains("playFromUgcSeason = false;"),
+            Check(page.Contains("SetSequenceSource(WatchSequenceSourceKind.UgcSeason);")
+                && page.Contains("SetSequenceSource(WatchSequenceSourceKind.Playlist);"),
                 "source: the page records whether the current video came from the collection or the queue");
-            Check(page.Contains("if (playFromUgcSeason)")
-                && page.Contains("if (await AdvanceUgcSeasonAsync()) return;")
-                && page.Contains("// 跟着合集走:合集播完就结束,不跳回打开时的队列"),
+            Check(page.Contains("case WatchSequenceMove.PlayRow:")
+                && page.Contains("PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart)")
+                && page.Contains("if (sequence.Position.Source == WatchSequenceSourceKind.UgcSeason)"),
                 "source: a collection episode advances inside the collection, leaving the opened queue alone");
             Check(!page.Contains("playlist.Index == playlist.Playlist.Count - 1"),
                 "source: the old stop-at-last-row condition is gone");
 
             var selectionStart = page.IndexOf("private async void ListView_SelectionChanged", StringComparison.Ordinal);
-            var selectionBody = selectionStart < 0 ? "" : page.Substring(selectionStart, 700);
+            var selectionBody = selectionStart < 0 ? "" : page.Substring(selectionStart, 1200);
             Check(selectionBody.Contains("playlist.Index = playlist.Playlist.IndexOf(item);")
-                && selectionBody.Contains("await InitializeVideo(item.ID);"),
+                && selectionBody.Contains("await InitializeVideo(item.ID, PlayTargetStart.Resume);"),
                 "source: choosing a row loads that video's details and its own pages");
             Check(!selectionBody.Contains("playlist = "), "source: choosing a row never replaces the active queue");
 
-            Check(page.Contains("playFromUgcSeason = true;") && page.Contains("item.Aid == ugcSeasonAid) return;"),
+            Check(page.Contains("SetSequenceSource(WatchSequenceSourceKind.UgcSeason);")
+                && page.Contains("item.Aid == ugcSeasonAid) return;"),
                 "source: an embedded collection stays browseable inside the queued video");
+        }
+
+        private static void DecodersAreWired()
+        {
+            var favorite = ReadSource("src/BiliLite.UWP/Modules/Detail/FavoriteDetailVM.cs");
+            Check(favorite.Contains("FavoriteResourceListParser.Parse(results)")
+                && favorite.Contains("FavoriteResourceListMapper.Map(parsed.Value)"),
+                "source: favorites decode through the shared parser and mapper");
+            Check(!favorite.Contains("GetJson<ApiDataModel<FavoriteDetailModel>>"),
+                "source: the favorite page no longer re-deserializes data itself");
+            Check(favorite.Contains("Utils.ShowMessageToast(MediaListFailureText.For(parsed));"),
+                "source: the favorite VM publishes the parse result's category");
+
+            var watchLater = ReadSource("src/BiliLite.UWP/Modules/User/WatchLaterVM.cs");
+            Check(watchLater.Contains("WatchLaterListParser.Parse(results)")
+                && watchLater.Contains("WatchLaterListMapper.Map(parsed.Value)"),
+                "source: watch later decodes through the shared parser and mapper");
+            Check(!watchLater.Contains("data.data[\"list\"]"),
+                "source: watch later no longer re-deserializes data.list");
+            Check(watchLater.Contains("Utils.ShowMessageToast(MediaListFailureText.For(parsed));"),
+                "source: the watch later VM publishes the parse result's category");
+            Check(!watchLater.Contains("public List<WatchlaterPagesModel> pages"),
+                "source: the unread pages field left the watch later model");
+
+            var center = ReadSource("src/BiliLite.UWP/Helpers/MessageCenter.cs");
+            Check(center.Contains("Utils.ShowMessageToast(MediaListFailureText.For(page));"),
+                "source: the link route publishes the category too");
+
+            var page = ReadSource("src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs");
+            Check(page.Contains("var message = MediaListFailureText.For(page);"),
+                "source: the detail page publishes the category from its fetch");
+            Check(!ReadSource("src/BiliLite.UWP/Services/MediaListService.cs").Contains("ShowMessageToast"),
+                "source: the service is not a publisher");
         }
 
         private static void ProjectEntries()
@@ -296,6 +377,24 @@ namespace C3Probe
             Check(csproj.Contains("Models\\MediaListResources.cs"), "source: the media list model is compiled by the UWP project");
             Check(csproj.Contains("Models\\VideoCollections.cs"), "source: the collection model is compiled by the UWP project");
         }
+
+        private static HttpResults Response(string body)
+        {
+            return new HttpResults() { results = body };
+        }
+
+        /// <summary>线上 playpage 首页的一条响应:两行、还有下一页、总数 3</summary>
+        private const string RoutePageJson = @"{""code"":0,""message"":""0"",""data"":{
+  ""media_list"": [
+    { ""id"": 2001, ""title"": ""第一集"", ""cover"": ""http://i0.hdslb.com/bfs/archive/r1.jpg"", ""upper"": { ""name"": ""UP一"" }, ""duration"": 60 },
+    { ""id"": 2002, ""title"": ""第二集"", ""cover"": ""http://i0.hdslb.com/bfs/archive/r2.jpg"", ""duration"": 61 }
+  ],
+  ""has_more"": true,
+  ""total_count"": 3
+}}";
+
+        /// <summary>同一个端点但没有 video 列表:签名接口靠这一条换未登录接口</summary>
+        private const string RouteNoListJson = @"{""code"":0,""message"":""0"",""data"":{""has_more"":false}}";
 
         private static MediaListResources Page1()
         {

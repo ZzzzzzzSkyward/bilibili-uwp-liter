@@ -29,35 +29,6 @@ namespace BiliLite.Api
         /// <param name="type">类型，1=视频，17=动态，11=图片，5=小视频，19=歌单，14=歌曲</param>
         /// <param name="ps">每页数量</param>
         /// <returns></returns>
-        public ApiModel Comment_New(string oid, CommentSort sort,int pn, int type, int ps = 30,string offsetStr=null)
-        {
-            string csrf = ApiHelper.GetCSRF(true);
-            var mode = sort == CommentSort.Hot ? 3 : 2;
-            var pagination = new
-            {
-                offset = offsetStr
-            };
-            var paginationStr = JsonConvert.SerializeObject(pagination);
-            ApiModel api = new ApiModel()
-            {
-                method = RestSharp.Method.Get,
-                baseUrl = $"{ApiHelper.API_BASE_URL}{ApiHelper.api2}{ApiHelper.readcomment}",
-                parameter = $"oid={oid}&ps={ps}&mode={mode}&type={type}&csrf={csrf}&pagination_str={paginationStr}",
-                need_cookie = !ApiHelper.need_refresh_cookie
-            };
-            //api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.AndroidKey);
-            return api;
-        }
-
-        /// <summary>
-        /// 读取评论
-        /// </summary>
-        /// <param name="oid">ID</param>
-        /// <param name="sort">1=最新，2=最热</param>
-        /// <param name="pn">页数</param>
-        /// <param name="type">类型，1=视频，17=动态，11=图片，5=小视频，19=歌单，14=歌曲</param>
-        /// <param name="ps">每页数量</param>
-        /// <returns></returns>
         public ApiModel Comment(string oid, CommentSort sort, int pn, int type, int ps = 30)
         {
             return new ApiModel()

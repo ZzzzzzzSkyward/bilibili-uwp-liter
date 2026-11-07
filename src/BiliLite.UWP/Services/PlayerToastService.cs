@@ -185,6 +185,10 @@ namespace BiliLite.Services
             }
         }
 
+        /// <summary>
+        /// key 对应的默认图标。图标本身已经说明这条提示是什么，
+        /// 所以文本只放值（时间、百分比），不再写“进度:/音量:/亮度:”。
+        /// </summary>
         private static EFontAwesomeIcon GetDefaultIcon(string key)
         {
             switch (key)

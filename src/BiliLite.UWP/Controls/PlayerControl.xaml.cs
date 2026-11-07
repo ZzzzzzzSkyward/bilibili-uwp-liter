@@ -34,10 +34,12 @@ using Windows.UI.Popups;
 using Windows.UI.Text;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Automation;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 
 //https://go.microsoft.com/fwlink/?LinkId=234236 上介绍了“用户控件”项模板
@@ -184,6 +186,56 @@ namespace BiliLite.Controls
         public event EventHandler AllMediaEndEvent;
 
         /// <summary>
+        /// 本视频的最后一个分P已经到顶,下一个目标由页面决定
+        /// </summary>
+        public event EventHandler NextOuterRequested;
+
+        /// <summary>
+        /// 已经在本视频的第一个分P上,上一个目标由页面决定
+        /// </summary>
+        public event EventHandler PreviousOuterRequested;
+
+        /// <summary>
+        /// 跳过本视频剩下的分P,直接换下一个视频
+        /// </summary>
+        public event EventHandler NextVideoRequested;
+
+        /// <summary>
+        /// 用户点了"目录"。普通窗口和全屏用同一个入口,开在哪由页面决定。
+        /// </summary>
+        public event EventHandler DirectoryRequested;
+
+        /// <summary>
+        /// 目录里激活了一行;播放由页面按连播顺序决定
+        /// </summary>
+        public event EventHandler<PlayDirectoryRowActivatedEventArgs> DirectoryRowRequested;
+
+        /// <summary>
+        /// 目录里点了"按合集连播"/"按播放列表连播";是否换来源由页面确认
+        /// </summary>
+        public event EventHandler<PlayDirectorySourceEventArgs> DirectorySourceRequested;
+
+        /// <summary>
+        /// 目录里换了浏览的分段。播放器只转发:换页签不改播放,也不改连播来源
+        /// </summary>
+        public event EventHandler<PlayDirectorySourceEventArgs> DirectoryScopeChanged;
+
+        /// <summary>
+        /// 目录里点了"加载更多"/"重试"。取页由页面执行,播放器只转发。
+        /// </summary>
+        public event EventHandler DirectoryLoadMoreRequested;
+
+        /// <summary>
+        /// 目录里点了"加载全部"。一页一页取完由页面执行,播放器只转发。
+        /// </summary>
+        public event EventHandler DirectoryLoadAllRequested;
+
+        /// <summary>
+        /// 目录里在"加载全部"跑着时点了"取消"
+        /// </summary>
+        public event EventHandler DirectoryCancelLoadAllRequested;
+
+        /// <summary>
         /// 切换剧集事件
         /// </summary>
 
@@ -203,6 +255,31 @@ namespace BiliLite.Controls
         /// 当前播放
         /// </summary>
         public PlayInfo CurrentPlayItem { get; set; }
+
+        // 页面报告的"下一个目标"文字;空表示外层没有下一个
+        private bool _hasOuterNextTarget;
+        // 正在把 CurrentPlayIndex 同步到选集列表:由此产生的 SelectionChanged 不是用户选集,不能再播一次
+        // 页面报告的可跳过剩余分P:有外层来源且本视频还有分P没播完
+        private bool _canSkipToNextVideo;
+        // 页面报告了目录,以及目录抽屉的开关状态(关门动画在跑时仍算开着)
+        private bool _directoryAvailable;
+        private readonly DirectoryDrawerMotion _directoryMotion = new DirectoryDrawerMotion(true);
+        private readonly UISettings _uiSettings = new UISettings();
+        // 当前在跑的抽屉故事板:换方向时先停掉,停掉的不会发完成回调
+        private Storyboard _directoryStoryboard;
+        // "目录"按钮按下反馈的故事板:目标固定,只建一次,每次点重放
+        private Storyboard _directoryPressStoryboard;
+        // 按下反馈正在跑:这时候再点要先停掉,不能把同一个故事板叠着 Begin
+        private bool _directoryPressRunning;
+        // 这一次关门的令牌,完成回调拿着它回来认领
+        private int _directoryCloseToken;
+        // 页面报告"正在换到某个目标":等待中"下一个"按钮变灰,提示仍然写着那个目标
+        private bool _transitionPending;
+        private string _pendingTargetText;
+        // 页面报告的下一个目标文字,等待结束后用来恢复按钮提示
+        private string _nextTargetText;
+        // "下一个视频"(跳过剩余分P)的右键/长按菜单,只在页面报告可跳过时挂上
+        private MenuFlyout _nextVideoFlyout;
 
         private readonly PlayerVM playerHelper;
         private readonly NSDanmaku.Helper.DanmakuParse danmakuParse;
@@ -225,10 +302,17 @@ namespace BiliLite.Controls
         private IDictionary<int, List<NSDanmaku.Model.DanmakuModel>> danmakuPool = new Dictionary<int, List<NSDanmaku.Model.DanmakuModel>>();
 
         private List<int> danmakuLoadedSegment;
+        /// <summary>当前这一集的弹幕已经跑过一次加载(成功或失败都算),第一次结果出来之前浮层保持藏。</summary>
+        private bool _danmakuLoadSettled;
+
+        /// <summary>池子里的弹幕属于哪一集:换集之后旧内容还不代表新内容,判定要先归零。</summary>
+        private PlayInfo _danmakuPoolItem;
         private SettingVM settingVM;
         private DisplayRequest dispRequest;
         private SystemMediaTransportControls _systemMediaTransportControls;
         private DispatcherTimer timer_focus;
+        /// <summary>播放中每 30s 记一次进度(本地位置 + 历史上报),关窗口不再丢掉看了一半的位置。</summary>
+        private DispatcherTimer _historyCheckpointTimer;
 
         public Player PlayerInstance
         { get { return Player; } }
@@ -244,6 +328,10 @@ namespace BiliLite.Controls
         private readonly LocalMediaAsyncLoadGuard _subtitleLoadGuard = new LocalMediaAsyncLoadGuard();
         private readonly LocalMediaAsyncLoadGuard _danmakuLoadGuard = new LocalMediaAsyncLoadGuard();
         private readonly HashSet<string> _enabledManifestDanmaku = new HashSet<string>(StringComparer.Ordinal);
+        // 播放器会话:每次打开媒体一个 id。关页/换P/换清晰度会把在飞的那次作废,它建出来还没接进播放器的资源在作废处释放
+        private readonly PlayerSessionState _playerSessions = new PlayerSessionState();
+        // 引擎回退重开:同一时刻只允许一个在飞,失败回调不能叠出第二次打开
+        private bool _engineFallbackRunning;
 
         private DisplayInformation displayInformation = DisplayInformation.GetForCurrentView();
 
@@ -263,6 +351,8 @@ namespace BiliLite.Controls
             danmuTimer = new DispatcherTimer();
             danmuTimer.Interval = TimeSpan.FromSeconds(1);
             danmuTimer.Tick += DanmuTimer_Tick;
+            _historyCheckpointTimer = new DispatcherTimer() { Interval = TimeSpan.FromSeconds(30) };
+            _historyCheckpointTimer.Tick += HistoryCheckpointTimer_Tick;
             this.Loaded += PlayerControl_Loaded;
             this.Unloaded += PlayerControl_Unloaded;
             gestureRecognizer = new GestureRecognizer();
@@ -276,6 +366,16 @@ namespace BiliLite.Controls
             {
                 BtnFoucs.Focus(FocusState.Programmatic);
             }
+        }
+
+        /// <summary>
+        /// 把焦点交还给播放器。页签头(PivotHeaderItem)会先吃掉空格键去切页签,
+        /// 换了视频之后焦点常留在页签头上,空格就再也到不了播放器 —— 页面换完视频要调这里。
+        /// 定时器那条路不能加页签头:它会从页签上抢走键盘切换。
+        /// </summary>
+        public void FocusPlayer()
+        {
+            BtnFoucs.Focus(FocusState.Programmatic);
         }
 
         private bool runing = false;
@@ -307,6 +407,8 @@ namespace BiliLite.Controls
 
         private void PlayerControl_Unloaded(object sender, RoutedEventArgs e)
         {
+            if (ReferenceEquals(_activeInstance, this))
+                _activeInstance = null;
             Window.Current.CoreWindow.PointerCursor = new Windows.UI.Core.CoreCursor(Windows.UI.Core.CoreCursorType.Arrow, 0);
             Window.Current.CoreWindow.KeyDown -= PlayerControl_KeyDown;
             if (_systemMediaTransportControls != null)
@@ -321,6 +423,7 @@ namespace BiliLite.Controls
 
         private void PlayerControl_Loaded(object sender, RoutedEventArgs e)
         {
+            _activeInstance = this;
             DanmuControl.ClearAll();
             Window.Current.CoreWindow.KeyDown += PlayerControl_KeyDown;
             BtnFoucs.Focus(FocusState.Programmatic);
@@ -406,6 +509,22 @@ namespace BiliLite.Controls
         private async void PlayerControl_KeyDown(CoreWindow sender, KeyEventArgs args)
         {
             var ele = FocusManager.GetFocusedElement();
+            // 目录抽屉开着:Esc 先清搜索框,词空了才关抽屉;方向键/回车留给列表浏览,
+            // 其余键一概让路(焦点在搜索框里时,这段也要排在下面那个文本框判断之前)
+            if (_directoryMotion.IsShown)
+            {
+                if (args.VirtualKey == Windows.System.VirtualKey.Escape)
+                {
+                    if (DirectoryDrawer.HasQuery) DirectoryDrawer.SetQuery("");
+                    else HideDirectory();
+                    args.Handled = true;
+                }
+                else
+                {
+                    args.Handled = false;
+                }
+                return;
+            }
             if (ele is TextBox || ele is AutoSuggestBox)
             {
                 args.Handled = false;
@@ -466,7 +585,7 @@ namespace BiliLite.Controls
                             }
                             if (step >= 1)
                             {
-                                playerToasts.Show(PlayerToastService.Progress, "进度:" + TimeSpan.FromSeconds(Player.Position).ToString(@"hh\:mm\:ss"));
+                                playerToasts.Show(PlayerToastService.Progress, TimeSpan.FromSeconds(Player.Position).ToString(@"hh\:mm\:ss"));
                             }
                         }
                     }
@@ -479,7 +598,8 @@ namespace BiliLite.Controls
                         Player.Volume += args.VirtualKey == Windows.System.VirtualKey.Up ? 0.1 : -0.1;
                         if (Player.Volume == 0)
                         {
-                            playerToasts.Show(PlayerToastService.Volume, "静音", EFontAwesomeIcon.Solid_VolumeMute);
+                            //静音图标本身就说明了状态，再写“静音”是多一遍
+                            playerToasts.Show(PlayerToastService.Volume, "", EFontAwesomeIcon.Solid_VolumeMute);
                         }
                         else
                         {
@@ -527,7 +647,7 @@ namespace BiliLite.Controls
                                 _position = Player.Duration;
                             }
                             Player.Position = _position;
-                            playerToasts.Show(PlayerToastService.Msg, "跳过OP(快进90秒)");
+                            playerToasts.Show(PlayerToastService.Msg, "跳过OP");
                         }
                     }
                     break;
@@ -552,13 +672,16 @@ namespace BiliLite.Controls
                 case (Windows.System.VirtualKey)188:
                     if (NoMod())
                     {
-                        if (EpisodeList.SelectedIndex == 0)
+                        // 换目标还在路上:上一个这一拍丢掉,与"下一个"同一条规矩
+                        if (_transitionPending) break;
+                        //还有分P就回上一P;第一个分P上的上一个交给页面,它可能换到上一个视频
+                        if (HasPreviousPart)
                         {
-                            Utils.ShowMessageToast("已经是第一P了");
+                            await SetPlayItem(CurrentPlayIndex - 1, PlayTargetStart.Resume);
                         }
                         else
                         {
-                            await SetPlayItem(EpisodeList.SelectedIndex - 1);
+                            PreviousOuterRequested?.Invoke(this, EventArgs.Empty);
                         }
                     }
                     break;
@@ -568,13 +691,16 @@ namespace BiliLite.Controls
                 case (Windows.System.VirtualKey)190:
                     if (NoMod())
                     {
-                        if (EpisodeList.SelectedIndex == EpisodeList.Items.Count - 1)
+                        // 换目标还在路上:下一个这一拍丢掉,不排队
+                        if (_transitionPending) break;
+                        //还有分P就换下一P;最后一P的下一个交给页面,它可能换到下一个视频
+                        if (HasNextPart)
                         {
-                            Utils.ShowMessageToast("已经是最后一P了");
+                            await SetPlayItem(CurrentPlayIndex + 1, PlayTargetStart.FromStart);
                         }
                         else
                         {
-                            await SetPlayItem(EpisodeList.SelectedIndex + 1);
+                            NextOuterRequested?.Invoke(this, EventArgs.Empty);
                         }
                     }
                     break;
@@ -922,26 +1048,375 @@ namespace BiliLite.Controls
             });
         }
 
-        public void InitializePlayInfo(List<PlayInfo> playInfos, int index)
+        public void InitializePlayInfo(List<PlayInfo> playInfos, int index, PlayTargetStart start)
         {
             //保持屏幕常亮
             dispRequest.RequestActive();
 
             PlayInfos = playInfos;
-            EpisodeList.ItemsSource = PlayInfos;
-            if (PlayInfos.Count > 1)
+            ApplySurfaceVisibility();
+            // 当前分P和开播位置只由 SetPlayItem 认:打开视频这一拍不是用户换集,
+            // 续播策略跟着页面传进来
+            _ = SetPlayItem(index, start);
+        }
+
+        /// <summary>
+        /// 页面报告顺序状态判定出的下一个/上一个目标。播放器只记文字和"下一个"按钮的可见性,
+        /// 既不取页、也不改页面的顺序状态;真正换集由页面收到事件后决定。
+        /// </summary>
+        public void UpdateSequenceInfo(string nextTargetText, string previousTargetText, bool canSkipToNextVideo)
+        {
+            _hasOuterNextTarget = !string.IsNullOrEmpty(nextTargetText);
+            _nextTargetText = nextTargetText;
+            if (canSkipToNextVideo != _canSkipToNextVideo)
             {
-                ShowPlaylistButton = true;
+                _canSkipToNextVideo = canSkipToNextVideo;
+                UpdateNextVideoMenu();
             }
-            else if (PlayInfos.Count == 1 && PlayInfos[0].is_interaction)
+            ApplyNextLabel();
+            UpdateBottomBtnNextVisibility();
+        }
+
+        /// <summary>
+        /// "下一个"按钮上的目标:等待中一直写着正在换的那一条,不因为别的重画把它顶掉;
+        /// 没有外层下一个时按钮只代表下一P
+        /// </summary>
+        private void ApplyNextLabel()
+        {
+            if (BottomBtnNext == null) return;
+            var nextName = _transitionPending && !string.IsNullOrEmpty(_pendingTargetText)
+                ? _pendingTargetText
+                : (_hasOuterNextTarget ? _nextTargetText : "下一P");
+            ToolTipService.SetToolTip(BottomBtnNext, nextName);
+            AutomationProperties.SetName(BottomBtnNext, nextName);
+        }
+
+        /// <summary>
+        /// 页面报告"正在换到某个目标":摆一个转圈加目标标题,并把"下一个"按钮变灰——
+        /// 等待中再按它不会有任何效果,不能让它看着还能按。目标标题原样显示,不加前缀。
+        /// </summary>
+        public void ShowTransitionPending(string targetTitle)
+        {
+            _transitionPending = true;
+            _pendingTargetText = targetTitle ?? "";
+            if (TransitionPendingText != null) TransitionPendingText.Text = _pendingTargetText;
+            if (TransitionPendingHost != null)
             {
-                ShowPlaylistButton = true;
+                TransitionPendingHost.Visibility = Visibility.Visible;
+                // 读屏读一次"正在切换 + 目标";画面上的文字仍然只有目标本身
+                AutomationProperties.SetName(TransitionPendingHost,
+                    string.IsNullOrEmpty(_pendingTargetText) ? "正在切换" : "正在切换 " + _pendingTargetText);
             }
-            else
+            if (BottomBtnNext != null) BottomBtnNext.IsEnabled = false;
+            ApplyNextLabel();
+        }
+
+        /// <summary>
+        /// 换目标结束(起播、失败或关页):收起等待态,按钮和提示回到页面报告的目标
+        /// </summary>
+        public void ClearTransitionPending()
+        {
+            _transitionPending = false;
+            _pendingTargetText = "";
+            if (TransitionPendingHost != null) TransitionPendingHost.Visibility = Visibility.Collapsed;
+            if (BottomBtnNext != null) BottomBtnNext.IsEnabled = true;
+            ApplyNextLabel();
+        }
+
+        /// <summary>
+        /// 页面报告目录是否可用,以及按钮上的短标签(合集 7/24 这种)。
+        /// 播放器只换标签和可见性,不自己判断有没有目录;没有位置时只留图标。
+        /// </summary>
+        public void UpdateDirectoryInfo(bool available, string caption)
+        {
+            _directoryAvailable = available;
+            if (BottomBtnDirectoryCaption != null)
             {
-                ShowPlaylistButton = false;
+                BottomBtnDirectoryCaption.Text = caption ?? "";
             }
-            EpisodeList.SelectedIndex = index;
+            if (BottomBtnDirectory != null)
+            {
+                BottomBtnDirectory.Visibility = available ? Visibility.Visible : Visibility.Collapsed;
+            }
+            // 目录没了就别把一个空的抽屉留在画面上
+            if (!available) HideDirectory();
+        }
+
+        /// <summary>
+        /// 在播放器内部打开目录抽屉。只装内容和显示抽屉:不停播、不跳进度、不改全屏/铺满。
+        /// 开门动画跑完之前抽屉就已经算打开,页面这期间推来的目录照样收得下。
+        /// </summary>
+        public void ShowDirectory(PlayDirectoryModel model)
+        {
+            if (model == null || !model.HasSections) return;
+            var wasOpen = _directoryMotion.IsShown;
+            var wasClosing = _directoryMotion.IsClosing;
+            DirectoryDrawer.SetModel(model);
+            _directoryMotion.AnimationsEnabled = _uiSettings.AnimationsEnabled;
+            // BeginOpen 会把还没回来的那次关门作废:它的完成回调再也不能把抽屉藏掉
+            var slide = _directoryMotion.BeginOpen();
+            DirectoryHost.Visibility = Visibility.Visible;
+            DirectoryScrim.Visibility = Visibility.Visible;
+            SetDirectoryButtonActive(true);
+            // 已经开着的抽屉只是换内容(重画、翻页、换分段),不再滑一次
+            if (wasOpen && !wasClosing) return;
+            if (slide) StartDirectoryStoryboard(true);
+            else SnapDirectoryOpen();
+            // 打开时定位一次;已经开着就只换内容,不抢滚动位置和焦点
+            if (wasOpen) return;
+            DirectoryDrawer.LocateCurrent();
+            DirectoryDrawer.FocusRows();
+        }
+
+        /// <summary>
+        /// 收起目录抽屉:有动画就跑关门动画,动画结束的回调里才真的藏;
+        /// 系统关掉动画时当场收起。焦点还给打开它的"目录"按钮
+        /// </summary>
+        public void HideDirectory()
+        {
+            // 已经在关的路上:等同一个回调收尾,不重启关门动画
+            if (!_directoryMotion.IsShown || _directoryMotion.IsClosing) return;
+            _directoryMotion.AnimationsEnabled = _uiSettings.AnimationsEnabled;
+            SetDirectoryButtonActive(false);
+            _directoryCloseToken = _directoryMotion.BeginClose();
+            if (_directoryMotion.IsClosing)
+            {
+                StartDirectoryStoryboard(false);
+                return;
+            }
+            FinishHideDirectory();
+        }
+
+        /// <summary>
+        /// 目录抽屉是否打开。关门动画还在跑时它仍占着画面,这里也算打开;
+        /// 页面据此决定要不要把重建好的目录推进来。
+        /// </summary>
+        public bool IsDirectoryVisible
+        {
+            get { return _directoryMotion.IsShown; }
+        }
+
+        /// <summary>
+        /// 真的把抽屉收掉:换成当场收起和关门动画结束都走这一条,不再各写一份
+        /// </summary>
+        private void FinishHideDirectory()
+        {
+            StopDirectoryStoryboard();
+            DirectoryHost.Visibility = Visibility.Collapsed;
+            DirectoryScrim.Visibility = Visibility.Collapsed;
+            DirectoryHostTranslate.TranslateX = DirectoryDrawerMotion.DrawerWidth;
+            DirectoryHost.Opacity = 0;
+            DirectoryScrim.Opacity = 0;
+            SetDirectoryButtonActive(false);
+            if (BottomBtnDirectory != null && BottomBtnDirectory.Visibility == Visibility.Visible)
+            {
+                BottomBtnDirectory.Focus(FocusState.Programmatic);
+            }
+        }
+
+        /// <summary>
+        /// 关掉系统动画时的打开:位置和透明度直接落到终点,不建故事板、不发令牌
+        /// </summary>
+        private void SnapDirectoryOpen()
+        {
+            StopDirectoryStoryboard();
+            DirectoryHostTranslate.TranslateX = 0;
+            DirectoryHost.Opacity = 1;
+            DirectoryScrim.Opacity = 1;
+        }
+
+        /// <summary>
+        /// 滑入/滑出:抽屉从右边 380 像素外滑进来,遮罩同时淡入;
+        /// 时长和位移都取 DirectoryDrawerMotion 的常量,probe 只认那一份
+        /// </summary>
+        private void StartDirectoryStoryboard(bool open)
+        {
+            StopDirectoryStoryboard();
+            var duration = TimeSpan.FromMilliseconds(open
+                ? DirectoryDrawerMotion.OpenDurationMilliseconds
+                : DirectoryDrawerMotion.CloseDurationMilliseconds);
+            var storyboard = new Storyboard();
+            var slide = new DoubleAnimation
+            {
+                From = open ? DirectoryDrawerMotion.DrawerWidth : 0,
+                To = open ? 0 : DirectoryDrawerMotion.DrawerWidth,
+                Duration = duration,
+                EasingFunction = new CubicEase { EasingMode = open ? EasingMode.EaseOut : EasingMode.EaseIn },
+            };
+            Storyboard.SetTarget(slide, DirectoryHostTranslate);
+            Storyboard.SetTargetProperty(slide, "TranslateX");
+            storyboard.Children.Add(slide);
+            var fade = new DoubleAnimation
+            {
+                From = open ? 0 : 1,
+                To = open ? 1 : 0,
+                Duration = duration,
+            };
+            Storyboard.SetTarget(fade, DirectoryHost);
+            Storyboard.SetTargetProperty(fade, "Opacity");
+            storyboard.Children.Add(fade);
+            var scrimFade = new DoubleAnimation
+            {
+                From = open ? 0 : 1,
+                To = open ? 1 : 0,
+                Duration = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ScrimFadeMilliseconds),
+            };
+            Storyboard.SetTarget(scrimFade, DirectoryScrim);
+            Storyboard.SetTargetProperty(scrimFade, "Opacity");
+            storyboard.Children.Add(scrimFade);
+            storyboard.FillBehavior = FillBehavior.HoldEnd;
+            _directoryStoryboard = storyboard;
+            if (open) storyboard.Completed += DirectoryOpenStoryboard_Completed;
+            else storyboard.Completed += DirectoryCloseStoryboard_Completed;
+            storyboard.Begin();
+        }
+
+        private void StopDirectoryStoryboard()
+        {
+            if (_directoryStoryboard == null) return;
+            _directoryStoryboard.Stop();
+            _directoryStoryboard.Completed -= DirectoryOpenStoryboard_Completed;
+            _directoryStoryboard.Completed -= DirectoryCloseStoryboard_Completed;
+            _directoryStoryboard = null;
+        }
+
+        private void DirectoryOpenStoryboard_Completed(object sender, object e)
+        {
+            // 开门途中又被关了:位置留给关门动画,这里别写回去
+            if (_directoryMotion.IsClosing) return;
+            DirectoryHostTranslate.TranslateX = 0;
+            DirectoryHost.Opacity = 1;
+            DirectoryScrim.Opacity = 1;
+        }
+
+        /// <summary>
+        /// 关门动画结束。只有"最近一次关门"的令牌能收掉抽屉:
+        /// 这期间用户又点开过,令牌就作废,抽屉留着。
+        /// </summary>
+        private void DirectoryCloseStoryboard_Completed(object sender, object e)
+        {
+            if (_directoryMotion.CompleteClose(_directoryCloseToken)) FinishHideDirectory();
+        }
+
+        /// <summary>
+        /// 抽屉开着时"目录"按钮挂底色,收起时摘掉
+        /// </summary>
+        private void SetDirectoryButtonActive(bool active)
+        {
+            if (BottomBtnDirectory == null) return;
+            var brush = Resources[active ? "DirectoryButtonActiveBrush" : "DirectoryButtonIdleBrush"] as SolidColorBrush;
+            if (brush != null) BottomBtnDirectory.Background = brush;
+        }
+
+        /// <summary>
+        /// "目录"按钮自己的按下反馈:内容缩一下再弹回,同时淡一下。点一次就闪一次,
+        /// 不受窗口模式影响,也不指望主题里的按下态在视频画面上看得出来
+        /// </summary>
+        private void PlayDirectoryButtonPress()
+        {
+            // 少一个目标就整段不发:动画没接住对象的故事板 Begin 会直接抛,后面的打开抽屉就再也走不到
+            if (BottomBtnDirectoryPress == null || BottomBtnDirectoryPressHost == null) return;
+            // 目标元素和时长在加载后都不变,故事板只建一次,每次点只重放
+            if (_directoryPressStoryboard == null)
+            {
+                var duration = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ButtonPressMilliseconds);
+                var half = TimeSpan.FromMilliseconds(DirectoryDrawerMotion.ButtonPressMilliseconds * 0.4);
+                var storyboard = new Storyboard { FillBehavior = FillBehavior.Stop };
+                // 缩放挂在 CompositeTransform 上,ScaleX/ScaleY 是它的属性
+                var scaleX = BuildPressFlash(duration, half, 0.88);
+                Storyboard.SetTarget(scaleX, BottomBtnDirectoryPress);
+                Storyboard.SetTargetProperty(scaleX, "ScaleX");
+                storyboard.Children.Add(scaleX);
+                var scaleY = BuildPressFlash(duration, half, 0.88);
+                Storyboard.SetTarget(scaleY, BottomBtnDirectoryPress);
+                Storyboard.SetTargetProperty(scaleY, "ScaleY");
+                storyboard.Children.Add(scaleY);
+                // 淡入淡出只能挂在 UIElement 上:Opacity 在内容面板,变换上没有这个属性
+                var fade = BuildPressFlash(duration, half, 0.55);
+                Storyboard.SetTarget(fade, BottomBtnDirectoryPressHost);
+                Storyboard.SetTargetProperty(fade, "Opacity");
+                storyboard.Children.Add(fade);
+                storyboard.Completed += DirectoryPressStoryboard_Completed;
+                _directoryPressStoryboard = storyboard;
+            }
+            // 上一次闪光还没跑完就又点:先停掉自己这一份再从头放,不能叠着 Begin
+            if (_directoryPressRunning)
+            {
+                _directoryPressStoryboard.Stop();
+                _directoryPressRunning = false;
+            }
+            _directoryPressRunning = true;
+            _directoryPressStoryboard.Begin();
+        }
+
+        /// <summary>
+        /// 闪光跑完了,下一次点就可以直接 Begin
+        /// </summary>
+        private void DirectoryPressStoryboard_Completed(object sender, object e)
+        {
+            _directoryPressRunning = false;
+        }
+
+        /// <summary>
+        /// 1 → low → 1 的闪光关键帧,按下反馈的缩放和淡出共用
+        /// </summary>
+        private static DoubleAnimationUsingKeyFrames BuildPressFlash(TimeSpan duration, TimeSpan half, double low)
+        {
+            var flash = new DoubleAnimationUsingKeyFrames { Duration = duration };
+            flash.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = TimeSpan.Zero, Value = 1 });
+            flash.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = half, Value = low });
+            flash.KeyFrames.Add(new LinearDoubleKeyFrame { KeyTime = duration, Value = 1 });
+            return flash;
+        }
+
+        /// <summary>
+        /// 遮罩上的点击只用来关抽屉,并且把这一下吃掉:
+        /// 底下的播放/暂停、双击全屏、显示控制条都收不到
+        /// </summary>
+        private void DirectoryScrim_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+            HideDirectory();
+        }
+
+        private void DirectoryScrim_DoubleTapped(object sender, DoubleTappedRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void DirectoryScrim_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        private void DirectoryScrim_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            e.Handled = true;
+        }
+
+        /// <summary>
+        /// 还有分P,或者页面报告了外层下一个目标时,"下一个"按钮才在
+        /// </summary>
+        private void UpdateBottomBtnNextVisibility()
+        {
+            if (BottomBtnNext == null) return;
+            BottomBtnNext.Visibility = HasNextPart || _hasOuterNextTarget ? Visibility.Visible : Visibility.Collapsed;
+        }
+
+        /// <summary>
+        /// 还有下一P。判定只认当前播放的这一P;选集列表的下标是它的镜像,不反过来当依据。
+        /// </summary>
+        private bool HasNextPart
+        {
+            get { return PlayInfos != null && CurrentPlayIndex >= 0 && CurrentPlayIndex < PlayInfos.Count - 1; }
+        }
+
+        /// <summary>
+        /// 还有上一P。第一个分P的"上一个"属于外层来源。
+        /// </summary>
+        private bool HasPreviousPart
+        {
+            get { return PlayInfos != null && CurrentPlayIndex > 0; }
         }
 
         private async void DanmuTimer_Tick(object sender, object e)
@@ -1044,7 +1519,7 @@ namespace BiliLite.Controls
             }
         }
 
-        private async Task SetPlayItem(int index)
+        private async Task SetPlayItem(int index, PlayTargetStart start)
         {
             ReleaseAcceleratingOverlay();
             if (PlayInfos == null || PlayInfos.Count == 0)
@@ -1056,12 +1531,15 @@ namespace BiliLite.Controls
             _danmakuLoadGuard.Invalidate();
             var itemGeneration = ++_playItemGeneration;
             ClearSubTitle();
+            // 换P/换视频:在飞的那次打开在这里作废,它挂着的资源当场释放,拿着旧会话回来的回调不再被认
+            _playerSessions.Invalidate();
             Player.ClosePlay();
             if (index >= PlayInfos.Count)
             {
                 index = PlayInfos.Count - 1;
             }
             CurrentPlayIndex = index;
+            // 分P列表在播放目录里,由目录自己跟随当前这一P;播放器只记下标
             var selectedPlayItem = PlayInfos[index];
             if (CurrentPlayItem == null || CurrentPlayItem.season_id != selectedPlayItem.season_id ||
                 CurrentPlayItem.ep_id != selectedPlayItem.ep_id || CurrentPlayItem.cid != selectedPlayItem.cid)
@@ -1071,6 +1549,8 @@ namespace BiliLite.Controls
             CurrentPlayItem = selectedPlayItem;
             _subtitleTicket = _subtitleLoadGuard.Begin(selectedPlayItem);
             _danmakuLoadGuard.Begin(selectedPlayItem);
+            // 换集:上一集的弹幕结果不再代表这一集,浮层重新判定
+            _danmakuLoadSettled = false;
             _enabledManifestDanmaku.Clear();
             if (selectedPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
             {
@@ -1078,11 +1558,6 @@ namespace BiliLite.Controls
                     if (track.Track.EnabledByDefault) _enabledManifestDanmaku.Add(track.Track.Id);
             }
             UpdateLocalTrackSelectors();
-            if (CurrentPlayItem.is_interaction)
-            {
-                ShowPlaylistButton = false;
-                ShowPlayNodeButton = true;
-            }
             //设置标题
             TopTitle.Text = CurrentPlayItem.title;
             if (_systemMediaTransportControls != null)
@@ -1094,14 +1569,7 @@ namespace BiliLite.Controls
             }
 
             //设置下一集按钮的显示
-            if (PlayInfos.Count >= 1 && index != PlayInfos.Count - 1)
-            {
-                BottomBtnNext.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                BottomBtnNext.Visibility = Visibility.Collapsed;
-            }
+            UpdateBottomBtnNextVisibility();
             ChangeEpisodeEvent?.Invoke(this, index);
 
             playUrlInfo = null;
@@ -1109,9 +1577,10 @@ namespace BiliLite.Controls
             //{
             //   // Player._ffmpegConfig.FFmpegOptions["referer"] = "https://www.bilibili.com/bangumi/play/ep" + CurrentPlayItem.ep_id;
             //}
-            if (SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_TO_POSITION, true))
+            // 开播位置由调用方明说:往前走的续播移动从 0 开始,只有"续播"才跳到保存的进度
+            if (PlayContinuationPolicy.RestoresPosition(start, SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_TO_POSITION, true)))
             {
-                _position = SettingHelper.GetValue<double>(CurrentPlayItem.season_id != 0 ? "ep" + CurrentPlayItem.ep_id : CurrentPlayItem.cid, 0);
+                _position = SettingHelper.GetValue<double>(HistoryKey(CurrentPlayItem), 0);
                 //减去两秒防止视频直接结束了
                 if (_position >= 2) _position -= 2;
             }
@@ -1427,21 +1896,22 @@ namespace BiliLite.Controls
             return grid;
         }
 
-        public void ChangePlayIndex(int index)
+        public void ChangePlayIndex(int index, PlayTargetStart start)
         {
+            // 页面请求换P和快捷键换P走同一条路径:当前分P只由 SetPlayItem 认,从哪开始播也由这里传下去
             ClearSubTitle();
             DanmuControl.ClearAll();
-            EpisodeList.SelectedIndex = index;
-        }
-
-        private async void EpisodeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (EpisodeList.SelectedItem == null)
+            //选集列表不接受的下标也不起播,和原来直接设 SelectedIndex 的越界表现一致
+            if (PlayInfos == null || index < 0 || index >= PlayInfos.Count)
             {
                 return;
             }
-            DanmuControl.ClearAll();
-            await SetPlayItem(EpisodeList.SelectedIndex);
+            //选中的就是正在播的这一P:清掉字幕弹幕即可,不重播(与选集列表下标没变时不播一致)
+            if (index == CurrentPlayIndex)
+            {
+                return;
+            }
+            _ = SetPlayItem(index, start);
         }
 
         private async void NodeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1485,7 +1955,6 @@ namespace BiliLite.Controls
         {
             var localInfo = CurrentPlayItem?.LocalPlayInfo;
             var isManifest = localInfo?.IsManifestPlayback == true;
-            LocalTracksPivot.Visibility = isManifest ? Visibility.Visible : Visibility.Collapsed;
             _updatingLocalTrackSelectors = true;
             try
             {
@@ -1501,6 +1970,8 @@ namespace BiliLite.Controls
             {
                 _updatingLocalTrackSelectors = false;
             }
+            // 轨道列表就是判定要的信号:本地轨道全没有,本地轨道标签一起收掉
+            ApplySurfaceVisibility();
         }
 
         private async void LocalVideoTrackSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1534,7 +2005,6 @@ namespace BiliLite.Controls
             _localTrackSwitching = true;
             LocalVideoTrackSelector.IsEnabled = false;
             LocalAudioTrackSelector.IsEnabled = false;
-            EpisodeList.IsEnabled = false;
             BottomBtnNext.IsEnabled = false;
             try
             {
@@ -1595,7 +2065,6 @@ namespace BiliLite.Controls
                 _localTrackSwitching = false;
                 LocalVideoTrackSelector.IsEnabled = true;
                 LocalAudioTrackSelector.IsEnabled = true;
-                EpisodeList.IsEnabled = true;
                 BottomBtnNext.IsEnabled = true;
                 UpdateLocalTrackSelectors();
             }
@@ -1620,6 +2089,10 @@ namespace BiliLite.Controls
         private double _position = 0;
         private bool _autoPlay = false;
         private bool _hasPlayedCurrentItem = false;
+        /// <summary>一次检查点还没回来(慢 POST)时,下一次 tick 直接跳过,不叠加请求。</summary>
+        private bool _historyCheckpointRunning = false;
+        /// <summary>正在显示的播放器实例:App 退出/挂起时从这里 flush 一次进度。</summary>
+        private static PlayerControl _activeInstance;
 
         /// <summary>
         /// The comments the player already holds, oldest first, for the danmaku list. Reads the
@@ -1667,6 +2140,8 @@ namespace BiliLite.Controls
         {
             var loadingItem = CurrentPlayItem;
             var loadingTicket = 0;
+            // 这次加载的结果还没出来:在它回来之前,入口不能凭上一集的结论站着
+            _danmakuLoadSettled = false;
             try
             {
                 if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
@@ -1674,6 +2149,7 @@ namespace BiliLite.Controls
                     var item = CurrentPlayItem;
                     var generation = loadingTicket = _danmakuLoadGuard.Begin(item);
                     danmakuPool = new Dictionary<int, List<DanmakuModel>>();
+                    _danmakuPoolItem = item;
                     DanmuControl.ClearAll();
                     TxtDanmuCount.Text = "0";
                     var tracks = (CurrentPlayItem.LocalPlayInfo.DanmakuFiles ?? new List<LocalMediaPlaybackTrack>())
@@ -1683,6 +2159,7 @@ namespace BiliLite.Controls
                         list =>
                         {
                             danmakuPool = list.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
+                            _danmakuPoolItem = item;
                             danmakuLoadedSegment = new List<int>();
                             TxtDanmuCount.Text = list.Count.ToString();
                         });
@@ -1705,6 +2182,7 @@ namespace BiliLite.Controls
                     }, danmuList =>
                     {
                         danmakuPool = danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
+                        _danmakuPoolItem = loadingItem;
                         TxtDanmuCount.Text = danmuList.Count.ToString();
                     });
                 }
@@ -1737,6 +2215,15 @@ namespace BiliLite.Controls
                     (loadingItem?.LocalPlayInfo?.IsManifestPlayback != true || _danmakuLoadGuard.IsCurrent(loadingTicket, loadingItem)))
                     Utils.ShowMessageToast("弹幕加载失败");
             }
+            finally
+            {
+                // 这一集的第一份结果出来了(有弹幕、空弹幕、读失败都算):弹幕列表入口跟着改
+                if (ReferenceEquals(loadingItem, CurrentPlayItem))
+                {
+                    _danmakuLoadSettled = true;
+                    ApplySurfaceVisibility();
+                }
+            }
         }
 
         private async void ManifestDanmakuTrack_Click(object sender, RoutedEventArgs e)
@@ -1766,6 +2253,9 @@ namespace BiliLite.Controls
 
         private async Task LoadDanmaku(int segmentIndex)
         {
+            // 这次加载认的是哪一集:在 try 外面就定下来,finally 里的重判要用它(当前可能已经换集)
+            var requestedItem = CurrentPlayItem;
+            var requestedGeneration = _playItemGeneration;
             try
             {
                 if (CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true) return;
@@ -1774,10 +2264,10 @@ namespace BiliLite.Controls
                 if (segmentIndex <= 1)
                 {
                     danmakuPool.Clear();
+                    // 池子从这一刻起只装这一集的弹幕,判定才敢按条数说话
+                    _danmakuPoolItem = requestedItem;
                     segmentIndex = 1;
                 }
-                var requestedItem = CurrentPlayItem;
-                var requestedGeneration = _playItemGeneration;
                 var danmuList = await playerHelper.GetDanmaku(requestedItem.cid, segmentIndex);
                 if (!ReferenceEquals(requestedItem, CurrentPlayItem) || requestedGeneration != _playItemGeneration) return;
                 foreach (var item in danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList()))
@@ -1808,6 +2298,8 @@ namespace BiliLite.Controls
             finally
             {
                 loadingDanmaku = false;
+                // 分段补弹幕也会把空列表补成有内容,顺带重判一次
+                if (ReferenceEquals(requestedItem, CurrentPlayItem)) ApplySurfaceVisibility();
             }
         }
 
@@ -1830,7 +2322,10 @@ namespace BiliLite.Controls
             }
 
             var qn = SettingHelper.GetValue<int>(SettingHelper.Player.DEFAULT_QUALITY, 80);
-            var info = await playerHelper.GetPlayUrls(CurrentPlayItem, qn);
+            var requestedItem = CurrentPlayItem;
+            var info = await playerHelper.GetPlayUrls(requestedItem, qn);
+            // 取地址的这段时间里换了P/换了视频:这一份地址属于上一次播放,不再采用也不去改清晰度下拉
+            if (!ReferenceEquals(CurrentPlayItem, requestedItem)) return;
 
             if (info.Success)
             {
@@ -1840,7 +2335,8 @@ namespace BiliLite.Controls
                 BottomCBQuality.SelectedItem = info.CurrentQuality;
                 //SettingHelper.SetValue<int>(SettingHelper.Player.DEFAULT_QUALITY, info.data.current.quality);
                 BottomCBQuality.SelectionChanged += BottomCBQuality_SelectionChanged;
-                ChangeQuality(info.CurrentQuality);
+                // 等这次打开收尾:不等的话 SetPlayItem 会踩着这次打开去读播放信息
+                await ChangeQuality(info.CurrentQuality);
             }
             else
             {
@@ -1856,6 +2352,7 @@ namespace BiliLite.Controls
                 result = false
             };
             var info = CurrentPlayItem.LocalPlayInfo.Info;
+            var session = _playerSessions.Begin(PlayerSessionReason.LocalOpen);
             if (info.PlayUrlType == BiliPlayUrlType.DASH)
             {
                 //如果设置是系统播放器则优先系统
@@ -1863,20 +2360,22 @@ namespace BiliLite.Controls
                 var hasExternalAudio = CurrentPlayItem.LocalPlayInfo.IsManifestPlayback && CurrentPlayItem.LocalPlayInfo.SelectedAudioTrack != null;
                 if (priority && !hasExternalAudio)
                 {
-                    result = await Player.PlayDashUseNative(info.DashInfo, "", "", position: _position, isLocal: true);
+                    result = await Player.PlayDashUseNative(info.DashInfo, "", "", position: _position, isLocal: true, session: session);
                 }
+                // 会话在等待里被取代了(换P/关页):这一次的后续,包括换解码器回退,一律不做
+                if (!session.IsCurrent) return result;
                 if (!result.result)
-                    result = await Player.PlayDashUseFFmpegInterop(info.DashInfo, "", "", positon: _position, isLocal: true);
+                    result = await Player.PlayDashUseFFmpegInterop(info.DashInfo, "", "", positon: _position, isLocal: true, session: session);
             }
             else if (CurrentPlayItem.LocalPlayInfo.Info.PlayUrlType == BiliPlayUrlType.SingleFLV)
             {
-                result = await Player.PlayerSingleMp4UseNativeAsync(info.FlvInfo.First().Url, positon: _position, isLocal: true);
+                result = await Player.PlayerSingleMp4UseNativeAsync(info.FlvInfo.First().Url, positon: _position, isLocal: true, session: session);
             }
             else if (CurrentPlayItem.LocalPlayInfo.Info.PlayUrlType == BiliPlayUrlType.MultiFLV)
             {
-                //TODO 本地播放
-                result = await Player.PlayVideoUseSYEngine(info.FlvInfo, "", "", positon: _position, epId: CurrentPlayItem.ep_id, isLocal: true);
+                result = await Player.PlayVideoUseSYEngine(info.FlvInfo, "", "", positon: _position, epId: CurrentPlayItem.ep_id, isLocal: true, session: session);
             }
+            if (!session.IsCurrent) return result;
             if (result.result)
             {
                 VideoLoading.Visibility = Visibility.Collapsed;
@@ -1885,6 +2384,8 @@ namespace BiliLite.Controls
             }
             else
             {
+                // 这次打开没成:它建出来还挂着的东西在这里释放一次
+                session.Release();
                 if (CurrentPlayItem.LocalPlayInfo.IsManifestPlayback)
                 {
                     LogHelper.Log("Local media playback failed; stage=player-open; collectionId=" +
@@ -2016,7 +2517,6 @@ namespace BiliLite.Controls
                     interactionVideoVM = new InteractionVideoVM(CurrentPlayItem.avid, player_info.interaction.graph_version);
                     NodeList.DataContext = interactionVideoVM;
                     InteractionChoices.DataContext = interactionVideoVM;
-                    ShowPlaylistButton = false;
                     await interactionVideoVM.GetNodes();
                     TopTitle.Text = interactionVideoVM.Select.title;
                 }
@@ -2035,16 +2535,21 @@ namespace BiliLite.Controls
                 return;
             }
             current_quality_info = quality;
+            var session = _playerSessions.Begin(PlayerSessionReason.QualityChange);
             if (!quality.HasPlayUrl)
             {
                 var info = await playerHelper.GetPlayUrls(CurrentPlayItem, quality.QualityID);
+                // 取地址的这段时间里换了P/换了清晰度:这一份地址不再采用,也不弹它失败的提示
+                if (!session.IsCurrent) return;
                 if (!info.Success)
                 {
+                    session.Release();
                     ShowDialog(info.Message, "切换清晰度失败");
                     return;
                 }
                 if (!info.CurrentQuality.HasPlayUrl)
                 {
+                    session.Release();
                     ShowDialog("无法读取到播放地址，试试换个清晰度?", "播放失败");
                     return;
                 }
@@ -2059,7 +2564,9 @@ namespace BiliLite.Controls
                 var audio = quality.DashInfo.Audio;
                 var video = quality.DashInfo.Video;
 
-                result = await Player.PlayDashUseNative(quality.DashInfo, quality.UserAgent, quality.Referer, position: _position, isLocal: false);
+                result = await Player.PlayDashUseNative(quality.DashInfo, quality.UserAgent, quality.Referer, position: _position, isLocal: false, session: session);
+                // 会话在等待里被取代了:这一次的地址属于上一次播放,后面换 FFmpeg 回退也不该做
+                if (!session.IsCurrent) return;
 
                 if (!result.result)
                 {
@@ -2079,7 +2586,7 @@ namespace BiliLite.Controls
                         VideoWidth = video.Width,
                         VideoUrl = video.Url,
                     });
-                    result = await Player.PlayDashUrlUseFFmpegInterop(mpd_url, quality.UserAgent, quality.Referer, positon: _position);
+                    result = await Player.PlayDashUrlUseFFmpegInterop(mpd_url, quality.UserAgent, quality.Referer, positon: _position, session: session);
                     //result = await Player.PlayDashUseFFmpegInterop(quality.playUrlInfo.dash_video_url, quality.playUrlInfo.dash_audio_url, quality.HttpHeader, positon: _postion);
                     //if (!result.result)
                     //{
@@ -2089,10 +2596,11 @@ namespace BiliLite.Controls
             }
             else if (quality.PlayUrlType == BiliPlayUrlType.SingleFLV)
             {
-                result = await Player.PlaySingleFlvUseSYEngine(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id);
+                result = await Player.PlaySingleFlvUseSYEngine(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id, session: session);
+                if (!session.IsCurrent) return;
                 if (!result.result)
                 {
-                    result = await Player.PlaySingleFlvUseFFmpegInterop(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _position);
+                    result = await Player.PlaySingleFlvUseFFmpegInterop(quality.FlvInfo.First().Url, quality.UserAgent, quality.Referer, positon: _position, session: session);
                 }
             }
             //else if (quality.PlayUrlType == VideoPlayMode.SingleMp4)
@@ -2105,8 +2613,10 @@ namespace BiliLite.Controls
             //}
             else if (quality.PlayUrlType == BiliPlayUrlType.MultiFLV)
             {
-                result = await Player.PlayVideoUseSYEngine(quality.FlvInfo, quality.UserAgent, quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id);
+                result = await Player.PlayVideoUseSYEngine(quality.FlvInfo, quality.UserAgent, quality.Referer, positon: _position, epId: CurrentPlayItem.ep_id, session: session);
             }
+            // 会话在等待里被取代了:这一次的结果既不改界面也不弹错误
+            if (!session.IsCurrent) return;
             if (result.result)
             {
                 //var text = $"AID:{CurrentPlayItem.avid}\r\nCID:{CurrentPlayItem.cid}\r\nSeasonID:{CurrentPlayItem.season_id}\r\n";
@@ -2115,6 +2625,8 @@ namespace BiliLite.Controls
             }
             else
             {
+                // 这次打开没成:它建出来还挂着的东西在这里释放一次
+                session.Release();
                 ShowErrorDialog(result.message + "[ChangeQuality]");
             }
         }
@@ -2248,15 +2760,6 @@ namespace BiliLite.Controls
 
         #endregion 全屏处理
 
-        public bool ShowPlaylistButton
-        {
-            get { return (bool)GetValue(ShowPlaylistButtonProperty); }
-            set { SetValue(ShowPlaylistButtonProperty, value); }
-        }
-
-        public static readonly DependencyProperty ShowPlaylistButtonProperty =
-            DependencyProperty.Register("ShowPlaylistButton", typeof(bool), typeof(PlayerControl), new PropertyMetadata(false));
-
         public bool ShowPlayNodeButton
         {
             get { return (bool)GetValue(ShowPlayNodeButtonProperty); }
@@ -2265,6 +2768,92 @@ namespace BiliLite.Controls
 
         public static readonly DependencyProperty ShowPlayNodeButtonProperty =
             DependencyProperty.Register("ShowPlayNodeButton", typeof(bool), typeof(PlayerControl), new PropertyMetadata(false));
+
+        /// <summary>本集有没有弹幕可以列:没有就不显示弹幕列表按钮。</summary>
+        public bool ShowDanmakuListButton
+        {
+            get { return (bool)GetValue(ShowDanmakuListButtonProperty); }
+            set { SetValue(ShowDanmakuListButtonProperty, value); }
+        }
+
+        public static readonly DependencyProperty ShowDanmakuListButtonProperty =
+            DependencyProperty.Register("ShowDanmakuListButton", typeof(bool), typeof(PlayerControl), new PropertyMetadata(false));
+
+        /// <summary>
+        /// 把播放器已经有的信号凑成一份判定输入:选集数量、互动、本地轨道、已加载弹幕、本地弹幕文件。
+        /// 判定在 PlayerSurfaceVisibility 里,这里只取数,不自己算去留。
+        /// </summary>
+        private PlayerSurfaceSignals BuildSurfaceSignals()
+        {
+            var item = CurrentPlayItem;
+            var localInfo = item?.LocalPlayInfo;
+            return new PlayerSurfaceSignals
+            {
+                PlaylistCount = PlayInfos?.Count ?? 0,
+                IsInteraction = item?.is_interaction == true,
+                VideoTrackCount = localInfo?.VideoTracks?.Count ?? 0,
+                AudioTrackCount = localInfo?.AudioTracks?.Count ?? 0,
+                SubtitleTrackCount = localInfo?.SubtitleTracks?.Count ?? 0,
+                DanmakuTrackCount = localInfo?.DanmakuTracks?.Count ?? 0,
+                // 池子里的东西还得是这一集的:换集之后旧内容不算新内容的弹幕
+                DanmakuRowCount = ReferenceEquals(item, _danmakuPoolItem) ? CountLoadedDanmaku() : 0,
+                // 下载自带的弹幕文件,或者合集里开着的弹幕轨道:都算本地有一个弹幕来源
+                HasLocalDanmakuFile = !string.IsNullOrEmpty(localInfo?.DanmakuPath) || _enabledManifestDanmaku.Count > 0,
+                DanmakuLoadSettled = _danmakuLoadSettled,
+            };
+        }
+
+        /// <summary>已经挂在播放器里的弹幕条数,按槽位数出来,不复制。</summary>
+        private int CountLoadedDanmaku()
+        {
+            var pool = danmakuPool;
+            if (pool == null) return 0;
+            var count = 0;
+            foreach (var group in pool)
+            {
+                if (group.Value != null) count += group.Value.Count;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// 判定一次,落到控件上:两个按钮走原来的依赖属性,弹幕列表走它自己的依赖属性,
+        /// 两个标签走可见性。藏掉就收位置,不留洞。
+        /// </summary>
+        private void ApplySurfaceVisibility()
+        {
+            var verdict = PlayerSurfaceVisibility.Decide(BuildSurfaceSignals());
+            if (ShowPlayNodeButton != verdict.ShowPlayNodeButton) ShowPlayNodeButton = verdict.ShowPlayNodeButton;
+            if (ShowDanmakuListButton != verdict.ShowDanmakuList) ShowDanmakuListButton = verdict.ShowDanmakuList;
+            if (NodePivot != null)
+            {
+                NodePivot.Visibility = verdict.ShowNodePivot ? Visibility.Visible : Visibility.Collapsed;
+            }
+            if (LocalTracksPivot != null)
+            {
+                LocalTracksPivot.Visibility = verdict.ShowLocalTracksPivot ? Visibility.Visible : Visibility.Collapsed;
+            }
+            EnsurePivotSelectionVisible();
+        }
+
+        /// <summary>刚被藏起来的标签不能还停在选中位置:退回弹幕标签,再不行退到第一个看得见的。</summary>
+        private void EnsurePivotSelectionVisible()
+        {
+            if (SettingPivot == null || SettingPivot.Items.Count == 0) return;
+            var visible = new List<bool>(SettingPivot.Items.Count);
+            foreach (var entry in SettingPivot.Items)
+            {
+                visible.Add(entry is PivotItem pivotItem && pivotItem.Visibility == Visibility.Visible);
+            }
+            var fallback = DanmakuPivot == null
+                ? PlayerSurfaceVisibility.NoVisiblePivot
+                : SettingPivot.Items.IndexOf(DanmakuPivot);
+            var target = PlayerSurfaceVisibility.ResolvePivotSelection(visible, SettingPivot.SelectedIndex, fallback);
+            if (target >= 0 && target != SettingPivot.SelectedIndex)
+            {
+                SettingPivot.SelectedIndex = target;
+            }
+        }
 
         private bool _buffering = false;
 
@@ -2426,7 +3015,6 @@ namespace BiliLite.Controls
                 //slider_V.Value += d;
             }
             playerToasts.Show(PlayerToastService.Volume, PlayerToastOverlay.FormatVolume(Player.Volume));
-            //Utils.ShowMessageToast("音量:" +  mediaElement.MediaPlayer.Volume.ToString("P"), 3000);
         }
 
         private void HandleSlideBrightnessDelta(double delta)
@@ -2440,7 +3028,7 @@ namespace BiliLite.Controls
             {
                 Brightness = Math.Max(Brightness - dd, 0);
             }
-            playerToasts.Show(PlayerToastService.Brightness, "亮度:" + Math.Abs(Brightness - 1).ToString("P"));
+            playerToasts.Show(PlayerToastService.Brightness, PlayerToastOverlay.FormatPercent(Math.Abs(Brightness - 1)));
         }
 
         private double _brightness = 0;
@@ -2599,6 +3187,15 @@ namespace BiliLite.Controls
         private void Grid_PointerReleased(object sender, PointerRoutedEventArgs e)
         {
             var pointerUpdateKind = e.GetCurrentPoint(sender as UIElement).Properties.PointerUpdateKind;
+            // 后退键/中键先关目录抽屉,退出全屏等留给下一次按键
+            if (_directoryMotion.IsShown
+                && (pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.XButton1Released
+                    || pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.MiddleButtonReleased))
+            {
+                HideDirectory();
+                e.Handled = true;
+                return;
+            }
             if (SettingHelper.GetValue<bool>(SettingHelper.UI.MOUSE_BACK, true)
                 && (pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.XButton1Released
                     || pointerUpdateKind == Windows.UI.Input.PointerUpdateKind.MiddleButtonReleased))
@@ -2612,25 +3209,22 @@ namespace BiliLite.Controls
             }
         }
 
-        private void BottomBtnList_Click(object sender, RoutedEventArgs e)
-        {
-            NodeList.Visibility = Visibility.Collapsed;
-            EpisodeList.Visibility = Visibility.Visible;
-            SettingPivot.SelectedIndex = 0;
-            SplitView.IsPaneOpen = true;
-        }
-
         private void BottomBtnNode_Click(object sender, RoutedEventArgs e)
         {
             NodeList.Visibility = Visibility.Visible;
-            EpisodeList.Visibility = Visibility.Collapsed;
-            SettingPivot.SelectedIndex = 0;
+            // 标签按名字找:前两个标签会在没有内容时收掉,写死的下标迟早对不上
+            SettingPivot.SelectedIndex = SettingPivot.Items.IndexOf(NodePivot);
             SplitView.IsPaneOpen = true;
         }
 
         private void TopBtnMore_Click(object sender, RoutedEventArgs e)
         {
-            SettingPivot.SelectedIndex = CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true ? 1 : 3;
+            var target = CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true ? LocalTracksPivot : PlaybackPivot;
+            var index = SettingPivot.Items.IndexOf(target);
+            if (index >= 0 && target.Visibility == Visibility.Visible)
+            {
+                SettingPivot.SelectedIndex = index;
+            }
             SplitView.IsPaneOpen = true;
         }
 
@@ -2670,9 +3264,91 @@ namespace BiliLite.Controls
             }
         }
 
-        private void BottomBtnNext_Click(object sender, RoutedEventArgs e)
+        private async void BottomBtnNext_Click(object sender, RoutedEventArgs e)
         {
-            EpisodeList.SelectedIndex = EpisodeList.SelectedIndex + 1;
+            // 换目标还在路上:这一按不生效,也不能让它把等待中的那一步顶掉
+            if (_transitionPending) return;
+            //还有分P就先换分P;最后一P把机会交给页面,它可能换到下一个视频
+            if (HasNextPart)
+            {
+                //原来是借选集列表的事件换P,那里会先清掉上一P的弹幕;现在直接换,这一手照旧
+                DanmuControl.ClearAll();
+                await SetPlayItem(CurrentPlayIndex + 1, PlayTargetStart.FromStart);
+                return;
+            }
+            NextOuterRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// "下一个"按钮的右键/长按菜单:只有页面报告可跳过剩余分P时才挂上"下一个视频",
+        /// 菜单本身就是这个动作的发现入口,不再靠隐藏的右键手势
+        /// </summary>
+        private void UpdateNextVideoMenu()
+        {
+            if (!_canSkipToNextVideo)
+            {
+                BottomBtnNext.ContextFlyout = null;
+                return;
+            }
+            if (_nextVideoFlyout == null)
+            {
+                _nextVideoFlyout = new MenuFlyout();
+                var item = new MenuFlyoutItem() { Text = "下一个视频" };
+                item.Click += NextVideoMenuItem_Click;
+                _nextVideoFlyout.Items.Add(item);
+            }
+            BottomBtnNext.ContextFlyout = _nextVideoFlyout;
+        }
+
+        /// <summary>
+        /// 菜单里的"下一个视频":跳过剩下的分P,直接换外层来源的下一条
+        /// </summary>
+        private void NextVideoMenuItem_Click(object sender, RoutedEventArgs e)
+        {
+            NextVideoRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void BottomBtnDirectory_Click(object sender, RoutedEventArgs e)
+        {
+            if (!_directoryAvailable) return;
+            // 点一次闪一次:这一下不管是开抽屉还是切详情页,按钮自己都有回应
+            PlayDirectoryButtonPress();
+            DirectoryRequested?.Invoke(this, EventArgs.Empty);
+        }
+
+        private void DirectoryDrawer_RowActivated(object sender, PlayDirectoryRowActivatedEventArgs e)
+        {
+            DirectoryRowRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_ContinuationSourceRequested(object sender, PlayDirectorySourceEventArgs e)
+        {
+            DirectorySourceRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_ScopeChanged(object sender, PlayDirectorySourceEventArgs e)
+        {
+            DirectoryScopeChanged?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_LoadMoreRequested(object sender, EventArgs e)
+        {
+            DirectoryLoadMoreRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_LoadAllRequested(object sender, EventArgs e)
+        {
+            DirectoryLoadAllRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_CancelLoadAllRequested(object sender, EventArgs e)
+        {
+            DirectoryCancelLoadAllRequested?.Invoke(this, e);
+        }
+
+        private void DirectoryDrawer_CloseRequested(object sender, EventArgs e)
+        {
+            HideDirectory();
         }
 
         private void KeepScreenOn(bool value = true)
@@ -2696,6 +3372,88 @@ namespace BiliLite.Controls
             }
         }
 
+        /// <summary>
+        /// 进度的本地存储键:番剧按分集,普通视频按 cid。Dispose、30s 检查点、关闭时的 flush 共用这一个。
+        /// </summary>
+        private static string HistoryKey(PlayInfo item)
+        {
+            return item.season_id != 0 ? "ep" + item.ep_id : item.cid;
+        }
+
+        /// <summary>
+        /// 记一次进度:本地位置当场写,需要时再上报一次历史。永不抛出——网络问题不能把播放带崩。
+        /// </summary>
+        /// <param name="report">是否上报历史;暂停那次只存位置。</param>
+        /// <param name="reportWhilePaused">关窗口/挂起那次为真:暂停着被关掉也要把最后位置报上去(播完除外)。</param>
+        private async Task CheckpointHistoryAsync(bool report, bool reportWhilePaused = false)
+        {
+            if (_historyCheckpointRunning) return;
+            if (CurrentPlayItem == null || !_hasPlayedCurrentItem) return;
+            // 从这里开始占住判定:慢 POST 没回来之前,下一次 tick 不叠加
+            _historyCheckpointRunning = true;
+            try
+            {
+                var item = CurrentPlayItem;
+                if (item.LocalPlayInfo?.IsManifestPlayback == true) return;
+                var position = Player.Position;
+                if (position < 5) return;
+                SettingHelper.SetValue<double>(HistoryKey(item), position);
+                if (!report) return;
+                // 本地文件没有 avid,报上去只会在服务端失败:位置照存,历史不报
+                if (string.IsNullOrEmpty(item.avid)) return;
+                var reportable = reportWhilePaused ? Player.PlayState != PlayState.End : Player.PlayState == PlayState.Playing;
+                if (!reportable) return;
+                await playerHelper.ReportHistory(item, position, reportErrors: false);
+            }
+            catch (Exception)
+            {
+                // 检查点失败就算了:位置下次还会写,上报的失败由静默上报自己记着
+            }
+            finally
+            {
+                _historyCheckpointRunning = false;
+            }
+        }
+
+        private async void HistoryCheckpointTimer_Tick(object sender, object e)
+        {
+            await CheckpointHistoryAsync(report: true);
+        }
+
+        /// <summary>暂停时补存位置,不上报。</summary>
+        private async void SaveHistoryCheckpoint()
+        {
+            await CheckpointHistoryAsync(report: false);
+        }
+
+        private async Task FlushPlaybackAsync()
+        {
+            await CheckpointHistoryAsync(report: true, reportWhilePaused: true);
+        }
+
+        private async void FlushPlayback()
+        {
+            await FlushPlaybackAsync();
+        }
+
+        /// <summary>
+        /// 挂起/退出前把当前进度存下来并上报一次(报告一次当前位置)。没有正在显示的播放器或还没播过就什么都不做。
+        /// </summary>
+        public static async Task FlushActivePlaybackAsync()
+        {
+            var player = _activeInstance;
+            if (player == null) return;
+            await player.FlushPlaybackAsync();
+        }
+
+        /// <summary>同步版 flush:位置当场写,上报丢到后台。给不能 await 的退出路径用。</summary>
+        public static void FlushActivePlayback()
+        {
+            var player = _activeInstance;
+            if (player == null) return;
+            player.FlushPlayback();
+        }
+
         private void Player_PlayStateChanged(object sender, PlayState e)
         {
             if (CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true)
@@ -2706,6 +3464,8 @@ namespace BiliLite.Controls
             if (e == PlayState.Playing)
             {
                 _hasPlayedCurrentItem = true;
+                // 一开始播就把 30s 检查点挂上:关窗口前的每一次 tick 都是一次可恢复的落点
+                _historyCheckpointTimer?.Start();
             }
             BottomImageBtnPlay.Visibility = Visibility.Collapsed;
             switch (e)
@@ -2746,6 +3506,8 @@ namespace BiliLite.Controls
                     {
                         _systemMediaTransportControls.PlaybackStatus = MediaPlaybackStatus.Paused;
                     }
+                    // 暂停可能一直停到关窗口:这里补存一次位置(不上报)
+                    SaveHistoryCheckpoint();
                     BottomImageBtnPlay.Visibility = Visibility.Visible;
                     BottomBtnLoading.Visibility = Visibility.Collapsed;
                     BottomBtnPlay.Visibility = Visibility.Visible;
@@ -2837,7 +3599,7 @@ namespace BiliLite.Controls
                     if (PlayerSettingAutoNext.IsOn)
                     {
                         _autoPlay = true;
-                        ChangePlayIndex(CurrentPlayIndex + 1);
+                        ChangePlayIndex(CurrentPlayIndex + 1, PlayTargetStart.FromStart);
                     }
                     else
                     {
@@ -2873,11 +3635,11 @@ namespace BiliLite.Controls
                 _autoPlay = true;
                 if (CurrentPlayIndex == PlayInfos.Count - 1)
                 {
-                    ChangePlayIndex(0);
+                    ChangePlayIndex(0, PlayTargetStart.FromStart);
                 }
                 else
                 {
-                    ChangePlayIndex(CurrentPlayIndex + 1);
+                    ChangePlayIndex(CurrentPlayIndex + 1, PlayTargetStart.FromStart);
                 }
                 return;
             }
@@ -2936,12 +3698,28 @@ namespace BiliLite.Controls
                 ShowErrorDialog(e.message + "[ChangeEngine]");
                 return;
             }
+            // 已经在换引擎重开:同一次失败里再叠一个打开会把刚接上的源顶掉
+            if (_engineFallbackRunning) return;
+            _engineFallbackRunning = true;
+            try
+            {
+                await ChangeEngineAsync(e);
+            }
+            finally
+            {
+                _engineFallbackRunning = false;
+            }
+        }
+
+        private async Task ChangeEngineAsync(ChangePlayerEngine e)
+        {
             VideoLoading.Visibility = Visibility.Visible;
             PlayerOpenResult result = new PlayerOpenResult()
             {
                 result = false,
                 message = ""
             };
+            var session = _playerSessions.Begin(PlayerSessionReason.EngineFallback);
             if (e.play_type == PlayMediaType.Dash && e.change_engine == PlayEngine.FFmpegInteropMSS)
             {
                 if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
@@ -2949,19 +3727,23 @@ namespace BiliLite.Controls
                     var localInfo = CurrentPlayItem.LocalPlayInfo.Info;
                     var position = Player.Position > 0 ? Player.Position : _position;
                     _position = position;
-                    result = await Player.PlayDashUseFFmpegInterop(localInfo.DashInfo, "", "", positon: position, isLocal: true);
+                    result = await Player.PlayDashUseFFmpegInterop(localInfo.DashInfo, "", "", positon: position, isLocal: true, session: session);
                 }
                 else
                 {
-                    result = await Player.PlayDashUseFFmpegInterop(current_quality_info.DashInfo, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position);
+                    result = await Player.PlayDashUseFFmpegInterop(current_quality_info.DashInfo, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position, session: session);
                 }
             }
             if (e.play_type == PlayMediaType.Single && e.change_engine == PlayEngine.SYEngine)
             {
-                result = await Player.PlaySingleFlvUseSYEngine(current_quality_info.FlvInfo.First().Url, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position);
+                if (!session.IsCurrent) return;
+                result = await Player.PlaySingleFlvUseSYEngine(current_quality_info.FlvInfo.First().Url, current_quality_info.UserAgent, current_quality_info.Referer, positon: _position, session: session);
             }
+            // 换引擎途中被换P/关页取代了:这一次的结果既不改界面也不弹错误
+            if (!session.IsCurrent) return;
             if (!result.result)
             {
+                session.Release();
                 if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
                 {
                     var localInfo = CurrentPlayItem.LocalPlayInfo;
@@ -3022,19 +3804,18 @@ namespace BiliLite.Controls
 
         private async void DanmuSettingAddWord_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrEmpty(DanmuSettingTxtWord.Text))
+            var word = DanmuSettingTxtWord.Text;
+            if (string.IsNullOrWhiteSpace(word))
             {
                 Utils.ShowMessageToast("关键词不能为空");
                 return;
             }
-            settingVM.ShieldWords.Add(DanmuSettingTxtWord.Text);
-            SettingHelper.SetValue(SettingHelper.VideoDanmaku.SHIELD_WORD, settingVM.ShieldWords);
-            var result = await settingVM.AddDanmuFilterItem(DanmuSettingTxtWord.Text, 0);
-            DanmuSettingTxtWord.Text = "";
-            if (!result)
+            if (!await settingVM.AddDanmuFilterItem(word, 0))
             {
-                Utils.ShowMessageToast("已经添加到本地，但远程同步失败");
+                Utils.ShowMessageToast("该关键词已存在");
+                return;
             }
+            DanmuSettingTxtWord.Text = "";
         }
 
         public async void Dispose()
@@ -3042,13 +3823,15 @@ namespace BiliLite.Controls
             playerToasts.Dispose();
             _subtitleLoadGuard.Invalidate();
             _danmakuLoadGuard.Invalidate();
+            // 关页:在飞的那次打开在这里作废,它挂着的资源当场释放,之后回来的回调不再被认
+            _playerSessions.Invalidate();
             _playItemGeneration++;
             ClearSubTitle();
             var historyItem = CurrentPlayItem;
             var historyPosition = Player.Position;
             var shouldReportHistory = historyItem != null && historyItem.LocalPlayInfo?.IsManifestPlayback != true && _hasPlayedCurrentItem && Player.PlayState != PlayState.End;
             if (historyItem != null)
-                SettingHelper.SetValue<double>(historyItem.season_id != 0 ? "ep" + historyItem.ep_id : historyItem.cid, historyPosition);
+                SettingHelper.SetValue<double>(HistoryKey(historyItem), historyPosition);
 
             Player.PlayStateChanged -= Player_PlayStateChanged;
             Player.PlayMediaEnded -= Player_PlayMediaEnded;
@@ -3058,12 +3841,15 @@ namespace BiliLite.Controls
             //Player.PlayBufferStart -= Player_PlayBufferStart;
             //Player.PlayBuffering -= Player_PlayBuffering;
             Player.Dispose();
+            // 只停不拆:Tick 挂在构造里,页面关掉还能再打开,同一个控件要能重新跑检查点
+            _historyCheckpointTimer?.Stop();
             if (danmuTimer != null)
             {
                 danmuTimer.Stop();
                 danmuTimer = null;
             }
             danmakuPool = null;
+            _danmakuPoolItem = null;
             if (dispRequest != null)
             {
                 dispRequest = null;
@@ -3280,16 +4066,27 @@ namespace BiliLite.Controls
             {
                 if (item?.LocalPlayInfo != null) item.LocalPlayInfo.DanmakuPath = file.Path;
                 danmakuPool = new Dictionary<int, List<DanmakuModel>>();
+                _danmakuPoolItem = item;
                 DanmuControl.ClearAll();
                 await _danmakuLoadGuard.LoadAndApplyAsync(ticket, item, () => danmakuParse.ParseBiliBili(file), danmuList =>
                 {
                     danmakuPool = danmuList.GroupBy(x => x.time_s).ToDictionary(x => x.Key, x => x.ToList());
+                    _danmakuPoolItem = item;
                     TxtDanmuCount.Text = danmuList.Count.ToString();
                 });
             }
             catch (Exception ex)
             {
                 if (_danmakuLoadGuard.IsCurrent(ticket, item)) Utils.ShowMessageToast("加载弹幕文件失败", $"{ex.Message}");
+            }
+            finally
+            {
+                // 导入的弹幕进了同一个池子:有内容就立刻给入口
+                if (ReferenceEquals(item, CurrentPlayItem))
+                {
+                    _danmakuLoadSettled = true;
+                    ApplySurfaceVisibility();
+                }
             }
         }
 

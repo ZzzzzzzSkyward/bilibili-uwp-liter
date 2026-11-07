@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>CardLayoutProbe</AssemblyName>
+    <RootNamespace>CardLayoutProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- 被测对象是纯几何类，不引用 XAML，所以这一个文件就够；视觉宿主不进探针。 -->
+    <Compile Include="..\..\..\src\BiliLite.UWP\Controls\Dynamic\DynamicImageGridLayout.cs" Link="DynamicImageGridLayout.cs" />
+  </ItemGroup>
+
+</Project>

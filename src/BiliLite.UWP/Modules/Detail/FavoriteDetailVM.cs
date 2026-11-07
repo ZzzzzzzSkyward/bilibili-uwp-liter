@@ -1,5 +1,6 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Models;
+using BiliLite.Parsing.MediaList;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -125,53 +126,48 @@ namespace BiliLite.Modules
                     api = favoriteApi.FavoriteSeasonInfo(Id, Keyword, Page);
                 }
                 var results = await api.Request();
-                if (results.status)
+                var parsed = FavoriteResourceListParser.Parse(results);
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<FavoriteDetailModel>>();
-                    if (data.success)
+                    // 失败类别来自解析结论:传输、业务拒绝、形状不对在这里各说各的
+                    Utils.ShowMessageToast(MediaListFailureText.For(parsed));
+                    return;
+                }
+                var data = FavoriteResourceListMapper.Map(parsed.Value);
+                if (Page == 1)
+                {
+                    if (data.info == null)
                     {
-                        if (Page == 1)
-                        {
-                            FavoriteInfo = data.data.info;
-                            IsSelf = FavoriteInfo.mid == SettingHelper.Account.UserID.ToString();
-                            if (!IsSelf)
-                            {
-                                ShowCollect = FavoriteInfo.fav_state != 1;
-                                ShowCancelCollect = !ShowCollect;
-                            }
-                           
-                            if (data.data.medias==null|| data.data.medias.Count==0)
-                            {
-                                Nothing = true;
-                                return;
-                            }
-                            Videos = data.data.medias;
-                           
-                        }
-                        else
-                        {
-                            if (data.data.medias != null)
-                            {
-                                foreach (var item in data.data.medias)
-                                {
-                                    Videos.Add(item);
-                                }
-                            }
-                        }
-                        if (Videos.Count != FavoriteInfo.media_count)
-                        {
-                            ShowLoadMore = true;
-                            Page++;
-                        }
+                        // 标题、mid 都在 info 上;缺了它整页没法发布
+                        Utils.ShowMessageToast(MediaListFailureText.GenericText);
+                        return;
                     }
-                    else
+                    FavoriteInfo = data.info;
+                    IsSelf = FavoriteInfo.mid == SettingHelper.Account.UserID.ToString();
+                    if (!IsSelf)
                     {
-                        Utils.ShowMessageToast(data.message);
+                        ShowCollect = FavoriteInfo.fav_state != 1;
+                        ShowCancelCollect = !ShowCollect;
                     }
+
+                    if (data.medias.Count == 0)
+                    {
+                        Nothing = true;
+                        return;
+                    }
+                    Videos = data.medias;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    foreach (var item in data.medias)
+                    {
+                        Videos.Add(item);
+                    }
+                }
+                if (Videos.Count != FavoriteInfo.media_count)
+                {
+                    ShowLoadMore = true;
+                    Page++;
                 }
             }
             catch (Exception ex)

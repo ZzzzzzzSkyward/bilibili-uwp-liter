@@ -49,6 +49,7 @@
         <Grid>
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
           </Grid.RowDefinitions>
           <Grid x:Name="gridTopBar" MaxWidth="800" Margin="8 0">
@@ -87,12 +88,20 @@
               </Pivot>
             </Border>
           </Grid>
-          <controls:MyListView SelectionMode="None" IsItemClickEnabled="false" x:Name="list" ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}" CanLoadMore="{x:Bind Path=dynamicVM.CanLoadMore,Mode=OneWay}" LoadMoreBottomOffset="0" LoadMoreCommand="{x:Bind Path=dynamicVM.LoadMoreCommand}" Padding="4" Grid.Row="1" ItemTemplateSelector="{StaticResource select}" HorizontalContentAlignment="Center">
+          <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Center" Margin="8 4" Visibility="{x:Bind Path=dynamicVM.HasEvictedPages,Mode=OneWay}">
+            <TextBlock Text="更早的 " VerticalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}"/>
+            <TextBlock Text="{x:Bind Path=dynamicVM.EvictedPageCount,Mode=OneWay}" VerticalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}"/>
+            <TextBlock Text=" 页已移出" VerticalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}"/>
+            <Button Command="{x:Bind Path=dynamicVM.ReloadEarlierCommand,Mode=OneWay}" Margin="12 0 0 0" Padding="12 4">
+              <TextBlock Text="重新加载"/>
+            </Button>
+          </StackPanel>
+          <controls:MyListView SelectionMode="None" IsItemClickEnabled="false" x:Name="list" ItemsSource="{x:Bind Path=dynamicVM.Items,Mode=OneWay}" CanLoadMore="{x:Bind Path=dynamicVM.CanLoadMore,Mode=OneWay}" LoadMoreBottomOffset="0" LoadMoreCommand="{x:Bind Path=dynamicVM.LoadMoreCommand}" Padding="4" Grid.Row="2" ItemTemplateSelector="{StaticResource select}" HorizontalContentAlignment="Center">
             <controls:MyListView.ItemContainerStyle>
               <Style TargetType="ListViewItem">
                 <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
                 <Setter Property="MaxWidth" Value="800"/>
-                <Setter Property="Margin" Value="4"/>
+                <Setter Property="Margin" Value="4,2"/>
               </Style>
             </controls:MyListView.ItemContainerStyle>
             <!--<ListView.ItemsPanel>-->
@@ -105,14 +114,14 @@
                         </ItemsPanelTemplate>-->
             <!--</ListView.ItemsPanel>-->
           </controls:MyListView>
-          <ProgressRing Grid.Row="1" VerticalAlignment="Bottom" Margin="8" IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.Loading,Mode=OneWay}"/>
-          <StackPanel Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.ShowError,Mode=OneWay}">
+          <ProgressRing Grid.Row="2" VerticalAlignment="Bottom" Margin="8" IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.Loading,Mode=OneWay}"/>
+          <StackPanel Grid.Row="2" VerticalAlignment="Center" HorizontalAlignment="Center" Visibility="{x:Bind Path=dynamicVM.ShowError,Mode=OneWay}">
             <TextBlock Text="{x:Bind Path=dynamicVM.ErrorMsg,Mode=OneWay}" TextWrapping="Wrap" MaxWidth="320" TextAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}"/>
             <controls:RoundButton Command="{x:Bind Path=dynamicVM.RefreshCommand}" Margin="0 12 0 0" Padding="16 8" HorizontalAlignment="Center">
               <TextBlock Text="重试"/>
             </controls:RoundButton>
           </StackPanel>
-          <StackPanel Orientation="Vertical" Grid.Row="1" VerticalAlignment="Bottom" Margin="20 12" HorizontalAlignment="Right">
+          <StackPanel Orientation="Vertical" Grid.Row="2" VerticalAlignment="Bottom" Margin="20 12" HorizontalAlignment="Right">
             <controls:RoundButton x:Name="btnGrid" ToolTipService.ToolTip="切换为瀑布流" Click="btnGrid_Click" Margin="0 0 0 8" Padding="12">
               <FontIcon FontFamily="Segoe MDL2 Assets" Glyph="" Foreground="White"/>
             </controls:RoundButton>

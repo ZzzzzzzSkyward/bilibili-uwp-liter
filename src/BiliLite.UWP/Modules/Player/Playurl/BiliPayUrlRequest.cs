@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using System.Threading;
 using BiliLite.gRPC.Api;
+using BiliLite.Services;
 using Bilibili.App.Playurl.V1;
 
 namespace BiliLite.Modules.Player.Playurl
@@ -93,6 +94,13 @@ namespace BiliLite.Modules.Player.Playurl
         {
             Message += $"{type}：{msg}\r\n";
         }
+
+        private readonly CookiePreflight cookiePreflight = new CookiePreflight();
+
+        /// <summary>播放地址请求前的 cookie 预刷新：先刷新再发请求，且整个请求只做一次。</summary>
+        protected Task PreflightCookieAsync() =>
+            cookiePreflight.EnsureAsync(ApiHelper.NeedRefreshCookie, ApiHelper.RefreshCookieAsync);
+
         protected async Task<bool> CheckUrlAvailable(string url, string userAgent, string referer)
         {
             var requestId = NewRequestId();
@@ -586,23 +594,23 @@ namespace BiliLite.Modules.Player.Playurl
         {
             //尝试WEB API读取播放地址
             var webResult = await GetPlayUrlUseWebApi(playInfo, qualityID);
-            if (webResult.Success)
+            // 会话已死时的 480p 上限不是结论，但那份结果还能播，先留着兜底
+            var capped = webResult.Success && BiliLite.Services.CookieService.WebPlayUrlCappedOnDeadSession(
+                qualityID, webResult.Qualites.Select(x => x.QualityID));
+            if (!PlayUrlFallback.NeedsGrpc(webResult.Success, capped))
             {
                 return webResult;
             }
-            AddMessage("[/x/player/playurl]", webResult.Message);
+            if (!webResult.Success)
+            {
+                AddMessage("[/x/player/playurl]", webResult.Message);
+            }
             //尝试GRPC API读取地址
             var grpcResult = await GetPlayUrlUseGrpc(playInfo, qualityID);
-            if (false)
+            var chosen = PlayUrlFallback.Choose(webResult, grpcResult);
+            if (chosen.Success)
             {
-                if (grpcResult.Qualites.Count> webResult.Qualites.Count)
-                {
-                    return grpcResult;
-                }
-            }
-            if (grpcResult.Success)
-            {
-                return grpcResult;
+                return chosen;
             }
             AddMessage("[/v1.PlayURL/PlayView]", grpcResult.Message);
             return BiliPlayUrlQualitesInfo.Failure(Message);
@@ -615,11 +623,7 @@ namespace BiliLite.Modules.Player.Playurl
             LogPlayurl(playInfo, requestId, "web-api", qualityID, "started");
             try
             {
-                var refresh = await ApiHelper.NeedRefreshCookie();
-                if (refresh)
-                {
-                    ApiHelper.RefreshCookie();
-                }
+                await PreflightCookieAsync();
                 var webApiResult = await (playerAPI.VideoPlayUrl(aid: playInfo.avid, cid: playInfo.cid, qn: qualityID, dash: CodecMode != PlayUrlCodecMode.FLV, false, playInfo.area)).Request();
                 LogPlayurl(playInfo, requestId, "web-api", qualityID, "status=" + webApiResult.code + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 if (!webApiResult.status)
@@ -634,7 +638,11 @@ namespace BiliLite.Modules.Player.Playurl
                     return BiliPlayUrlQualitesInfo.Failure(data.message);
                 }
                 var jsonResult = await ParseJson(qualityID, data.data, WebUserAgent, WebReferer, false, playInfo, requestId);
-                LogPlayurl(playInfo, requestId, "web-api", qualityID, "parsed success=" + jsonResult.Success + " durationMs=" + stopwatch.ElapsedMilliseconds);
+                // 会话已死时这份 code 0 只是 480p 上限：记下来，调用方会让 gRPC 先说一次，结果本身留着兜底
+                var capped = jsonResult.Success && BiliLite.Services.CookieService.WebPlayUrlCappedOnDeadSession(
+                    qualityID, jsonResult.Qualites.Select(x => x.QualityID));
+                LogPlayurl(playInfo, requestId, "web-api", qualityID,
+                    "parsed success=" + jsonResult.Success + " capped=" + capped + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 return jsonResult;
             }
             catch (Exception ex)
@@ -730,6 +738,7 @@ namespace BiliLite.Modules.Player.Playurl
             LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " started");
             try
             {
+                await PreflightCookieAsync();
                 var webApiResult = await (playerAPI.SeasonPlayUrl(aid: playInfo.avid, cid: playInfo.cid, ep_id: playInfo.ep_id, qn: qualityID, season_type: playInfo.season_type, dash: CodecMode != PlayUrlCodecMode.FLV, area != "", area)).Request();
                 LogPlayurl(playInfo, requestId, "season-web-api", qualityID, "area=" + area + " status=" + webApiResult.code + " durationMs=" + stopwatch.ElapsedMilliseconds);
                 if (!webApiResult.status)

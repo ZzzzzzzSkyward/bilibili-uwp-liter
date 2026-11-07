@@ -320,68 +320,100 @@ sub_line="$(printf '%s\n' "$nav_body" | grep -n 'SubscribeClosedPage();' | cut -
 n=$((n + 1))
 
 # 7. The page fetch drops a page that lands after the tab closed, for both callers.
+#    Paging now goes through the single-flight channel (mediaListLoader.LoadAsync ->
+#    FetchMediaListPageAsync, the page's only request site), so the latch check sits
+#    between that await and the row append instead of around the service call.
 load_body="$(method_body 'private async Task<bool> LoadMediaListPage()' "$detail")"
 [ -n "$load_body" ] || fail "could not locate the LoadMediaListPage() body"
-guarded_between "$load_body" 'await mediaListService.LoadMoreMediaList(mediaListState);' 'if (page == null)' 'LoadMediaListPage()'
+guarded_between "$load_body" 'var landed = await loader.LoadAsync();' 'if (landed) AppendMediaListRows();' 'LoadMediaListPage()'
+printf '%s\n' "$load_body" | grep -Fq 'ReferenceEquals(mediaListState, state)' \
+	|| fail "LoadMediaListPage() must drop a page that belongs to a replaced queue: ReferenceEquals(mediaListState, state)"
+fetch_body="$(method_body 'private async Task<MediaListResources> FetchMediaListPageAsync()' "$detail")"
+[ -n "$fetch_body" ] || fail "could not locate the FetchMediaListPageAsync() body"
+printf '%s\n' "$fetch_body" | grep -Fq 'if (!_isClosed) Utils.ShowMessageToast(message);' \
+	|| fail "FetchMediaListPageAsync() must not toast for a page that lands after the tab closed"
 
 # 8. The initial remote-playlist fetch is guarded before it selects or starts playback.
 init_body="$(method_body 'private async Task InitializeMediaListPlaylist()' "$detail")"
 [ -n "$init_body" ] || fail "could not locate the InitializeMediaListPlaylist() body"
 guarded_after_block "$init_body" 'if (mediaListState.LoadedCount == 0 && !await LoadMediaListPage())' 'InitializeMediaListPlaylist()'
 
-# 9. The automatic next-page continuation is guarded after its fetch, before the next row.
-advance_body="$(method_body 'private async Task AdvancePlaylistAsync()' "$detail")"
-[ -n "$advance_body" ] || fail "could not locate the AdvancePlaylistAsync() body"
-guarded_before "$advance_body" 'var action = MediaListQueue.NextAction(' 'AdvancePlaylistAsync()'
-guarded_between "$advance_body" 'if (await LoadMediaListPage())' 'continue;' 'AdvancePlaylistAsync()'
+# 9. Every advance now funnels through the shared sequence state: the retired
+#    AdvancePlaylistAsync() must not come back, and AdvanceSequenceAsync() is the routine
+#    that carries the latch — guard before the first move, re-check after its own fetch.
+if grep -Fq 'AdvancePlaylistAsync' "$detail"; then
+	fail "the retired AdvancePlaylistAsync() must not come back: AdvanceSequenceAsync() is the only advance path"
+fi
+n=$((n + 1))
+advance_body="$(method_body 'private async Task<bool> AdvanceSequenceAsync' "$detail")"
+[ -n "$advance_body" ] || fail "could not locate the AdvanceSequenceAsync() body"
+guarded_before "$advance_body" 'var step = WatchSequenceOrder.Next(' 'AdvanceSequenceAsync()'
+guarded_between "$advance_body" 'if (await LoadMediaListPage())' 'continue;' 'AdvanceSequenceAsync()'
 
-# 10. The Load more button refuses a closed page and re-checks after its own fetch.
-more_body="$(method_body 'private async void MediaListLoadMore_Click' "$detail")"
-[ -n "$more_body" ] || fail "could not locate the MediaListLoadMore_Click() body"
-guarded_before "$more_body" 'mediaListLoadMoreButton.IsEnabled = false;' 'MediaListLoadMore_Click()'
-guarded_between "$more_body" 'await LoadMediaListPage();' 'RefreshMediaListChrome();' 'MediaListLoadMore_Click()'
+# 10. The Load more entry refuses a closed page and re-checks after its own fetch.
+#     footer 和抽屉 share RequestMediaListPageAsync() (single-flight channel); the button no
+#     longer toggles IsEnabled here — the chrome is derived from the paging state instead.
+more_entry="$(method_body 'private async void MediaListLoadMore_Click' "$detail")"
+[ -n "$more_entry" ] || fail "could not locate the MediaListLoadMore_Click() body"
+printf '%s\n' "$more_entry" | grep -Fq 'await RequestMediaListPageAsync();' \
+	|| fail "MediaListLoadMore_Click() must funnel through RequestMediaListPageAsync(), the guarded entry"
+n=$((n + 1))
+more_body="$(method_body 'private async Task RequestMediaListPageAsync()' "$detail")"
+[ -n "$more_body" ] || fail "could not locate the RequestMediaListPageAsync() body"
+guarded_before "$more_body" 'var request = LoadMediaListPage();' 'RequestMediaListPageAsync()'
+guarded_between "$more_body" 'var landed = await request;' 'await ResumeInterruptedAdvanceAsync(landed);' 'RequestMediaListPageAsync()'
 
 # 11. Row selection refuses a closed page, before the selection and before playback.
-select_body="$(method_body 'private async Task SelectPlaylistRowAsync' "$detail")"
+select_body="$(method_body 'private async Task<bool> SelectPlaylistRowAsync' "$detail")"
 [ -n "$select_body" ] || fail "could not locate the SelectPlaylistRowAsync() body"
-guarded_before "$select_body" 'listView.SelectedIndex = index;' 'SelectPlaylistRowAsync()'
-guarded_before "$select_body" 'await InitializeVideo(playlist.Playlist[index].ID);' 'SelectPlaylistRowAsync()'
+guarded_before "$select_body" 'SelectPlaylistRow(listView, index);' 'SelectPlaylistRowAsync()'
+guarded_before "$select_body" 'await InitializeVideo(playlist.Playlist[index].ID, start);' 'SelectPlaylistRowAsync()'
 
-# 12. The UGC season continuation refuses a closed page and re-checks after its await.
-season_body="$(method_body 'private async Task<bool> AdvanceUgcSeasonAsync()' "$detail")"
-[ -n "$season_body" ] || fail "could not locate the AdvanceUgcSeasonAsync() body"
-guarded_before "$season_body" 'listView.SelectedItem = row;' 'AdvanceUgcSeasonAsync()'
-printf '%s\n' "$season_body" | grep -Fq 'return !_isClosed;' \
-	|| fail "AdvanceUgcSeasonAsync() must report the closed page after its await: return !_isClosed"
-recheck="$(printf '%s\n' "$season_body" | grep -n 'return !_isClosed;' | cut -d: -f1 || true)"
-init_video="$(printf '%s\n' "$season_body" | grep -n 'await InitializeVideo(next);' | cut -d: -f1 || true)"
-[ -n "$init_video" ] && [ "$recheck" -gt "$init_video" ] \
-	|| fail "AdvanceUgcSeasonAsync() must re-check the latch after 'await InitializeVideo(next);' (await: ${init_video:-none}, re-check: ${recheck:-none})"
+# 12. The UGC season continuation was folded into the shared sequence state: the retired
+#     AdvanceUgcSeasonAsync() must not come back, and the surviving routine carries the same
+#     guarantee — the outer row is played, then the latch is re-checked before reporting.
+if grep -Fq 'AdvanceUgcSeasonAsync' "$detail"; then
+	fail "the retired AdvanceUgcSeasonAsync() must not come back: PlaySequenceRowAsync()/PlayCollectionRowAsync() serve that row now"
+fi
+n=$((n + 1))
+printf '%s\n' "$advance_body" | grep -Fq 'return await PlaySequenceRowAsync(step.RowIndex, PlayTargetStart.FromStart) && !_isClosed;' \
+	|| fail "AdvanceSequenceAsync() must re-check the latch after playing an outer row: ... && !_isClosed"
+part_change="$(printf '%s\n' "$advance_body" | grep -n 'player.ChangePlayIndex(step.PartIndex, PlayTargetStart.FromStart);' | cut -d: -f1 || true)"
+part_recheck="$(printf '%s\n' "$advance_body" | grep -n 'return !_isClosed;' | cut -d: -f1 || true)"
+[ -n "$part_change" ] && [ -n "$part_recheck" ] && [ "$part_recheck" -gt "$part_change" ] \
+	|| fail "AdvanceSequenceAsync() must report the closed page after switching parts (change: ${part_change:-none}, re-check: ${part_recheck:-none})"
 n=$((n + 1))
 
 # 13. Video detail itself stops on both sides of its request.
-video_body="$(method_body 'private async Task InitializeVideo' "$detail")"
+video_body="$(method_body 'private async Task<bool> InitializeVideo(string id, PlayTargetStart start)' "$detail")"
 [ -n "$video_body" ] || fail "could not locate the InitializeVideo() body"
 guarded_before "$video_body" '_id = id;' 'InitializeVideo()'
-guarded_between "$video_body" 'await videoDetailVM.LoadVideoDetail(id, is_bvid);' 'player.InitializePlayInfo(playInfos, index);' 'InitializeVideo()'
+guarded_between "$video_body" 'await videoDetailVM.LoadVideoDetail(id, is_bvid);' 'player.InitializePlayInfo(playInfos, index, start);' 'InitializeVideo()'
 
 # 14. A detail response that a newer visit superseded is dropped as well: the close path
 #     clears the load flag, so the next visit can request while the old response lands.
-printf '%s\n' "$video_body" | grep -Fq 'if (_isClosed || _id != id)' \
-	|| fail "InitializeVideo() must drop a detail response a newer visit superseded: if (_isClosed || _id != id)"
+#     The three conditions are the same gate: closed, a different id, or a newer ticket.
+printf '%s\n' "$video_body" | grep -Fq 'if (_isClosed || _id != id || !transition.IsCurrent(ticket))' \
+	|| fail "InitializeVideo() must drop a detail response a newer visit superseded: if (_isClosed || _id != id || !transition.IsCurrent(ticket))"
 n=$((n + 1))
 
-# 15. Every event that can start a continuation checks the latch first.
+# 15. Every event that can start a continuation checks the latch first: either itself or by
+#     handing the move to AdvanceSequenceAsync()/PlayCollectionRowAsync(), which own the latch.
 end_body="$(method_body 'private async void player_AllMediaEndEvent' "$detail")"
 [ -n "$end_body" ] || fail "could not locate the player_AllMediaEndEvent() body"
-guarded_before "$end_body" 'if (playFromUgcSeason)' 'player_AllMediaEndEvent()'
+printf '%s\n' "$end_body" | grep -Fq 'await AdvanceSequenceAsync(false, false);' \
+	|| fail "player_AllMediaEndEvent() must hand the automatic boundary to AdvanceSequenceAsync(false, false)"
+if printf '%s\n' "$end_body" | grep -q 'InitializeVideo(\|SelectPlaylistRowAsync(\|SelectUgcSeasonRow('; then
+	fail "player_AllMediaEndEvent() must not start playback itself: AdvanceSequenceAsync() owns the latch"
+fi
+n=$((n + 1))
 
 ugc_sel="$(method_body 'private async void UgcSeasonEpisode_SelectionChanged' "$detail")"
 [ -n "$ugc_sel" ] || fail "could not locate the UgcSeasonEpisode_SelectionChanged() body"
-guarded_before "$ugc_sel" 'await InitializeVideo(item.Aid);' 'UgcSeasonEpisode_SelectionChanged()'
+guarded_before "$ugc_sel" 'await InitializeVideo(item.Aid, PlayTargetStart.Resume);' 'UgcSeasonEpisode_SelectionChanged()'
 
 queue_sel="$(method_body 'private async void ListView_SelectionChanged' "$detail")"
 [ -n "$queue_sel" ] || fail "could not locate the ListView_SelectionChanged() body"
-guarded_before "$queue_sel" 'await InitializeVideo(item.ID);' 'ListView_SelectionChanged()'
+guarded_before "$queue_sel" 'await InitializeVideo(item.ID, PlayTargetStart.Resume);' 'ListView_SelectionChanged()'
 
 printf 'PASS %d assertions\n' "$n"

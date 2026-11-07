@@ -14,7 +14,7 @@ namespace BiliLite.Helpers
         /// <summary>
         /// 透明图片
         /// </summary>
-        public const string TRANSPARENT_IMAGE = "ms-appx:///Assets/MiniIcon/transparent.png";
+        public const string TRANSPARENT_IMAGE = "ms-appx:///Assets/Thumbnails/transparent.png";
         public const string VERIFY_PERSONAL_IMAGE = "ms-appx:///Assets/Icon/verify0.png";
         public const string VERIFY_OGANIZATION_IMAGE = "ms-appx:///Assets/Icon/verify1.png";
         public const string BACKGROUND_IAMGE_URL = "ms-appx:///Assets/Image/background.jpg";

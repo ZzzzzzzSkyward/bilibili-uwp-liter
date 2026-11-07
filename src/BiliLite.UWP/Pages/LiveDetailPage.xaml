@@ -837,7 +837,7 @@
                     <DataTemplate>
                       <HyperlinkButton Padding="0" Margin="0" NavigateUri="{Binding jump_url}">
                         <StackPanel>
-                          <Image HorizontalAlignment="Center" Width="56" Height="56" Source="{Binding pic_url}"/>
+                          <Image HorizontalAlignment="Center" Width="56" Height="56" Source="{Binding pic_url, Converter={StaticResource imageConvert2}, ConverterParameter='200w'}"/>
                           <TextBlock FontSize="12" HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" Text="{Binding name}"/>
                           <TextBlock FontSize="10" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" Text="{Binding activity_name}"/>
                           <TextBlock FontSize="10" HorizontalAlignment="Center" Foreground="{ThemeResource ForegroundTextColor}" TextTrimming="CharacterEllipsis" Text="{Binding activity_date}"/>

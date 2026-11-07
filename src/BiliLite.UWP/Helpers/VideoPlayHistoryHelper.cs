@@ -61,7 +61,6 @@ namespace BiliLite.Helpers
                 ABPlayHistories[info.season_id != 0 ? "ep" + info.ep_id : info.cid] = history;
             }
 
-            //TODO: 这种信息或许用数据库存更合适
             await Task.Run(() => SettingHelper.SetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES, ABPlayHistories));
         }
     }

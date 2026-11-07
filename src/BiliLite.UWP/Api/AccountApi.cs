@@ -1,4 +1,5 @@
 ﻿using BiliLite.Helpers;
+using BiliLite.Services;
 using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
@@ -509,18 +510,23 @@ namespace BiliLite.Api
         }
 
         /// <summary>
-        /// 刷新Token
+        /// 刷新ACCESS_KEY。请求必须用换回这一对令牌的那把 appkey 签名，所以按键的来历选：
+        /// 记的是 login 就用 LoginKey，记的是 tv（或旧会话没有记录）用 TV 键 —— 后者就是修复前唯一的行为。
+        /// 文档口径是 access_key + refresh_token + 公共参数，签名永远压最后。
         /// </summary>
-        /// <returns></returns>
-        public ApiModel RefreshToken()
+        public ApiModel RefreshToken(string accessKey, string refreshToken)
         {
+            var key = AppkeyPolicy.Select(
+                AppkeyPolicy.Parse(SettingHelper.GetValue(AppkeyPolicy.SettingKey, "")),
+                ApiHelper.LoginKey, ApiHelper.AndroidTVKey);
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Post,
-                baseUrl = "https://passport.bilibili.com/api/oauth2/refreshToken",
-                body = ApiHelper.MustParameter(ApiHelper.AndroidKey)+ $"&access_token={SettingHelper.Account.AccessKey}&refresh_token={SettingHelper.GetValue<string>(SettingHelper.Account.REFRESH_KEY, "")}"
+                baseUrl = "https://passport.bilibili.com/api/v2/oauth2/refresh_token",
+                body = $"access_key={FormValue(accessKey)}&" + ApiHelper.MustParameter(key) +
+                       $"&refresh_token={FormValue(refreshToken)}"
             };
-            api.body += ApiHelper.GetSign(api.body, ApiHelper.AndroidKey);
+            api.body += ApiHelper.GetSign(api.body, key);
             return api;
         }
 

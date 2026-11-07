@@ -2,6 +2,8 @@
 using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Models.Common;
+using BiliLite.Parsing;
+using BiliLite.Parsing.Video;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -124,23 +126,15 @@ namespace BiliLite.Modules
                 {
                     return;
                 }
-                var results = await favoriteAPI.MyCreatedFavorite(avid).Request();
-                if (results.status)
+                var parsed = FavoriteCreatedListParser.ParseFavoriteCreatedList(
+                    await favoriteAPI.MyCreatedFavorite(avid).Request());
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<JObject>>();
-                    if (data.success)
-                    {
-                        MyFavorite = await data.data["list"].ToString().DeserializeJson<ObservableCollection<FavoriteItemModel>>();
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
+                    //收藏夹列表读不到只影响收藏弹窗:一句提示,详情页照常
+                    Utils.ShowMessageToast(VideoFailureText.For(parsed));
+                    return;
                 }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
-                }
+                MyFavorite = FavoriteCreatedListMapper.Map(parsed.Value);
             }
             catch (Exception ex)
             {
@@ -156,77 +150,57 @@ namespace BiliLite.Modules
                 Loaded = false;
                 Loading = true;
                 ShowError = false;
+
+                //详情三源:web 详情 → 签名 app 详情 → 第三方代理。换不换源只看解析结论,
+                //"这一源解不出来"才是不可用,"没拿到 relates"不是
                 var webResult = await videoAPI.DetailWebInterface(id, isbvid).Request();
-                var webRelatesResult = await videoAPI.RelatesWebInterface(id, isbvid).Request();
-                ApiDataModel<VideoDetailModel> data = null;
-                if (webResult.status && webRelatesResult.status)
+                var parsed = WebVideoViewParser.ParseWebVideoView(webResult);
+                if (!parsed.IsSuccess)
                 {
-                    data = await webResult.GetJson<ApiDataModel<VideoDetailModel>>();
-                    if (data.success)
+                    LogParseFailure("view.web", parsed);
+                    parsed = WebVideoViewParser.ParseWebVideoView(await videoAPI.Detail(id, isbvid).Request());
+                }
+                if (!parsed.IsSuccess)
+                {
+                    LogParseFailure("view.app", parsed);
+                    //第三方代理(biliproxy.iill.moe)不归本项目维护,只在前两源都解不出来时才会被请求;
+                    //它的结论与 app 端点走同一个解析和同一个错误面板,不额外信任、不额外扩用
+                    parsed = WebVideoViewParser.ParseWebVideoView(await videoAPI.DetailProxy(id, isbvid).Request());
+                    if (!parsed.IsSuccess)
                     {
-                        data.data.short_link = "https://b23.tv/" + data.data.bvid;
-                        var relatesData = await webRelatesResult.GetJson<ApiDataModel<List<VideoDetailRelatesModel>>>();
-                        if (relatesData.success)
-                        {
-                            data.data.relates = relatesData.data;
-                        }
-                        else
-                        {
-                            data = null;
-                        }
+                        LogParseFailure("view.proxy", parsed);
                     }
                 }
 
-                // The app endpoint remains a fallback when either web read is unavailable.
-                if (data == null || !data.success)
-                {
-                    var results = await videoAPI.Detail(id, isbvid).Request();
-                    if (results.status)
-                    {
-                        data = await results.GetJson<ApiDataModel<VideoDetailModel>>();
-                    }
-                    else
-                    {
-                        var result_proxy = await videoAPI.DetailProxy(id, isbvid).Request();
-                        if (result_proxy.status)
-                        {
-                            data = await result_proxy.GetJson<ApiDataModel<VideoDetailModel>>();
-                        }
-                        else
-                        {
-                            ShowError = true;
-                            ErrorMsg = results.message;
-                        }
-                    }
-                }
-
-                if (data != null && data.success)
-                {
-                    data.data.req_user = data.data.req_user ?? new VideoDetailReqUserModel();
-                    if (data.data.req_user.attention != 1 && data.data.req_user.attention != -999)
-                    {
-                        data.data.req_user.attention = -999;
-                    }
-                    // The web endpoints omit owner_ext entirely; keep it non-null so the
-                    // fans label can hide itself instead of dangling when the count is unknown.
-                    var hasOwnerExt = data.data.owner_ext != null;
-                    data.data.owner_ext = data.data.owner_ext ?? new VideoDetailOwnerExtModel();
-                    VideoInfo = data.data;
-                    Loaded = true;
-                    if (!hasOwnerExt)
-                    {
-                        await LoadOwnerFans();
-                    }
-                    await GetAttentionUp();
-                    await GetUserVideoStates();
-                    await LoadVideoTags(data.data.aid);
-                    await LoadFavorite(data.data.aid);
-                }
-                else if (!ShowError)
+                if (!parsed.IsSuccess)
                 {
                     ShowError = true;
-                    ErrorMsg = data?.message ?? "视频详情读取失败";
+                    ErrorMsg = VideoFailureText.For(parsed);
+                    return;
                 }
+
+                var detail = WebVideoViewMapper.MapWebVideoView(parsed.Value);
+
+                //相关视频是另一条读:它失败只丢推荐区,详情照常发布,整页不再被拖成 null
+                var parsedRelates = WebVideoRelatesParser.ParseWebVideoRelates(
+                    await videoAPI.RelatesWebInterface(id, isbvid).Request());
+                if (parsedRelates.IsSuccess)
+                {
+                    detail.relates = WebVideoViewMapper.MapWebVideoRelates(parsedRelates.Value);
+                }
+                else
+                {
+                    LogParseFailure("relates", parsedRelates);
+                    detail.relates = new List<VideoDetailRelatesModel>();
+                }
+
+                VideoInfo = detail;
+                Loaded = true;
+                await LoadOwnerFans();
+                await GetAttentionUp();
+                await GetUserVideoStates();
+                await LoadVideoTags(detail.aid);
+                await LoadFavorite(detail.aid);
             }
             catch (Exception ex)
             {
@@ -242,32 +216,42 @@ namespace BiliLite.Modules
         }
 
         /// <summary>
-        /// 详情接口(Web/app)可能不含粉丝数, 单独查询; 失败时保持 fans=0 且不打断页面
+        /// 解析失败的诊断日志:类别、字段定位、原文分开写,方便判断"换了源还是同一处错"
+        /// </summary>
+        private static void LogParseFailure<T>(string source, ApiParseResult<T> result)
+        {
+            System.Diagnostics.Debug.WriteLine("[video." + source + "] " +
+                result.Failure + " " + result.Stage + ": " + result.Message);
+        }
+
+        /// <summary>
+        /// 详情接口(Web/app)可能不含粉丝数, 单独查询; 失败时保持 fans=0 且不打断页面。
+        /// 详情已经带了粉丝数就不再查:web 端点从来不返回 owner_ext,app 端点带了就不必多发一条
         /// </summary>
         private async Task LoadOwnerFans()
         {
+            var ownerExt = VideoInfo?.owner_ext;
             var mid = VideoInfo?.owner?.mid;
-            if (string.IsNullOrEmpty(mid))
+            if (ownerExt == null || ownerExt.HasFans || string.IsNullOrEmpty(mid))
             {
                 return;
             }
 
-            var fans = 0;
+            int fans;
             try
             {
-                var results = await videoAPI.RelationStat(mid).Request();
-                if (results.status)
+                var parsed = WebRelationParser.ParseWebRelationStat(await videoAPI.RelationStat(mid).Request());
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<JObject>>();
-                    if (data.success)
-                    {
-                        fans = data.data?["follower"]?.ToObject<int>() ?? 0;
-                    }
+                    LogParseFailure("relation.stat", parsed);
+                    return;
                 }
+                fans = parsed.Value;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine(ex.Message);
+                return;
             }
 
             if (fans <= 0)
@@ -275,7 +259,7 @@ namespace BiliLite.Modules
                 return;
             }
 
-            VideoInfo.owner_ext.fans = fans;
+            ownerExt.fans = fans;
             VideoInfo.DoPropertyChanged("owner_ext");
         }
 
@@ -283,15 +267,16 @@ namespace BiliLite.Modules
         {
             try
             {
-                var results = await videoAPI.Tags(aid).Request();
-                if (!results.status)
+                var parsed = WebVideoTagsParser.ParseWebVideoTags(await videoAPI.Tags(aid).Request());
+                if (!parsed.IsSuccess)
                 {
+                    //标签只是附加信息:读不到就保持原标签,只留诊断
+                    LogParseFailure("tags", parsed);
                     return;
                 }
-                var data = await results.GetJson<ApiDataModel<List<VideoDetailTagModel>>>();
-                if (data.success && VideoInfo != null)
+                if (VideoInfo != null)
                 {
-                    VideoInfo.tag = data.data;
+                    VideoInfo.tag = WebVideoViewMapper.MapWebVideoTags(parsed.Value);
                 }
             }
             catch (Exception ex)
@@ -315,15 +300,15 @@ namespace BiliLite.Modules
 
             try
             {
-                var result = await followAPI.GetAttention(VideoInfo.owner.mid).Request();
-                if (!result.status)
+                var parsed = WebRelationParser.ParseWebRelationAttribute(
+                    await followAPI.GetAttention(VideoInfo.owner.mid).Request());
+                if (!parsed.IsSuccess)
                 {
+                    LogParseFailure("relation.attribute", parsed);
                     return;
                 }
-
-                var data = await result.GetJson<ApiDataModel<JObject>>();
-                var attribute = data.data?["attribute"]?.ToObject<int>();
-                VideoInfo.req_user.attention = attribute == 2 || attribute == 6 ? 1 : -999;
+                //2=已关注, 6=已互关;其余(0=未关注, 128=已拉黑)都按未关注
+                VideoInfo.req_user.attention = parsed.Value == 2 || parsed.Value == 6 ? 1 : -999;
             }
             catch (Exception ex)
             {
@@ -347,31 +332,34 @@ namespace BiliLite.Modules
                 var favoriteTask = videoAPI.HasFav(VideoInfo.aid, VideoInfo.bvid).Request();
                 await Task.WhenAll(likeTask, coinTask, favoriteTask);
 
-                if (likeTask.Result.status)
+                var parsedLike = WebVideoStateParser.ParseWebVideoStateLike(likeTask.Result);
+                if (parsedLike.IsSuccess)
                 {
-                    var data = await likeTask.Result.GetJson<ApiDataModel<int>>();
-                    if (data.success)
-                    {
-                        VideoInfo.req_user.like = data.data == 1 ? 1 : 0;
-                    }
+                    VideoInfo.req_user.like = parsedLike.Value == 1 ? 1 : 0;
+                }
+                else
+                {
+                    LogParseFailure("state.like", parsedLike);
                 }
 
-                if (coinTask.Result.status)
+                var parsedCoin = WebVideoStateParser.ParseWebVideoStateCoin(coinTask.Result);
+                if (parsedCoin.IsSuccess)
                 {
-                    var data = await coinTask.Result.GetJson<ApiDataModel<JObject>>();
-                    if (data.success && data.data?["multiply"] != null)
-                    {
-                        VideoInfo.req_user.coin = data.data["multiply"].ToObject<int>() > 0 ? 1 : 0;
-                    }
+                    VideoInfo.req_user.coin = parsedCoin.Value > 0 ? 1 : 0;
+                }
+                else
+                {
+                    LogParseFailure("state.coin", parsedCoin);
                 }
 
-                if (favoriteTask.Result.status)
+                var parsedFavoured = WebVideoStateParser.ParseWebVideoStateFavoured(favoriteTask.Result);
+                if (parsedFavoured.IsSuccess)
                 {
-                    var data = await favoriteTask.Result.GetJson<ApiDataModel<JObject>>();
-                    if (data.success && data.data?["favoured"] != null)
-                    {
-                        VideoInfo.req_user.favorite = data.data["favoured"].ToObject<bool>() ? 1 : 0;
-                    }
+                    VideoInfo.req_user.favorite = parsedFavoured.Value ? 1 : 0;
+                }
+                else
+                {
+                    LogParseFailure("state.favoured", parsedFavoured);
                 }
             }
             catch (Exception ex)
@@ -392,41 +380,26 @@ namespace BiliLite.Modules
             }
             try
             {
-                var results = await videoAPI.Like(VideoInfo.aid, VideoInfo.req_user.dislike, VideoInfo.req_user.like).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(
+                    await videoAPI.Like(VideoInfo.aid, VideoInfo.req_user.dislike, VideoInfo.req_user.like).Request());
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<JObject>>();
-                    if (data.success)
-                    {
-                        if (VideoInfo.req_user.like == 1)
-                        {
-                            VideoInfo.req_user.like = 0;
-                            VideoInfo.stat.like -= 1;
-                        }
-                        else
-                        {
-                            VideoInfo.req_user.like = 1;
-                            VideoInfo.req_user.dislike = 0;
-                            VideoInfo.stat.like += 1;
-                        }
-                        if (!string.IsNullOrEmpty( data.data["toast"]?.ToString()))
-                        {
-                            Utils.ShowMessageToast(data.data["toast"].ToString());
-                        }
-                        else
-                        {
-                            Utils.ShowMessageToast("操作成功");
-                        }
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
+                    Utils.ShowMessageToast(VideoFailureText.For(parsed));
+                    return;
+                }
+                if (VideoInfo.req_user.like == 1)
+                {
+                    VideoInfo.req_user.like = 0;
+                    VideoInfo.stat.like -= 1;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    VideoInfo.req_user.like = 1;
+                    VideoInfo.req_user.dislike = 0;
+                    VideoInfo.stat.like += 1;
                 }
+                //服务端说了话就说它的话,没说就说"操作成功"
+                Utils.ShowMessageToast(string.IsNullOrEmpty(parsed.Value) ? "操作成功" : parsed.Value);
             }
             catch (Exception ex)
             {
@@ -445,45 +418,27 @@ namespace BiliLite.Modules
             }
             try
             {
-                var results = await videoAPI.Dislike(VideoInfo.aid, VideoInfo.req_user.dislike, VideoInfo.req_user.like).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(
+                    await videoAPI.Dislike(VideoInfo.aid, VideoInfo.req_user.dislike, VideoInfo.req_user.like).Request());
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<JObject>>();
-                    if (data.success)
-                    {
-                        if (VideoInfo.req_user.dislike == 1)
-                        {
-                            VideoInfo.req_user.dislike = 0;
-                        }
-                        else
-                        {
-                            VideoInfo.req_user.dislike = 1;
-                            if (VideoInfo.req_user.like==1)
-                            {
-                                VideoInfo.req_user.like = 0;
-                                VideoInfo.stat.like -= 1;
-                            }
-                          
-                            
-                        }
-                        if (!string.IsNullOrEmpty(data.data["toast"]?.ToString()))
-                        {
-                            Utils.ShowMessageToast(data.data["toast"].ToString());
-                        }
-                        else
-                        {
-                            Utils.ShowMessageToast("操作成功");
-                        }
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
+                    Utils.ShowMessageToast(VideoFailureText.For(parsed));
+                    return;
+                }
+                if (VideoInfo.req_user.dislike == 1)
+                {
+                    VideoInfo.req_user.dislike = 0;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    VideoInfo.req_user.dislike = 1;
+                    if (VideoInfo.req_user.like == 1)
+                    {
+                        VideoInfo.req_user.like = 0;
+                        VideoInfo.stat.like -= 1;
+                    }
                 }
+                Utils.ShowMessageToast(string.IsNullOrEmpty(parsed.Value) ? "操作成功" : parsed.Value);
             }
             catch (Exception ex)
             {
@@ -503,34 +458,25 @@ namespace BiliLite.Modules
             }
             try
             {
-                var results = await videoAPI.Triple(VideoInfo.aid).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(
+                    await videoAPI.Triple(VideoInfo.aid).Request());
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<JObject>>();
-                    if (data.success)
-                    {
-                        VideoInfo.req_user.like = 1;
-                        VideoInfo.stat.like += 1;
-                        VideoInfo.req_user.coin = 1;
-                        VideoInfo.stat.coin += 1;
-                        VideoInfo.req_user.favorite = 1;
-                        VideoInfo.stat.favorite += 1;
-                        if (VideoInfo.req_user.dislike == 1)
-                        {
-                            VideoInfo.req_user.dislike = 0;
-                        }
+                    Utils.ShowMessageToast(VideoFailureText.For(parsed));
+                    return;
+                }
+                VideoInfo.req_user.like = 1;
+                VideoInfo.stat.like += 1;
+                VideoInfo.req_user.coin = 1;
+                VideoInfo.stat.coin += 1;
+                VideoInfo.req_user.favorite = 1;
+                VideoInfo.stat.favorite += 1;
+                if (VideoInfo.req_user.dislike == 1)
+                {
+                    VideoInfo.req_user.dislike = 0;
+                }
 
-                        Utils.ShowMessageToast("三连完成");
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
-                }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
-                }
+                Utils.ShowMessageToast("三连完成");
             }
             catch (Exception ex)
             {
@@ -552,40 +498,24 @@ namespace BiliLite.Modules
             var coinNum = Convert.ToInt32(num);
             try
             {
-                var results = await videoAPI.Coin(VideoInfo.aid, coinNum).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(
+                    await videoAPI.Coin(VideoInfo.aid, coinNum).Request());
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<JObject>>();
-                    if (data.success)
-                    {
-                        if (VideoInfo.req_user.coin == 1)
-                        {
-                            VideoInfo.req_user.coin = 0;
-                            VideoInfo.stat.coin -= coinNum;
-                        }
-                        else
-                        {
-                            VideoInfo.req_user.coin = 1;
-                            VideoInfo.stat.coin += coinNum;
-                        }
-                        if (!string.IsNullOrEmpty(data.data["toast"]?.ToString()))
-                        {
-                            Utils.ShowMessageToast(data.data["toast"].ToString());
-                        }
-                        else
-                        {
-                            Utils.ShowMessageToast("操作成功");
-                        }
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
+                    Utils.ShowMessageToast(VideoFailureText.For(parsed));
+                    return;
+                }
+                if (VideoInfo.req_user.coin == 1)
+                {
+                    VideoInfo.req_user.coin = 0;
+                    VideoInfo.stat.coin -= coinNum;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    VideoInfo.req_user.coin = 1;
+                    VideoInfo.stat.coin += coinNum;
                 }
+                Utils.ShowMessageToast(string.IsNullOrEmpty(parsed.Value) ? "操作成功" : parsed.Value);
             }
             catch (Exception ex)
             {
@@ -605,40 +535,31 @@ namespace BiliLite.Modules
             }
             try
             {
-                var results = await favoriteAPI.AddFavorite(fav_ids, avid).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(
+                    await favoriteAPI.AddFavorite(fav_ids, avid).Request());
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<JObject>>();
-                    if (data.success)
-                    {
-                        if (fav_ids.Count != 0)
-                        {
-                            VideoInfo.req_user.favorite = 1;
-                            VideoInfo.stat.favorite += 1;
-                        }
-                        else
-                        {
-                            VideoInfo.req_user.favorite = 0;
-                            VideoInfo.stat.favorite -= 1;
-                        }
-                        if (!string.IsNullOrEmpty(data.data["toast"]?.ToString()))
-                        {
-                            Utils.ShowMessageToast(data.data["toast"].ToString());
-                        }
-                        else
-                        {
-                            Utils.ShowMessageToast("操作成功");
-                            await LoadFavorite(avid);
-                        }
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
+                    Utils.ShowMessageToast(VideoFailureText.For(parsed));
+                    return;
+                }
+                if (fav_ids.Count != 0)
+                {
+                    VideoInfo.req_user.favorite = 1;
+                    VideoInfo.stat.favorite += 1;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    VideoInfo.req_user.favorite = 0;
+                    VideoInfo.stat.favorite -= 1;
+                }
+                if (string.IsNullOrEmpty(parsed.Value))
+                {
+                    Utils.ShowMessageToast("操作成功");
+                    await LoadFavorite(avid);
+                }
+                else
+                {
+                    Utils.ShowMessageToast(parsed.Value);
                 }
             }
             catch (Exception ex)
@@ -679,28 +600,15 @@ namespace BiliLite.Modules
           
             try
             {
-                var results = await videoAPI.Attention(mid, mode.ToString()).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(
+                    await videoAPI.Attention(mid, mode.ToString()).Request());
+                if (!parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<JObject>>();
-                   
-                    if (data.success)
-                    {
-                       
-                        Utils.ShowMessageToast("操作成功");
-                        return true;
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                        return false;
-                    }
-                }
-                else
-                {
-                    Utils.ShowMessageToast(results.message);
+                    Utils.ShowMessageToast(VideoFailureText.For(parsed));
                     return false;
                 }
+                Utils.ShowMessageToast("操作成功");
+                return true;
             }
             catch (Exception ex)
             {
@@ -814,12 +722,14 @@ namespace BiliLite.Modules
 
         private List<VideoDetailRelatesModel> _relates;
         /// <summary>
-        /// 推荐
+        /// 推荐。null 是合法值：线上可能直接给 relates: null，related 读失败时页面也保留空表。
+        /// 这里选"空安全 setter"而不是"mapper 绕过 setter"，因为直接反序列化这份模型的路径
+        /// （plan/tests/c1 的夹具、任何按 wire 形状读它的调用点）同样会走 setter，绕过只修得了一条路。
         /// </summary>
         public List<VideoDetailRelatesModel> relates
         {
             get { return _relates; }
-            set { _relates = value.Where(x => !string.IsNullOrEmpty(x.aid)).ToList(); }
+            set { _relates = value == null ? null : value.Where(x => x != null && !string.IsNullOrEmpty(x.aid)).ToList(); }
         }
 
 

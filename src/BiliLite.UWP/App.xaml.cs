@@ -1,6 +1,8 @@
 ﻿using BiliLite.Api;
+using BiliLite.Controls;
 using BiliLite.Helpers;
 using BiliLite.Modules;
+using BiliLite.Services;
 using FFmpegInteropX;
 using Microsoft.Toolkit.Uwp.Helpers;
 using System;
@@ -62,6 +64,91 @@ namespace BiliLite
             LogHelper.Log("FFmpeg diagnostics enabled at Info level", LogType.INFO);
             SqlHelper.InitDB();
             this.Suspending += OnSuspending;
+            // Resuming 只在 Application 上，且 OnLaunched 可能因协议激活多次进入：先减后加保证只挂一次
+            this.Resuming -= OnAppResuming;
+            this.Resuming += OnAppResuming;
+            BiliLite.Services.CookieService.ReloginRequired += OnReloginRequired;
+            // 登录成功或主动退出后，上一次的「已失效」结论必须作废，否则设置页一直挂着失效
+            MessageCenter.LoginedEvent += OnSessionChanged;
+            MessageCenter.LogoutedEvent += OnSessionChanged;
+        }
+
+        private static void OnSessionChanged(object sender, object e) => BiliLite.Services.CookieService.ClearReloginRequired();
+
+        /// <summary>UI 线程的调度器：ReloginRequired 从后台请求线程触发，Toast 只能在 UI 线程弹。</summary>
+        private static Windows.UI.Core.CoreDispatcher uiDispatcher;
+
+        private static void OnReloginRequired(object sender, EventArgs e)
+        {
+            var dispatcher = uiDispatcher;
+            if (dispatcher == null)
+            {
+                LogHelper.Log("Re-login required before a window existed; toast skipped", LogType.ERROR);
+                return;
+            }
+            if (dispatcher.HasThreadAccess)
+            {
+                ShowReloginToast();
+                return;
+            }
+            _ = dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, ShowReloginToast);
+        }
+
+        private static void ShowReloginToast() => Utils.ShowMessageToast("登录已失效");
+
+        /// <summary>启动与恢复都不等待结果：会话校验失败也不该挡住界面。</summary>
+        private static async Task PreflightLoginAsync()
+        {
+            try
+            {
+                await ApiHelper.Cookie.RefreshLoginAsync();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Startup cookie preflight failed", LogType.ERROR, ex);
+            }
+
+            // 启动/恢复只走一遍：OAuth 能续就续；OAuth 这条凭证类型不适用时，cookie 来源的 key 兑换一次。
+            // 两条路各发一次请求，失败就留到下次启动，绝不在这里连环重试。闸门自己会记一行原因。
+            var refreshToken = SettingHelper.GetValue<string>(SettingHelper.Account.REFRESH_KEY, "");
+            var expiresAt = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue);
+            var expiryEstimated = SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false);
+            var needsRelogin = BiliLite.Services.CookieService.NeedsRelogin;
+
+            BiliLite.Services.RenewalResult renewal = null;
+            if (BiliLite.Services.AccessKeyRenewal.ShouldRenew(needsRelogin, refreshToken, expiresAt, DateTime.Now,
+                    (message, exception) => LogHelper.Log(message, exception == null ? LogType.INFO : LogType.ERROR, exception),
+                    expiryEstimated))
+                renewal = await new BiliLite.Modules.Account().RefreshToken();
+            if (renewal != null)
+                LogHelper.Log("ACCESS_KEY 续期结果 outcome=" + renewal.Outcome +
+                    " sessionDead=" + renewal.SessionDead + " retryable=" + renewal.Retryable, LogType.INFO);
+
+            // 估算的到期时间只是提示：它过了只当「该验一次」，不当服务端已经拒绝
+            var keyLooksUsable = !(needsRelogin || expiresAt <= DateTime.Now);
+            var action = renewal != null
+                ? BiliLite.Services.AppKeyRecovery.AfterOAuth(renewal.Outcome, !needsRelogin)
+                : BiliLite.Services.AppKeyRecovery.Decide(keyLooksUsable,
+                    BiliLite.Services.CookieAppKeyBridge.ReadProvenance(),
+                    !string.IsNullOrEmpty(refreshToken), !needsRelogin);
+
+            if (action == BiliLite.Services.AppKeyRecoveryAction.Convert)
+            {
+                var conversion = await BiliLite.Services.CookieAppKeyBridge.ConvertWithWebSessionAsync(
+                    SettingHelper.Account.UserID,
+                    () => ApiHelper.Cookie.RefreshLoginAsync(),
+                    () => BiliLite.Services.CookieService.NeedsRelogin,
+                    (message, exception) => LogHelper.Log(message, exception == null ? LogType.INFO : LogType.ERROR, exception));
+                action = BiliLite.Services.AppKeyRecovery.AfterConversion(conversion.Outcome);
+                LogHelper.Log("ACCESS_KEY 兑换结果 outcome=" + conversion.Outcome + " detail=" + conversion.Detail +
+                    " action=" + action, LogType.INFO);
+            }
+
+            // 启动不做界面决定：只把结论记下来，凭证交给上面的落盘结果
+            if (action == BiliLite.Services.AppKeyRecoveryAction.Logout)
+                LogHelper.Log("ACCESS_KEY 恢复路径已走完，需要重新登录", LogType.INFO);
+            else if (action == BiliLite.Services.AppKeyRecoveryAction.Retry)
+                LogHelper.Log("ACCESS_KEY 恢复未完成，凭证保持原样", LogType.INFO);
         }
         private void RegisterExceptionHandlingSynchronizationContext()
         {
@@ -116,9 +203,17 @@ namespace BiliLite
         {
             RegisterExceptionHandlingSynchronizationContext();
             LogHelper.Log("Application launched; prelaunch=" + e.PrelaunchActivated, LogType.INFO);
+            uiDispatcher = Window.Current.Dispatcher;
             LoadTheme();
             Navigation(e.Arguments,e.PrelaunchActivated);
-            
+            _ = PreflightLoginAsync();
+        }
+
+        // 挂起后回到前台时 SESSDATA 很可能已经过期，先校验再让用户去点播放
+        private void OnAppResuming(object sender, object e)
+        {
+            LogHelper.Log("Application resumed", LogType.INFO);
+            _ = PreflightLoginAsync();
         }
 
 
@@ -234,11 +329,13 @@ namespace BiliLite
         /// </summary>
         /// <param name="sender">挂起的请求的源。</param>
         /// <param name="e">有关挂起请求的详细信息。</param>
-        private void OnSuspending(object sender, SuspendingEventArgs e)
+        private async void OnSuspending(object sender, SuspendingEventArgs e)
         {
             LogHelper.Log("Application suspending", LogType.INFO);
             LogHelper.Flush();
             var deferral = e.SuspendingOperation.GetDeferral();
+            // 正在播的进度在 deferral 里存下来并上报一次:挂起之后进程可能直接没了
+            await PlayerControl.FlushActivePlaybackAsync();
             GC.Collect();
             GC.WaitForPendingFinalizers();
             deferral.Complete();
@@ -273,6 +370,7 @@ namespace BiliLite
             base.OnActivated(args);
             RegisterExceptionHandlingSynchronizationContext();
             LogHelper.Log("Application activated; kind=" + args.Kind, LogType.INFO);
+            uiDispatcher = Window.Current.Dispatcher;
             if (args.Kind == ActivationKind.Protocol)
             {
                 ProtocolActivatedEventArgs eventArgs = args as ProtocolActivatedEventArgs;
@@ -329,6 +427,8 @@ namespace BiliLite
                 }
             }
             catch (Exception ex) { }
+            // 关窗口不走 OnNavigatedFrom:在这里把当前进度存下来并报一次
+            await PlayerControl.FlushActivePlaybackAsync();
             LogHelper.Flush();
             deferral.Complete();
         }

@@ -1,6 +1,5 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Models;
-using BiliLite.Modules.Player.Playurl;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -20,14 +19,20 @@ namespace BiliLite.Api
             {
                 baseUrl = Utils.ChooseProxyServer(area);
             }
+            // cookie 会话已死时带着旧 jar 只会换来 480p 上限：改走 access_key，不再附 cookie
+            var deadCookie = BiliLite.Services.CookieService.NeedsRelogin;
             ApiModel api = new ApiModel()
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{baseUrl}/x/player/playurl",
-                parameter = $"avid={aid}&cid={cid}&qn={qn}&type=&otype=json&mid={(SettingHelper.Account.Logined ? SettingHelper.Account.Profile.mid.ToString() : "")}",
-                need_cookie = true,
+                parameter = $"avid={aid}&cid={cid}&qn={qn}&type=&otype=json&mid={(SettingHelper.Account.Logined ? SettingHelper.Account.Profile?.mid.ToString() : "")}",
+                need_cookie = !deadCookie,
                 headers = VideoHeader,
             };
+            if (deadCookie && SettingHelper.Account.Logined)
+            {
+                api.parameter += $"&access_key={SettingHelper.Account.AccessKey}";
+            }
             api.parameter += "&fourk=1&fnver=0&fnval=4048";
             if (proxy)
             {
@@ -53,7 +58,7 @@ namespace BiliLite.Api
             };
             if (SettingHelper.Account.Logined)
             {
-                api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile.mid}";
+                api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile?.mid}";
             }
             api.parameter += "&fourk=1&fnver=0&fnval=12240";
 
@@ -78,7 +83,7 @@ namespace BiliLite.Api
             };
             if (SettingHelper.Account.Logined)
             {
-                api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile.mid}";
+                api.parameter += $"&access_key={SettingHelper.Account.AccessKey}&mid={SettingHelper.Account.Profile?.mid}";
             }
             api.parameter += "&fourk=1&fnver=0&fnval=4048";
             api.parameter += ApiHelper.GetSign(api.parameter, ApiHelper.WebVideoKey);

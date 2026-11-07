@@ -3,11 +3,19 @@ using System.Threading.Tasks;
 using Bilibili.App.Dynamic.V2;
 
 // Minimal stand-ins for the UWP surface the home DynamicVM class needs. The mapper and
-// model closure under test (DynamicGrpcMapper.cs + Modules/Home/DynamicVM.cs) are real code.
+// model closure under test (DynamicGrpcMapper.cs + Modules/Home/DynamicVM.cs + Controls/Dynamic/DisplayModel.cs)
+// are real code.
 namespace Windows.UI.Xaml
 {
     public class DependencyObject
     {
+    }
+
+    /// <summary>探针替身:DisplayModel 的标题槽/祖先行只比较这个枚举的两个值。</summary>
+    public enum Visibility
+    {
+        Visible,
+        Collapsed,
     }
 
     public class ResourceDictionary
@@ -33,6 +41,39 @@ namespace Windows.UI.Xaml.Controls
             return null;
         }
     }
+
+    /// <summary>探针替身:显示模型持有 RichTextBlock，但探针不渲染它。</summary>
+    public class RichTextBlock : Windows.UI.Xaml.DependencyObject
+    {
+    }
+}
+
+namespace BiliLite.Controls.Dynamic
+{
+    /// <summary>
+    /// 探针替身:显示类型枚举的真正定义在 Controls/Dynamic/DynamicParse.cs（依赖整片 WinRT 文本栈，
+    /// 探针编译不了）。这里只保留显示模型判断宿主归属与标题槽需要的那几个成员。
+    /// </summary>
+    public enum DynamicDisplayType
+    {
+        Repost,
+        Text,
+        Photo,
+        Video,
+        ShortVideo,
+        Season,
+        Music,
+        Web,
+        Article,
+        Live,
+        LiveShare,
+        Cheese,
+        MediaList,
+        Miss,
+        Reserve,
+        Other,
+        CustomSeason,
+    }
 }
 
 namespace BiliLite.Helpers
@@ -57,7 +98,7 @@ namespace BiliLite.Helpers
         }
     }
 
-    public static class Utils
+    public static partial class Utils
     {
         public static void ShowMessageToast(string message, int seconds = 2)
         {
@@ -98,11 +139,43 @@ namespace BiliLite.Helpers
         public bool status { get; set; }
         public string message { get; set; }
         public int code { get; set; }
+        /// <summary>响应正文；ApiEnvelope 只通过 TryGetJObject 读它。</summary>
+        public string results { get; set; }
+
+        /// <summary>与 Helpers/HttpHelper.cs 的静默解码同义：正文不是 JSON 对象就返回 false。</summary>
+        public bool TryGetJObject(out Newtonsoft.Json.Linq.JObject value)
+        {
+            value = null;
+            if (string.IsNullOrEmpty(results))
+            {
+                return false;
+            }
+            try
+            {
+                value = Newtonsoft.Json.Linq.JObject.Parse(results);
+                return true;
+            }
+            catch (Newtonsoft.Json.JsonException)
+            {
+                return false;
+            }
+        }
 
         public Newtonsoft.Json.Linq.JObject GetJObject()
         {
             return Newtonsoft.Json.Linq.JObject.Parse("{}");
         }
+    }
+}
+
+namespace BiliLite.Helpers
+{
+    /// <summary>探针替身:显示模型给头像/认证字段的默认透明图常量。</summary>
+    public static class AppHelper
+    {
+        public const string TRANSPARENT_IMAGE = "ms-appx:///Assets/MiniIcon/transparent.png";
+        public const string VERIFY_PERSONAL_IMAGE = "ms-appx:///Assets/Icon/verify0.png";
+        public const string VERIFY_OGANIZATION_IMAGE = "ms-appx:///Assets/Icon/verify1.png";
     }
 }
 

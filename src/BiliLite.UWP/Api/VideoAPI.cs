@@ -95,6 +95,10 @@ namespace BiliLite.Api
             };
         }
 
+        /// <summary>
+        /// 签名的 app 详情端点经第三方代理（biliproxy.iill.moe）转发：详情页在 web 与 app 两端都解析失败时
+        /// 才会请求这一路。它不归本项目维护，只作最后兜底；响应与 app 端点走同一个解析，不额外信任、不额外扩用。
+        /// </summary>
         public ApiModel DetailProxy(string id, bool isbvid)
         {
             ApiModel api = new ApiModel()

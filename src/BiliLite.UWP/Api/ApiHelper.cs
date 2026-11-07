@@ -28,15 +28,7 @@ namespace BiliLite.Api
         public static global::CookieService Cookie = new global::CookieService();
         static ApiHelper()
         {
-            var sets = new List<string>();
-            bool single = false;
-            foreach (var i in settingsname)
-            {
-                single = !single;
-                sets.Add(
-                SettingHelper.GetValue(i, single ? DefaultKey.Appkey : DefaultKey.Secret));
-            }
-            Init(sets);
+            Init();
         }
         // BiliLite.WebApi 项目部署的服务器
         //public static string baseUrl = "http://localhost:5000";
@@ -51,18 +43,6 @@ namespace BiliLite.Api
 
         //漫游默认的服务器
         public const string ROMAING_PROXY_URL = "https://b.chuchai.vip";
-        public static List<string> settingsname = new List<string>() {
-    "appkey_android_1",
-    "appkey_android_2",
-    "appkey_login_1",
-    "appkey_login_2",
-    "appkey_video_1",
-    "appkey_video_2",
-    "appkey_tv_1",
-    "appkey_tv_2",
-    "appkey_web_1",
-    "appkey_web_2",
-        };
         public static ApiKeyInfo DefaultKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
         public static ApiKeyInfo AndroidKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
         public static ApiKeyInfo AndroidVideoKey = new ApiKeyInfo("4409e2ce8ffd12b8", "59b43e04ad6965f34319062b478f83dd");
@@ -111,62 +91,15 @@ namespace BiliLite.Api
             result = Utils.ToMD5(stringBuilder.ToString()).ToLower();
             return par + result;
         }
-        public static void Init(List<string> keys)
+        public static void Init()
         {
-            if (!string.IsNullOrEmpty(keys[0]) && !string.IsNullOrEmpty(keys[1]))
-            {
-                AndroidKey = new ApiKeyInfo(keys[0], keys[1]);
-            }
-            else
-            {
-                AndroidKey = DefaultKey;
-            }
-
-            if (keys.Count >= 4 && !string.IsNullOrEmpty(keys[2]) && !string.IsNullOrEmpty(keys[3]))
-            {
-                LoginKey = new ApiKeyInfo(keys[2], keys[3]);
-            }
-            else
-            {
-                LoginKey = DefaultKey;
-            }
-
-            if (keys.Count >= 6 && !string.IsNullOrEmpty(keys[4]) && !string.IsNullOrEmpty(keys[5]))
-            {
-                AndroidVideoKey = new ApiKeyInfo(keys[4], keys[5]);
-            }
-            else
-            {
-                AndroidVideoKey = DefaultKey;
-            }
-
-            if (keys.Count >= 8 && !string.IsNullOrEmpty(keys[6]) && !string.IsNullOrEmpty(keys[7]))
-            {
-                AndroidTVKey = new ApiKeyInfo(keys[6], keys[7]);
-            }
-            else
-            {
-                AndroidTVKey = DefaultKey;
-            }
-            if (keys.Count >= 10 && !string.IsNullOrEmpty(keys[8]) && !string.IsNullOrEmpty(keys[9]))
-            {
-                WebVideoKey = new ApiKeyInfo(keys[8], keys[9]);
-            }
-            else
-            {
-                WebVideoKey = DefaultKey;
-            }
-
-            if (keys.Count >= 12 && !string.IsNullOrEmpty(keys[10]) && !string.IsNullOrEmpty(keys[11]))
-            {
-                API_BASE_URL = keys[10];
-                api2 = keys[11];
-            }
-            else
-            {
-                API_BASE_URL = Default_API_BASE_URL;
-                api2 = default_api2;
-            }
+            AndroidKey = DefaultKey;
+            LoginKey = DefaultKey;
+            AndroidVideoKey = DefaultKey;
+            AndroidTVKey = DefaultKey;
+            WebVideoKey = DefaultKey;
+            API_BASE_URL = Default_API_BASE_URL;
+            api2 = default_api2;
             Cookie.LoadCookieFromSetting();
             Cookie.StartAutoRefresh();
         }
@@ -275,7 +208,7 @@ namespace BiliLite.Api
 
         public static Task<bool> NeedRefreshCookie() => Cookie.NeedRefreshCookieAsync();
 
-        public static async void RefreshCookie()
+        public static async Task RefreshCookieAsync()
         {
             try
             {
