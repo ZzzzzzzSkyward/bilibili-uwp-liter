@@ -31,6 +31,14 @@ are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no p
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
 
+- **Reserve attachment panel (BR-56):** `7dd9780` — a reserve attachment (`additional.reserve`) on a photo/text
+  dynamic now selects `AttachmentPanelTemplate` through `DynamicAttachmentDataTemplateSelector`: BR-55's bordered
+  panel, pink 预约 chip, 18/26 title, 14/21 description and the payload's own button. The summary maps
+  `reserve.button.text` / `icon_url` (falling back to the check/uncheck icon) and prefers `button.jump_url` over
+  `reserve.jump_url`; vote/link/unknown attachments keep the quiet row. `ImageSourceConvert` treats a missing
+  parameter as the original image and the standalone Reserve panel now passes `64h.png`, so its icon no longer
+  throws. `g5` 232 → 265 (mapping, panel tokens, selector, button visibility; the pre-fix mapping lands on the
+  reservation page instead of the live URL).
 - **Package version 1.0.9.57:** `284a714` — both `Package.appxmanifest` files bumped to 1.0.9.57; no other change.
 - **Live-room guards and the legacy web escape (BR-53, review `8d496eb`):** `2276f28` — every live-room step that
   parses a response now returns before touching a failed model (no `data.message` on a null), and the ordinary legacy
@@ -235,7 +243,7 @@ BR-21 (device journey, no code left), then whatever the 1.0.9.4x device pass rep
 a `NullReferenceException` message) is recorded in `bug_report.md` and waits for a log line before any live-room
 code changes; BR-54 (toast pill width and content centring) is fixed in `01e51a7` and waits only for the device
 look.
-Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back. The 1.0.9.42–1.0.9.57 device rows plus the new BR-56 reserve-attachment row are the next device pass; BR-56 is recorded in `bug_report.md`.
+Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back. The 1.0.9.42–1.0.9.58 device rows are the next device pass (BR-56 is the 1.0.9.58 row).
 
 ## 已知债务（2026-11-06，从源码 TODO 收拢）
 

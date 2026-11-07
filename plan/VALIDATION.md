@@ -227,3 +227,13 @@ Compiled with `-Fast`, 0 errors; probe batches cover the logic (`toastalign` 41,
 | --- | --- | --- |
 | Live-room sub-request failure no longer throws | `2276f28` | open any live room (live and not live): no `Object reference not set` toast; if a sub-request response fails to parse, the log carries `直播接口返回的数据解析失败 step=…` or `直播详情加载失败 stage=…` naming the step, and the room shows what it could load. |
 | Legacy unsupported card opens the web | `2276f28` | an unsupported card produced by the REST fallback shows 打开原文 and opens `t.bilibili.com/<id>`; a card with no id shows no button. |
+
+## Shipped 2026-11-07 — reserve attachment panel (1.0.9.58)
+
+`BiliLite.Packages_1.0.9.58_x64.msix` exists in `Z:\BiliLite.Packages_1.0.9.58_x64_Test`; compiled (`-Fast`,
+0 errors), `g5` 265 assertions. No device row below has run. This build also passes `64h.png` to the standalone
+Reserve panel's icon converter, so that icon no longer disappears when the payload supplies one.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Reserve attachment looks like a card (BR-56) | `7dd9780` | a photo/text dynamic carrying a live reservation shows one rounded bordered panel under the content: pink 预约 chip, the reservation title at 18/26 in at most two lines, the `11-13 20:00 直播 175人预约` line at 14/21 in at most two lines, and a bottom action with the payload's own label and icon that opens the live URL. A payload with no button text, or with no usable route, shows no action row; a vote or link attachment on the same card keeps the old quiet row. |
