@@ -29,6 +29,8 @@
 
 https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/releases
 
+最新版本：`1.0.9.61`（2026-11-07）
+
 ## 其他fork
 
 https://github.com/ywmoyue/biliuwp-lite

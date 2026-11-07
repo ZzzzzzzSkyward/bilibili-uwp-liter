@@ -221,5 +221,5 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting` 再同步保存一次位置。`Dispose`/播完的上报保留。检查点走静默上报（`ReportHistory(..., reportErrors: false)`），不会每 30s 弹一次失败提示。
 
 - 已修：`ae90881`（`playersess` 161 → 203，`g5` 335）。`HistoryKey` 同时用于续播读取、`Dispose` 保存与检查点；
-  `App.OnSuspending`/`OnExiting` 都在各自的 deferral 里 await flush。打包 1.0.9.60：
-  `Z:\BiliLite.Packages_1.0.9.60_x64_Test\BiliLite.Packages_1.0.9.60_x64.msix`。
+  `App.OnSuspending`/`OnExiting` 都在各自的 deferral 里 await flush。发布 1.0.9.61（tag `20261107`）：
+  `Z:\BiliLite.Packages_1.0.9.61_x64_Test\BiliLite.Packages_1.0.9.61_x64.msix`。

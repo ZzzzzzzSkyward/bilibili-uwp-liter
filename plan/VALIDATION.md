@@ -230,8 +230,9 @@ Compiled with `-Fast`, 0 errors; probe batches cover the logic (`toastalign` 41,
 
 ## Shipped 2026-11-07 — reserve attachment panel and tappable titles (1.0.9.59)
 
-`BiliLite.Packages_1.0.9.59_x64.msix` exists in `Z:\BiliLite.Packages_1.0.9.59_x64_Test`; compiled (`-Fast`,
-0 errors), `g5` 332 and `localdir` 50 assertions. No device row below has run. This batch supersedes the untested
+`BiliLite.Packages_1.0.9.59_x64.msix` was installed on the maintainer's device on 2026-11-07; its title-tooltip and
+playback paths produced BR-59 and BR-60 (fixed in the next batch), and the rows below were not individually checked
+off. Compiled (`-Fast`, 0 errors), `g5` 332 and `localdir` 50 assertions. This batch supersedes the untested
 1.0.9.58 package. It also passes `64h.png` to the standalone Reserve panel's icon converter, so that icon no longer
 disappears when the payload supplies one.
 
@@ -243,10 +244,11 @@ disappears when the payload supplies one.
 | Long card titles open their tooltip on tap (BR-58) | `65ca559` | hover a truncated 18px title (feed card, reserve panel, attachment row, video/column card) and the full text appears exactly as before; tap or click the title with touch or a mouse and the same full text appears for about four seconds and then closes. Tapping the title starts nothing else, and the title is otherwise unchanged. |
 | Text reservation post shows one panel (review `ac6867c`) | `95934db` | open a text-only reservation post: exactly one reservation panel, the title once and the tag line once, with no second panel below it; a photo post carrying the same reservation still shows the panel under its images; a text post that also carries a vote keeps the single panel plus the quiet vote row. |
 
-## Shipped 2026-11-07 — recommend tooltips and progress checkpoints (1.0.9.60)
+## Shipped 2026-11-07 — recommend tooltips and progress checkpoints (1.0.9.61)
 
-`BiliLite.Packages_1.0.9.60_x64.msix` exists in `Z:\BiliLite.Packages_1.0.9.60_x64_Test`; compiled (`-Fast`,
-0 errors), `g5` 335 and `playersess` 203 assertions. No device row below has run.
+`BiliLite.Packages_1.0.9.61_x64.msix` exists in `Z:\BiliLite.Packages_1.0.9.61_x64_Test`; built with the plain
+script (full Release build, 0 errors), `g5` 335 and `playersess` 203 assertions. This is the `20261107` release
+build and supersedes the untested 1.0.9.60 package. No device row below has run.
 
 | Item | Commit(s) | Confirm on the device |
 | --- | --- | --- |

@@ -31,6 +31,9 @@ are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no p
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
 
+- **Release 1.0.9.61 (2026-11-07):** tag `20261107` on the master sync commit; the release asset is
+  `BiliLite.Packages_1.0.9.61_x64_Test.zip` (msix, test certificate, `Install.ps1`/`Add-AppDevPackage.ps1`,
+  dependencies). Built with the plain script (full Release build, 0 errors); `g5` 335, `playersess` 203.
 - **Recommend card tooltips (BR-59):** `ae90881` — the two card-title TextBlocks in `Pages/Home/RecommendPage.xaml`
   (grid `MaxLines=2`, list `MaxLines=3`) were the only truncated card titles without `ToolTipService.ToolTip`; both
   now bind the full title, and no tap handler is attached because the card is item-click navigated. `g5` 332 → 335.
