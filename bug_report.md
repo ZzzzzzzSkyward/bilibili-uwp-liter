@@ -201,6 +201,8 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 处理：两个模板各加 `ToolTipService.ToolTip="{x:Bind title}"`，悬停显示全文。推荐卡整张是 ItemClick 跳转，
 不加"点击打开 tooltip"，否则点一下既弹提示又跳页。
 
+- 已修：`ae90881`（`g5` 332 → 335，两个模板的 `ToolTipService.ToolTip="{x:Bind title}"` 都有锚点）。
+
 ## BR-60 — 关闭应用时正在播放的视频不记进度（维护者 2026-11-07，1.0.9.59）
 
 维护者：记录播放进度的功能失效了。
@@ -216,4 +218,8 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 既不上报历史、也不保存续播位置。
 
 处理：播放中每 30s 做一次检查点（同步保存本地位置 + 上报历史），暂停时补存一次；`App.OnSuspending` 在现有
-deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting` 再同步保存一次位置。`Dispose`/播完的上报保留。
+deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting` 再同步保存一次位置。`Dispose`/播完的上报保留。检查点走静默上报（`ReportHistory(..., reportErrors: false)`），不会每 30s 弹一次失败提示。
+
+- 已修：`ae90881`（`playersess` 161 → 203，`g5` 335）。`HistoryKey` 同时用于续播读取、`Dispose` 保存与检查点；
+  `App.OnSuspending`/`OnExiting` 都在各自的 deferral 里 await flush。打包 1.0.9.60：
+  `Z:\BiliLite.Packages_1.0.9.60_x64_Test\BiliLite.Packages_1.0.9.60_x64.msix`。

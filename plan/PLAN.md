@@ -31,6 +31,15 @@ are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no p
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
 
+- **Recommend card tooltips (BR-59):** `ae90881` — the two card-title TextBlocks in `Pages/Home/RecommendPage.xaml`
+  (grid `MaxLines=2`, list `MaxLines=3`) were the only truncated card titles without `ToolTipService.ToolTip`; both
+  now bind the full title, and no tap handler is attached because the card is item-click navigated. `g5` 332 → 335.
+- **Playback progress survives an app close (BR-60):** `ae90881` — progress was written only from `Dispose` (leaving
+  the page) and on media end, so closing the window mid-video lost both the local resume point and the history report
+  (log 2026-11-07: 8 minutes of playback, no `history/report`, new session). Now a 30 s `DispatcherTimer` checkpoints
+  while playing (local position saved, history posted silently), pause saves once, and `App.OnSuspending`/`OnExiting`
+  await `PlayerControl.FlushActivePlaybackAsync()` inside their deferrals. `HistoryKey` is the only key builder and the
+  resume read uses it too; `ReportHistory` gained a `reportErrors` flag so checkpoints never toast. `playersess` 161 → 203.
 - **Reservation copy and attachment labels (BR-57):** `65ca559` — `Parsing/Dynamic/ReserveCardCopy.cs` formats the
   description as `<time> 开播 <n>人已预约` (+ a third tag for `desc3`), tags separated by one space and no brackets,
   rewriting a trailing 直播 and a pending 预约 while leaving 直播中/预约中 untouched; both the attachment summary and
@@ -263,7 +272,7 @@ BR-21 (device journey, no code left), then whatever the 1.0.9.4x device pass rep
 a `NullReferenceException` message) is recorded in `bug_report.md` and waits for a log line before any live-room
 code changes; BR-54 (toast pill width and content centring) is fixed in `01e51a7` and waits only for the device
 look.
-Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back. The 1.0.9.42–1.0.9.59 device rows are the next device pass (BR-56, local playback, the BR-57 copy row and the BR-58 tooltip row are the 1.0.9.59 rows).
+Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back. The 1.0.9.42–1.0.9.60 device rows are the next device pass (BR-56, local playback, the BR-57 copy row and the BR-58 tooltip row are the 1.0.9.59 rows; the BR-59 recommend-tooltip row and the BR-60 progress row are the 1.0.9.60 rows).
 
 ## 已知债务（2026-11-06，从源码 TODO 收拢）
 
