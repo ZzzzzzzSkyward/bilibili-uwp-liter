@@ -242,3 +242,13 @@ disappears when the payload supplies one.
 | Reservation copy and attachment labels (BR-57) | `65ca559` | a live reservation keeps its title and shows the tag line `11-13 20:00 开播 175人已预约` with no brackets anywhere; a `desc3` lottery line becomes a third tag; a goods attachment shows 「商品」 with its title and 打开 and never `ADDITIONAL_TYPE_GOODS`; an attachment with no title, description or link draws no row at all. |
 | Long card titles open their tooltip on tap (BR-58) | `65ca559` | hover a truncated 18px title (feed card, reserve panel, attachment row, video/column card) and the full text appears exactly as before; tap or click the title with touch or a mouse and the same full text appears for about four seconds and then closes. Tapping the title starts nothing else, and the title is otherwise unchanged. |
 | Text reservation post shows one panel (review `ac6867c`) | `95934db` | open a text-only reservation post: exactly one reservation panel, the title once and the tag line once, with no second panel below it; a photo post carrying the same reservation still shows the panel under its images; a text post that also carries a vote keeps the single panel plus the quiet vote row. |
+
+## Shipped 2026-11-07 — recommend tooltips and progress checkpoints (1.0.9.60)
+
+`BiliLite.Packages_1.0.9.60_x64.msix` exists in `Z:\BiliLite.Packages_1.0.9.60_x64_Test`; compiled (`-Fast`,
+0 errors), `g5` 335 and `playersess` 203 assertions. No device row below has run.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Recommend card titles show a tooltip (BR-59) | `ae90881` | on 推荐, hover a card whose title is cut off (both the grid card and the list card): the full title appears as a tooltip, and a click still opens the card. |
+| Playback progress survives closing the app (BR-60) | `ae90881` | play a video for 2+ minutes, then close the window without going back; reopen the app and the same video resumes within ~30 seconds of where it stopped, and 观看记录 carries that progress. Same after minimizing (suspend) and for a season episode. |
