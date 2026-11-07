@@ -171,3 +171,16 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 - 已修：`93c69de`（`g5` 265 → 293）。`ReserveCardCopy` 对 `直播`/`预约` 只改结尾词，`直播中`/`预约中` 原样保留；
   `商品`/`合集`/`附件` 三个标签与空行不渲染都有锚点。
+
+## BR-58 — 卡片长标题在设备上没有 tooltip（维护者 2026-11-07，1.0.9.57/.58）
+
+维护者：卡片长标题仍然没有 tooltip。
+
+现状：`09ee480`（BR-55）已经在会被截断的标题上写了 `ToolTipService.ToolTip`——`DynamicItemControl` 的
+`CardTitle`、预约面板标题、附件行标题，`DynamicTemplate` 的视频/专栏/预约标题，热门页卡片标题——文本与提示绑定同一份
+数据，所以不是绑定漏了；设备上没有出现悬浮提示。`ToolTipService` 只在指针悬停时自动打开，触摸/手柄没有 hover。
+
+处理（只依赖用户能做的动作）：新增一个"点击也打开同一个 ToolTip"的附加行为，保留原有悬浮路径；`Tapped` 打开，
+`PointerExited`/`Unloaded` 与 4 秒超时关闭。鼠标、触摸、笔都能看到全文。热门页整卡点击会跳转，不挂这个行为。
+
+同批修正 BR-57 的文案：标签不再包【】，标签之间用一个空格分隔（`11-13 20:00 开播 175人已预约`）。
