@@ -218,3 +218,12 @@ Compiled with `-Fast`, 0 errors; probe batches cover the logic (`toastalign` 41,
 | Reserve card looks like a card | `1.0.9.54` | a 预约 dynamic shows the author's text, then a rounded bordered panel: pink 预约 chip, two-line title, two-line 预约说明, and a bottom action with the payload's own label/icon that opens the jump url; a reserve payload without button text shows no action row |
 | Long titles show a tooltip | `1.0.9.55` | hover a card title that is cut off at two lines (feed, 预约 panel, video preview, 热门 card): the tooltip shows the whole title; hovering a short title shows the same text and is harmless |
 | One list entry in the player | `1.0.9.56` | a multi-P video shows one 目录 button with a `3/12`-style caption and no 选集 button; opening it lists every part and jumps on click; an interaction video still shows 节点 and its tree in the side pane |
+
+## Shipped 2026-11-06 — live guard and legacy web escape (1.0.9.57)
+
+`BiliLite.Packages_1.0.9.57_x64.msix` exists in `Z:\BiliLite.Packages_1.0.9.57_x64_Test` (package directory dated 2026-11-06 22:32) and was compiled. No device row below has run.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Live-room sub-request failure no longer throws | `2276f28` | open any live room (live and not live): no `Object reference not set` toast; if a sub-request response fails to parse, the log carries `直播接口返回的数据解析失败 step=…` or `直播详情加载失败 stage=…` naming the step, and the room shows what it could load. |
+| Legacy unsupported card opens the web | `2276f28` | an unsupported card produced by the REST fallback shows 打开原文 and opens `t.bilibili.com/<id>`; a card with no id shows no button. |
