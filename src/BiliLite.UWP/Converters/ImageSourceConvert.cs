@@ -21,6 +21,11 @@ namespace BiliLite.Converters
             {
                 return new BitmapImage(new Uri(value.ToString()));
             }
+            // 没给缩放参数就按原图绑定:调用方只提供地址,不等于是地址写错
+            if (parameter == null || string.IsNullOrEmpty(parameter.ToString()))
+            {
+                return new BitmapImage(new Uri(value.ToString()));
+            }
             if (parameter.ToString().Contains("."))
             {
                 return new BitmapImage(new Uri(value.ToString() + "@" + parameter.ToString()));

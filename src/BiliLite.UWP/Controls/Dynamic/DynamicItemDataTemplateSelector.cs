@@ -61,4 +61,20 @@ namespace BiliLite.Controls.Dynamic
             }
         }
     }
+
+    /// <summary>
+    /// 附件区（DynamicItemControl.xaml 的 AttachmentRow）的模板选择：预约附件用 BR-55 的预约面板，
+    /// 投票/链接/未知种类仍走安静的一行。判断只在显示模型上做（ShowPanel），模板里不写条件。
+    /// </summary>
+    public sealed class DynamicAttachmentDataTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate PanelTemplate { get; set; }
+        public DataTemplate RowTemplate { get; set; }
+
+        protected override DataTemplate SelectTemplateCore(object item, DependencyObject container)
+        {
+            var display = item as DynamicAttachmentDisplay;
+            return display != null && display.ShowPanel ? PanelTemplate : RowTemplate;
+        }
+    }
 }

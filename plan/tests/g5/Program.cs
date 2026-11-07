@@ -7,6 +7,7 @@ using BiliLite.Helpers;
 using BiliLite.Modules;
 using BiliLite.Parsing.Dynamic;
 using Google.Protobuf;
+using Windows.UI.Xaml;
 
 namespace G5Probe
 {
@@ -49,6 +50,8 @@ namespace G5Probe
             CardProjectionCarriesTheContract();
             LiveSummaryReadsThePayload();
             ReserveCardIsAPanelNotBareText();
+            ReserveAttachmentMapsTheButton();
+            ReserveAttachmentBecomesAPanel();
             LongTitlesCarryATooltip();
             UnsupportedCardsAlwaysCarryTheWebCommand();
             ImageGridBindsOnlyVisibleTiles();
@@ -582,9 +585,246 @@ namespace G5Probe
                 "the action appears only when the payload carries button text");
             Check(reserve.Contains("OneRowInfo.Cover, Converter={StaticResource imageConvert2}"),
                 "the action icon goes through the image converter instead of binding a raw string");
+            // 反向锚点：ConverterParameter 缺席时 ImageSourceConvert 会拿 null 调 ToString()，载荷带图标就抛
+            Check(reserve.Contains("OneRowInfo.Cover, Converter={StaticResource imageConvert2}, ConverterParameter='64h.png'"),
+                "the reserve action icon passes a converter parameter instead of relying on a null one");
             Check(!reserve.Contains("实际上根本没有办法点击这个按钮"),
                 "the commented-out reserve button is gone");
         }
+        /// <summary>
+        /// BR-56：图文动态里挂的直播预约（additional.reserve）带着自己的按钮 —— 文案取 reserve.button.text
+        /// （check/uncheck 由 status 选），图标 icon_url 优先、退回 check/uncheck 的图标，跳转按钮优先、
+        /// 卡片自己的 jump_url 只是回退。改回只读 reserve.jump_url/只摊文本时下面的锚点会失败。
+        /// </summary>
+        private static void ReserveAttachmentMapsTheButton()
+        {
+            var card = WebCards(PhotoCard("\"additional\":" + ReserveButtonAdditional()));
+            var web = DynamicAttachmentSummaries.From(card).Find(x => x.Kind == DynamicAttachmentKind.Reserve);
+            Check(web != null, "a photo card's reserve attachment is mapped");
+            Check(web.ButtonText == "预约", "the reserve button text comes from reserve.button.text");
+            Check(web.ButtonIcon == "https://i0.hdslb.com/reserve.png",
+                "the reserve button icon comes from reserve.button.icon_url");
+            // 反向锚点：改回只读 reserve.jump_url 时这里拿到的是预约页地址，不是按钮的直播间
+            Check(web.Destination == "https://live.bilibili.com/123",
+                "the reserve destination prefers reserve.button.jump_url over the card's own jump_url");
+
+            // protobuf 只映射 check/uncheck 的图标：button.icon_url 缺席时要退回 button.icon
+            var unconfirmed = ReserveSummaryOf(new DynamicCardModel2024_addin_reserve
+            {
+                title = "预约标题",
+                jump_url = "//www.bilibili.com/reserve/321",
+                desc1 = new DynamicCardModel2024_reservetext { text = "11-13 20:00" },
+                button = new DynamicCardModel2024_button2
+                {
+                    status = 1,
+                    jump_url = "//live.bilibili.com/123",
+                    uncheck = new DynamicCardModel2024_buttontext
+                    {
+                        text = "预约",
+                        icon_url = "//i0.hdslb.com/uncheck.png",
+                    },
+                },
+            });
+            Check(unconfirmed.ButtonIcon == "//i0.hdslb.com/uncheck.png",
+                "a button without icon_url falls back to the check/uncheck icon");
+            Check(unconfirmed.ButtonText == "预约", "an unconfirmed reservation takes the uncheck text");
+            Check(unconfirmed.Destination == "https://live.bilibili.com/123",
+                "a protocol-relative button jump url is normalised like the card link");
+
+            var confirmed = ReserveSummaryOf(new DynamicCardModel2024_addin_reserve
+            {
+                button = new DynamicCardModel2024_button2
+                {
+                    status = 2,
+                    icon_url = "https://i0.hdslb.com/top.png",
+                    check = new DynamicCardModel2024_buttontext { text = "已预约", icon_url = "https://i0.hdslb.com/check.png" },
+                    uncheck = new DynamicCardModel2024_buttontext { text = "预约", icon_url = "https://i0.hdslb.com/uncheck.png" },
+                },
+            });
+            Check(confirmed.ButtonText == "已预约", "a confirmed reservation takes the check text");
+            Check(confirmed.ButtonIcon == "https://i0.hdslb.com/top.png",
+                "button.icon_url wins over the check/uncheck icon");
+
+            var noButtonUrl = ReserveSummaryOf(new DynamicCardModel2024_addin_reserve
+            {
+                jump_url = "//www.bilibili.com/reserve/321",
+                button = new DynamicCardModel2024_button2
+                {
+                    status = 1,
+                    uncheck = new DynamicCardModel2024_buttontext { text = "预约" },
+                },
+            });
+            Check(noButtonUrl.Destination == "https://www.bilibili.com/reserve/321",
+                "the card's own jump_url is the fallback destination");
+        }
+
+        /// <summary>
+        /// BR-56：预约附件换成 BR-55 的面板，投票/链接/未知种类仍是安静行；按钮文案/目的地/命令缺一个
+        /// 就不画，图标非空才占位。XAML 断言钉住令牌与 imageConvert2 接线，防止面板被悄悄改回一行。
+        /// </summary>
+        private static void ReserveAttachmentBecomesAPanel()
+        {
+            var xaml = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicItemControl.xaml");
+            var panel = Slice(xaml, "<DataTemplate x:Key=\"AttachmentPanelTemplate\">", "</DataTemplate>");
+            var row = Slice(xaml, "<DataTemplate x:Key=\"AttachmentRowTemplate\">", "</DataTemplate>");
+
+            Check(panel.Contains("CornerRadius=\"8\"") && panel.Contains("BorderThickness=\"1\"")
+                  && panel.Contains("Padding=\"12\"") && panel.Contains("Margin=\"0 8 0 0\"")
+                  && panel.Contains("BorderBrush=\"{ThemeResource ForegroundBorderColor}\""),
+                "the reserve attachment draws the BR-55 bordered panel");
+            Check(panel.Contains("Text=\"预约\"") && panel.Contains("Background=\"HotPink\"")
+                  && panel.Contains("FontSize=\"12\""),
+                "the reserve attachment panel carries the 12px 预约 chip");
+            Check(panel.Contains("Text=\"{Binding Title}\"") && panel.Contains("FontSize=\"18\"")
+                  && panel.Contains("LineHeight=\"26\"") && panel.Contains("FontWeight=\"SemiBold\""),
+                "the panel title uses the 18/26 SemiBold token");
+            Check(panel.Contains("Text=\"{Binding Desc}\"") && panel.Contains("FontSize=\"14\"")
+                  && panel.Contains("LineHeight=\"21\""),
+                "the panel description uses the 14/21 token");
+            Check(!panel.Contains("KindLabel"),
+                "the reserve panel is not the quiet attachment row");
+            Check(panel.Contains("Visibility=\"{Binding ButtonVisibility}\"")
+                  && panel.Contains("Command=\"{Binding OpenCommand}\"")
+                  && panel.Contains("CommandParameter=\"{Binding Destination}\"")
+                  && panel.Contains("Text=\"{Binding ButtonText}\""),
+                "the panel button shows the payload's text and opens the payload's route");
+            Check(panel.Contains("Width=\"16\" Height=\"16\"")
+                  && panel.Contains("Source=\"{Binding ButtonIcon, Converter={StaticResource imageConvert2}")
+                  && panel.Contains("Visibility=\"{Binding IconVisibility}\""),
+                "the panel icon is 16px and goes through imageConvert2");
+
+            Check(row.Contains("KindLabel") && row.Contains("Content=\"打开\"")
+                  && row.Contains("Visibility=\"{Binding OpenVisibility}\""),
+                "the vote/link row is unchanged: label, title and an optional 打开");
+
+            var rowStart = xaml.IndexOf("<ItemsControl x:Name=\"AttachmentRow\"", StringComparison.Ordinal);
+            Check(rowStart >= 0, "the attachment row element still exists");
+            var rowElement = rowStart < 0
+                ? ""
+                : xaml.Substring(rowStart, xaml.IndexOf("/>", rowStart, StringComparison.Ordinal) - rowStart);
+            Check(rowElement.Contains("ItemTemplateSelector=\"{StaticResource attachmentTemplateSelect}\""),
+                "the attachment row picks its template through the selector");
+            Check(!rowElement.Contains("ItemTemplate=\"") || rowElement.Contains("ItemTemplateSelector=\""),
+                "the attachment row is no longer hard-wired to one template for every kind");
+            Check(!xaml.Contains("<ItemsControl.ItemTemplate>"),
+                "no inline attachment row template is left behind");
+
+            var selector = ProductSource("src/BiliLite.UWP/Controls/Dynamic/DynamicItemDataTemplateSelector.cs");
+            var selectorStart = selector.IndexOf("class DynamicAttachmentDataTemplateSelector", StringComparison.Ordinal);
+            Check(selectorStart >= 0, "the attachment template selector exists");
+            var attachmentSelector = selectorStart < 0 ? "" : selector.Substring(selectorStart);
+            Check(attachmentSelector.Contains("ShowPanel ? PanelTemplate : RowTemplate"),
+                "the selector swaps templates on ShowPanel, not on the raw wire type");
+
+            var command = new NoopCommand();
+            var reserve = new DynamicAttachmentDisplay(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.Reserve,
+                Title = "10月新番OP/ED鉴赏会！",
+                Desc = "11-13 20:00 直播 175人预约",
+                Destination = "https://live.bilibili.com/123",
+                ButtonText = "预约",
+                ButtonIcon = "https://i0.hdslb.com/reserve.png",
+            }, command);
+            Check(reserve.ShowPanel, "a reserve attachment selects the panel");
+            Check(reserve.ButtonVisibility == Visibility.Visible && reserve.IconVisibility == Visibility.Visible,
+                "a reserve panel with text, icon and route draws its button");
+
+            var vote = new DynamicAttachmentDisplay(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.Vote,
+                Title = "投票标题",
+                Desc = "投票说明",
+                Destination = "https://www.bilibili.com/vote/123",
+            }, command);
+            Check(!vote.ShowPanel && vote.OpenVisibility == Visibility.Visible,
+                "a vote attachment keeps the quiet row with its 打开 action");
+            var link = new DynamicAttachmentDisplay(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.CommonLink,
+                Title = "链接标题",
+                Destination = "https://www.bilibili.com/x",
+            }, command);
+            Check(!link.ShowPanel, "a common link keeps the quiet row");
+            var unsupported = new DynamicAttachmentDisplay(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.Unsupported,
+                RawType = "ADDITIONAL_TYPE_GOODS",
+                Title = "商品",
+            }, command);
+            Check(!unsupported.ShowPanel && unsupported.KindLabel == "ADDITIONAL_TYPE_GOODS",
+                "an unknown attachment keeps the quiet row and the wire type label");
+
+            var noText = new DynamicAttachmentDisplay(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.Reserve,
+                Title = "只有标题",
+                Destination = "https://live.bilibili.com/123",
+                ButtonIcon = "https://i0.hdslb.com/reserve.png",
+            }, command);
+            Check(noText.ButtonVisibility == Visibility.Collapsed,
+                "a reserve panel without button text draws no button");
+
+            var noRoute = new DynamicAttachmentDisplay(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.Reserve,
+                Title = "只有文案",
+                ButtonText = "预约",
+            }, command);
+            Check(noRoute.ButtonVisibility == Visibility.Collapsed,
+                "a reserve panel without a destination draws no button");
+
+            var noCommand = new DynamicAttachmentDisplay(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.Reserve,
+                Title = "没有命令",
+                Destination = "https://live.bilibili.com/123",
+                ButtonText = "预约",
+            }, null);
+            Check(noCommand.ButtonVisibility == Visibility.Collapsed,
+                "a reserve panel without an open command draws no button");
+
+            var noIcon = new DynamicAttachmentDisplay(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.Reserve,
+                Title = "没有图标",
+                Destination = "https://live.bilibili.com/123",
+                ButtonText = "预约",
+            }, command);
+            Check(noIcon.IconVisibility == Visibility.Collapsed,
+                "a button without an icon hides the icon instead of drawing a placeholder");
+        }
+
+        private static DynamicAttachmentSummary ReserveSummaryOf(DynamicCardModel2024_addin_reserve reserve)
+        {
+            var card = new DynamicCardModel2024
+            {
+                modules = new DynamicCardModel2024_modules
+                {
+                    module_dynamic = new DynamicCardModel2024_dynamic
+                    {
+                        additional = new DynamicCardModel2024_add
+                        {
+                            type = "ADDITIONAL_TYPE_RESERVE",
+                            reserve = reserve,
+                        },
+                    },
+                },
+            };
+            return DynamicAttachmentSummaries.From(card).Find(x => x.Kind == DynamicAttachmentKind.Reserve);
+        }
+
+        private static string ReserveButtonAdditional()
+        {
+            return "{\"type\":\"ADDITIONAL_TYPE_RESERVE\"," +
+                   "\"reserve\":{\"title\":\"10月新番OP/ED鉴赏会！\",\"rid\":321," +
+                   "\"desc1\":{\"text\":\"11-13 20:00\",\"style\":0}," +
+                   "\"desc2\":{\"text\":\"175人预约\"}," +
+                   "\"jump_url\":\"//www.bilibili.com/reserve/321\"," +
+                   "\"button\":{\"status\":1,\"jump_url\":\"//live.bilibili.com/123\"," +
+                   "\"uncheck\":{\"text\":\"预约\",\"icon_url\":\"https://i0.hdslb.com/reserve.png\"}}}}";
+        }
+
         private static void LiveSummaryReadsThePayload()
         {
             var summary = LiveCardSummary.From(new DynamicCardModel2024_live

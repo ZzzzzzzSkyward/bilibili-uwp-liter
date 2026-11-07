@@ -35,6 +35,53 @@
     <Style TargetType="HyperlinkButton">
       <Setter Property="Foreground" Value="#178bcf"/>
     </Style>
+    <!--
+      附件区(CARD_PLAN §7)的两套模板,由 DynamicAttachmentDataTemplateSelector 按显示模型的 ShowPanel 选:
+      预约附件用 BR-55 的预约面板,投票/链接/未知种类仍走下面这一行。
+      ItemTemplateSelector 是元素属性,在 UserControl.Resources 里声明才能在属性解析时找得到。
+    -->
+    <DataTemplate x:Key="AttachmentPanelTemplate">
+      <!--
+        预约附件:与独立预约动态(DynamicTemplate.xaml 的 Reserve)同一套语言 ——
+        圆角 8、内边距 12、1px 边框、粉色「预约」角标,标题 18/26、说明 14/21 各两行;
+        按钮的文案与图标都来自载荷(reserve.button),没有文案、没有可用路由时不画按钮。
+        图标必须过 imageConvert2:这里是地址字符串,不是可直接绑定的图片。
+      -->
+      <Border Margin="0 8 0 0" Padding="12" HorizontalAlignment="Stretch" CornerRadius="8" BorderThickness="1" BorderBrush="{ThemeResource ForegroundBorderColor}">
+        <StackPanel HorizontalAlignment="Stretch">
+          <Border HorizontalAlignment="Left" Background="HotPink" CornerRadius="2" Padding="6,1">
+            <TextBlock FontSize="12" Foreground="White" Text="预约"/>
+          </Border>
+          <TextBlock Margin="0 8 0 0" Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" Visibility="{Binding TitleVisibility}" FontSize="18" FontWeight="SemiBold" LineHeight="26" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
+          <TextBlock Margin="0 4 0 0" Text="{Binding Desc}" Visibility="{Binding DescVisibility}" FontSize="14" LineHeight="21" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxLines="2"/>
+          <HyperlinkButton Margin="0 8 0 0" Padding="0" HorizontalAlignment="Left" Visibility="{Binding ButtonVisibility}" Command="{Binding OpenCommand}" CommandParameter="{Binding Destination}">
+            <StackPanel Orientation="Horizontal">
+              <Image Width="16" Height="16" Margin="0,0,6,0" VerticalAlignment="Center" Visibility="{Binding IconVisibility}" Source="{Binding ButtonIcon, Converter={StaticResource imageConvert2}, ConverterParameter='64h.png'}"/>
+              <TextBlock VerticalAlignment="Center" FontSize="14" Text="{Binding ButtonText}"/>
+            </StackPanel>
+          </HyperlinkButton>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+    <DataTemplate x:Key="AttachmentRowTemplate">
+      <Border Background="{ThemeResource TopPaneBackground}" CornerRadius="4" Padding="8,6" Margin="0,0,0,4">
+        <Grid>
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <StackPanel Orientation="Vertical">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{Binding KindLabel}" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+              <TextBlock Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" Visibility="{Binding TitleVisibility}" FontSize="13" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+            </StackPanel>
+            <TextBlock Text="{Binding Desc}" Visibility="{Binding DescVisibility}" Margin="0,2,0,0" FontSize="12" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
+          </StackPanel>
+          <HyperlinkButton Grid.Column="1" Margin="8,0,0,0" Padding="8,0" MinWidth="40" MinHeight="24" VerticalAlignment="Center" FontSize="12" Content="打开" Visibility="{Binding OpenVisibility}" Command="{Binding OpenCommand}" CommandParameter="{Binding Destination}" AutomationProperties.Name="打开附件"/>
+        </Grid>
+      </Border>
+    </DataTemplate>
+    <local:DynamicAttachmentDataTemplateSelector x:Key="attachmentTemplateSelect" PanelTemplate="{StaticResource AttachmentPanelTemplate}" RowTemplate="{StaticResource AttachmentRowTemplate}"/>
   </UserControl.Resources>
   <!-- 阅读列:最大 800,宽窗口居中,窄窗口自 stretch 到可用宽度 -->
   <Grid x:Name="CardRoot" Margin="12,0,12,4" MaxWidth="800" HorizontalAlignment="Stretch" VerticalAlignment="Top">
@@ -163,32 +210,14 @@
         <!--媒体/预告/附件/转发原动态:占满整宽-->
         <ContentPresenter x:Name="CardContentPresenter" Grid.Row="3" Margin="0,8,0,0" HorizontalAlignment="Stretch" Content="{x:Bind Path=CardContent,Mode=OneWay}"/>
         <!--
-          附件(CARD_PLAN §7):放在共享外壳里,所以每个模板都拿到同一行。
-          每项只有短标签/标题、一行说明和"真有目的地才出现"的打开动作;没有目的地时就是可读文本。
+          附件(CARD_PLAN §7):放在共享外壳里,所以每个模板都拿到同一块。
+          预约附件(图文/文字动态里挂的直播预约)选中 UserControl.Resources 的预约面板:
+          角标、标题、说明和载荷自带的按钮;投票/链接/未知种类仍是安静的一行
+          (短标签 + 标题、一行说明、"真有目的地才出现"的打开动作;没有目的地时就是可读文本)。
+          选面板还是选行只由 DynamicAttachmentDisplay.ShowPanel 决定(模板选择器),模板里不写条件。
           列表为空(或附件摘要没被填)时整块 Collapsed,Auto 行随之收成 0,不画空框、不替正文占位。
         -->
-        <ItemsControl x:Name="AttachmentRow" Grid.Row="4" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.AttachmentRowVisibility,Mode=OneWay}" ItemsSource="{x:Bind Path=Model.AttachmentItems,Mode=OneWay}">
-          <ItemsControl.ItemTemplate>
-            <DataTemplate>
-              <Border Background="{ThemeResource TopPaneBackground}" CornerRadius="4" Padding="8,6" Margin="0,0,0,4">
-                <Grid>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*"/>
-                    <ColumnDefinition Width="Auto"/>
-                  </Grid.ColumnDefinitions>
-                  <StackPanel Orientation="Vertical">
-                    <StackPanel Orientation="Horizontal">
-                      <TextBlock Text="{Binding KindLabel}" FontSize="12" Foreground="{ThemeResource ForegroundTextColor}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                      <TextBlock Text="{Binding Title}" ToolTipService.ToolTip="{Binding Title}" Visibility="{Binding TitleVisibility}" FontSize="13" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource TextColor}" TextWrapping="NoWrap" MaxLines="1" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                    </StackPanel>
-                    <TextBlock Text="{Binding Desc}" Visibility="{Binding DescVisibility}" Margin="0,2,0,0" FontSize="12" LineHeight="18" LineStackingStrategy="MaxHeight" Foreground="{ThemeResource ForegroundTextColor}" TextWrapping="Wrap" MaxLines="2" TextTrimming="CharacterEllipsis"/>
-                  </StackPanel>
-                  <HyperlinkButton Grid.Column="1" Margin="8,0,0,0" Padding="8,0" MinWidth="40" MinHeight="24" VerticalAlignment="Center" FontSize="12" Content="打开" Visibility="{Binding OpenVisibility}" Command="{Binding OpenCommand}" CommandParameter="{Binding Destination}" AutomationProperties.Name="打开附件"/>
-                </Grid>
-              </Border>
-            </DataTemplate>
-          </ItemsControl.ItemTemplate>
-        </ItemsControl>
+        <ItemsControl x:Name="AttachmentRow" Grid.Row="4" Margin="0,8,0,0" HorizontalAlignment="Stretch" Visibility="{x:Bind Path=Model.AttachmentRowVisibility,Mode=OneWay}" ItemsSource="{x:Bind Path=Model.AttachmentItems,Mode=OneWay}" ItemTemplateSelector="{StaticResource attachmentTemplateSelect}"/>
         <!--互动栏:三等分列,按钮点击区 ≥40×40-->
         <Grid x:Name="ActionRow" Grid.Row="5" Margin="0,8,0,0" Visibility="{x:Bind Path=Model.InteractionRowVisibility,Mode=OneWay}">
           <Grid.ColumnDefinitions>

@@ -33,6 +33,10 @@ namespace BiliLite.Controls.Dynamic
         public string Desc { get; set; } = "";
         /// <summary>归一化后的目的地；空串表示没有目的地，只能当文本读。</summary>
         public string Destination { get; set; } = "";
+        /// <summary>预约按钮的文案（check/uncheck 由 status 选出）；其它种类与没有按钮时都是空串。</summary>
+        public string ButtonText { get; set; } = "";
+        /// <summary>预约按钮的图标地址；只有真能画按钮的附件才有值。</summary>
+        public string ButtonIcon { get; set; } = "";
         public bool HasDestination { get { return !string.IsNullOrEmpty(Destination); } }
     }
 
@@ -56,6 +60,7 @@ namespace BiliLite.Controls.Dynamic
             if (additional.reserve != null)
             {
                 var reserve = additional.reserve;
+                var button = reserve.button;
                 result.Add(new DynamicAttachmentSummary
                 {
                     Kind = DynamicAttachmentKind.Reserve,
@@ -63,7 +68,11 @@ namespace BiliLite.Controls.Dynamic
                     Id = reserve.rid > 0 ? reserve.rid.ToString() : "",
                     Title = reserve.title ?? "",
                     Desc = reserve.desc ?? "",
-                    Destination = WireScalars.NormalizeWebUrl(reserve.jump_url),
+                    // 直播预约的跳转在 button.jump_url；reserve.jump_url 是卡片自己的地址，按钮优先
+                    Destination = WireScalars.NormalizeWebUrl(FirstPresent(button?.jump_url, reserve.jump_url)),
+                    ButtonText = button?.text ?? "",
+                    // web 来源填 button.icon_url，protobuf 来源只填 check/uncheck 的图标；两处都空就没有图标
+                    ButtonIcon = FirstPresent(button?.icon_url, button?.icon),
                 });
             }
 
@@ -111,6 +120,19 @@ namespace BiliLite.Controls.Dynamic
             return result;
         }
 
+        /// <summary>
+        /// 两个来源各填一处（web 给 button.icon_url，protobuf 只给 check/uncheck 的图标），
+        /// 字段存在但为空串时也要继续看下一处；都空就是空串。
+        /// </summary>
+        private static string FirstPresent(string primary, string fallback)
+        {
+            if (!string.IsNullOrWhiteSpace(primary))
+            {
+                return primary.Trim();
+            }
+            return (fallback ?? "").Trim();
+        }
+
         private static void AppendUnsupported(
             List<DynamicAttachmentSummary> target,
             DynamicCardModel2024_addin addin,
@@ -148,12 +170,21 @@ namespace BiliLite.Controls.Dynamic
             KindLabel = KindLabelOf(summary.Kind, summary.RawType);
             Title = Clean(summary.Title);
             Desc = Clean(summary.Desc);
-            Destination = summary.Destination ?? "";
+            Destination = Clean(summary.Destination);
+            ButtonText = Clean(summary.ButtonText);
+            ButtonIcon = Clean(summary.ButtonIcon);
             OpenCommand = openCommand;
+            // 预约附件不再走安静行：它有角标、标题、说明和载荷自带的按钮，模板按这一位选面板
+            ShowPanel = summary.Kind == DynamicAttachmentKind.Reserve;
             TitleVisibility = string.IsNullOrEmpty(Title) ? Visibility.Collapsed : Visibility.Visible;
             DescVisibility = string.IsNullOrEmpty(Desc) ? Visibility.Collapsed : Visibility.Visible;
+            IconVisibility = string.IsNullOrEmpty(ButtonIcon) ? Visibility.Collapsed : Visibility.Visible;
+            // 文案/目的地/命令缺一个就不画按钮：不生成点了没反应的按钮，也不替来源编造文案
+            ButtonVisibility = Destination.Length > 0 && ButtonText.Length > 0 && openCommand != null
+                ? Visibility.Visible
+                : Visibility.Collapsed;
             // 有目的地也得有真正可用的路由才画按钮:没有命令时宁可不显示,也不留一个点了没反应的"打开"
-            OpenVisibility = summary.HasDestination && openCommand != null ? Visibility.Visible : Visibility.Collapsed;
+            OpenVisibility = Destination.Length > 0 && openCommand != null ? Visibility.Visible : Visibility.Collapsed;
         }
 
         /// <summary>种类标签：已知种类给中文短标签，未知种类原样用来源的类型名。</summary>
@@ -167,6 +198,14 @@ namespace BiliLite.Controls.Dynamic
         /// <summary>打开动作走既有 LaunchUrlCommand（MessageCenter.HandleUrl），不另建一套导航。</summary>
         public ICommand OpenCommand { get; private set; }
         public Visibility OpenVisibility { get; private set; }
+        /// <summary>预约附件用面板渲染（BR-55 的预约语言）；其它种类仍是安静的一行。</summary>
+        public bool ShowPanel { get; private set; }
+        /// <summary>面板按钮的文案，取自 reserve.button.text；空串就是不画按钮。</summary>
+        public string ButtonText { get; private set; }
+        /// <summary>面板按钮的图标，取自 reserve.button 的 icon_url（回退 check/uncheck 图标）。</summary>
+        public string ButtonIcon { get; private set; }
+        public Visibility ButtonVisibility { get; private set; }
+        public Visibility IconVisibility { get; private set; }
 
         private static string KindLabelOf(DynamicAttachmentKind kind, string rawType)
         {
