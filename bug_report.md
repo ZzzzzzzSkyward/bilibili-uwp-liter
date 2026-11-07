@@ -170,7 +170,7 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 `plan/tests/g5` 钉住标签格式、时间/人数改写、desc3 追加、无结构化字段时的回退，以及 `KindLabel` 不含
 `ADDITIONAL_TYPE_`；旧断言 `Desc == "明天 20:00 1.2万人预约"` 同步改成新文案。
 
-- 已修：`93c69de`（标签映射与空行不渲染）、`8182beb`（去括号，`g5` 265 → 316）。`ReserveCardCopy` 对
+- 已修：`93c69de`（标签映射与空行不渲染）、`65ca559`（去括号，`g5` 265 → 316；同批最终 332）。`ReserveCardCopy` 对
   `直播`/`预约` 只改结尾词，`直播中`/`预约中` 原样保留；`商品`/`合集`/`附件` 三个标签与空行不渲染都有锚点。
 
 ## BR-58 — 卡片长标题在设备上没有 tooltip（维护者 2026-11-07，1.0.9.57/.58）
@@ -188,5 +188,5 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 同批修正 BR-57 的文案：标签不再包【】，标签之间用一个空格分隔（`11-13 20:00 开播 175人已预约`）。
 
-- 已修：`8182beb`（`g5` 316，五个标题元素都有锚点；去掉空格拼接或 `CardTitle` 的附加属性会分别失败）。
+- 已修：`65ca559`（`g5` 316 → 同批最终 332，五个标题元素都有锚点；去掉空格拼接或 `CardTitle` 的附加属性会分别失败）。
   打包 1.0.9.59：`Z:\BiliLite.Packages_1.0.9.59_x64_Test\BiliLite.Packages_1.0.9.59_x64.msix`。

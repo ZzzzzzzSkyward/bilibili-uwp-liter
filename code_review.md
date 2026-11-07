@@ -13,3 +13,21 @@ Effect: the `Reserve` template in `DynamicTemplate.xaml:5-35` displays its reser
 Suggested fix: give the reservation a single display owner. Once the final display type is `Reserve`, omit the matching reserve summary from `AttachmentItems`, preserving other attachments; alternatively let the shared attachment panel own the reservation and remove the duplicate standalone panel. Keep reservation attachment panels on photo and other card types. Apply the choice after text-to-reserve promotion so the earlier projection cannot retain a duplicate.
 
 The previous local-playback picker finding is resolved by the directory wiring in `9c8920f`; it is not repeated. This range adds no evidence identifying BR-21's memory-growth cause or BR-53's failing interface response.
+
+## Dispositions (2026-11-07, dispatcher, review `ac6867c`)
+
+Finding accepted; not contested. `DynamicCardProjection.Apply` runs before `ParseOneRowInfo2024`, and that call's
+text branch flips `data.Type` to `DynamicDisplayType.Reserve` afterwards, so the same `additional.reserve` was both
+the standalone panel's `OneRowInfo` and an `Attachments` entry; the unconditional reserve `ShowPanel` selection made
+the second one a second full panel.
+
+Fixed in `95934db` with the first suggested shape: `DynamicCardProjection.ApplyAttachmentOwnership(data)` runs
+immediately after the parse in `ConvertToDisplay2024`, is a no-op unless the final type is `Reserve`, and rebuilds
+`Attachments` without `DynamicAttachmentKind.Reserve` — nulls and every other kind kept, and the setter clears the
+built `AttachmentItems` cache. Photo/article cards keep their reserve attachment panel, and a text reservation post
+that also carries a vote renders the single panel plus the quiet vote row. `g5` 316 → 332; removing the call fails
+the conversion anchor.
+
+The review's range also predates this batch's copy change: the tag line is now `11-13 20:00 开播 175人已预约` with no
+brackets, and truncated titles open their tooltip on tap (`65ca559`), so a re-read of `33debce` alone sees the older
+bracketed string.

@@ -31,15 +31,20 @@ are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no p
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
 
-- **Reservation copy and attachment labels (BR-57):** `8182beb` — `Parsing/Dynamic/ReserveCardCopy.cs` formats the
+- **Reservation copy and attachment labels (BR-57):** `65ca559` — `Parsing/Dynamic/ReserveCardCopy.cs` formats the
   description as `<time> 开播 <n>人已预约` (+ a third tag for `desc3`), tags separated by one space and no brackets,
   rewriting a trailing 直播 and a pending 预约 while leaving 直播中/预约中 untouched; both the attachment summary and
   the standalone Reserve card use it. Attachment labels map `GOODS`→商品、`UGC`→合集、unknown→附件 and never print a
   wire type; an unsupported row with no title, description or destination is dropped. `g5` 265 → 316.
-- **Titles open their tooltip on tap (BR-58):** `8182beb` — `Helpers/TapToolTip.cs` attached behavior; a tap on the
+- **Titles open their tooltip on tap (BR-58):** `65ca559` — `Helpers/TapToolTip.cs` attached behavior; a tap on the
   five truncated dynamic titles opens the same full text a hover shows, for 4 s, and closes on mouse exit/unload.
   It reads `ToolTipService.ToolTip` on every tap (so a recycled list item cannot show the previous title) and never
   writes back the attached property; touch `PointerExited` is ignored because it fires on lift.
+- **Text reservation posts keep one panel (review `ac6867c`):** `95934db` — the text branch of
+  `ParseOneRowInfo2024` promotes the card to `DynamicDisplayType.Reserve` after `DynamicCardProjection.Apply` already
+  projected the reserve into `Attachments`, so the standalone template and the attachment panel drew it twice.
+  `DynamicCardProjection.ApplyAttachmentOwnership` now runs right after the parse and drops only the reserve summary
+  when the type is `Reserve`; photo posts keep their panel, other kinds stay. `g5` 316 → 332.
 - **Local playback keeps its directory (review `dae62b7`):** `9c8920f` — `LocalPlayerPage` builds
   `PlayDirectoryBuilder.FromParts` rows from the `PlayInfos` it is handed (title/cid/duration), reports
   availability only above one item, opens and refreshes the drawer on request, switches Parts rows through
