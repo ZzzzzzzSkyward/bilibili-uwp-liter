@@ -8,7 +8,10 @@ using Windows.UI.Xaml.Controls;
 
 namespace BiliLite.Controls.Dynamic
 {
-    /// <summary>正文之外的附件种类；未知种类不丢弃，按 Unsupported 保留原类型名。</summary>
+    /// <summary>
+    /// 正文之外的附件种类；未知种类不丢弃，按 Unsupported 保留原类型名（只用于诊断，不上屏），
+    /// 标题/说明/目的地全空的那种整行不渲染。
+    /// </summary>
     public enum DynamicAttachmentKind
     {
         Reserve,
@@ -67,7 +70,7 @@ namespace BiliLite.Controls.Dynamic
                     RawType = rawType,
                     Id = reserve.rid > 0 ? reserve.rid.ToString() : "",
                     Title = reserve.title ?? "",
-                    Desc = reserve.desc ?? "",
+                    Desc = ReserveCardCopy.Format(reserve),
                     // 直播预约的跳转在 button.jump_url；reserve.jump_url 是卡片自己的地址，按钮优先
                     Destination = WireScalars.NormalizeWebUrl(FirstPresent(button?.jump_url, reserve.jump_url)),
                     ButtonText = button?.text ?? "",
@@ -108,7 +111,7 @@ namespace BiliLite.Controls.Dynamic
             AppendUnsupported(result, additional.ugc, rawType);
             if (result.Count == 0)
             {
-                // 有附件块、但里面没有能认出来的子卡：保留原类型，页面至少知道"这里有东西"
+                // 有附件块、但里面没有能认出来的子卡：保留类型名当诊断线索，页面至少知道"这里有东西"
                 result.Add(new DynamicAttachmentSummary
                 {
                     Kind = DynamicAttachmentKind.Unsupported,
@@ -116,6 +119,12 @@ namespace BiliLite.Controls.Dynamic
                     Desc = additional.title ?? "",
                 });
             }
+
+            // 认不出的种类如果连标题、说明、目的地都没有，就只是一行类型名，什么都不该上屏（BR-57）
+            result.RemoveAll(x => x.Kind == DynamicAttachmentKind.Unsupported
+                && string.IsNullOrWhiteSpace(x.Title)
+                && string.IsNullOrWhiteSpace(x.Desc)
+                && !x.HasDestination);
 
             return result;
         }
@@ -156,8 +165,8 @@ namespace BiliLite.Controls.Dynamic
 
     /// <summary>
     /// 附件行的一项（CARD_PLAN §7）：短标题 + 一行说明 + 一个只在真有目的地时才出现的打开动作。
-    /// 没有目的地时只剩可读文本，不做成按了没反应的按钮；未知种类原样保留来源类型名当标签，
-    /// 没有类型名时退回"附件"，不替来源编造种类，也不生成投票/预约的写入动作。
+    /// 没有目的地时只剩可读文本，不做成按了没反应的按钮；未知种类给「商品」/「合集」/「附件」这类中文短标签，
+    /// wire 类型名（RawType）只留在摘要里做诊断、不上屏，也不生成投票/预约的写入动作。
     /// </summary>
     public sealed class DynamicAttachmentDisplay
     {
@@ -207,6 +216,10 @@ namespace BiliLite.Controls.Dynamic
         public Visibility ButtonVisibility { get; private set; }
         public Visibility IconVisibility { get; private set; }
 
+        /// <summary>
+        /// 种类标签只给中文短词：wire 类型名（ADDITIONAL_TYPE_*）是诊断字段，不上屏。
+        /// 认不出的种类一律是「附件」——没标题没说明没目的地的那种整行不画（见 DynamicAttachmentSummaries.From）。
+        /// </summary>
         private static string KindLabelOf(DynamicAttachmentKind kind, string rawType)
         {
             switch (kind)
@@ -218,7 +231,15 @@ namespace BiliLite.Controls.Dynamic
                 case DynamicAttachmentKind.CommonLink:
                     return "链接";
                 default:
-                    return string.IsNullOrEmpty(rawType) ? "附件" : rawType;
+                    switch (rawType)
+                    {
+                        case "ADDITIONAL_TYPE_GOODS":
+                            return "商品";
+                        case "ADDITIONAL_TYPE_UGC":
+                            return "合集";
+                        default:
+                            return "附件";
+                    }
             }
         }
 

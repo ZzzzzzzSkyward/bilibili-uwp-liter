@@ -52,6 +52,8 @@ namespace G5Probe
             ReserveCardIsAPanelNotBareText();
             ReserveAttachmentMapsTheButton();
             ReserveAttachmentBecomesAPanel();
+            ReserveCopyLabelsTimeAndCount();
+            AttachmentLabelsHideWireTypes();
             LongTitlesCarryATooltip();
             UnsupportedCardsAlwaysCarryTheWebCommand();
             ImageGridBindsOnlyVisibleTiles();
@@ -440,19 +442,32 @@ namespace G5Probe
             Check(bothDisplay.Attachments[0].Kind == DynamicAttachmentKind.Reserve
                   && bothDisplay.Attachments[1].Kind == DynamicAttachmentKind.Vote,
                 "attachments keep the reserve-then-vote order");
-            Check(bothDisplay.Attachments[0].Desc == "明天 20:00 1.2万人预约",
-                "the reservation keeps both description lines, joined once");
+            Check(bothDisplay.Attachments[0].Desc == "【明天 20:00 开播】【1.2万人已预约】",
+                "the reservation description is tagged by slot, not joined into one sentence");
             Check(bothDisplay.Attachments[0].Id == "321", "the reservation keeps its object id");
 
             var unknownDisplay = new DynamicItemDisplayModel();
             DynamicCardProjection.Apply(unknownDisplay, WebCards(WordCard(
                 "\"desc\":{\"text\":\"赛事\"}," +
-                "\"additional\":{\"type\":\"ADDITIONAL_TYPE_ESPORTS\",\"title\":\"赛事直播\"}")));
+                "\"additional\":{\"type\":\"ADDITIONAL_TYPE_ESPORTS\"," +
+                "\"goods\":{\"id_str\":\"5\",\"title\":\"赛事直播\"}}")));
             Check(unknownDisplay.Attachments.Count == 1
                   && unknownDisplay.Attachments[0].Kind == DynamicAttachmentKind.Unsupported,
-                "an unsupported attachment is kept as an unsupported summary");
+                "an unsupported attachment with something to show is kept as an unsupported summary");
             Check(unknownDisplay.Attachments[0].RawType == "ADDITIONAL_TYPE_ESPORTS",
                 "an unsupported attachment keeps its raw wire type");
+            Check(unknownDisplay.AttachmentItems[0].KindLabel == "附件"
+                  && unknownDisplay.AttachmentItems[0].Title == "赛事直播",
+                "an unsupported attachment is labelled 附件, never the wire type");
+
+            // type 在、却没有任何子卡：只有一条 wire 类型名，整行不该上屏
+            var emptyTypeDisplay = new DynamicItemDisplayModel();
+            DynamicCardProjection.Apply(emptyTypeDisplay, WebCards(WordCard(
+                "\"desc\":{\"text\":\"赛事\"}," +
+                "\"additional\":{\"type\":\"ADDITIONAL_TYPE_ESPORTS\",\"title\":\"赛事直播\"}")));
+            Check(emptyTypeDisplay.Attachments.Count == 0
+                  && emptyTypeDisplay.AttachmentRowVisibility == Visibility.Collapsed,
+                "an attachment block with nothing but a wire type renders no row");
 
             var plainDisplay = new DynamicItemDisplayModel();
             DynamicCardProjection.Apply(plainDisplay, WebCards(WordCard("\"desc\":{\"text\":\"纯文字\"}")));
@@ -752,8 +767,8 @@ namespace G5Probe
                 RawType = "ADDITIONAL_TYPE_GOODS",
                 Title = "商品",
             }, command);
-            Check(!unsupported.ShowPanel && unsupported.KindLabel == "ADDITIONAL_TYPE_GOODS",
-                "an unknown attachment keeps the quiet row and the wire type label");
+            Check(!unsupported.ShowPanel && unsupported.KindLabel == "商品",
+                "a goods attachment keeps the quiet row and a Chinese label");
 
             var noText = new DynamicAttachmentDisplay(new DynamicAttachmentSummary
             {
@@ -793,6 +808,108 @@ namespace G5Probe
             }, command);
             Check(noIcon.IconVisibility == Visibility.Collapsed,
                 "a button without an icon hides the icon instead of drawing a placeholder");
+        }
+
+        /// <summary>
+        /// BR-57：预约说明行按槽位给标签 —— 【时间 开播】【N人已预约】【抽奖文案】。
+        /// 时间槽把「直播」改成「开播」、已经写「开播」的不重复加，状态词「直播中」「预约中」原样保留；
+        /// 人数优先用结构化 reserve_total，没有才读 desc2 并把「预约」补成「已预约」；desc3 原样做第三个标签。
+        /// </summary>
+        private static void ReserveCopyLabelsTimeAndCount()
+        {
+            Check(ReserveCardCopy.Format(null) == "",
+                "a missing reservation yields no copy");
+
+            var live = ReserveCardCopy.Format(ReserveOf("11-13 20:00 直播", "175人预约", null, 0));
+            Check(live == "【11-13 20:00 开播】【175人已预约】",
+                "the time slot rewrites 直播 to 开播 and the count slot rewrites 预约 to 已预约");
+            Check(ReserveSummaryOf(ReserveOf("11-13 20:00 直播", "175人预约", null, 0)).Desc == live,
+                "the reserve attachment description is the shared copy, not the raw joined text");
+
+            Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00", null, null, 0)) == "【11-13 20:00 开播】",
+                "a bare time gains 开播");
+            Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00 开播", null, null, 0)) == "【11-13 20:00 开播】",
+                "a time that already says 开播 is not rewritten twice");
+            Check(ReserveCardCopy.Format(ReserveOf("直播中", null, null, 0)) == "【直播中】",
+                "a live-state word stays as it is instead of becoming 直播中 开播");
+            Check(ReserveCardCopy.Format(ReserveOf("预约中", null, null, 0)) == "【预约中】",
+                "a pending-state word stays as it is");
+
+            Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00", "175人预约", null, 4866))
+                    == "【11-13 20:00 开播】【4866人已预约】",
+                "the structured reserve_total wins over the desc2 copy");
+            Check(ReserveCardCopy.Format(ReserveOf(null, "175人已预约", null, 0)) == "【175人已预约】",
+                "a desc2 that already says 已预约 is left alone");
+            Check(ReserveCardCopy.Format(ReserveOf(null, "175", null, 0)) == "【175人已预约】",
+                "a count without any suffix gains 人已预约");
+
+            Check(ReserveCardCopy.Format(ReserveOf("11-13 20:00", "175人预约", "预约可参与抽奖", 0))
+                    == "【11-13 20:00 开播】【175人已预约】【预约可参与抽奖】",
+                "the lottery copy becomes the third tag, unchanged");
+            var blank = ReserveCardCopy.Format(ReserveOf("  ", "  ", "  ", 0));
+            Check(!blank.Contains("【") && blank.Trim() == "",
+                "blank slots produce no empty 【】 tags and no stray separators");
+        }
+
+        /// <summary>
+        /// BR-57：附件行不再打印 wire 类型名 —— GOODS 是「商品」、UGC 是「合集」、认不出的都是「附件」；
+        /// 标题/说明/目的地全空的附件行整行丢掉，有标题或链接的照旧保留。
+        /// </summary>
+        private static void AttachmentLabelsHideWireTypes()
+        {
+            Check(LabelOf("ADDITIONAL_TYPE_GOODS") == "商品", "a goods attachment is labelled 商品");
+            Check(LabelOf("ADDITIONAL_TYPE_UGC") == "合集", "a ugc attachment is labelled 合集");
+            Check(LabelOf("ADDITIONAL_TYPE_ESPORTS") == "附件", "an unknown attachment falls back to 附件");
+            Check(LabelOf("") == "附件", "an attachment without any wire type is labelled 附件");
+            Check(!LabelOf("ADDITIONAL_TYPE_ESPORTS").Contains("ADDITIONAL_TYPE_"),
+                "the wire type name never reaches the kind label");
+
+            var goodsCard = WebCards(WordCard("\"desc\":{\"text\":\"带货\"},\"additional\":{" +
+                "\"type\":\"ADDITIONAL_TYPE_GOODS\"," +
+                "\"goods\":{\"id_str\":\"9\",\"title\":\"周边\",\"jump_url\":\"//www.bilibili.com/goods/9\"}}"));
+            var goods = DynamicAttachmentSummaries.From(goodsCard);
+            Check(goods.Count == 1 && goods[0].Title == "周边",
+                "a goods attachment with a title stays");
+            Check(goods[0].RawType == "ADDITIONAL_TYPE_GOODS",
+                "the raw wire type is still kept for diagnostics");
+            var goodsRow = new DynamicAttachmentDisplay(goods[0], UserCommand);
+            Check(goodsRow.KindLabel == "商品" && goodsRow.Title == "周边"
+                  && !goodsRow.KindLabel.Contains("ADDITIONAL_TYPE_"),
+                "a real goods row shows the Chinese label and its title");
+
+            var linkOnly = DynamicAttachmentSummaries.From(WebCards(WordCard("\"desc\":{\"text\":\"合集\"},\"additional\":{" +
+                "\"type\":\"ADDITIONAL_TYPE_UGC\"," +
+                "\"ugc\":{\"id_str\":\"7\",\"jump_url\":\"//www.bilibili.com/cheese/play/7\"}}")));
+            Check(linkOnly.Count == 1 && LabelOf(linkOnly[0].RawType) == "合集",
+                "an attachment with only a destination stays and is labelled 合集");
+
+            var nothing = DynamicAttachmentSummaries.From(WebCards(WordCard("\"desc\":{\"text\":\"空附件\"}," +
+                "\"additional\":{\"type\":\"ADDITIONAL_TYPE_GOODS\"}")));
+            Check(nothing.Count == 0,
+                "an attachment row with no title, description or destination is dropped");
+        }
+
+        private static string LabelOf(string rawType)
+        {
+            return new DynamicAttachmentDisplay(new DynamicAttachmentSummary
+            {
+                Kind = DynamicAttachmentKind.Unsupported,
+                RawType = rawType,
+            }, UserCommand).KindLabel;
+        }
+
+        private static DynamicCardModel2024_addin_reserve ReserveOf(
+            string time, string count, string lottery, int reserveTotal)
+        {
+            return new DynamicCardModel2024_addin_reserve
+            {
+                title = "预约标题",
+                rid = 321,
+                reserve_total = reserveTotal,
+                desc1 = time == null ? null : new DynamicCardModel2024_reservetext { text = time },
+                desc2 = count == null ? null : new DynamicCardModel2024_reservetext { text = count },
+                desc3 = lottery == null ? null : new DynamicCardModel2024_reservetext { text = lottery },
+            };
         }
 
         private static DynamicAttachmentSummary ReserveSummaryOf(DynamicCardModel2024_addin_reserve reserve)

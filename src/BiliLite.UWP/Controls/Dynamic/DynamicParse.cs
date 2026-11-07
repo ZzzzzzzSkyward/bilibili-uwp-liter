@@ -391,7 +391,7 @@ namespace BiliLite.Controls.Dynamic
                             info = new DynamicItemDisplayOneRowInfo()
                             {
                                 Title = item.title,
-                                Desc = reserve?.desc ?? "",
+                                Desc = ReserveCardCopy.Format(reserve),
                                 Subtitle = item.desc,
                                 CoverText = reserve?.button?.text,
                                 Cover = reserve?.button?.icon_url,
