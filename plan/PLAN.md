@@ -31,7 +31,13 @@ are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no p
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
 
-- **Reserve attachment panel (BR-56):** `7dd9780` — a reserve attachment (`additional.reserve`) on a photo/text
+- **Local playback keeps its directory (review `dae62b7`):** `9c8920f` — `LocalPlayerPage` builds
+  `PlayDirectoryBuilder.FromParts` rows from the `PlayInfos` it is handed (title/cid/duration), reports
+  availability only above one item, opens and refreshes the drawer on request, switches Parts rows through
+  `ChangePlayIndex(index, PlayTargetStart.Resume)`, refreshes the open drawer from `ChangeEpisodeEvent`, and
+  releases its three handlers on navigate-from/close. `plan/tests/localdir` 50 assertions; 28 of its 32 page
+  anchors fail against the pre-change body.
+- **Reserve attachment panel (BR-56):** `a431b4c` — a reserve attachment (`additional.reserve`) on a photo/text
   dynamic now selects `AttachmentPanelTemplate` through `DynamicAttachmentDataTemplateSelector`: BR-55's bordered
   panel, pink 预约 chip, 18/26 title, 14/21 description and the payload's own button. The summary maps
   `reserve.button.text` / `icon_url` (falling back to the check/uncheck icon) and prefers `button.jump_url` over
@@ -243,7 +249,7 @@ BR-21 (device journey, no code left), then whatever the 1.0.9.4x device pass rep
 a `NullReferenceException` message) is recorded in `bug_report.md` and waits for a log line before any live-room
 code changes; BR-54 (toast pill width and content centring) is fixed in `01e51a7` and waits only for the device
 look.
-Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back. The 1.0.9.42–1.0.9.58 device rows are the next device pass (BR-56 is the 1.0.9.58 row).
+Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back. The 1.0.9.42–1.0.9.58 device rows are the next device pass (BR-56 and the local-playback row are the 1.0.9.58 rows).
 
 ## 已知债务（2026-11-06，从源码 TODO 收拢）
 

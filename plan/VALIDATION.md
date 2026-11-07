@@ -231,9 +231,10 @@ Compiled with `-Fast`, 0 errors; probe batches cover the logic (`toastalign` 41,
 ## Shipped 2026-11-07 — reserve attachment panel (1.0.9.58)
 
 `BiliLite.Packages_1.0.9.58_x64.msix` exists in `Z:\BiliLite.Packages_1.0.9.58_x64_Test`; compiled (`-Fast`,
-0 errors), `g5` 265 assertions. No device row below has run. This build also passes `64h.png` to the standalone
-Reserve panel's icon converter, so that icon no longer disappears when the payload supplies one.
+0 errors), `g5` 265 and `localdir` 50 assertions. No device row below has run. This build also passes `64h.png`
+to the standalone Reserve panel's icon converter, so that icon no longer disappears when the payload supplies one.
 
 | Item | Commit(s) | Confirm on the device |
 | --- | --- | --- |
-| Reserve attachment looks like a card (BR-56) | `7dd9780` | a photo/text dynamic carrying a live reservation shows one rounded bordered panel under the content: pink 预约 chip, the reservation title at 18/26 in at most two lines, the `11-13 20:00 直播 175人预约` line at 14/21 in at most two lines, and a bottom action with the payload's own label and icon that opens the live URL. A payload with no button text, or with no usable route, shows no action row; a vote or link attachment on the same card keeps the old quiet row. |
+| Reserve attachment looks like a card (BR-56) | `a431b4c` | a photo/text dynamic carrying a live reservation shows one rounded bordered panel under the content: pink 预约 chip, the reservation title at 18/26 in at most two lines, the `11-13 20:00 直播 175人预约` line at 14/21 in at most two lines, and a bottom action with the payload's own label and icon that opens the live URL. A payload with no button text, or with no usable route, shows no action row; a vote or link attachment on the same card keeps the old quiet row. |
+| Local playback keeps its picker | `9c8920f` | open a downloaded season or a local collection with 3+ episodes: the 目录 button shows a `2/3`-style caption and opens the drawer with every episode; tapping one plays it and 正在播放 follows; a single local item shows no 目录 button and no empty drawer. |

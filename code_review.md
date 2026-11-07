@@ -15,3 +15,20 @@ Suggested fix: connect `LocalPlayerPage` to the existing directory drawer before
 ## Previous findings and BR-53
 
 The previous live-room parse-failure error-branch dereferences and the ordinary legacy unsupported-card's missing `WebCommand` are fixed in this range; they should not be reported again. BR-53's actual failing response still cannot be identified from this source change. The added step/stage log line is needed to establish the cause of the maintainer's report; these guards alone do not prove that every possible null-reference path is gone.
+
+## Dispositions (2026-11-07, dispatcher, review `dae62b7`)
+
+The finding is correct; not contested. `35f6905` removed the shared list population and the `EpisodeList`/`BottomBtnList`
+entries, and `LocalPlayerPage` — the third caller, fed by `DownloadPage.OpenPlayer` and `OpenCollectionItemAsync` — only
+called `InitializePlayInfo`. Nothing subscribed the directory events, reported availability or supplied a model, so the
+replacement directory button stayed collapsed and a multi-episode download had no in-player picker.
+
+Fixed in `9c8920f`: the page keeps the supplied `LocalPlayInfo`, builds `PlayDirectoryBuilder.FromParts` rows from every
+`PlayInfo` (title, cid, duration/1000), reports availability only above one item with the model caption, opens and refreshes
+the drawer on request, switches Parts rows through `ChangePlayIndex(index, PlayTargetStart.Resume)`, ignores the current row,
+refreshes the open drawer from `ChangeEpisodeEvent` behind an index|count signature, and releases the three handlers on
+navigate-from/close. `plan/tests/localdir` (50 assertions; 28 of its 32 page anchors fail against the pre-change body).
+
+Compiled into `BiliLite.Packages_1.0.9.58_x64.msix` together with BR-56; no device run, per the 2026-11-04 default-pass rule.
+
+BR-53 keeps its open status: the failing response is still unnamed until the maintainer sends the `step=`/`stage=` log line.
