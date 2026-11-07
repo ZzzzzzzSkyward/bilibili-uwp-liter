@@ -190,3 +190,30 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 - 已修：`65ca559`（`g5` 316 → 同批最终 332，五个标题元素都有锚点；去掉空格拼接或 `CardTitle` 的附加属性会分别失败）。
   打包 1.0.9.59：`Z:\BiliLite.Packages_1.0.9.59_x64_Test\BiliLite.Packages_1.0.9.59_x64.msix`。
+
+## BR-59 — 推荐卡片的长标题没有 tooltip（维护者 2026-11-07，1.0.9.59）
+
+维护者：推荐卡片仍然不显示 tooltip，其他地方都显示。
+
+源码：`Pages/Home/RecommendPage.xaml` 两个卡片模板的标题都是裸 `TextBlock`——网格卡（`MaxLines="2"`）与
+列表卡（`MaxLines="3"`），都没有 `ToolTipService.ToolTip`。动态卡与热门页的标题都有，所以只有推荐页缺。
+
+处理：两个模板各加 `ToolTipService.ToolTip="{x:Bind title}"`，悬停显示全文。推荐卡整张是 ItemClick 跳转，
+不加"点击打开 tooltip"，否则点一下既弹提示又跳页。
+
+## BR-60 — 关闭应用时正在播放的视频不记进度（维护者 2026-11-07，1.0.9.59）
+
+维护者：记录播放进度的功能失效了。
+
+证据（本机 `LocalState\log\20261107.log`）：
+- 15:34:11 打开 870.834s 视频（session `8e7530d4…`）；15:42:00 换成新 session（应用重启）。这 8 分钟里没有任何
+  `POST /x/v2/history/report`，本地续播位置也没机会写。
+- 全天只有一次 report：15:42:49，49s 视频中途离开页面（走 `Dispose`）。
+- 15:49:48 与 16:49:51 又两次打开同一 870.834s 视频，是维护者在反复验证。
+
+源码：进度只在 `PlayerControl.Dispose()`（离开页面）和 `Player_PlayMediaEnded`（播完）上报；
+关窗口/退应用不走 `OnNavigatedFrom`，`App.OnSuspending`/`OnExiting` 也没有播放器钩子，所以"看一半直接关应用"
+既不上报历史、也不保存续播位置。
+
+处理：播放中每 30s 做一次检查点（同步保存本地位置 + 上报历史），暂停时补存一次；`App.OnSuspending` 在现有
+deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting` 再同步保存一次位置。`Dispose`/播完的上报保留。
