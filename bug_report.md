@@ -153,8 +153,9 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 
 维护者两条要求：
 
-1. 预约卡的说明行改成两个标签：`【11-13 20:00 开播】【175人已预约】`（标题行保持 `reserve.title` 不变）。
-   选中方案 A：标题不动；时间取 `desc1`（把「直播」改为「开播」），人数取 `reserve_total` / `desc2`
+1. 预约卡的说明行改成两个标签（标题行保持 `reserve.title` 不变）：最终形态 `11-13 20:00 开播 175人已预约`
+   ——标签不包【】，之间一个空格（维护者后续修正，见 BR-58）。
+   时间取 `desc1`（把「直播」改为「开播」），人数取 `reserve_total` / `desc2`
    （「预约」改为「已预约」）；`desc3` 抽奖文案非空时追加第三个标签。
 2. 有的卡片会显示 `ADDITIONAL_TYPE_GOODS` 这一行原始类型名。选中方案 A：`GOODS` 显示「商品」、`UGC` 显示
    「合集」、其它未知种类显示「附件」，任何用户可见文案都不再出现 wire 类型名；标题/说明/目的地全空的附件行
@@ -169,8 +170,8 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 `plan/tests/g5` 钉住标签格式、时间/人数改写、desc3 追加、无结构化字段时的回退，以及 `KindLabel` 不含
 `ADDITIONAL_TYPE_`；旧断言 `Desc == "明天 20:00 1.2万人预约"` 同步改成新文案。
 
-- 已修：`93c69de`（`g5` 265 → 293）。`ReserveCardCopy` 对 `直播`/`预约` 只改结尾词，`直播中`/`预约中` 原样保留；
-  `商品`/`合集`/`附件` 三个标签与空行不渲染都有锚点。
+- 已修：`93c69de`（标签映射与空行不渲染）、`8182beb`（去括号，`g5` 265 → 316）。`ReserveCardCopy` 对
+  `直播`/`预约` 只改结尾词，`直播中`/`预约中` 原样保留；`商品`/`合集`/`附件` 三个标签与空行不渲染都有锚点。
 
 ## BR-58 — 卡片长标题在设备上没有 tooltip（维护者 2026-11-07，1.0.9.57/.58）
 
@@ -180,7 +181,12 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 `CardTitle`、预约面板标题、附件行标题，`DynamicTemplate` 的视频/专栏/预约标题，热门页卡片标题——文本与提示绑定同一份
 数据，所以不是绑定漏了；设备上没有出现悬浮提示。`ToolTipService` 只在指针悬停时自动打开，触摸/手柄没有 hover。
 
-处理（只依赖用户能做的动作）：新增一个"点击也打开同一个 ToolTip"的附加行为，保留原有悬浮路径；`Tapped` 打开，
-`PointerExited`/`Unloaded` 与 4 秒超时关闭。鼠标、触摸、笔都能看到全文。热门页整卡点击会跳转，不挂这个行为。
+处理（只依赖用户能做的动作）：新增附加行为 `Helpers/TapToolTip.cs`，保留原有悬浮路径；`Tapped` 打开，
+鼠标 `PointerExited`、`Unloaded` 与 4 秒超时关闭（触摸抬手的 `PointerExited` 会立刻关掉刚打开的提示，忽略）。
+每次点击都重新读 `ToolTipService.ToolTip` 的当前值写进点击专用 `ToolTip`，不回写该附加属性——列表回收复用时
+绑定还要继续更新，否则会显示上一条的标题。鼠标、触摸、笔都能看到全文。热门页整卡点击会跳转，不挂这个行为。
 
 同批修正 BR-57 的文案：标签不再包【】，标签之间用一个空格分隔（`11-13 20:00 开播 175人已预约`）。
+
+- 已修：`8182beb`（`g5` 316，五个标题元素都有锚点；去掉空格拼接或 `CardTitle` 的附加属性会分别失败）。
+  打包 1.0.9.59：`Z:\BiliLite.Packages_1.0.9.59_x64_Test\BiliLite.Packages_1.0.9.59_x64.msix`。
