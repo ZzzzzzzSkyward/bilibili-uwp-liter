@@ -36,6 +36,11 @@
           <Color x:Key="SolidTransparentBackground">#00ffffff</Color>
           <Color x:Key="SolidHalfTransparentBackground">#a0ffffff</Color>
           <AcrylicBrush x:Key="TransparentLayer" TintColor="White" TintOpacity="0.1" TintLuminosityOpacity="0.5" FallbackColor="#a0ffffff" BackgroundSource="Backdrop"/>
+          <AcrylicBrush x:Key="CommentDialogLayer" TintColor="White" TintOpacity="0.1" TintLuminosityOpacity="0.5" FallbackColor="#a0ffffff" BackgroundSource="Backdrop"/>
+          <Color x:Key="CommentDialogBorderColor">#31808080</Color>
+          <Color x:Key="CommentDividerColor">#33808080</Color>
+          <Color x:Key="CommentBandColor">#19AAAAAA</Color>
+          <Color x:Key="CommentBadgeColor">#3C808080</Color>
           <AcrylicBrush x:Key="TransparentBackground" BackgroundSource="HostBackdrop" TintColor="#ffffff" TintOpacity="0.5" TintLuminosityOpacity="0.5" FallbackColor="#ffffff"/>
         </ResourceDictionary>
         <ResourceDictionary x:Key="Dark">
@@ -53,6 +58,11 @@
           <Color x:Key="ForegroundBorderColor">#dddddd</Color>
           <Color x:Key="ForegroundBackColor">#555555</Color>
           <AcrylicBrush x:Key="TransparentLayer" TintColor="Black" TintOpacity="0.1" TintLuminosityOpacity="0.5" FallbackColor="#a0000000" BackgroundSource="Backdrop"/>
+          <AcrylicBrush x:Key="CommentDialogLayer" TintColor="#1A1A1A" TintOpacity="0.9" TintLuminosityOpacity="0.9" FallbackColor="#F21A1A1A" BackgroundSource="Backdrop"/>
+          <Color x:Key="CommentDialogBorderColor">#31FFFFFF</Color>
+          <Color x:Key="CommentDividerColor">#33FFFFFF</Color>
+          <Color x:Key="CommentBandColor">#19FFFFFF</Color>
+          <Color x:Key="CommentBadgeColor">#3CFFFFFF</Color>
           <AcrylicBrush x:Key="TransparentBackground" BackgroundSource="HostBackdrop" TintColor="#000000" TintOpacity="0.5" TintLuminosityOpacity="0.7" FallbackColor="#000000"/>
         </ResourceDictionary>
       </ResourceDictionary.ThemeDictionaries>

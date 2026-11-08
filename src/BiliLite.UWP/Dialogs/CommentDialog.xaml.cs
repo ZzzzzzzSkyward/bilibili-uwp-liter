@@ -34,6 +34,8 @@ namespace BiliLite.Dialogs
         {
             isvisible = true;
             this.InitializeComponent();
+            // Popup 根节点不在 Frame 的可视树中，ElementTheme 不会向下传递，需显式锁定主题（同 MessageToast/PlayDirectoryControl）
+            this.RequestedTheme = (Window.Current.Content as FrameworkElement)?.ActualTheme ?? ElementTheme.Default;
             popup = new Popup();
             this.Width = Window.Current.Bounds.Width;
             this.Height = Window.Current.Bounds.Height;

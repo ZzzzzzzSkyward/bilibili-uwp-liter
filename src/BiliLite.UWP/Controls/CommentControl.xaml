@@ -5,13 +5,13 @@
     <Style TargetType="ListViewItem" x:Key="commentStyle">
       <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
       <Setter Property="BorderThickness" Value="0 0 0 1"/>
-      <Setter Property="BorderBrush" Value="#33808080"/>
+      <Setter Property="BorderBrush" Value="{ThemeResource CommentDividerColor}"/>
       <Setter Property="Padding" Value="4"/>
     </Style>
     <Style TargetType="ListViewItem" x:Key="replyStyle">
       <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
       <Setter Property="BorderThickness" Value="0 0 0 1"/>
-      <Setter Property="BorderBrush" Value="#33808080"/>
+      <Setter Property="BorderBrush" Value="{ThemeResource CommentDividerColor}"/>
       <Setter Property="Padding" Value="0"/>
     </Style>
     <convert:ColorSelecteConvert x:Key="colorSelct"/>
@@ -185,11 +185,11 @@
               </StackPanel>
             </HyperlinkButton>
           </StackPanel>
-          <Border Visibility="{x:Bind Path=up_action.like,Mode=OneWay}" Background="#3C808080" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="2">
+          <Border Visibility="{x:Bind Path=up_action.like,Mode=OneWay}" Background="{ThemeResource CommentBadgeColor}" HorizontalAlignment="Right" VerticalAlignment="Center" CornerRadius="2">
             <TextBlock FontSize="12" Margin="8 4" Foreground="{ThemeResource ForegroundTextColor}">UP主觉得很赞</TextBlock>
           </Border>
         </Grid>
-        <StackPanel Grid.Column="1" Grid.Row="5" Grid.ColumnSpan="2" Margin="0 4" Background="#19AAAAAA" Padding="8" Visibility="{x:Bind Path=showReplies,Mode=OneWay}">
+        <StackPanel Grid.Column="1" Grid.Row="5" Grid.ColumnSpan="2" Margin="0 4" Background="{ThemeResource CommentBandColor}" Padding="8" Visibility="{x:Bind Path=showReplies,Mode=OneWay}">
           <StackPanel Visibility="{x:Bind Path=showReplyBox,Mode=OneWay}" Margin="0 0 0 4">
             <TextBox MaxLength="233" BorderThickness="0" TextWrapping="Wrap" Text="{x:Bind Path=replyText,Mode=TwoWay}" FontSize="14" MinHeight="48" PlaceholderText="说点什么吧..." AcceptsReturn="True"/>
             <Grid Margin="0 4 0 0">
@@ -255,7 +255,7 @@
                       </HyperlinkButton>
                     </StackPanel>
                   </Grid>
-                  <StackPanel Background="#19AAAAAA" Padding="4 8" Visibility="{Binding showReplyBox}">
+                  <StackPanel Background="{ThemeResource CommentBandColor}" Padding="4 8" Visibility="{Binding showReplyBox}">
                     <TextBox TextWrapping="Wrap" MaxLength="233" BorderThickness="0" AcceptsReturn="True" Text="{Binding Path=replyText,Mode=TwoWay}" FontSize="14" MinHeight="48" PlaceholderText="{Binding replyAt}">
 
                                         </TextBox>
@@ -299,14 +299,14 @@
       <RowDefinition Height="40"/>
       <RowDefinition/>
     </Grid.RowDefinitions>
-    <Grid BorderThickness="0 0 0 1" BorderBrush="#33808080">
+    <Grid BorderThickness="0 0 0 1" BorderBrush="{ThemeResource CommentDividerColor}">
       <StackPanel Padding="0 0 0 8" Orientation="Horizontal" x:Name="hot">
-        <HyperlinkButton x:Name="btn_NewSort" Margin="8 0 0 0" Padding="0" VerticalAlignment="Bottom" Click="btn_NewSort_Click" HorizontalAlignment="Right">
+        <HyperlinkButton x:Name="btn_NewSort" Margin="8 0 0 0" Padding="0" VerticalAlignment="Bottom" Foreground="{ThemeResource HighLightTextColor}" Click="btn_NewSort_Click" HorizontalAlignment="Right">
           <TextBlock Margin="2 2 2 2" FontSize="20" VerticalAlignment="Center">热门评论</TextBlock>
         </HyperlinkButton>
       </StackPanel>
       <StackPanel Padding="0 0 0 8" Orientation="Horizontal" x:Name="_new">
-        <HyperlinkButton x:Name="btn_HotSort" Margin="8 0 0 0" Padding="0" VerticalAlignment="Bottom" HorizontalAlignment="Right" Click="btn_HotSort_Click">
+        <HyperlinkButton x:Name="btn_HotSort" Margin="8 0 0 0" Padding="0" VerticalAlignment="Bottom" Foreground="{ThemeResource HighLightTextColor}" HorizontalAlignment="Right" Click="btn_HotSort_Click">
           <TextBlock Margin="2 2 2 2" FontSize="20" VerticalAlignment="Center">最新评论</TextBlock>
         </HyperlinkButton>
       </StackPanel>

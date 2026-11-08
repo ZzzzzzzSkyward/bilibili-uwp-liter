@@ -525,8 +525,8 @@ namespace BiliLite.Helpers
         public static SolidColorBrush GetBrush(string name)
         {
             var themeDictionaries = App.Current.Resources.ThemeDictionaries;
-            var requestedTheme = ((FrameworkElement)Window.Current.Content).RequestedTheme;
-            var themeKey = requestedTheme == ElementTheme.Light ? "Light" : "Dark";
+            var actualTheme = ((FrameworkElement)Window.Current.Content)?.ActualTheme;
+            var themeKey = actualTheme == ElementTheme.Light ? "Light" : "Dark";
             if (themeDictionaries.TryGetValue(themeKey, out object theme))
             {
                 var t =  (ResourceDictionary)theme;
