@@ -97,7 +97,7 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
   分别对应 `step=gift-config`（`GetRoomGiftList`）与 `step=bag-gifts`（`LoadBag`）—— 接口的 `data` 已经是数组，
   按 `JObject` 反序列化必然失败，礼物/背包整块不加载。
 
-修复（`9b780b6`）：
+修复（`c0b7eb1`）：
 
 - 醒目留言：先按「`data` 是数组」或「`data.list`」拆出列表（都认不出就空列表），跳过 `user_info` 为空的条目，
   其余 14 个字段的映射不变。
