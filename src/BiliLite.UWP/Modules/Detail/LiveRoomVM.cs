@@ -573,6 +573,30 @@ namespace BiliLite.Modules
             LogHelper.Log("直播接口返回的数据解析失败 step=" + step, LogType.ERROR);
             return false;
         }
+        /// <summary>
+        /// gift/v4/Live/giftConfig 的 data 有时是数组、有时是 {"list":[...]}，
+        /// 这里统一拆成礼物列表；认不出结构就返回空列表，调用方不必再判空。
+        /// </summary>
+        private static List<LiveGiftItem> ParseGiftList(JToken token)
+        {
+            var array = token as JArray;
+            if (array == null)
+            {
+                array = (token as JObject)?["list"] as JArray;
+            }
+            if (array == null)
+            {
+                return new List<LiveGiftItem>();
+            }
+            var list = JsonConvert.DeserializeObject<List<LiveGiftItem>>(array.ToString());
+            if (list == null)
+            {
+                return new List<LiveGiftItem>();
+            }
+            // 数组里的 null 元素会让后面的 FirstOrDefault(x => x.id ...) 变成空引用
+            list.RemoveAll(x => x == null);
+            return list;
+        }
 
         /// <summary>
         /// 读取直播间详细信息
@@ -736,7 +760,7 @@ namespace BiliLite.Modules
                 var result = await liveRoomAPI.RoomSuperChat(RoomID).Request();
                 if (result.status)
                 {
-                    var data = await result.GetData<JObject>();
+                    var data = await result.GetData<JToken>();
                     if (!HasParsedData(data, "superchat"))
                     {
                         return;
@@ -744,9 +768,21 @@ namespace BiliLite.Modules
                     if (data.success)
                     {
                         SuperChats.Clear();
-                        var ls = JsonConvert.DeserializeObject<List<LiveRoomSuperChatModel>>(data.data?["list"]?.ToString() ?? "[]");
+                        // data 可能是数组，也可能是 {"list":[...]}。先确认不是数组，才按字符串取 list，
+                        // 否则对 JArray 用字符串索引会直接抛异常。
+                        var array = data.data as JArray;
+                        if (array == null)
+                        {
+                            array = (data.data as JObject)?["list"] as JArray;
+                        }
+                        var ls = JsonConvert.DeserializeObject<List<LiveRoomSuperChatModel>>(array?.ToString() ?? "[]") ?? new List<LiveRoomSuperChatModel>();
                         foreach (var item in ls)
                         {
+                            if (item?.user_info == null)
+                            {
+                                // 缺 user_info 的条目在下面三个字段上必炸，跳过它，别让整段读取变空引用
+                                continue;
+                            }
                             SuperChats.Add(new SuperChatMsgModel() { 
                                 background_bottom_color=item.background_bottom_color,
                                 background_color=item.background_color,
@@ -852,14 +888,14 @@ namespace BiliLite.Modules
                 var result = await liveRoomAPI.GiftList(LiveInfo.room_info.area_id, LiveInfo.room_info.parent_area_id, RoomID).Request();
                 if (result.status)
                 {
-                    var data = await result.GetData<JObject>();
+                    var data = await result.GetData<JToken>();
                     if (!HasParsedData(data, "bag-gifts"))
                     {
                         return;
                     }
                     if (data.success)
                     {
-                        var list = JsonConvert.DeserializeObject<List<LiveGiftItem>>(data.data?["list"]?.ToString() ?? "[]");
+                        var list = ParseGiftList(data.data);
 
                         var bag_result = await liveRoomAPI.BagList(RoomID).Request();
                         if (bag_result.status)
@@ -957,14 +993,14 @@ namespace BiliLite.Modules
                 var result = await liveRoomAPI.GiftList(LiveInfo.room_info.area_id, LiveInfo.room_info.parent_area_id, RoomID).Request();
                 if (result.status)
                 {
-                    var data = await result.GetData<JObject>();
+                    var data = await result.GetData<JToken>();
                     if (!HasParsedData(data, "gift-config"))
                     {
                         return;
                     }
                     if (data.success)
                     {
-                        var list = JsonConvert.DeserializeObject<List<LiveGiftItem>>(data.data?["list"]?.ToString() ?? "[]");
+                        var list = ParseGiftList(data.data);
                         if (_allGifts == null || _allGifts.Count == 0) { _allGifts = list; }
 
                         var result_room = await liveRoomAPI.RoomGifts(LiveInfo.room_info.area_id, LiveInfo.room_info.parent_area_id, RoomID).Request();
@@ -975,13 +1011,25 @@ namespace BiliLite.Modules
                             {
                                 return;
                             }
-                            var list_room = JsonConvert.DeserializeObject<List<LiveRoomGiftItem>>(data_room.data["list"].ToString());
-                            List<LiveGiftItem> ls = new List<LiveGiftItem>() {
-                               list.FirstOrDefault(x=>x.id==1)
-                            };
+                            var list_room = JsonConvert.DeserializeObject<List<LiveRoomGiftItem>>(data_room.data["list"].ToString()) ?? new List<LiveRoomGiftItem>();
+                            var ls = new List<LiveGiftItem>();
+                            // 礼物配置里没有 id=1 时就不放，别让列表里出现 null
+                            var defaultGift = list.FirstOrDefault(x => x.id == 1);
+                            if (defaultGift != null)
+                            {
+                                ls.Add(defaultGift);
+                            }
                             foreach (var item in list_room)
                             {
-                                ls.Add(list.FirstOrDefault(x => x.id == item.gift_id));
+                                if (item == null)
+                                {
+                                    continue;
+                                }
+                                var gift = list.FirstOrDefault(x => x.id == item.gift_id);
+                                if (gift != null)
+                                {
+                                    ls.Add(gift);
+                                }
                             }
                             Gifts = ls;
                         }
