@@ -109,6 +109,20 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 `[JSON][FAIL]`，`step=gift-config`/`step=bag-gifts` 也不再出现；礼物面板按房间礼物配置列出，背包里配置之外的
 礼物仍然跳过。
 
+验证（2026-11-08 13:02，设备日志会话 `5399351e6fb34f128b941ea828078b49`，`187fc48` 构建）：通过。
+
+- `gift/v4/Live/giftConfig` 两次都是 200（`http-000042` 155 ms、`http-000045` 10 ms，对应 `LoadBag` 与
+  `GetRoomGiftList`），**没有** `[JSON][FAIL]`，也没有 `直播接口返回的数据解析失败 step=gift-config/bag-gifts`。
+- 背包那一步走到了 `xlive/app-room/v1/gift/bag_list` 200（`http-000046`）——这行只在礼物配置解析成功后才可能出现。
+- 整个会话 167 行里没有 `NullReferenceException`、没有 `LoadSuperChat`、没有「Object reference not set」的 toast；
+  钱包（`pay/v2/Pay/myWallet`）、头衔（`rc/v1/Title/getTitle`）、进房（`room_entry_action`）依次 200。
+- `api/baseline-https___api_live_bilibili_com_gift_v4_Live_giftConfig.json` 记的形状是 `$.data: "array"`，
+  与根因一致；同一目录里 `SuperChat/getMessageList` 的 `$.data.list` 本次是 `null`（房间没有醒目留言），
+  所以「缺 `user_info` 的条目」这条保护这次没有被触发——是没有覆盖到，不是失败。
+- 会话末尾的 `直播接收包出错 … WebSocketException … without completing the close handshake`（`LiveMessage.Connect`）
+  与 12:27 那次相同，是既有噪声，和本条无关。
+
+
 
 ## BR-54 — 播放器浮层的胶囊太宽，内容块相对背景偏低（维护者 2026-11-06，带截图）
 

@@ -275,5 +275,5 @@ side; the rows below say what to look at.
 | Item | Commit(s) | Confirm on the device |
 | --- | --- | --- |
 | Checkpoint survives a pending report (review `c4aa630`) | `cfc4a15` | while a video is playing, seek far forward, pause, and close the app within the 30 s window right after a checkpoint fires; reopen with resume: playback starts at the seeked point, not the pre-seek tick. Same if the window is minimized (suspend) instead of closed. 观看记录 carries the new position |
-| Live room opens without a null-reference toast (BR-53) | `c0b7eb1` | open any live room: no `Object reference not set to an instance of an object.` toast; the log has no `[JSON][FAIL] … gift/v4/Live/giftConfig` and no `step=gift-config`/`step=bag-gifts`; the gift panel lists this room's gifts and the bag shows only gifts present in that config |
+| Live room opens without a null-reference toast (BR-53) | `c0b7eb1` | **passed 2026-11-08 13:02**, session `5399351e…`: `giftConfig` twice 200 with no `[JSON][FAIL]`, no `step=gift-config`/`step=bag-gifts`, `bag_list` 200, no `NullReferenceException`; the `user_info` guard was not exercised (no superchats in that room) |
 
