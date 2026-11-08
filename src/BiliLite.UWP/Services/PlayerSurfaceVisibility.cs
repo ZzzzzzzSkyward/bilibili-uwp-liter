@@ -13,6 +13,12 @@ namespace BiliLite.Services
         /// <summary>当前这一集是互动视频。</summary>
         public bool IsInteraction { get; set; }
 
+        /// <summary>互动视频已经拿到的节点数(story_list 的条数)。</summary>
+        public int NodeCount { get; set; }
+
+        /// <summary>当前是合集(本地 manifest)播放:视频、音频轨道的下拉只有这种播放方式才填。</summary>
+        public bool IsManifestPlayback { get; set; }
+
         public int VideoTrackCount { get; set; }
         public int AudioTrackCount { get; set; }
         public int SubtitleTrackCount { get; set; }
@@ -51,12 +57,14 @@ namespace BiliLite.Services
         public static PlayerSurfaceVerdicts Decide(PlayerSurfaceSignals signals)
         {
             var isInteraction = signals != null && signals.IsInteraction;
+            // 节点树是异步取的:列表还没到就没什么可点,标签和按钮一起留着就是空壳
+            var hasNode = isInteraction && signals.NodeCount > 0;
             return new PlayerSurfaceVerdicts
             {
                 ShowDanmakuList = HasDanmaku(signals),
                 // 分P/合集/播放列表都在播放目录里,播放器侧栏只留互动视频的节点树
-                ShowPlayNodeButton = isInteraction,
-                ShowNodePivot = isInteraction,
+                ShowPlayNodeButton = hasNode,
+                ShowNodePivot = hasNode,
                 ShowLocalTracksPivot = HasLocalTrack(signals),
             };
         }
@@ -72,10 +80,17 @@ namespace BiliLite.Services
             return signals.HasLocalDanmakuFile && !signals.DanmakuLoadSettled;
         }
 
+        /// <summary>
+        /// 视频、音频轨道的下拉只有合集(manifest)播放时才填,别的播放方式拿到轨道数也点不开,
+        /// 所以这两项只在 manifest 下算数;字幕、弹幕轨道不靠下拉,有就算。
+        /// </summary>
         private static bool HasLocalTrack(PlayerSurfaceSignals signals)
         {
             if (signals == null) return false;
-            return signals.VideoTrackCount + signals.AudioTrackCount + signals.SubtitleTrackCount + signals.DanmakuTrackCount > 0;
+            var selectableTrackCount = signals.IsManifestPlayback
+                ? signals.VideoTrackCount + signals.AudioTrackCount
+                : 0;
+            return selectableTrackCount + signals.SubtitleTrackCount + signals.DanmakuTrackCount > 0;
         }
 
         /// <summary>

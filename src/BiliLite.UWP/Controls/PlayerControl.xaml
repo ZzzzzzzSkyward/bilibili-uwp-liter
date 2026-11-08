@@ -201,7 +201,7 @@
       <SplitView.Pane>
         <Grid x:Name="Setting">
           <Pivot x:Name="SettingPivot" RequestedTheme="Dark">
-            <PivotItem x:Name="NodePivot">
+            <PivotItem x:Name="NodePivot" Visibility="Collapsed">
               <PivotItem.Header>
                 <TextBlock Foreground="White" FontSize="18">节点</TextBlock>
               </PivotItem.Header>

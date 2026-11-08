@@ -99,13 +99,23 @@ namespace PlayerToolbarProbe
             Check("多P:节点按钮藏(分P走播放目录)", many.ShowPlayNodeButton, false);
             Check("多P:节点标签藏(分P走播放目录)", many.ShowNodePivot, false);
 
-            var interaction = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, IsInteraction = true });
+            var interaction = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, IsInteraction = true, NodeCount = 1 });
             Check("互动单P:节点按钮在", interaction.ShowPlayNodeButton, true);
             Check("互动单P:节点标签在", interaction.ShowNodePivot, true);
 
-            var interactionMany = Decide(new PlayerSurfaceSignals { PlaylistCount = 8, IsInteraction = true });
+            var interactionMany = Decide(new PlayerSurfaceSignals { PlaylistCount = 8, IsInteraction = true, NodeCount = 6 });
             Check("互动多P:节点按钮在", interactionMany.ShowPlayNodeButton, true);
             Check("互动多P:节点标签在", interactionMany.ShowNodePivot, true);
+
+            // 节点树是异步取的:还没拿到节点时按钮和标签都是空壳
+            var interactionEmpty = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, IsInteraction = true, NodeCount = 0 });
+            Check("互动但节点还没到:节点按钮藏", interactionEmpty.ShowPlayNodeButton, false);
+            Check("互动但节点还没到:节点标签藏", interactionEmpty.ShowNodePivot, false);
+
+            // 不是互动视频:节点数为 0 也好、别的播放残留的节点数也好,都不该冒出节点入口
+            var notInteraction = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, IsInteraction = false, NodeCount = 3 });
+            Check("非互动但节点数不为零:节点按钮藏", notInteraction.ShowPlayNodeButton, false);
+            Check("非互动但节点数不为零:节点标签藏", notInteraction.ShowNodePivot, false);
 
             // 方案 A:播放器不再有第二个列表入口
             var xaml = PlayerControlXaml();
@@ -113,6 +123,7 @@ namespace PlayerToolbarProbe
             Check("播放器侧栏没有选集列表", xaml.Contains("x:Name=\"EpisodeList\""), false);
             Check("播放器里不再出现「选集」字样", xaml.Contains("Text=\"选集\""), false);
             Check("互动视频的节点标签仍在", xaml.Contains("x:Name=\"NodePivot\""), true);
+            Check("节点标签默认就藏着(第一次判定之前不站位置)", xaml.Contains("<PivotItem x:Name=\"NodePivot\" Visibility=\"Collapsed\">"), true);
         }
 
         // ---------- 本地轨道标签:有轨道才在 ----------
@@ -122,11 +133,15 @@ namespace PlayerToolbarProbe
             var none = Decide(new PlayerSurfaceSignals { PlaylistCount = 1 });
             Check("没本地轨道:本地轨道标签藏", none.ShowLocalTracksPivot, false);
 
-            var video = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, VideoTrackCount = 1 });
-            Check("只有视频轨:本地轨道标签在", video.ShowLocalTracksPivot, true);
+            var video = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, IsManifestPlayback = true, VideoTrackCount = 1 });
+            Check("合集只有视频轨:本地轨道标签在", video.ShowLocalTracksPivot, true);
 
-            var audio = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, AudioTrackCount = 1 });
-            Check("只有音频轨:本地轨道标签在", audio.ShowLocalTracksPivot, true);
+            var audio = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, IsManifestPlayback = true, AudioTrackCount = 1 });
+            Check("合集只有音频轨:本地轨道标签在", audio.ShowLocalTracksPivot, true);
+
+            // 不在合集播放里:视频、音频轨道的下拉根本没填,标签开着也是空的
+            var notManifest = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, VideoTrackCount = 2, AudioTrackCount = 1 });
+            Check("合集外的视频/音频轨:下拉没填,本地轨道标签藏", notManifest.ShowLocalTracksPivot, false);
 
             var subtitle = Decide(new PlayerSurfaceSignals { PlaylistCount = 1, SubtitleTrackCount = 2 });
             Check("只有字幕轨:本地轨道标签在", subtitle.ShowLocalTracksPivot, true);
@@ -137,6 +152,7 @@ namespace PlayerToolbarProbe
             var all = Decide(new PlayerSurfaceSignals
             {
                 PlaylistCount = 4,
+                IsManifestPlayback = true,
                 VideoTrackCount = 2,
                 AudioTrackCount = 1,
                 SubtitleTrackCount = 2,

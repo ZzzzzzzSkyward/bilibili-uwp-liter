@@ -169,6 +169,8 @@ namespace BiliLite.Controls
         }
 
         private InteractionVideoVM interactionVideoVM;
+        /// <summary>interactionVideoVM 是为哪一集建的:换集(哪怕是另一个互动视频)就得重建,旧的节点不能跟着过来。</summary>
+        private PlayInfo _interactionVideoItem;
 
         /// <summary>
         /// 铺满窗口事件
@@ -1916,7 +1918,7 @@ namespace BiliLite.Controls
 
         private async void NodeList_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (NodeList.SelectedItem == null || interactionVideoVM.Loading)
+            if (NodeList.SelectedItem == null || interactionVideoVM == null || interactionVideoVM.Loading)
             {
                 return;
             }
@@ -1937,6 +1939,8 @@ namespace BiliLite.Controls
 
             await interactionVideoVM.GetNodes(node_id);
 
+            // 节点换了一批:节点标签和按钮要跟着新列表走
+            ApplySurfaceVisibility();
             TopTitle.Text = interactionVideoVM.Select.title;
             //if ((interactionVideoVM.Info.edges?.questions?.Count ?? 0) <= 0)
             //{
@@ -2408,6 +2412,14 @@ namespace BiliLite.Controls
         private async Task GetPlayerInfo()
         {
             TopOnline.Text = "";
+            // 节点树只属于建它的那一集:换集了就把旧的整份丢掉,上一集的节点不许在下一集里露头
+            if (!ReferenceEquals(_interactionVideoItem, CurrentPlayItem))
+            {
+                interactionVideoVM = null;
+                _interactionVideoItem = null;
+                NodeList.DataContext = null;
+                InteractionChoices.DataContext = null;
+            }
             if (CurrentPlayItem.LocalPlayInfo?.IsManifestPlayback == true)
             {
                 var menu = new MenuFlyout();
@@ -2517,12 +2529,16 @@ namespace BiliLite.Controls
             if (player_info.interaction != null)
             {
                 //设置互动视频
-                if (interactionVideoVM == null)
+                //节点树跟着这一集:换了一个互动视频就得按新的 avid/graph_version 重建
+                if (interactionVideoVM == null || !ReferenceEquals(_interactionVideoItem, CurrentPlayItem))
                 {
                     interactionVideoVM = new InteractionVideoVM(CurrentPlayItem.avid, player_info.interaction.graph_version);
+                    _interactionVideoItem = CurrentPlayItem;
                     NodeList.DataContext = interactionVideoVM;
                     InteractionChoices.DataContext = interactionVideoVM;
                     await interactionVideoVM.GetNodes();
+                    // 节点列表到手之前不站位置,到手之后再判一次
+                    ApplySurfaceVisibility();
                     TopTitle.Text = interactionVideoVM.Select.title;
                 }
             }
@@ -2796,6 +2812,9 @@ namespace BiliLite.Controls
             {
                 PlaylistCount = PlayInfos?.Count ?? 0,
                 IsInteraction = item?.is_interaction == true,
+                // 节点树是异步拿的:这一票按真正到手的条数算,而且只认这一集自己的节点
+                NodeCount = ReferenceEquals(_interactionVideoItem, item) ? (interactionVideoVM?.List?.Count ?? 0) : 0,
+                IsManifestPlayback = localInfo?.IsManifestPlayback == true,
                 VideoTrackCount = localInfo?.VideoTracks?.Count ?? 0,
                 AudioTrackCount = localInfo?.AudioTracks?.Count ?? 0,
                 SubtitleTrackCount = localInfo?.SubtitleTracks?.Count ?? 0,
@@ -3616,7 +3635,7 @@ namespace BiliLite.Controls
             ReleaseAcceleratingOverlay();
             if (CurrentPlayItem.is_interaction)
             {
-                if (interactionVideoVM.Info.is_leaf == 1)
+                if (interactionVideoVM?.Info?.is_leaf == 1)
                 {
                     Utils.ShowMessageToast("播放完毕，请点击右下角节点，重新开始");
                     return;
