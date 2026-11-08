@@ -90,6 +90,18 @@ namespace BiliLite.Modules
                 Loaded = false;
                 Loading = true;
                 ShowError = false;
+
+                //整页信息（标题/封面/评分/地区/追番状态）只在 pgc/view/web/season 上，
+                //ep/list 只有片单和分区，拿它当整页信息会让 Detail 全空
+                var seasonDetail = await seasonApi.Detail(ep_id, SeasonIdType.EpId).Request();
+                var seasonData = await seasonDetail.GetResult<SeasonDetailModel>();
+                var detail = seasonData != null && seasonData.success ? seasonData.result : null;
+                if (detail == null)
+                {
+                    //整页信息拿不到不挡播放：片单照旧发布，只是元数据面板空着
+                    LogHelper.Log("番剧详情解析失败 ep=" + ep_id + " endpoint=pgc/view/web/season", LogType.ERROR);
+                }
+
                 var parsed = WebSeasonEpListParser.ParseWebSeasonEpList(
                     await seasonApi.EpList(ep_id, SeasonIdType.EpId).Request());
                 if (!parsed.IsSuccess)
@@ -102,7 +114,18 @@ namespace BiliLite.Modules
 
                 //通过解析才发布；空但合法的季照样发布，由页面显示空状态
                 var season = WebSeasonEpListMapper.MapWebSeasonEpList(parsed.Value);
-                Detail = season.Detail;
+                Detail = detail ?? season.Detail;
+                //season 只给 season_title 时页面标题也得有字
+                if (string.IsNullOrEmpty(Detail.title))
+                {
+                    Detail.title = Detail.season_title;
+                }
+                //下载面板与历史行为都吃 ep/list 的合并列表（含分区预告、已按 ep 号去重），
+                //season 自带的 episodes 只有正片，不能拿它顶替
+                if (season.Detail.episodes != null && season.Detail.episodes.Count > 0)
+                {
+                    Detail.episodes = season.Detail.episodes;
+                }
                 Episodes = season.Episodes;
                 ShowEpisodes = Episodes.Count > 0;
                 Previews = season.Previews;

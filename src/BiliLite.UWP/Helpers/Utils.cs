@@ -462,13 +462,17 @@ namespace BiliLite.Helpers
 
         public static string ParseArea(string title, long mid)
         {
-            if (Regex.IsMatch(title, @"僅.*港.*地區"))
+            //标题可能为空（pgc 接口不是每个季都带 title），空标题按“不含僅**地區”处理
+            if (!string.IsNullOrEmpty(title))
             {
-                return "hk";
-            }
-            else if (Regex.IsMatch(title, @"僅.*台.*地區"))
-            {
-                return "tw";
+                if (Regex.IsMatch(title, @"僅.*港.*地區"))
+                {
+                    return "hk";
+                }
+                else if (Regex.IsMatch(title, @"僅.*台.*地區"))
+                {
+                    return "tw";
+                }
             }
             //如果是哔哩哔哩番剧出差这个账号上传的
             //且标题不含僅**地區，返回地区设置为港澳台

@@ -20,6 +20,20 @@ namespace BiliLite.Api
             return api;
         }
 
+        public ApiModel Detail(string id, SeasonIdType type = SeasonIdType.SeasonId)
+        {
+            var baseUrl = ApiHelper.API_BASE_URL;
+
+            ApiModel api = new ApiModel()
+            {
+                method = RestSharp.Method.Get,
+                need_cookie = true,
+                baseUrl = $"{baseUrl}/pgc/view/web/season"
+            };
+            api.parameter += type == SeasonIdType.SeasonId ? $"&season_id={id}" : $"&ep_id={id}";
+            return api;
+        }
+
         /// <summary>
         /// 短评
         /// </summary>
