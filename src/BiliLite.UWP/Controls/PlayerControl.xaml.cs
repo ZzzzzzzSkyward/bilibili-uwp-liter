@@ -2089,8 +2089,13 @@ namespace BiliLite.Controls
         private double _position = 0;
         private bool _autoPlay = false;
         private bool _hasPlayedCurrentItem = false;
-        /// <summary>一次检查点还没回来(慢 POST)时,下一次 tick 直接跳过,不叠加请求。</summary>
+        /// <summary>有一条上报正在跑(慢 POST);同一时刻只允许一条,新来的落点并进 pending 快照。</summary>
         private bool _historyCheckpointRunning = false;
+        /// <summary>正在跑的那条上报(已合并尾巴);_historyCheckpointRunning 为真时等它。</summary>
+        private Task _historyReportTask = Task.CompletedTask;
+        /// <summary>等上报期间攒下的最新落点;drain 每报完一次就取走它,再报一次。</summary>
+        private PlayInfo _historyPendingItem;
+        private double _historyPendingPosition = 0;
         /// <summary>正在显示的播放器实例:App 退出/挂起时从这里 flush 一次进度。</summary>
         private static PlayerControl _activeInstance;
 
@@ -3381,36 +3386,78 @@ namespace BiliLite.Controls
         }
 
         /// <summary>
-        /// 记一次进度:本地位置当场写,需要时再上报一次历史。永不抛出——网络问题不能把播放带崩。
+        /// 记一次进度:本地位置无条件当场写,需要时再上报一次历史。永不抛出——网络问题不能把播放带崩。
+        /// 本地保存不受在跑的上报影响;上报同一时刻只跑一条,期间来的落点并成一条尾巴补报。
         /// </summary>
         /// <param name="report">是否上报历史;暂停那次只存位置。</param>
         /// <param name="reportWhilePaused">关窗口/挂起那次为真:暂停着被关掉也要把最后位置报上去(播完除外)。</param>
         private async Task CheckpointHistoryAsync(bool report, bool reportWhilePaused = false)
         {
-            if (_historyCheckpointRunning) return;
-            if (CurrentPlayItem == null || !_hasPlayedCurrentItem) return;
-            // 从这里开始占住判定:慢 POST 没回来之前,下一次 tick 不叠加
-            _historyCheckpointRunning = true;
             try
             {
+                if (CurrentPlayItem == null || !_hasPlayedCurrentItem) return;
                 var item = CurrentPlayItem;
                 if (item.LocalPlayInfo?.IsManifestPlayback == true) return;
                 var position = Player.Position;
                 if (position < 5) return;
+                // 本地位置先落盘:慢 POST 或正在跑的上报都不能让这次不存
                 SettingHelper.SetValue<double>(HistoryKey(item), position);
                 if (!report) return;
                 // 本地文件没有 avid,报上去只会在服务端失败:位置照存,历史不报
                 if (string.IsNullOrEmpty(item.avid)) return;
                 var reportable = reportWhilePaused ? Player.PlayState != PlayState.End : Player.PlayState == PlayState.Playing;
                 if (!reportable) return;
-                await playerHelper.ReportHistory(item, position, reportErrors: false);
+                // 最新落点总是覆盖 pending:在跑的那条 drain 会把它作为尾巴补报
+                _historyPendingItem = item;
+                _historyPendingPosition = position;
+                if (_historyCheckpointRunning)
+                {
+                    // 已经有一条在跑(它会带走 pending):等它连同尾巴报完
+                    await _historyReportTask;
+                    return;
+                }
+                _historyCheckpointRunning = true;
+                var drain = DrainHistoryReportsAsync();
+                _historyReportTask = drain;
+                await drain;
             }
             catch (Exception)
             {
-                // 检查点失败就算了:位置下次还会写,上报的失败由静默上报自己记着
+                // 检查点失败就算了:位置已经写过了,上报的失败由静默上报自己记着
+            }
+        }
+
+        /// <summary>
+        /// 把 pending 落点一直报到它不再变:每次取走 pending 再报,期间又挤进来的落点继续报。
+        /// 退出前清 _historyCheckpointRunning,pending 也是在这里清空——收尾和清标志之间没有空窗。
+        /// </summary>
+        private async Task DrainHistoryReportsAsync()
+        {
+            try
+            {
+                PlayInfo lastItem = null;
+                var lastPosition = -1d;
+                while (true)
+                {
+                    var item = _historyPendingItem;
+                    if (item == null) break;
+                    var position = _historyPendingPosition;
+                    _historyPendingItem = null;
+                    // 跟刚报的那条一模一样就不用再发一次
+                    if (ReferenceEquals(item, lastItem) && position == lastPosition) break;
+                    await playerHelper.ReportHistory(item, position, reportErrors: false);
+                    lastItem = item;
+                    lastPosition = position;
+                }
+            }
+            catch (Exception)
+            {
+                // 上报失败静默:静默上报自己不抛,这里只是兜底
             }
             finally
             {
+                _historyPendingItem = null;
+                _historyPendingPosition = 0;
                 _historyCheckpointRunning = false;
             }
         }
