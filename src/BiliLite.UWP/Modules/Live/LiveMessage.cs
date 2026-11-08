@@ -83,6 +83,8 @@ namespace BiliLite.Modules.Live
         public delegate void MessageHandler(MessageType type, object message);
         public event MessageHandler NewMessage;
         ClientWebSocket ws;
+        volatile bool disposed;
+        volatile bool running;
         public string ServerUrl { get; set; } = "wss://broadcastlv.chat.bilibili.com/sub";
         public LiveMessage()
         {
@@ -91,36 +93,81 @@ namespace BiliLite.Modules.Live
         private System.Timers.Timer heartBeatTimer;
         public async Task Connect(long roomID, long uid, CancellationToken cancellationToken)
         {
-            if (ws.State != WebSocketState.Open && ws.State != WebSocketState.Connecting)
-                //连接
-                await ws.ConnectAsync(new Uri(ServerUrl), cancellationToken);
-            else 
-                return;
-            //进房
-            await JoinRoomAsync(roomID, uid);
-            //发送心跳
-            await SendHeartBeatAsync();
-            StopHeartBeatTimer();
-            heartBeatTimer = new System.Timers.Timer(1000 * 30);
-            heartBeatTimer.Elapsed += HeartBeatTimer_Elapsed;
-            heartBeatTimer.Start();
-            while (!cancellationToken.IsCancellationRequested && ws.State == WebSocketState.Open)
+            if (running || ws.State == WebSocketState.Open || ws.State == WebSocketState.Connecting)
             {
-                try
+                return;
+            }
+            running = true;
+            try
+            {
+                var waitTime = 1000 * 2;
+                while (!disposed && !cancellationToken.IsCancellationRequested)
                 {
-                    var buffer = new byte[4096];
-                    WebSocketReceiveResult result = await ws.ReceiveAsync(buffer, cancellationToken);
-                    ParseData(buffer.Take(result.Count).ToArray());
-                }
-                catch (Exception ex)
-                {
-                    if(ex is OperationCanceledException)
+                    try
+                    {
+                        //连接
+                        await ws.ConnectAsync(new Uri(ServerUrl), cancellationToken);
+                        //进房
+                        await JoinRoomAsync(roomID, uid);
+                        //发送心跳
+                        await SendHeartBeatAsync();
+                        StopHeartBeatTimer();
+                        heartBeatTimer = new System.Timers.Timer(1000 * 30);
+                        heartBeatTimer.Elapsed += HeartBeatTimer_Elapsed;
+                        heartBeatTimer.Start();
+                        waitTime = 1000 * 2;
+                        var buffer = new byte[4096];
+                        while (!disposed && !cancellationToken.IsCancellationRequested && ws.State == WebSocketState.Open)
+                        {
+                            WebSocketReceiveResult result = await ws.ReceiveAsync(buffer, cancellationToken);
+                            if (result.MessageType == WebSocketMessageType.Close)
+                            {
+                                break;
+                            }
+                            ParseData(buffer.Take(result.Count).ToArray());
+                        }
+                    }
+                    catch (OperationCanceledException)
                     {
                         return;
                     }
-                    LogHelper.Log("直播接收包出错", LogType.ERROR, ex);
+                    catch (Exception ex)
+                    {
+                        LogHelper.Log("直播接收包出错", LogType.ERROR, ex);
+                    }
+                    if (disposed || cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    StopHeartBeatTimer();
+                    //出错中断的连接不能复用，必须换一个新的
+                    try
+                    {
+                        ws.Dispose();
+                    }
+                    catch
+                    {
+                    }
+                    try
+                    {
+                        //重连间隔逐次加倍并封顶，避免房间已死时不断空转
+                        await Task.Delay(waitTime, cancellationToken);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return;
+                    }
+                    waitTime = Math.Min(waitTime * 2, 1000 * 10);
+                    if (disposed || cancellationToken.IsCancellationRequested)
+                    {
+                        return;
+                    }
+                    ws = new ClientWebSocket();
                 }
-               
+            }
+            finally
+            {
+                running = false;
             }
         }
 
@@ -150,9 +197,21 @@ namespace BiliLite.Modules.Live
         /// <returns></returns>
         private async Task SendHeartBeatAsync()
         {
-            if (ws.State == WebSocketState.Open)
+            try
             {
-                await ws.SendAsync(EncodeData("", 2), WebSocketMessageType.Binary, true, CancellationToken.None);
+                if (ws.State == WebSocketState.Open)
+                {
+                    await ws.SendAsync(EncodeData("", 2), WebSocketMessageType.Binary, true, CancellationToken.None);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+            }
+            catch (ObjectDisposedException)
+            {
+            }
+            catch (WebSocketException)
+            {
             }
         }
         /// <summary>
@@ -430,8 +489,16 @@ namespace BiliLite.Modules.Live
 
         public void Dispose()
         {
+            //已离开页面，重连循环不能再启动
+            disposed = true;
             StopHeartBeatTimer();
-            ws.Dispose(); 
+            try
+            {
+                ws.Dispose();
+            }
+            catch
+            {
+            }
         }
     }
 
