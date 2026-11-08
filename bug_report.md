@@ -224,6 +224,37 @@ deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting
   `App.OnSuspending`/`OnExiting` 都在各自的 deferral 里 await flush。发布 1.0.9.61（tag `20261107`）：
   `Z:\BiliLite.Packages_1.0.9.61_x64_Test\BiliLite.Packages_1.0.9.61_x64.msix`。
 
+
+## BR-61 — 最小化很久后点任务栏图标回不到最大化（维护者 2026-11-07，1.0.9.60）
+
+维护者：窗口缩到任务栏很久以后，点任务栏图标回不到最大化；这个现象一直存在。
+
+本机实测（PID 30616，1.0.9.60，session `4b4ff9b4…`）：
+
+- 失败态：`ApplicationFrameWindow` 18025424 停在 `-32000,-32000`、`showCmd=2`、`flags=2`（语义是应恢复到最大化），
+  CoreWindow 3084488 停在 `0,8` 且 DWM cloak=2，进程 61/61 线程 Suspended、`Responding=False`。
+- 真实鼠标点可见的任务栏按钮（`哔哩哔哩 UWP`，1077,20）：前台一度变成该 AFW，但窗口仍是最小化，应用日志没有
+  `Application resumed` —— 系统只前置了 frame，没有恢复它。MSAA 默认动作点同一个按钮结果相同。
+- 同一时刻手动 `ShowWindow(afw, SW_RESTORE)`：窗口立刻回到 `40,72 1216x941`（正常尺寸，不是最大化），日志出现
+  `Application resumed`，进程恢复 —— 说明 frame 本身能恢复。
+- 对照：系统自带「设置」最小化 45 秒后点任务栏按钮，直接回到最大化（`-8,32 1936x1056`，`zoomed=True`），
+  同一套顶置任务栏 + ApplicationFrameHost，说明不是任务栏位置或 frame host 的通用行为。
+
+同类实现的写法（Richasy/Bili.Uwp）：`OnLaunched` 与 `OnActivated` 走同一个方法，结尾无条件 `Window.Current.Activate()`
+并重新初始化标题栏；标题栏在控件 `Loaded` 后才 `SetTitleBar`。本仓库 `App.OnActivated` 只处理 Protocol，其它激活
+不激活窗口；`OnSuspending` 里 await 一旦抛错，deferral 不会 Complete（系统按挂起失败处理）。
+
+处理：
+
+- `App.OnActivated` 的非 Protocol 分支补 `Window.Current.Activate()`；
+- `App.OnAppResuming` 在窗口仍不可见时补一次 `Activate()`，并记一行日志；
+- `App.OnSuspending` 的挂起工作加 try/catch，deferral 始终 Complete，并记录耗时与剩余预算；
+- `MainPage`/`NoTabMainPage` 在 `Loaded` 后再设一次拖拽区（构造时元素可能还没进可视化树）。
+
+- 待验证：需要下一次复现时看日志。若恢复确实卡在系统侧（没有 `Application resumed`），这些改动只能在应用被恢复
+  之后补激活；届时日志里 `Main window is not visible after resume; activating` 是否出现是判断依据。
+
+
 ## BR-62 — 暗色模式下评论浮窗仍是浅色色值（维护者 2026-11-08，1.0.9.62）
 
 维护者截图：暗色模式里打开评论浮窗（`Dialogs/CommentDialog`，标题「热门评论」+ 刷新/关闭），面板还是浅色
