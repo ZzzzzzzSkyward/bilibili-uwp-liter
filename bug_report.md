@@ -223,3 +223,36 @@ deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting
 - 已修：`ae90881`（`playersess` 161 → 203，`g5` 335）。`HistoryKey` 同时用于续播读取、`Dispose` 保存与检查点；
   `App.OnSuspending`/`OnExiting` 都在各自的 deferral 里 await flush。发布 1.0.9.61（tag `20261107`）：
   `Z:\BiliLite.Packages_1.0.9.61_x64_Test\BiliLite.Packages_1.0.9.61_x64.msix`。
+
+## BR-62 — 暗色模式下评论浮窗仍是浅色色值（维护者 2026-11-08，1.0.9.62）
+
+维护者截图：暗色模式里打开评论浮窗（`Dialogs/CommentDialog`，标题「热门评论」+ 刷新/关闭），面板还是浅色
+磨砂、标题深色、正文近黑，与界面其余部分不一套值。
+
+源码定位：
+
+- 浮窗是 `Popup` 的 `Child`（`CommentDialog.xaml.cs` 构造里 `popup.Child = this`），自身没有 `RequestedTheme`；
+  根 `Frame` 的 `ElementTheme` 只作用于它的子树，弹窗按 `Application.RequestedTheme`（启动时的系统主题）解析，
+  于是深色界面里整窗都取到浅色字典的值。同仓库的其它浮层都显式钉了主题（`MessageToast` `Light`、
+  `PlayDirectoryControl` `Dark`、`SendDanmakuDialog` `Dark`、播放器设置 `Pivot` `Dark`），只有这个浮窗没有。
+- `Utils.GetBrush` 另算一套：只看 `Window.Current.Content.RequestedTheme`，非 `Light` 一律当 `Dark`；
+  `Default`（跟随系统）在浅色系统上拿到深色值，`TransparentLight`(4) 也落到 `Dark`。同一个窗口里
+  `ThemeResource` 与代码画刷因此可能来自两套值。
+- `App.LoadTheme()` 在启动导航前把 `Application.Resources.ThemeDictionaries` 替换成 `Themes/DefaultTheme.xaml`，
+  运行时调色板以该文件为准；`App.xaml` 里同名主题字典只在替换之前存在。
+
+处理（`44d7f0e`）：
+
+- `CommentDialog` 构造时用宿主 `Frame` 的 `ActualTheme` 写 `RequestedTheme`（`ActualTheme` 永不为 `Default`，
+  五种设置一次覆盖），浮窗里的主题资源与 `MessageToast`/`PlayDirectoryControl` 同一套做法。
+- `Utils.GetBrush` 改用 `Frame.ActualTheme` 取字典，与浮窗同源。
+- 浮窗的中性色收成 5 个令牌，深浅两套同时写进 `Themes/DefaultTheme.xaml`（运行时来源）与 `App.xaml`：
+  `CommentDialogLayer`（浅色仍是原磨砂；深色 `#1A1A1A`/`0.9`、兜底 `#F21A1A1A`，与播放目录抽屉同面）、
+  `CommentDialogBorderColor` `#31808080`/`#31FFFFFF`、`CommentDividerColor` `#33808080`/`#33FFFFFF`、
+  `CommentBandColor` `#19AAAAAA`/`#19FFFFFF`、`CommentBadgeColor` `#3C808080`/`#3CFFFFFF`
+  —— 深色同 alpha、基色换白。
+- 标题两枚排序链接改用 `HighLightTextColor`（浅色 `#d0318c`、深色 `#fff47bcf`），不再跟系统强调色走。
+
+验收：浅色、深色各开一次评论浮窗 —— 深色面板为暗面、正文浅色，分隔线/回复带/UP 徽标可见，昵称与点赞数
+和 XAML 同属一套主题；浅色除标题改用 `HighLightTextColor` 外与改动前逐值相同。按维护者 2026-11-08 的指示，
+本轮不做设备/运行测试，编译通过后由维护者反馈。

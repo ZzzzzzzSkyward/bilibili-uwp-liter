@@ -254,3 +254,15 @@ build and supersedes the untested 1.0.9.60 package. No device row below has run.
 | --- | --- | --- |
 | Recommend card titles show a tooltip (BR-59) | `ae90881` | on 推荐, hover a card whose title is cut off (both the grid card and the list card): the full title appears as a tooltip, and a click still opens the card. |
 | Playback progress survives closing the app (BR-60) | `ae90881` | play a video for 2+ minutes, then close the window without going back; reopen the app and the same video resumes within ~30 seconds of where it stopped, and 观看记录 carries that progress. Same after minimizing (suspend) and for a season episode. |
+
+## Shipped 2026-11-08 — comment popup dark color values (BR-62, compile only)
+
+Compiled from `Z:\bilibili-uwp-liter` with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences`
+(0 errors; no MSIX produced). No package and no device run: the maintainer's 2026-11-08 instruction makes the device
+report the test, so the rows below say what to look at rather than gate the batch.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Comment popup follows the app theme (BR-62) | `44d7f0e` | in 深色, open a comment popup (a dynamic card's comment glyph, or a user page's comment): the panel is the dark `#F21A1A1A` sheet instead of the old white frosted one, the body text is light, separators / reply band / UP badge are white-alpha and visible, and 热门评论/最新评论 use the app's pink (`#fff47bcf`) instead of the OS accent. In 浅色 the window is the old one value for value except those two sort links, which now use `#d0318c` |
+| Popup and code brushes agree in 跟随系统 | `44d7f0e` | with the system in 浅色 and the app on 跟随系统, nicknames and like/comment counts are dark text (they used to be the dark-palette `#dddddd` on a light panel); switching the app to 深色 flips the XAML tokens and the `GetBrush` values together, so one window never mixes a light and a dark value |
+
