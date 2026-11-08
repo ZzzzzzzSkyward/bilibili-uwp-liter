@@ -59,6 +59,11 @@ namespace BiliLite.Modules.Season
                         {
                             foreach (var item in items)
                             {
+                                //短评正文可能带 HTML 实体，绑定前解码一次
+                                if (item.content != null)
+                                {
+                                    item.content = System.Net.WebUtility.HtmlDecode(item.content);
+                                }
                                 Items.Add(item);
                             }
                             //Items = new IncrementalLoadingCollection<LiveRecommendItemSource, LiveRecommendItemModel>(new LiveRecommendItemSource(items, SortType), 30);

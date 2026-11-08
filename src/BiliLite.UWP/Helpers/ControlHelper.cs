@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Linq;
 using System;
+using System.Net;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Documents;
 using Windows.UI.Xaml.Markup;
@@ -14,8 +15,11 @@ namespace BiliLite.Helpers
             {
                 if (txt != null)
                 {
+                    //接口返回的文本可能已带 HTML 实体，先解码一次，避免转义后当成字面量显示
+                    var decoded = WebUtility.HtmlDecode(txt);
+
                     //处理特殊字符
-                    var input = txt.Replace("&", "&amp;");
+                    var input = decoded.Replace("&", "&amp;");
                     input = input.Replace("<", "&lt;");
                     input = input.Replace(">", "&gt;");
                     input = input.Replace("\r\n", "<LineBreak/>");
