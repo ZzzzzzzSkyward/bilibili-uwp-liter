@@ -432,3 +432,72 @@ deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting
 验收：进番剧页面不再出现 `Value cannot be null`；标题、封面、简介、评分、地区、追番状态有内容；短评按正确的
 `media_id` 拉取；点下载能看到正片 + 预告；港澳台番剧的 `area` 仍是 `hk`/`tw`（标题含「僅…地區」时）。若整页信息拿不到，
 日志应有 `番剧详情解析失败 ep=… endpoint=pgc/view/web/season`，而片单和播放照常。
+
+## BR-65 — 番剧页面不报错但什么都不显示（维护者 2026-11-08，21:57 日志）
+
+现象：BR-64 之后进番剧页面不再抛异常，但页面是空的——标题、封面、简介、剧集列、评论全没有。日志里三次加载都是同一条：
+
+```
+21:57:15.5943 ERROR 番剧详情解析失败 ep= endpoint=pgc/view/web/season
+21:57:29.5008 ERROR 番剧详情解析失败 ep= endpoint=pgc/view/web/season
+21:57:37.8125 ERROR 番剧详情解析失败 ep= endpoint=pgc/view/web/season
+```
+
+`ep=` 后面是空的，说明请求根本没带 id：`OnNavigatedTo` 只在参数是 `object[] { seasonId, epId }` 时才填 `ep_id`，
+而应用内所有入口（首页番剧、影视、时间表、排行、搜索、追番、历史、换季）都只传 `season_id`。于是
+`seasonApi.Detail(ep_id, SeasonIdType.EpId)` 与 `EpList(ep_id, SeasonIdType.EpId)` 都在拿空串去请求，
+season 端点回 `code=-400`，ep/list 也拿不到片单，`Detail` 和 `Episodes` 双双为空——页面自然什么都没有。
+
+上游同源项目（`ywmoyue/biliuwp-lite`，`ViewModels/Season/SeasonDetailPageViewModel.cs`）的做法是
+`LoadSeasonDetail(string seasonId)`，`Detail(seasonId)` 与 `EpList(seasonId)` 都按 season id 请求，
+具体分集在列表到手后按 `ep_id` 选中。本仓库的 `Api/SeasonApi` 两个方法本来就是 `SeasonIdType.SeasonId`
+为默认值，是调用方把 id 弄错了。
+
+处理（`5132840`）：
+
+- `SeasonDetailVM.LoadSeasonDetail(season_id)`：`Detail(season_id)`、`EpList(season_id)`，日志改为 `番剧详情解析失败 season=…`；
+- `SeasonDetailPage.InitSeasonDetail()` 传 `season_id`；`ep_id` 仍用于在列表里选中初始分集，链接里的分集不在列表时仍从第一集起播；
+- `plan/tests/season1` 探针同步：stub 增加 `Detail`、登记 `Endpoint`，断言改成「先 season 再 ep/list，两次都用 `SeasonIdType.SeasonId`」，
+  并补了「整页信息失败仍发布片单」的用例。
+
+验收：进番剧/国创/电影页面能看到标题、封面、简介、评分、地区、追番状态与剧集列；换季可用；从 `ep` 链接进入时仍在对应分集起播；
+日志不再出现 `ep=` 为空的详情失败行（真的取不到整页信息时应是 `season=<数字>`）。
+
+## BR-66 — 评论里显示 `&quot;` 之类的 HTML 实体（维护者 2026-11-08）
+
+现象：评论区（以及回复、视频简介）把已经转义过的文本又转义了一次，于是页面上看到 `&quot;`、`&amp;`、`&#39;`
+这些字符本身，而不是它们代表的标点。
+
+定位：`ControlHelper.StringToRichText` 是评论富文本的唯一出口（`CommentControl.xaml.cs:1012` 的 `Content.text`
+getter，主评论与每条回复都走它；`VideoDetailPage.xaml.cs:372` 的视频简介也走它）。它第一步就是
+`txt.Replace("&", "&amp;")`——接口给的 `&quot;` 于是变成 `&amp;quot;`，XAML 就把它渲染成六个字符。
+短评（`SeasonShortReviewItemModel.content`）是直接绑定的，同样会露出实体。
+
+处理（`ec92550`）：
+
+- `StringToRichText` 在转义之前先 `WebUtility.HtmlDecode(txt)` 解一次（只解一次，后面照旧转义、换行、拼链接/av号/表情）；
+- `SeasonReviewVM.GetItems` 对每条短评 `content` 同样解码一次。
+
+验收：评论里引号、`&`、`<`/`>` 显示成字符本身；`<b>` 这类内容仍按文本显示而不是变成加粗；`[表情]`、av/BV 链接照旧；
+短评同样不再出现实体。
+
+## BR-67 — 播放器侧栏的「节点」「本地轨道」空标签（维护者 2026-11-08）
+
+现象：播放器设置侧栏会出现「节点」标签但里面一条节点都没有；「本地轨道」也会在没有可选轨道时出现。
+
+定位：`PlayerControl.xaml` 的 `NodePivot` 没有写 `Visibility`，默认就是可见的——只要某一页没走到
+`InitializePlayInfo`（例如 BR-65 那会儿番剧页没有可播列表），第一次判定就永远不会执行，空标签就这么露出来。
+判定本身也不够严：`PlayerSurfaceVisibility.Decide` 只看「是不是互动视频」，不看节点是否已经取到；
+「本地轨道」把视频/音频轨道也算作内容，而那两行下拉只在合集（manifest）播放时才填。
+
+处理（`9fdfbf4`）：
+
+- `NodePivot` 默认 `Collapsed`，第一次判定之前不占位置；
+- 判定新增 `NodeCount`（当前这一集真正到手的 `story_list` 条数）与 `IsManifestPlayback`：
+  「节点」标签与右下角节点按钮 = 互动视频且节点数 > 0；「本地轨道」= 合集播放且视频/音频轨 > 0，或字幕/弹幕轨 > 0；
+- `GetNodes()` 之后补一次判定（首次播放与换节点两处），节点到手才露面；
+- 节点列表归属当前分集：换集（包括从一个互动视频换到另一个）重建 `InteractionVideoVM`，上一集的节点不会跟着过来；
+- `plan/tests/playertoolbar` 探针补了「互动但节点还没到」「非互动但节点数不为零」「合集外的视频/音频轨」等用例。
+
+验收：普通视频、以及没有任何可播内容的番剧页，侧栏不再出现「节点」「本地轨道」；互动视频在节点列表取到后出现，
+换节点后跟着更新，换集后不显示上一集的节点；合集播放里有可选轨道时「本地轨道」出现，没有时消失。

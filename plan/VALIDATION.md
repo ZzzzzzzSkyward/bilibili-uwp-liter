@@ -310,3 +310,13 @@ was built from `pgc/view/web/ep/list`, whose payload carries only `episodes`/`se
 | A season page opens without `Value cannot be null` (BR-64) | `b643e77` | open any 番剧/国创/电影 page: no toast, no `ArgumentNullException` in `20261108.log`, and the header shows the real title. The metadata panel has 封面/简介/评分/地区/追番状态; the 短评 tab loads (it used `media_id` = 0 before). Episode switching still works and the 下载 dialog lists both 正片 and 预告 |
 | 港澳台 area detection unchanged | `b643e77` | a season whose title carries 僅…香港…地區 still resolves `area=hk` and one with 僅…台灣…地區 resolves `tw`; every other season resolves `cn` (the null-title guard changes nothing for non-empty titles) |
 
+## Shipped 2026-11-08 — season page content, comment entities, empty player pivots (compile only)
+
+Compiled with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (0 errors, no MSIX).
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Season page loads its content again (BR-65) | `5132840` | open 番剧 / 国创 / 电影 from the home feed, 时间表, 排行, 搜索, 追番 and 历史: title, cover, intro, rating, area, follow state and the episode column are all filled. Switch season with the season list; open an `/ep` link: playback still starts on that episode. Log shows no `番剧详情解析失败` line with an empty id |
+| Comments show characters, not entities (BR-66) | `ec92550` | a comment containing quotes / `&` / `<` renders the characters; a comment whose text contains `&quot;` no longer prints `&quot;`. Replies and the video description behave the same, `[表情]` still renders as images, av/BV ids still link |
+| Empty 节点 / 本地轨道 pivots stay hidden (BR-67) | `9fdfbf4` | player settings sidebar on a normal video: no `节点`, no `本地轨道`. On an interactive video the `节点` tab appears once nodes are loaded and follows a branch change; after switching to another episode it never shows the previous video's nodes. A manifest/collection playback with tracks shows `本地轨道`, one without hides it |
+
