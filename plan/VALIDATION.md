@@ -266,3 +266,14 @@ report the test, so the rows below say what to look at rather than gate the batc
 | Comment popup follows the app theme (BR-62) | `44d7f0e` | in 深色, open a comment popup (a dynamic card's comment glyph, or a user page's comment): the panel is the dark `#F21A1A1A` sheet instead of the old white frosted one, the body text is light, separators / reply band / UP badge are white-alpha and visible, and 热门评论/最新评论 use the app's pink (`#fff47bcf`) instead of the OS accent. In 浅色 the window is the old one value for value except those two sort links, which now use `#d0318c` |
 | Popup and code brushes agree in 跟随系统 | `44d7f0e` | with the system in 浅色 and the app on 跟随系统, nicknames and like/comment counts are dark text (they used to be the dark-palette `#dddddd` on a light panel); switching the app to 深色 flips the XAML tokens and the `GetBrush` values together, so one window never mixes a light and a dark value |
 
+## Shipped 2026-11-08 — checkpoint tail and live-room parse (compile only)
+
+Compiled from `Z:\bilibili-uwp-liter` with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences`
+(0 errors; no MSIX produced). Per the maintainer's 2026-11-08 instruction there is no runtime or device run from this
+side; the rows below say what to look at.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Checkpoint survives a pending report (review `c4aa630`) | `5c6f4d3` | while a video is playing, seek far forward, pause, and close the app within the 30 s window right after a checkpoint fires; reopen with resume: playback starts at the seeked point, not the pre-seek tick. Same if the window is minimized (suspend) instead of closed. 观看记录 carries the new position |
+| Live room opens without a null-reference toast (BR-53) | `9b780b6` | open any live room: no `Object reference not set to an instance of an object.` toast; the log has no `[JSON][FAIL] … gift/v4/Live/giftConfig` and no `step=gift-config`/`step=bag-gifts`; the gift panel lists this room's gifts and the bag shows only gifts present in that config |
+

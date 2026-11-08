@@ -86,6 +86,30 @@ split, the background-playback and memory work in `plan/PLAN.md` cannot be scope
 本地用真实载荷验过 `getInfoByRoom` 能正常反序列化（`code=0`，`room_info`/`anchor_info` 都在），所以
 不是这个接口的形状问题。
 
+处理（2026-11-08，按日志定位）：维护者给的设备日志把这条钉死了。
+
+- `NullReferenceException` 的堆栈是 `at BiliLite.Modules.LiveRoomVM.LoadSuperChat()`，紧跟
+  `GET av/v1/SuperChat/getMessageList status=200`，而这条请求没有 `[JSON][FAIL]` —— 解析成功，炸在循环体里：
+  `item.user_info.face`（及 `face_frame`/`uname`）没有保护，条目缺 `user_info` 就是一句裸的
+  `Object reference not set to an instance of an object.`，正好是 `LoadSuperChat` 自己的 catch 弹出来的文字。
+- 同一时刻 `gift/v4/Live/giftConfig` 两次 200 都报
+  `Deserialized JSON type 'JArray' is not compatible with expected type 'JObject'. Path 'data'`，
+  分别对应 `step=gift-config`（`GetRoomGiftList`）与 `step=bag-gifts`（`LoadBag`）—— 接口的 `data` 已经是数组，
+  按 `JObject` 反序列化必然失败，礼物/背包整块不加载。
+
+修复（`9b780b6`）：
+
+- 醒目留言：先按「`data` 是数组」或「`data.list`」拆出列表（都认不出就空列表），跳过 `user_info` 为空的条目，
+  其余 14 个字段的映射不变。
+- 礼物配置：两个 `GiftList` 调用点改为 `GetData<JToken>()` + `ParseGiftList`（数组 / `{"list":[...]}` / null
+  统一归一成列表），拼 `Gifts` 时不再放入 null 元素；`bag_list` 与 `gift-room` 的响应形状没有证据表明变化，不动。
+- 提示与日志文案保持原样（`step=` 名称不变），没有新增日志。
+
+验收：打开任意直播间 —— 不再弹 `Object reference not set ...`；日志里 `gift/v4/Live/giftConfig` 不再出现
+`[JSON][FAIL]`，`step=gift-config`/`step=bag-gifts` 也不再出现；礼物面板按房间礼物配置列出，背包里配置之外的
+礼物仍然跳过。
+
+
 ## BR-54 — 播放器浮层的胶囊太宽，内容块相对背景偏低（维护者 2026-11-06，带截图）
 
 维护者：进度浮层（`00:00:43` + 时钟图标）的胶囊左右各挂了一大截背景，宽度需要收窄到截图红框；另外
