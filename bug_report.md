@@ -289,7 +289,7 @@ deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting
 - `App.OnSuspending` 的挂起工作加 try/catch，deferral 始终 Complete，并记录耗时与剩余预算；
 - `MainPage`/`NoTabMainPage` 在 `Loaded` 后再设一次拖拽区（构造时元素可能还没进可视化树）。
 
-- 待验证：需要下一次复现时看日志。若恢复确实卡在系统侧（没有 `Application resumed`），这些改动只能在应用被恢复
+- 待验证：需要下一次复现时看日志。若恢复确实卡在系统侧（没有 `Application resumed`），这些改动只能在应用被恢复
   之后补激活；届时日志里 `Main window is not visible after resume; activating` 是否出现是判断依据。
 
 复现（2026-11-08 13:12，session `5399351e…`）：窗口最小化约 100 秒后点回前台
