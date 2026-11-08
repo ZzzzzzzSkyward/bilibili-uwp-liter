@@ -263,7 +263,7 @@ report the test, so the rows below say what to look at rather than gate the batc
 
 | Item | Commit(s) | Confirm on the device |
 | --- | --- | --- |
-| Comment popup follows the app theme (BR-62) | `44d7f0e` | in 深色, open a comment popup (a dynamic card's comment glyph, or a user page's comment): the panel is the dark `#F21A1A1A` sheet instead of the old white frosted one, the body text is light, separators / reply band / UP badge are white-alpha and visible, and 热门评论/最新评论 use the app's pink (`#fff47bcf`) instead of the OS accent. In 浅色 the window is the old one value for value except those two sort links, which now use `#d0318c` |
+| Comment popup follows the app theme (BR-62) | `44d7f0e` | **passed 2026-11-08**（维护者确认）: 深色浮窗取深色值，浅色保持原值 |
 | Popup and code brushes agree in 跟随系统 | `44d7f0e` | with the system in 浅色 and the app on 跟随系统, nicknames and like/comment counts are dark text (they used to be the dark-palette `#dddddd` on a light panel); switching the app to 深色 flips the XAML tokens and the `GetBrush` values together, so one window never mixes a light and a dark value |
 
 ## Shipped 2026-11-08 — checkpoint tail and live-room parse (compile only)
@@ -276,4 +276,14 @@ side; the rows below say what to look at.
 | --- | --- | --- |
 | Checkpoint survives a pending report (review `c4aa630`) | `cfc4a15` | while a video is playing, seek far forward, pause, and close the app within the 30 s window right after a checkpoint fires; reopen with resume: playback starts at the seeked point, not the pre-seek tick. Same if the window is minimized (suspend) instead of closed. 观看记录 carries the new position |
 | Live room opens without a null-reference toast (BR-53) | `c0b7eb1` | **passed 2026-11-08 13:02**, session `5399351e…`: `giftConfig` twice 200 with no `[JSON][FAIL]`, no `step=gift-config`/`step=bag-gifts`, `bag_list` 200, no `NullReferenceException`; the `user_info` guard was not exercised (no superchats in that room) |
+
+## Shipped 2026-11-08 — live danmaku reconnect (BR-63, compile only)
+
+Compiled from `Z:\bilibili-uwp-liter` with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences`
+(0 errors; no MSIX produced). The drop has only been seen in logs, never forced by hand, so the row below is the
+first real test of the reconnect path.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| A dropped danmaku socket comes back (BR-63) | `722555b` | in a busy room, force one drop (lock the device a minute, or toggle Wi-Fi): the log shows `直播接收包出错`, then a `弹幕连接成功` line returns to the danmaku list and messages resume without leaving the page. Force several drops: the gaps grow 2→4→8→10 s and stay at 10. Leaving the page stops new `直播接收包出错` lines, and nothing crashes while a heartbeat lands on a dead socket |
 

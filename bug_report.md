@@ -325,3 +325,41 @@ deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting
 验收：浅色、深色各开一次评论浮窗 —— 深色面板为暗面、正文浅色，分隔线/回复带/UP 徽标可见，昵称与点赞数
 和 XAML 同属一套主题；浅色除标题改用 `HighLightTextColor` 外与改动前逐值相同。按维护者 2026-11-08 的指示，
 本轮不做设备/运行测试，编译通过后由维护者反馈。
+
+验证（2026-11-08，设备）：通过。维护者确认深色/浅色评论浮窗都取到与界面同一套色值。
+
+## BR-63 — 直播间弹幕断开一次就再也不连（维护者 2026-11-08）
+
+来源是 BR-53 的两份设备日志（2026-11-08 12:27 与 13:02），两次会话里各出现一条：
+
+- `直播接收包出错 | HResult=0x80004005|System.Net.WebSockets.WebSocketException (0xB55B6598): The remote party
+  closed the WebSocket connection without completing the close handshake. ---> System.Exception: Exception from
+  HRESULT: 0x80072EFE`，紧跟 `at Windows.Networking.Sockets.MessageWebSocketMessageReceivedEventArgs.GetDataReader()`
+  与 `at BiliLite.Modules.Live.LiveMessage.Connect(...)`。
+
+这条日志之后接收循环的 `while (... && ws.State == WebSocketState.Open)` 条件为假，`Connect` 直接返回；而
+`ReceiveMessage` 只在 `LoadLiveRoomDetail` 的 connect 阶段调用一次，不会再被调用。结果是弹幕、礼物、醒目留言
+在本次停留期间全部停住，界面上没有任何提示，只能退出重进。
+
+根因两处：
+
+1. `Connect` 是「连一次、收到死为止」：异常只记一条日志，循环条件依赖 socket 状态，断线即永久停止；而且抛过
+   异常的 `ClientWebSocket` 不能复用，重连必须换新实例。
+2. 心跳是 `System.Timers.Timer` → `async void HeartBeatTimer_Elapsed` → `ws.SendAsync`：socket 在发送瞬间死亡时
+   抛出的异常会从 `async void` 逃逸，UWP 里这会直接终止应用。
+
+处理（`722555b`）：
+
+- `Connect` 改为监督式循环：连接 → 进房 → 心跳 → 起 30 s 心跳定时器 → 收包；收包在取消、服务端 close 帧
+  （close 帧不再交给 `ParseData`）或异常时退出内层，仍记原来那条 `直播接收包出错`（文案与级别不变），丢弃旧
+  socket、换新 `ClientWebSocket`，按 2 s → 4 s → 8 s → 10 s 封顶退避后重连；连上后把退避重置回 2 s。
+- 每次连接前先 `StopHeartBeatTimer()`，定时器不叠加；`SendHeartBeatAsync` 吞掉 `OperationCanceledException` /
+  `ObjectDisposedException` / `WebSocketException`，`async void` 不再可能把发送异常带出去。
+- `Dispose` 先置标志，再停定时器、释放 socket；重连循环在循环条件、异常后、退避前后都看这个标志，离开页面后
+  不会再有重连，也不会在 `Dispose` 之后新建 socket。
+- 同一实例只允许一条连接循环（`running` 标志），退避窗口内的重复调用直接返回，避免两条循环抢同一个 `ws`。
+
+验收：进一个弹幕密集的直播间，人为断一次网（锁屏一分钟或关开 Wi-Fi）——日志出现 `直播接收包出错` 后，弹幕列表
+应重新出现「弹幕连接成功」并继续滚动，不需要退出重进；连续断线时退避 2→4→8→10 s；离开页面后日志不再出现新的
+`直播接收包出错`；期间应用不闪退。
+
