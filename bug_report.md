@@ -500,4 +500,16 @@ getter，主评论与每条回复都走它；`VideoDetailPage.xaml.cs:372` 的�
 - `plan/tests/playertoolbar` 探针补了「互动但节点还没到」「非互动但节点数不为零」「合集外的视频/音频轨」等用例。
 
 验收：普通视频、以及没有任何可播内容的番剧页，侧栏不再出现「节点」「本地轨道」；互动视频在节点列表取到后出现，
+
+复核（维护者反馈“依然可见”）：第一次的改法是给 `PivotItem` 设 `Visibility`——这条路走不通。`LocalTracksPivot`
+在本次改动之前就带着 `Visibility="Collapsed"`，可「本地轨道」页签一直都能看到，说明 UWP 的 `Pivot` 会给
+`Items` 里的每一项都画一个页签头，**页签头不看该项自己的 `Visibility`**，折叠只藏住内容。所以页签必须从
+`Pivot.Items` 里整条拿走（`b95f2ab`）：
+
+- 构造函数在 `InitializeComponent()` 之后记下两个页签的原始位置（此时是 0 和 1），随即把它们从 `Items` 移除，
+  并调一次 `EnsurePivotSelectionVisible()`，让选中项落到「弹幕」上，第一次判定之前不会出现空内容区；
+- `ApplySurfaceVisibility` 改成按判定结果把页签插回原位或整条拿走（`SetPivotItemPresent`），插回时强制 `Visibility=Visible`；
+- `EnsurePivotSelectionVisible` 改用「还在 `Items` 里就是看得见」来算，`ResolvePivotSelection` 与兜底逻辑不变；
+- XAML 去掉两个页签上的 `Visibility="Collapsed"`（去留已经不由它决定）；
+- `plan/tests/playertoolbar` 里针对 XAML `Visibility` 的断言改成针对 `Items` 接线的断言。
 换节点后跟着更新，换集后不显示上一集的节点；合集播放里有可选轨道时「本地轨道」出现，没有时消失。
