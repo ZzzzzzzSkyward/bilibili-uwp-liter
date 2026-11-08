@@ -299,3 +299,14 @@ re-suspended the app 10 s later. This batch adds the Win32 path and the window-s
 | Maximized window returns maximized after a long minimize (BR-61) | `bbfaf7f` | maximize, minimize for 1–2 minutes, click the taskbar icon: the window should come back maximized straight away. In `20261108.log` expect `Window state at suspend; … iconic=False; zoomed=False; restoreToMaximized=True` at the minimize, then `Main window not visible … activating`, then `Main window restored through Win32; visible=True; …; zoomed=True` at the restore. If it still fails, send those two lines — `hwnd`/`root`/`iconic`/`zoomed` say whether the handle is wrong or the shell refused the command |
 | The same window still comes back when the app was left at normal size | `bbfaf7f` | with the window un-maximized, do the same minimize/return: it must come back at the same size (log shows `restoreToMaximized=False` and a `SW_RESTORE` path), and a notification click while the window is visible-but-behind must still front it (`OnActivated` keeps the unconditional `Activate()`) |
 
+## Shipped 2026-11-08 — season page loads its own detail (BR-64, compile only)
+
+Compiled from `Z:\bilibili-uwp-liter` with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences`
+(0 errors; no MSIX produced). The device log pinned the crash to `Utils.ParseArea(null, …)` fed by a `Detail` model that
+was built from `pgc/view/web/ep/list`, whose payload carries only `episodes`/`section`/`play_strategy`.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| A season page opens without `Value cannot be null` (BR-64) | `b643e77` | open any 番剧/国创/电影 page: no toast, no `ArgumentNullException` in `20261108.log`, and the header shows the real title. The metadata panel has 封面/简介/评分/地区/追番状态; the 短评 tab loads (it used `media_id` = 0 before). Episode switching still works and the 下载 dialog lists both 正片 and 预告 |
+| 港澳台 area detection unchanged | `b643e77` | a season whose title carries 僅…香港…地區 still resolves `area=hk` and one with 僅…台灣…地區 resolves `tw`; every other season resolves `cn` (the null-title guard changes nothing for non-empty titles) |
+

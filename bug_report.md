@@ -395,3 +395,40 @@ deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting
 应重新出现「弹幕连接成功」并继续滚动，不需要退出重进；连续断线时退避 2→4→8→10 s；离开页面后日志不再出现新的
 `直播接收包出错`；期间应用不闪退。
 
+## BR-64 — 打开番剧页面报 Value cannot be null（维护者 2026-11-08，20:38 日志）
+
+现象：进任意番剧页面就抛异常，页面初始化中断——
+
+- `20:38:06 System.ArgumentNullException: Value cannot be null. Parameter name: input`
+  `at System.Text.RegularExpressions.Regex.IsMatch(String input)`
+  `at BiliLite.Helpers.Utils.ParseArea(String title, Int64 mid)`
+  `at BiliLite.Pages.SeasonDetailPage.UpdatePlayInfoToEpisode(Int32 index)` ← `InitializePlayInfo()` ←
+  `InitSeasonDetail()` ← `OnNavigatedTo`；
+- 前后两次 `pgc/view/web/season` 与 `pgc/view/web/ep/list` 都是 200，没有 `[JSON][FAIL]`，所以不是网络或反序列化失败。
+
+定位：今天实测 `pgc/view/web/ep/list` 的 `result` 只有 `episodes`、`section`、`play_strategy` 三个键（season 29325 /
+28747 / 33378 三份一致），没有 `title`、`season_title`、`media_id`、`rating`、`areas`、`stat`、`user_status`。而
+`SeasonDetailVM.LoadSeasonDetail` 恰好拿这份 result 造整页 `Detail`，于是 `Detail.title == null`，
+`Utils.ParseArea` 里的 `Regex.IsMatch(title, …)` 直接抛 `ArgumentNullException`。同一原因下：
+
+- `SeasonDetailPage.xaml` 里 20 个 `Detail.*` 绑定（标题/封面/简介/评分/发布/统计/地区/关联季/付费/追番状态…）全空；
+- `PlayInfo.season_id` 恒为 0，`seasonReviewVM.MediaID = Detail.media_id` 恒为 0（短评按 media 0 去查）；
+- 港澳台分区的判定依赖 `Detail.title` 与 `up_info.mid`，标题空时连「僅…地區」也判不出来。
+
+上游同源项目（`ywmoyue/biliuwp-lite`，`ViewModels/Season/SeasonDetailPageViewModel.cs`）是两条请求并行：整页信息取
+`pgc/view/web/season`，片单取 `pgc/view/web/ep/list`，`Detail` 只来自前者。本仓库的 `Api/SeasonApi` 只有 `EpList`，
+迁移时把两件事并成了一条，才落到现在这个状态。
+
+处理（`b643e77`）：
+
+- `Api/SeasonApi` 新增 `Detail(id, type)`：`{API_BASE_URL}/pgc/view/web/season`，`season_id=` / `ep_id=` 与 `EpList` 同一套；
+- `SeasonDetailVM.LoadSeasonDetail` 先取 season 端点（`GetResult<SeasonDetailModel>()`，`result` 信封），
+  `Detail = detail ?? season.Detail`；season 解析失败只记一条 `番剧详情解析失败 ep=… endpoint=pgc/view/web/season`，
+  不挡播放；`Detail.title` 为空时回落 `season_title`，页面标题/地区判定都有字；
+- `Detail.episodes` 仍用 ep/list 的合并列表（含分区预告、按 ep 号去重），下载面板的条目与去重行为不变；只有当 ep/list
+  一条都没有时才用 season 自带的那份；
+- `Utils.ParseArea` 标题为空时跳过两条 `僅…地區` 正则，其余判定（`mid == 11783021 → hk`、默认 `cn`）不变。
+
+验收：进番剧页面不再出现 `Value cannot be null`；标题、封面、简介、评分、地区、追番状态有内容；短评按正确的
+`media_id` 拉取；点下载能看到正片 + 预告；港澳台番剧的 `area` 仍是 `hk`/`tw`（标题含「僅…地區」时）。若整页信息拿不到，
+日志应有 `番剧详情解析失败 ep=… endpoint=pgc/view/web/season`，而片单和播放照常。
