@@ -213,7 +213,23 @@ namespace BiliLite
         private void OnAppResuming(object sender, object e)
         {
             LogHelper.Log("Application resumed", LogType.INFO);
+            // 长时间挂起后系统可能只恢复进程、不把窗口带回前台；窗口仍不可见时补一次激活
+            ActivateMainWindowIfHidden();
             _ = PreflightLoginAsync();
+        }
+
+        private static void ActivateMainWindowIfHidden()
+        {
+            try
+            {
+                if (Window.Current.Visible) return;
+                LogHelper.Log("Main window is not visible after resume; activating", LogType.INFO);
+                Window.Current.Activate();
+            }
+            catch (Exception ex)
+            {
+                LogHelper.Log("Activating the main window failed", LogType.ERROR, ex);
+            }
         }
 
 
@@ -333,11 +349,24 @@ namespace BiliLite
         {
             LogHelper.Log("Application suspending", LogType.INFO);
             LogHelper.Flush();
-            var deferral = e.SuspendingOperation.GetDeferral();
-            // 正在播的进度在 deferral 里存下来并上报一次:挂起之后进程可能直接没了
-            await PlayerControl.FlushActivePlaybackAsync();
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+            var operation = e.SuspendingOperation;
+            var deferral = operation.GetDeferral();
+            var watch = System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                // 正在播的进度在 deferral 里存下来并上报一次:挂起之后进程可能直接没了
+                await PlayerControl.FlushActivePlaybackAsync();
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+            }
+            catch (Exception ex)
+            {
+                // deferral 必须完成,否则系统按“挂起失败”处理,下一次恢复可能就是坏的
+                LogHelper.Log("Suspend work failed", LogType.ERROR, ex);
+            }
+            // 超过 5 秒系统会按挂起失败终止应用;耗时写进日志,窗口卡死时能和系统侧对上
+            LogHelper.Log("Application suspend work finished; ms=" + watch.ElapsedMilliseconds
+                + "; budgetMs=" + (int)(operation.Deadline - DateTimeOffset.Now).TotalMilliseconds, LogType.INFO);
             deferral.Complete();
         }
 
@@ -376,6 +405,11 @@ namespace BiliLite
                 ProtocolActivatedEventArgs eventArgs = args as ProtocolActivatedEventArgs;
                 LogHelper.Log("Protocol activation; scheme=" + eventArgs.Uri.Scheme + "; host=" + eventArgs.Uri.Host, LogType.INFO);
                 Navigation(eventArgs.Uri.AbsoluteUri ,false);
+            }
+            else
+            {
+                // 与 OnLaunched 的收尾一致:非 Launch 的激活(通知/文件等)也要把已有窗口带回前台
+                Window.Current.Activate();
             }
            
         }

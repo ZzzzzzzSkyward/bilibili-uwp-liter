@@ -26,6 +26,8 @@ namespace BiliLite
             var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
             mode = SettingHelper.GetValue<int>(SettingHelper.UI.DISPLAY_MODE, 0);
             Window.Current.SetTitleBar(TitleBar);
+            // 构造时标题栏 Border 可能还没进可视化树；加载后再设一次
+            Loaded += NoTabMainPage_Loaded;
             frame.Navigated += Frame_Navigated;
             MessageCenter.NavigateToPageEvent += NavigationHelper_NavigateToPageEvent;
             MessageCenter.ChangeTitleEvent += MessageCenter_ChangeTitleEvent;
@@ -33,6 +35,11 @@ namespace BiliLite
             MessageCenter.MiniWindowEvent += MessageCenter_MiniWindowEvent;
             Window.Current.Content.PointerPressed += Content_PointerPressed;
         }
+        private void NoTabMainPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            Window.Current.SetTitleBar(TitleBar);
+        }
+
         private void MessageCenter_MiniWindowEvent(object sender, bool e)
         {
             if (e)

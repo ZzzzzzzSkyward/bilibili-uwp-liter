@@ -27,6 +27,8 @@ namespace BiliLite
             coreTitleBar.LayoutMetricsChanged += CoreTitleBar_LayoutMetricsChanged;
 
             Window.Current.SetTitleBar(CustomDragRegion);
+            // 构造时 TabView 模板还没应用，拖拽区可能还不在可视化树里；加载后再设一次
+            Loaded += MainPage_Loaded;
 
             //处理页面跳转
             MessageCenter.NavigateToPageEvent += NavigationHelper_NavigateToPageEvent;
@@ -144,6 +146,12 @@ namespace BiliLite
                 }
 
             }
+        }
+
+        private void MainPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            Window.Current.SetTitleBar(CustomDragRegion);
+            CoreTitleBar_LayoutMetricsChanged(CoreApplication.GetCurrentView().TitleBar, null);
         }
 
         /// <summary>
