@@ -78,6 +78,12 @@ namespace BiliLite
         /// <summary>UI 线程的调度器：ReloginRequired 从后台请求线程触发，Toast 只能在 UI 线程弹。</summary>
         private static Windows.UI.Core.CoreDispatcher uiDispatcher;
 
+        /// <summary>CoreWindow 的 HWND：被系统最小化的是它的顶层框架窗口，还原时由 Helpers 解析祖先。</summary>
+        private static IntPtr mainWindowHandle;
+
+        /// <summary>挂起时窗口是否最大化：恢复时按原状态还回来，而不是掉成普通大小。</summary>
+        private static bool suspendedWhileMaximized;
+
         private static void OnReloginRequired(object sender, EventArgs e)
         {
             var dispatcher = uiDispatcher;
@@ -213,18 +219,46 @@ namespace BiliLite
         private void OnAppResuming(object sender, object e)
         {
             LogHelper.Log("Application resumed", LogType.INFO);
-            // 长时间挂起后系统可能只恢复进程、不把窗口带回前台；窗口仍不可见时补一次激活
-            ActivateMainWindowIfHidden();
+            // 长时间挂起后系统可能只恢复进程、不把窗口带回前台；窗口仍不可见时先激活，不行再直接走 Win32 还原
+            RestoreMainWindowIfHiddenAsync();
             _ = PreflightLoginAsync();
         }
 
-        private static void ActivateMainWindowIfHidden()
+        /// <summary>
+        /// 恢复窗口：最小化状态下 Window.Current.Activate() 是空操作，所以激活之后仍不可见就
+        /// 拿 HWND 找到顶层框架窗口走 ShowWindow，并按挂起前是否最大化还回原状态。
+        /// </summary>
+        private static async void RestoreMainWindowIfHiddenAsync()
         {
             try
             {
                 if (Window.Current.Visible) return;
                 LogHelper.Log("Main window is not visible after resume; activating", LogType.INFO);
+                var rootHandle = WindowRestoreHelper.GetRootHandle(mainWindowHandle);
+                LogHelper.Log("Main window state before restore; hwnd=0x" + mainWindowHandle.ToString("X")
+                    + "; root=0x" + rootHandle.ToString("X")
+                    + "; iconic=" + WindowRestoreHelper.IsMinimized(mainWindowHandle)
+                    + "; zoomed=" + WindowRestoreHelper.IsMaximized(mainWindowHandle), LogType.INFO);
+                if (mainWindowHandle == IntPtr.Zero)
+                {
+                    WindowRestoreHelper.TryGetHandle(out mainWindowHandle);
+                }
                 Window.Current.Activate();
+                await Task.Delay(200);
+                if (Window.Current.Visible)
+                {
+                    LogHelper.Log("Main window came back after activate; zoomed=" + WindowRestoreHelper.IsMaximized(mainWindowHandle), LogType.INFO);
+                    return;
+                }
+                WindowRestoreHelper.Restore(mainWindowHandle, suspendedWhileMaximized);
+                Window.Current.Activate();
+                await Task.Delay(200);
+                rootHandle = WindowRestoreHelper.GetRootHandle(mainWindowHandle);
+                LogHelper.Log("Main window restored through Win32; visible=" + Window.Current.Visible
+                    + "; hwnd=0x" + mainWindowHandle.ToString("X")
+                    + "; root=0x" + rootHandle.ToString("X")
+                    + "; iconic=" + WindowRestoreHelper.IsMinimized(mainWindowHandle)
+                    + "; zoomed=" + WindowRestoreHelper.IsMaximized(mainWindowHandle), LogType.INFO);
             }
             catch (Exception ex)
             {
@@ -349,6 +383,14 @@ namespace BiliLite
         {
             LogHelper.Log("Application suspending", LogType.INFO);
             LogHelper.Flush();
+            // 记下挂起前的窗口状态：恢复时窗口已经最小化，只有这里能知道它原本是不是最大化
+            WindowRestoreHelper.TryGetHandle(out mainWindowHandle);
+            suspendedWhileMaximized = WindowRestoreHelper.RestoresToMaximized(mainWindowHandle);
+            LogHelper.Log("Window state at suspend; hwnd=0x" + mainWindowHandle.ToString("X")
+                + "; root=0x" + WindowRestoreHelper.GetRootHandle(mainWindowHandle).ToString("X")
+                + "; iconic=" + WindowRestoreHelper.IsMinimized(mainWindowHandle)
+                + "; zoomed=" + WindowRestoreHelper.IsMaximized(mainWindowHandle)
+                + "; restoreToMaximized=" + suspendedWhileMaximized, LogType.INFO);
             var operation = e.SuspendingOperation;
             var deferral = operation.GetDeferral();
             var watch = System.Diagnostics.Stopwatch.StartNew();
@@ -408,8 +450,10 @@ namespace BiliLite
             }
             else
             {
-                // 与 OnLaunched 的收尾一致:非 Launch 的激活(通知/文件等)也要把已有窗口带回前台
+                // 与 OnLaunched 的收尾一致:非 Launch 的激活(通知/文件/任务栏)先无条件激活把窗口带到前台;
+                // 窗口仍不可见(被最小化)时再走 Win32 还原
                 Window.Current.Activate();
+                RestoreMainWindowIfHiddenAsync();
             }
            
         }
