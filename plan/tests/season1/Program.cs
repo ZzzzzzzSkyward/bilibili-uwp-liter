@@ -13,7 +13,8 @@ using Newtonsoft.Json.Linq;
 namespace Season1Probe
 {
     /// <summary>
-    /// season1: pgc/view/web/ep/list 走 Parsing/Season 这一层，SeasonDetailVM 只在解析被接受后发布。
+    /// season1: pgc/view/web/season（整页信息）+ pgc/view/web/ep/list（片单）走 Parsing/Season 这一层，
+    /// SeasonDetailVM 只在片单解析被接受后发布；整页信息失败只记日志、不挡片单。
     ///
     /// Scope: the probe compiles the real Parsing/ApiEnvelope.cs, Parsing/Season/*, the season wire DTO,
     /// Modules/Detail/SeasonDetailVM.cs and its model closure; only the REST transport (SeasonApi/ApiModel)
@@ -27,6 +28,7 @@ namespace Season1Probe
         public static int Main()
         {
             ResultEnvelopePublishesTheSeason();
+            SeasonDetailFailureStillPublishesTheEpisodeList();
             BusinessRejectionPublishesNothing();
             MalformedEnvelopeKeepsItsFieldPath();
             TransportFailureStaysAParseableCategory();
@@ -53,10 +55,14 @@ namespace Season1Probe
             result["section"] = TwoSections();
             var vm = LoadSeason(SuccessBody(result));
 
-            Check(SeasonApi.Calls.Count == 1 && SeasonApi.Calls[0].Id == "12345",
-                "ep/list: the page asks pgc/view/web/ep/list once for the requested episode");
-            Check(SeasonApi.Calls[0].Type == SeasonIdType.EpId,
-                "ep/list: the caller keeps asking by ep_id (SeasonIdType.EpId)");
+            Check(SeasonApi.Calls.Count == 2 && SeasonApi.Calls[0].Endpoint == SeasonEndpoint.Detail
+                  && SeasonApi.Calls[0].Id == "12345" && SeasonApi.Calls[0].Type == SeasonIdType.SeasonId,
+                "pgc/view/web/season: the page first asks for the whole season by season_id");
+            Check(SeasonApi.Calls[1].Endpoint == SeasonEndpoint.EpList && SeasonApi.Calls[1].Id == "12345"
+                  && SeasonApi.Calls[1].Type == SeasonIdType.SeasonId,
+                "pgc/view/web/ep/list: the list is then asked for by the same season_id");
+            Check(DetailFailureLogs() == 0,
+                "season detail: a readable pgc/view/web/season body logs nothing");
             Check(vm.Loaded && !vm.Loading && !vm.ShowError,
                 "publish: an accepted parse sets Loaded and leaves the error panel closed");
 
@@ -120,6 +126,28 @@ namespace Season1Probe
                 "state: loading a valid season never toasts");
         }
 
+        /// <summary>
+        /// 整页信息拿不到不挡播放：pgc/view/web/season 失败只记一条日志，片单照旧解析发布，
+        /// Detail 退回 mapper 从 ep/list 推出的那份 season。
+        /// </summary>
+        private static void SeasonDetailFailureStillPublishesTheEpisodeList()
+        {
+            var vm = LoadSeason(SuccessBody(BaseResult()), "{\"code\":-404,\"message\":\"详情木有\"}");
+            Check(SeasonApi.Calls.Count == 2 && SeasonApi.Calls[0].Endpoint == SeasonEndpoint.Detail
+                  && SeasonApi.Calls[1].Endpoint == SeasonEndpoint.EpList,
+                "season detail: the page still asks pgc/view/web/ep/list after the header endpoint fails");
+            Check(DetailFailureLogs() == 1,
+                "season detail: a failed pgc/view/web/season body is logged once (" +
+                string.Join("|", LogHelper.Entries) + ")");
+            Check(vm.Loaded && !vm.Loading && !vm.ShowError,
+                "season detail: a failed header does not open the error panel");
+            Check(Ids(vm.Episodes) == "1,2,3" && vm.ShowEpisodes,
+                "season detail: the episode list is published anyway (" + Ids(vm.Episodes) + ")");
+            Check(vm.Detail != null && vm.Detail.title == "probe title" && vm.Detail.season_id == 45886,
+                "season detail: the header falls back to the season mapped from ep/list");
+            Check(Utils.Toasts.Count == 0, "season detail: a failed header shows no toast");
+        }
+
         /// <summary>业务码非 0：Rejected 保留码与文案，VM 只开错误面板，不发布、不弹 toast。</summary>
         private static void BusinessRejectionPublishesNothing()
         {
@@ -142,8 +170,9 @@ namespace Season1Probe
             Check(vm.ErrorMsg == "啥都木有",
                 "rejection: the server message reaches the error panel (" + (vm.ErrorMsg ?? "null") + ")");
             Check(Utils.Toasts.Count == 0, "rejection: the parse path itself shows no toast");
-            Check(LogHelper.Entries.Count == 0,
-                "rejection: a refused response is not reported as an unhandled error");
+            Check(DetailFailureLogs() == 1 && UnexpectedLogs().Length == 0,
+                "rejection: only the failed season header is logged, the refused list is not an unhandled error (" +
+                string.Join("|", LogHelper.Entries) + ")");
         }
 
         /// <summary>信封/形状坏掉的每一档都带字段路径，且不发布、不当成空页。</summary>
@@ -213,11 +242,18 @@ namespace Season1Probe
                 "transport: an HTTP failure keeps its status and message");
 
             SeasonApi.Reset();
-            SeasonApi.FailNextRequest = true;
+            Utils.Toasts.Clear();
+            LogHelper.Entries.Clear();
+            SeasonApi.Fixture = call => call.Endpoint == SeasonEndpoint.Detail
+                ? SuccessBody(BaseResult())
+                : "{\"code\":-404,\"message\":\"啥都木有\"}";
+            SeasonApi.FailNextEpListRequest = true;
             var vm = new SeasonDetailVM();
             vm.LoadSeasonDetail("12345").GetAwaiter().GetResult();
             Check(vm.ShowError && !vm.Loaded && vm.Detail == null && vm.ErrorMsg == "NotFound",
                 "transport: the caller shows the transport message and publishes nothing");
+            Check(DetailFailureLogs() == 0 && UnexpectedLogs().Length == 0,
+                "transport: an ep/list transport failure is not logged as an unhandled error");
             Check(Utils.Toasts.Count == 0, "transport: the caller does not toast from the parse path");
         }
 
@@ -427,14 +463,16 @@ namespace Season1Probe
                 LoadSeason(body.Value);
                 Check(Utils.Toasts.Count == 0,
                     "no toast: the " + body.Key + " body stays silent (" + string.Join("|", Utils.Toasts) + ")");
-                Check(LogHelper.Entries.Count == 0,
-                    "no toast: the " + body.Key + " body is not logged as an unhandled error");
+                Check(UnexpectedLogs().Length == 0,
+                    "no toast: the " + body.Key + " body logs nothing beyond the season-header/decode failure (" +
+                    string.Join("|", LogHelper.Entries) + ")");
             }
 
             Check(Utils.Toasts.Count == 0,
                 "no toast: success, rejection, malformed and empty all stay silent");
-            Check(LogHelper.Entries.Count == 0,
-                "no toast: no failure category falls through to the unhandled-error message");
+            Check(UnexpectedLogs().Length == 0,
+                "no toast: no failure category falls through to the unhandled-error message (" +
+                string.Join("|", LogHelper.Entries) + ")");
         }
 
         /// <summary>
@@ -470,8 +508,9 @@ namespace Season1Probe
                 Check(Utils.Toasts.Count == 0,
                     "non-json (" + body.Key + "): a non-JSON body shows no toast (" +
                     string.Join("|", Utils.Toasts) + ")");
-                Check(LogHelper.Entries.Count == 0,
-                    "non-json (" + body.Key + "): a non-JSON body is not reported as an unhandled error");
+                Check(UnexpectedLogs().Length == 0,
+                    "non-json (" + body.Key + "): only the season-detail decode failure is logged (" +
+                    string.Join("|", LogHelper.Entries) + ")");
             }
         }
 
@@ -484,10 +523,16 @@ namespace Season1Probe
             SeasonApi.Reset();
             Utils.Toasts.Clear();
             LogHelper.Entries.Clear();
-            var attempt = 0;
-            SeasonApi.Fixture = call => attempt++ == 0
-                ? SuccessBody(BaseResult())
-                : "{\"code\":-404,\"message\":\"刷新失败\"}";
+            var listLoads = 0;
+            SeasonApi.Fixture = call =>
+            {
+                // 只有片单那一次换成拒绝：Detail 照旧成功，页面仍不该清掉上一次发布的数据
+                if (call.Endpoint == SeasonEndpoint.EpList && listLoads++ > 0)
+                {
+                    return "{\"code\":-404,\"message\":\"刷新失败\"}";
+                }
+                return SuccessBody(BaseResult());
+            };
 
             var vm = new SeasonDetailVM();
             vm.LoadSeasonDetail("12345").GetAwaiter().GetResult();
@@ -498,7 +543,8 @@ namespace Season1Probe
             var previews = vm.Previews;
 
             vm.LoadSeasonDetail("12345").GetAwaiter().GetResult();
-            Check(SeasonApi.Calls.Count == 2, "refresh: the second load asks the endpoint again");
+            Check(SeasonApi.Calls.Count == 4,
+                "refresh: the second load asks both endpoints again (" + SeasonApi.Calls.Count + ")");
             Check(vm.ShowError && !vm.Loaded && vm.ErrorMsg == "刷新失败",
                 "refresh: a refused reload opens the error panel with the server message");
             Check(ReferenceEquals(vm.Detail, detail) && ReferenceEquals(vm.Episodes, episodes)
@@ -516,8 +562,8 @@ namespace Season1Probe
             Check(!seasonApi.Contains("DetailWeb") && !seasonApi.Contains("Detail_Web")
                   && !seasonApi.Contains("pgc/view/v2/app/season"),
                 "dead paths: SeasonApi.Detail/Detail_Web/DetailWeb are gone");
-            Check(seasonApi.Contains("/pgc/view/web/ep/list"),
-                "dead paths: the one live endpoint is still pgc/view/web/ep/list");
+            Check(seasonApi.Contains("/pgc/view/web/season") && seasonApi.Contains("/pgc/view/web/ep/list"),
+                "dead paths: the two live endpoints are still pgc/view/web/season and pgc/view/web/ep/list");
 
             var vm = File.ReadAllText(Path.Combine(root, "src", "BiliLite.UWP", "Modules", "Detail",
                 "SeasonDetailVM.cs"));
@@ -544,15 +590,33 @@ namespace Season1Probe
                 "boundaries: the new parsing and DTO files are part of the app project");
         }
 
-        private static SeasonDetailVM LoadSeason(string body)
+        private static SeasonDetailVM LoadSeason(string body, string detailBody = null)
         {
             SeasonApi.Reset();
             Utils.Toasts.Clear();
             LogHelper.Entries.Clear();
-            SeasonApi.Fixture = call => body;
+            var detail = detailBody ?? body;
+            SeasonApi.Fixture = call => call.Endpoint == SeasonEndpoint.Detail ? detail : body;
             var vm = new SeasonDetailVM();
             vm.LoadSeasonDetail("12345").GetAwaiter().GetResult();
             return vm;
+        }
+
+        /// <summary>产品 Detail 拿不到整页信息时必记的那一条（endpoint=pgc/view/web/season）。</summary>
+        private static int DetailFailureLogs()
+        {
+            return LogHelper.Entries.Count(x => x.StartsWith("番剧详情解析失败", StringComparison.Ordinal));
+        }
+
+        /// <summary>
+        /// 详情失败与详情正文解码失败都是产品行为，各自单独断言；这里只留"没人预期的落网日志"。
+        /// </summary>
+        private static string[] UnexpectedLogs()
+        {
+            return LogHelper.Entries
+                .Where(x => !x.StartsWith("番剧详情解析失败", StringComparison.Ordinal)
+                            && !x.StartsWith("HTTP response parse failed", StringComparison.Ordinal))
+                .ToArray();
         }
 
         private static string SuccessBody(JObject result)

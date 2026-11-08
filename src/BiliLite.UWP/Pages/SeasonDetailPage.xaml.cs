@@ -157,7 +157,7 @@ namespace BiliLite.Pages
 
         private async Task InitSeasonDetail()
         {
-            await seasonDetailVM.LoadSeasonDetail(ep_id);
+            await seasonDetailVM.LoadSeasonDetail(season_id);
 
             if (seasonDetailVM.Detail != null)
             {

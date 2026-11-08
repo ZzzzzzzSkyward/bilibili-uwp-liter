@@ -83,7 +83,7 @@ namespace BiliLite.Modules
             set { _nothingPlay = value; DoPropertyChanged("NothingPlay"); }
         }
 
-        public async Task LoadSeasonDetail(string ep_id)
+        public async Task LoadSeasonDetail(string season_id)
         {
             try
             {
@@ -93,17 +93,17 @@ namespace BiliLite.Modules
 
                 //整页信息（标题/封面/评分/地区/追番状态）只在 pgc/view/web/season 上，
                 //ep/list 只有片单和分区，拿它当整页信息会让 Detail 全空
-                var seasonDetail = await seasonApi.Detail(ep_id, SeasonIdType.EpId).Request();
+                var seasonDetail = await seasonApi.Detail(season_id).Request();
                 var seasonData = await seasonDetail.GetResult<SeasonDetailModel>();
                 var detail = seasonData != null && seasonData.success ? seasonData.result : null;
                 if (detail == null)
                 {
                     //整页信息拿不到不挡播放：片单照旧发布，只是元数据面板空着
-                    LogHelper.Log("番剧详情解析失败 ep=" + ep_id + " endpoint=pgc/view/web/season", LogType.ERROR);
+                    LogHelper.Log("番剧详情解析失败 season=" + season_id + " endpoint=pgc/view/web/season", LogType.ERROR);
                 }
 
                 var parsed = WebSeasonEpListParser.ParseWebSeasonEpList(
-                    await seasonApi.EpList(ep_id, SeasonIdType.EpId).Request());
+                    await seasonApi.EpList(season_id).Request());
                 if (!parsed.IsSuccess)
                 {
                     //解析层只给结论，用户看什么由这里定：错误面板，不弹 toast
