@@ -172,6 +172,11 @@ namespace BiliLite.Controls
         /// <summary>interactionVideoVM 是为哪一集建的:换集(哪怕是另一个互动视频)就得重建,旧的节点不能跟着过来。</summary>
         private PlayInfo _interactionVideoItem;
 
+        /// <summary>节点标签在侧栏里的原始位置:拿走之后要靠它插回原位。</summary>
+        private int _nodePivotSlot = -1;
+        /// <summary>本地轨道标签在侧栏里的原始位置。</summary>
+        private int _localTracksPivotSlot = -1;
+
         /// <summary>
         /// 铺满窗口事件
         /// </summary>
@@ -340,6 +345,14 @@ namespace BiliLite.Controls
         public PlayerControl()
         {
             this.InitializeComponent();
+            // 页签在不在由 Items 说了算:Pivot 的页签头不看标签自己的 Visibility,
+            // 所以先记下原始位置(此刻是 0 / 1),再把它俩拿走,页面拿到播放信息之前一个都不留
+            _nodePivotSlot = SettingPivot.Items.IndexOf(NodePivot);
+            _localTracksPivotSlot = SettingPivot.Items.IndexOf(LocalTracksPivot);
+            SetPivotItemPresent(NodePivot, _nodePivotSlot, false);
+            SetPivotItemPresent(LocalTracksPivot, _localTracksPivotSlot, false);
+            // 拿走之后选中项可能悬空/越界:第一次判定之前就得站到看得见的标签上
+            EnsurePivotSelectionVisible();
             playerToasts = new PlayerToastService(ToastHost);
             dispRequest = new DisplayRequest();
             playerHelper = new PlayerVM();
@@ -2842,32 +2855,47 @@ namespace BiliLite.Controls
 
         /// <summary>
         /// 判定一次,落到控件上:两个按钮走原来的依赖属性,弹幕列表走它自己的依赖属性,
-        /// 两个标签走可见性。藏掉就收位置,不留洞。
+        /// 两个标签走 Items(不在判定里就整条拿走,不留页签头)。
         /// </summary>
         private void ApplySurfaceVisibility()
         {
             var verdict = PlayerSurfaceVisibility.Decide(BuildSurfaceSignals());
             if (ShowPlayNodeButton != verdict.ShowPlayNodeButton) ShowPlayNodeButton = verdict.ShowPlayNodeButton;
             if (ShowDanmakuListButton != verdict.ShowDanmakuList) ShowDanmakuListButton = verdict.ShowDanmakuList;
-            if (NodePivot != null)
-            {
-                NodePivot.Visibility = verdict.ShowNodePivot ? Visibility.Visible : Visibility.Collapsed;
-            }
-            if (LocalTracksPivot != null)
-            {
-                LocalTracksPivot.Visibility = verdict.ShowLocalTracksPivot ? Visibility.Visible : Visibility.Collapsed;
-            }
+            SetPivotItemPresent(NodePivot, _nodePivotSlot, verdict.ShowNodePivot);
+            SetPivotItemPresent(LocalTracksPivot, _localTracksPivotSlot, verdict.ShowLocalTracksPivot);
             EnsurePivotSelectionVisible();
         }
 
-        /// <summary>刚被藏起来的标签不能还停在选中位置:退回弹幕标签,再不行退到第一个看得见的。</summary>
+        /// <summary>
+        /// 页签的去留只认 Items:Pivot 会给每个 Item 画一个页签头,标签自己的 Visibility 只管内容,
+        /// 所以不在就整条从 Items 里拿走,在就插回原来的位置。
+        /// </summary>
+        private void SetPivotItemPresent(PivotItem item, int slot, bool present)
+        {
+            if (item == null || SettingPivot == null) return;
+            var index = SettingPivot.Items.IndexOf(item);
+            if (present)
+            {
+                if (index >= 0) return;
+                item.Visibility = Visibility.Visible;
+                SettingPivot.Items.Insert(System.Math.Min(System.Math.Max(slot, 0), SettingPivot.Items.Count), item);
+            }
+            else if (index >= 0)
+            {
+                SettingPivot.Items.RemoveAt(index);
+            }
+        }
+
+        /// <summary>选中的标签刚被拿走就换到兜底标签(弹幕),兜底也没了换到第一个还在的。</summary>
         private void EnsurePivotSelectionVisible()
         {
             if (SettingPivot == null || SettingPivot.Items.Count == 0) return;
+            // 拿走的不在 Items 里了:还在的都是看得见的
             var visible = new List<bool>(SettingPivot.Items.Count);
-            foreach (var entry in SettingPivot.Items)
+            for (var i = 0; i < SettingPivot.Items.Count; i++)
             {
-                visible.Add(entry is PivotItem pivotItem && pivotItem.Visibility == Visibility.Visible);
+                visible.Add(true);
             }
             var fallback = DanmakuPivot == null
                 ? PlayerSurfaceVisibility.NoVisiblePivot
@@ -3236,16 +3264,21 @@ namespace BiliLite.Controls
         private void BottomBtnNode_Click(object sender, RoutedEventArgs e)
         {
             NodeList.Visibility = Visibility.Visible;
-            // 标签按名字找:前两个标签会在没有内容时收掉,写死的下标迟早对不上
-            SettingPivot.SelectedIndex = SettingPivot.Items.IndexOf(NodePivot);
+            // 标签按名字找:没节点的播放里这条标签根本不在 Items 里,找不到就不动选中项
+            var index = SettingPivot.Items.IndexOf(NodePivot);
+            if (index >= 0)
+            {
+                SettingPivot.SelectedIndex = index;
+            }
             SplitView.IsPaneOpen = true;
         }
 
         private void TopBtnMore_Click(object sender, RoutedEventArgs e)
         {
             var target = CurrentPlayItem?.LocalPlayInfo?.IsManifestPlayback == true ? LocalTracksPivot : PlaybackPivot;
+            // 还在 Items 里就是有这条标签:拿走的标签 IndexOf 是 -1
             var index = SettingPivot.Items.IndexOf(target);
-            if (index >= 0 && target.Visibility == Visibility.Visible)
+            if (index >= 0)
             {
                 SettingPivot.SelectedIndex = index;
             }

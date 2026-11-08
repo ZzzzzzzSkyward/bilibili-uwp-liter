@@ -201,7 +201,7 @@
       <SplitView.Pane>
         <Grid x:Name="Setting">
           <Pivot x:Name="SettingPivot" RequestedTheme="Dark">
-            <PivotItem x:Name="NodePivot" Visibility="Collapsed">
+            <PivotItem x:Name="NodePivot">
               <PivotItem.Header>
                 <TextBlock Foreground="White" FontSize="18">节点</TextBlock>
               </PivotItem.Header>
@@ -218,7 +218,7 @@
                 </ListView>
               </Grid>
             </PivotItem>
-            <PivotItem x:Name="LocalTracksPivot" Visibility="Collapsed" Foreground="White">
+            <PivotItem x:Name="LocalTracksPivot" Foreground="White">
               <PivotItem.Header>
                 <TextBlock Foreground="White" FontSize="18">本地轨道</TextBlock>
               </PivotItem.Header>

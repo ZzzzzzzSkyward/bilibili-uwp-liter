@@ -70,20 +70,26 @@ namespace PlayerToolbarProbe
 
         // ---------- 节点:按钮 + 标签(分P 已交给播放目录) ----------
 
-        /// <summary>产品源码里的播放器 XAML:钉住"没有第二个列表入口"这条决定。</summary>
-        private static string PlayerControlXaml()
+        /// <summary>产品源码:探针从自己的输出目录往上找仓库根。</summary>
+        private static string ReadSource(string fileName)
         {
             var dir = AppContext.BaseDirectory;
             while (!string.IsNullOrEmpty(dir))
             {
-                var candidate = Path.Combine(dir, "src", "BiliLite.UWP", "Controls", "PlayerControl.xaml");
+                var candidate = Path.Combine(dir, "src", "BiliLite.UWP", "Controls", fileName);
                 if (File.Exists(candidate))
                 {
                     return File.ReadAllText(candidate);
                 }
                 dir = Path.GetDirectoryName(dir);
             }
-            throw new FileNotFoundException("PlayerControl.xaml not found above " + AppContext.BaseDirectory);
+            throw new FileNotFoundException(fileName + " not found above " + AppContext.BaseDirectory);
+        }
+
+        /// <summary>产品源码里的播放器 XAML:钉住"没有第二个列表入口"这条决定。</summary>
+        private static string PlayerControlXaml()
+        {
+            return ReadSource("PlayerControl.xaml");
         }
         private static void PlaylistCases()
         {
@@ -123,7 +129,16 @@ namespace PlayerToolbarProbe
             Check("播放器侧栏没有选集列表", xaml.Contains("x:Name=\"EpisodeList\""), false);
             Check("播放器里不再出现「选集」字样", xaml.Contains("Text=\"选集\""), false);
             Check("互动视频的节点标签仍在", xaml.Contains("x:Name=\"NodePivot\""), true);
-            Check("节点标签默认就藏着(第一次判定之前不站位置)", xaml.Contains("<PivotItem x:Name=\"NodePivot\" Visibility=\"Collapsed\">"), true);
+            // 页签头不看标签的 Visibility:去留只能靠 Items,所以 XAML 里不许再折起来
+            Check("节点标签在 XAML 里不再用 Visibility 折", xaml.Contains("x:Name=\"NodePivot\" Visibility="), false);
+            Check("本地轨道标签在 XAML 里不再用 Visibility 折", xaml.Contains("x:Name=\"LocalTracksPivot\" Visibility="), false);
+            var code = ReadSource("PlayerControl.xaml.cs");
+            Check("构造函数先把节点标签从 Items 里拿走", code.Contains("SetPivotItemPresent(NodePivot, _nodePivotSlot, false);"), true);
+            Check("构造函数先把本地轨道标签拿走", code.Contains("SetPivotItemPresent(LocalTracksPivot, _localTracksPivotSlot, false);"), true);
+            Check("节点判定落到 Items(插回/拿走)", code.Contains("SetPivotItemPresent(NodePivot, _nodePivotSlot, verdict.ShowNodePivot);"), true);
+            Check("本地轨道判定落到 Items(插回/拿走)", code.Contains("SetPivotItemPresent(LocalTracksPivot, _localTracksPivotSlot, verdict.ShowLocalTracksPivot);"), true);
+            Check("判定不再写节点标签的 Visibility", code.Contains("NodePivot.Visibility = verdict"), false);
+            Check("判定不再写本地轨道标签的 Visibility", code.Contains("LocalTracksPivot.Visibility = verdict"), false);
         }
 
         // ---------- 本地轨道标签:有轨道才在 ----------
