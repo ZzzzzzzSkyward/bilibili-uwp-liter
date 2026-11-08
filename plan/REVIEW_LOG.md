@@ -7,6 +7,7 @@ below were removed on purpose — they are all fixed and `git log` has them.
 
 | Review commit | Reviewed head | Finding | Disposition |
 | --- | --- | --- | --- |
+| `c4aa630` | `59e8175` | A pending 30 s history report makes the pause and exit checkpoints return at `PlayerControl.xaml.cs:3390` before the local position is read or written, so a seek followed by pause or close can keep the pre-seek tick | Accepted 2026-11-08, queued as `plan/PLAN.md` row 11; not fixed yet — the local write has to be split from the report gate, and this round is compile-only per the maintainer |
 | `ac6867c` | `33debce` | Text reservation posts rendered the reservation twice: `DynamicCardProjection.Apply` projects `additional.reserve` into `Attachments` before `ParseOneRowInfo2024` promotes a text card to `DynamicDisplayType.Reserve`, so the standalone template and the shared attachment panel both draw the same panel | Fixed in `95934db`: `DynamicCardProjection.ApplyAttachmentOwnership` runs immediately after the parse and drops only the `Reserve` summary when the type is `Reserve`; vote/link/unsupported stay and photo posts keep their panel. `g5` 316 → 332, with the conversion anchor failing when the call is removed |
 | `dae62b7` | `284a714` | Local playback lost its episode picker: `35f6905` deleted the shared list population and `EpisodeList`/`BottomBtnList`, but `LocalPlayerPage` (the download/local-collection caller) never subscribed `DirectoryRequested`/`DirectoryRowRequested` and never reported `UpdateDirectoryInfo`, so its directory button stayed collapsed | Fixed in `9c8920f`: the page builds `PlayDirectoryBuilder.FromParts` rows from its supplied `PlayInfos`, reports availability above one item, opens/refreshes the drawer, switches Parts rows through `ChangePlayIndex(index, PlayTargetStart.Resume)` and refreshes from `ChangeEpisodeEvent`; `plan/tests/localdir` 50 assertions, 28 of 32 page anchors red on the pre-change body |
 | `924d1ab` | `4db379c` | `ResumeInterruptedAdvanceAsync` replays a saved step against the *current* continuation source, so switching source between the failure and the retry advances the wrong list | Fixed in `d0d6bd9` (`bug_report.md` BR-32): the record pins its row key, `DecideResume` drops it when identity/source/key changed, and a source switch invalidates it at the switch on the same generation that rejects page responses. `plan/tests/uxfix` executes the 9-cell table and the reviewer's scenario. |
@@ -20,9 +21,9 @@ below were removed on purpose — they are all fixed and `git log` has them.
 
 ## Standing review notes
 
-- **The external reviewer is off duty as of 2026-11-01**; no further review commits are expected unless
-  the maintainer asks for one. Rows above stay as the record of what was already found and fixed. A pass
-  did land afterwards on its own — `b7fb5bc`, no findings — so the note describes the schedule, not a promise.
+- **The external reviewer is no longer a scheduled watcher**; passes land when the maintainer runs one
+  (`b7fb5bc` on its own, `ac6867c` 2026-11-07, `c4aa630` 2026-11-08). Rows above stay as the record of what was
+  found and what happened to it.
 - Reviews were static source inspection only: no build, no launch, no API call. A finding marked here
   as fixed means "fixed in source", not "verified on device".
 - The reviewer re-reads earlier findings every round, so an open row must stay accurate; close it in
