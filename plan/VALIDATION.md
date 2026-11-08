@@ -287,3 +287,15 @@ first real test of the reconnect path.
 | --- | --- | --- |
 | A dropped danmaku socket comes back (BR-63) | `722555b` | in a busy room, force one drop (lock the device a minute, or toggle Wi-Fi): the log shows `直播接收包出错`, then a `弹幕连接成功` line returns to the danmaku list and messages resume without leaving the page. Force several drops: the gaps grow 2→4→8→10 s and stay at 10. Leaving the page stops new `直播接收包出错` lines, and nothing crashes while a heartbeat lands on a dead socket |
 
+## Shipped 2026-11-08 — minimized window comes back through its frame (BR-61, compile only)
+
+Compiled from `Z:\bilibili-uwp-liter` with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences`
+(0 errors; no MSIX produced). The previous attempt (`d0e7168`) was device-reproduced on 2026-11-08 13:12 and failed:
+`Application resumed` was logged, `Window.Current.Activate()` ran, the window stayed minimized and the system
+re-suspended the app 10 s later. This batch adds the Win32 path and the window-state logs.
+
+| Item | Commit(s) | Confirm on the device |
+| --- | --- | --- |
+| Maximized window returns maximized after a long minimize (BR-61) | `bbfaf7f` | maximize, minimize for 1–2 minutes, click the taskbar icon: the window should come back maximized straight away. In `20261108.log` expect `Window state at suspend; … iconic=False; zoomed=False; restoreToMaximized=True` at the minimize, then `Main window not visible … activating`, then `Main window restored through Win32; visible=True; …; zoomed=True` at the restore. If it still fails, send those two lines — `hwnd`/`root`/`iconic`/`zoomed` say whether the handle is wrong or the shell refused the command |
+| The same window still comes back when the app was left at normal size | `bbfaf7f` | with the window un-maximized, do the same minimize/return: it must come back at the same size (log shows `restoreToMaximized=False` and a `SW_RESTORE` path), and a notification click while the window is visible-but-behind must still front it (`OnActivated` keeps the unconditional `Activate()`) |
+

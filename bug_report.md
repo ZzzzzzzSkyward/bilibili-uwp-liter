@@ -289,8 +289,40 @@ deferral 里 await 一次 flush（最后一次上报能发出去）；`OnExiting
 - `App.OnSuspending` 的挂起工作加 try/catch，deferral 始终 Complete，并记录耗时与剩余预算；
 - `MainPage`/`NoTabMainPage` 在 `Loaded` 后再设一次拖拽区（构造时元素可能还没进可视化树）。
 
-- 待验证：需要下一次复现时看日志。若恢复确实卡在系统侧（没有 `Application resumed`），这些改动只能在应用被恢复
+- 待验证：需要下一次复现时看日志。若恢复确实卡在系统侧（没有 `Application resumed`），这些改动只能在应用被恢复
   之后补激活；届时日志里 `Main window is not visible after resume; activating` 是否出现是判断依据。
+
+复现（2026-11-08 13:12，session `5399351e…`）：窗口最小化约 100 秒后点回前台
+
+- `13:12:24.9409 Application resumed` —— 系统确实恢复了进程，**不是**卡在系统侧；
+- 同一毫秒 `Main window is not visible after resume; activating`，之后既没有 `Activating the main window failed`，
+  也没有 `Main window activated`；
+- `13:12:34.9625 Application suspending` —— 10 秒后系统又把应用挂起，说明窗口始终没回到前台。也就是说
+  `Window.Current.Activate()` 在挂起恢复路径上对最小化窗口是空操作，上一版的两处 `Activate()` 都无效。
+
+与本机实测也能对上：AFW 当时是 `showCmd=2`、`flags=2`（`WPF_RESTORETOMAXIMIZED`），手动 `ShowWindow(afw, SW_RESTORE)`
+能把窗口叫回来，但落在普通尺寸 1216×941 —— 只激活、或只 restore，都不等于「回到最大化」。
+
+处理（`bbfaf7f`）：
+
+- 新增 `Helpers/WindowRestoreHelper.cs`（已加进 `BiliLite.UWP.csproj`）：从 `CoreWindow` 的 `ICoreWindowInterop`
+  取 HWND（`CoreWindow` 是 sealed，只能 `(ICoreWindowInterop)(object)` 走运行时 QI），再用 `GetAncestor(hwnd, GA_ROOT)`
+  找到顶层框架窗口 —— 被系统最小化的是 `ApplicationFrameWindow`，不是 CoreWindow 子窗口 —— 然后用 `user32`：
+  `IsIconic`/`IsZoomed` 读状态、`ShowWindow(SW_SHOWMAXIMIZED|SW_RESTORE)` + `SetForegroundWindow` 还原。取不到 HWND
+  （非桌面设备）时全部安静返回。
+- `OnSuspending` 记录窗口状态，并用 `GetWindowPlacement` 的 `WPF_RESTORETOMAXIMIZED` 判断「原本是否最大化」：
+  最小化窗口的 `WS_MAXIMIZE` 已被清掉，这时 `IsZoomed` 是 false，只有这个标志能回答（正是本机实测的 `flags=2`）。
+- `OnAppResuming` 与 `OnActivated` 共用 `RestoreMainWindowIfHiddenAsync()`：窗口不可见时先 `Window.Current.Activate()`，
+  200 ms 后仍不可见就按挂起前状态走 Win32 还原并再激活一次，前后状态都写进日志。
+
+验收：把窗口最大化 → 最小化放置 1~2 分钟 → 点任务栏图标，窗口应直接回到最大化。日志里应看到
+
+- `Window state at suspend; hwnd=0x…; root=0x…; iconic=False; zoomed=False; restoreToMaximized=True`
+  （`zoomed=False` 与 `restoreToMaximized=True` 同时出现，就是最小化窗口丢失 zoomed 样式的证据）；
+- `Main window restored through Win32; visible=True; …; zoomed=True`。
+
+若仍失败，`Main window state before restore` 与 `… restored through Win32` 两行会给出 hwnd / root / iconic / zoomed
+的实际值，可直接判断是句柄不对（root 不是 AFW）还是还原命令被系统忽略。
 
 
 ## BR-62 — 暗色模式下评论浮窗仍是浅色色值（维护者 2026-11-08，1.0.9.62）
