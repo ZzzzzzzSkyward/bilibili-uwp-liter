@@ -25,6 +25,12 @@
 | `bug_report.md` | 维护者报告与处理记录（BR-nn） |
 | `code_review.md` | 外部评审的当轮结论与处置 |
 
+## API research
+
+[Bilibili API update and complement backlog](document/BILIBILI_API_RESEARCH.md)
+compares this fork with `ywmoyue/biliuwp-lite`, with priorities and pinned source links.
+The [endpoint catalog](document/BILIBILI_API_ENDPOINTS.md) lists HTTP and gRPC routes.
+
 ## 下载
 
 https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/releases
