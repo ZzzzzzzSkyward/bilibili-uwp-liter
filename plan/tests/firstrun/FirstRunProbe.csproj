@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- 首启布局判据探针:编译真实的 Services/FirstRunDisplayMode.cs,不需要 UWP 类型 -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>FirstRunDisplayModeProbe</AssemblyName>
+    <RootNamespace>FirstRunDisplayModeProbe</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\FirstRunDisplayMode.cs" Link="FirstRunDisplayMode.cs" />
+  </ItemGroup>
+
+</Project>

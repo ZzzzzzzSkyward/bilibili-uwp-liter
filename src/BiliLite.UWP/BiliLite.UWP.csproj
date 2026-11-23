@@ -177,6 +177,7 @@
     <Compile Include="Services\DynamicApiSelector.cs" />
     <Compile Include="Services\DynamicApiSelection.cs" />
     <Compile Include="Services\DynamicFeedWindow.cs" />
+    <Compile Include="Services\FirstRunDisplayMode.cs" />
     <Compile Include="Services\DynamicApiHistoryFileStore.cs" />
     <Compile Include="Services\MediaListService.cs" />
     <Compile Include="Helpers\DynamicImageRules.cs" />
