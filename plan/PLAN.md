@@ -31,6 +31,7 @@ are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no p
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
 
+- **工程整理批次 (2026-11-24, docs/与静态审查):** 新增 `AGENTS.md` 与 `docs/` 五篇(架构/功能/开发/路线图/索引)，README 加英文摘要与文档索引；删除死代码 `Helpers/SqlHelper.cs`(只创建一只永远不被读取的 `bili.db`，无 SQLite 依赖)；`App.InitBili` 的首启布局判据改为整数交叉相乘并存进 `Services/FirstRunDisplayMode.cs`(旧式 `width/height > 16/9` 在 UInt32 上是地板除，实际要求比值 ≥ 2，16:9–2:1 的屏幕都判成网格，高为 0 还抛除零)，新增探针 `plan/tests/firstrun` 15 项(旧判据下 2 项红)；`OnSuspending`/`OnExiting` 的 deferral 改为 `finally` 放行；`VideoPlayHistoryHelper` 的静态表不再可能为 null，`async void` 写盘失败改为记日志。**未编译、未上设备**：该克隆是 partial clone，缺 `PlayerControl.xaml.cs`、`DynamicVM.cs`、`VideoDetailPage.xaml.cs`、`EFontAwesomeIcon.cs` 与 `BiliLite.gRPC` 的 `dynamic.proto`，因此只有 `firstrun` 探针是实跑的。
 - **Release 1.0.9.61 (2026-11-07):** tag `20261107` on the master sync commit; the release asset is
   `BiliLite.Packages_1.0.9.61_x64_Test.zip` (msix, test certificate, `Install.ps1`/`Add-AppDevPackage.ps1`,
   dependencies). Built with the plain script (full Release build, 0 errors); `g5` 335, `playersess` 203.

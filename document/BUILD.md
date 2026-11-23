@@ -110,6 +110,6 @@ iconv -f GB18030 -t UTF-8 -c build.log | grep -a "error"
 
 ## Commit and push
 
-- `git add -A`, then commit the source fix. The build's manifest bump is part of the build, so it belongs in that commit; say so in the commit message.
-- Push to `dev` (`git push origin dev`), which tracks `origin/dev`. `master` is a separate ancestor branch; do not push build fixes there.
+- Commit the source fix together with the manifest bump the build made; say so in the commit message. Do not `git add -A` blindly: large binary assets (fonts, `ffmpeg.7z`, splash images) must never be rewritten or dropped by a stray add.
+- Push to the branch you are on, `master` (`git push origin master`), which tracks `origin/master`. Older notes in `plan/` say `dev`; that branch no longer exists — `master` is the default and the only remote branch.
 - In the summary, state the exact error that was fixed, the change, the verification command, and the emitted `.msix` paths with their version.
