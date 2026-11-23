@@ -76,8 +76,8 @@ sh plan/tests/<batch>/run.sh      # 例：sh plan/tests/auth3/run.sh
 - 目录批次共 43 个，覆盖：认证与刷新（`auth1`–`auth4`、`webrefresh`、`api02`）、动态
   （`g1`–`g5`、`cardlayout`、`cap`、`cm1`）、播放器（`playersess`、`playertoolbar`、`localdir`、`focus`、
   `dirpress`、`toastalign`）、列表与分页（`c1`–`c3`、`ux0`、`ux1a`–`ux1d`、`ux2a`/`ux2b`、`ux3`–`ux5`、
-  `uxfix`、`stab`、`smart1`、`firstrun`）、评论（`comments`）、季节（`season1`）、设置（`settings1`）、其他
-  （`d1`/`d2`、`ov`）。
+  `uxfix`、`stab`、`smart1`）、评论（`comments`）、季节（`season1`）、设置（`settings1`）、启动判据
+  （`firstrun`）、其他（`d1`/`d2`、`ov`）。
 - 另有 7 个单文件探针（`LM01`–`LM05` 本地媒体与字幕、`API01`、`AUTH01B`）不建项目：`plan/tests/run.sh`
   用 `$UPSTREAM_UNIT_TOOLS/dotnet/sdk/8.0.427` 的 `csc` 直接编译并运行，末尾还会调用 `run-api01.sh`、
   `run-auth01b.sh`。这个脚本要求那个 SDK 根真实存在。

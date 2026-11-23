@@ -33,7 +33,7 @@
 | [HOT_CARD_PLAN.md](../plan/HOT_CARD_PLAN.md) | 热榜卡片的高度预算与响应式布局 |
 | [REFRESH_PLAN.md](../plan/REFRESH_PLAN.md) | 登录刷新：cookie/appkey 归属、对应关系与事务 |
 | [SETTINGS_PLAN.md](../plan/SETTINGS_PLAN.md) | 设置页十个页签的顺序、文案与失效控件 |
-| [tests/](../plan/tests) | 43 个探针批次（每个 `run.sh` 一行 `dotnet run`），编译真实产品源码并断言行为 |
+| [tests/](../plan/tests) | 43 个目录批次（每个 `run.sh` 一行 `dotnet run`）+ 7 个单文件探针（由 `plan/tests/run.sh` 直接 `csc` 编译），都编译真实产品源码并断言行为 |
 
 ## 根目录
 

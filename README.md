@@ -44,7 +44,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Out
 | --- | --- |
 | `src/` | 解决方案的 7 个项目；`BiliLite.UWP` 是应用本体，`BiliLite.Packages` 出 MSIX，`BiliLite.gRPC` 是 protobuf/gRPC 客户端，`BiliLite.JSBridge` 给 WebView 登录页，`BiliLite.Win32Tools` 是完全信任的导出进程，`BiliLite.WebApi` 与 `ApiTester` 是不随包发布的开发期工具 |
 | `plan/` | 计划与验收：`PLAN.md`（条目与顺序）、`VALIDATION.md`（设备清单）、`REVIEW_LOG.md`、`P4_INVENTORY.md`，以及专题方案 `CARD_PLAN.md`、`HOT_CARD_PLAN.md`、`REFRESH_PLAN.md`、`SETTINGS_PLAN.md` |
-| `plan/tests/` | 43 个探针批次，编译产品源码并断言行为；不改产品源码 |
+| `plan/tests/` | 43 个目录批次 + 7 个单文件探针，编译产品源码并断言行为；不改产品源码 |
 | `document/` | `BUILD.md`（构建与常见构建故障）、`DIAGNOSTICS.md`（日志与反馈）；`new_version.json`、`entrance.json` 是应用抓取的线上数据 |
 | `docs/` | [架构](docs/ARCHITECTURE.md)、[功能](docs/FEATURES.md)、[开发](docs/DEVELOPMENT.md)、[路线图](docs/ROADMAP.md)、[索引](docs/README.md) |
 | `bug_report.md` | 维护者报告与处理记录（BR-nn） |
