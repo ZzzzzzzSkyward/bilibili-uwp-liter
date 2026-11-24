@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using BiliLite.Api;
 using BiliLite.Controls;
 using BiliLite.Helpers;
 using BiliLite.Parsing;
@@ -27,6 +28,7 @@ namespace CommentsProbe
 
         public static int Main()
         {
+            CommentActionFormsKeepRawValues();
             CursorPageMapsInDisplayOrder();
             MappedRowKeepsTheWireFields();
             MissingCodeIsNotSuccess();
@@ -48,6 +50,69 @@ namespace CommentsProbe
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
+        }
+
+        private static void CommentActionFormsKeepRawValues()
+        {
+            const string oid = "9007199254740993";
+            const string root = "9007199254740995";
+            const string parent = "9007199254740997";
+            const string text = "中文 👋 &x=1 + / ? # %25\na&csrf=other+b%";
+            var api = new CommentApi();
+            var failures = new List<string>();
+            foreach (var token in new[] { "dummy-csrf", "dummy+&=%中文", "" })
+            {
+                ApiHelper.RawCsrf = token;
+                foreach (var type in new[] { 1, 17, 12 })
+                {
+                    foreach (var action in new[] { 0, 1 })
+                    {
+                        AssertForm(api.Like(oid, root, action, type), "/x/v2/reply/action", token,
+                            new Dictionary<string, string> { ["oid"] = oid, ["rpid"] = root,
+                                ["action"] = action.ToString(), ["type"] = type.ToString() }, failures);
+                    }
+                    AssertForm(api.ReplyComment(oid, root, root, Uri.EscapeDataString(text), type),
+                        "/x/v2/reply/add", token, new Dictionary<string, string> { ["oid"] = oid,
+                            ["root"] = root, ["parent"] = root, ["type"] = type.ToString(), ["message"] = text }, failures);
+                    AssertForm(api.ReplyComment(oid, root, parent, Uri.EscapeDataString(text), type),
+                        "/x/v2/reply/add", token, new Dictionary<string, string> { ["oid"] = oid,
+                            ["root"] = root, ["parent"] = parent, ["type"] = type.ToString(), ["message"] = text }, failures);
+                    AssertForm(api.AddComment(oid, (CommentApi.CommentType)type, text), "/x/v2/reply/add", token,
+                        new Dictionary<string, string> { ["oid"] = oid, ["type"] = type.ToString(), ["message"] = text }, failures);
+                    AssertForm(api.DeleteComment(oid, root, type), "/x/v2/reply/del", token,
+                        new Dictionary<string, string> { ["oid"] = oid, ["rpid"] = root, ["type"] = type.ToString() }, failures);
+                }
+            }
+            foreach (var failure in failures) Console.Error.WriteLine("FAIL request: " + failure);
+            Check(failures.Count == 0, "request forms: all raw-token, multiplicity, field and text checks (failures=" + failures.Count + ")");
+        }
+
+        private static void AssertForm(ApiModel request, string route, string token,
+            Dictionary<string, string> expected, List<string> failures)
+        {
+            Action<bool, string> check = (condition, label) =>
+            {
+                if (condition) _passed++;
+                else failures.Add(route + " " + label);
+            };
+            check(request.method == RestSharp.Method.Post, "POST method");
+            check(request.baseUrl == "https://api.bilibili.com" + route, "exact route");
+            // A list retains duplicate literal keys; never hide multiplicity by overwriting a dictionary.
+            var fields = (request.body ?? "").Split('&').Where(x => x.Length != 0).Select(x =>
+            {
+                var separator = x.IndexOf('=');
+                return new KeyValuePair<string, string>(separator < 0 ? x : x.Substring(0, separator),
+                    Uri.UnescapeDataString((separator < 0 ? "" : x.Substring(separator + 1)).Replace("+", " ")));
+            }).ToList();
+            expected.Add("csrf", token);
+            check(fields.Count == expected.Count, "exact field count");
+            check(fields.All(x => expected.ContainsKey(x.Key)), "no injected/alias fields");
+            foreach (var field in expected)
+            {
+                var matches = fields.Where(x => x.Key == field.Key).ToList();
+                check(matches.Count == 1, "single literal " + field.Key + " key");
+                check(matches.Count == 1 && matches[0].Value == field.Value, "exact decoded " + field.Key + " value");
+            }
         }
 
         /// <summary>游标源的一页：置顶在前、游标交给调用方，行数与线上 replies 分开记。</summary>

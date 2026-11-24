@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Api\CommentApi.cs" Link="CommentApi.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiEnvelope.cs" Link="ApiEnvelope.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Comment\WebCommentPageParser.cs" Link="WebCommentPageParser.cs" />
