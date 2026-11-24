@@ -1,6 +1,6 @@
 # BND-B/C/D implementation evidence
 
-Status: **TARGETED PASS, source publication pending**. Exact authorized scope: execution-dispatch.md and root-granted boundaries/commit-window.md. BND-A FavoriteDetailVM/c2, other executors, aggregate tooling, main documentation, protected files and UWP project remain excluded.
+Status: **TARGETED PASS, source published `1b6af65b8689ffb407cf59860593dba8685be46a`**. Exact authorized scope: execution-dispatch.md and root-granted boundaries/commit-window.md. BND-A FavoriteDetailVM/c2, other executors, aggregate tooling, main documentation, protected files and UWP project remain excluded.
 
 ## Behavior and actual-source seams
 
@@ -90,3 +90,5 @@ Decoder extraction provenance:
 ```
 
 All test processes completed; all fake gates completed and no probe processes remain. No account/service request, device/native rendering, Windows build, XAML/BackgroundTransfer/session behavior or hosted CI PASS is inferred. Targeted results are partial, not the final current51 logical/52 executable common gate. Next native actions: UWP compile; switch video/playlist entries during each pending action/login; exercise valid/rejected actions and partial season/comment pages. Main-document reconciliation and final integrated gate remain assigned elsewhere.
+
+Source publication receipt: exact17-path source/test/evidence commit above pushed successfully to dev; actual remote ref equality independently checked through `git ls-remote`. Owned source/test files clean and staged index empty before the one final evidence-only receipt. The receipt changes evidence metadata only; no test rerun or broader gate is claimed. Ownership is released after its successful push.
