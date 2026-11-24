@@ -1,11 +1,33 @@
 #!/usr/bin/env bash
 set -euo pipefail
+stage=all
+if [ "$#" -eq 1 ] && [ "$1" = --help ]; then
+  echo 'Usage: bash run-auth01b.sh [--stage all|account|loginvm]'
+  exit 0
+fi
+if [ "$#" -ne 0 ]; then
+  if [ "$#" -ne 2 ] || [ "$1" != --stage ]; then echo 'Invalid arguments; use --help' >&2; exit 2; fi
+  stage="$2"
+fi
+case "$stage" in all|account|loginvm) ;; *) echo "Unknown stage: $stage" >&2; exit 2;; esac
+phase() { if [ "$stage" != all ]; then echo "PROBE_PHASE $1 $2"; fi; }
 repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)"
 tools="${UPSTREAM_UNIT_TOOLS:-/workspace/work/upstream-unit-tools}"
 sdk="$tools/dotnet/sdk/8.0.427"
 refs="$tools/dotnet/packs/Microsoft.NETCore.App.Ref/8.0.33/ref/net8.0"
 scratch="$(mktemp -d /tmp/auth01b.XXXXXX)"
 trap 'rm -rf "$scratch"' EXIT
+cookie_store_source="$scratch/ICookieStore.cs"
+{
+  echo 'namespace BiliLite.Services {'
+  sed -n '/    public interface ICookieStore/,/^    }/p' "$repo/src/BiliLite.UWP/Services/CookieService.cs"
+  echo '}'
+} > "$cookie_store_source"
+args=()
+for ref in "$refs"/*.dll; do args+=("-r:$ref"); done
+args+=("-r:$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll")
+export DOTNET_ROOT="$tools/dotnet" DOTNET_CLI_HOME="$tools/cache/dotnet-cli" NUGET_PACKAGES="$tools/cache/nuget" XDG_CACHE_HOME="$tools/cache/xdg" XDG_DATA_HOME="$tools/cache/xdg-data"
+if [ "$stage" = all ] || [ "$stage" = account ]; then
 account_source="$scratch/AccountCookieCommit.cs"
 {
   cat <<'CS'
@@ -29,15 +51,7 @@ CS
   ' "$repo/src/BiliLite.UWP/Modules/User/Account.cs"
   echo '}}'
 } > "$account_source"
-cookie_store_source="$scratch/ICookieStore.cs"
-{
-  echo 'namespace BiliLite.Services {'
-  sed -n '/    public interface ICookieStore/,/^    }/p' "$repo/src/BiliLite.UWP/Services/CookieService.cs"
-  echo '}'
-} > "$cookie_store_source"
-args=()
-for ref in "$refs"/*.dll; do args+=("-r:$ref"); done
-args+=("-r:$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll")
+phase AUTH01B.account compile
 "$tools/dotnet/dotnet" "$sdk/Roslyn/bincore/csc.dll" -nologo -langversion:latest -target:exe -out:"$scratch/AUTH01B.dll" "${args[@]}" \
   "$cookie_store_source" \
   "$repo/src/BiliLite.UWP/Models/CookieOrigins.cs" \
@@ -55,9 +69,13 @@ cp "$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll" "$scratch/Newtonsoft.Json.
 cat > "$scratch/AUTH01B.runtimeconfig.json" <<'JSON'
 {"runtimeOptions":{"tfm":"net8.0","framework":{"name":"Microsoft.NETCore.App","version":"8.0.33"}}}
 JSON
-export DOTNET_ROOT="$tools/dotnet" DOTNET_CLI_HOME="$tools/cache/dotnet-cli" NUGET_PACKAGES="$tools/cache/nuget" XDG_CACHE_HOME="$tools/cache/xdg" XDG_DATA_HOME="$tools/cache/xdg-data"
+phase AUTH01B.account run
 "$DOTNET_ROOT/dotnet" "$scratch/AUTH01B.dll"
+phase AUTH01B.account complete
 
+fi
+
+if [ "$stage" = all ] || [ "$stage" = loginvm ]; then
 login_vm_source="$scratch/LoginVMAuthProbe.cs"
 extract_method() {
   awk -v start="$1" -v stop="$2" '
@@ -163,6 +181,7 @@ sed -i \
   -e 's/public async void SendPasswordVerificationSMS(/public async Task SendPasswordVerificationSMS(/' \
   -e 's/private async void CompletePasswordLoginCheck(/private async Task CompletePasswordLoginCheck(/' \
   "$login_vm_source"
+phase AUTH01B.loginvm compile
 "$tools/dotnet/dotnet" "$sdk/Roslyn/bincore/csc.dll" -nologo -langversion:latest -target:exe -out:"$scratch/AUTH01BLoginVM.dll" "${args[@]}" \
   "$cookie_store_source" \
   "$repo/src/BiliLite.UWP/Models/CookieOrigins.cs" \
@@ -181,4 +200,7 @@ cp "$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll" "$scratch/Newtonsoft.Json.
 cat > "$scratch/AUTH01BLoginVM.runtimeconfig.json" <<'JSON'
 {"runtimeOptions":{"tfm":"net8.0","framework":{"name":"Microsoft.NETCore.App","version":"8.0.33"}}}
 JSON
+phase AUTH01B.loginvm run
 "$DOTNET_ROOT/dotnet" "$scratch/AUTH01BLoginVM.dll"
+phase AUTH01B.loginvm complete
+fi
