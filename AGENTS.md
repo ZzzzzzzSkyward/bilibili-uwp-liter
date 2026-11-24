@@ -1,5 +1,15 @@
 # AGENTS.md — operating manual for this repository
 
+## 云端执行（强制）
+
+- 工作分支：`dev`（唯一开发分支，也是默认分支；`master` 只是发布线）。
+- 开工前必须执行：`git fetch origin --prune` → `git checkout dev` → `git pull --ff-only`；工作区必须干净。
+- 主会话是调度者，**禁止编写或修改产品代码、测试、构建配置与根文档**；只写 `cloud/rounds/**`、`cloud/memory/**`。
+- 角色、阶段、并行与模型路由见 `cloud/CONTRACT.md`（专家 `gpt-6.1-sol` / `xhigh`；执行者与主会话 `gpt-6.1-sol` / `high`）。
+- 子代理之间的一切输入输出都落在 `cloud/rounds/<round>/`，不通过聊天传递需求与结论。
+- 记忆只写 `cloud/memory/`（按需读 `cloud/memory/INDEX.md`），**禁止把记忆或轮次结论写进本文件**。
+- 允许联网与安装依赖；全程自主运行，不向用户提问。
+
 Third-party Bilibili client for Windows 10/11, written as a C#/XAML UWP application (7 projects,
 440 tracked C# files). This file is the entry point for an agent or a new maintainer: it maps the
 tree, gives the exact build/verify commands, states the invariants that must not be broken, and
