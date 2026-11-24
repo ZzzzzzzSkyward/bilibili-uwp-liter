@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using BiliLite.Api.User;
 using System.Threading.Tasks;
 using BiliLite.Api;
 using BiliLite.Helpers;
@@ -103,6 +105,7 @@ namespace C2Probe
 
         public static async Task<int> Main()
         {
+            FavoriteFormsPreserveFieldsAndSigning();
             ParsesResourceListResponse();
             ParsesItemFields();
             MissingAndEmptyMediaListAreDifferent();
@@ -129,6 +132,56 @@ namespace C2Probe
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
+        }
+
+        private static void FavoriteFormsPreserveFieldsAndSigning()
+        {
+            var failures = new List<string>();
+            var api = new FavoriteApi();
+            foreach (var loggedIn in new[] { false, true })
+            foreach (var isOpen in new[] { false, true })
+            foreach (var edit in new[] { false, true })
+            foreach (var empty in new[] { false, true })
+            {
+                var title = empty ? "" : " 收藏 + &= %25 👋 ";
+                var intro = empty ? "" : "介绍\n? + &= %25";
+                var id = empty ? "0009007199254740993" : "9007199254740993123";
+                ApiHelper.LoggedIn = loggedIn;
+                ApiHelper.ResetRecorder();
+                var request = edit ? api.EditFavorite(title, intro, isOpen, id) : api.CreateFavorite(title, intro, isOpen);
+                Action<bool, string> check = (condition, label) =>
+                {
+                    if (condition) _passed++;
+                    else failures.Add((edit ? "edit" : "create") + " loggedIn=" + loggedIn + " open=" + isOpen + " " + label);
+                };
+                check(request.method == RestSharp.Method.Post, "POST");
+                check(request.baseUrl == ApiHelper.API_BASE_URL + "/x/v3/fav/folder/" + (edit ? "edit" : "add"), "configured destination");
+                check(request.parameter == null && !request.need_cookie, "unchanged metadata defaults");
+                check(ApiHelper.CommonCalls == 1 && ApiHelper.CommonKey == ApiHelper.AndroidKey && ApiHelper.NeedAccessKey, "Android common input");
+                check(ApiHelper.SignCalls == 1 && ApiHelper.SignKey == ApiHelper.AndroidKey, "Android signing once");
+                check(request.body == ApiHelper.SignInput + "&sign=dummy-sign" && !ApiHelper.SignInput.Contains("&sign="), "complete unsigned input plus exact suffix");
+                var expected = new Dictionary<string, string> { ["appkey"] = "dummy-android", ["build"] = "123",
+                    ["mobi_app"] = "android", ["platform"] = "android", ["ts"] = "1700000000", ["privacy"] = isOpen ? "0" : "1",
+                    ["title"] = title, ["intro"] = intro, ["sign"] = "dummy-sign" };
+                if (loggedIn) expected.Add("access_key", "dummy-access");
+                if (edit) expected.Add("media_id", id);
+                var fields = request.body.Split('&').Select(x =>
+                {
+                    var split = x.IndexOf('=');
+                    return new KeyValuePair<string, string>(split < 0 ? x : x.Substring(0, split),
+                        Uri.UnescapeDataString((split < 0 ? "" : x.Substring(split + 1)).Replace("+", " ")));
+                }).ToList();
+                check(fields.Count == expected.Count && fields.All(x => expected.ContainsKey(x.Key)), "exact field set/count");
+                foreach (var pair in expected)
+                {
+                    var values = fields.Where(x => x.Key == pair.Key).ToList();
+                    check(values.Count == 1 && values[0].Value == pair.Value, "single exact decoded " + pair.Key);
+                }
+                check(ApiHelper.SignInput.EndsWith("&privacy=" + (isOpen ? "0" : "1") + "&title=" + Uri.EscapeDataString(title)
+                    + "&intro=" + Uri.EscapeDataString(intro) + (edit ? "&media_id=" + id : "")), "encoded feature fields precede signing");
+            }
+            foreach (var failure in failures) Console.Error.WriteLine("FAIL favorite form: " + failure);
+            Check(failures.Count == 0, "favorite forms preserve fields/signing (failures=" + failures.Count + ")");
         }
 
         private static void ParsesResourceListResponse()

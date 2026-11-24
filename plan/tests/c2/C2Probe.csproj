@@ -16,6 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Api\User\FavoriteAPI.cs" Link="FavoriteAPI.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\MediaListResources.cs" Link="MediaListResources.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\MediaList\MediaListResourceListDto.cs" Link="MediaListResourceListDto.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\Api\MediaList\FavoriteResourceListDto.cs" Link="FavoriteResourceListDto.cs" />
