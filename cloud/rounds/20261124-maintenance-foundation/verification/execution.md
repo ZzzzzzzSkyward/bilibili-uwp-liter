@@ -1,6 +1,6 @@
 # QF1 harness restoration execution
 
-Status: **READY FOR COMMIT** — assigned offline repair complete; commit window granted in commit-window.md. Product source and all final test inputs verified; Windows UWP/device checks remain FAILED/BLOCKED on Linux. Implementation review remains pending.
+Status: **COMMITTED / PUSHED — OFFLINE PASS**; assigned repair complete under commit-window.md. Product source and all final test inputs verified; Windows UWP/device checks remain FAILED/BLOCKED on Linux. Implementation review remains pending.
 
 ## Results and evidence
 
@@ -27,6 +27,10 @@ Exact commands/results, genuine red failures, initial scratch permission-copy er
 
 ## Commit and release of ownership
 
-Not yet committed at this READY checkpoint. Stage only the exact owned harness and evidence files; leave other owners' round/memory/requirements/reviews untouched. Window read: commit-window.md grants exclusive quality commit/push after source metadata `10dd848`.
+Implementation/evidence commit: `ca991490f0826268d22984a2275b3e28190acad8` (`test: restore current-source probe harness coverage`). `git push origin dev` exit 0; `git rev-parse HEAD` and `git ls-remote origin refs/heads/dev` both returned that exact SHA immediately after push. This final execution-status update is a subsequent evidence-only commit; the orchestrator should verify its final HEAD/remote SHA independently. No rebase/amend/force operation.
 
-All verification work complete. Shared API01Stubs remains unchanged; ownership will be explicitly released after commit/push. No unresolved offline product behavior failure was found in QF1. Windows compile/runtime/MSIX/device/live-session gates remain FAILED/BLOCKED with exact baseline prerequisite evidence; no device acceptance or release performed.
+Exactly the 13 assigned harness files plus five owned verification evidence files were staged. Other owners' requirements/reviews/round/memory and next-wave files remain untouched/uncommitted by this executor. Window read: commit-window.md granted exclusive quality commit/push after source metadata `10dd848`.
+
+All verification work complete. **Release all QF1 harness ownership, including shared API01Stubs.cs, after this evidence-only commit/push.** API01Stubs is unchanged; planned search work may take over through its own approved dispatch. No quality write/process remains active after return; implementation-review fixes require a new explicit follow-up assignment. No unresolved offline product behavior failure was found in QF1. Windows compile/runtime/MSIX/device/live-session gates remain FAILED/BLOCKED with exact baseline prerequisite evidence; no device acceptance or release performed.
+
+Observed push-banner dependency finding: GitHub reports one moderate Dependabot alert on the default branch, https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/security/dependabot/5 . The banner identifies no package/version; this is an observed external alert for the separately scoped dependency triage, not a finding proven against the complete shipped graph here. Prior limited gRPC advisory evidence is not a repository-wide clean claim. No dependency change attempted.
