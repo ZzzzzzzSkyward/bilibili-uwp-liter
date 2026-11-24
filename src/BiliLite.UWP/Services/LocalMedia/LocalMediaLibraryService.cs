@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using BiliLite.Models.LocalMedia;
 using Newtonsoft.Json;
@@ -35,6 +36,7 @@ namespace BiliLite.Services.LocalMedia
     public static class LocalMediaLibraryService
     {
         private const string RegistryFileName = "local-media-library.json";
+        private static readonly SemaphoreSlim RegistryGate = new SemaphoreSlim(1, 1);
 
         public static async Task<LocalMediaCollection> ImportFolderAsync(StorageFolder folder)
         {
@@ -44,6 +46,7 @@ namespace BiliLite.Services.LocalMedia
             string collectionId = "unknown";
             string token = null;
             var registrySaved = false;
+            var registryOwned = false;
             try
             {
                 var manifestFile = await folder.GetFileAsync(LocalMediaManifestLoader.ManifestFileName);
@@ -67,7 +70,9 @@ namespace BiliLite.Services.LocalMedia
                 LocalMediaValidator.Validate(manifest, folder.Path, resolvedPaths.Contains);
 
                 stage = "registry-read";
-                var registry = await ReadRegistryAsync();
+                await RegistryGate.WaitAsync();
+                registryOwned = true;
+                var registry = await ReadRegistryUnderGateAsync();
                 var priorEntries = registry.Entries.Where(entry =>
                     string.Equals(entry.CollectionId, manifest.Id, StringComparison.OrdinalIgnoreCase) &&
                     string.Equals(entry.RootPath, folder.Path, StringComparison.OrdinalIgnoreCase)).ToList();
@@ -107,26 +112,42 @@ namespace BiliLite.Services.LocalMedia
                     StorageApplicationPermissions.FutureAccessList.Remove(token);
                 throw CreateException(stage, collectionId, exception);
             }
+            finally
+            {
+                if (registryOwned) RegistryGate.Release();
+            }
         }
 
         public static async Task<IReadOnlyList<LocalMediaCollection>> GetSavedCollectionsAsync()
         {
-            var registry = await ReadRegistryAsync();
-            return registry.Entries.Select(entry => ToCollection(entry, null)).ToList();
+            await RegistryGate.WaitAsync();
+            try
+            {
+                var registry = await ReadRegistryUnderGateAsync();
+                return registry.Entries.Select(entry => ToCollection(entry, null)).ToList();
+            }
+            finally { RegistryGate.Release(); }
         }
 
         public static async Task<LocalMediaCollection> ReopenCollectionAsync(string token)
         {
             if (string.IsNullOrWhiteSpace(token)) throw new ArgumentException("A collection token is required.", nameof(token));
-            var registry = await ReadRegistryAsync();
-            var entry = registry.Entries.FirstOrDefault(item => string.Equals(item.Token, token, StringComparison.Ordinal));
-            if (entry == null) throw new LocalMediaLibraryException("access-restore", "unknown", "This saved collection is no longer available. Import its folder again.");
-
-            string stage = "access-restore";
+            LibraryRegistryEntry entry;
+            StorageFolder folder;
+            await RegistryGate.WaitAsync();
             try
             {
-                var folder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(token);
-                stage = "manifest-read";
+                var registry = await ReadRegistryUnderGateAsync();
+                entry = registry.Entries.FirstOrDefault(item => string.Equals(item.Token, token, StringComparison.Ordinal));
+                if (entry == null) throw new LocalMediaLibraryException("access-restore", "unknown", "This saved collection is no longer available. Import its folder again.");
+                try { folder = await StorageApplicationPermissions.FutureAccessList.GetFolderAsync(token); }
+                catch (Exception exception) { throw CreateException("access-restore", entry.CollectionId, exception); }
+            }
+            finally { RegistryGate.Release(); }
+
+            string stage = "manifest-read";
+            try
+            {
                 var manifestFile = await folder.GetFileAsync(LocalMediaManifestLoader.ManifestFileName);
                 var json = await FileIO.ReadTextAsync(manifestFile);
                 var manifest = LocalMediaManifestLoader.Load(json, folder.Path, path => true);
@@ -170,7 +191,7 @@ namespace BiliLite.Services.LocalMedia
             return fullPath.Substring(prefix.Length).Replace('\\', '/');
         }
 
-        private static async Task<LibraryRegistry> ReadRegistryAsync()
+        private static async Task<LibraryRegistry> ReadRegistryUnderGateAsync()
         {
             try
             {

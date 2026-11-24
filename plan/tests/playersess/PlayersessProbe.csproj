@@ -11,6 +11,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\VideoPlayHistoryHelper.cs" Link="VideoPlayHistoryHelper.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\SettingHelper.cs" Link="SettingHelper.cs" />
     <Compile Include="$(HistoryCheckpointSource)" Link="ActualHistoryCheckpoint.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\PlayerSessionState.cs" Link="PlayerSessionState.cs" />
   </ItemGroup>

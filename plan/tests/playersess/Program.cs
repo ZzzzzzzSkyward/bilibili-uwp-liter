@@ -51,6 +51,8 @@ namespace PlayersessProbe
                 playerPath = args[i + 1];
             }
 
+            HistoryStorageProbe.Run(Check).GetAwaiter().GetResult();
+
             StateCases();
             ResumeAfterReplacementCases();
             SourceCases();

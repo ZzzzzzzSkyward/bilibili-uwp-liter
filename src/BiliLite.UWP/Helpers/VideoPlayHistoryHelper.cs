@@ -8,7 +8,10 @@ namespace BiliLite.Helpers
     public class VideoPlayHistoryHelper
     {
         private const int ABPLAY_HISTORES_MAX = 200;
-        // 启动时由 App.InitBili 里的一步异步初始化赋值,播放器可能在它之前就读;先给一个空表,不让静态字段成为 null
+        private static readonly object ABPlayHistoryLock = new object();
+        private static bool _abPlayHistoriesInitialized;
+        private static Task _pendingABPlayWrite = Task.CompletedTask;
+        // 首次访问先读持久化记录，启动时的延迟 Load 不再覆盖已经接受的修改。
         private static Dictionary<string, ABPlayHistoryEntry> ABPlayHistories =
             new Dictionary<string, ABPlayHistoryEntry>(ABPLAY_HISTORES_MAX);
 
@@ -23,19 +26,48 @@ namespace BiliLite.Helpers
         /// <param name="cleanup">是否顺带清理一下历史记录</param>
         public static void LoadABPlayHistories(bool cleanup)
         {
-            ABPlayHistories = SettingHelper.GetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES, new Dictionary<string, ABPlayHistoryEntry>(ABPLAY_HISTORES_MAX))
-                ?? new Dictionary<string, ABPlayHistoryEntry>(ABPLAY_HISTORES_MAX);
-
-            if (ABPlayHistories.Count > ABPLAY_HISTORES_MAX && cleanup)
+            lock (ABPlayHistoryLock)
             {
-                int toDelete = ABPlayHistories.Count - ABPLAY_HISTORES_MAX;
-
-                for (int i = 0; i < toDelete; i++)
+                EnsureABPlayHistoriesInitialized();
+                if (ABPlayHistories.Count > ABPLAY_HISTORES_MAX && cleanup)
                 {
-                    ABPlayHistories.Remove(ABPlayHistories.Keys.First());
+                    int toDelete = ABPlayHistories.Count - ABPLAY_HISTORES_MAX;
+                    for (int i = 0; i < toDelete; i++)
+                        ABPlayHistories.Remove(ABPlayHistories.Keys.First());
+                    QueueABPlayHistoryWrite();
                 }
+            }
+        }
 
-                SettingHelper.SetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES, ABPlayHistories);
+        private static void EnsureABPlayHistoriesInitialized()
+        {
+            if (_abPlayHistoriesInitialized) return;
+            ABPlayHistories = SettingHelper.GetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES,
+                new Dictionary<string, ABPlayHistoryEntry>(ABPLAY_HISTORES_MAX))
+                ?? new Dictionary<string, ABPlayHistoryEntry>(ABPLAY_HISTORES_MAX);
+            _abPlayHistoriesInitialized = true;
+        }
+
+        // 调用方持有状态锁：保留内存条目的身份，只给写盘队列复制键和值。
+        private static Task QueueABPlayHistoryWrite()
+        {
+            var snapshot = ABPlayHistories.ToDictionary(pair => pair.Key, pair => pair.Value == null ? null :
+                new ABPlayHistoryEntry { PointA = pair.Value.PointA, PointB = pair.Value.PointB });
+            _pendingABPlayWrite = SaveABPlayHistoriesAsync(_pendingABPlayWrite, snapshot);
+            return _pendingABPlayWrite;
+        }
+
+        private static async Task SaveABPlayHistoriesAsync(Task previous, Dictionary<string, ABPlayHistoryEntry> snapshot)
+        {
+            try
+            {
+                await previous.ConfigureAwait(false);
+                await Task.Run(() => SettingHelper.SetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES, snapshot)).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                // 每次写入自行处理失败，后续已接受的快照仍可继续写入。
+                LogHelper.Log("AB play history write failed", LogType.ERROR, ex);
             }
         }
 
@@ -46,7 +78,11 @@ namespace BiliLite.Helpers
         /// <returns>null 如果没有找到</returns>
         public static ABPlayHistoryEntry FindABPlayHistory(Controls.PlayInfo info)
         {
-            return ABPlayHistories.GetValueOrDefault(info.season_id != 0 ? "ep" + info.ep_id : info.cid, null);
+            lock (ABPlayHistoryLock)
+            {
+                EnsureABPlayHistoriesInitialized();
+                return ABPlayHistories.GetValueOrDefault(info.season_id != 0 ? "ep" + info.ep_id : info.cid, null);
+            }
         }
 
         /// <summary>
@@ -58,19 +94,18 @@ namespace BiliLite.Helpers
         {
             try
             {
-                var key = info.season_id != 0 ? "ep" + info.ep_id : info.cid;
-                if (history == null)
+                Task write;
+                lock (ABPlayHistoryLock)
                 {
-                    ABPlayHistories.Remove(key);
+                    EnsureABPlayHistoriesInitialized();
+                    var key = info.season_id != 0 ? "ep" + info.ep_id : info.cid;
+                    if (history == null)
+                        ABPlayHistories.Remove(key);
+                    else
+                        ABPlayHistories[key] = history;
+                    write = QueueABPlayHistoryWrite();
                 }
-                else
-                {
-                    ABPlayHistories[key] = history;
-                }
-
-                // 快照之后再写盘:Task.Run 里读静态字段会和下一次 Load 撞上
-                var snapshot = ABPlayHistories;
-                await Task.Run(() => SettingHelper.SetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES, snapshot));
+                await write;
             }
             catch (Exception ex)
             {

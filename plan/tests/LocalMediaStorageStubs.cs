@@ -6,6 +6,22 @@ namespace Windows.Storage
 {
     public interface IStorageItem { }
 
+    // Inert by default; gates/faults delay or fail primitive I/O, never registry decisions.
+    public static class StorageTestHooks
+    {
+        public static Func<string, Task> BeforeCreate;
+        public static Func<StorageFile, string, Task> AfterRead;
+        public static Action<StorageFile, string> BeforeWrite;
+        public static Action<StorageFile> BeforeReplace;
+        public static Func<string, Task> BeforeGetFolder;
+        public static Action<string> BeforeRemove;
+        public static void Reset()
+        {
+            BeforeCreate = null; AfterRead = null; BeforeWrite = null;
+            BeforeReplace = null; BeforeGetFolder = null; BeforeRemove = null;
+        }
+    }
+
     public sealed class StorageFile : IStorageItem
     {
         public string Path { get; private set; }
@@ -15,6 +31,7 @@ namespace Windows.Storage
 
         public Task RenameAsync(string name, NameCollisionOption option)
         {
+            StorageTestHooks.BeforeReplace?.Invoke(this);
             var next = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Path), name);
             if (File.Exists(next) && option == NameCollisionOption.ReplaceExisting) File.Delete(next);
             File.Move(Path, next);
@@ -24,6 +41,7 @@ namespace Windows.Storage
 
         public Task MoveAndReplaceAsync(StorageFile target)
         {
+            StorageTestHooks.BeforeReplace?.Invoke(this);
             File.Delete(target.Path);
             File.Move(Path, target.Path);
             Path = target.Path;
@@ -57,20 +75,27 @@ namespace Windows.Storage
             return Task.FromResult(item);
         }
 
-        public Task<StorageFile> CreateFileAsync(string name, CreationCollisionOption option)
+        public async Task<StorageFile> CreateFileAsync(string name, CreationCollisionOption option)
         {
+            if (StorageTestHooks.BeforeCreate != null) await StorageTestHooks.BeforeCreate(name);
             var path = System.IO.Path.Combine(Path, name);
             if (File.Exists(path) && option == CreationCollisionOption.ReplaceExisting) File.Delete(path);
             using (File.Create(path)) { }
-            return Task.FromResult(new StorageFile(path));
+            return new StorageFile(path);
         }
     }
 
     public static class FileIO
     {
-        public static Task<string> ReadTextAsync(StorageFile file) => Task.FromResult(File.ReadAllText(file.Path));
+        public static async Task<string> ReadTextAsync(StorageFile file)
+        {
+            var text = File.ReadAllText(file.Path);
+            if (StorageTestHooks.AfterRead != null) await StorageTestHooks.AfterRead(file, text);
+            return text;
+        }
         public static Task WriteTextAsync(StorageFile file, string text)
         {
+            StorageTestHooks.BeforeWrite?.Invoke(file, text);
             File.WriteAllText(file.Path, text);
             return Task.CompletedTask;
         }
@@ -94,14 +119,25 @@ namespace Windows.Storage.AccessCache
     public sealed class AccessList
     {
         private readonly Dictionary<string, StorageFolder> folders = new Dictionary<string, StorageFolder>();
-        public int Count => folders.Count;
-        public void AddOrReplace(string token, StorageFolder folder, string metadata) => folders[token] = folder;
-        public Task<StorageFolder> GetFolderAsync(string token)
+        private readonly object sync = new object();
+        public int Count { get { lock (sync) return folders.Count; } }
+        public bool Contains(string token) { lock (sync) return folders.ContainsKey(token); }
+        public void Clear() { lock (sync) folders.Clear(); }
+        public void AddOrReplace(string token, StorageFolder folder, string metadata) { lock (sync) folders[token] = folder; }
+        public async Task<StorageFolder> GetFolderAsync(string token)
         {
-            if (!folders.TryGetValue(token, out var folder)) throw new FileNotFoundException(token);
-            return Task.FromResult(folder);
+            if (StorageTestHooks.BeforeGetFolder != null) await StorageTestHooks.BeforeGetFolder(token);
+            lock (sync)
+            {
+                if (!folders.TryGetValue(token, out var folder)) throw new FileNotFoundException(token);
+                return folder;
+            }
         }
-        public void Remove(string token) => folders.Remove(token);
+        public void Remove(string token)
+        {
+            StorageTestHooks.BeforeRemove?.Invoke(token);
+            lock (sync) folders.Remove(token);
+        }
     }
 
     public static class StorageApplicationPermissions
