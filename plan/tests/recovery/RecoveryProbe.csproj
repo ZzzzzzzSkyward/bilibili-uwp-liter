@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net8.0</TargetFramework><Nullable>disable</Nullable><ImplicitUsings>enable</ImplicitUsings><EnableDefaultCompileItems>false</EnableDefaultCompileItems></PropertyGroup>
+  <ItemGroup><PackageReference Include="Newtonsoft.Json" Version="13.0.3" /></ItemGroup>
+  <ItemGroup>
+    <Compile Include="Program.cs" /><Compile Include="Stubs.cs" /><Compile Include="obj/RecoverySource.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Dialogs/DownloadDialog.xaml.cs" Link="DownloadDialog.xaml.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/Player/Playurl/BiliPlayUrlInfo.cs" Link="BiliPlayUrlInfo.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/Home/RecommendVM.cs" Link="RecommendVM.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/DownloadVM.cs" Link="DownloadVM.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Helpers/DownloadHelper.cs" Link="DownloadHelper.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Services/DownloadPathCoordinator.cs" Link="DownloadPathCoordinator.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Parsing/Recommend/RecommendResponseParser.cs" Link="RecommendResponseParser.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Parsing/ApiEnvelope.cs" Link="ApiEnvelope.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Parsing/ApiParseResult.cs" Link="ApiParseResult.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/IModules.cs" Link="IModules.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/RelayCommand.cs" Link="RelayCommand.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Models/ReturnModel.cs" Link="ReturnModel.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Api/Home/RecommendAPI.cs" Link="RecommendAPI.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Models/ApiModel.cs" Link="ApiModel.cs" />
+  </ItemGroup>
+</Project>

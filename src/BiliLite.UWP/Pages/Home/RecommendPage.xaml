@@ -142,7 +142,7 @@
   <Grid>
     <winui:RefreshContainer RefreshRequested="RefreshContainer_RefreshRequested">
       <Grid>
-        <controls:MyAdaptiveGridView x:Name="RecommendGridView" ItemClick="RecommendGridView_ItemClick" ItemsSource="{x:Bind Path=recommendVM.Items,Mode=OneWay}" OneRowModeEnabled="False" ItemHeight="240" DesiredWidth="260" Padding="8" SelectionMode="None" LoadMoreBottomOffset="0" LoadMoreCommand="{x:Bind Path=recommendVM.LoadMoreCommand}" CanLoadMore="True" Loading="{x:Bind Path=recommendVM.Loading,Mode=OneWay}" IsItemClickEnabled="True">
+        <controls:MyAdaptiveGridView x:Name="RecommendGridView" ItemClick="RecommendGridView_ItemClick" ItemsSource="{x:Bind Path=recommendVM.Items,Mode=OneWay}" OneRowModeEnabled="False" ItemHeight="240" DesiredWidth="260" Padding="8" SelectionMode="None" LoadMoreBottomOffset="0" LoadMoreCommand="{x:Bind Path=recommendVM.LoadMoreCommand}" CanLoadMore="{x:Bind Path=recommendVM.AutoLoad,Mode=OneWay}" Loading="{x:Bind Path=recommendVM.Loading,Mode=OneWay}" IsItemClickEnabled="True">
           <toolkit:AdaptiveGridView.ItemContainerStyle>
             <Style TargetType="GridViewItem">
               <Setter Property="Margin" Value="12"/>
@@ -162,12 +162,16 @@
             </controls:Carousel>
           </controls:MyAdaptiveGridView.Header>
           <controls:MyAdaptiveGridView.Footer>
-            <Grid>
+            <StackPanel>
+              <TextBlock Text="{x:Bind Path=recommendVM.StatusText,Mode=OneWay}" HorizontalAlignment="Center" TextWrapping="Wrap"/>
+              <HyperlinkButton Content="刷新 / 重试" Command="{x:Bind Path=recommendVM.RetryCommand}" HorizontalAlignment="Center"/>
+              <Grid>
               <HyperlinkButton Visibility="{x:Bind Path=recommendVM.Loading,Mode=OneWay,Converter={StaticResource display}}" Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Center" Command="{x:Bind Path=recommendVM.LoadMoreCommand}">
                 <TextBlock>加载更多</TextBlock>
               </HyperlinkButton>
               <ProgressRing IsActive="True" HorizontalAlignment="Center" Visibility="{x:Bind Path=recommendVM.Loading,Mode=OneWay}"/>
-            </Grid>
+              </Grid>
+            </StackPanel>
           </controls:MyAdaptiveGridView.Footer>
         </controls:MyAdaptiveGridView>
       </Grid>

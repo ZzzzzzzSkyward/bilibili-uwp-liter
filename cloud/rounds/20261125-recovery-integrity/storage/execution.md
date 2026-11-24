@@ -1,5 +1,9 @@
 # Storage execution
 
+Current amendment status: **FA-01 LOCAL PASS, final bytes frozen/released for re-verification, unstaged and unpublished**. Fix-only review-fix-dispatch grant changed only service entry validation and additive LM02 checks. Same final fixture:214 genuine red predicates on pre-fix source →653/653 additive green checks (50 prior +603 FA-01); original LM02 bodies preserved. Exact page-refresh composition also red→green with one typed log/toast and retained rows/bytes/grants. Source SHA256 `28f03d444c40b79da8fd93f034f00ef6be5f2265355451799d7807bdf6aff514`. See [FA-01 evidence](implementation-evidence/fa01-red-green.md). No index/ref/auth/publication operation was performed. Root's common gate and independent FA-01 re-review remain pending.
+
+Original S1–S4 publication receipt follows (historical source/receipt SHAs do not include this unstaged amendment):
+
 Status: **source/test PASS and published; final evidence-only receipt**. This is the final owned edit. Source/test/evidence/index ownership releases after this receipt is pushed and HEAD/origin/dev/actual remote equality is verified; the final executor response certifies that completed release. No further receipt edit is required. Baseline product source `077ef35ae194d3ae85aa0621daeac07dc29e29ab`; startup `git pull --ff-only` succeeded while preserving declared parallel dirty paths. Source dispatch and independent requirements review authorize only the paths below. See [implementation evidence](implementation-evidence/red-green.md).
 
 ## Implementation and exact scope

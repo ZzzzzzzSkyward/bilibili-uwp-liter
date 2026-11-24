@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 using BiliLite.Services.LocalMedia;
 using Windows.Storage;
 using Windows.Storage.AccessCache;
@@ -43,6 +44,7 @@ internal static class LM02
             Assert((await LocalMediaLibraryService.GetSavedCollectionsAsync()).Count == 1, "reimport replaces duplicate registry entry");
             Assert(StorageApplicationPermissions.FutureAccessList.Count == 1, "reimport removes superseded access token");
             await StorageIntegrityCases(scratch);
+            await RegistryIdentityCases(scratch);
             Console.WriteLine("LM-02 checks passed: import/reopen, invalid paths, missing assets, retained broken entry, reimport deduplication.");
         }
         finally
@@ -233,6 +235,108 @@ internal static class LM02
         StorageCheck(!StorageApplicationPermissions.FutureAccessList.Contains(original.Token) && StorageApplicationPermissions.FutureAccessList.Count == 1, "replacement after " + gate + " retires only old grant");
         await TypedFailure(LocalMediaLibraryService.ReopenCollectionAsync(original.Token), "access-restore");
         await CanReopen(replacement.Result.Token, "replacement after " + gate + " reopens");
+    }
+
+    private static async Task RegistryIdentityCases(string scratch)
+    {
+        var folder = MakeCollection(scratch, "identity-valid", "identity-a", "video/one.mp4");
+        var importedFolder = MakeCollection(scratch, "identity-import", "identity-b", "video/one.mp4");
+        var retryFolder = MakeCollection(scratch, "identity-retry", "identity-c", "video/one.mp4");
+        var fixtures = new List<KeyValuePair<string, JToken>>
+        {
+            new KeyValuePair<string, JToken>("null-entry", JValue.CreateNull()),
+            new KeyValuePair<string, JToken>("empty-entry", new JObject())
+        };
+        foreach (var field in new[] { "Token", "CollectionId", "RootPath" })
+        foreach (var invalid in new[] { "missing", "null", "empty", "whitespace" })
+        {
+            var entry = new JObject { ["Token"] = "other-token", ["CollectionId"] = "other-id", ["RootPath"] = folder.Path };
+            if (invalid == "missing") entry.Remove(field);
+            else entry[field] = invalid == "null" ? JValue.CreateNull() : new JValue(invalid == "empty" ? "" : " \t\r\n");
+            fixtures.Add(new KeyValuePair<string, JToken>(field + "-" + invalid, entry));
+        }
+        var caseNumber = 0;
+        foreach (var fixture in fixtures)
+        foreach (var beforeValid in new[] { true, false })
+        foreach (var operation in new[] { "list", "reopen", "import" })
+        {
+            var label = fixture.Key + "/" + (beforeValid ? "before" : "after") + "/" + operation;
+            ResetStorage(scratch, "identity-" + caseNumber++);
+            var original = await LocalMediaLibraryService.ImportFolderAsync(folder).WaitAsync(GateTimeout);
+            var validBytes = File.ReadAllText(RegistryPath);
+            var validEntry = JObject.Parse(validBytes)["Entries"][0].DeepClone();
+            var entries = beforeValid ? new JArray(fixture.Value.DeepClone(), validEntry) : new JArray(validEntry, fixture.Value.DeepClone());
+            var malformedBytes = new JObject { ["Entries"] = entries }.ToString();
+            File.WriteAllText(RegistryPath, malformedBytes);
+            var temporaryPath = RegistryPath + ".tmp";
+            const string temporaryBytes = "existing incomplete temporary bytes";
+            File.WriteAllText(temporaryPath, temporaryBytes);
+            var creates = 0; var writes = 0; var replacements = 0; var removals = 0;
+            StorageTestHooks.BeforeCreate = name => { creates++; return Task.CompletedTask; };
+            StorageTestHooks.BeforeWrite = (file, text) => writes++;
+            StorageTestHooks.BeforeReplace = file => replacements++;
+            StorageTestHooks.BeforeRemove = token => removals++;
+            string observed = "success";
+            try
+            {
+                if (operation == "list") await LocalMediaLibraryService.GetSavedCollectionsAsync().WaitAsync(GateTimeout);
+                else if (operation == "reopen") await LocalMediaLibraryService.ReopenCollectionAsync(original.Token).WaitAsync(GateTimeout);
+                else await LocalMediaLibraryService.ImportFolderAsync(importedFolder).WaitAsync(GateTimeout);
+            }
+            catch (LocalMediaLibraryException exception) { observed = exception.Stage + "/" + exception.CollectionId; }
+            catch (Exception exception) { observed = exception.GetType().Name; }
+            finally { StorageTestHooks.Reset(); }
+            StorageCheck(observed == "registry-read/unknown", label + " rejects whole snapshot through typed registry-read/unknown: " + observed);
+            StorageCheck(File.ReadAllText(RegistryPath) == malformedBytes, label + " preserves exact registry bytes");
+            StorageCheck(File.Exists(temporaryPath) && File.ReadAllText(temporaryPath) == temporaryBytes, label + " preserves existing temporary bytes");
+            StorageCheck(StorageApplicationPermissions.FutureAccessList.Count == 1 && StorageApplicationPermissions.FutureAccessList.Contains(original.Token), label + " preserves exact grant identity/count");
+            // Any provisional grant still live changes Count; any removed one reaches BeforeRemove.
+            StorageCheck(creates == 0 && writes == 0 && replacements == 0 && removals == 0, label + " has no provisional-grant/staging/replacement/retirement activity");
+
+            // Restore only bytes; the same process-wide service and semaphore must recover after every operation kind.
+            File.WriteAllText(RegistryPath, validBytes);
+            var restored = await LocalMediaLibraryService.GetSavedCollectionsAsync().WaitAsync(GateTimeout);
+            var reopened = await LocalMediaLibraryService.ReopenCollectionAsync(original.Token).WaitAsync(GateTimeout);
+            StorageCheck(restored.Count == 1 && restored[0].Token == original.Token && reopened.Id == "identity-a", label + " releases gate for restored list and reopen");
+            var retry = await LocalMediaLibraryService.ImportFolderAsync(retryFolder).WaitAsync(GateTimeout);
+            var rows = await LocalMediaLibraryService.GetSavedCollectionsAsync().WaitAsync(GateTimeout);
+            StorageCheck(rows.Count == 2 && rows.Any(row => row.Token == original.Token) && rows.Any(row => row.Token == retry.Token) && StorageApplicationPermissions.FutureAccessList.Count == 2 && rows.All(row => StorageApplicationPermissions.FutureAccessList.Contains(row.Token)), label + " retry preserves old/new rows and exactly reachable grants");
+            await LocalMediaLibraryService.ReopenCollectionAsync(retry.Token).WaitAsync(GateTimeout);
+        }
+
+        var invalidCalls = caseNumber;
+        foreach (var empty in new[] { "absent", "null", "{}", "{\"Entries\":null}", "{\"Entries\":[]}" })
+        {
+            ResetStorage(scratch, "empty-identity-" + caseNumber++);
+            if (empty != "absent") File.WriteAllText(RegistryPath, empty);
+            StorageCheck((await LocalMediaLibraryService.GetSavedCollectionsAsync().WaitAsync(GateTimeout)).Count == 0, "identity validation preserves empty default: " + empty);
+        }
+        ResetStorage(scratch, "identity-compatible");
+        const string compatibleToken = "non-GUID-token";
+        StorageApplicationPermissions.FutureAccessList.AddOrReplace(compatibleToken, folder, "Collection");
+        var compatibleBytes = new JObject { ["Entries"] = new JArray(new JObject { ["Token"] = compatibleToken, ["CollectionId"] = "identity-a", ["RootPath"] = folder.Path }) }.ToString();
+        File.WriteAllText(RegistryPath, compatibleBytes);
+        var compatibleRows = await LocalMediaLibraryService.GetSavedCollectionsAsync().WaitAsync(GateTimeout);
+        StorageCheck(compatibleRows.Count == 1 && compatibleRows[0].Token == compatibleToken && compatibleRows[0].Title == null && compatibleRows[0].ItemCount == 0, "identity-complete non-GUID token permits missing display metadata");
+        await LocalMediaLibraryService.ReopenCollectionAsync(compatibleToken).WaitAsync(GateTimeout);
+        StorageCheck(File.ReadAllText(RegistryPath) == compatibleBytes, "compatible reopen does not rewrite identity or metadata");
+        File.Delete(Path.Combine(folder.Path, "video", "one.mp4"));
+        StorageCheck((await LocalMediaLibraryService.GetSavedCollectionsAsync().WaitAsync(GateTimeout)).Count == 1, "identity-complete broken asset remains listed for repair");
+        await TypedFailure(LocalMediaLibraryService.ReopenCollectionAsync(compatibleToken), "asset-resolution");
+        StorageCheck(File.ReadAllText(RegistryPath) == compatibleBytes && StorageApplicationPermissions.FutureAccessList.Contains(compatibleToken), "broken asset keeps registry bytes and grant");
+        File.WriteAllText(Path.Combine(folder.Path, "video", "one.mp4"), "media");
+        await LocalMediaLibraryService.ReopenCollectionAsync(compatibleToken).WaitAsync(GateTimeout);
+        StorageCheck(File.ReadAllText(RegistryPath) == compatibleBytes, "asset repair reopens complete identity without registry rewrite");
+        await TypedFailure(LocalMediaLibraryService.ReopenCollectionAsync("unknown-valid-input"), "access-restore");
+        StorageApplicationPermissions.FutureAccessList.Remove(compatibleToken);
+        StorageCheck((await LocalMediaLibraryService.GetSavedCollectionsAsync().WaitAsync(GateTimeout)).Count == 1, "complete identity with stale grant remains listed without FAL lookup");
+        await TypedFailure(LocalMediaLibraryService.ReopenCollectionAsync(compatibleToken), "access-restore");
+        var argumentRejected = false;
+        try { await LocalMediaLibraryService.ReopenCollectionAsync(" ").WaitAsync(GateTimeout); }
+        catch (ArgumentException) { argumentRejected = true; }
+        StorageCheck(argumentRejected, "blank public reopen token retains argument precondition");
+        Console.WriteLine("FA-01 identity fixtures=" + fixtures.Count + "; placements=2; operations=3; invalid calls=" + invalidCalls);
+        if (StorageFailures.Count != 0) throw new Exception("Storage identity integrity failed: " + string.Join("; ", StorageFailures));
     }
 
     private static StorageFolder MakeCollection(string parent, string name, string id, string videoPath, bool createAsset = true)

@@ -201,6 +201,9 @@ namespace BiliLite.Services.LocalMedia
                 var registry = JsonConvert.DeserializeObject<LibraryRegistry>(await FileIO.ReadTextAsync(file));
                 registry = registry ?? new LibraryRegistry();
                 registry.Entries = registry.Entries ?? new List<LibraryRegistryEntry>();
+                if (registry.Entries.Any(entry => entry == null || string.IsNullOrWhiteSpace(entry.Token) ||
+                    string.IsNullOrWhiteSpace(entry.CollectionId) || string.IsNullOrWhiteSpace(entry.RootPath)))
+                    throw new InvalidDataException("The saved collection registry contains an invalid entry identity.");
                 return registry;
             }
             catch (Exception exception)

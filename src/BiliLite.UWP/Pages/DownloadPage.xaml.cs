@@ -1,4 +1,4 @@
-﻿using BiliLite.Controls;
+using BiliLite.Controls;
 using BiliLite.Helpers;
 using BiliLite.Modules;
 using BiliLite.Modules.Player.Playurl;
@@ -281,26 +281,35 @@ namespace BiliLite.Pages
             OpenPlayer(data, data.Episodes.IndexOf(item));
         }
 
+        private bool completedCleanupPending;
+        private async void btnCleanupOpen_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var target = (sender as Button)?.DataContext as DownloadCleanupTarget;
+                if (target != null) await Launcher.LaunchFolderPathAsync(target.Path);
+            }
+            catch (Exception ex) { LogHelper.Log("清理目录打开失败", LogType.ERROR, ex); Utils.ShowMessageToast("目录无法打开，请刷新后重试"); }
+        }
         private async void btnEpisodesDelete_Click(object sender, RoutedEventArgs e)
         {
             var data = Pane.DataContext as DownloadedItem;
             var item = (sender as AppBarButton).DataContext as DownloadedSubItem;
-            var result = await Utils.ShowDialog("删除下载", $"确定要删除《{item.Title}》吗?\r\n文件将会被永久删除!");
-            if (!result)
-            {
-                return;
-            }
+            if (completedCleanupPending) return;
+            completedCleanupPending = true;
             try
             {
-                var folder = await StorageFolder.GetFolderFromPathAsync(item.Path);
-                await folder.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                var target = await downloadVM.CaptureCleanupAsync(item.Path, item.Title, false);
+                if (!await Utils.ShowDialog("删除下载", $"确定要删除《{item.Title}》吗?\r\n文件将会被永久删除!")) return;
+                await downloadVM.DeleteCleanupAsync(target);
                 data.Episodes.Remove(item);
             }
             catch (Exception ex)
             {
-                Utils.ShowMessageToast("目录删除失败，请检查是否文件是否被占用");
+                Utils.ShowMessageToast("目录删除失败，请刷新并检查文件是否被占用或存在下载任务");
                 LogHelper.Log("删除下载视频失败", LogType.FATAL, ex);
             }
+            finally { completedCleanupPending = false; }
         }
 
         private async void btnEpisodesFolder_Click(object sender, RoutedEventArgs e)
@@ -344,22 +353,21 @@ namespace BiliLite.Pages
         private async void btnMenuDetele_Click(object sender, RoutedEventArgs e)
         {
             var data = (sender as MenuFlyoutItem).DataContext as DownloadedItem;
-            var result = await Utils.ShowDialog("删除下载", $"确定要删除《{data.Title}》吗?\r\n目录下共有{data.Episodes.Count}个视频,将会被永久删除。");
-            if (!result)
-            {
-                return;
-            }
+            if (completedCleanupPending) return;
+            completedCleanupPending = true;
             try
             {
-                var folder = await StorageFolder.GetFolderFromPathAsync(data.Path);
-                await folder.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                var target = await downloadVM.CaptureCleanupAsync(data.Path, data.Title, false);
+                if (!await Utils.ShowDialog("删除下载", $"确定要删除《{data.Title}》吗?\r\n目录下共有{data.Episodes.Count}个视频,将会被永久删除。")) return;
+                await downloadVM.DeleteCleanupAsync(target);
                 downloadVM.Downloadeds.Remove(data);
             }
             catch (Exception ex)
             {
-                Utils.ShowMessageToast("目录删除失败，请检查是否文件是否被占用");
+                Utils.ShowMessageToast("目录删除失败，请刷新并检查文件是否被占用或存在下载任务");
                 LogHelper.Log("删除下载视频失败", LogType.FATAL, ex);
             }
+            finally { completedCleanupPending = false; }
         }
 
         private async void btnMerge_Click(object sender, RoutedEventArgs e)

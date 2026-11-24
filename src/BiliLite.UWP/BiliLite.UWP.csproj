@@ -144,6 +144,7 @@
     <Compile Include="Models\Requests\Api\BaseApi.cs" />
     <Compile Include="Models\Requests\Api\EmoteApi.cs" />
     <Compile Include="Models\Requests\Api\DanmakuApi.cs" />
+    <Compile Include="Services\DownloadPathCoordinator.cs" />
     <Compile Include="Services\CookieService.cs" />
     <Compile Include="Services\AccessKeyRenewal.cs" />
     <Compile Include="Services\HttpLogSanitizer.cs" />
@@ -181,6 +182,7 @@
     <Compile Include="Services\DynamicApiHistoryFileStore.cs" />
     <Compile Include="Services\MediaListService.cs" />
     <Compile Include="Helpers\DynamicImageRules.cs" />
+    <Compile Include="Parsing\Recommend\RecommendResponseParser.cs" />
     <Compile Include="Parsing\ApiParseResult.cs" />
     <Compile Include="Parsing\ApiEnvelope.cs" />
     <Compile Include="Parsing\Dynamic\LegacyDynamicFeedParser.cs" />

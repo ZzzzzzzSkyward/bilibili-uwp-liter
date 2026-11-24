@@ -26,7 +26,7 @@ namespace BiliLite.Dialogs
             {
                 checkHidePreview.Visibility = Visibility.Visible;
             }
-           
+
             this.downloadItem = downloadItem;
             playerVM = new PlayerVM(true);
             cbVideoType.SelectedIndex = SettingHelper.GetValue<int>(SettingHelper.Download.DEFAULT_VIDEO_TYPE, 1);
@@ -38,7 +38,7 @@ namespace BiliLite.Dialogs
                     LoadQuality();
                 });
             });
-          
+
             LoadQuality();
 
         }
@@ -75,154 +75,168 @@ namespace BiliLite.Dialogs
         {
             args.Cancel = true;
             bool hide = true;
-            if (listView.SelectedItems == null || listView.SelectedItems.Count == 0)
+            try
             {
-                Utils.ShowMessageToast("请选择要下载的剧集");
-                return;
-            }
-            IsPrimaryButtonEnabled = false;
-            foreach (DownloadEpisodeItem item in listView.SelectedItems)
-            {
-                if (item.State != 0 && item.State != 99)
+                // Selection changes while requests are pending belong to the next invocation.
+                var selected = listView.SelectedItems?.Cast<DownloadEpisodeItem>().ToList();
+                if (selected == null || selected.Count == 0)
                 {
-                    continue;
+                    Utils.ShowMessageToast("请选择要下载的剧集");
+                    return;
                 }
-                try
+                IsPrimaryButtonEnabled = false;
+                foreach (var item in selected)
                 {
-                    item.State = 1;
-
-                    var downloadInfo = new DownloadInfo()
+                    if (item.State != 0 && item.State != 99)
                     {
-                        CoverUrl = downloadItem.Cover,
-                        DanmakuUrl = $"{ApiHelper.API_BASE_URL}/x/v1/dm/list.so?oid=" + item.CID,
-                        EpisodeID =item.EpisodeID,
-                        CID= item.CID,
-                        AVID = downloadItem.ID,
-                        SeasonID=downloadItem.SeasonID,
-                        SeasonType=downloadItem.SeasonType,
-                        Title = downloadItem.Title,
-                        EpisodeTitle = item.Title,
-                        Type = downloadItem.Type,
-                        Index= item.Index
-                    };
-                    //读取视频信息
-                    //读取视频字幕
-                    var info = await playerVM.GetPlayInfo(item.AVID, item.CID);
-                    if (info.subtitle != null && info.subtitle.subtitles != null && info.subtitle.subtitles.Count > 0)
-                    {
-                        downloadInfo.Subtitles = new List<DownloadSubtitleInfo>();
-                        foreach (var subtitleItem in info.subtitle.subtitles)
-                        {
-                            downloadInfo.Subtitles.Add(new DownloadSubtitleInfo()
-                            {
-                                Name = $"{subtitleItem.lan_doc}({subtitleItem.lan})",
-                                Url = subtitleItem.subtitle_url
-                            });
-                        }
-                    }
-                    //读取视频地址
-                    var playUrl = await playerVM.GetPlayUrls(new Controls.PlayInfo()
-                    {
-                        avid = item.AVID,
-                        cid = item.CID,
-                        ep_id = item.EpisodeID,
-                        play_mode = downloadItem.Type == Helpers.DownloadType.Season ? Controls.VideoPlayType.Season : Controls.VideoPlayType.Video,
-                        season_id = downloadItem.SeasonID,
-                        season_type = downloadItem.SeasonType,
-                        area = Utils.ParseArea(downloadItem.Title, downloadItem.UpMid)
-                    }, qn: (cbQuality.SelectedItem as BiliPlayUrlInfo).QualityID);
-                    if (!playUrl.Success)
-                    {
-                        item.State = 99;
-                        item.ErrorMessage = playUrl.Message;
                         continue;
                     }
-                    
-                    downloadInfo.QualityID = playUrl.CurrentQuality.QualityID;
-                    downloadInfo.QualityName = playUrl.CurrentQuality.QualityName;
-                    downloadInfo.Urls = new List<DownloadUrlInfo>();
-                    if (playUrl.CurrentQuality.PlayUrlType ==  Modules.Player.Playurl.BiliPlayUrlType.DASH)
+                    try
                     {
-                        var quality = playUrl.CurrentQuality;
-                        var audio = playUrl.CurrentQuality.DashInfo.Audio;
-                        var video = playUrl.CurrentQuality.DashInfo.Video;
-                       
-                        if (audio != null)
+                        item.State = 1;
+
+                        var downloadInfo = new DownloadInfo()
                         {
-                            downloadInfo.Urls.Add(new DownloadUrlInfo()
+                            CoverUrl = downloadItem.Cover,
+                            DanmakuUrl = $"{ApiHelper.API_BASE_URL}/x/v1/dm/list.so?oid=" + item.CID,
+                            EpisodeID =item.EpisodeID,
+                            CID= item.CID,
+                            AVID = downloadItem.ID,
+                            SeasonID=downloadItem.SeasonID,
+                            SeasonType=downloadItem.SeasonType,
+                            Title = downloadItem.Title,
+                            EpisodeTitle = item.Title,
+                            Type = downloadItem.Type,
+                            Index= item.Index
+                        };
+                        //读取视频信息
+                        //读取视频字幕
+                        var info = await playerVM.GetPlayInfo(item.AVID, item.CID);
+                        if (info.subtitle != null && info.subtitle.subtitles != null && info.subtitle.subtitles.Count > 0)
+                        {
+                            downloadInfo.Subtitles = new List<DownloadSubtitleInfo>();
+                            foreach (var subtitleItem in info.subtitle.subtitles)
                             {
-                                FileName = "video.m4s",
-                                HttpHeader = quality.GetHttpHeader(),
-                                Url = video.Url
-                            }); ;
-                            downloadInfo.Urls.Add(new DownloadUrlInfo()
-                            {
-                                FileName = "audio.m4s",
-                                HttpHeader = quality.GetHttpHeader(),
-                                Url = audio.Url
-                            });
+                                downloadInfo.Subtitles.Add(new DownloadSubtitleInfo()
+                                {
+                                    Name = $"{subtitleItem.lan_doc}({subtitleItem.lan})",
+                                    Url = subtitleItem.subtitle_url
+                                });
+                            }
                         }
-                        else
+                        //读取视频地址
+                        var playUrl = await playerVM.GetPlayUrls(new Controls.PlayInfo()
                         {
-                         
+                            avid = item.AVID,
+                            cid = item.CID,
+                            ep_id = item.EpisodeID,
+                            play_mode = downloadItem.Type == Helpers.DownloadType.Season ? Controls.VideoPlayType.Season : Controls.VideoPlayType.Video,
+                            season_id = downloadItem.SeasonID,
+                            season_type = downloadItem.SeasonType,
+                            area = Utils.ParseArea(downloadItem.Title, downloadItem.UpMid)
+                        }, qn: (cbQuality.SelectedItem as BiliPlayUrlInfo).QualityID);
+                        if (!playUrl.Success)
+                        {
+                            hide = false;
+                            item.State = 99;
+                            item.ErrorMessage = playUrl.Message;
+                            continue;
+                        }
+
+                        downloadInfo.QualityID = playUrl.CurrentQuality.QualityID;
+                        downloadInfo.QualityName = playUrl.CurrentQuality.QualityName;
+                        downloadInfo.Urls = new List<DownloadUrlInfo>();
+                        if (playUrl.CurrentQuality.PlayUrlType ==  Modules.Player.Playurl.BiliPlayUrlType.DASH)
+                        {
+                            var quality = playUrl.CurrentQuality;
+                            var audio = playUrl.CurrentQuality.DashInfo.Audio;
+                            var video = playUrl.CurrentQuality.DashInfo.Video;
+
+                            if (audio != null)
+                            {
+                                downloadInfo.Urls.Add(new DownloadUrlInfo()
+                                {
+                                    FileName = "video.m4s",
+                                    HttpHeader = quality.GetHttpHeader(),
+                                    Url = video.Url
+                                }); ;
+                                downloadInfo.Urls.Add(new DownloadUrlInfo()
+                                {
+                                    FileName = "audio.m4s",
+                                    HttpHeader = quality.GetHttpHeader(),
+                                    Url = audio.Url
+                                });
+                            }
+                            else
+                            {
+
+                                downloadInfo.Urls.Add(new DownloadUrlInfo()
+                                {
+                                    FileName = "0.blv",
+                                    HttpHeader = quality.GetHttpHeader(),
+                                    Url = video.Url
+                                });
+                            }
+
+                        }
+                        if (playUrl.CurrentQuality.PlayUrlType == Modules.Player.Playurl.BiliPlayUrlType.MultiFLV)
+                        {
+                            int i = 0;
+                            foreach (var videoItem in playUrl.CurrentQuality.FlvInfo)
+                            {
+                                downloadInfo.Urls.Add(new DownloadUrlInfo()
+                                {
+                                    FileName = $"{i++}.blv",
+                                    HttpHeader = playUrl.CurrentQuality.GetHttpHeader(),
+                                    Url = videoItem.Url
+                                });
+                            }
+                        }
+                        if (playUrl.CurrentQuality.PlayUrlType == Modules.Player.Playurl.BiliPlayUrlType.SingleFLV)
+                        {
                             downloadInfo.Urls.Add(new DownloadUrlInfo()
                             {
                                 FileName = "0.blv",
-                                HttpHeader = quality.GetHttpHeader(),
-                                Url = video.Url
-                            });
-                        }
-                      
-                    }
-                    if (playUrl.CurrentQuality.PlayUrlType == Modules.Player.Playurl.BiliPlayUrlType.MultiFLV)
-                    {
-                        int i = 0;
-                        foreach (var videoItem in playUrl.CurrentQuality.FlvInfo)
-                        {
-                            downloadInfo.Urls.Add(new DownloadUrlInfo()
-                            {
-                                FileName = $"{i}.blv",
                                 HttpHeader = playUrl.CurrentQuality.GetHttpHeader(),
-                                Url = videoItem.Url
+                                Url = playUrl.CurrentQuality.FlvInfo.First().Url
                             });
+
                         }
+                        //添加下载
+                        await DownloadHelper.AddDownload(downloadInfo);
+
+                        item.State = 2;
                     }
-                    if (playUrl.CurrentQuality.PlayUrlType == Modules.Player.Playurl.BiliPlayUrlType.SingleFLV)
+                    catch (Exception ex)
                     {
-                        downloadInfo.Urls.Add(new DownloadUrlInfo()
-                        {
-                            FileName = "0.blv",
-                            HttpHeader = playUrl.CurrentQuality.GetHttpHeader(),
-                            Url = playUrl.CurrentQuality.FlvInfo.First().Url
-                        });
-
+                        hide = false;
+                        item.State = 99;
+                        item.ErrorMessage = ex.Message;
                     }
-                    //添加下载
-                    await DownloadHelper.AddDownload(downloadInfo);
 
-                    item.State = 2;
+
                 }
-                catch (Exception ex)
+                DownloadVM.Instance.LoadDownloading();
+                if (hide)
                 {
-                    hide = false;
-                    item.State = 99;
-                    item.ErrorMessage = ex.Message;
+                    Utils.ShowMessageToast("已添加至下载列表");
+                    this.Hide();
                 }
-
-
+                else
+                {
+                    Utils.ShowMessageToast("有视频下载失败");
+                }
             }
-            DownloadVM.Instance.LoadDownloading();
-            IsPrimaryButtonEnabled = true;
-            if (hide)
+            catch (Exception ex)
             {
-                Utils.ShowMessageToast("已添加至下载列表");
-                this.Hide();
+                LogHelper.Log("添加下载失败", LogType.ERROR, ex);
+                // Keep already admitted siblings discoverable even after a batch/reporting fault.
+                try { DownloadVM.Instance.LoadDownloading(); }
+                catch (Exception discoveryError) { LogHelper.Log("读取下载任务失败", LogType.ERROR, discoveryError); }
+                try { Utils.ShowMessageToast("有视频下载失败"); }
+                catch (Exception reportError) { LogHelper.Log("下载错误提示失败", LogType.ERROR, reportError); }
             }
-            else
-            {
-                Utils.ShowMessageToast("有视频下载失败");
-            }
-           
+            finally { IsPrimaryButtonEnabled = true; }
         }
 
         private void ContentDialog_SecondaryButtonClick(ContentDialog sender, ContentDialogButtonClickEventArgs args)
@@ -306,7 +320,7 @@ namespace BiliLite.Dialogs
         public string ErrorMessage
         {
             get { return _message; }
-            set { _message = value; DoPropertyChanged("Message"); }
+            set { _message = value; DoPropertyChanged("ErrorMessage"); }
         }
         public bool IsPreview { get; set; } = false;
 

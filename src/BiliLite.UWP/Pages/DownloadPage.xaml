@@ -10,7 +10,22 @@
     <Grid.RowDefinitions>
       <RowDefinition/>
       <RowDefinition Height="Auto"/>
+      <RowDefinition Height="Auto"/>
     </Grid.RowDefinitions>
+    <StackPanel Grid.Row="1">
+      <ItemsControl ItemsSource="{x:Bind Path=downloadVM.CleanupFailures,Mode=OneWay}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="modules:DownloadCleanupTarget">
+            <StackPanel Orientation="Horizontal">
+              <TextBlock Text="{x:Bind Title}" Margin="8"/>
+              <TextBlock Text="{x:Bind FailureText}" Margin="8"/>
+              <Button Content="打开文件夹" Click="btnCleanupOpen_Click"/>
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <HyperlinkButton Content="重试清理失败的部分文件" Command="{x:Bind Path=downloadVM.RetryCleanupCommand}"/>
+    </StackPanel>
     <Pivot>
       <Pivot.RightHeader>
         <Grid Background="{StaticResource PivotHeaderBackground}">
@@ -85,7 +100,13 @@
           </SplitView.Pane>
           <SplitView.Content>
             <Grid>
-              <toolkit:AdaptiveGridView Padding="8" x:Name="listDowned" ItemClick="listDowned_ItemClick" StretchContentForSingleRow="false" DesiredWidth="460" SelectionMode="None" ItemsSource="{x:Bind Path=downloadVM.Downloadeds,Mode=OneWay}" IsItemClickEnabled="True">
+              <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition/></Grid.RowDefinitions>
+              <StackPanel>
+                <TextBlock Text="{x:Bind Path=downloadVM.DownloadedStatus,Mode=OneWay}" TextWrapping="Wrap"/>
+                <ProgressRing IsActive="{x:Bind Path=downloadVM.LoadingDownloaded,Mode=OneWay}" Visibility="{x:Bind Path=downloadVM.LoadingDownloaded,Mode=OneWay}"/>
+                <HyperlinkButton Content="刷新离线视频" Command="{x:Bind Path=downloadVM.RefreshDownloadedCommand}"/>
+              </StackPanel>
+              <toolkit:AdaptiveGridView Grid.Row="1" Padding="8" x:Name="listDowned" ItemClick="listDowned_ItemClick" StretchContentForSingleRow="false" DesiredWidth="460" SelectionMode="None" ItemsSource="{x:Bind Path=downloadVM.Downloadeds,Mode=OneWay}" IsItemClickEnabled="True">
                 <toolkit:AdaptiveGridView.ItemContainerStyle>
                   <Style TargetType="GridViewItem">
                     <Setter Property="Padding" Value="4"/>
@@ -131,7 +152,7 @@
                   </DataTemplate>
                 </toolkit:AdaptiveGridView.ItemTemplate>
               </toolkit:AdaptiveGridView>
-              <controls:RoundButton Command="{x:Bind Path=downloadVM.RefreshDownloadedCommand}" Visibility="{x:Bind Path=downloadVM.LoadingDownloaded,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
+              <controls:RoundButton Grid.Row="1" Command="{x:Bind Path=downloadVM.RefreshDownloadedCommand}" Visibility="{x:Bind Path=downloadVM.LoadingDownloaded,Mode=OneWay,Converter={StaticResource display}}" VerticalAlignment="Bottom" Padding="12" Margin="12" HorizontalAlignment="Right">
                 <SymbolIcon Symbol="Refresh" Foreground="White"/>
               </controls:RoundButton>
             </Grid>
@@ -291,12 +312,15 @@
         </StackPanel>
       </PivotItem>
     </Pivot>
-    <StackPanel BorderThickness="0 1 0 0" BorderBrush="#40808080" Grid.Row="1" Padding="12 4">
+    <StackPanel BorderThickness="0 1 0 0" BorderBrush="#40808080" Grid.Row="2" Padding="12 4">
+      <TextBlock Text="磁盘信息不可用" Visibility="{x:Bind Path=downloadVM.DiskAvailable,Mode=OneWay,Converter={StaticResource display}}"/>
+      <StackPanel Visibility="{x:Bind Path=downloadVM.DiskAvailable,Mode=OneWay}">
       <Grid>
         <TextBlock>磁盘可用空间 <Run Text="{x:Bind Path=downloadVM.DiskFree,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>GB</TextBlock>
         <TextBlock Foreground="{ThemeResource ForegroundTextColor}" HorizontalAlignment="Right"><Run Text="{x:Bind Path=downloadVM.DiskUse,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>GB/<Run Text="{x:Bind Path=downloadVM.DiskTotal,Mode=OneWay,Converter={StaticResource numberToStringConvert}}"/>GB</TextBlock>
       </Grid>
       <ProgressBar Margin="0 4 0 0" Height="8" Value="{x:Bind Path=downloadVM.DiskUse,Mode=OneWay}" Maximum="{x:Bind Path=downloadVM.DiskTotal,Mode=OneWay}"/>
+      </StackPanel>
     </StackPanel>
   </Grid>
 </local:BasePage>

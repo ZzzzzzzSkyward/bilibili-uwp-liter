@@ -729,7 +729,7 @@ namespace BiliLite.Pages
             {
                 // 检查正在下载及下载完成是否存在此视频
                 int state = 0;
-                if (DownloadVM.Instance.Downloadings.FirstOrDefault(x => x.EpisodeID == item.id.ToString()) != null)
+                if (DownloadVM.Instance.Downloadings.FirstOrDefault(x => x.EpisodeID == item.cid.ToString()) != null)
                 {
                     state = 2;
                 }

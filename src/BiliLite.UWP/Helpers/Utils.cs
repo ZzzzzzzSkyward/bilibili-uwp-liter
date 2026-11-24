@@ -244,8 +244,14 @@ namespace BiliLite.Helpers
             {
                 LoginDialog login = new LoginDialog();
                 dialogShowing = true;
-                await login.ShowAsync();
-                dialogShowing = false;
+                try
+                {
+                    await login.ShowAsync();
+                }
+                finally
+                {
+                    dialogShowing = false;
+                }
             }
             if (SettingHelper.Account.Logined)
             {

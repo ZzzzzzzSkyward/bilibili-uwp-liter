@@ -162,7 +162,7 @@ namespace BiliLite.Pages.Home
 
         private void btnTop_Click(object sender, RoutedEventArgs e)
         {
-            RecommendGridView.ScrollIntoView(RecommendGridView.Items[0]);
+            if (RecommendGridView.Items.Count > 0) RecommendGridView.ScrollIntoView(RecommendGridView.Items[0]);
         }
 
         private void btnList_Click(object sender, RoutedEventArgs e)

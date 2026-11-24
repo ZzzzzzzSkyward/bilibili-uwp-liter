@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""External orchestration controls; these never count toward the legacy 50/51 suite."""
+"""External orchestration controls; separate from current 51/52 and historical 50/51 stages."""
 import argparse
 import ctypes
 import hashlib
@@ -70,7 +70,7 @@ def main():
             result['duration_seconds'] = round(time.monotonic() - started, 3)
             results.append(result)
             (output / 'controls.json').write_text(json.dumps({'schema_version': 1, 'separate_from_legacy_totals': True, 'controls': results}, indent=2) + '\n')
-            (output / 'summary.md').write_text('# Runner contract controls\n\nSeparate from legacy 50 logical / 51 executable totals.\n\n' + '\n'.join('- %s: %s — %s' % (r['name'], r['status'], r['detail']) for r in results) + '\n')
+            (output / 'summary.md').write_text('# Runner contract controls\n\nSeparate from current 51 logical / 52 executable and historical 50 logical / 51 executable totals.\n\n' + '\n'.join('- %s: %s — %s' % (r['name'], r['status'], r['detail']) for r in results) + '\n')
             print(name + ': ' + result['status'], flush=True)
 
         def fixture(name, first='exit 7\n'):
@@ -92,10 +92,10 @@ def main():
             report_dir = output / name
             report = json.loads((report_dir / 'results.json').read_text())
             assert report['historical_baseline'] == {'logical': 50, 'executable': 51}
-            assert report['current_manifest'] == {'logical': 50, 'executable': 51}
+            assert report['current_manifest'] == {'logical': 51, 'executable': 52}
             assert report['selected_totals'] == {'logical': 2, 'executable': 2}
             assert report['finished'] and not report['complete_required']
-            assert len(report['stages']) == 51
+            assert len(report['stages']) == 52
             rows = [r for r in report['stages'] if r['selected']]
             assert [r['status'] for r in rows] == expected, [(r['id'], r['status'], r['reason']) for r in rows]
             if reasons:
@@ -155,7 +155,7 @@ os.execv(REAL_COMMAND, [REAL_COMMAND] + sys.argv[1:])
                 initialized = (output / name / 'results.json').is_file()
                 if initialized:
                     initial = json.loads((output / name / 'results.json').read_text())
-                    assert len(initial['stages']) == 51 and not initial['finished']
+                    assert len(initial['stages']) == 52 and not initial['finished']
                 if signum:
                     start = time.monotonic()
                     child.send_signal(signum)
@@ -206,7 +206,7 @@ os.execv(REAL_COMMAND, [REAL_COMMAND] + sys.argv[1:])
             code, _ = run_capture(command(root, 'failure'), REPO)
             rows = check_report('failure', code, ['FAIL', 'PASS'])
             assert rows[0]['exit_code'] == 7 and (root / 'later-started').exists()
-            return 'actual exit 7 retained; later actual control passed; 50/51 denominator retained'
+            return 'actual exit 7 retained; later actual control passed; current51/52 denominator retained'
         control('failure-propagation', failure)
 
         def missing():
@@ -291,7 +291,7 @@ CONTROL
             root = fixture('interfaces', 'touch should-not-run\n')
             empty = scratch / 'no-tools'
             code, listing = run_capture(['bash', str(RUNNER), '--list'], root, dict(env, UPSTREAM_UNIT_TOOLS=str(empty)))
-            assert code == 0 and 'AUTH01B.loginvm' in listing and '50 logical / 51 executable' in listing
+            assert code == 0 and 'AUTH01B.loginvm' in listing and 'current: 51 logical / 52 executable' in listing
             for bad in [['--only', ''], ['--only', 'bad'], ['--stage-timeout', 'nan'], ['--suite-timeout', '0'], ['--list', '--only', 'LM01']]:
                 code, _ = run_capture(['bash', str(RUNNER)] + bad, root, env)
                 assert code == 2
@@ -341,7 +341,7 @@ CONTROL
             report = json.loads((output / 'protocol/results.json').read_text())
             row = next(r for r in report['stages'] if r['id'] == 'LM05')
             assert code == 1 and row['status'] == 'ERROR' and row['reason'] == 'missing_completion_marker'
-            assert not report['complete_required'] and report['status_counts']['NOT_SELECTED'] == 50
+            assert not report['complete_required'] and report['status_counts']['NOT_SELECTED'] == 51
             return 'zero-exit selector without actual completion marker fails protocol'
         control('completion-marker-protocol', protocol)
 
@@ -388,7 +388,7 @@ CONTROL
             assert code == 0 and report['suite_status'] == 'PARTIAL_PASS' and not report['complete_required']
             assert report['selected_totals'] == {'logical': 1, 'executable': 1}
             assert report['logical_status']['AUTH01B'] == 'PARTIAL' and report['logical_pass'] == 0
-            assert report['status_counts']['NOT_SELECTED'] == 50 and report['status_counts']['PASS'] == 1
+            assert report['status_counts']['NOT_SELECTED'] == 51 and report['status_counts']['PASS'] == 1
             assert not any(value for key, value in report['status_counts'].items() if key not in ('NOT_SELECTED', 'PASS'))
             assert all(hashlib.sha256((root / p).read_bytes()).hexdigest() == digest for p, digest in integrity.items())
             return 'byte-identical source hashes retained; broken LM01/Account defaults fail, real LM05/LoginVM independently PASS: ' + repr(details)

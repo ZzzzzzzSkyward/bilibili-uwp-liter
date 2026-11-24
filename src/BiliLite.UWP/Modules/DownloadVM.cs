@@ -1,4 +1,5 @@
-﻿using BiliLite.Helpers;
+using BiliLite.Services;
+using BiliLite.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -17,6 +18,19 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace BiliLite.Modules
 {
+    public sealed class DownloadCleanupTarget
+    {
+        internal DownloadCleanupTarget(string path, long revision, HashSet<string> guids, Dictionary<string, CancellationTokenSource> sources, bool cancelRunning, string title)
+        { Path = path; Revision = revision; Guids = guids; Sources = sources; CancelRunning = cancelRunning; Title = title; }
+        public string Path { get; }
+        internal readonly long Revision;
+        internal readonly HashSet<string> Guids;
+        internal readonly Dictionary<string, CancellationTokenSource> Sources;
+        internal readonly bool CancelRunning;
+        internal bool WasCancelled, FailedCancellation;
+        public string Title { get; }
+        public string FailureText { get; internal set; }
+    }
     public class DownloadVM : IModules
     {
         private static DownloadVM _downloadVM;
@@ -51,6 +65,7 @@ namespace BiliLite.Modules
             Downloadings = new ObservableCollection<DownloadingItem>();
 
             RefreshDownloadedCommand = new RelayCommand(RefreshDownloaded);
+            RetryCleanupCommand = new RelayCommand(RetryCleanup);
             PauseItemCommand = new RelayCommand<DownloadingSubItem>(PauseItem);
             ResumeItemCommand = new RelayCommand<DownloadingSubItem>(ResumeItem);
             DeleteItemCommand = new RelayCommand<DownloadingItem>(DeleteItem);
@@ -92,6 +107,15 @@ namespace BiliLite.Modules
             set { _diskFree = value; DoPropertyChanged("DiskFree"); }
         }
 
+        private bool legacyPartial;
+        private bool scanPending;
+        private bool discoveryPending;
+        private string downloadedStatus = "";
+        public string DownloadedStatus { get { return downloadedStatus; } private set { downloadedStatus = value; DoPropertyChanged("DownloadedStatus"); } }
+        public bool DiskAvailable { get; private set; }
+        public ObservableCollection<DownloadCleanupTarget> CleanupFailures { get; } = new ObservableCollection<DownloadCleanupTarget>();
+        public ICommand RetryCleanupCommand { get; private set; }
+
         public void RefreshDownloaded()
         {
             if (LoadingDownloaded)
@@ -107,11 +131,25 @@ namespace BiliLite.Modules
         /// <returns></returns>
         public async void LoadDownloaded()
         {
-
+            try { await LoadDownloadedAsync(); }
+            catch (Exception ex) { LogHelper.Log("下载目录读取失败", LogType.ERROR, ex); }
+        }
+        public async Task LoadDownloadedAsync()
+        {
+            if (scanPending) return;
+            scanPending = true;
             LoadingDownloaded = true;
-            Downloadeds.Clear();
+            var staged = new ObservableCollection<DownloadedItem>();
+            bool partial = false;
+            bool withheld = false;
+            var reads = new Dictionary<DownloadedSubItem, DownloadPathCoordinator.ReadStamp>();
+            var candidates = new Dictionary<DownloadedItem, Dictionary<string, DownloadPathCoordinator.ReadStamp>>();
+            try
+            {
             var folder = await GetDownloadFolder();
-            await LoadDiskSize(folder);
+            try { await LoadDiskSize(folder); DiskAvailable = true; }
+            catch (Exception ex) { DiskAvailable = false; DiskFree = DiskTotal = DiskUse = 0; partial = true; LogHelper.Log("磁盘信息读取失败", LogType.ERROR, ex); }
+            DoPropertyChanged("DiskAvailable");
             // var list = new List<DownloadedItem>();
             foreach (var item in await folder.GetFoldersAsync())
             {
@@ -140,6 +178,7 @@ namespace BiliLite.Modules
                         IsSeason = info.Type == DownloadType.Season,
                         Path = item.Path
                     };
+                    candidates[downloadedItem] = new Dictionary<string, DownloadPathCoordinator.ReadStamp>();
                     var coverFile = await item.TryGetItemAsync("cover.jpg") as StorageFile;
                     if (coverFile != null)
                     {
@@ -158,6 +197,10 @@ namespace BiliLite.Modules
 
                     foreach (var episodeItem in await item.GetFoldersAsync())
                     {
+                        try
+                        {
+                        var readStamp = DownloadPathCoordinator.CaptureRead(episodeItem.Path);
+                        if (candidates != null) candidates[downloadedItem][episodeItem.Path] = readStamp;
                         //检查是否存在info.json
                         var episodeInfoFile = await episodeItem.TryGetItemAsync("info.json") as StorageFile;
                         if (episodeInfoFile == null)
@@ -219,7 +262,10 @@ namespace BiliLite.Modules
                             }
                         }
 
+                        reads?.Add(downloadedSubItem, readStamp);
                         lsEpisodes.Add(downloadedSubItem);
+                        }
+                        catch (Exception ex) { partial = true; LogHelper.Log("下载分集读取失败", LogType.ERROR, ex); }
                     }
                     //排序
                     foreach (var episode in lsEpisodes.OrderBy(x => x.Index))
@@ -227,35 +273,57 @@ namespace BiliLite.Modules
                         downloadedItem.Episodes.Add(episode);
                     }
 
-                    Downloadeds.Add(downloadedItem);
+                    staged.Add(downloadedItem);
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(ex.Message);
+                    partial = true; LogHelper.Log("下载目录子项读取失败", LogType.ERROR, ex);
                     continue;
                 }
 
 
             }
 
-            // list = list.OrderByDescending(x => x.UpdateTime).ToList();
-            if (SettingHelper.GetValue(SettingHelper.Download.LOAD_OLD_DOWNLOAD, false))
-            {
-                await LoadDownloadedOld();
+
+                if (SettingHelper.GetValue(SettingHelper.Download.LOAD_OLD_DOWNLOAD, false))
+                {
+                    try { legacyPartial = false; await LoadDownloadedOld(staged, reads, candidates); partial |= legacyPartial; }
+                    catch (Exception ex) { partial = true; LogHelper.Log("旧下载目录读取失败", LogType.ERROR, ex); }
+                }
+                // No await separates this classification check from staged publication.
+                foreach (var title in staged.ToList())
+                {
+                    bool removed = false;
+                    Dictionary<string, DownloadPathCoordinator.ReadStamp> titleCandidates;
+                    if (candidates.TryGetValue(title, out titleCandidates))
+                        foreach (var candidate in titleCandidates)
+                            if (!DownloadPathCoordinator.CanPublish(candidate.Key, candidate.Value)) removed = withheld = true;
+                    foreach (var episode in title.Episodes.ToList())
+                    {
+                        DownloadPathCoordinator.ReadStamp stamp;
+                        if (reads.TryGetValue(episode, out stamp) && !DownloadPathCoordinator.CanPublish(episode.Path, stamp))
+                        { title.Episodes.Remove(episode); removed = withheld = true; }
+                    }
+                    if (removed && title.Episodes.Count == 0) staged.Remove(title);
+                }
+                foreach (var failure in CleanupFailures.ToList())
+                    if (DownloadPathCoordinator.CompletedRevision(failure.Path) > failure.Revision) CleanupFailures.Remove(failure);
+                Downloadeds = staged;
+                DownloadedStatus = withheld ? "部分下载尚未完成或待清理，请完成下载或清理后刷新" : partial ? "部分下载内容或磁盘信息读取失败，请刷新重试" : (staged.Count == 0 ? "暂无离线视频" : "");
             }
-
-
-            //foreach (var item in list)
-            //{
-            //    Downloadeds.Add(item);
-            //}
-            LoadingDownloaded = false;
+            catch (Exception ex)
+            {
+                DiskAvailable = false; DiskFree = DiskTotal = DiskUse = 0; DoPropertyChanged("DiskAvailable");
+                DownloadedStatus = "下载目录读取失败，请刷新重试";
+                LogHelper.Log("下载目录读取失败", LogType.ERROR, ex);
+            }
+            finally { scanPending = false; LoadingDownloaded = false; }
         }
         /// <summary>
         /// 读取旧版下载的视频
         /// </summary>
         /// <returns></returns>
-        public async Task LoadDownloadedOld()
+        public async Task LoadDownloadedOld(ObservableCollection<DownloadedItem> target = null, IDictionary<DownloadedSubItem, DownloadPathCoordinator.ReadStamp> reads = null, IDictionary<DownloadedItem, Dictionary<string, DownloadPathCoordinator.ReadStamp>> candidates = null)
         {
 
             var folder = await GetDownloadOldFolder();
@@ -289,6 +357,7 @@ namespace BiliLite.Modules
                         IsSeason = info["type"].ToString() != "video",
                         Path = item.Path
                     };
+                    if (candidates != null) candidates[downloadedItem] = new Dictionary<string, DownloadPathCoordinator.ReadStamp>();
                     var coverFile = await item.TryGetItemAsync("thumb.jpg") as StorageFile;
                     if (coverFile != null)
                     {
@@ -299,6 +368,10 @@ namespace BiliLite.Modules
 
                     foreach (var episodeItem in await item.GetFoldersAsync())
                     {
+                        try
+                        {
+                        var readStamp = DownloadPathCoordinator.CaptureRead(episodeItem.Path);
+                        if (candidates != null) candidates[downloadedItem][episodeItem.Path] = readStamp;
                         //检查是否存在info.json
                         var episodeInfoFile = await episodeItem.TryGetItemAsync("info.json") as StorageFile;
                         if (episodeInfoFile == null)
@@ -349,7 +422,10 @@ namespace BiliLite.Modules
                         downloadedSubItem.DanmakuPath = Path.Combine(episodeItem.Path, downloadedSubItem.CID + ".xml");
 
 
+                        reads?.Add(downloadedSubItem, readStamp);
                         lsEpisodes.Add(downloadedSubItem);
+                        }
+                        catch (Exception ex) { legacyPartial = true; LogHelper.Log("旧下载分集读取失败", LogType.ERROR, ex); }
                     }
                     //排序
                     foreach (var episode in lsEpisodes.OrderBy(x => x.Index))
@@ -357,11 +433,12 @@ namespace BiliLite.Modules
                         downloadedItem.Episodes.Add(episode);
                     }
 
-                    Downloadeds.Add(downloadedItem);
+                    (target ?? Downloadeds).Add(downloadedItem);
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(ex.Message);
+                    LogHelper.Log("旧下载子项读取失败", LogType.ERROR, ex);
+                    legacyPartial = true;
                     continue;
                 }
 
@@ -420,46 +497,83 @@ namespace BiliLite.Modules
             }
         }
 
-        private IDictionary<string, CancellationTokenSource> cts;
+        private readonly IDictionary<string, CancellationTokenSource> cts = new Dictionary<string, CancellationTokenSource>();
+        private readonly Dictionary<string, CancellationTokenSource> failedCancellations = new Dictionary<string, CancellationTokenSource>();
+        private readonly HashSet<string> observerFinished = new HashSet<string>();
+        private readonly HashSet<string> independentlyAbsent = new HashSet<string>();
+        private void RetireSource(string guid, CancellationTokenSource source)
+        {
+            CancellationTokenSource owned;
+            if (cts.TryGetValue(guid, out owned) && ReferenceEquals(source, owned))
+            { cts.Remove(guid); source.Dispose(); }
+            downloadOperations?.RemoveAll(x => x.Guid.ToString() == guid);
+            observerFinished.Remove(guid); independentlyAbsent.Remove(guid);
+        }
+        private void ReconcileAbsent(HashSet<string> current)
+        {
+            foreach (var entry in cts.ToList())
+            {
+                if (current.Contains(entry.Key)) continue;
+                independentlyAbsent.Add(entry.Key);
+                CancellationTokenSource failed;
+                if (failedCancellations.TryGetValue(entry.Key, out failed) && ReferenceEquals(failed, entry.Value)) failedCancellations.Remove(entry.Key);
+                if (observerFinished.Contains(entry.Key)) RetireSource(entry.Key, entry.Value);
+            }
+        }
         List<DownloadOperation> downloadOperations;
-        List<Task> handelList;
         /// <summary>
         /// 读取下载中
         /// </summary>
         public async void LoadDownloading()
         {
-            cts = new Dictionary<string, CancellationTokenSource>();
-            if (handelList == null)
+            if (discoveryPending) return;
+            discoveryPending = true;
+            try
             {
-                handelList = new List<Task>();
-            }
             if (downloadOperations == null)
             {
                 downloadOperations = new List<DownloadOperation>();
             }
+            var pendingObservers = new List<Tuple<DownloadOperation, CancellationTokenSource>>();
             ObservableCollection<DownloadingSubItem> subItems = new ObservableCollection<DownloadingSubItem>();
-            Downloadings.Clear();
+            var staged = new ObservableCollection<DownloadingItem>();
             var ls = await BackgroundDownloader.GetCurrentDownloadsForTransferGroupAsync(DownloadHelper.group);
+            var metadata = new Dictionary<string, DownloadGUIDInfo>();
+            bool metadataPartial = false;
+            foreach (var op in ls)
+            {
+                var key = op.Guid.ToString();
+                var value = SettingHelper.GetValue<DownloadGUIDInfo>(key, null);
+                try
+                {
+                    if (value == null || string.IsNullOrWhiteSpace(value.CID) || string.IsNullOrWhiteSpace(value.Path) || value.GUID != key)
+                        throw new DownloadPathException(DownloadPathFailure.Reconciliation);
+                    DownloadPathCoordinator.Normalize(value.Path);
+                    metadata.Add(key, value);
+                }
+                catch (Exception ex) { metadataPartial = true; LogHelper.Log("下载任务元数据读取失败", LogType.ERROR, ex); }
+            }
+            if (!metadataPartial) ReconcileAbsent(new HashSet<string>(ls.Select(x => x.Guid.ToString())));
             foreach (var item in ls)
             {
                 CancellationTokenSource cancellationTokenSource = null;
 
-                var data = SettingHelper.GetValue<DownloadGUIDInfo>(item.Guid.ToString(), null);
-                if (data == null || data.CID == null) continue;
-                if (cts.ContainsKey(data.CID))
+                DownloadGUIDInfo data;
+                if (!metadata.TryGetValue(item.Guid.ToString(), out data)) continue;
+                if (cts.ContainsKey(item.Guid.ToString()))
                 {
-                    cancellationTokenSource = cts[data.CID];
+                    cancellationTokenSource = cts[item.Guid.ToString()];
                 }
                 else
                 {
                     cancellationTokenSource = new CancellationTokenSource();
-                    cts.Add(data.CID, cancellationTokenSource);
+                    cts.Add(item.Guid.ToString(), cancellationTokenSource);
                 }
 
-                if (!downloadOperations.Contains(item))
+                if (!downloadOperations.Any(x => x.Guid == item.Guid))
                 {
                     downloadOperations.Add(item);
-                    handelList.Add(Handel(item, cancellationTokenSource));
+                    pendingObservers.Add(Tuple.Create(item, cancellationTokenSource));
                 }
 
                 subItems.Add(new DownloadingSubItem()
@@ -478,16 +592,16 @@ namespace BiliLite.Modules
                     ResumeItemCommand = ResumeItemCommand
                 });
             }
-            foreach (var item in subItems.GroupBy(x => x.CID))
+            foreach (var item in subItems.GroupBy(x => new { x.CID, x.Path }))
             {
                 ObservableCollection<DownloadingSubItem> items = new ObservableCollection<DownloadingSubItem>();
                 foreach (var item2 in item)
                 {
                     items.Add(item2);
                 }
-                Downloadings.Add(new DownloadingItem()
+                staged.Add(new DownloadingItem()
                 {
-                    EpisodeID = item.Key,
+                    EpisodeID = item.Key.CID,
                     Items = items,
                     Title = item.FirstOrDefault().Title,
                     EpisodeTitle = item.FirstOrDefault().EpisodeTitle,
@@ -495,7 +609,22 @@ namespace BiliLite.Modules
                     DeleteItemCommand = DeleteItemCommand,
                 });
             }
-            await Task.WhenAll(handelList);
+            if (metadataPartial)
+            {
+                // Preserve established rows/sources while still exposing successfully published siblings.
+                foreach (var row in staged)
+                {
+                    var existing = Downloadings.FirstOrDefault(x => x.EpisodeID == row.EpisodeID && x.Path == row.Path);
+                    if (existing == null) Downloadings.Add(row);
+                    else foreach (var child in row.Items) if (!existing.Items.Any(x => x.GUID == child.GUID)) existing.Items.Add(child);
+                }
+                Utils.ShowMessageToast("部分下载任务读取失败，请刷新重试");
+            }
+            else Downloadings = staged;
+            foreach (var observer in pendingObservers) _ = Handel(observer.Item1, observer.Item2);
+            }
+            catch (Exception ex) { LogHelper.Log("下载任务读取失败", LogType.ERROR, ex); Utils.ShowMessageToast("下载任务读取失败，请重试"); }
+            finally { discoveryPending = false; }
 
         }
         private async Task Handel(DownloadOperation downloadOperation, CancellationTokenSource cancellationTokenSource)
@@ -531,11 +660,16 @@ namespace BiliLite.Modules
                 }
                 var guid = downloadOperation.Guid.ToString();
                 var item = Downloadings.FirstOrDefault(x => x.Items.FirstOrDefault(y => y.GUID == guid) != null);
-                await Utils.ShowDialog("下载出现问题", $"失败视频:{item.Title ?? ""} {item.EpisodeTitle ?? ""}\r\n" + ex.Message);
+                try { await Utils.ShowDialog("下载出现问题", $"失败视频:{item?.Title ?? ""} {item?.EpisodeTitle ?? ""}\r\n" + ex.Message); }
+                catch (Exception reportError) { LogHelper.Log("下载错误提示失败", LogType.ERROR, reportError); }
             }
             finally
             {
-                RemoveItem(downloadOperation.Guid.ToString(), success);
+                var guid = downloadOperation.Guid.ToString();
+                RemoveItem(guid, success);
+                observerFinished.Add(guid);
+                // A locally cancelled observer alone is not proof that a failed native cancellation settled.
+                if (!cancellationTokenSource.IsCancellationRequested || independentlyAbsent.Contains(guid)) RetireSource(guid, cancellationTokenSource);
 
             }
         }
@@ -572,6 +706,7 @@ namespace BiliLite.Modules
 
         private double GetProgress(ulong progress, ulong total)
         {
+            if (total == 0) return 0;
             if (total >= progress)
             {
                 return ((double)progress / total) * 100;
@@ -621,97 +756,187 @@ namespace BiliLite.Modules
         /// 暂停下载
         /// </summary>
         /// <param name="item"></param>
-        private void PauseItem(DownloadingSubItem item)
+        private void PauseItem(DownloadingSubItem item) { ControlOperation(item, true, true); }
+        private void ResumeItem(DownloadingSubItem item) { ControlOperation(item, false, true); }
+        private bool ControlOperation(DownloadingSubItem item, bool pause, bool report)
+        {
+            var op = downloadOperations?.FirstOrDefault(x => x.Guid.ToString() == item?.GUID);
+            if (op == null) return true;
+            try { if (pause) op.Pause(); else op.Resume(); return true; }
+            catch (Exception ex)
+            {
+                LogHelper.Log(pause ? "暂停下载失败" : "恢复下载失败", LogType.ERROR, ex);
+                if (report) Utils.ShowMessageToast(pause ? "暂停失败，请刷新任务后重试" : "恢复失败，请刷新任务后重试");
+                return false;
+            }
+        }
+        private bool cleanupPending;
+        private async Task<HashSet<string>> ReconcileAsync(string path)
         {
             try
             {
-                var op = downloadOperations.FirstOrDefault(x => x.Guid.ToString().Equals(item.GUID));
-                op.Pause();
-            }
-            catch (Exception)
+            var result = new HashSet<string>();
+            var operations = await BackgroundDownloader.GetCurrentDownloadsForTransferGroupAsync(DownloadHelper.group);
+            foreach (var op in operations)
             {
+                var guid = op.Guid.ToString();
+                var data = SettingHelper.GetValue<DownloadGUIDInfo>(guid, null);
+                if (data == null || string.IsNullOrWhiteSpace(data.Path) || data.GUID != guid || string.IsNullOrWhiteSpace(data.CID))
+                    throw new DownloadPathException(DownloadPathFailure.Reconciliation);
+                if (DownloadPathCoordinator.Contains(path, data.Path)) result.Add(guid);
             }
+            ReconcileAbsent(new HashSet<string>(operations.Select(x => x.Guid.ToString())));
+            return result;
+            }
+            catch (Exception ex) { throw new DownloadPathException(DownloadPathFailure.Reconciliation, ex); }
         }
-        /// <summary>
-        /// 开始下载
-        /// </summary>
-        /// <param name="item"></param>
-        private void ResumeItem(DownloadingSubItem item)
+        public async Task<DownloadCleanupTarget> CaptureCleanupAsync(string path, string title, bool cancelRunning)
         {
-            try
+            using (var lease = DownloadPathCoordinator.Acquire(path))
             {
-                var op = downloadOperations.FirstOrDefault(x => x.Guid.ToString().Equals(item.GUID));
-                op.Resume();
+                var guids = await ReconcileAsync(path);
+                if (!cancelRunning && guids.Count != 0) throw new DownloadPathException(DownloadPathFailure.Busy);
+                var sources = new Dictionary<string, CancellationTokenSource>();
+                if (cancelRunning)
+                    foreach (var guid in guids)
+                    {
+                        CancellationTokenSource source;
+                        if (!cts.TryGetValue(guid, out source)) throw new DownloadPathException(DownloadPathFailure.Reconciliation);
+                        sources.Add(guid, source);
+                    }
+                return new DownloadCleanupTarget(path, lease.Revision, guids, sources, cancelRunning, title);
             }
-            catch (Exception)
-            {
-            }
-
         }
-        /// <summary>
-        /// 删除
-        /// </summary>
-        /// <param name="item"></param>
+        public async Task DeleteCleanupAsync(DownloadCleanupTarget target)
+        {
+            using (var lease = DownloadPathCoordinator.Acquire(target.Path, expectedRevision: target.Revision))
+            {
+                var current = await ReconcileAsync(target.Path);
+                if (!current.IsSubsetOf(target.Guids) || (!target.CancelRunning && current.Count != 0)) throw new DownloadPathException(DownloadPathFailure.Changed);
+                // Resolve every source before cancelling any operation.
+                foreach (var guid in current)
+                {
+                    CancellationTokenSource source;
+                    if (!cts.TryGetValue(guid, out source) || !ReferenceEquals(source, target.Sources[guid])) throw new DownloadPathException(DownloadPathFailure.Changed);
+                    CancellationTokenSource failed;
+                    if (failedCancellations.TryGetValue(guid, out failed) && ReferenceEquals(failed, source))
+                    { target.FailedCancellation = true; throw new DownloadPathException(DownloadPathFailure.Reconciliation); }
+                }
+                foreach (var guid in current)
+                {
+                    var operation = downloadOperations.First(x => x.Guid.ToString() == guid);
+                    var metadata = SettingHelper.GetValue<DownloadGUIDInfo>(guid, null);
+                    if (operation.Progress.TotalBytesToReceive == 0 || operation.Progress.BytesReceived < operation.Progress.TotalBytesToReceive)
+                        DownloadPathCoordinator.MarkPartial(metadata.Path);
+                    try { target.Sources[guid].Cancel(); target.WasCancelled = true; }
+                    catch
+                    {
+                        failedCancellations[guid] = target.Sources[guid]; target.FailedCancellation = true;
+                        throw;
+                    }
+                }
+                try
+                {
+                    var folder = await StorageFolder.GetFolderFromPathAsync(target.Path);
+                    await folder.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                }
+                catch (FileNotFoundException) { }
+                catch (DirectoryNotFoundException) { }
+                DownloadPathCoordinator.CleanupSucceeded(lease);
+                foreach (var failure in CleanupFailures.Where(x => DownloadPathCoordinator.Contains(target.Path, x.Path) && x.Revision <= target.Revision).ToList()) CleanupFailures.Remove(failure);
+            }
+        }
         private async void DeleteItem(DownloadingItem data)
         {
+            try { await DeleteItemAsync(data); }
+            catch (Exception ex) { LogHelper.Log("清理任务失败", LogType.ERROR, ex); Utils.ShowMessageToast("清理失败，请重试"); }
+        }
+        public async Task DeleteItemAsync(DownloadingItem data)
+        {
+            if (cleanupPending || data == null) return;
+            cleanupPending = true;
             try
             {
-                if (!await Utils.ShowDialog("取消任务", "确定要取消任务吗?"))
-                {
-                    return;
-                }
-                cts[data.EpisodeID].Cancel();
-                var folder = await StorageFolder.GetFolderFromPathAsync(data.Path);
-                await folder.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                var target = await CaptureCleanupAsync(data.Path, data.Title + " " + data.EpisodeTitle, true);
+                if (!await Utils.ShowDialog("取消并删除任务", $"确定取消《{target.Title}》并永久删除已下载的部分文件吗？")) return;
+                await DownloadCleanupTargetsAsync(new[] { target });
             }
-            catch (Exception)
+            catch (Exception ex) { LogHelper.Log("删除下载任务失败", LogType.ERROR, ex); Utils.ShowMessageToast("任务未删除，请刷新后重试"); }
+            finally { cleanupPending = false; }
+        }
+        private async Task DownloadCleanupTargetsAsync(IEnumerable<DownloadCleanupTarget> targets)
+        {
+            int success = 0, failure = 0, superseded = 0;
+            foreach (var target in targets)
             {
+                try { await DeleteCleanupAsync(target); CleanupFailures.Remove(target); success++; }
+                catch (Exception ex)
+                {
+                    if (DownloadPathCoordinator.CompletedRevision(target.Path) > target.Revision)
+                    {
+                        CleanupFailures.Remove(target); superseded++;
+                        LogHelper.Log("新下载已完成，旧清理记录失效", LogType.ERROR, ex);
+                        continue;
+                    }
+                    failure++;
+                    target.FailureText = target.FailedCancellation
+                        ? (target.WasCancelled ? "部分任务已取消，仍有任务取消失败，部分文件未删除" : "任务取消失败，文件未删除")
+                        : (target.WasCancelled ? "任务已取消，部分文件未删除" : "清理失败，请刷新后重试");
+                    if (CleanupFailures.Contains(target)) CleanupFailures.Remove(target);
+                    CleanupFailures.Add(target);
+                    LogHelper.Log("下载部分文件清理失败: " + target.Title, LogType.ERROR, ex);
+                }
             }
-
+            Utils.ShowMessageToast($"已清理{success}项，失败{failure}项" + (superseded > 0 ? $"，{superseded}项下载已更新，旧清理记录已失效，未删除新下载" : "") + (failure > 0 ? "，任务可能已取消，部分文件未删除，请重试清理" : ""));
+        }
+        private async void RetryCleanup()
+        {
+            if (cleanupPending) return;
+            cleanupPending = true;
+            try
+            {
+                var targets = CleanupFailures.ToList();
+                if (targets.Count == 0) return;
+                if (!await Utils.ShowDialog("重试清理", $"确定永久删除{targets.Count}项任务遗留的部分文件吗？")) return;
+                await DownloadCleanupTargetsAsync(targets);
+            }
+            catch (Exception ex) { LogHelper.Log("重试清理失败", LogType.ERROR, ex); }
+            finally { cleanupPending = false; }
         }
 
-        private void StartAll()
+        private void StartAll() { ControlAll(false); }
+        private void PauseAll() { ControlAll(true); }
+        private void ControlAll(bool pause)
         {
-            if (Downloadings.Count == 0) return;
-            foreach (var item in Downloadings)
-            {
-                foreach (var item1 in item.Items)
-                {
-                    ResumeItem(item1);
-                }
-            }
-        }
-        private void PauseAll()
-        {
-            if (Downloadings.Count == 0) return;
-            foreach (var item in Downloadings)
-            {
-                foreach (var item1 in item.Items)
-                {
-                    PauseItem(item1);
-                }
-            }
+            int failed = 0;
+            foreach (var item in Downloadings.ToList())
+                foreach (var child in item.Items.ToList()) if (!ControlOperation(child, pause, false)) failed++;
+            if (failed > 0) Utils.ShowMessageToast($"{failed}项任务" + (pause ? "暂停失败" : "恢复失败") + "，请刷新后重试");
         }
         private async void DeleteAll()
         {
-            if (Downloadings.Count == 0) return;
-            if (!await Utils.ShowDialog("取消任务", "确定要取消全部任务吗?"))
+            try { await DeleteAllAsync(); }
+            catch (Exception ex) { LogHelper.Log("批量清理任务失败", LogType.ERROR, ex); Utils.ShowMessageToast("清理失败，请重试"); }
+        }
+        public async Task DeleteAllAsync()
+        {
+            if (cleanupPending || Downloadings.Count == 0) return;
+            cleanupPending = true;
+            try
             {
-                return;
-            }
-            foreach (var item in Downloadings.ToList())
-            {
-                try
+                var targets = new List<DownloadCleanupTarget>();
+                int blocked = 0;
+                foreach (var item in Downloadings.ToList())
                 {
-                    cts[item.EpisodeID].Cancel();
-                    var folder = await StorageFolder.GetFolderFromPathAsync(item.Path);
-                    await folder.DeleteAsync(StorageDeleteOption.PermanentDelete);
+                    try { targets.Add(await CaptureCleanupAsync(item.Path, item.Title + " " + item.EpisodeTitle, true)); }
+                    catch (Exception ex) { blocked++; LogHelper.Log("下载任务无法确认清理范围", LogType.ERROR, ex); }
                 }
-                catch (Exception)
-                {
-                }
-
+                if (targets.Count == 0) { Utils.ShowMessageToast("任务未删除，请刷新后重试"); return; }
+                if (!await Utils.ShowDialog("取消并删除任务", $"确定取消{targets.Count}项任务并永久删除部分文件吗？" + (blocked > 0 ? $"另有{blocked}项不可清理。" : ""))) return;
+                await DownloadCleanupTargetsAsync(targets);
             }
+            catch (Exception ex) { LogHelper.Log("批量清理失败", LogType.ERROR, ex); Utils.ShowMessageToast("清理失败，请重试"); }
+            finally { cleanupPending = false; }
         }
         public async void UpdateSetting()
         {

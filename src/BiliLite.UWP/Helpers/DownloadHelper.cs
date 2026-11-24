@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+using BiliLite.Services;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -33,31 +34,50 @@ namespace BiliLite.Helpers
         public static BackgroundTransferGroup group = BackgroundTransferGroup.CreateGroup("BiliDownlad");//下载组，方便管理
         public async static Task AddDownload(DownloadInfo downloadInfo)
         {
-            //读取存储文件夹
-            StorageFolder folder = await GetDownloadFolder();
-            folder = await folder.CreateFolderAsync((downloadInfo.Type == DownloadType.Season ? ("ss"+ downloadInfo.SeasonID) : downloadInfo.AVID), CreationCollisionOption.OpenIfExists);
-            StorageFolder episodeFolder = await folder.CreateFolderAsync(downloadInfo.Type == DownloadType.Season?downloadInfo.EpisodeID: downloadInfo.CID, CreationCollisionOption.OpenIfExists);
-            //下载封面
-            await DownloadCover(downloadInfo.CoverUrl, folder);
-            //下载弹幕
-            await DownloadDanmaku(downloadInfo.DanmakuUrl, episodeFolder);
-            //下载字幕
+            // Keep validated names, URLs and metadata bound to the captured admission across awaits.
+            downloadInfo = JsonConvert.DeserializeObject<DownloadInfo>(JsonConvert.SerializeObject(downloadInfo));
+            if (downloadInfo == null || downloadInfo.Urls == null || downloadInfo.Urls.Count == 0)
+                throw new InvalidOperationException("没有可下载的视频链接，请重新读取后重试");
+            foreach (var url in downloadInfo.Urls)
+            {
+                if (url == null || string.IsNullOrWhiteSpace(url.Url) || string.IsNullOrWhiteSpace(url.FileName))
+                    throw new InvalidOperationException("视频下载链接或文件名无效，请重新读取后重试");
+                // Use the same URI construction as the transfer, before any target mutation.
+                try { new Uri(url.Url); }
+                catch (Exception ex) { throw new InvalidOperationException("视频下载链接无效，请重新读取后重试", ex); }
+            }
+            var root = await GetDownloadFolder();
+            var parentName = downloadInfo.Type == DownloadType.Season ? "ss" + downloadInfo.SeasonID : downloadInfo.AVID;
+            var episodeName = downloadInfo.Type == DownloadType.Season ? downloadInfo.EpisodeID : downloadInfo.CID;
+            var path = DownloadPathCoordinator.Child(DownloadPathCoordinator.Child(root.Path, parentName), episodeName);
+            // Validate every filename before acquiring ownership or mutating storage.
+            foreach (var url in downloadInfo.Urls) DownloadPathCoordinator.Child(path, url.FileName);
             if (downloadInfo.Subtitles != null)
+                foreach (var subtitle in downloadInfo.Subtitles) DownloadPathCoordinator.Child(path, subtitle.Name + ".json");
+            using (var lease = DownloadPathCoordinator.Acquire(path, creation: true))
             {
-                foreach (var item in downloadInfo.Subtitles)
+                var generation = DownloadPathCoordinator.BeginGeneration(lease, downloadInfo.Urls.Count);
+                bool prepared = false;
+                try
                 {
-                    await DownloadSubtitle(item, episodeFolder);
+                var folder = await root.CreateFolderAsync(parentName, CreationCollisionOption.OpenIfExists);
+                var episodeFolder = await folder.CreateFolderAsync(episodeName, CreationCollisionOption.OpenIfExists);
+                await DownloadCover(downloadInfo.CoverUrl, folder);
+                await DownloadDanmaku(downloadInfo.DanmakuUrl, episodeFolder);
+                if (downloadInfo.Subtitles != null)
+                    foreach (var item in downloadInfo.Subtitles) await DownloadSubtitle(item, episodeFolder);
+                var preparations = downloadInfo.Urls.Select(item => DownloadVideo(downloadInfo, item, episodeFolder, generation)).ToList();
+                // WhenAll settles every sibling before a required error leaves the lease.
+                Exception failure = null;
+                try { await Task.WhenAll(preparations); } catch (Exception ex) { failure = ex; }
+                try { await SaveInfo(downloadInfo, folder, episodeFolder); } catch (Exception ex) { failure = failure ?? ex; }
+                if (failure != null) throw new InvalidOperationException("部分下载准备失败，已创建的任务已保留，请刷新任务列表后重试", failure);
+                prepared = true;
                 }
+                finally { DownloadPathCoordinator.PreparationSettled(generation, prepared); }
             }
-           
-            //下载视频
-            foreach (var item in downloadInfo.Urls)
-            {
-                 DownloadVideo(downloadInfo,item, episodeFolder);
-            }
-            //保存文件
-            await SaveInfo(downloadInfo,folder, episodeFolder);
         }
+
         private async static Task<StorageFolder> GetDownloadFolder()
         {
             var path = SettingHelper.GetValue(SettingHelper.Download.DOWNLOAD_PATH, SettingHelper.Download.DEFAULT_PATH);
@@ -148,6 +168,7 @@ namespace BiliLite.Helpers
             catch (Exception ex)
             {
                 LogHelper.Log("文件保存失败:" + episodeFolder.Path, LogType.ERROR,ex);
+                throw;
             }
         }
         private async static Task DownloadSubtitle(DownloadSubtitleInfo subtitleInfo, StorageFolder episodeFolder)
@@ -170,7 +191,7 @@ namespace BiliLite.Helpers
                 LogHelper.Log($"字幕下载失败:{subtitleInfo.Name}={subtitleInfo.Url}", LogType.ERROR, ex);
             }
         }
-        private async static void DownloadVideo(DownloadInfo downloadInfo, DownloadUrlInfo url, StorageFolder episodeFolder)
+        private async static Task DownloadVideo(DownloadInfo downloadInfo, DownloadUrlInfo url, StorageFolder episodeFolder, DownloadPathCoordinator.Generation generation)
         {
             BackgroundDownloader downloader = new BackgroundDownloader();
             if (url.HttpHeader!=null)
@@ -219,13 +240,16 @@ namespace BiliLite.Helpers
                 ID = downloadInfo.Type== DownloadType.Video? downloadInfo.AVID: downloadInfo.SeasonID.ToString()
             });
            
-            try
-            {
-                await downloadOp.StartAsync();
-            }
-            catch (Exception)
-            {
-            }
+            // Start dispatch belongs to preparation; transfer completion owns no path lease.
+            var transfer = downloadOp.StartAsync().AsTask();
+            _ = ObserveTransferAsync(transfer, generation);
+        }
+        private static async Task ObserveTransferAsync(Task transfer, DownloadPathCoordinator.Generation generation)
+        {
+            bool success = false;
+            try { await transfer; success = true; }
+            catch (Exception ex) { LogHelper.Log("后台下载结束或失败", LogType.ERROR, ex); }
+            finally { DownloadPathCoordinator.TransferSettled(generation, success); }
 
         }
     }

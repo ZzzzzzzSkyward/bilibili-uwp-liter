@@ -1,4 +1,5 @@
-﻿using System;
+using BiliLite.Parsing.Recommend;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -19,6 +20,7 @@ namespace BiliLite.Modules
             Banner = new ObservableCollection<RecommendBannerItemModel>();
             RefreshCommand = new RelayCommand(Refresh);
             LoadMoreCommand = new RelayCommand(LoadMore);
+            RetryCommand = new RelayCommand(Retry);
         }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
@@ -47,170 +49,142 @@ namespace BiliLite.Modules
         }
 
 
-        public async Task GetRecommend(string idx = "0")
+        private bool requestPending;
+        private bool readyState;
+        private bool retryAppend;
+        private string continuation;
+        public ICommand RetryCommand { get; private set; }
+        private string statusText = "";
+        public string StatusText { get { return statusText; } private set { statusText = value; DoPropertyChanged("StatusText"); } }
+        private bool autoLoad;
+        public bool AutoLoad { get { return autoLoad; } private set { autoLoad = value; DoPropertyChanged("AutoLoad"); } }
+
+        public Task GetRecommend(string idx = "0") { return LoadAsync(idx, idx != "0"); }
+        private async Task LoadAsync(string idx, bool append)
         {
+            if (requestPending) return;
+            var hadCommittedFeed = Items != null;
+            readyState = false;
+            requestPending = true;
+            Loading = true;
+            AutoLoad = false;
+            StatusText = "";
             try
             {
-                Loading = true;
-                var result = await recommendAPI.Recommend(idx).Request();
-                if (result.status)
+                bool optionalBannerFailure;
+                var parsed = RecommendResponseParser.Read(await recommendAPI.Recommend(idx).Request(), out optionalBannerFailure);
+                if (!parsed.IsSuccess) throw new InvalidOperationException(parsed.Stage + ": " + parsed.Message);
+                if (optionalBannerFailure) LogHelper.Log("推荐横幅解析失败", LogType.ERROR);
+                var staged = new ObservableCollection<RecommendItemModel>();
+                var banners = new ObservableCollection<RecommendBannerItemModel>();
+                foreach (var item in parsed.Value)
                 {
-                    var obj = result.GetJObject();
-                    if (obj["code"].ToInt32() == 0)
+                    if (item.card_goto == "banner")
                     {
-                        var items = JsonConvert.DeserializeObject<ObservableCollection<RecommendItemModel>>(obj["data"]["items"].ToString().Replace("left_bottom_rcmd_reason_style", "rcmd_reason_style"));
-                        var banner = items.FirstOrDefault(x => x.card_goto == "banner");
-                        if (banner != null)
+                        if (!SettingHelper.GetValue("dontloadbanner", false))
                         {
-                            //处理banner
-                            LoadBanner(banner);
-                            items.Remove(banner);
-                        }
-                        for (int i = items.Count - 1; i >= 0; i--)
-                        {
-                            if (items[i].showAD)
+                            try
                             {
-                                items.Remove(items[i]);
-                                continue;
-                            }
-                            var item = items[i];
-                            if (item.three_point_v2 != null && item.three_point_v2.Count > 0 && item.card_goto == "av")
-                            {
-                                item.three_point_v2.Insert(1, new RecommendThreePointV2ItemModel()
+                                var optional = new List<RecommendBannerItemModel>();
+                                foreach (var entry in item.banner_item ?? new JArray())
                                 {
-                                    idx = item.idx,
-                                    url = $"https://b23.tv/av{item.param}",
-                                    title = "使用浏览器打开",
-                                    type = "browser"
-                                });
+                                    var token = entry[(string)entry["type"] == "static" ? "static_banner" : "ad_banner"];
+                                    if (token != null) optional.Add(token.ToObject<RecommendBannerItemModel>());
+                                }
+                                foreach (var banner in optional) if (banner != null) banners.Add(banner);
                             }
-
+                            catch (Exception ex) { LogHelper.Log("推荐横幅解析失败", LogType.ERROR, ex); }
                         }
-                        
-                        if (Items == null)
-                        {
-                            Items = items;
-                            canloadmore = true;
-                            //await GetRecommend(items.LastOrDefault().idx);
-                        }
-                        else
-                        {
-                            foreach(var i in items)
-                            Items.Add(i);
-                        }
-
+                        continue;
                     }
-                    else
-                    {
-                        Utils.ShowMessageToast(obj["message"].ToString());
-                    }
+                    if (item.showAD) continue;
+                    if (item.three_point_v2 != null && item.three_point_v2.Count > 0 && item.card_goto == "av")
+                        item.three_point_v2.Insert(1, new RecommendThreePointV2ItemModel { idx = item.idx, url = $"https://b23.tv/av{item.param}", title = "使用浏览器打开", type = "browser" });
+                    staged.Add(item);
                 }
-                else
+                retryAppend = false;
+                var next = staged.LastOrDefault(x => !string.IsNullOrWhiteSpace(x.idx))?.idx;
+                if (!append)
                 {
-                    Utils.ShowMessageToast(result.message);
+                    Items = staged;
+                    Banner = banners;
                 }
+                else if (staged.Count > 0 && !string.IsNullOrWhiteSpace(next) && next != continuation)
+                    foreach (var item in staged) Items.Add(item);
+                else staged.Clear();
+                if (!append || staged.Count > 0) continuation = next;
+                AutoLoad = Items != null && Items.Count > 0 && !string.IsNullOrWhiteSpace(continuation) && (!append || staged.Count > 0);
+                StatusText = Items == null || Items.Count == 0 ? "暂无推荐内容" : (append && staged.Count == 0 ? "暂时没有更多推荐" : "");
+                readyState = !append || staged.Count > 0;
             }
             catch (Exception ex)
             {
-
-                var handel = HandelError<AnimeHomeModel>(ex);
-                Utils.ShowMessageToast(handel.message);
+                retryAppend = append;
+                StatusText = append ? "加载更多失败" : (hadCommittedFeed ? "推荐刷新失败" : "推荐加载失败");
+                LogHelper.Log("推荐加载失败", LogType.ERROR, ex);
             }
-            finally
-            {
-                Loading = false;
-            }
+            finally { requestPending = false; Loading = false; }
         }
-
-        private void LoadBanner(RecommendItemModel banner)
-        {
-            if(SettingHelper.GetValue("dontloadbanner",false)==true) { return; }
-            try
-            {
-                if (Banner == null) Banner = new ObservableCollection<RecommendBannerItemModel>();
-                if (Banner.Count == 0)
-                {
-                    foreach (var item in banner.banner_item)
-                    {
-                        if (item["type"].ToString() == "static")
-                        {
-                            Banner.Add(JsonConvert.DeserializeObject<RecommendBannerItemModel>(item["static_banner"].ToString()));
-                        }
-                        if (item["type"].ToString() == "ad")
-                        {
-                            Banner.Add(JsonConvert.DeserializeObject<RecommendBannerItemModel>(item["ad_banner"].ToString()));
-                        }
-                    }
-                }
-            }
-            catch (Exception)
-            {
-            }
-           
-        }
-        // 同一时间只允许一次加载：列表滚动会连续触发，这里挡掉重复请求
-        private bool canloadmore = true;
-        private string last_index = "xxx";
-
         public async void LoadMore()
         {
-            if (!canloadmore) return;
-            string idx = Items.LastOrDefault().idx;
-            bool issame = last_index == idx;
-            if (issame)
+            try
             {
-                canloadmore = false;
-                await Task.Delay(1000);
-                //清除之前的
-                canloadmore = true;
-                return;
+                if (Items == null || Items.Count == 0 || requestPending) return;
+                var idx = continuation ?? Items.LastOrDefault(x => !string.IsNullOrWhiteSpace(x.idx))?.idx;
+                if (string.IsNullOrWhiteSpace(idx)) return;
+                await LoadAsync(idx, true);
             }
-            last_index = idx;
-            if (Items == null || Items.Count == 0)
-            {
-                return;
-            }
-            if (Loading)
-            {
-                return;
-            }
-            await GetRecommend(idx);
+            catch (Exception ex) { LogHelper.Log("推荐追加失败", LogType.ERROR, ex); }
         }
         public async void Refresh()
         {
-            if (Loading)
+            try { await LoadAsync("0", false); }
+            catch (Exception ex) { LogHelper.Log("推荐刷新失败", LogType.ERROR, ex); }
+        }
+        private async void Retry()
+        {
+            try
             {
-                Utils.ShowMessageToast("正在加载中....");
-                return;
+                if (retryAppend) { var idx = continuation ?? Items?.LastOrDefault(x => !string.IsNullOrWhiteSpace(x.idx))?.idx; if (!string.IsNullOrWhiteSpace(idx)) await LoadAsync(idx, true); }
+                else await LoadAsync("0", false);
             }
-            Banner = null;
-            Items = null;
-            canloadmore = true;
-            await GetRecommend();
+            catch (Exception ex) { LogHelper.Log("推荐重试失败", LogType.ERROR, ex); }
         }
 
         public async Task Dislike(string idx, RecommendThreePointV2ItemModel threePointV2Item, RecommendThreePointV2ItemReasonsModel itemReasons)
         {
             try
             {
-                if (!SettingHelper.Account.Logined && await Utils.ShowLoginDialog())
+                var collection = Items;
+                var recommendItem = collection?.FirstOrDefault(x => x.idx == idx);
+                if (recommendItem == null) return;
+                if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
                 {
                     Utils.ShowMessageToast("请先登录");
                     return;
                 }
-                var recommendItem = Items.FirstOrDefault(x => x.idx == idx);
+                if (!ReferenceEquals(Items, collection) || !collection.Contains(recommendItem)) return;
                 var api = recommendAPI.Dislike(_goto: recommendItem.card_goto, id: recommendItem.param, mid: recommendItem.args.up_id, reason_id: itemReasons?.id ?? 0, rid: recommendItem.args.rid, tag_id: recommendItem.args.tid);
                 if (threePointV2Item.type == "feedback")
                 {
-                    recommendAPI.Feedback(_goto: recommendItem.card_goto, id: recommendItem.param, mid: recommendItem.args.up_id, feedback_id: itemReasons?.id ?? 0, rid: recommendItem.args.rid, tag_id: recommendItem.args.tid);
+                    api = recommendAPI.Feedback(_goto: recommendItem.card_goto, id: recommendItem.param, mid: recommendItem.args.up_id, feedback_id: itemReasons?.id ?? 0, rid: recommendItem.args.rid, tag_id: recommendItem.args.tid);
                 }
                 var result = await api.Request();
                 if (result.status)
                 {
                     var obj = result.GetJObject();
-                    if (obj["code"].ToInt32() == 0)
+                    if (RecommendResponseParser.ActionSucceeded(result))
                     {
-                        Items.Remove(recommendItem);
+                        if (ReferenceEquals(Items, collection) && collection.Contains(recommendItem))
+                        {
+                            collection.Remove(recommendItem);
+                            if (!requestPending && readyState)
+                            {
+                                continuation = collection.LastOrDefault(x => !string.IsNullOrWhiteSpace(x.idx))?.idx;
+                                AutoLoad = collection.Count > 0 && !string.IsNullOrWhiteSpace(continuation);
+                                StatusText = collection.Count == 0 ? "暂无推荐内容" : "";
+                            }
+                        }
                     }
                     else
                     {
