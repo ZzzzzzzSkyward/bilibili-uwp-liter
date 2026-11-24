@@ -41,3 +41,5 @@ The earlier U1 Windows command returned **127 / powershell: command not found**.
 ## Commit ownership
 
 Only the three product parsers, two probe programs, updated U1 evidence, this evidence and the source-stream index belong in the PB1 commit (`fix: reject out-of-range api business codes`). Exact stable source/test commit SHA and remote confirmation are appended after committing/pushing; an evidence-only follow-up records those immutable hashes. Other-owner working-tree changes remain unstaged and preserved.
+
+PB1 source/test commit/push completed: `edbd8739d894b8ab59400e097eb96a9a0a1ac592`; `git push origin dev` exited 0. Immediately afterward local HEAD and `git ls-remote origin refs/heads/dev` both returned that exact SHA. This evidence-only follow-up changes no source or assertion.
