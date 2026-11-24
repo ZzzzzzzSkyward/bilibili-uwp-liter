@@ -1,6 +1,6 @@
-# Search execution — COMMIT WINDOW GRANTED
+# Search execution — COMMITTED / PUSHED / OWNERSHIP RELEASED
 
-Owner: `search_executor`. U5/U8 implementation and owned verification are complete. `search/commit-window.md` now explicitly grants the shared-index commit/push window after U9/E1 release. The exact verified file hashes are unchanged. This is not an implementation-review or Windows/session PASS.
+Owner: `search_executor`. U5/U8 implementation and owned verification are complete. `search/commit-window.md` granted the shared-index commit/push window after U9/E1 release. Source/test commit `f594c9b58f6ed2e086329b1d2a221b1bc0fdf95e` is pushed and verified on origin/dev. The exact verified file hashes are unchanged. Source/test and shared API01Stubs ownership are now released. This is not an implementation-review or Windows/session PASS.
 
 ## Inputs and ownership
 
@@ -62,7 +62,7 @@ Mutable public base/login/key/hook/capture settings are restored in `finally`; p
 
 ## Remaining gates and handoff
 
-- **READY FOR COMMIT**: owned source/tests and this artifact are ready; not staged. Commit/push remains deferred until the request/recovery executor releases the shared index and the orchestrator writes `search/commit-window.md`.
-- Exact owned source/test commit and origin SHA: **pending authorized commit window**; current behavior is bound by the file hashes above.
+- **COMMITTED / PUSHED**: only the five assigned source/test files and this evidence artifact were staged. Conventional commit: `f594c9b58f6ed2e086329b1d2a221b1bc0fdf95e` — `fix: preserve search identity and signed app ordering`. `git push origin dev` exited 0; `git ls-remote origin refs/heads/dev` returned exactly that SHA immediately afterward.
+- **OWNERSHIP RELEASED**: SearchAPI, api02 owned files, and shared API01Stubs are released for read-only implementation review and later explicitly assigned work. The serialized index/commit window is released after publication of this evidence follow-up. Other owners' source/build/orchestration files were preserved. `git pull --ff-only` before staging reported Already up to date; all seven verified source/test input hashes still matched, so no retest was needed or run.
 - **Windows build FAILED/BLOCKED** by missing PowerShell/VS UWP/Windows SDK in this Linux environment. Actual WinRT cookie installation/wire behavior, real Bilibili sessions, configured proxy connectivity, rendered search UI/device acceptance are **BLOCKED/unverified**. Offline green is not live/session/device/release readiness.
 - Independent implementation review and the later one-owner main-document disposition remain outside this executor's current scope.
