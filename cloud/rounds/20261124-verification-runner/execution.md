@@ -1,4 +1,4 @@
-# QF2 execution — offline PASS, workflow published, hosted CI BLOCKED
+# QF2 execution — offline PASS, hosted workflow validation FAILED
 
 Owner: runner_executor, exclusive granted index/push window. Starting clean source HEAD/origin/dev `2f760c16dd9f7f1f931da78c01aa4b576eb7ce96`; required fetch/checkout/pull succeeded. Preexisting dispatch files and subsequently edited disjoint main docs belong to other owners; none was staged here. This executor's source paths are clean.
 
@@ -13,3 +13,10 @@ Hosted CI: **BLOCKED**, explicit service evidence in [CI observation](execution-
 Action pins: checkout v7 `3d3c42e5aac5ba805825da76410c181273ba90b1`; setup-dotnet v6 `0f4a354dd5547a28c70b7853dbd95d5b67886e73`; upload-artifact v7 `cf430e030ddbb5b0abf93d22962f4752f3646cd9`. Exact SDK 8.0.427/runtime/ref 8.0.33, read-only permissions, ubuntu-24.04, explicit caches/install root, 40/35/3-minute bounds, independent controls+suite status capture and bounded artifact settings match reviewed requirements. No CI settings/branch protection/secrets/credential persistence change.
 
 Windows UWP/XAML/build/MSIX/install/device/startup/playback/account-session gates remain **BLOCKED**, independent of this offline work. Independent implementation review follows. All runner/source/workflow/control/test and exclusive index/push ownership is **RELEASED** after this receipt publication. Source/workflow paths are clean and local HEAD is verified equal to origin/dev/ls-remote; the only remaining working-tree edits belong to the separate documentation/orchestrator owners. The final receipt commit changes only this round’s execution evidence; source/test/runner/workflow bytes remain identical to the passing/bound inputs. No additional complete local rerun is justified by that metadata-only change.
+
+
+## Newest hosted outcome — approved bounded manual-entry amendment
+
+The no-input manual trigger was published as exact one-line addition at **`636484d3507384ce48cac8a3b32766c497494041`**; all job/source/test/runner bytes remain unchanged. The single authorized `POST .../actions/workflows/429242571/dispatches` with structured `{"ref":"dev"}` was rejected at **2026-11-24T15:57:51Z**, **HTTP 422**, gh exit 1: `Invalid Argument - failed to parse workflow`, unrecognized named-value `runner` in the seven existing job-level `runner.temp` environment entries (lines 19–25). No run/job/artifact started. This identifies a workflow expression-context defect and supersedes the earlier no-run/permission-diagnostic uncertainty; it is **FAILED TO START / BLOCKED by configuration**, not hosted PASS or a proven external permission/enablement failure.
+
+Full exact request/error/publication/equivalence and ownership release: [hosted-validation execution](hosted-validation-execution.md). No second dispatch or job/configuration/settings/identity repair was authorized by the trigger-only amendment, so the concrete defect is returned to independent implementation review for separately reviewed correction. Existing local 11/11 controls and 50/51 suite remain valid; Windows/runtime gates remain BLOCKED. Trigger/evidence/global index/push ownership is released after this receipt publication.
