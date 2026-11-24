@@ -85,6 +85,7 @@ namespace BiliLite.Parsing.Season
             {
                 page.Section = new List<WebSeasonSectionDto>();
             }
+            page.Section.RemoveAll(section => section == null);
             foreach (var section in page.Section)
             {
                 if (section.Episodes == null)

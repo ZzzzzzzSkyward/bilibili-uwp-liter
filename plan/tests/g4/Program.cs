@@ -51,8 +51,40 @@ namespace G4Probe
             WebFeedParserClassifiesFailures();
             LegacyFeedParserClassifiesFailures();
 
+            LegacyIntegerBoundariesKeepCallerState();
+
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
+        }
+
+        private static void LegacyIntegerBoundariesKeepCallerState()
+        {
+            foreach (var literal in new[] { "9223372036854775808", "-9223372036854775809" })
+            {
+                var body = "{\"code\":0,\"data\":{\"cards\":[],\"items\":[],\"has_more\":" + literal + "}}";
+                var feed = LegacyDynamicFeedParser.Parse(RestEnvelope(body)); var repost = LegacyDynamicFeedParser.ParseReposts(RestEnvelope(body));
+                Check(feed.Failure == ApiParseFailure.Payload && feed.Stage == "data.has_more" && repost.Failure == ApiParseFailure.Payload && repost.Stage == "data.has_more", "legacy overflow typed payload " + literal);
+                Check(!LegacyDynamicFeedParser.ReadHasMore(JToken.Parse(literal)), "public has_more never throws " + literal);
+            }
+            foreach (var literal in new[] { "-9223372036854775808", "9223372036854775807", "0", "1", "2", "-1", "true", "false", "null", "\"1\"", "1.5" })
+            {
+                var body = "{\"code\":0,\"data\":{\"cards\":[],\"items\":[],\"has_more\":" + literal + ",\"offset\":9007199254740993}}";
+                var feed = LegacyDynamicFeedParser.Parse(RestEnvelope(body)); var repost = LegacyDynamicFeedParser.ParseReposts(RestEnvelope(body));
+                long number; var numeric = long.TryParse(literal, out number);
+                Check(feed.IsSuccess && feed.Value.HasMore == (literal == "true" || numeric && number != 0) && feed.Value.NextCursor == "9007199254740993", "legacy feed ordinary has_more " + literal);
+                Check(repost.IsSuccess && repost.Value.HasMore == (literal == "1") && repost.Value.NextCursor == "9007199254740993", "legacy repost ordinary has_more " + literal);
+            }
+            ResetSourceHistory(); ResetFixtures(); GrpcService.RejectDynVideo = true;
+            DynamicAPI.Fixture = call => RestFixture("known-good-cursor", "70001");
+            var vm = new DynamicVM(); vm.GetDynamicItems(1).GetAwaiter().GetResult();
+            Check(vm.Items != null && vm.Items.Count == 1, "actual Home DynamicVM publishes known good legacy row");
+            var rows = vm.Items; LogHelper.Entries.Clear(); DynamicAPI.Calls.Clear();
+            DynamicAPI.Fixture = call => "{\"code\":0,\"data\":{\"cards\":[],\"has_more\":9223372036854775808,\"offset\":\"bad-cursor\"}}";
+            vm.GetDynamicItems(2).GetAwaiter().GetResult();
+            Check(ReferenceEquals(rows, vm.Items) && vm.Items.Count == 1, "actual Home DynamicVM failed append preserves known-good rows");
+            Check(LogHelper.Entries.Any(x => x.Contains("src=legacy") && x.Contains("outcome=MalformedResponse")), "actual Home DynamicVM records ordinary malformed source failure");
+            DynamicAPI.Calls.Clear(); vm.GetDynamicItems(2).GetAwaiter().GetResult();
+            Check(LegacyCalls().Any(c => c.Cursor == "70001"), "failed append retains legacy cursor for retry");
         }
 
         private static void DynSpaceReqRoundTripsPagingFields()

@@ -44,11 +44,40 @@ namespace Season1Probe
             RefreshFailureKeepsTheLoadedSeason();
             DeadPathsAreGone();
 
+            NullWireRowsKeepNeighbors();
+
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
         }
 
         /// <summary>result 信封的成功路径：字段映射、正片/预告划分、Detail.episodes 是合并后整份片单。</summary>
+        private static void NullWireRowsKeepNeighbors()
+        {
+            foreach (var payload in new[] { "{\"section\":[null]}", "{\"episodes\":[null]}", "{\"section\":[{\"episodes\":[null]}]}", "{\"areas\":[null]}", "{\"seasons\":[null]}" })
+            {
+                var parsed = WebSeasonEpListParser.ParseWebSeasonEpList(RestEnvelope("{\"code\":0,\"result\":" + payload + "}"));
+                Check(parsed.IsSuccess && WebSeasonEpListMapper.MapWebSeasonEpList(parsed.Value).Detail.episodes.Count == 0, "null-only wire rows produce usable empty season " + payload);
+            }
+            foreach (var location in new[] { "section", "episodes", "section.episodes", "areas", "seasons" })
+            {
+                var result = BaseResult();
+                result["section"] = new JArray(new JObject { ["title"] = "first", ["episodes"] = new JArray(Episode(21), Episode(2)) }, new JObject { ["title"] = "second", ["episodes"] = new JArray(Episode(31)) });
+                ((JArray)result["areas"]).Add(new JObject { ["id"] = 3, ["name"] = "second area" });
+                ((JArray)result["seasons"]).Add(new JObject { ["season_id"] = 45887, ["title"] = "second season" });
+                var array = location == "section.episodes" ? (JArray)result["section"][0]["episodes"] : (JArray)result[location];
+                array.Insert(0, JValue.CreateNull()); array.Insert(2, JValue.CreateNull());
+                var vm = LoadSeason(SuccessBody(result), "{\"code\":-404,\"message\":\"metadata unavailable\"}");
+                Check(vm.Loaded && !vm.ShowError && !vm.Loading && UnexpectedLogs().Length == 0, "actual season VM tolerates null " + location);
+                Check(Ids(vm.Detail.episodes) == "21,2,31,1,3" && Ids(vm.Episodes) == "1,3" && Ids(vm.Previews) == "21,2,31", "null " + location + " preserves section-first winner and classifications");
+                Check(vm.Detail.areas.Count == 2 && vm.Detail.areas[0].id == "2" && vm.Detail.areas[1].id == "3" && vm.Detail.seasons.Count == 2 && vm.Detail.seasons[1].season_id == 45887 && vm.Detail.section.Count == 2 && vm.Detail.section[0].title == "first" && vm.Detail.section[1].title == "second", "optional metadata excludes only null " + location);
+            }
+            foreach (var member in new[] { "episodes", "section", "areas", "seasons" })
+            {
+                var parsed = WebSeasonEpListParser.ParseWebSeasonEpList(RestEnvelope("{\"code\":0,\"result\":{\"" + member + "\":[7]}}"));
+                Check(!parsed.IsSuccess && parsed.Failure == ApiParseFailure.Payload, "non-null malformed row remains Payload " + member);
+            }
+        }
+
         private static void ResultEnvelopePublishesTheSeason()
         {
             var result = BaseResult();

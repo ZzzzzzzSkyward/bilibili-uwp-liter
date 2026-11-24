@@ -53,8 +53,39 @@ namespace CommentsProbe
             var dialogChecks = DialogRecoveryChecks.Run();
             if (dialogChecks < 0) return 1;
             _passed += dialogChecks;
+            NullWireRowsPreservePaging();
+
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
+        }
+
+        private static void NullWireRowsPreservePaging()
+        {
+            foreach (var first in new[] { true, false })
+            foreach (var onlyNull in new[] { true, false })
+            {
+                var replies = onlyNull ? "null,null" : "null," + Reply(1) + ",null," + Reply(2) + "," + Reply(1);
+                var body = "{\"code\":0,\"data\":{\"replies\":[" + replies + "],\"top_replies\":[null," + Reply(1) + ",null," + Reply(3) + "],\"cursor\":{\"pagination_reply\":{\"next_offset\":\"9007199254740993\"}}}}";
+                var parsed = WebCommentPageParser.ParseWebCommentPage(Ok(body));
+                Check(parsed.IsSuccess && parsed.Value.Replies.Count == (onlyNull ? 2 : 5), "parser retains null wire slots");
+                var mapped = WebCommentPageMapper.MapWebCommentPage(parsed.Value, WebCommentPageSource.Cursor, first);
+                Check(mapped.ReplyCount == (onlyNull ? 2 : 5) && mapped.NextOffset == "9007199254740993", "null filtering retains raw count and exact cursor");
+                Check(Rpids(mapped.Rows) == (onlyNull ? (first ? "1,3" : "") : (first ? "1,3,2" : "1,2,1")), "null filtering retains pin priority/dedup/page behavior");
+                if (first) Check(mapped.Rows[0].showTop == Windows.UI.Xaml.Visibility.Visible, "valid pin remains pinned");
+            }
+            var allNull = WebCommentPageParser.ParseWebCommentPage(Ok("{\"code\":0,\"data\":{\"top_replies\":[null],\"replies\":[null],\"cursor\":{\"pagination_reply\":{\"next_offset\":\"null-page-cursor\"}}}}"));
+            var allFiltered = WebCommentPageMapper.MapWebCommentPage(allNull.Value, WebCommentPageSource.Cursor, true);
+            Check(allNull.IsSuccess && allFiltered.Rows.Count == 0 && allFiltered.ReplyCount == 1 && allFiltered.NextOffset == "null-page-cursor", "all null rows retain raw paging meaning");
+            foreach (var content in new[] { "null,null", "null," + Reply(7) + ",null," + Reply(8) })
+            {
+                var parsed = WebCommentPageParser.ParseWebCommentReplies(Ok("{\"code\":0,\"data\":{\"replies\":[" + content + "]}}"));
+                Check(parsed.IsSuccess && Rpids(WebCommentPageMapper.MapWebCommentReplies(parsed.Value)) == (content == "null,null" ? "" : "7,8"), "subreply null filtering retains usable neighbors");
+            }
+            foreach (var member in new[] { "replies", "top_replies" })
+            {
+                var parsed = WebCommentPageParser.ParseWebCommentPage(Ok("{\"code\":0,\"data\":{\"" + member + "\":[7]}}"));
+                Check(!parsed.IsSuccess && parsed.Failure == ApiParseFailure.Payload, "non-null malformed comment remains Payload " + member);
+            }
         }
 
         private static void EnvelopeCodeBoundaries()

@@ -44,7 +44,12 @@ namespace BiliLite.Parsing.Video
                 return ApiParseResult<int>.Fail(ApiParseFailure.Payload, "data.follower",
                     "follower 不是整数（实际是 " + follower.Type + "）");
             }
-            return ApiParseResult<int>.Success(follower.Value<int>());
+            int value;
+            if (!ApiEnvelope.TryReadBusinessCode(follower, out value))
+            {
+                return ApiParseResult<int>.Fail(ApiParseFailure.Payload, "data.follower", "整数超出范围");
+            }
+            return ApiParseResult<int>.Success(value);
         }
 
         public static ApiParseResult<int> ParseWebRelationAttribute(HttpResults response)
@@ -67,7 +72,12 @@ namespace BiliLite.Parsing.Video
                 return ApiParseResult<int>.Fail(ApiParseFailure.Payload, "data.attribute",
                     "attribute 不是整数（实际是 " + attribute.Type + "）");
             }
-            return ApiParseResult<int>.Success(attribute.Value<int>());
+            int value;
+            if (!ApiEnvelope.TryReadBusinessCode(attribute, out value))
+            {
+                return ApiParseResult<int>.Fail(ApiParseFailure.Payload, "data.attribute", "整数超出范围");
+            }
+            return ApiParseResult<int>.Success(value);
         }
     }
 }

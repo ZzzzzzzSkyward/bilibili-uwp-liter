@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Numerics;
 using BiliLite.Helpers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -60,6 +61,11 @@ namespace BiliLite.Parsing.Dynamic
                     "cards 不是数组（实际是 " + cardsToken.Type + "）");
             }
 
+            long hasMoreInteger;
+            if (data["has_more"]?.Type == JTokenType.Integer && !TryReadInteger(data["has_more"], out hasMoreInteger))
+            {
+                return ApiParseResult<LegacyCardPage>.Fail(ApiParseFailure.Payload, "data.has_more", "整数超出范围");
+            }
             var cursorToken = data["offset"];
             return ApiParseResult<LegacyCardPage>.Success(new LegacyCardPage
             {
@@ -94,7 +100,8 @@ namespace BiliLite.Parsing.Dynamic
             }
             if (token.Type == JTokenType.Integer)
             {
-                return token.Value<long>() != 0;
+                long integer;
+                return TryReadInteger(token, out integer) && integer != 0;
             }
             return false;
         }
@@ -127,7 +134,12 @@ namespace BiliLite.Parsing.Dynamic
             }
             // 这一路的 has_more 只有 0/1：不是 1 就当作没有下一页，避免用别的类型猜
             var hasMoreToken = data["has_more"];
-            var hasMore = hasMoreToken != null && hasMoreToken.Type == JTokenType.Integer && hasMoreToken.Value<long>() == 1;
+            long hasMoreInteger = 0;
+            if (hasMoreToken?.Type == JTokenType.Integer && !TryReadInteger(hasMoreToken, out hasMoreInteger))
+            {
+                return ApiParseResult<LegacyRepostPage>.Fail(ApiParseFailure.Payload, "data.has_more", "整数超出范围");
+            }
+            var hasMore = hasMoreToken?.Type == JTokenType.Integer && hasMoreInteger == 1;
             var cursorToken = data["offset"];
             return ApiParseResult<LegacyRepostPage>.Success(new LegacyRepostPage
             {
@@ -135,6 +147,29 @@ namespace BiliLite.Parsing.Dynamic
                 HasMore = hasMore,
                 NextCursor = cursorToken == null || cursorToken.Type == JTokenType.Null ? "" : cursorToken.ToString(),
             });
+        }
+
+        private static bool TryReadInteger(JToken token, out long integer)
+        {
+            integer = 0;
+            if (token == null || token.Type != JTokenType.Integer) return false;
+            var value = ((JValue)token).Value;
+            if (value is BigInteger)
+            {
+                var big = (BigInteger)value;
+                if (big < long.MinValue || big > long.MaxValue) return false;
+                integer = (long)big;
+                return true;
+            }
+            if (value is ulong)
+            {
+                var unsigned = (ulong)value;
+                if (unsigned > long.MaxValue) return false;
+                integer = (long)unsigned;
+                return true;
+            }
+            integer = token.Value<long>();
+            return true;
         }
 
         /// <summary>

@@ -45,7 +45,12 @@ namespace BiliLite.Parsing.Video
                 return ApiParseResult<int>.Fail(ApiParseFailure.Payload, "data",
                     "data 不是 0/1 数字（实际是 " + data.Type + "）");
             }
-            return ApiParseResult<int>.Success(data.Value<int>());
+            int value;
+            if (!ApiEnvelope.TryReadBusinessCode(data, out value))
+            {
+                return ApiParseResult<int>.Fail(ApiParseFailure.Payload, "data", "整数超出范围");
+            }
+            return ApiParseResult<int>.Success(value);
         }
 
         public static ApiParseResult<int> ParseWebVideoStateCoin(HttpResults response)
@@ -68,7 +73,12 @@ namespace BiliLite.Parsing.Video
                 return ApiParseResult<int>.Fail(ApiParseFailure.Payload, "data.multiply",
                     "multiply 不是整数（实际是 " + multiply.Type + "）");
             }
-            return ApiParseResult<int>.Success(multiply.Value<int>());
+            int value;
+            if (!ApiEnvelope.TryReadBusinessCode(multiply, out value))
+            {
+                return ApiParseResult<int>.Fail(ApiParseFailure.Payload, "data.multiply", "整数超出范围");
+            }
+            return ApiParseResult<int>.Success(value);
         }
 
         public static ApiParseResult<bool> ParseWebVideoStateFavoured(HttpResults response)

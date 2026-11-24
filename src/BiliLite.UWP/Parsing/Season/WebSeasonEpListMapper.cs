@@ -37,6 +37,7 @@ namespace BiliLite.Parsing.Season
             var sections = new List<SeasonDetailSectionItemModel>();
             foreach (var source in page.Section)
             {
+                if (source == null) continue;
                 var section = new SeasonDetailSectionItemModel
                 {
                     title = source.Title,
@@ -72,6 +73,7 @@ namespace BiliLite.Parsing.Season
         private static SeasonDetailEpisodeModel Append(List<SeasonDetailEpisodeModel> target, HashSet<int> seen,
             WebSeasonEpisodeDto source, int sectionType)
         {
+            if (source == null) return null;
             var episodeId = source.Id ?? source.EpId;
             if (episodeId.HasValue && !seen.Add(episodeId.Value))
             {
@@ -130,7 +132,7 @@ namespace BiliLite.Parsing.Season
                     : new SeasonDetailUpInfoModel { mid = page.UpInfo.Mid, uname = page.UpInfo.Uname },
                 areas = page.Areas == null
                     ? null
-                    : page.Areas.Select(x => new SeasonDetailAreaItemModel
+                    : page.Areas.Where(x => x != null).Select(x => new SeasonDetailAreaItemModel
                     {
                         id = x.Id?.ToString() ?? "",
                         name = x.Name,
@@ -165,7 +167,7 @@ namespace BiliLite.Parsing.Season
                     },
                 seasons = page.Seasons == null
                     ? null
-                    : page.Seasons.Select(x => new SeasonDetailSeasonItemModel
+                    : page.Seasons.Where(x => x != null).Select(x => new SeasonDetailSeasonItemModel
                     {
                         season_id = x.SeasonId,
                         cover = x.Cover,

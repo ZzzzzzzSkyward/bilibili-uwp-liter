@@ -120,6 +120,8 @@ namespace BiliLite.Modules
         }
         public async Task LoadFavorite(string avid)
         {
+            var owner = VideoInfo;
+            if (owner == null || owner.aid != avid) return;
             try
             {
                 if (!SettingHelper.Account.Logined)
@@ -134,7 +136,10 @@ namespace BiliLite.Modules
                     Utils.ShowMessageToast(VideoFailureText.For(parsed));
                     return;
                 }
-                MyFavorite = FavoriteCreatedListMapper.Map(parsed.Value);
+                if (ReferenceEquals(VideoInfo, owner) && owner.aid == avid)
+                {
+                    MyFavorite = FavoriteCreatedListMapper.Map(parsed.Value);
+                }
             }
             catch (Exception ex)
             {
@@ -373,30 +378,38 @@ namespace BiliLite.Modules
         }
         public async void DoLike()
         {
+            var owner = VideoInfo;
+            if (owner == null) return;
+            var aid = owner.aid;
+            var dislike = owner.req_user.dislike;
+            var like = owner.req_user.like;
+
             if (!SettingHelper.Account.Logined&&!await Utils.ShowLoginDialog())
             {
                 Utils.ShowMessageToast("请先登录后再操作");
                 return;
             }
+            if (!ReferenceEquals(VideoInfo, owner)) return;
             try
             {
                 var parsed = WebVideoActionParser.ParseWebVideoAction(
-                    await videoAPI.Like(VideoInfo.aid, VideoInfo.req_user.dislike, VideoInfo.req_user.like).Request());
+                    await videoAPI.Like(aid, dislike, like).Request());
+                if (!ReferenceEquals(VideoInfo, owner)) return;
                 if (!parsed.IsSuccess)
                 {
                     Utils.ShowMessageToast(VideoFailureText.For(parsed));
                     return;
                 }
-                if (VideoInfo.req_user.like == 1)
+                if (owner.req_user.like == 1)
                 {
-                    VideoInfo.req_user.like = 0;
-                    VideoInfo.stat.like -= 1;
+                    owner.req_user.like = 0;
+                    owner.stat.like -= 1;
                 }
                 else
                 {
-                    VideoInfo.req_user.like = 1;
-                    VideoInfo.req_user.dislike = 0;
-                    VideoInfo.stat.like += 1;
+                    owner.req_user.like = 1;
+                    owner.req_user.dislike = 0;
+                    owner.stat.like += 1;
                 }
                 //服务端说了话就说它的话,没说就说"操作成功"
                 Utils.ShowMessageToast(string.IsNullOrEmpty(parsed.Value) ? "操作成功" : parsed.Value);
@@ -411,31 +424,39 @@ namespace BiliLite.Modules
         }
         public async void DoDislike()
         {
+            var owner = VideoInfo;
+            if (owner == null) return;
+            var aid = owner.aid;
+            var dislike = owner.req_user.dislike;
+            var like = owner.req_user.like;
+
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
             {
                 Utils.ShowMessageToast("请先登录后再操作");
                 return;
             }
+            if (!ReferenceEquals(VideoInfo, owner)) return;
             try
             {
                 var parsed = WebVideoActionParser.ParseWebVideoAction(
-                    await videoAPI.Dislike(VideoInfo.aid, VideoInfo.req_user.dislike, VideoInfo.req_user.like).Request());
+                    await videoAPI.Dislike(aid, dislike, like).Request());
+                if (!ReferenceEquals(VideoInfo, owner)) return;
                 if (!parsed.IsSuccess)
                 {
                     Utils.ShowMessageToast(VideoFailureText.For(parsed));
                     return;
                 }
-                if (VideoInfo.req_user.dislike == 1)
+                if (owner.req_user.dislike == 1)
                 {
-                    VideoInfo.req_user.dislike = 0;
+                    owner.req_user.dislike = 0;
                 }
                 else
                 {
-                    VideoInfo.req_user.dislike = 1;
-                    if (VideoInfo.req_user.like == 1)
+                    owner.req_user.dislike = 1;
+                    if (owner.req_user.like == 1)
                     {
-                        VideoInfo.req_user.like = 0;
-                        VideoInfo.stat.like -= 1;
+                        owner.req_user.like = 0;
+                        owner.stat.like -= 1;
                     }
                 }
                 Utils.ShowMessageToast(string.IsNullOrEmpty(parsed.Value) ? "操作成功" : parsed.Value);
@@ -451,29 +472,35 @@ namespace BiliLite.Modules
         }
         public async void DoTriple()
         {
+            var owner = VideoInfo;
+            if (owner == null) return;
+            var aid = owner.aid;
+
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
             {
                 Utils.ShowMessageToast("请先登录后再操作");
                 return;
             }
+            if (!ReferenceEquals(VideoInfo, owner)) return;
             try
             {
                 var parsed = WebVideoActionParser.ParseWebVideoAction(
-                    await videoAPI.Triple(VideoInfo.aid).Request());
+                    await videoAPI.Triple(aid).Request());
+                if (!ReferenceEquals(VideoInfo, owner)) return;
                 if (!parsed.IsSuccess)
                 {
                     Utils.ShowMessageToast(VideoFailureText.For(parsed));
                     return;
                 }
-                VideoInfo.req_user.like = 1;
-                VideoInfo.stat.like += 1;
-                VideoInfo.req_user.coin = 1;
-                VideoInfo.stat.coin += 1;
-                VideoInfo.req_user.favorite = 1;
-                VideoInfo.stat.favorite += 1;
-                if (VideoInfo.req_user.dislike == 1)
+                owner.req_user.like = 1;
+                owner.stat.like += 1;
+                owner.req_user.coin = 1;
+                owner.stat.coin += 1;
+                owner.req_user.favorite = 1;
+                owner.stat.favorite += 1;
+                if (owner.req_user.dislike == 1)
                 {
-                    VideoInfo.req_user.dislike = 0;
+                    owner.req_user.dislike = 0;
                 }
 
                 Utils.ShowMessageToast("三连完成");
@@ -490,30 +517,36 @@ namespace BiliLite.Modules
 
         public async void DoCoin(string num)
         {
+            var owner = VideoInfo;
+            if (owner == null) return;
+            var aid = owner.aid;
+
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
             {
                 Utils.ShowMessageToast("请先登录后再操作");
                 return;
             }
             var coinNum = Convert.ToInt32(num);
+            if (!ReferenceEquals(VideoInfo, owner)) return;
             try
             {
                 var parsed = WebVideoActionParser.ParseWebVideoAction(
-                    await videoAPI.Coin(VideoInfo.aid, coinNum).Request());
+                    await videoAPI.Coin(aid, coinNum).Request());
+                if (!ReferenceEquals(VideoInfo, owner)) return;
                 if (!parsed.IsSuccess)
                 {
                     Utils.ShowMessageToast(VideoFailureText.For(parsed));
                     return;
                 }
-                if (VideoInfo.req_user.coin == 1)
+                if (owner.req_user.coin == 1)
                 {
-                    VideoInfo.req_user.coin = 0;
-                    VideoInfo.stat.coin -= coinNum;
+                    owner.req_user.coin = 0;
+                    owner.stat.coin -= coinNum;
                 }
                 else
                 {
-                    VideoInfo.req_user.coin = 1;
-                    VideoInfo.stat.coin += coinNum;
+                    owner.req_user.coin = 1;
+                    owner.stat.coin += coinNum;
                 }
                 Utils.ShowMessageToast(string.IsNullOrEmpty(parsed.Value) ? "操作成功" : parsed.Value);
             }
@@ -528,29 +561,35 @@ namespace BiliLite.Modules
         }
         public async void DoFavorite(List<string> fav_ids,string avid)
         {
+            var owner = VideoInfo;
+            if (owner == null) return;
+            var favoriteIds = new List<string>(fav_ids);
+
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
             {
                 Utils.ShowMessageToast("请先登录后再操作");
                 return;
             }
+            if (!ReferenceEquals(VideoInfo, owner)) return;
             try
             {
                 var parsed = WebVideoActionParser.ParseWebVideoAction(
-                    await favoriteAPI.AddFavorite(fav_ids, avid).Request());
+                    await favoriteAPI.AddFavorite(favoriteIds, avid).Request());
+                if (!ReferenceEquals(VideoInfo, owner) || owner.aid != avid) return;
                 if (!parsed.IsSuccess)
                 {
                     Utils.ShowMessageToast(VideoFailureText.For(parsed));
                     return;
                 }
-                if (fav_ids.Count != 0)
+                if (favoriteIds.Count != 0)
                 {
-                    VideoInfo.req_user.favorite = 1;
-                    VideoInfo.stat.favorite += 1;
+                    owner.req_user.favorite = 1;
+                    owner.stat.favorite += 1;
                 }
                 else
                 {
-                    VideoInfo.req_user.favorite = 0;
-                    VideoInfo.stat.favorite -= 1;
+                    owner.req_user.favorite = 0;
+                    owner.stat.favorite -= 1;
                 }
                 if (string.IsNullOrEmpty(parsed.Value))
                 {
@@ -575,22 +614,31 @@ namespace BiliLite.Modules
 
         public async void DoAttentionUP()
         {
-            var result = await AttentionUP(VideoInfo.owner.mid, VideoInfo.req_user.attention==1?2:1);
-            if (result)
+            var owner = VideoInfo;
+            if (owner == null) return;
+            var mid = owner.owner.mid;
+            var mode = owner.req_user.attention == 1 ? 2 : 1;
+            var result = await AttentionUP(mid, mode, owner);
+            if (result && ReferenceEquals(VideoInfo, owner))
             {
-                if (VideoInfo.req_user.attention == 1)
+                if (owner.req_user.attention == 1)
                 {
-                    VideoInfo.req_user.attention = -999;
-                    if (VideoInfo.owner_ext != null && VideoInfo.owner_ext.fans > 0) VideoInfo.owner_ext.fans -= 1;
+                    owner.req_user.attention = -999;
+                    if (owner.owner_ext != null && owner.owner_ext.fans > 0) owner.owner_ext.fans -= 1;
                 }
                 else
                 {
-                    VideoInfo.req_user.attention = 1;
-                    if (VideoInfo.owner_ext != null && VideoInfo.owner_ext.fans > 0) VideoInfo.owner_ext.fans += 1;
+                    owner.req_user.attention = 1;
+                    if (owner.owner_ext != null && owner.owner_ext.fans > 0) owner.owner_ext.fans += 1;
                 }
             }
         }
-        public async Task<bool> AttentionUP(string mid,int mode)
+        public Task<bool> AttentionUP(string mid,int mode)
+        {
+            return AttentionUP(mid, mode, null);
+        }
+
+        private async Task<bool> AttentionUP(string mid, int mode, VideoDetailModel owner)
         {
             if (!SettingHelper.Account.Logined && !await Utils.ShowLoginDialog())
             {
@@ -598,10 +646,12 @@ namespace BiliLite.Modules
                 return false;
             }
           
+            if (owner != null && !ReferenceEquals(VideoInfo, owner)) return false;
             try
             {
                 var parsed = WebVideoActionParser.ParseWebVideoAction(
                     await videoAPI.Attention(mid, mode.ToString()).Request());
+                if (owner != null && !ReferenceEquals(VideoInfo, owner)) return false;
                 if (!parsed.IsSuccess)
                 {
                     Utils.ShowMessageToast(VideoFailureText.For(parsed));

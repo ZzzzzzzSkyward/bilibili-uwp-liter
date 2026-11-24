@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using BiliLite.Controls;
 using BiliLite.Models.Api.Comment;
@@ -57,6 +57,7 @@ namespace BiliLite.Parsing.Comment
                 }
                 foreach (var reply in page.TopReplies)
                 {
+                    if (reply == null) continue;
                     var item = MapWebCommentReply(reply);
                     item.showTop = Visibility.Visible;
                     if (!ContainsRpid(rows, item.rpid))
@@ -67,6 +68,7 @@ namespace BiliLite.Parsing.Comment
             }
             foreach (var reply in page.Replies)
             {
+                if (reply == null) continue;
                 var item = MapWebCommentReply(reply);
                 if (!firstPage || !ContainsRpid(rows, item.rpid))
                 {
@@ -92,6 +94,7 @@ namespace BiliLite.Parsing.Comment
             var rows = new List<CommentModel>(page.Replies.Count);
             foreach (var reply in page.Replies)
             {
+                if (reply == null) continue;
                 rows.Add(MapWebCommentReply(reply));
             }
             return rows;

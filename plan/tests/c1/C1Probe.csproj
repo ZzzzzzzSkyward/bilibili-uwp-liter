@@ -16,6 +16,14 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Remove="build/**/*.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Models/Common.cs" Link="Models/Common.cs" />
+    <Compile Include="obj/probe-generated/HttpResults.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/Detail/VideoDetailVM.cs" Link="Modules/Detail/VideoDetailVM.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/IModules.cs" Link="Modules/IModules.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/RelayCommand.cs" Link="Modules/RelayCommand.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Models/ApiModel.cs" Link="Models/ApiModel.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Models/ReturnModel.cs" Link="Models/ReturnModel.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Models\VideoCollections.cs" Link="VideoCollections.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiEnvelope.cs" Link="ApiEnvelope.cs" />
