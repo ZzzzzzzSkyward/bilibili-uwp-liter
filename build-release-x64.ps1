@@ -429,6 +429,9 @@ function Test-FullPackageLayout {
     if (-not $layout.Entries.ContainsKey('entrypoint/BiliLiter.exe')) { return '缺少 entrypoint/BiliLiter.exe' }
     if (-not $layout.Entries.ContainsKey('BiliLite.Win32Tools/BiliLite.Win32Tools.exe')) { return '缺少 BiliLite.Win32Tools' }
     if ($layout.Manifest -notmatch 'fullTrustProcess') { return '清单里没有 fullTrustProcess 扩展' }
+    # 根启动器按 ZIP 条目的未压缩长度校验，64 KB 是不包含上界的限制。
+    if (-not $layout.Entries.ContainsKey('BiliLiter.exe')) { return '缺少根目录 BiliLiter.exe' }
+    if ($layout.Entries['BiliLiter.exe'] -ge 64KB) { return '根目录 BiliLiter.exe 必须小于 64 KB' }
     return $null
 }
 
