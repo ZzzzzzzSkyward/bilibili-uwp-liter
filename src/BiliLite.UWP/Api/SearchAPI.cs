@@ -26,10 +26,7 @@ namespace BiliLite.Api
                 parameter = ApiHelper.MustParameter(ApiHelper.LoginKey, true) + "&fnval=16&fnver=0&force_host=0&fourk=1&from_source=app_search&highlight=0&is_org_query=0&qn=112&recommend=1"
             };
             api.parameter += $"&keyword={Uri.EscapeDataString(keyword)}&local_time={Utils.GetTimestampS()}&pn={pn}&ps={ps}";
-            if (string.IsNullOrEmpty(order))
-            {
-                api.parameter += $"&order={order}";
-            }
+            api.parameter += $"&order={Uri.EscapeDataString(order ?? string.Empty)}";
             if (duration!=0)
             {
                 api.parameter += $"&duration={duration}";
@@ -60,9 +57,9 @@ namespace BiliLite.Api
                 baseUrl = $"{baseUrl}/x/web-interface/wbi/search/type",
                 parameter = $"context=&search_type=video&page={pn}&order={order}&keyword={Uri.EscapeDataString(keyword)}&duration={duration}&category_id=&tids_2=&__refresh__=true&tids={region}&highlight=1&single_column=0"
             };
-            api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
             if (!string.IsNullOrEmpty(area))
             {
+                api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
                 api.parameter += $"&area={area}";
             }
             api.parameter = await ApiHelper.GetWbiSign(api.parameter);
@@ -82,9 +79,9 @@ namespace BiliLite.Api
                 baseUrl = $"{baseUrl}/x/web-interface/wbi/search/type",
                 parameter = $"context=&search_type=media_bangumi&page={pn}&order=&keyword={Uri.EscapeDataString(keyword)}&category_id=&__refresh__=true&highlight=1&single_column=0"
             };
-            api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
             if (!string.IsNullOrEmpty(area))
             {
+                api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
                 api.parameter += $"&area={area}";
             }
             api.parameter = await ApiHelper.GetWbiSign(api.parameter);
@@ -104,9 +101,9 @@ namespace BiliLite.Api
                 baseUrl = $"{baseUrl}/x/web-interface/wbi/search/type",
                 parameter = $"context=&search_type=media_ft&page={pn}&order=&keyword={Uri.EscapeDataString(keyword)}&category_id=&__refresh__=true&highlight=1&single_column=0"
             };
-            api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
             if (!string.IsNullOrEmpty(area))
             {
+                api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
                 api.parameter += $"&area={area}";
             }
             api.parameter = await ApiHelper.GetWbiSign(api.parameter);
@@ -126,9 +123,9 @@ namespace BiliLite.Api
                 baseUrl = $"{baseUrl}/x/web-interface/wbi/search/type",
                 parameter = $"context=&search_type=bili_user&page={pn}&keyword={Uri.EscapeDataString(keyword)}{order}{type}&__refresh__=true&changing=mid&highlight=1&single_column=0&category_id="
             };
-            api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
             if (!string.IsNullOrEmpty(area))
             {
+                api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
                 api.parameter += $"&area={area}";
             }
             api.parameter = await ApiHelper.GetWbiSign(api.parameter);
@@ -148,9 +145,9 @@ namespace BiliLite.Api
                 baseUrl = $"{baseUrl}/x/web-interface/wbi/search/type",
                 parameter = $"context=&search_type=live&cover_type=user_cover&page={pn}&keyword={Uri.EscapeDataString(keyword)}&__refresh__=true&changing=mid&highlight=1&single_column=0"
             };
-            api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
             if (!string.IsNullOrEmpty(area))
             {
+                api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
                 api.parameter += $"&area={area}";
             }
             api.parameter = await ApiHelper.GetWbiSign(api.parameter);
@@ -170,9 +167,9 @@ namespace BiliLite.Api
                 baseUrl = $"{baseUrl}/x/web-interface/wbi/search/type",
                 parameter = $"context=&search_type=article&page={pn}&order={order}&keyword={Uri.EscapeDataString(keyword)}&category_id={region}&__refresh__=true&highlight=1&single_column=0"
             };
-            api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
             if (!string.IsNullOrEmpty(area))
             {
+                api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
                 api.parameter += $"&area={area}";
             }
             api.parameter = await ApiHelper.GetWbiSign(api.parameter);
@@ -192,9 +189,9 @@ namespace BiliLite.Api
                 baseUrl = $"{baseUrl}/x/web-interface/wbi/search/type",
                 parameter = $"context=&search_type=topic&page={pn}&order=&keyword={Uri.EscapeDataString(keyword)}&category_id=&__refresh__=true&highlight=1&single_column=0"
             };
-            api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
             if (!string.IsNullOrEmpty(area))
             {
+                api.ExtraCookies = new Dictionary<string, string>() { { "buvid3", "temp" } };
                 api.parameter += $"&area={area}";
             }
             api.parameter = await ApiHelper.GetWbiSign(api.parameter);

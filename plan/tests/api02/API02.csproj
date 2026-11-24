@@ -23,6 +23,7 @@
     <Compile Include="..\..\..\src\BiliLite.UWP\Api\AccountApi.cs" Link="AccountApi.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Api\ApiHelper.cs" Link="ApiHelper.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\WbiKeyService.cs" Link="WbiKeyService.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Api\SearchAPI.cs" Link="SearchAPI.cs" />
     <Compile Include="..\API01Stubs.cs" Link="API01Stubs.cs" />
   </ItemGroup>
 

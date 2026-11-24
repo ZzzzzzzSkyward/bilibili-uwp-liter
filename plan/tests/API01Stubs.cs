@@ -28,6 +28,12 @@ namespace BiliLite.Helpers
     public static class Utils
     {
         public static void ShowMessageToast(string message) { }
+        // Primitive selector seam only: SearchAPI owns the decision to call it.
+        public static string ChooseProxyServer(string area)
+        {
+            Api01TestHooks.ProxyAreas.Add(area);
+            return Api01TestHooks.ProxySelector(area);
+        }
         public static string ToMD5(string value)
         {
             using (var md5 = MD5.Create())
@@ -95,6 +101,9 @@ namespace BiliLite.Helpers
 {
     public static class Api01TestHooks
     {
+        public static List<string> ProxyAreas { get; } = new List<string>();
+        public static Func<string, string> ProxySelector { get; set; }
+            = _ => "https://proxy.invalid";
         public static Func<ApiModel, Task<HttpResults>> RequestHandler { get; set; }
             = _ => Task.FromResult(new HttpResults { code = 500, status = false, results = "" });
     }

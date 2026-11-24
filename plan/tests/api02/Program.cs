@@ -30,7 +30,8 @@ internal static class Program
         await FailedRefreshKeepsTimestamp();
         await SuccessfulRefreshClearsTimestamp();
         await CounterTracksConsecutiveFailures();
-        Console.WriteLine("PASS " + assertions + " assertions");
+        Console.WriteLine("PASS " + assertions + " original API02 assertions");
+        await SearchRequestChecks.RunAsync();
     }
 
     private static async Task FailedRefreshKeepsTimestamp()
