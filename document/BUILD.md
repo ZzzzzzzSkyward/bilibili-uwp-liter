@@ -1,4 +1,4 @@
-# Building and fixing build failures (x64 Release)
+﻿# Building and fixing build failures (x64 Release)
 
 ## Run the script
 
@@ -110,6 +110,6 @@ iconv -f GB18030 -t UTF-8 -c build.log | grep -a "error"
 
 ## Commit and push
 
-- `git add -A`, then commit the source fix. The build's manifest bump is part of the build, so it belongs in that commit; say so in the commit message.
+- Commit the source fix together with the manifest bump the build made; say so in the commit message. Do not `git add -A` blindly: large binary assets (fonts, `ffmpeg.7z`, splash images) must never be rewritten or dropped by a stray add.
 - Push to `dev` (`git push origin dev`), which tracks `origin/dev`. `master` is a separate ancestor branch; do not push build fixes there.
 - In the summary, state the exact error that was fixed, the change, the verification command, and the emitted `.msix` paths with their version.
