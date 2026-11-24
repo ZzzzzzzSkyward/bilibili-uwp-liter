@@ -1,5 +1,6 @@
 name: Offline probes
 on:
+  workflow_dispatch:
   push:
     branches: [dev]
   pull_request:
