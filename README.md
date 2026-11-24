@@ -44,7 +44,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Out
 bash plan/tests/run-all.sh --tools-root /absolute/path/to/probe-tools
 ```
 
-固定 43 目录 + 7 逻辑探针 = 50 逻辑项 / 51 可执行阶段；选择部分通过只表示 PARTIAL_PASS。
+固定 44 目录（43 个 net8.0 项目 + shell-only stab）+ 7 逻辑探针 = 51 逻辑项 / 52 可执行阶段。
+全部 52 阶段实际 PASS 且 `complete_required=true` 才是完整通过；选择部分通过只表示 PARTIAL_PASS。
 `--list`、选择命令、独立 PowerShell 布局门禁与工具设置见开发文档；
 离线 CI 使用同一入口，配置见 [offline-probes.yml](.github/workflows/offline-probes.yml)。
 环境、调试、排障与 partial clone 的限制见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)，
@@ -56,7 +57,7 @@ bash plan/tests/run-all.sh --tools-root /absolute/path/to/probe-tools
 | --- | --- |
 | `src/` | 解决方案的 7 个项目；`BiliLite.UWP` 是应用本体，`BiliLite.Packages` 出 MSIX，`BiliLite.gRPC` 是 protobuf/gRPC 客户端，`BiliLite.JSBridge` 给 WebView 登录页，`BiliLite.Win32Tools` 是完全信任的导出进程，`BiliLite.WebApi` 与 `ApiTester` 是不随包发布的开发期工具 |
 | `plan/` | 计划与验收：`PLAN.md`（条目与顺序）、`VALIDATION.md`（设备清单）、`REVIEW_LOG.md`、`P4_INVENTORY.md`，以及专题方案 `CARD_PLAN.md`、`HOT_CARD_PLAN.md`、`REFRESH_PLAN.md`、`SETTINGS_PLAN.md` |
-| `plan/tests/` | 43 个目录批次 + 7 个单文件探针，编译产品源码并断言行为；不改产品源码 |
+| `plan/tests/` | 44 个目录批次 + 7 个单文件逻辑探针（8 个 legacy 可执行阶段），编译产品源码并断言行为；不改产品源码 |
 | `document/` | `BUILD.md`（构建与常见构建故障）、`DIAGNOSTICS.md`（日志与反馈）、`BILIBILI_API_RESEARCH.md` + `BILIBILI_API_ENDPOINTS.md`（与姊妹仓库的接口对照）；`new_version.json`、`entrance.json` 是应用抓取的线上数据 |
 | `docs/` | [架构](docs/ARCHITECTURE.md)、[功能](docs/FEATURES.md)、[开发](docs/DEVELOPMENT.md)、[路线图](docs/ROADMAP.md)、[索引](docs/README.md) |
 | `bug_report.md` | 缺陷报告与处理记录（BR-nn） |
@@ -76,10 +77,10 @@ bash plan/tests/run-all.sh --tools-root /absolute/path/to/probe-tools
 
 ## 当前状态
 
-- 开发线 `dev`：比发布线多 510 个提交（分叉点 `e2c7958`）；最近的批次是 2026-11-08 的 BR-61…BR-67。
+- 开发线 `dev`：唯一开发线；当前修复与验证状态见 [docs/ROADMAP.md](docs/ROADMAP.md)。
 - 发布线 `master`：最新发布 `1.0.9.61`（2026-11-07，tag `20261107`）。
-- 已知缺口：后台播放归属与内存测量（BR-21）、账号接口的解析重构、与姊妹仓库对照出的评论写入 CSRF
-  与直播弹幕发现接口，详见 [docs/ROADMAP.md](docs/ROADMAP.md)。
+- 已知缺口：后台播放归属与内存测量（BR-21）、维护者保留的账号解析批次、直播发现/鉴权的身份与会话前置，
+  以及新改动的 Windows/真实会话验收，详见 [docs/ROADMAP.md](docs/ROADMAP.md)。
 - 验收策略：编译 + 离线探针 + 维护者设备检查；后者「默认通过」，只有真实报告的缺陷才重开，
   见 [plan/VALIDATION.md](plan/VALIDATION.md)。
 

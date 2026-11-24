@@ -38,6 +38,23 @@ QF2 的 [独立复审](../cloud/rounds/20261124-verification-runner/final-review
 
 [当前 hosted receipt](../cloud/rounds/20261124-verification-runner/corrected-hosted-execution.md) 是 corrected-head workflow_dispatch run [45434541348](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348)，head `169b2b0a0205a14cad7d24558920250989720cc2`；2026-11-24 16:17:58 UTC QUEUED、0 jobs/0 artifacts。**Hosted PENDING/UNVERIFIED**，源码 PASS 不表示 hosted PASS；排队也不是 failed job 或已证 outage/permission blocker。
 
+## 2026-11-25 recovery / integrity reviews
+
+| Review evidence | Reviewed source | Disposition |
+| --- | --- | --- |
+| [Boundaries final](../cloud/rounds/20261125-recovery-integrity/boundaries/final-review.md) | `0514966` / `1b6af65` | PASS：favorite typed acknowledgement/Sort containment、payload overflow/null-row/raw paging、detail/login/favorite-list ownership；原断言与真实源red→green完整保留，standalone AttentionUP兼容。 |
+| [Storage final](../cloud/rounds/20261125-recovery-integrity/storage/final-review.md) | `bdba9eb` | PASS：S1–S4深值有序snapshot/初始化/registry事务/admitted reopen，playersess240、LM02及LM03/05；进程内保证，无跨进程/崩溃承诺。 |
+| [FA-01 evidence](../cloud/rounds/20261125-recovery-integrity/storage/implementation-evidence/fa01-red-green.md) / [fresh final](../cloud/rounds/20261125-recovery-integrity/final-audit.md) | `7fe7a5f` | CLOSED：不可用registry entry typed registry-read，214 genuine failures→653 additive PASS与实际page-refresh composition；保留bytes/grants/后续重试。 |
+| [Recovery final](../cloud/rounds/20261125-recovery-integrity/recovery/final-review.md) / [fresh audit](../cloud/rounds/20261125-recovery-integrity/final-audit.md) | `7fe7a5f` | PASS：RF1/RF2/FA-01–09/P2-CR1全部CLOSED；真实取消失败重试、部分残留classification、MultiFLV/空media/typed mixed retry/selection snapshot、真实login bool/collection-object authority与owned-show finally。最终 348保留原 312/208/139；无未闭环scoped P0/P1/P2，结构与UWP兼容源码形状接受。 |
+
+[最终集成](../cloud/rounds/20261125-recovery-integrity/verification/execution.md) 实跑 51/51 逻辑、52/52 可执行 PASS、complete_required=true，
+recovery 348 / g5 335；915 source/5073 tool bytes绑定最终已推源码，独立14 controls/package15按精确输入复用。
+历史50/51、初始51/52、139/208/312与早期CHANGES审查仍为对应快照记录，不代表最终状态。
+这些为源码/离线结论，不改历史设备默认验收，也不表示native/服务/Windows编译/安装启动通过。
+Root 2026-11-25 04:11 Asia/Shanghai 实际Actions collection仅有旧 169b2b0的45434541348 queued/null；
+未建立 7fe7a5f hosted run/result；即使旧head后来PASS也不认证当前inventory/runnable bytes。
+新增native/session/并发场景见 [VALIDATION.md](VALIDATION.md#2026-11-25--恢复与数据完整性的新增-windows-跟进未运行)。
+
 ## Standing review notes
 
 - **The external reviewer is no longer a scheduled watcher**; passes land when the maintainer runs one

@@ -3,6 +3,7 @@
 状态口径：**完成** = 源码存在且（按 `plan/VALIDATION.md` 的策略）已由维护者的设备检查通过；
 **部分** = 主体可用但已知有缺口；**缺失/停放** = 未实现或不打算实现。缺口的原因与下一步都记在
 [ROADMAP.md](ROADMAP.md)，不要在本文里另开一份待办。
+新修复的“源码/离线完成”不改判历史维护者设备行；其 Windows/真实会话跟进单列在 [VALIDATION.md](../plan/VALIDATION.md)。
 
 ## 1. 主界面与浏览
 
@@ -18,6 +19,11 @@
 | 图片查看器（缩放、保存、多图切换） | 完成 | `Pages/Other/ImageViewerPage.xaml`、`Controls/ImageViewerControl.xaml` |
 | 深链接/协议激活（`bilibili://` 与站内短链） | 完成 | `Helpers/MessageCenter.cs::HandleUrl`、`App.OnActivated` |
 | 最小化后从任务栏回到最大化（BR-61） | 部分：`bbfaf7f` 只编译过，等设备确认 | `Helpers/WindowRestoreHelper.cs`、`App.OnAppResuming` |
+
+推荐恢复的源码/离线行为已完成：首次失败、刷新失败和追加失败各有持久状态与显式重试；刷新/追加失败保留已提交内容，
+空页或无新游标停止自动追加，最后一行被成功反馈移除后回到空态。反馈/不感兴趣仅在 typed accepted 回执后改行；
+登录成功才继续，且登录和回执等待后仍须属于发起 collection/object。登录窗口异常或取消后，其 show owner 释放标志，
+同进程后续重试仍可显示窗口。Windows 真实显示/会话跟进见 VALIDATION。
 
 ## 2. 视频
 
@@ -38,6 +44,18 @@
 | 本地媒体库播放（清单校验、轨道选择、字幕/弹幕轨道） | 完成 | `Pages/LocalPlayerPage.xaml`、`Services/LocalMedia/*` |
 | 本地字幕（SRT/VTT/B站 JSON）解析 | 完成 | `Services/LocalMedia/SubtitleTrackParser.cs` |
 | 评论：正文先做一次 HTML 解码再转富文本（BR-66），浮窗暗色令牌（BR-62） | 完成 | `Helpers/ControlHelper.cs`、`Dialogs/CommentDialog.xaml` |
+
+新修复的源码/离线行为（[实现与审查](../plan/PLAN.md#2026-11-25-恢复与数据完整性源码已提交离线与独立审查完成)）：
+
+- 收藏夹动作要求真实 typed code0 回执，失败保留已有行/标志，Sort 包含请求/解析异常；详情动作和收藏列表结果归属发起详情，切换视频或同ID重载后不写入替代详情。
+- payload 数值越界返回 typed failure；season/comment 映射只跳过 null 行、保留有效邻居，评论原始 ReplyCount 与来源游标不按映射后行数改写。
+- A–B 设置先初始化，再以深值快照按接纳顺序落盘；失败不阻断后续写入。本地库导入/重导入/读取共用 registry 事务门，reopen 取得 folder 后释放；不可用 registry entry 是可恢复的 typed registry-read，不静默丢数据。
+- 已完成下载扫描在根读取失败时保留旧列表，子项故障显示部分状态；每 GUID 独立观察/取消/退休。取消或永久删除按实际结果反馈，失败项保留重新确认的清理重试；取消失败且原任务未结束时不删除。
+- 下载创建准备与清理共享实际路径/子树/revision 保护，媒体传输期间不持有准备 lease；旧清理权限不能删除新工作。进程内已知部分残留（含零/缺媒体）不显示为完成，当前非空 generation 全部成功后才可替代旧部分状态。
+- MultiFLV 分段按原序使用不同目的名与元数据，SingleFLV/DASH 命名保持；空或不可用 required media 在目标/generation 变更前拒绝。下载对话框保留 typed/mixed 失败行及 ErrorMessage，显式重试不重复成功项；批次使用发起选择快照，异常后恢复按钮并发现已接纳任务。
+
+以上保持既有请求/表单/metadata/schema/账号兼容，不承诺跨进程、崩溃或重启完整性；native BackgroundTransfer/FAL/文件锁、
+Windows/XAML、实际播放/登录/服务写入仍按 [VALIDATION.md](../plan/VALIDATION.md)单独取证，不从离线 PASS 推断。
 
 ## 3. 番剧与影视
 
@@ -63,7 +81,7 @@
 | 关注动态流：全部/视频/专栏，web 与 gRPC 双源 + 自适应选择 | 完成 | `Modules/Home/DynamicVM.cs`、`Services/DynamicApiSelector.cs`、`Parsing/Dynamic/*` |
 | 卡片渲染：文字/图片网格/转发（两级）/视频/专栏/直播/预约/投票/附件 | 完成（CARD_PLAN 切片 1–4 与后续评审修复） | `Controls/Dynamic/*`、`Models/Dynamic/*` |
 | 动态详情、用户动态页、话题页 | 完成 | `Pages/User/DynamicDetailPage.xaml`、`Pages/Home/UserDynamicPage.xaml`、`Pages/Other/TopicPage.xaml` |
-| 点赞、转发、评论、删除、发布文字/图片动态 | 完成（评论写入的 CSRF 拼装缺陷见 `document/BILIBILI_API_RESEARCH.md` U1） | `Modules/User/DynamicVM.cs`、`Modules/User/SendDynamic/*` |
+| 点赞、转发、评论、删除、发布文字/图片动态 | 完成（U1 的四动作 CSRF 拼装已修；真实写入会话仍待验证） | `Modules/User/DynamicVM.cs`、`Modules/User/SendDynamic/*` |
 | 信息流滚动窗口（十页滚动窗口、锚点保护、重新加载检查点） | 完成 | `Services/DynamicFeedWindow.cs` |
 
 ## 6. 账号
@@ -94,5 +112,5 @@
 | 后台播放归属 | 切标签/最小化后系统媒体控制（SMTC）没有唯一所有者；`OnUnload` 会关掉别的播放器的控制 | `plan/PLAN.md` 第 2 项 |
 | 内存随时间增长 | 长会话内存上升，缺分层测量 | `bug_report.md` BR-21 |
 | 账号相关的 API 解析（P4 第 4 步） | 账号接口仍在旧的 `GetJson/GetData` 直读路径上 | `plan/PLAN.md` 第 4 项 |
-| 与姊妹仓库的 API 差距 | 203 个方法/路由对里 38 个本地没有完全对应的路由，其中若干是已确认的缺陷（评论写入 CSRF、直播弹幕发现接口等） | `document/BILIBILI_API_RESEARCH.md` |
+| 与姊妹仓库的 API 差距 | 历史 pinned 对照的 203 个方法/路由对里 38 个无精确对应，不等于 38 个缺失功能；U1/U5/U8/U9 已修，活动直播发现/鉴权 U2 仍受身份/会话证据阻塞 | `document/BILIBILI_API_RESEARCH.md` |
 | 直播磁贴、真 buvid、备用弹幕渲染器 | 明确停放，不做 | `plan/PLAN.md` 「Parked」 |

@@ -13,7 +13,7 @@
 | 发布线 | `master`，tip 为 1.0.9.61 同步（2026-11-07）+ 仓库文档化提交 |
 | 分叉点 | `e2c7958`（2026-10-31）；`dev` 在此之后 510 个提交，`master` 8 个（两次同步提交的内容 `dev` 已全部包含） |
 | 设备验收策略 | 维护者的设备检查「默认通过」；只有真实报告的缺陷才重开（`plan/VALIDATION.md`） |
-| 探针 | 43 目录批次 + 7 逻辑 legacy 探针 / 8 可执行阶段 = 50/51；QF1 `ca99149` 修复后完整 sweep 与独立审查 PASS。后续修复有 owning regression；新 runner/CI 的结果另行记录 |
+| 探针 | 44 目录批次（43 net8.0 项目 + shell-only stab）+ 7 逻辑 legacy 探针 / 8 可执行阶段 = 51/52；当前 changed-source 完整 gate PASS、complete_required=true，详见 §6。历史 QF1/runner 50/51 仍为原快照证据 |
 
 ## 1. 未完成项
 
@@ -109,10 +109,15 @@
 - [~] **QF3/发布前 P1 `8f55968`**：Packages 根启动器守卫与独立 15-case probe/实现审查 PASS。**Windows compile/full-package/install/launch FAILED/BLOCKED**：Linux 缺 PowerShell/VS/UWP/Windows SDK。下一步在 Windows 完成实际发布门禁，不以 ZIP fixture 代替。
 - [~] **发布签名前置：Windows 证据 BLOCKED**。只读盘点确认仓库 CER（PEM）有效期截至 2024-05-16 22:27:48 GMT，公开 SHA-1 `42621A9CE0525C9351F5142E87F349D063DFE89B`；两个项目当前选择 `3F95D7B0B185635BA827AF4A3E82E31EC3675FCF`，两者不同。未检查 Windows 证书存储/私钥或真实包，因此不能推断当前 signer 过期或已发生签名失败。下一次获授权的发布准备须核对所选证书有效期/私钥/publisher、真实 MSIX 签名及分发证书；不擅改 CER/指纹/身份/密钥。只读证据见 [release-signing-evidence.md](../cloud/rounds/20261124-package-layout-guard/release-signing-evidence.md)。
 - [ ] **QF4/P2 依赖兼容性**：完整 shipped graph、SDK/transitive/native 支持与 Windows 播放/导出证据缺失；需单独 owner 做 advisory/pin inventory，禁止批量升级。gRPC 单项目查询不认证全应用。
-- [ ] **P2 持久化假设**：先用延迟写入/并发调用重现 history snapshot alias 与 local registry interleaving，再决定不可变有序写入；尚非已确认缺陷。
-- [ ] **UX-03–06/P2**：推荐初始失败/空态/重试、下载删除的真实部分失败反馈，以及窄窗/缩放/可访问性。保留既有批量操作、导入导出、完整标题与主题成果；布局缺陷先取 Windows 最小窗口/800×600/1280×720、100/150/200% 字号、主题/键盘/Narrator 证据。
+- [x] **P2 持久化 S1–S4 / FA-01**：已用实际源重现并修复深快照/写入顺序、首次初始化、registry 事务与 admitted reopen；异常 registry 条目返回 typed registry-read 并可在修复后重试。实现/独立审查和平台边界见 §6 与 PLAN；不承诺跨进程或 crash/restart 可靠性。
+- [x] **UX-03/04 与恢复源码**：推荐初始/刷新/追加失败保留可用状态、显式重试和空态；下载按实际取消/删除结果反馈、失败保留清理重试，creator/path/subtree/revision 与 caller/lifetime 边界已闭环。当前源码与离线审查完成，见 §6。
+- [~] **UX-05/06 Windows 显示/可访问性 FAILED/BLOCKED**：Linux 无 UWP/XAML/native 运行环境。保留既有批量操作、导入导出、完整标题与主题；下一步按 VALIDATION 获取最小窗口/800×600/1280×720、100/150/200% 字号、主题/键盘/Narrator 证据，只按实际缺陷修布局。
 
 ## 6. 最近完成
+
+- [x] **2026-11-25 recovery/integrity 源码完成**：`0514966` favorite typed acknowledgements、`1b6af65` payload/null-row/raw-paging 与 detail action/list 归属、`bdba9eb` 深值有序 A–B snapshot/首次初始化/registry 事务与 reopen；最终 `7fe7a5f` 含推荐恢复、下载扫描/每 GUID observer/真实清理重试、creator/subtree/revision 协作、MultiFLV/失败重试/稳定 selection 与 login helper lifetime。RF1/RF2/FA-01–09/CR1 全部独立 CLOSED，范围/red→green/兼容边界见 [PLAN 处置表](../plan/PLAN.md#2026-11-25-恢复与数据完整性源码已提交离线与独立审查完成)、[owning review](../cloud/rounds/20261125-recovery-integrity/recovery/final-review.md)、[fresh audit](../cloud/rounds/20261125-recovery-integrity/final-audit.md)。
+- [x] **当前本地完整 gate**：[final integration](../cloud/rounds/20261125-recovery-integrity/verification/execution.md) 为 51/51 逻辑、52/52 可执行 PASS、complete_required=true，recovery 348 / g5 335；源 915 与工具 5073字节绑定最终已推源码 7fe7a5f。14 controls/package15各自独立且输入未变，未重复执行。旧50/51及早期51/52保持历史 provenance。
+- [~] **当前 hosted 与 native 跟进**：root 2026-11-25 04:11 Asia/Shanghai 实际 Actions collection 只见旧 169b2b0的 run45434541348 queued/null；没有经验证的7fe7a5f hosted run/result。旧head即使最终通过也不能认证新 runnable bytes/51/52 inventory；只观察实际服务结果，不推断原因或重复派发。Windows compile/XAML/BackgroundTransfer/FAL/文件锁/会话/签名与设备仍 FAILED/BLOCKED，下一步按 [新增 Windows 场景](../plan/VALIDATION.md#2026-11-25--恢复与数据完整性的新增-windows-跟进未运行)执行；不更改历史默认验收。
 
 - [x] **2026-11-24 E1/UX-02 `1c7f6e4`**：评论发送 single-flight、等待反馈、保草稿失败重试与关闭后迟到拒绝；真实 dialog/HttpResults/typed parser 的 153 新检查、comments 总 1070 与独立审查 PASS。实际 XAML/焦点/会话仍 FAILED/BLOCKED。
 - [x] 本次 U1/PB1/U9/U5/U8/QF1/QF3 的准确行为、测试归属和提交见 [PLAN.md 维护修复表](../plan/PLAN.md#2026-11-24-维护修复已提交与离线验收)。Windows 平台限制保留；账号 P4/P5 仍为维护者 hold；parked 范围不扩张。

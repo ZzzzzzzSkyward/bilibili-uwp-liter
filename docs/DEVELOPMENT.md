@@ -12,7 +12,7 @@
 | .NET SDK | 8.0+（`BiliLite.gRPC`、`BiliLite.WebApi` 是 SDK 风格项目；UWP 项目本身走 MSBuild 而非 dotnet CLI）。批次探针需要 **8.0** 目标包，`plan/tests/run.sh` 还需要 `$UPSTREAM_UNIT_TOOLS` 下的 8.0.427 SDK |
 | PowerShell | Windows PowerShell 5.1 即可（脚本自带 UTF-8 输出设置） |
 | Bash / Python | 完整离线 runner 用 Linux、Bash ≥4、Python ≥3.9（标准库），以及 awk/sed/grep/cut/cp/mktemp 等现有脚本工具；Windows 的单批次可用 Git/MSYS2 Bash，UWP 构建仍走 Windows |
-| 网络 | 拉依赖与 `git push` 需要；本机 GitHub 的 TLS 会间歇性中断，用 `sync-dev.ps1` 重试 |
+| 网络 | 拉依赖与 `git push` 需要；本机 GitHub 的 TLS 会间歇性中断。本地维护者可用 `sync-dev.ps1` 重试；云端 agent 不运行该 rebase/stash 脚本，按 §7 的串行授权与普通 Git 流程处理 |
 
 App 的接口基址与 appkey 编译在产品里，不在运行时读取环境变量；离线探针的工具根、PATH 和缓存需要按 §6 设置。
 
@@ -110,6 +110,7 @@ bash plan/tests/run-all.sh --tools-root "$UPSTREAM_UNIT_TOOLS"
 bash plan/tests/run-all.sh --list
 # --only 可重复，按清单顺序去重执行；这里只覆盖选择范围
 bash plan/tests/run-all.sh --tools-root "$UPSTREAM_UNIT_TOOLS" --only batch:comments --only LM05
+bash plan/tests/run-all.sh --tools-root "$UPSTREAM_UNIT_TOOLS" --only batch:recovery
 bash plan/tests/run-all.sh --tools-root "$UPSTREAM_UNIT_TOOLS" --only AUTH01B
 # 独立旧脚本选择：不需要此前阶段成功
 bash plan/tests/run.sh --stage LM05
@@ -131,7 +132,7 @@ ID 区分大小写：目录是 `batch:<name>`（含 g1、stab），单文件是 
 `logs/`（每份保留最多 1 MiB 的首尾），记录源 SHA/dirty、工具/命令、完整清单与所选数量、退出码/原因/阶段等。
 源码/工具根不可放进输出树；报告、夹具、缓存、bin/obj 都不提交。缺少最终报告或 `finished=false` 不能视为完成。
 
-完整 `PASS` 要求全部 **50 逻辑项 / 51 可执行阶段** 实际通过，且 `complete_required=true`。
+完整 `PASS` 要求全部 **51 逻辑项 / 52 可执行阶段** 实际通过，且 `complete_required=true`。
 选择范围全部通过返回 `PARTIAL_PASS`、exit 0，但 `complete_required=false`；其它未选项仍显示 `NOT_SELECTED`。
 缺源码是 `MISSING`，缺精确工具链是 `BLOCKED`（shell-only stab 仍可独立运行）；失败、超时、执行/协议错误保留各自状态。
 未知选择/参数或报告设置错误退出 2，任一选中必需项失败/缺失/阻塞退出 1。
@@ -141,7 +142,7 @@ ID 区分大小写：目录是 `batch:<name>`（含 g1、stab），单文件是 
 Git/Bash/SDK 元数据前置同样服从套件截止与取消，报告在首个元数据子进程前初始化；中断的来源信息保留 unavailable/unverified。
 SIGINT/SIGTERM 尽力清理进程组并完成报告，分别退出 130/143；硬杀/宿主失效不能保证最终报告。
 
-runner 自身的外部契约控制另跑，**不计入 50/51**：
+runner 自身的 14 项外部契约控制另跑，**不计入 51/52**：
 
 ```bash
 python3 plan/tests/verify-suite-runner.py --tools-root "$UPSTREAM_UNIT_TOOLS"
@@ -155,15 +156,16 @@ dev push/PR 与无输入 workflow_dispatch，Ubuntu 24.04；运行时步骤通�
 GitHub run；排队/尚无 job 是 PENDING，不能由配置、lint、控制或本地 suite PASS 推断 hosted PASS。
 
 
-- 固定清单为 **43 个目录批次 + 7 个单文件逻辑探针 = 50 个逻辑项 / 51 个可执行阶段**。
-  目录批次含 42 个 net8.0 控制台项目和 shell-only `stab`；42 个目录带 `run.sh`，`g1` 使用根
+- 固定清单为 **44 个目录批次 + 7 个单文件逻辑探针 = 51 个逻辑项 / 52 个可执行阶段**。
+  目录批次含 43 个 net8.0 控制台项目和 shell-only `stab`；43 个目录带 `run.sh`，`g1` 使用根
   `run-g1.sh`。项目直接链接真实产品源码，以少量 stub 提供平台/网络边界，不能替代 UWP 编译或真机。
+- `batch:recovery` 是一个可执行阶段，覆盖真实推荐、下载与调用方恢复路径；不按内部断言数拆阶段。
 - 七个逻辑探针是 LM01–LM05、API01、AUTH01B；最后一个分 Account 与 LoginVM 两个可执行阶段。
   旧无参链遇失败即停，成功前缀不表示后面的阶段执行过。
 - **显式用 Bash，并保留 LF**：Linux 的 `sh` 可能是 dash，不支持 `BASH_SOURCE`/`pipefail`，LF 也会失败。
   CRLF 是另一个问题，会产生 `^M` 路径/选项；`.gitattributes` 钉 `*.sh text eol=lf`。
 - 单个/选定批次通过仅覆盖其范围；全套通过需要所有必需项实际完成，缺文件、缺 SDK、失败或未执行都不能省略。
-- 独立包布局门禁（不计入上述 50/51）：
+- 独立包布局门禁（不计入上述 51/52）：
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File ./plan/tests/package-layout-probe.ps1
@@ -175,6 +177,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ./plan/tests/package-layout-
   Windows PowerShell 5.1、UWP/XAML 编译、完整打包、安装启动和设备路径仍需各自的平台证据。
 
 ## 7. 提交与同步
+
+以下同步脚本仅供本地维护者使用。云端 agent 按适用的串行授权使用普通 fetch、获授权的 fast-forward-only
+集成与 nonforce push；不运行 `sync-dev.ps1`，不 rebase，也不自动 stash 或改写其他 owner 的并发工作。
+不能安全快进时保留现有工作并记录阻塞，等待相应的集成授权。
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\sync-dev.ps1              # 拉 + 推（dev）

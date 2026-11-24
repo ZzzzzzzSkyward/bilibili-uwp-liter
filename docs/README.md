@@ -36,7 +36,7 @@
 | [REFRESH_PLAN.md](../plan/REFRESH_PLAN.md) | 登录刷新：cookie/appkey 归属、对应关系与事务 |
 | [SETTINGS_PLAN.md](../plan/SETTINGS_PLAN.md) | 设置页十个页签的顺序、文案与失效控件 |
 | [offline-probes.yml](../.github/workflows/offline-probes.yml) | dev push/PR 与无输入手动入口的 Ubuntu 离线 controls + 完整 suite；实际 hosted 结论另看对应 SHA 的 run |
-| [tests/](../plan/tests) | `bash plan/tests/run-all.sh` 统一运行 43 目录 + 7 逻辑项 / 8 legacy executables（50/51）；Bash/Python/SDK/选择/报告与独立 controls 见 DEVELOPMENT；独立 PowerShell 包布局探针不计入该总数 |
+| [tests/](../plan/tests) | `bash plan/tests/run-all.sh` 统一运行 44 目录 + 7 逻辑项 / 8 legacy executables（51/52）；Bash/Python/SDK/选择/报告与独立 controls 见 DEVELOPMENT；独立 PowerShell 包布局探针不计入该总数 |
 
 ## 根目录
 

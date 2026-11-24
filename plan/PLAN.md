@@ -14,8 +14,8 @@ in `bug_report.md` first.
 | workspace | 路径取当前 checkout；历史 Z:/H: 说明只适用于原维护者工作副本。先核对实际输入是否存在，不把历史 sparse 缺失自动套给完整 checkout |
 | branch | `dev` 是唯一开发线；同步状态取实际 git 证据 |
 | build | `powershell -NoProfile -ExecutionPolicy Bypass -File ./build-release-x64.ps1 -Fast -NoVersionBump -Restore` 编译循环；不带 `-NoVersionBump` 才自增两份清单。全量发布构建与真实安装启动另行验证；`-SkipProjectReferences` 只在引用输出已存在时使用 |
-| probe checks | 显式 Bash；43 目录批次含 g1 根 runner 与 shell-only stab，另七逻辑探针/八 legacy executables，总计 50/51。精确 SDK/运行时/引用包与命令见 `docs/DEVELOPMENT.md` §6；成功前缀不算完整通过 |
-| sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-dev.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
+| probe checks | 显式 Bash；44 目录批次含 g1 根 runner 与 shell-only stab（43 net8.0 项目），另七逻辑探针/八 legacy executables，总计 51/52。精确 SDK/运行时/引用包与命令见 `docs/DEVELOPMENT.md` §6；成功前缀不算完整通过 |
+| sync | Local maintainer only: `powershell -NoProfile -ExecutionPolicy Bypass -File sync-dev.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`). Cloud agents follow the applicable serialized grant: ordinary fetch, granted fast-forward-only integration and nonforce push; do not run this rebase/stash script or automatically stash/rewrite concurrent work. Preserve work and record integration blockers |
 | review cache | `plan/REVIEW_LOG.md` |
 | bug device log | `bug_report.md`, `code_review.md` at the repo root |
 
@@ -30,6 +30,34 @@ compiled into `BiliLite.Packages_1.0.9.42_x64.msix` (package directory dated 202
 are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no probe run is recorded for them.
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
+
+### 2026-11-25 恢复与数据完整性：源码已提交、离线与独立审查完成
+
+以下新修复属于源码/离线范围，保留历史设备默认通过策略和旧 50/51 receipts；不表示本轮 Windows 编译、
+真实服务、BackgroundTransfer、安装启动或设备通过。当前 recovery 为单个新批次，完整清单 **51 逻辑 / 52 可执行阶段**。
+
+| 范围 | 已提交行为 | 实际证据与处置 |
+| --- | --- | --- |
+| BND-A 收藏动作 | `0514966`：Delete/Clean/collect/cancel/sort 只接受 typed code0 回执；malformed/HTTP/transport 失败不删除行、不改标志、不触发 Clean 刷新；Sort 整体异常边界保留正常反馈 | 实际 FavoriteDetailVM + decoder/parser：新 563、原 451 PASS，原源101 genuine failures；[独立边界审查 PASS](../cloud/rounds/20261125-recovery-integrity/boundaries/final-review.md) |
+| BND-B/C/D 非账号边界 | `1b6af65`：payload Int32/legacy has_more Int64 越界返回 typed Payload；null season/comment 行仅映射时跳过，保留有效邻居、原始 ReplyCount/游标；六动作、登录前后和 favorite-list 迟到结果归属发起详情，独立 AttentionUP 调用仍可用 | c1 原 186+新 139、season1 141、comments 1089（dialog 153）、g4 179、g3 386+rich-text29/105、g5 335 PASS；真实源 red→green 与[独立 PASS](../cloud/rounds/20261125-recovery-integrity/boundaries/final-review.md)，请求/字段/编码/来源兼容未迁移 |
+| S1–S4 历史与本地库 | `bdba9eb`：A–B 首次 Find/Set 前初始化，持久化深值快照按接受顺序写入，写入失败不毒化后续；registry read/modify/grant/stage/replace/retire 共用进程内异步门，reopen 持有到实际 folder 获取后释放 | playersess 原 217+新 23=240，LM02 新 50及原断言、LM03/LM05 PASS；[独立 storage PASS](../cloud/rounds/20261125-recovery-integrity/storage/final-review.md)。保留 live entry、key/schema、staged rollback/typed errors；不承诺跨进程/崩溃恢复 |
+| FA-01 registry 边界 | `7fe7a5f`：null/不可用 registry entry 在受控读取中返回 typed registry-read，保留原 bytes/grants、broken-asset 修复语义与后续可用重试 | 同 fixture 214 failures→653 additive PASS，实际 DownloadPage refresh red→green；[FA-01 evidence](../cloud/rounds/20261125-recovery-integrity/storage/implementation-evidence/fa01-red-green.md) 与[最终独立 closure](../cloud/rounds/20261125-recovery-integrity/final-audit.md) |
+| 推荐恢复 / FA-03/08/09 | `7fe7a5f`：初始/刷新/追加 single-flight、staged publication、失败保留 rows/banner/continuation、显式重试与 no-progress/空态；反馈只接受 typed acknowledgement 并重算最后一行空态。真实登录 true 为成功，登录及回执后都核对原 collection/object；ShowLoginDialog 仅拥有 show 的调用在 finally 释放标志，fault/cancel 后可在同进程再试 | recovery 最终 348（保留原 312/208/139）及 g5 335 PASS；helper 同 fixture 21 semantic failures→348/348，异常/取消/token/nonowner 控制保持；[owning PASS](../cloud/rounds/20261125-recovery-integrity/recovery/final-review.md) 与[fresh PASS](../cloud/rounds/20261125-recovery-integrity/final-audit.md) |
+| 下载观察/扫描/清理 / RF1/RF2/FA-02/04 | `7fe7a5f`：root 扫描失败保留旧完成列表，optional 故障呈部分状态；每 GUID 观察/CTS/退休；删除按已确认的原路径/GUID/范围执行，部分失败保留清理重试，取消失败仍 pending 时不删。creator 与 episode/title subtree 共用 revision/path ownership，准备期与媒体 lifetime 分离；已知取消残留（零/缺媒体/metadata 也包括）不冒充完成项，进度有限且有界 | 原 RF1 actual CTS retry proof 已闭环；partial/read-stamp/current-generation 与有效 sibling 控制 PASS，[独立审查](../cloud/rounds/20261125-recovery-integrity/recovery/final-review.md)。进程内 partial/generation 状态不等于重启/跨进程磁盘完整性判断 |
+| 实际下载调用方 / FA-05–07 / CR1 | `7fe7a5f`：MultiFLV 按源序生成 distinct 0.blv/1.blv/… 与 VideoPath，保留 SingleFLV/DASH；required media 空/无效时在 generation/target 变更前拒绝。typed/mixed 失败保留行、正确通知 ErrorMessage，显式重试不重复成功行；批次保存发起 selected-object snapshot，whole-event catch/finally 恢复主按钮并发现已接纳 sibling | 相同最终 caller fixture 43 failures→312 PASS；后续 348保留全部断言。RF1/RF2/FA-01–09/P2-CR1 全部独立 CLOSED，见[最终 fresh audit](../cloud/rounds/20261125-recovery-integrity/final-audit.md)；无账号/凭据/schema 迁移 |
+
+最终 changed-source [完整集成](../cloud/rounds/20261125-recovery-integrity/verification/execution.md)：**51/51 逻辑、52/52 可执行 PASS**，
+finished=true、complete_required=true、所有 52 行 PASS，无遗漏/其它状态。报告 SHA256 `b33d402fdf65518ea47805463f82d097bec9e638694750e6031b698baa1b549d`；
+915 输入绑定 `0a80ac1cf14e76c9274564a999a88522c23460be6a85e077e093d5e28cd55639`，5073 tool/package bytes 前后稳定。
+执行时诚实记录 e928bf0/dirty；最终源码 `7fe7a5ff417d0bc2437b5dc3f0507543f744da9b` 已普通提交/推送，
+[publication receipt](../cloud/rounds/20261125-recovery-integrity/recovery/publication.md) 核对其 22 runnable paths 与执行字节相同。
+独立14 controls 与 package15 通过各自精确输入绑定沿用，均不计入52；selected PASS 仍为 PARTIAL_PASS。
+
+Hosted **PENDING/UNVERIFIED**：root 于2026-11-25 04:11 Asia/Shanghai 的实际 connected Actions collection 仍只返回
+旧 workflow_dispatch run [45434541348](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348)，
+head 169b2b0、queued/null conclusion；未建立 7fe7a5f的 hosted run/result。不由此推断 outage/权限或重复 dispatch。
+Windows/VS/UWP/XAML/native/session/signing-store/设备前置仍 **FAILED/BLOCKED**；具体新增行见 [VALIDATION.md](VALIDATION.md)。
+portable PowerShell fixture 不等于 Windows PowerShell/VS 能力。BR-21测量、身份U2、账号 hold 和 parked 范围仍保持原验收与下一步。
 
 ### 2026-11-24 维护修复：已提交与离线验收
 

@@ -32,6 +32,17 @@ Windows/UWP compilation and real authenticated service behavior remain unavailab
 The original implementation ordering below is retained as historical research guidance; U1/U5/U8/U9
 now have the dispositions above, while U2 and evidence-dependent route migrations remain separate.
 
+### Later non-account boundary disposition (2026-11-25)
+
+The pinned route comparison and U1/U5/U8/U9 history above remain unchanged. Current favorite action
+acceptance is additionally repaired in `0514966`: actual FavoriteDetailVM Delete/Clean/collect/cancel/sort
+require the existing typed code0 acknowledgement; malformed replies retain local state and Sort contains
+request/decoding exceptions. `1b6af65` separately bounds payload integers, skips only null mapped rows
+while preserving raw paging, and binds detail actions/login/favorite lists to their initiating detail.
+[Independent boundary review](../cloud/rounds/20261125-recovery-integrity/boundaries/final-review.md) PASS
+is source/offline evidence, with no new endpoint, form/signing/credential contract or live service claim.
+U2 identity/session/protocol prerequisites and the original research counts remain as stated.
+
 ## APIs to update
 
 | ID / priority | API and local state | Required update or investigation | Evidence |

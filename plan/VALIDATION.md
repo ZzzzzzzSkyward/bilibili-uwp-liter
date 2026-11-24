@@ -49,6 +49,27 @@ starts that.
 | E1 显示/可访问性 | 实际支持最小窗口及 800×600/1280×720 effective pixels，100/150/200% text，light/dark/follow-system/high contrast；状态不遮操作，键盘可达，Narrator/UIA 名称与 live-region 公告正确 |
 | QF3 `8f55968` | Windows PowerShell 5.1 跑独立 15-case probe；实际 UWP/XAML compile，然后获授权的完整版本递增构建；Packages archive 内 entrypoint/companion/fullTrustProcess 与存在且 <65,536 字节根启动器；安装启动、导出/转换器及受影响路径。ZIP fixture 不证明安装/启动 |
 
+## 2026-11-25 — 恢复与数据完整性的新增 Windows 跟进（未运行）
+
+本轮源码/离线与独立审查已完成（[PLAN 处置](PLAN.md#2026-11-25-恢复与数据完整性源码已提交离线与独立审查完成)），
+这里列精确新增 native/session 场景。Linux 缺 Windows/VS/UWP/XAML、BackgroundTransfer/FAL/文件锁与真实会话环境，
+当前 **FAILED/BLOCKED**；portable pwsh 的包 ZIP fixture 不改变此前 Windows PowerShell 5.1/发布门禁。
+先在 Windows 跑 `powershell -NoProfile -ExecutionPolicy Bypass -File ./build-release-x64.ps1 -Fast -NoVersionBump -Restore`，
+再记录设备/版本/时间/实际结果；历史默认通过行不重开，发现真实缺陷才新建 BR。
+
+| 新改动 | Windows/真实会话要看什么 |
+| --- | --- |
+| BND-A 收藏 `0514966` | 受控账号的 Delete/Clean/collect/cancel/sort 普通成功与业务/网络失败：失败保留行/标志、不报排序成功、不误触 Clean 刷新；拖动排序失败后仍可操作，记录实际服务结果而非仅提示。 |
+| BND-B/C/D `1b6af65` | season/comment 有有效邻居和可选空项时正常展示/翻页；typed 错误不成为空成功。动作或登录等待期间从视频A切B、同ID重新加载，或让A的收藏列表迟到：B状态/统计/列表不被A覆盖；staff/live的独立关注仍可用。测试代理/fixture若用于异常形状，须区分受控输入与真实服务捕获。 |
+| S1/S2 A–B 历史 `bdba9eb` | 冷启动后立即设置A/B、快速更改/取消B、多个视频/剧集交替设置，在写入延迟/失败恢复后保留最后接受状态与原有条目；重启确认落盘结果，播放控件实时A/B行为保持。真实设置存储/启动时序与重启结果单独记录，不把进程内有序队列当crash保证。 |
+| S3/S4 / FA-01 本地库 `bdba9eb`/`7fe7a5f` | 并行导入不同集合均保留；同id/root重导入与已开始reopen交错时旧folder可先取得、新token有效；写入/replace失败保留旧registry/grant，后续重试可用。备份后的受控坏registry产生可恢复读取反馈，修复后刷新可用；broken media修复/重导入不丢条目。实际FutureAccessList撤销、文件替换/占用、重启另取证。 |
+| 推荐状态/反馈 `7fe7a5f` | 首次断网/空结果、刷新与追加失败/重试、快速连续点击、无新游标；旧rows/banner不消失，空态/重试/自动追加正确。成功/拒绝/失败反馈、移除最后一行；登录成功/取消/异常后再试；登录或回执等待中刷新到同idx的新集合/移除原对象，不向替代行发送或应用旧操作。 |
+| 下载扫描与每 GUID observer `7fe7a5f` | 根路径不可读保留原完成列表、子目录/旧metadata故障只标部分状态并保留有效邻居；重扫同CID多个GUID不串CTS/进度/退休。开始/暂停/继续/取消、离页再返、未知总量时进度有限有界；真实BackgroundTransfer callback/UI线程/绑定反馈正确。 |
+| 删除/清理/创建并发 `7fe7a5f` | 单集/批量/整标题删除分别确认，期间新增同CID/不同GUID、相邻路径/其它root、未显示子集或创建准备；旧权限不删除新工作。拒绝取消/文件占用/部分删除失败时提示实际结果并保留可重新确认的清理重试；原任务仍pending时不删。准备lease不覆盖媒体lifetime，正常下载不被整段传输锁住。 |
+| 已知部分残留 `7fe7a5f` | 取消在首字节前/传输中、清理失败且observer退休，含零长度/缺媒体/不可用episode metadata；完成页不冒出空标题/假完成项，有效同标题sibling仍可见且部分状态明确。新pending/单段成功/失败替代不能清掉旧残留，全required成功才显示新完成；重启后的磁盘判断另记，不能沿用进程内partial 结论。 |
+| 实际下载对话框 `7fe7a5f` | 多段MultiFLV按序写不同0.blv/1.blv/…及VideoPath；SingleFLV、DASH有/无音轨、headers/导出保持。空/坏media不改旧目标/metadata；typed失败、mixed成功/失败保留可重试行，ErrorMessage可见，retry不重复成功任务。等待playurl/准备时取消勾选/清空/加选，原选择按序处理且新增行不混入；异常恢复主按钮、已接纳sibling可发现、仅全成功关闭一次。 |
+| 显示/可访问性与登录owner `7fe7a5f` | 最小窗口/800×600/1280×720，100/150/200%字号、light/dark/follow-system/high contrast；新状态/重试/清理操作不遮挡且键盘/Narrator可达。受控native登录show fault/cancellation后可再次打开；已有show期间非owner不能解除其占用，不声称新的跨线程串行策略。 |
+
 ## Shipped 2026-11-01 — the batch that was uncommitted, now built
 
 Compiled with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (0 errors), probes green:

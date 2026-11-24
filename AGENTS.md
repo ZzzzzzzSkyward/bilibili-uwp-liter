@@ -63,11 +63,11 @@ bash plan/tests/<batch>/run.sh        # directory batch; g1 uses plan/tests/run-
 bash plan/tests/run.sh                # legacy fail-fast chain
 ```
 
-Full PASS requires all 50 logical / 51 executable stages and `complete_required=true` in the
+Full PASS requires all 51 logical / 52 executable stages and `complete_required=true` in the
 printed report directory's `results.json`. Selected success is `PARTIAL_PASS`, not a complete gate.
 Tools default to `$UPSTREAM_UNIT_TOOLS` or `/workspace/work/upstream-unit-tools`; `--tools-root`
 overrides it. Exact SDK 8.0.427, runtime/ref pack 8.0.33, selectors, reports and budgets are documented
-in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#6-探针离线行为测试). Runner controls are separate:
+in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#6-探针离线行为测试). Runner controls (14 cases) are separate:
 `python3 plan/tests/verify-suite-runner.py --tools-root /absolute/path/to/probe-tools`.
 
 Optional separate archive-layout gate (15 internal cases; no full release-script execution):
@@ -81,20 +81,24 @@ The published workflow is [.github/workflows/offline-probes.yml](.github/workflo
 (dev push/PR and no-input workflow_dispatch, Ubuntu 24.04). Check actual pushed-SHA hosted
 results before reporting CI success; a queued run is pending.
 
-The inventory contains 43 directory batches: 42 `net8.0` projects link product sources plus
-stubs, while `stab` is shell-only. `g1` uses `bash plan/tests/run-g1.sh`; the other 42
+The inventory contains 44 directory batches: 43 `net8.0` projects link product sources plus
+stubs, while `stab` is shell-only. `g1` uses `bash plan/tests/run-g1.sh`; the other 43
 directories have `run.sh`. Assertions fail nonzero. The seven legacy logical probes run eight
-executables because AUTH01B has separate Account and LoginVM stages (50 logical / 51 total).
+executables because AUTH01B has separate Account and LoginVM stages (51 logical / 52 total).
 `plan/tests/run.sh` instead compiles its probes with `csc` from the SDK at
 `$UPSTREAM_UNIT_TOOLS/dotnet/sdk/8.0.427`, so that one script needs an explicit .NET 8 SDK root.
 
-Git sync (GitHub TLS drops intermittently on this network; the script retries, rebases, and stashes
-the two manifests around the operation):
+Local-maintainer Git sync (GitHub TLS drops intermittently on this network; the script retries,
+rebases, and stashes the two manifests around the operation):
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\sync-dev.ps1            # fetch+rebase+push
 powershell -NoProfile -ExecutionPolicy Bypass -File .\watch-remote.ps1 -Fetch # block until remote moves
 ```
+
+Cloud agents follow the applicable serialized grant: ordinary fetch, fast-forward-only integration
+when granted, and nonforce push. Do not invoke `sync-dev.ps1`, rebase, or automatically stash or
+rewrite concurrent work; preserve other owners' work and record any integration blocker.
 
 ## 2. Repo map
 

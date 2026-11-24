@@ -47,8 +47,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ./plan/tests/package-layout-
 It runs 15 inert archive cases without executing the release script or changing versions. Exit 0 means
 all cases passed, 1 means an assertion failed, 2 means setup/parser/extraction/cleanup failure.
 `pwsh -NoProfile -File ./plan/tests/package-layout-probe.ps1` is the PowerShell Core equivalent.
-This optional gate is separate from the 43 directory + seven logical legacy probes (50 logical /
-51 executable stages). The complete offline command is `bash plan/tests/run-all.sh --tools-root /absolute/path/to/probe-tools`
+This optional gate is separate from the 44 directory + seven logical legacy probes (51 logical /
+52 executable stages). The complete offline command is `bash plan/tests/run-all.sh --tools-root /absolute/path/to/probe-tools`
 on Linux with Bash >=4/Python >=3.9; see [DEVELOPMENT.md](../docs/DEVELOPMENT.md#6-探针离线行为测试) for exact SDK setup,
 selectors, reports and partial-vs-complete results. It cannot replace the Windows release gates.
 Fixtures do not establish a valid signed MSIX, installed launch or converter behavior. Before an
