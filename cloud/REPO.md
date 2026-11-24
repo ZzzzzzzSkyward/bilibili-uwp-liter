@@ -6,7 +6,7 @@
 - 工作分支：`dev`（唯一开发分支，也是默认分支；`master` 是发布线，新工作不落在那里）
 - 远端：`origin`
 - 安装依赖：`Visual Studio 2022` + **通用 Windows 平台开发（UWP）**工作负载 + Windows 10 SDK `10.0.19041.0`（最低 18362），.NET SDK 8.0+（探针用），PowerShell 5.1，Git/MSYS2 bash。NuGet 还原由构建脚本的 `-Restore` 完成（`packages.config` 与 `PackageReference` 两种都处理），不要自己调 MSBuild。详见 `document/BUILD.md`
-- 测试：`sh plan/tests/firstrun/run.sh`，其它批次同样 `sh plan/tests/<batch>/run.sh`（`plan/tests/` 下 43 个目录批次，每个脚本是一行 `dotnet run --project ... -c Debug`，断言行为而非接线）；单文件探针 `sh plan/tests/run.sh` 需 `UPSTREAM_UNIT_TOOLS` 指向含 `dotnet/sdk/8.0.427` 的 SDK 根（默认 `/workspace/work/upstream-unit-tools`）
+- 测试：`sh plan/tests/firstrun/run.sh`，其它批次同样 `sh plan/tests/<batch>/run.sh`（`plan/tests/` 下 43 个批次目录，其中 42 个带 `run.sh`，脚本内容是一行 `dotnet run --project ... -c Debug`，断言行为而非接线；`g1/` 只有 `G1Probe.csproj` + `Program.cs`）；单文件探针 `sh plan/tests/run.sh` 需 `UPSTREAM_UNIT_TOOLS` 指向含 `dotnet/sdk/8.0.427` 的 SDK 根（默认 `/workspace/work/upstream-unit-tools`）
 - 构建：`powershell -NoProfile -ExecutionPolicy Bypass -File ./build-release-x64.ps1 -Fast -NoVersionBump -Restore`（编译校验，约 1 分钟，不打包、不升版本号）；出可安装包用 `... ./build-release-x64.ps1 -OutputDir Z:\`（约 2 分钟，会把两个 `Package.appxmanifest` 修订号 +1，须与触发它的改动的同一提交）
 - 额外验证：按 `document/BUILD.md` 的 MSIX 布局核对——安装包取 `BiliLite.Packages_<version>_x64.msix`，包内必须存在 `entrypoint/BiliLiter.exe` 且根 `BiliLiter.exe` < 64 KB（`BiliLite.UWP_*.msix` 在启动图即退出）；布局/播放/账号/生命周期改动按 `plan/VALIDATION.md` 写「设备上要看什么」，不自行宣称已通过
 - 入口文档：`README.md`、`AGENTS.md`、`docs/DEVELOPMENT.md`
