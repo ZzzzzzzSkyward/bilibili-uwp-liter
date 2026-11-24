@@ -12,7 +12,7 @@
 - 入口文档：`README.md`、`AGENTS.md`、`docs/DEVELOPMENT.md`
 - 包管理器/运行时：NuGet（`packages.config` + `PackageReference`）；.NET / UWP，Windows 10 18362+ x64，构建经 VS MSBuild；探针为 `net8.0` 控制台（`dotnet run`）
 - CI（若有）：无（仓库没有 `.github/workflows`；验收靠本地构建 + `plan/tests/*/run.sh`）
-- 模型路由：专家 `gpt-6.1-sol` / `xhigh`；执行者与主会话 `gpt-6.1-sol` / `high`（详见 `CONTRACT.md §2.1`）
+- 模型路由：专家 `gpt-6.1-sol` / `xhigh`；执行者与主会话 `gpt-6.1-sol` / `high`；重复/机械任务 `gpt-6-luna` / `max`（详见 `CONTRACT.md §2.1`）
 
 ## 本仓库注意事项
 
