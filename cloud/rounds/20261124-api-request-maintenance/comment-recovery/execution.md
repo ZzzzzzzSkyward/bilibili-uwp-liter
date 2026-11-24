@@ -54,3 +54,5 @@ The decoder retains longest-object salvage and first-on-equal-length semantics. 
 Windows follow-up: delayed send remains visible/busy/cancellable; rejection preserves draft and keyboard retry; blank remains open; verify Escape/external Hide Closing precedes Closed and completion between them cannot publish/restore/Hide; success-first closes once; already-open face callback cannot alter protected draft; status/live region/theme is readable. Real writes require separate authorization/test-owned content.
 
 Source/test commit is `fix: preserve comment drafts through send failures`. Its stable SHA and exact remote confirmation are appended after push. Shared/main documentation remains with its later owner, and source test ownership is released only after the execution-index artifact is finalized. No whole-suite result follows from this affected batch.
+
+Stable E1 source/test commit/push: `1c7f6e4aacf3c0fa4bb7f7d70851308405b995cd`. Push exited 0; immediately local HEAD and `git ls-remote origin refs/heads/dev` returned that exact SHA. This evidence-only follow-up changes no source/test assertion.
