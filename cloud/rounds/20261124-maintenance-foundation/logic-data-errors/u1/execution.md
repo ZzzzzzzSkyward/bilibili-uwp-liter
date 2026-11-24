@@ -27,3 +27,5 @@ UPSTREAM_UNIT_TOOLS=/workspace/work/maintenance-foundation/quality DOTNET_CLI_HO
 ## Commit and handoff
 
 The U1 source/test/evidence commit is the commit introducing this file (`fix: encode explicit csrf fields in comment actions`). Commit/push and remote verification will be recorded in the PB1 index after the sequential U1 commit has a stable SHA. Shared/main documentation remains reserved for its later owner; E1 dialog recovery remains separate.
+
+U1 commit/push completed: `5eec54ecd094bdb51ec43b42d9f901d8fae7c993`; `git push origin dev` exited 0; immediately afterward both `git rev-parse HEAD` and `git ls-remote origin refs/heads/dev` returned that exact SHA. PB1 started only after this verification.

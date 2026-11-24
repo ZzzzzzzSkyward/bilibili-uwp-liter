@@ -23,6 +23,7 @@ namespace C1Probe
 
         public static int Main()
         {
+            VideoEnvelopeCodeBoundaries();
             CollectionIsRetained();
             EpisodeCoverAndAuthorFallBackToArc();
             EpisodeLevelValuesWinOverArc();
@@ -47,6 +48,62 @@ namespace C1Probe
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
+        }
+
+        private static void VideoEnvelopeCodeBoundaries()
+        {
+            var failures = new System.Collections.Generic.List<string>();
+            CodeReaderRejectsMalformedIntegers("video", VideoEnvelope.ReadDataToken, failures);
+            foreach (var payload in new[] { "absent", "null", "1", "{}" })
+            {
+                var member = payload == "absent" ? "" : ",\"data\":" + payload;
+                var parsed = VideoEnvelope.ReadDataToken(new HttpResults { status = true, results = "{\"code\":0" + member + "}" });
+                Check(parsed.IsSuccess, "video: raw or absent payload accepted " + payload);
+                Check(payload == "absent" ? parsed.Value == null : parsed.Value != null && parsed.Value.ToString(Newtonsoft.Json.Formatting.None) == payload,
+                    "video: raw payload preserved " + payload);
+            }
+            var fallback = VideoEnvelope.ReadDataToken(new HttpResults { status = true,
+                results = "{\"code\":-404,\"message\":\"\",\"msg\":\"fallback\"}" });
+            Check(fallback.Failure == ApiParseFailure.Rejected && fallback.Message == "fallback", "video: msg fallback retained");
+            foreach (var failure in failures) Console.Error.WriteLine("FAIL boundary: " + failure);
+            Check(failures.Count == 0, "video code reader returns typed failures (exceptions=" + failures.Count + ")");
+        }
+
+        private static void CodeReaderRejectsMalformedIntegers<T>(string name,
+            Func<HttpResults, ApiParseResult<T>> read, System.Collections.Generic.List<string> failures)
+        {
+            // Parse JSON through the real reader: beyond-Int64 literals become Newtonsoft BigInteger.
+            foreach (var literal in new[] { "2147483648", "-2147483649", "9223372036854775808",
+                "-9223372036854775809", "null", "\"0\"", "0.0", "true", "missing" })
+            {
+                try
+                {
+                    var member = literal == "missing" ? "" : "\"code\":" + literal + ",";
+                    var result = read(new HttpResults { status = true, code = 200,
+                        results = "{" + member + "\"data\":{},\"result\":{}}" });
+                    Check(!result.IsSuccess && result.Failure == ApiParseFailure.Envelope
+                        && result.Stage == "envelope.code" && result.BusinessCode == 0,
+                        name + ": invalid code " + literal + " is typed Envelope without invented code");
+                }
+                catch (Exception ex)
+                {
+                    failures.Add(name + " code=" + literal + " threw " + ex.GetType().Name);
+                }
+            }
+            foreach (var code in new[] { int.MinValue, int.MaxValue, -404 })
+            {
+                var result = read(new HttpResults { status = true, code = 200,
+                    results = "{\"code\":" + code + ",\"message\":\"boundary rejection\"}" });
+                Check(!result.IsSuccess && result.Failure == ApiParseFailure.Rejected
+                    && result.Stage == "envelope.code" && result.BusinessCode == code
+                    && result.Message == "boundary rejection", name + ": exact rejection before absent payload " + code);
+            }
+            Check(read(null).Failure == ApiParseFailure.Transport, name + ": null response stays Transport");
+            Check(read(new HttpResults { status = false, code = 503, message = "offline", results = "{}" }).Failure
+                == ApiParseFailure.Transport, name + ": failed HTTP stays Transport");
+            var malformed = read(new HttpResults { status = true, results = "not JSON" });
+            Check(malformed.Failure == ApiParseFailure.Envelope && malformed.Stage == "envelope.json",
+                name + ": malformed JSON stays Envelope");
         }
 
         private static void CollectionIsRetained()

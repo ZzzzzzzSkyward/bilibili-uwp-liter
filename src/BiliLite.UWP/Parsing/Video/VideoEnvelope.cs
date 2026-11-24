@@ -31,13 +31,12 @@ namespace BiliLite.Parsing.Video
                 return ApiParseResult<JToken>.Fail(ApiParseFailure.Envelope, "envelope.json", "响应正文不是 JSON 对象");
             }
 
-            var codeToken = body["code"];
-            if (codeToken == null || codeToken.Type != JTokenType.Integer)
+            int code;
+            if (!ApiEnvelope.TryReadBusinessCode(body["code"], out code))
             {
                 //缺 code 或 code 不是数字都算信封无效：不能把"没拿到业务码"当成成功
                 return ApiParseResult<JToken>.Fail(ApiParseFailure.Envelope, "envelope.code", "响应没有可用的业务码");
             }
-            var code = codeToken.Value<int>();
             if (code != 0)
             {
                 var message = body["message"]?.ToString();

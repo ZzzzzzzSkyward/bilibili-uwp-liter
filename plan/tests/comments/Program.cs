@@ -28,6 +28,7 @@ namespace CommentsProbe
 
         public static int Main()
         {
+            EnvelopeCodeBoundaries();
             CommentActionFormsKeepRawValues();
             CursorPageMapsInDisplayOrder();
             MappedRowKeepsTheWireFields();
@@ -50,6 +51,72 @@ namespace CommentsProbe
 
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
+        }
+
+        private static void EnvelopeCodeBoundaries()
+        {
+            var failures = new List<string>();
+            CodeReaderRejectsMalformedIntegers("data", ApiEnvelope.Read, failures);
+            CodeReaderRejectsMalformedIntegers("result", ApiEnvelope.ReadResult, failures);
+            CodeReaderRejectsMalformedIntegers("comment action", WebCommentActionParser.Parse, failures);
+            foreach (var reader in new Func<HttpResults, ApiParseResult<JObject>>[] { ApiEnvelope.Read, ApiEnvelope.ReadResult })
+            {
+                var field = reader == ApiEnvelope.Read ? "data" : "result";
+                Check(reader(Ok("{\"code\":0,\"" + field + "\":{}}")).IsSuccess, field + ": empty object accepted");
+                foreach (var payload in new[] { "absent", "null", "1" })
+                {
+                    var suffix = payload == "absent" ? "" : ",\"" + field + "\":" + payload;
+                    var parsed = reader(Ok("{\"code\":0" + suffix + "}"));
+                    Check(parsed.Failure == (payload == "1" ? ApiParseFailure.Payload : ApiParseFailure.Envelope)
+                        && parsed.Stage == field, field + ": existing payload policy " + payload);
+                }
+                var fallback = reader(Ok("{\"code\":-404,\"message\":\"\",\"msg\":\"fallback\"}"));
+                Check(fallback.Failure == ApiParseFailure.Rejected && fallback.Message == "fallback", field + ": msg fallback retained");
+            }
+            foreach (var payload in new[] { "", ",\"data\":null", ",\"data\":1", ",\"data\":{}" })
+                Check(WebCommentActionParser.Parse(Ok("{\"code\":0" + payload + "}")).IsSuccess,
+                    "comment action: no payload requirement " + payload);
+            Check(WebCommentActionParser.Parse(Ok("{\"code\":-404}")).Message == "操作被服务端拒绝",
+                "comment action: rejection fallback retained");
+            foreach (var failure in failures) Console.Error.WriteLine("FAIL boundary: " + failure);
+            Check(failures.Count == 0, "all data/result/comment code readers return typed failure (exceptions=" + failures.Count + ")");
+        }
+
+        private static void CodeReaderRejectsMalformedIntegers<T>(string name,
+            Func<HttpResults, ApiParseResult<T>> read, System.Collections.Generic.List<string> failures)
+        {
+            // Parse JSON through the real reader: beyond-Int64 literals become Newtonsoft BigInteger.
+            foreach (var literal in new[] { "2147483648", "-2147483649", "9223372036854775808",
+                "-9223372036854775809", "null", "\"0\"", "0.0", "true", "missing" })
+            {
+                try
+                {
+                    var member = literal == "missing" ? "" : "\"code\":" + literal + ",";
+                    var result = read(new HttpResults { status = true, code = 200,
+                        results = "{" + member + "\"data\":{},\"result\":{}}" });
+                    Check(!result.IsSuccess && result.Failure == ApiParseFailure.Envelope
+                        && result.Stage == "envelope.code" && result.BusinessCode == 0,
+                        name + ": invalid code " + literal + " is typed Envelope without invented code");
+                }
+                catch (Exception ex)
+                {
+                    failures.Add(name + " code=" + literal + " threw " + ex.GetType().Name);
+                }
+            }
+            foreach (var code in new[] { int.MinValue, int.MaxValue, -404 })
+            {
+                var result = read(new HttpResults { status = true, code = 200,
+                    results = "{\"code\":" + code + ",\"message\":\"boundary rejection\"}" });
+                Check(!result.IsSuccess && result.Failure == ApiParseFailure.Rejected
+                    && result.Stage == "envelope.code" && result.BusinessCode == code
+                    && result.Message == "boundary rejection", name + ": exact rejection before absent payload " + code);
+            }
+            Check(read(null).Failure == ApiParseFailure.Transport, name + ": null response stays Transport");
+            Check(read(new HttpResults { status = false, code = 503, message = "offline", results = "{}" }).Failure
+                == ApiParseFailure.Transport, name + ": failed HTTP stays Transport");
+            var malformed = read(new HttpResults { status = true, results = "not JSON" });
+            Check(malformed.Failure == ApiParseFailure.Envelope && malformed.Stage == "envelope.json",
+                name + ": malformed JSON stays Envelope");
         }
 
         private static void CommentActionFormsKeepRawValues()

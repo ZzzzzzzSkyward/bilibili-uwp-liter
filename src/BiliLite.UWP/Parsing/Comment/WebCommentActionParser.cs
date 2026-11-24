@@ -41,13 +41,12 @@ namespace BiliLite.Parsing.Comment
                     "响应正文不是 JSON 对象");
             }
 
-            var codeToken = body["code"];
-            if (codeToken == null || codeToken.Type != JTokenType.Integer)
+            int code;
+            if (!ApiEnvelope.TryReadBusinessCode(body["code"], out code))
             {
                 return ApiParseResult<WebCommentActionResultDto>.Fail(ApiParseFailure.Envelope, "envelope.code",
                     "响应没有可用的业务码");
             }
-            var code = codeToken.Value<int>();
 
             WebCommentActionResultDto result;
             try

@@ -1,4 +1,5 @@
-﻿using BiliLite.Helpers;
+﻿using System.Numerics;
+using BiliLite.Helpers;
 using Newtonsoft.Json.Linq;
 
 namespace BiliLite.Parsing
@@ -21,6 +22,38 @@ namespace BiliLite.Parsing
             return ReadPayload(response, "result");
         }
 
+        /// <summary>仅接受 Int32 范围内的整数 token；超出 Int64 的 JSON 整数由 Newtonsoft 表示为 BigInteger。</summary>
+        internal static bool TryReadBusinessCode(JToken token, out int code)
+        {
+            code = 0;
+            if (token == null || token.Type != JTokenType.Integer)
+            {
+                return false;
+            }
+
+            var value = ((JValue)token).Value;
+            if (value is BigInteger)
+            {
+                var integer = (BigInteger)value;
+                if (integer < int.MinValue || integer > int.MaxValue) return false;
+                code = (int)integer;
+                return true;
+            }
+            if (value is ulong)
+            {
+                var integer = (ulong)value;
+                if (integer > int.MaxValue) return false;
+                code = (int)integer;
+                return true;
+            }
+
+            // 其余整数存储类型均可无损读为 Int64，先检查范围再缩窄。
+            var signed = token.Value<long>();
+            if (signed < int.MinValue || signed > int.MaxValue) return false;
+            code = (int)signed;
+            return true;
+        }
+
         private static ApiParseResult<JObject> ReadPayload(HttpResults response, string field)
         {
             if (response == null)
@@ -40,13 +73,12 @@ namespace BiliLite.Parsing
                 return ApiParseResult<JObject>.Fail(ApiParseFailure.Envelope, "envelope.json", "响应正文不是 JSON 对象");
             }
 
-            var codeToken = body["code"];
-            if (codeToken == null || codeToken.Type != JTokenType.Integer)
+            int code;
+            if (!ApiEnvelope.TryReadBusinessCode(body["code"], out code))
             {
                 //缺 code 或 code 不是数字都算信封无效：不能把"没拿到业务码"当成成功
                 return ApiParseResult<JObject>.Fail(ApiParseFailure.Envelope, "envelope.code", "响应没有可用的业务码");
             }
-            var code = codeToken.Value<int>();
             if (code != 0)
             {
                 var message = body["message"]?.ToString();
