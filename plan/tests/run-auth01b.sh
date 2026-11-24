@@ -18,6 +18,7 @@ using BiliLite.Services;
 using Windows.Web.Http.Filters;
 namespace BiliLite.Modules { public sealed class Account {
 CS
+  sed -n '/private static readonly RefreshTokenMirror refreshTokenMirror = /,+1p' "$repo/src/BiliLite.UWP/Modules/User/Account.cs"
   awk '
     /public bool CommitCookieLogin\(/ { phase = 1 }
     phase == 1 && /public async Task FinishCookieLoginAsync\(/ { phase = 0 }
@@ -28,11 +29,23 @@ CS
   ' "$repo/src/BiliLite.UWP/Modules/User/Account.cs"
   echo '}}'
 } > "$account_source"
+cookie_store_source="$scratch/ICookieStore.cs"
+{
+  echo 'namespace BiliLite.Services {'
+  sed -n '/    public interface ICookieStore/,/^    }/p' "$repo/src/BiliLite.UWP/Services/CookieService.cs"
+  echo '}'
+} > "$cookie_store_source"
 args=()
 for ref in "$refs"/*.dll; do args+=("-r:$ref"); done
 args+=("-r:$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll")
 "$tools/dotnet/dotnet" "$sdk/Roslyn/bincore/csc.dll" -nologo -langversion:latest -target:exe -out:"$scratch/AUTH01B.dll" "${args[@]}" \
+  "$cookie_store_source" \
   "$repo/src/BiliLite.UWP/Models/CookieOrigins.cs" \
+  "$repo/src/BiliLite.UWP/Models/UserModels.cs" \
+  "$repo/src/BiliLite.UWP/Services/RefreshCredentialPolicy.cs" \
+  "$repo/src/BiliLite.UWP/Services/WebRefreshTransaction.cs" \
+  "$repo/src/BiliLite.UWP/Services/CookieAppKeyBridge.cs" \
+  "$repo/src/BiliLite.UWP/Services/AccessKeyRenewal.cs" \
   "$repo/src/BiliLite.UWP/Services/PasswordLoginSession.cs" \
   "$repo/src/BiliLite.UWP/Services/IsolatedPasswordLoginTransport.cs" \
   "$account_source" \
@@ -151,7 +164,13 @@ sed -i \
   -e 's/private async void CompletePasswordLoginCheck(/private async Task CompletePasswordLoginCheck(/' \
   "$login_vm_source"
 "$tools/dotnet/dotnet" "$sdk/Roslyn/bincore/csc.dll" -nologo -langversion:latest -target:exe -out:"$scratch/AUTH01BLoginVM.dll" "${args[@]}" \
+  "$cookie_store_source" \
   "$repo/src/BiliLite.UWP/Models/CookieOrigins.cs" \
+  "$repo/src/BiliLite.UWP/Models/UserModels.cs" \
+  "$repo/src/BiliLite.UWP/Services/RefreshCredentialPolicy.cs" \
+  "$repo/src/BiliLite.UWP/Services/WebRefreshTransaction.cs" \
+  "$repo/src/BiliLite.UWP/Services/CookieAppKeyBridge.cs" \
+  "$repo/src/BiliLite.UWP/Services/AccessKeyRenewal.cs" \
   "$repo/src/BiliLite.UWP/Services/PasswordLoginSession.cs" \
   "$repo/src/BiliLite.UWP/Services/IsolatedPasswordLoginTransport.cs" \
   "$(dirname -- "${BASH_SOURCE[0]}")/AUTH01BStubs.cs" \

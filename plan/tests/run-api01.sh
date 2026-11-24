@@ -18,6 +18,8 @@ args+=("-r:$sdk/Containers/tasks/net8.0/Newtonsoft.Json.dll")
   "$repo/src/BiliLite.UWP/Models/Requests/Api/EmoteApi.cs" \
   "$repo/src/BiliLite.UWP/Models/Requests/Api/DanmakuApi.cs" \
   "$repo/src/BiliLite.UWP/Services/CookieService.cs" \
+  "$repo/src/BiliLite.UWP/Services/RefreshCredentialPolicy.cs" \
+  "$repo/src/BiliLite.UWP/Services/WebRefreshTransaction.cs" \
   "$repo/src/BiliLite.UWP/Services/HttpLogSanitizer.cs" \
   "$repo/src/BiliLite.UWP/Models/CookieOrigins.cs" \
   "$repo/src/BiliLite.UWP/Services/PasswordLoginSession.cs" \

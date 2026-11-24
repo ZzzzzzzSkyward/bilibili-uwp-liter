@@ -23,4 +23,25 @@ else
 fi
 
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
-"$dotnet" run --project "$probe" -c Debug -- "$@"
+scratch="$(mktemp -d /tmp/playersess-history.XXXXXX)"
+trap 'rm -rf "$scratch"' EXIT
+history_source="${PLAYER_HISTORY_SOURCE:-$repo/src/BiliLite.UWP/Controls/PlayerControl.xaml.cs}"
+{
+    printf '%s\n' 'using System;' 'using System.Threading.Tasks;' 'namespace PlayersessProbe { internal sealed partial class HistoryCheckpointSubject {'
+    awk '
+        /private bool _hasPlayedCurrentItem =/ ||
+        /private bool _historyCheckpointRunning =/ ||
+        /private Task _historyReportTask =/ ||
+        /private PlayInfo _historyPendingItem;/ ||
+        /private double _historyPendingPosition =/ { print; fields++ }
+        /private static string HistoryKey\(PlayInfo item\)/ ||
+        /private async Task CheckpointHistoryAsync\(bool report, bool reportWhilePaused = false\)/ ||
+        /private async Task DrainHistoryReportsAsync\(\)/ ||
+        /private async Task FlushPlaybackAsync\(\)/ { active = 1; methods++ }
+        active { print }
+        active && /^        }$/ { active = 0 }
+        END { if (fields != 5 || methods != 4 || active) exit 1 }
+    ' "$history_source"
+    printf '%s\n' '}}'
+} > "$scratch/ActualHistoryCheckpoint.cs"
+"$dotnet" run --project "$probe" -c Debug -p:HistoryCheckpointSource="$scratch/ActualHistoryCheckpoint.cs" -- "$@"

@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\Dynamic\ReserveCardCopy.cs" Link="ReserveCardCopy.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelector.cs" Link="DynamicApiSelector.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicApiSelection.cs" Link="DynamicApiSelection.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\DynamicFeedWindow.cs" Link="DynamicFeedWindow.cs" />

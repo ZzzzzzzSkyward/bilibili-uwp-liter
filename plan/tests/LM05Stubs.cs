@@ -2,9 +2,17 @@ using System.Collections.Generic;
 using BiliLite.Models.LocalMedia;
 using Windows.Storage;
 
-namespace BiliLite.Modules.Player
+namespace BiliLite.Modules
 {
-    public sealed class SubtitleModel { public List<SubtitleItemModel> body { get; set; } }
+    public sealed class SubtitleModel
+    {
+        public double font_size { get; set; }
+        public string font_color { get; set; }
+        public double background_alpha { get; set; }
+        public string background_color { get; set; }
+        public string Stroke { get; set; }
+        public List<SubtitleItemModel> body { get; set; }
+    }
     public sealed class SubtitleItemModel
     {
         public double from { get; set; }

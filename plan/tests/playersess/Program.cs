@@ -58,6 +58,7 @@ namespace PlayersessProbe
             AttemptCases();
             AttemptSourceCases();
             ProgressCheckpointCases();
+            HistoryCheckpointProbe.Run(Check).GetAwaiter().GetResult();
 
             Console.WriteLine();
             if (failures.Count == 0)
@@ -447,7 +448,8 @@ namespace PlayersessProbe
             // 检查点的判定集
             var checkpoint = Code(Section(control, "private async Task CheckpointHistoryAsync", "private async void HistoryCheckpointTimer_Tick"));
             Check(checkpoint.Length > 0, "找得到检查点实现");
-            Check(checkpoint.Contains("if (_historyCheckpointRunning) return;"), "检查点有在飞判定,慢 POST 不叠加");
+            Check(checkpoint.Contains("await _historyReportTask;") && checkpoint.Contains("DrainHistoryReportsAsync()"),
+                "检查点等待唯一 drain 与 pending 尾报;实际串行行为另由异步门控探针验证");
             Check(checkpoint.Contains("CurrentPlayItem == null"), "没有当前播放条目时检查点跳过");
             Check(checkpoint.Contains("!_hasPlayedCurrentItem"), "还没播过当前条目时检查点跳过");
             Check(checkpoint.Contains("LocalPlayInfo?.IsManifestPlayback == true"), "清单播放(本地媒体)不做检查点");

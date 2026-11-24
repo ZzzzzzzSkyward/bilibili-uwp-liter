@@ -10,14 +10,16 @@ namespace BiliLite.Modules
         public Task<string> Encryption { get; set; } = Task.FromResult("encrypted");
         public int EncryptCalls { get; private set; }
         public int SaveLoginCalls { get; private set; }
+        public AppkeyIdentity LastAppkey { get; private set; }
         public int CookieCommits { get; private set; }
         public int ProfileFinishes { get; private set; }
         public PasswordLoginSession CommittedSession { get; private set; }
         public bool CommitResult { get; set; } = true;
         public Task<string> EncryptedPassword(string password) { EncryptCalls++; return Encryption; }
-        public Task<bool> SaveLogin(string access, string refresh, int expires, long userId, object sso, object cookies)
+        public Task<bool> SaveLogin(string access, string refresh, int expires, long userId, object sso, object cookies, AppkeyIdentity appkey = AppkeyIdentity.UnknownLegacy)
         {
             SaveLoginCalls++;
+            LastAppkey = appkey;
             return Task.FromResult(true);
         }
         public bool CommitCookieLogin(PasswordLoginSession session) { CookieCommits++; CommittedSession = session; return CommitResult; }
@@ -27,13 +29,6 @@ namespace BiliLite.Modules
 
 namespace BiliLite.Models
 {
-    public enum LoginStatus { Success, Fail, Error, NeedCaptcha, NeedValidate }
-    public sealed class LoginCallbackModel
-    {
-        public LoginStatus status { get; set; }
-        public string message { get; set; }
-        public string url { get; set; }
-    }
     public sealed class LoginResultModel
     {
         public int code { get; set; }
@@ -44,13 +39,6 @@ namespace BiliLite.Models
         public LoginTokenInfo token_info { get; set; }
         public object sso { get; set; }
         public object cookie_info { get; set; }
-    }
-    public sealed class LoginTokenInfo
-    {
-        public string access_token { get; set; }
-        public string refresh_token { get; set; }
-        public int expires_in { get; set; }
-        public long mid { get; set; }
     }
     public sealed class GeetestRequestModel
     {
@@ -74,9 +62,4 @@ namespace BiliLite.Helpers
         public static event EventHandler LogoutedEvent;
         public static void RaiseLogout() => LogoutedEvent?.Invoke(null, EventArgs.Empty);
     }
-}
-
-namespace BiliLite.Api
-{
-    public static class ApiHelper { public static ApiKeyInfo LoginKey { get; } = new ApiKeyInfo { Appkey = "fixture", Secret = "fixture" }; }
 }

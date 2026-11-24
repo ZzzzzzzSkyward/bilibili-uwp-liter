@@ -132,6 +132,10 @@ internal static class AUTH01B
         SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, new DateTime(2030, 1, 2));
         SettingHelper.SetValue(SettingHelper.Account.REFRESH_KEY, "old-oauth-refresh");
         SettingHelper.SetValue("CookieRefreshToken", "old-cookie-refresh");
+        SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false);
+        SettingHelper.SetValue(SettingHelper.Account.ACCESS_KEY_SOURCE, "app-response");
+        SettingHelper.SetValue(RefreshTokenMirror.SourceKey, "manual");
+        SettingHelper.SetValue(RefreshTokenMirror.OwnerKey, "77");
         SettingHelper.SetValue("CookieSESSDATA", "old-cookie-session");
         SettingHelper.SetValue("CookieCSRF", "old-cookie-csrf");
         SettingHelper.SetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, new MyProfileModel { mid = 77 });
@@ -161,6 +165,10 @@ internal static class AUTH01B
             SettingHelper.GetValue("CookieRefreshToken", "") == "old-cookie-refresh" &&
             SettingHelper.GetValue("CookieSESSDATA", "") == "old-cookie-session" &&
             SettingHelper.GetValue("CookieCSRF", "") == "old-cookie-csrf", label + ": cookie settings restored");
+        Check(!SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, true) &&
+            SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_SOURCE, "") == "app-response" &&
+            SettingHelper.GetValue(RefreshTokenMirror.SourceKey, "") == "manual" &&
+            SettingHelper.GetValue(RefreshTokenMirror.OwnerKey, "") == "77", label + ": expiry estimate, provenance and refresh ownership restored");
         Check(SettingHelper.GetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, null)?.mid == 77, label + ": prior profile restored");
         Check(ReadCookie("SESSDATA") == "old-sess" && ReadCookie("bili_jct") == "old-csrf" &&
             ReadCookie("DedeUserID") == "77" && ReadCookie("sid_guard") == "old-sid-guard" && ReadCookie("unrelated") == "keep-me" &&
@@ -182,6 +190,13 @@ internal static class AUTH01B
         Check(SettingHelper.GetValue<MyProfileModel>(SettingHelper.Account.USER_PROFILE, new MyProfileModel { mid = -1 }) == null &&
             ReadCookie("SESSDATA") == "sess-secret" && ReadCookie("new_aux") == "new-auxiliary" && ReadCookie("unrelated") == "keep-me",
             "production Account adapter installs staged cookies and clears the old profile");
+
+        Check(SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_ESTIMATED, false) &&
+            SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_SOURCE, "") == "cookie-conversion" &&
+            SettingHelper.GetValue(RefreshTokenMirror.SourceKey, "") == "response" &&
+            SettingHelper.GetValue(RefreshTokenMirror.OwnerKey, "") == "123" &&
+            SettingHelper.GetValue(SettingHelper.Account.ACCESS_KEY_EXPIRE_DATE, DateTime.MinValue) > DateTime.Now.AddHours(239),
+            "production Account adapter records estimated expiry, conversion provenance and response refresh ownership");
 
         SeedAccountState();
         HttpFilter.SharedCookieManager.RejectSetCall = 3;

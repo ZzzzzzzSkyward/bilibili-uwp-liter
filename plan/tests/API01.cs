@@ -141,67 +141,199 @@ internal static class API01
     {
         SettingHelper.Reset();
         SettingHelper.SetValue("CookieCSRF", "csrf-original");
-        SettingHelper.SetValue("CookieRefreshToken", "old-refresh-token");
+        SettingHelper.SetValue(RefreshTokenMirror.TokenKey, "old-refresh-token");
+        SettingHelper.SetValue(RefreshTokenMirror.SourceKey, "manual");
+        SettingHelper.SetValue(RefreshTokenMirror.OwnerKey, "42");
+        SettingHelper.SetValue(SettingHelper.Account.USER_ID, "42");
+        var jar = new FakeCookieStore();
+        jar.Write("SESSDATA", "session-original");
+        jar.Write("bili_jct", "csrf-original");
+        jar.Write("DedeUserID", "42");
+        var folder = Windows.Storage.ApplicationData.Current.LocalFolder;
+        var previousPath = folder.Path;
+        folder.Path = System.IO.Path.Combine(previousPath, Guid.NewGuid().ToString("N"));
+        var state = new LocalFolderWebRefreshStateStore();
         var sent = new List<ApiModel>();
         var confirmSent = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
-        var service = new global::CookieService(new FakeCookieStore(), key => SettingHelper.GetValue<string>(key, ""),
-            SettingHelper.SetValue, () => true, api =>
-            {
-                sent.Add(api);
-                if (api.baseUrl.Contains("/correspond/")) return Task.FromResult(Http(200, "<div id=\"1-name\">refresh-csrf</div>"));
-                if (api.baseUrl.EndsWith("/cookie/refresh")) return Task.FromResult(Http(200, "{\"code\":0,\"data\":{\"refresh_token\":\"new-refresh-token\"}}"));
-                if (api.baseUrl.EndsWith("/confirm/refresh"))
+        var confirmation = new TaskCompletionSource<HttpResults>(TaskCreationOptions.RunContinuationsAsynchronously);
+        Task flow = null;
+        try
+        {
+            var service = new global::CookieService(jar, key => SettingHelper.GetValue<string>(key, ""),
+                SettingHelper.SetValue, () => true, api =>
                 {
-                    confirmSent.TrySetResult(true);
-                    return Task.FromResult(Http(200, "{\"code\":0}"));
-                }
-                return Task.FromResult(Http(500, ""));
-            });
-        service.CookieTimestamp = 123;
-        ApiHelper.Cookie = service;
-        await ApiHelper.RefreshCookieAsync();
-        await confirmSent.Task.WaitAsync(TimeSpan.FromSeconds(2));
-        Check(sent.Count == 3 && sent[0].method == RestSharp.Method.Get &&
-            sent[1].method == RestSharp.Method.Post && sent[2].method == RestSharp.Method.Post &&
-            sent[2].baseUrl == "https://passport.bilibili.com/x/passport-login/web/confirm/refresh",
-            "ApiHelper refresh wrapper dispatches the confirm-refresh POST after the refresh response");
-        Check(sent[2].body == "csrf=csrf-original&refresh_token=old-refresh-token" &&
-            SettingHelper.GetValue<string>("CookieRefreshToken", "") == "new-refresh-token",
-            "confirm-refresh request preserves the established old-token body and stores the rotated token");
+                    sent.Add(api);
+                    if (api.baseUrl.Contains("/correspond/")) return Task.FromResult(Http(200, "<div id=\"1-name\">refresh-csrf</div>"));
+                    if (api.baseUrl.EndsWith("/cookie/refresh"))
+                    {
+                        Check(state.Read() == null && SettingHelper.GetValue(RefreshTokenMirror.TokenKey, "") == "old-refresh-token",
+                            "refresh dispatch starts before replacement commit or pending confirmation");
+                        jar.Write("SESSDATA", "session-replacement");
+                        jar.Write("bili_jct", "csrf-replacement");
+                        return Task.FromResult(Http(200, "{\"code\":0,\"data\":{\"refresh_token\":\"new-refresh-token\"}}"));
+                    }
+                    if (api.baseUrl.EndsWith("/confirm/refresh"))
+                    {
+                        confirmSent.TrySetResult(true);
+                        return confirmation.Task;
+                    }
+                    return Task.FromResult(Http(500, ""));
+                });
+            service.CookieTimestamp = 123;
+            ApiHelper.Cookie = service;
+            flow = ApiHelper.RefreshCookieAsync();
+            await confirmSent.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            Check(sent.Count == 3 && sent[0].method == RestSharp.Method.Get &&
+                sent[0].baseUrl.Contains("/correspond/") && sent[1].baseUrl.EndsWith("/cookie/refresh") &&
+                sent[1].method == RestSharp.Method.Post && sent[2].method == RestSharp.Method.Post &&
+                sent[2].baseUrl == "https://passport.bilibili.com/x/passport-login/web/confirm/refresh",
+                "ApiHelper refresh wrapper dispatches the confirm-refresh POST after the refresh response");
+            Check(sent[1].body == "csrf=csrf-original&refresh_csrf=refresh-csrf&source=main_web&refresh_token=old-refresh-token" &&
+                sent[2].body == "csrf=csrf-replacement&refresh_token=old-refresh-token" &&
+                SettingHelper.GetValue<string>(RefreshTokenMirror.TokenKey, "") == "new-refresh-token" &&
+                SettingHelper.GetValue<string>(RefreshTokenMirror.SourceKey, "") == "response" &&
+                SettingHelper.GetValue<string>(RefreshTokenMirror.OwnerKey, "") == "42",
+                "refresh uses previous credentials; confirmation uses replacement CSRF and previous token with response-owned replacement persisted");
+            var pending = WebRefreshTransaction.Load(state);
+            Check(!flow.IsCompleted && pending != null && pending.PreviousToken == "old-refresh-token" &&
+                pending.ReplacementToken == "new-refresh-token" && pending.UserId == 42 && pending.ReplacementUserId == 42 &&
+                pending.Phase == WebRefreshTransaction.FormatPhase(WebRefreshPhase.ConfirmationPending) &&
+                WebRefreshTransaction.MatchesReplacementSession(jar, pending, out _),
+                "real replacement commit retains its owner-bound pending record until explicit successful confirmation");
+            confirmation.SetResult(Http(200, "{\"code\":0}"));
+            await flow.WaitAsync(TimeSpan.FromSeconds(2));
+            Check(state.Read() == null && !service.NeedRefreshCookie && sent.Count == 3,
+                "explicit confirmation clears pending state and refresh-required without another rotation");
+        }
+        finally
+        {
+            confirmation.TrySetResult(Http(200, "{\"code\":0}"));
+            if (flow != null) await flow.WaitAsync(TimeSpan.FromSeconds(2));
+            state.Clear();
+            if (System.IO.Directory.Exists(folder.Path)) System.IO.Directory.Delete(folder.Path, true);
+            folder.Path = previousPath;
+        }
     }
 
     private static async Task TestConfirmFailureLeavesRefreshRequired()
     {
-        var sent = 0;
-        var settings = new Dictionary<string, string> { ["CookieRefreshToken"] = "old-token", ["CookieCSRF"] = "csrf" };
-        var service = NewCookieService(new FakeCookieStore(), settings, _ =>
+        var settings = new Dictionary<string, string>
         {
-            sent++;
-            if (sent == 1) return Task.FromResult(Http(200, "{\"code\":0,\"data\":{\"timestamp\":123,\"refresh\":true}}"));
-            if (sent == 2) return Task.FromResult(Http(200, "<div id=\"1-name\">new-csrf</div>"));
-            if (sent == 3) return Task.FromResult(Http(200, "{\"code\":0,\"data\":{\"refresh_token\":\"rotated\"}}"));
-            return Task.FromResult(Http(503, ""));
-        }, () => true);
-        Check(await service.NeedRefreshCookieAsync(), "fixture starts with refresh required");
-        await service.RefreshCookieAsync();
-        Check(service.NeedRefreshCookie && sent == 4, "failed confirm-refresh response leaves cookie refresh state required");
+            [RefreshTokenMirror.TokenKey] = "old-token", ["CookieCSRF"] = "csrf-previous",
+            [RefreshTokenMirror.SourceKey] = "manual", [RefreshTokenMirror.OwnerKey] = "42",
+            [SettingHelper.Account.USER_ID] = "42"
+        };
+        var jar = new FakeCookieStore();
+        jar.Write("SESSDATA", "session-previous"); jar.Write("bili_jct", "csrf-previous"); jar.Write("DedeUserID", "42");
+        var folder = Windows.Storage.ApplicationData.Current.LocalFolder;
+        var previousPath = folder.Path;
+        folder.Path = System.IO.Path.Combine(previousPath, Guid.NewGuid().ToString("N"));
+        var state = new LocalFolderWebRefreshStateStore();
+        var sent = new List<ApiModel>();
+        var phases = new List<WebRefreshPhase>();
+        try
+        {
+            var service = new BiliLite.Services.CookieService(jar,
+                key => settings.TryGetValue(key, out var value) ? value : "", (key, value) => settings[key] = value,
+                () => true, api =>
+                {
+                    sent.Add(api);
+                    if (api.baseUrl.EndsWith("/cookie/info")) return Task.FromResult(Http(200, "{\"code\":0,\"data\":{\"timestamp\":123,\"refresh\":true}}"));
+                    if (api.baseUrl.Contains("/correspond/")) return Task.FromResult(Http(200, "<div id=\"1-name\">refresh-page-csrf</div>"));
+                    if (api.baseUrl.EndsWith("/cookie/refresh"))
+                    {
+                        jar.Write("SESSDATA", "session-replacement"); jar.Write("bili_jct", "csrf-replacement");
+                        return Task.FromResult(Http(200, "{\"code\":0,\"data\":{\"refresh_token\":\"rotated\"}}"));
+                    }
+                    if (api.baseUrl.EndsWith("/confirm/refresh")) return Task.FromResult(Http(503, ""));
+                    return Task.FromResult(Http(500, ""));
+                }, webRefreshState: state, observePhase: phases.Add);
+            Check(await service.NeedRefreshCookieAsync(), "fixture starts with refresh required");
+            await service.RefreshCookieAsync();
+            Check(service.NeedRefreshCookie && sent.Count == 4 && sent[0].baseUrl.EndsWith("/cookie/info") &&
+                sent[1].baseUrl.Contains("/correspond/") && sent[1].method == RestSharp.Method.Get &&
+                sent[2].baseUrl.EndsWith("/cookie/refresh") && sent[2].method == RestSharp.Method.Post &&
+                sent[3].baseUrl.EndsWith("/confirm/refresh") && sent[3].method == RestSharp.Method.Post,
+                "failed confirm-refresh response leaves cookie refresh state required after the intended confirmation HTTP 503");
+            var pending = WebRefreshTransaction.Load(state);
+            Check(phases.SequenceEqual(new[] { WebRefreshPhase.Checked, WebRefreshPhase.ReplacementReceived,
+                WebRefreshPhase.ReplacementCommitted, WebRefreshPhase.ConfirmationPending }) &&
+                pending != null && pending.PreviousToken == "old-token" && pending.ReplacementToken == "rotated" &&
+                pending.UserId == 42 && pending.ReplacementUserId == 42 && pending.Attempts == 1 &&
+                pending.Phase == WebRefreshTransaction.FormatPhase(WebRefreshPhase.ConfirmationPending) &&
+                WebRefreshTransaction.MatchesReplacementSession(jar, pending, out _) &&
+                settings[RefreshTokenMirror.TokenKey] == "rotated" && settings[RefreshTokenMirror.SourceKey] == "response" &&
+                settings[RefreshTokenMirror.OwnerKey] == "42" &&
+                sent[2].body.Contains("csrf=csrf-previous&") && sent[2].body.EndsWith("refresh_token=old-token") &&
+                sent[3].body == "csrf=csrf-replacement&refresh_token=old-token",
+                "uncertain confirmation retains real pending state bound to replacement session and previous token");
+            await service.RefreshCookieAsync();
+            var retry = WebRefreshTransaction.Load(state);
+            Check(service.NeedRefreshCookie && sent.Count == 5 && sent[4].baseUrl.EndsWith("/confirm/refresh") &&
+                sent[4].body == sent[3].body && sent.Count(api => api.baseUrl.EndsWith("/cookie/refresh")) == 1 &&
+                retry != null && retry.Attempts == 2 && retry.PreviousToken == pending.PreviousToken &&
+                retry.ReplacementToken == pending.ReplacementToken && retry.CsrfDigest == pending.CsrfDigest &&
+                !phases.Contains(WebRefreshPhase.Confirmed),
+                "retry resumes the same pending confirmation without another rotation or false success");
+        }
+        finally
+        {
+            state.Clear();
+            if (System.IO.Directory.Exists(folder.Path)) System.IO.Directory.Delete(folder.Path, true);
+            folder.Path = previousPath;
+        }
     }
 
     private static async Task TestRefreshMissingCodeDoesNotRotateToken()
     {
-        var sent = 0;
-        var settings = new Dictionary<string, string> { ["CookieRefreshToken"] = "old-token", ["CookieCSRF"] = "csrf" };
-        var service = NewCookieService(new FakeCookieStore(), settings, _ =>
+        var settings = new Dictionary<string, string>
         {
-            sent++;
-            if (sent == 1) return Task.FromResult(Http(200, "{\"code\":0,\"data\":{\"timestamp\":123,\"refresh\":true}}"));
-            if (sent == 2) return Task.FromResult(Http(200, "<div id=\"1-name\">new-csrf</div>"));
-            return Task.FromResult(Http(200, "{\"data\":{\"refresh_token\":\"unvalidated-token\"}}"));
-        }, () => true);
-        Check(await service.NeedRefreshCookieAsync(), "fixture starts with refresh required");
-        await service.RefreshCookieAsync();
-        Check(sent == 3 && settings["CookieRefreshToken"] == "old-token" && service.NeedRefreshCookie,
-            "refresh response missing its API code does not rotate the token or mark refresh complete");
+            [RefreshTokenMirror.TokenKey] = "old-token", ["CookieCSRF"] = "csrf-previous",
+            [RefreshTokenMirror.SourceKey] = "manual", [RefreshTokenMirror.OwnerKey] = "42",
+            [SettingHelper.Account.USER_ID] = "42"
+        };
+        var jar = new FakeCookieStore();
+        jar.Write("SESSDATA", "session-previous"); jar.Write("bili_jct", "csrf-previous"); jar.Write("DedeUserID", "42");
+        var folder = Windows.Storage.ApplicationData.Current.LocalFolder;
+        var previousPath = folder.Path;
+        folder.Path = System.IO.Path.Combine(previousPath, Guid.NewGuid().ToString("N"));
+        var state = new LocalFolderWebRefreshStateStore();
+        var sent = new List<ApiModel>();
+        var phases = new List<WebRefreshPhase>();
+        try
+        {
+            var service = new BiliLite.Services.CookieService(jar,
+                key => settings.TryGetValue(key, out var value) ? value : "", (key, value) => settings[key] = value,
+                () => true, api =>
+                {
+                    sent.Add(api);
+                    if (api.baseUrl.EndsWith("/cookie/info")) return Task.FromResult(Http(200, "{\"code\":0,\"data\":{\"timestamp\":123,\"refresh\":true}}"));
+                    if (api.baseUrl.Contains("/correspond/")) return Task.FromResult(Http(200, "<div id=\"1-name\">refresh-page-csrf</div>"));
+                    if (api.baseUrl.EndsWith("/cookie/refresh"))
+                    {
+                        jar.Write("SESSDATA", "session-replacement"); jar.Write("bili_jct", "csrf-replacement");
+                        return Task.FromResult(Http(200, "{\"data\":{\"refresh_token\":\"unvalidated-token\"}}"));
+                    }
+                    return Task.FromResult(Http(500, ""));
+                }, webRefreshState: state, observePhase: phases.Add);
+            Check(await service.NeedRefreshCookieAsync(), "fixture starts with refresh required");
+            await service.RefreshCookieAsync();
+            Check(sent.Count == 3 && settings[RefreshTokenMirror.TokenKey] == "old-token" &&
+                settings[RefreshTokenMirror.SourceKey] == "manual" && settings[RefreshTokenMirror.OwnerKey] == "42" && service.NeedRefreshCookie,
+                "refresh response missing its API code does not rotate token/source/owner or mark refresh complete");
+            Check(sent[0].baseUrl.EndsWith("/cookie/info") && sent[1].method == RestSharp.Method.Get &&
+                sent[1].baseUrl.Contains("/correspond/") && sent[2].method == RestSharp.Method.Post &&
+                sent[2].baseUrl.EndsWith("/cookie/refresh") && jar.Read("SESSDATA", "") == "session-replacement" &&
+                jar.Read("bili_jct", "") == "csrf-replacement" && jar.Read("DedeUserID", "") == "42" &&
+                phases.SequenceEqual(new[] { WebRefreshPhase.Checked }) && state.Read() == null,
+                "missing-code negative case reaches the otherwise valid replacement response and never commits, confirms or creates pending success");
+        }
+        finally
+        {
+            state.Clear();
+            if (System.IO.Directory.Exists(folder.Path)) System.IO.Directory.Delete(folder.Path, true);
+            folder.Path = previousPath;
+        }
     }
 
     private static async Task TestApiHelperWbiWrapper()

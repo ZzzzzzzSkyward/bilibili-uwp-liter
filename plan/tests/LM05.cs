@@ -4,7 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
 using BiliLite.Models.LocalMedia;
-using BiliLite.Modules.Player;
+using BiliLite.Modules;
 using BiliLite.Services.LocalMedia;
 using NSDanmaku.Model;
 using Windows.Storage;
