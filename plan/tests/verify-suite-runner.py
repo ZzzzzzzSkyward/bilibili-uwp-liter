@@ -277,6 +277,7 @@ CONTROL
                 (output / (name + '-default-negative.log')).write_text(log)
                 assert code != 0 and 'deliberate scratch-only prefix failure' in log
                 assert 'PROBE_PHASE ' + marker + ' complete' not in log
+                assert ('LM-05 actual-source parser' not in log if name == 'lm' else 'LoginVM lifecycle probes passed:' not in log), 'default ran a suffix after its failed prefix'
                 code, log = run_capture(['bash', str(root / 'plan/tests' / script), '--stage', selected], root, env)
                 (output / (name + '-independent.log')).write_text(log)
                 assert code == 0 and 'PROBE_PHASE ' + marker + ' complete' in log, log[-4000:]
