@@ -61,33 +61,6 @@ namespace BiliLite.Helpers
         FATAL,
     }
 
-    /// <summary>
-    /// Mirrors the product HttpResults fields the envelope reader uses: transport status, message,
-    /// HTTP code and the raw body. TryGetJObject is the silent decode the parsing layer relies on.
-    /// </summary>
-    public class HttpResults
-    {
-        public bool status { get; set; } = true;
-        public string message { get; set; }
-        public int code { get; set; }
-        public string results { get; set; }
-
-        public bool TryGetJObject(out JObject value)
-        {
-            value = null;
-            if (string.IsNullOrEmpty(results)) return false;
-            try
-            {
-                value = JObject.Parse(results);
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
-        }
-    }
-
     public static class LogHelper
     {
         public static void Log(string message, LogType type, Exception ex = null)
@@ -111,6 +84,9 @@ namespace BiliLite.Helpers
         /// <summary>
         /// Nothing compiled by this probe may publish: Toasts stays empty unless a publisher ran.
         /// </summary>
+        public static void AddALog(string message) { C2Probe.FakeTransport.Logs.Add(message); }
+        public static Task<bool> ShowLoginDialog() => Task.FromResult(true);
+        public static void ShowMessageToast(string message, string details) => ShowMessageToast(message);
         public static void ShowMessageToast(string message)
         {
             C2Probe.FakeTransport.Toasts.Add(message);
@@ -161,6 +137,9 @@ namespace BiliLite.Helpers
 {
     public static class SettingHelper
     {
-        public static class Account { public static string UserID = "dummy-uid"; }
+        public static class Account { public static string UserID = "dummy-uid"; public static bool Logined = true; }
     }
 }
+
+namespace Windows.UI.Xaml.Controls { public enum ListViewSelectionMode { None, Multiple } }
+namespace BiliLite.Models { public class AnimeHomeModel { } }

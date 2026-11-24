@@ -24,4 +24,19 @@ fi
 
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
+# Bind the complete unchanged production decoder body, including salvage and legacy methods.
+python3 - "$repo" <<'PYDECODER'
+from pathlib import Path
+import sys
+repo = Path(sys.argv[1])
+source = (repo / "src/BiliLite.UWP/Helpers/HttpHelper.cs").read_text(encoding="utf-8-sig")
+marker = "    public class HttpResults\n"
+assert source.count(marker) == 1, "HttpResults marker must be unique"
+assert source.endswith("    }\n}\n"), "HttpResults must remain the final class"
+body = source[source.index(marker):source.rfind("}")]
+out = repo / "plan/tests/c2/obj/HttpResults.actual.cs"
+out.parent.mkdir(exist_ok=True)
+out.write_text("using System;\nusing System.Threading.Tasks;\nusing BiliLite.Models;\nusing Newtonsoft.Json;\nusing Newtonsoft.Json.Linq;\nnamespace BiliLite.Helpers {\n" + body + "\n}\n")
+PYDECODER
+
 "$dotnet" run --project "$probe" -c Debug

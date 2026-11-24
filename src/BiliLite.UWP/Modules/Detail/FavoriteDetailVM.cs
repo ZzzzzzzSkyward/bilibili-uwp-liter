@@ -1,6 +1,8 @@
 ﻿using BiliLite.Helpers;
 using BiliLite.Models;
 using BiliLite.Parsing.MediaList;
+using BiliLite.Parsing;
+using BiliLite.Parsing.Video;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -194,24 +196,17 @@ namespace BiliLite.Modules
                     return;
                 }
                 var results = await favoriteApi.Delete(Id, items.Select(x=>x.id).ToList()).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(results);
+                if (parsed.IsSuccess)
                 {
-                    var data = await results.GetData<object>();
-                    if (data.success)
+                    foreach (var item in items)
                     {
-                        foreach (var item in items)
-                        {
-                            Videos.Remove(item);
-                        }
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
+                        Videos.Remove(item);
                     }
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    Utils.ShowMessageToast(FavoriteActionFailureText(parsed));
                 }
             }
             catch (Exception ex)
@@ -231,21 +226,14 @@ namespace BiliLite.Modules
                     return;
                 }
                 var results = await favoriteApi.Clean(Id).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(results);
+                if (parsed.IsSuccess)
                 {
-                    var data = await results.GetData<object>();
-                    if (data.success)
-                    {
-                        Refresh();
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
+                    Refresh();
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    Utils.ShowMessageToast(FavoriteActionFailureText(parsed));
                 }
             }
             catch (Exception ex)
@@ -313,22 +301,15 @@ namespace BiliLite.Modules
             try
             {
                 var results = await favoriteApi.CollectFavorite(FavoriteInfo.id).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(results);
+                if (parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<object>>();
-                    if (data.success)
-                    {
-                        ShowCancelCollect = true;
-                        ShowCollect = false;
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
+                    ShowCancelCollect = true;
+                    ShowCollect = false;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    Utils.ShowMessageToast(FavoriteActionFailureText(parsed));
                 }
             }
             catch (Exception ex)
@@ -349,22 +330,15 @@ namespace BiliLite.Modules
             try
             {
                 var results = await favoriteApi.CacnelCollectFavorite(FavoriteInfo.id).Request();
-                if (results.status)
+                var parsed = WebVideoActionParser.ParseWebVideoAction(results);
+                if (parsed.IsSuccess)
                 {
-                    var data = await results.GetJson<ApiDataModel<object>>();
-                    if (data.success)
-                    {
-                        ShowCancelCollect = false;
-                        ShowCollect = true;
-                    }
-                    else
-                    {
-                        Utils.ShowMessageToast(data.message);
-                    }
+                    ShowCancelCollect = false;
+                    ShowCollect = true;
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
+                    Utils.ShowMessageToast(FavoriteActionFailureText(parsed));
                 }
             }
             catch (Exception ex)
@@ -373,22 +347,34 @@ namespace BiliLite.Modules
                 Utils.ShowMessageToast(handel.message);
             }
         }
+        private static string FavoriteActionFailureText(ApiParseResult<string> result)
+        {
+            if ((result.Failure == ApiParseFailure.Transport || result.Failure == ApiParseFailure.Rejected)
+                && !string.IsNullOrEmpty(result.Message))
+            {
+                return result.Message;
+            }
+            return "操作失败";
+        }
+
         public async Task Sort(string sourceId, string targetId)
         {
-            var result = await favoriteApi.SortResource(Id, sourceId, targetId).Request();
-            if (!result.status)
+            try
             {
-                Utils.ShowMessageToast("排序失败" + result.message);
-                return;
+                var result = await favoriteApi.SortResource(Id, sourceId, targetId).Request();
+                var parsed = WebVideoActionParser.ParseWebVideoAction(result);
+                if (parsed.IsSuccess)
+                {
+                    Utils.ShowMessageToast("排序成功");
+                    return;
+                }
+                Utils.ShowMessageToast("排序失败" + FavoriteActionFailureText(parsed));
             }
-
-            var data = await result.GetData<object>();
-            if (data.success)
+            catch (Exception ex)
             {
-                Utils.ShowMessageToast("排序成功");
-                return;
+                var handel = HandelError<object>(ex);
+                Utils.ShowMessageToast("排序失败" + handel.message);
             }
-            Utils.ShowMessageToast("排序失败" + data.message);
         }
     }
     public class FavoriteDetailModel

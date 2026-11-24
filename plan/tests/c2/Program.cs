@@ -37,10 +37,14 @@ namespace C2Probe
         public static readonly List<string> Logs = new List<string>();
 
         public static Exception NextThrow;
+        public static Func<ApiModel, Task<HttpResults>> Delivery;
+        public static readonly List<ApiModel> ActualRequests = new List<ApiModel>();
 
         public static void Reset()
         {
             Calls.Clear();
+            ActualRequests.Clear();
+            Delivery = null;
             SignedResponses.Clear();
             UnsignedResponses.Clear();
             Toasts.Clear();
@@ -69,6 +73,8 @@ namespace C2Probe
 
         public static Task<HttpResults> Handle(ApiModel api)
         {
+            ActualRequests.Add(api);
+            if (Delivery != null) return Delivery(api);
             Calls.Add(new Call()
             {
                 Kind = api.Kind,
@@ -87,7 +93,7 @@ namespace C2Probe
 
             var queue = api.Kind == "signed" ? SignedResponses : UnsignedResponses;
             if (queue.Count == 0) return Task.FromResult<HttpResults>(null);
-            return Task.FromResult(new HttpResults() { results = queue.Dequeue() });
+            return Task.FromResult(new HttpResults() { status = true, results = queue.Dequeue() });
         }
     }
 
@@ -130,6 +136,7 @@ namespace C2Probe
             PageSourceWiring();
             ProjectEntries();
 
+            await FavoriteActionChecks.Run();
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
         }
@@ -244,12 +251,13 @@ namespace C2Probe
                 && offline.HttpStatus == 500,
                 "a failed transport keeps its message and HTTP code");
 
-            var notJson = MediaListResourceListParser.Parse(new HttpResults() { results = "<html></html>" });
+            var notJson = MediaListResourceListParser.Parse(new HttpResults() { status = true, results = "<html></html>" });
             Check(notJson.Failure == ApiParseFailure.Envelope && notJson.Stage == "envelope.json",
                 "a body that is not a JSON object is an envelope failure");
 
             var noCode = MediaListResourceListParser.Parse(new HttpResults()
             {
+                status = true,
                 results = "{\"data\":" + Page1Json + "}",
             });
             Check(noCode.Failure == ApiParseFailure.Envelope && noCode.Stage == "envelope.code",
@@ -257,6 +265,7 @@ namespace C2Probe
 
             var rejected = MediaListResourceListParser.Parse(new HttpResults()
             {
+                status = true,
                 results = "{\"code\":-404,\"message\":\"啥都木有\",\"data\":" + Page1Json + "}",
             });
             Check(rejected.Failure == ApiParseFailure.Rejected && rejected.BusinessCode == -404
@@ -265,16 +274,17 @@ namespace C2Probe
 
             var msgOnly = MediaListResourceListParser.Parse(new HttpResults()
             {
+                status = true,
                 results = "{\"code\":-1,\"msg\":\"拒绝\"}",
             });
             Check(msgOnly.Failure == ApiParseFailure.Rejected && msgOnly.Message == "拒绝",
                 "a rejection without message reads the msg field");
 
-            var noData = MediaListResourceListParser.Parse(new HttpResults() { results = "{\"code\":0,\"message\":\"0\"}" });
+            var noData = MediaListResourceListParser.Parse(new HttpResults() { status = true, results = "{\"code\":0,\"message\":\"0\"}" });
             Check(noData.Failure == ApiParseFailure.Envelope && noData.Stage == "data",
                 "a body without data is an envelope failure");
 
-            var dataNotObject = MediaListResourceListParser.Parse(new HttpResults() { results = "{\"code\":0,\"data\":[]}" });
+            var dataNotObject = MediaListResourceListParser.Parse(new HttpResults() { status = true, results = "{\"code\":0,\"data\":[]}" });
             Check(dataNotObject.Failure == ApiParseFailure.Payload && dataNotObject.Stage == "data",
                 "a data that is not an object is a payload failure");
         }
@@ -754,7 +764,7 @@ namespace C2Probe
 
         private static HttpResults Response(string body)
         {
-            return new HttpResults() { results = body };
+            return new HttpResults() { status = true, results = body };
         }
 
         private static ApiParseResult<MediaListResourceListDto> ParsePage(string dataJson)

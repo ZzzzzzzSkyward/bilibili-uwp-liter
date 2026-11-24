@@ -29,6 +29,15 @@
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\MediaList\WatchLaterListParser.cs" Link="WatchLaterListParser.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\MediaList\MediaListFailureText.cs" Link="MediaListFailureText.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\MediaListService.cs" Link="MediaListService.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/Detail/FavoriteDetailVM.cs" Link="FavoriteDetailVM.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/IModules.cs" Link="IModules.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/RelayCommand.cs" Link="RelayCommand.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Models/ApiModel.cs" Link="ApiModel.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Models/ReturnModel.cs" Link="ReturnModel.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Parsing/MediaList/FavoriteResourceListMapper.cs" Link="FavoriteResourceListMapper.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Parsing/Video/WebVideoActionParser.cs" Link="WebVideoActionParser.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Parsing/Video/VideoEnvelope.cs" Link="VideoEnvelope.cs" />
+    <Compile Include="obj/HttpResults.actual.cs" />
   </ItemGroup>
 
 </Project>
