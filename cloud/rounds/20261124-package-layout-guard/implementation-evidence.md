@@ -1,6 +1,6 @@
 # Permanent package-layout probe execution evidence
 
-Status: **OFFLINE PASS / COMMIT WINDOW GRANTED**. Publication proceeds under this round's explicit commit-window.md; verified source/probe/manifest hashes matched again before staging, without retesting or implementation changes. Source intake HEAD `7ff548b24dc70a335c6d0d44c4ebc86a984ce96c`; other owners' edits/commits were preserved. All raw logs, original source snapshot, loader-only mutants and integrity JSON are under `/workspace/work/maintenance-foundation/package-layout/execution/`.
+Status: **OFFLINE PASS / COMMITTED AND PUSHED**. Implementation `8f559681c700453e681b28bd295ad56b2cdcf132` was pushed under this round's explicit commit-window.md and immediately verified equal to origin/dev. Verified source/probe/manifest hashes matched again before staging, without retesting or implementation changes. Final publication/status and ownership release: execution.md. Source intake HEAD `7ff548b24dc70a335c6d0d44c4ebc86a984ce96c`; other owners' edits/commits were preserved. All raw logs, original source snapshot, loader-only mutants and integrity JSON are under `/workspace/work/maintenance-foundation/package-layout/execution/`.
 
 ## Exact source loading and scope
 
