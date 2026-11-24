@@ -1,4 +1,4 @@
-# QF2 execution — corrected source/config READY FOR CORE RE-REVIEW
+# QF2 execution — source PASS, hosted PENDING, index released
 
 Owner: runner_executor, exclusive granted index/push window. Starting clean source HEAD/origin/dev `2f760c16dd9f7f1f931da78c01aa4b576eb7ce96`; required fetch/checkout/pull succeeded. Preexisting dispatch files and subsequently edited disjoint main docs belong to other owners; none was staged here. This executor's source paths are clean.
 
@@ -27,3 +27,13 @@ Full exact request/error/publication/equivalence and ownership release: [hosted-
 P1-01 metadata/preflight deadline/cancellation fix is pushed at **`9c33bce28a6222d73e05be134efa60abf0344ecd`**. Genuine three-case red reproduction is retained; the unchanged expanded controls now pass **14/14**, and one changed-runner full gate passes **50/50 logical / 51/51 executable**, complete_required=true, exit 0, 165.290 seconds. All compiler/extraction/product/selector/default inputs remain unchanged. [Review-fix execution](review-fix-execution.md) binds exact source hashes, actual red/green outputs and full result and requests independent P1 closure.
 
 The separately approved GITHUB_ENV relocation is published at **`c4e9dba27f49e77886598d137f6d3d81b370e60c`**; actionlint v1.7.12 rejects the original seven contexts and passes the corrected workflow. [Environment execution](workflow-env-execution.md) proves exact key/path and every other job/pin/permission/artifact field preservation. This supersedes the defective config bytes but does not turn the earlier HTTP422 into a hosted PASS. No corrected-head manual dispatch has been sent; independent core P1 closure is required first. READY FOR CORE RE-REVIEW, ownership/window released for orchestration; actual hosted/Windows/runtime status remains unpassed.
+
+
+## Corrected-head actual hosted run — in progress
+
+Independent final-review.md has closed P1-01 and passed the runner/corrected workflow source. The authorized corrected-head request received HTTP204 and created actual workflow_dispatch run **45434541348**, exact reviewed source/workflow head **169b2b0a0205a14cad7d24558920250989720cc2**, created 2026-11-24T16:13:11Z. URL: https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348 . Current observation is queued/no job yet; no hosted PASS is claimed. [Corrected hosted execution](corrected-hosted-execution.md) owns the actual terminal result/blocker. Prior HTTP422 and source/control failure evidence remain labeled history. No source/config/settings/identity change, repeated dispatch or unchanged local full run is performed.
+
+
+## Current hosted handoff — PENDING HOSTED, INDEX RELEASED
+
+At 2026-11-24T16:17:58.078923+00:00 the corrected actual run **45434541348** remains **queued**, conclusion null, **0 jobs / 0 artifacts**, no assigned runner. [Corrected hosted execution](corrected-hosted-execution.md) records the exact event/head/request/current service receipts. No hosted PASS, failed-job verdict or underlying outage/permission cause is inferred. Per hosted-observation-coordination.md this executor checkpoints PENDING and releases the global index/ownership without another receipt push or dispatch; root continues observing this same run while documentation publishes. Source/workflow bytes remain reviewed and unchanged. These current receipt edits are handed to the orchestrator for its publication window; no source/index changes remain owned here.

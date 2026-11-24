@@ -22,14 +22,16 @@ Requirement owners do not write product/tests/build/main docs or git history. Sc
 
 Each artifact must state current behavior/evidence class, goals/non-goals, exact request/state/data/error contract, boundaries and risks, minimal expected file ownership, meaningful tests (real source, no duplicate implementation), pre/post evidence plan, Windows/session limitations, priority and terminal/blocker status. Inspect existing probes before proposing new batches and preserve original assertions. Avoid changing shared ApiHelper or credential semantics to fix local callers.
 
-## Requirements review (complete); execution active
+## Requirements review and execution (complete)
 
-All three independent requirements reviews PASS, after corrected compatibility-wrapper ownership and dialog Closing/raw-decoder revisions. Execution ownership and serialized commit windows are in `execution-dispatch.md`: source_executor owns U9 then E1 sequentially; search_executor owns disjoint U5/U8 files with a later commit window. No shared main docs owner is active yet.
+All three independent requirements reviews PASS, after corrected compatibility-wrapper ownership and dialog Closing/raw-decoder revisions. Ownership/serialized commit windows in `execution-dispatch.md` were completed: source_executor delivered U9 then E1; search_executor delivered U5/U8. All source/test ownership is released. Main documentation reconciliation is separately committed as `7a84957`, receipt `5dec1a1`.
 
 Revision assignment: `ux_requirements` resolves `comment-recovery/review.md` CR-R1/CR-R2 in its own requirements/evidence, then independent re-review. Orchestrator decision for this maintenance slice: preserve the existing typed action parser/HttpResults raw-body compatibility policy rather than expand into global strict-decoder work. State exact salvage behavior and limits, add faithful actual-source raw-body fixtures, and do not claim HTML-with-embedded-JSON rejection if the real decoder accepts it. Add earliest accepted Closing invalidation plus separate Closing/Closed race evidence per review. No user/device report is invented; no product edit before PASS.
 
-## Later stages (not authorized yet)
+## Stage discipline and final disposition
 
 Independent expert requirements reviewers (`gpt-6.1-sol` / `xhigh`) write per-stream `review.md`. Only PASS permits explicitly owned executors (`gpt-6.1-sol` / `high`), with commits/push serialized in the shared checkout. Main docs have one separate owner. Independent implementation review follows. A Windows build/session/device block must remain explicit; no release/master/deployment action.
 
-Main orchestrator owns this plan, checkpoint and later memory. The preceding round's live checkpoint remains the primary continuation point until it closes.
+U9 `7ff548b` has 451 c2 assertions and independent implementation PASS. E1 `1c7f6e4` has 153 new actual-dialog checks within 1070 comments assertions and independent implementation PASS. Search U5/U8 `f594c9b` has 1258 search checks plus existing API02 12, actual cookie-policy 881 and shared auth regressions; independent implementation PASS. The subsequent reviewed aggregate completed all 50 logical / 51 executable stages with final source input equivalence. No open P0/P1/P2 implementation finding remains in these scoped diffs; this is not global runtime certification.
+
+**Round source status: COMPLETE / PASS; Windows, real session, XAML/rendering/focus and live-service outcomes FAILED/BLOCKED or unverified on Linux.** Exact prerequisite evidence and device scenarios remain in requirements/execution/final reviews and plan/VALIDATION.md. No live write, release/master/identity change occurred. Main orchestrator owns this plan and memory; maintenance-foundation/checkpoint.md remains the primary continuation point for external gates.

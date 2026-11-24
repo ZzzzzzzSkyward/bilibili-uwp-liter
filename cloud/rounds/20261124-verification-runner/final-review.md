@@ -1,0 +1,77 @@
+# QF2 implementation re-review — source PASS; hosted continuation pending
+
+- Reviewer: `runner_implementation_review`, independent implementation reviewer; owns only this file.
+- **Runner source verdict: PASS. P1-01 is CLOSED at `9c33bce28a6222d73e05be134efa60abf0344ecd`.** No open runner-source P0/P1/P2 finding remains.
+- **Corrected workflow source inspection: PASS** at `c4e9dba27f49e77886598d137f6d3d81b370e60c`, including the separately approved no-input manual trigger and exact environment relocation.
+- **Overall hosted acceptance: PENDING.** The one corrected-head dispatch returned **HTTP 204** and created actual workflow_dispatch run **45434541348** at reviewed head **`169b2b0a0205a14cad7d24558920250989720cc2`**. Latest bound observation is **QUEUED**, conclusion null, zero jobs/artifacts; no hosted PASS/FAIL or outage cause is inferred. No additional dispatch is authorized by this review.
+- Latest bound receipt: `169b2b0` changes only execution evidence; reviewed runnable/workflow bytes remain identical.
+
+## Review scope and source identities
+
+Read repository/cloud instructions, memory index, final requirements and independent PASS, all immutable runner/selector/control/workflow deltas, original execution/default/full/control evidence, first review and bounded fix dispatch, genuine red/green/new-full receipts, manual-trigger amendment/review/execution, environment amendment/review/dispatch/execution, official-context/lint/path-propagation evidence, and `corrected-hosted-execution.md` plus its sanitized dispatch/current-run/jobs/artifact receipts. No implementation, selector, product, main-document, requirement or git-history edit was made by this reviewer. Review-generated reports/fixtures are outside the repository, under `/workspace/work/maintenance-foundation/`; only this file is an owned repository output.
+
+Original implementation: `0368569ea34c6b15491c256bdab106c25dfe7951`, `f1963e0ed59816188dac487ed30ff8ddddbc7e64`. Metadata repair: `9c33bce28a6222d73e05be134efa60abf0344ecd` changes only `run-all.py` and `verify-suite-runner.py`. Original workflow: `79ba0b0`; one-line no-input manual trigger: `636484d`; environment repair: `c4e9dba`. No product, legacy compiler/extraction/assertion, comments, optional package probe or main-document change is included in these runnable commits.
+
+## P0 / P1 / P2
+
+**P0: none. P1: no unresolved source finding. P2: none.**
+
+### P1-01 — CLOSED: metadata/preflight suite deadlines and cancellation
+
+The first review correctly requested CHANGES at the original `run-all.py:44–54,281–285`: git HEAD/status and Bash metadata stacked independent five-second captures and kept launching suffix metadata after expiry/cancellation; active SDK metadata did not promptly observe signals. The independent scratch reproduction took **9.149 seconds** for a one-second suite budget, and **9.028 seconds after SIGTERM**, with no stage to clean up. Those red receipts remain at `/workspace/work/maintenance-foundation/runner-review-preflight/`; this closure does not erase them.
+
+Independently inspected the exact immutable `9c33bce` delta. Metadata now checks the suite deadline/cancellation before spawn and during nonblocking drain, uses `min(start+5, suite_end)`, and calls the same owned-group TERM/KILL/drain/subreaper cleanup as stages. Every git/Bash/SDK metadata call goes through this path. The caller checks cancellation/deadline before starting each subsequent command. All 51 rows are atomically checkpointed before the first metadata child; attempted metadata records truthful TIMEOUT/suite_budget or CANCELLED/signal observations, and interrupted provenance remains unavailable/unverified. Unstarted selected stages retain BLOCKED/suite_budget or BLOCKED/cancelled and 1/130/143 exits. No manifest, assertion, deadline allowance, selector or source-provenance requirement was relaxed.
+
+The permanent regression controls were added before the fix and retained unchanged for green. Genuine old-runner red evidence in `review-fix-red-v2/controls.json` reproduces **9.139s / 9.075s / 9.086s**, missing prompt initial report, suffix metadata and surviving/late descendants. The earlier invalid wrapper setup is explicitly retained separately and is not used as red evidence. Controls operate the actual aggregate using temporary delayed wrappers and a delayed child, coordinate signals from readiness, check initialized reports/no suffix/no stage/no surviving or delayed child, and clean up their own descendants even on failure. They are external contract tests, not another runner or substituted business checks.
+
+Reviewed executor green: **14/14 PASS**, new metadata budget/SIGINT/SIGTERM completion **1.602s / 0.543s / 0.552s**. Independently reran unchanged current controls:
+
+```bash
+python3 plan/tests/verify-suite-runner.py --tools-root /workspace/work/maintenance-foundation/quality --output /workspace/work/maintenance-foundation/runner-review-controls-fixed
+```
+
+Actual exit **0**, **14/14 PASS**; metadata completion **1.575s / 0.559s / 0.555s**. Each regression retained all 51 rows, exactly one attempted metadata command, correct final statuses/exits and no surviving/delayed child. All previous eleven controls also pass. **P1-01 closure accepted; source re-review PASS is complete.**
+
+## Complete changed-runner gate and preserved contracts
+
+The changed runner has its own actual complete gate, not just historical QF1/original-runner evidence. `/workspace/work/maintenance-foundation/runner-execution/review-fix-full/results.json` is finished/PASS, **50/50 logical / 51/51 executable**, complete_required=true, all FAIL/MISSING/BLOCKED/TIMEOUT/ERROR/CANCELLED/NOT_SELECTED/PENDING counts zero, duration **165.290 seconds**. Historical baseline/current manifest and selected totals are independently checked. Manifest SHA-256 remains `3b240e48f78bd7020abcb038eaa37a005a198452c44828f3ae0e0fd80ea676e6`.
+
+The run honestly records observed HEAD `37a2cf5` with pending reviewed source/disjoint documentation edits. Independently rechecked **869/869** final input hashes against `review-fix-source-hashes.json`, SHA-256 **`bc052eea37c1577ab9baa20a2e0f91594e3f33308ebe24bdb371d53d32baf431`**, zero mismatches; actual current two-Python-file bytes equal immutable `9c33bce`. Only these two files differ from the original 869-input binding. Workflow/receipt-only later commits do not invalidate this executed-input equivalence. No redundant whole-suite run was substituted for checking it.
+
+| Required behavior | Independent review result |
+| --- | --- |
+| Exact inventory and comments integration | PASS: 51 unique stages / 50 logical IDs, explicit argv/required-path manifest matches full reports. Comments remains exactly one real program/stage; full logs include `DIALOG_CHECKS=153 FAILURES=0` and `PASS 1070 assertions`. |
+| Legacy/default preservation | PASS: all five LM and two AUTH compiler command lists independently compared byte-for-byte with prechange scripts; extraction/static initializer/instrumentation/runtimeconfig/assertion bodies unchanged. Original no-argument chain evidence retains LM01→LM05→API01→Account→LoginVM and fail-fast behavior. |
+| Independent selectors | PASS: scratch-only prefix `#error` causes original defaults to fail without suffix business output; real selected LM05=22 and LoginVM=39 checks pass. Deduplication and selected-only AUTH logical PARTIAL are verified; selector completion markers cannot substitute for a successful command. |
+| Failure/missing/drift and partial/full outcomes | PASS: failed/missing selected rows retain fixed denominators and later stages run; unexpected runnable directories fail inventory while known stages complete. Partial selections remain PARTIAL_PASS/complete=false, unknown/empty IDs and bad invocations exit 2. |
+| Exact toolchain and prerequisite behavior | PASS: SDK 8.0.427/runtime/ref 8.0.33 checked; exact compiler/Newtonsoft/reference inputs, source cwd/version and tools/cache/PATH setup inspected. Missing/wrong exact SDK BLOCKs affected commands while independent stab can pass. No tool install/roll-forward/source fetch is performed by the aggregate. |
+| Deadline/signals/ownership | PASS after P1 closure: active stage and metadata obey earlier deadlines and signals, selected/unstarted reasons and 130/143 exits are truthful, owned groups are drained/killed/reaped by Linux subreaper, no delayed child survives. |
+| Reports/output/provenance | PASS: initialized fixed rows, atomic incremental reports, bounded retained head/tail with continued drain, >2 MiB output preserves actual exit 7 and <=1 MiB log. Report-write/output-preservation errors cannot exit 0. Non-git source snapshots do not borrow another cwd SHA; interrupted metadata preserves unverified provenance. |
+| Artifact contents and size | PASS: changed-runner full report tree **288,460 bytes**, max full log **38,669 bytes**; expanded control tree **1,929,951 bytes**, max log **1 MiB**. Inspected trees contain synthetic diagnostics/reports/hash metadata, no source/extracted .cs/scripts/projects, bin/obj/cache subtree or real account material. |
+| Syntax/ownership | PASS: Python syntax, touched Bash syntax/LF and immutable diff whitespace pass. Reviewed source/workflow paths are clean; remaining shared documentation/orchestrator edits retain separate owners, so no globally clean checkout claim is made. |
+
+Package layout remains separately **NOT_CONFIGURED**, reason `separately-owned, excluded`, never invoked or added to 50/51. Runner controls remain separate from that denominator.
+
+## Corrected workflow source review — PASS, actual hosted result still required
+
+The original workflow source-inspection PASS in the first revision of this review **missed the invalid runner context in job-level env and is superseded**. The actual one authorized dispatch at 2026-11-24 15:57:49–15:57:51 UTC returned **HTTP 422** with seven `Unrecognized named-value: runner` job-env errors. That is a real configuration defect, not an external outage, permission denial or unexplained no-run blocker. Earlier zero-run/permissions-GET-403 observations remain historical facts and do not explain away this error.
+
+The independently PASS environment amendment and current official-context evidence correctly distinguish job env (runner unavailable) from step run/with (runner supported); GITHUB_ENV values propagate to later steps. Independently inspected `c4e9dba`: exactly seven runtime-derived path assignments were removed from job env and written with quoted `printf '%s\n' ... >> "$GITHUB_ENV"` in one Bash step after checkout/before setup-dotnet. The three literal telemetry flags remain. Independently parsed old/new structure and removed only this approved relocation: **all other fields match**. Independently executed this exact step using a runtime path containing spaces: **all seven emitted keys/values match exactly**. No protected GITHUB_* or RUNNER_* variable is overwritten.
+
+Current workflow SHA-256 **`a12d8d6306809be5aa484d535a7314ccd2e4dbe8c6ff18dab13f547b4c85bfe9`**, blob `53b40aac5dc9ab10cdc17351052f437a37bf22fc`, matches publication/evidence. Independently ran retained verified actionlint v1.7.12 against the actual current file with `-shellcheck= -pyflakes=`: **exit 0**, no diagnostics. The executor's genuine original lint receipt has exactly seven context errors; its corrected receipt is green. Optional shellcheck/pyflakes were not run. YAML/Bash/lint results establish source checks, not GitHub execution.
+
+The following remain preserved and inspected: dev push/dev-targeted PR plus approved no-input workflow_dispatch; `contents: read`; ubuntu-24.04; full shallow checkout with persist-credentials=false; exact SDK/install/cache paths; 40/35/3-minute job/test/upload bounds; explicit status capture allowing both controls and complete default suite to run; no secrets/live API/release or optional package gate. Exact action refs remain checkout `3d3c42e5aac5ba805825da76410c181273ba90b1`, setup-dotnet `0f4a354dd5547a28c70b7853dbd95d5b67886e73`, upload-artifact `cf430e030ddbb5b0abf93d22962f4752f3646cd9`. Always-upload targets only runner.temp/offline-results, seven-day retention, hidden files excluded, missing files error.
+
+The prior zero-run observation is superseded by the completed bounded attempt in `corrected-hosted-execution.md`. After the exact-head precheck found no existing run, the authorized owner sent **one** corrected-head `POST /repos/ZzzzzzzSkyward/bilibili-uwp-liter/actions/workflows/429242571/dispatches`, structured body `{"ref":"dev"}`, at **2026-11-24T16:13:10.026568Z–16:13:11.961069Z**. Actual response: **HTTP 204 No Content**, gh exit 0. The synchronized request head is **`169b2b0a0205a14cad7d24558920250989720cc2`**; all 869 reviewed source/test/runner hashes and corrected workflow bytes are recorded unchanged. No source/configuration/settings/identity change or local rerun accompanied the request. The original invalid-config HTTP422 remains historical evidence; it is not the current corrected request result.
+
+GitHub created actual workflow_dispatch run **[45434541348](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348)**, created **2026-11-24T16:13:11Z**, exact reviewed head **`169b2b0a0205a14cad7d24558920250989720cc2`**. Independently read the sanitized request receipt and `corrected-hosted-pending-handoff.json`: latest controlling observation **2026-11-24T16:17:58.078923Z**, status **queued**, conclusion **null**, attempt **1**; Jobs API **0 jobs**, Artifacts API **0 artifacts**. There is no assigned job/runner, step result, terminal conclusion or artifact to certify. This establishes accepted corrected workflow/event/head binding, **not hosted execution PASS or FAIL**. Queue state supplies no evidence of an outage, permission cause or permanent failure.
+
+Hosted acceptance is therefore **PENDING**. Continue read-only observation of this same actual run and bind its eventual terminal run/job/step/artifact evidence; do not send another dispatch, manufacture an event-test push or infer success from 204, registration or local lint. The owner released its index/source/workflow/receipt window at the pending handoff without cancelling the real run. No settings/identity/permission/branch operation or new approval scope follows from this review.
+
+## Structural conclusion and current disposition
+
+**Source structure PASS:** the declarative fixed manifest, small launcher, one standard-library aggregate, shared owned-child cleanup, reused legacy compile/extraction bodies and external control driver have clear responsibilities, no copied product implementation or second runner. The repaired shared metadata execution path closes the only runner-source P1. No open P2 structure finding remains.
+
+**Runner source PASS / corrected configuration source PASS; overall hosted acceptance PENDING for actual queued run 45434541348 at reviewed head 169b2b0.** P1-01 stays closed. The corrected request and real event are now bound; the next review update must bind this same run's terminal jobs/artifacts or a new explicit evidenced blocker. No job failure, CI PASS or outage cause is inferred from a queued run. Shared main docs remain separately owned.
+
+Windows UWP/XAML compilation, MSIX validity/install, real startup, playback, account/session and device gates remain **BLOCKED/excluded** independently. Offline/source/hosted success cannot establish those platform outcomes.

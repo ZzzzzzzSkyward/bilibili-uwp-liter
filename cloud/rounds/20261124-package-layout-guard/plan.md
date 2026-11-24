@@ -11,3 +11,9 @@ Propose one narrowly named PowerShell probe (prefer a root-level file under plan
 Requirements → independent expert PASS → explicit executor (`gpt-6.1-sol` / `high`) source/probe ownership → red/green fixture evidence → separate commit/push window after active quality/source owners → independent implementation review. Main docs remain one later owner. No product/build/test edit before requirements PASS. All agent communication/results in round files; final chat artifact/status only.
 
 Requirements and independent review now PASS. Existing quality_executor is assigned the exact two-file scope and deferred commit window in `execution-dispatch.md`; no release or full-build execution is authorized.
+
+## Final disposition — 2026-11-25 Asia/Shanghai
+
+Source `8f55968` adds only the root-launcher existence/strictly-under-65536-byte guard to the actual build function and its narrowly named archive probe. Genuine red 10/15 passing cases became **15/15 PASS** using AST-extracted real functions under user-level PowerShell Core. Independent implementation review in final-review.md is **PASS**, with no open scoped P0/P1/P2; all source/test/index ownership is released. This separate package gate is excluded from the 50/51 aggregate.
+
+**Windows PowerShell 5.1, actual UWP compile/full signed MSIX/install/startup remain FAILED/BLOCKED — Linux has no VS/UWP/Windows SDK/runtime.** The zero-byte fixture characterizes this narrow size predicate; it never certifies executable validity. The tracked expired public certificate differs from the configured signer; release-signing-evidence.md records the actual read-only distinction and uninspected Windows store. No manifest/version/certificate/thumbprint/identity or release action occurred. Main docs record exact validation commands and release prerequisites.

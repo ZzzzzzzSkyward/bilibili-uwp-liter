@@ -1,0 +1,7 @@
+# 2026-11-24 package-layout guard — source COMPLETE, release BLOCKED
+
+Round: `cloud/rounds/20261124-package-layout-guard/plan.md`. Requirements and independent review PASS preceded exact two-file executor ownership. Source `8f55968` adds only root BiliLiter.exe existence and uncompressed Int64 size <65536 to Test-FullPackageLayout, preserving existing package selection/entrypoint/companion/manifest checks and build/version behavior.
+
+The narrow PowerShell probe extracts the exact actual two function ASTs without executing the release script; inert ZIP fixtures preserve invalid-loader/setup controls. Genuine red10/15 → **15/15 PASS** under user-level PowerShell Core. Independent final review **PASS**, no open scoped P0/P1/P2. Gate remains separate from 50/51. Zero-byte root fixture is predicate characterization, never proof of a valid launcher or bootability.
+
+Actual Windows PowerShell5.1/UWP compilation/full signed MSIX/install/startup remain FAILED/BLOCKED because this Linux host lacks VS/UWP/Windows SDK/runtime. No manifest/version/signing identity/certificate/asset change occurred. Read-only signing evidence confirms tracked CER expired2024 but differs from configured Windows signer; uninspected store/key/publisher/real signing remain explicit release prerequisites, not proven current signer failure. Main docs reconciled in7a84957/receipt5dec1a1; release/master remain untouched.

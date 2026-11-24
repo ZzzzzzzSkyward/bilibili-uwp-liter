@@ -1,6 +1,21 @@
 # Live orchestration checkpoint
 
-Current stage: **runner/CI requirements full re-review**. All product, harness and package-layout implementations and independent implementation reviews PASS within offline scope. All product/build executors released ownership; main session remains active.
+Current stage: **reviewed source/plan rounds closed; external gates retained** (2026-11-25 Asia/Shanghai). All reviewed product, harness, package-layout and runner/workflow source implementations have independent PASS. Documentation `7a84957` / receipt `5dec1a1` and independent documentation/canonical-plan review PASS, with no open scoped P0/P1/P2. All source/build/test/workflow/doc/reviewer ownership is released. Final metadata publication belongs only to checkpoint_publisher (`gpt-6-luna` / `max`) under final-archive-dispatch.md; its final-archive-publication.md records actual archive results. Root verifies final clean worktree and exact origin/dev synchronization after that publication.
+
+## Current results and continuation
+
+- Canonical deliverable: [maintenance-plan.md](maintenance-plan.md), independently requirements-approved and reconciled for source/local/hosted/platform scope.
+- Completed source: U1 `5eec54e`, PB1 `edbd873`, QF1 `ca99149`, U9 `7ff548b`, E1 `1c7f6e4`, U5/U8 `f594c9b`, package guard `8f55968`, aggregate `0368569` / `f1963e0`, runner metadata fix `9c33bce`, corrected workflow `c4e9dba`. Owning final reviews PASS; no unresolved scoped P0/P1/P2 source finding.
+- Actual changed-runner complete gate: **50/50 logical / 51/51 executable PASS**, complete_required=true; separate **14/14 controls PASS** and **15/15 package archive fixtures PASS**. Root recomputed all **869/869 executed-input hashes**, zero mismatches. See [pre-archive-verification.md](pre-archive-verification.md) and immutable source reviews.
+- Latest local/origin/actual GitHub ref equality: **5dec1a1b608a3fe689401c7bec7861f45cb70666** before metadata archive. No runnable/workflow difference from hosted head `169b2b0`. Pending root/reviewer metadata is preserved, not described as a clean checkout yet.
+- Actual hosted [run 45434541348](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348), workflow_dispatch, head `169b2b0a0205a14cad7d24558920250989720cc2`: **QUEUED / PENDING / UNVERIFIED**, null conclusion, zero jobs/artifacts at 2026-11-25 00:30:45 Asia/Shanghai. Observe this same run's eventual terminal jobs/artifacts. Do not duplicate dispatch, mutate settings/permissions/identity, infer outage or claim PASS/failed job from queue state. Earlier actual HTTP422 was a source configuration error that is now independently corrected.
+- Windows/UWP/PowerShell 5.1/VS/Windows SDK/actual MSIX/install/startup/native focus/UIA/playback/live/session/signing-store gates remain **FAILED/BLOCKED or unverified**. Exact unavailable-prerequisite command exited127 in baseline evidence. PowerShell Core archive fixtures are a separate narrow test. Public expired CER differs from configured signer; do not infer active signer expiry.
+- Background/BR-21/pacing require measurements; live U2 needs trustworthy identity and protocol/session evidence; persistence needs a reproducer; dependency compatibility needs scoped graph/native evidence; account parser remains maintainer-held; parked scope stays parked. UX-03–06 remain documented scoped recovery/accessibility follow-ups, with actual native/state/file-operation evidence required, not invented device defects.
+- One-time 20-minute wake-up fired at 22:51 Asia/Shanghai on 2026-11-24 and resumed this active thread; no recurring automation was requested or added.
+
+All source tasks authorized by reviewed execution dispatches are complete, and the requested maintenance plan has final independent PASS at frozen SHA-256 `50191998f71550466956068878604f7bf87682b46c4d51992a9964194ae99402`. Final exact-manifest archive is the only index/push window; do not create a competing writer. Repository-wide runtime/release readiness is not established. Continue from the actual same hosted run's terminal evidence or a newly available Windows/measurement/identity/maintainer prerequisite in blockers.md, preserving all accepted historical behavior.
+
+## Historical checkpoints (superseded by current state above)
 
 Active owners and outputs are listed in `plan.md`. Review instructions are in `review-dispatch.md`. Reviewers own only their stream-local `review.md`. All implementation must pass that review first.
 
