@@ -1,0 +1,7 @@
+# Documentation P2 correction — GRANTED same owner, docs only
+
+Owner round_documentation_executor, gpt-6.1-sol/high, retains exact prior twelve-file maximum/main-doc and owned evidence scope. Independent documentation/final-review.md accepts all other counts/behavior/hash/native/plan/publication scope; only P2-DR1 returns to you. Root separately corrects P2-DR2 in its quality assessment; neither frozen plan changes.
+
+Read exact DR1 and evidence. Add reusable explicit cloud-agent exclusions at AGENTS sync block, DEVELOPMENT sync block/environment recommendation and PLAN environment-table sync entry: applicable serialized grant, ordinary fetch/fast-forward-only integration/nonforce push, no rebase/stash sync script or automatic concurrent-work stash/rewrite. Preserve useful local-maintainer description and all scripts/CONTRACT/source/global instruction semantics. No scope expansion or one-time memory in global guidance.
+
+Refresh only affected frozen hashes and owning execution/validation evidence; check changed links/whitespace/static source equivalence. Do not rerun source suite/controls/package/compile for this Markdown-only correction. All sourceC/runnable bytes and other accepted documents remain frozen unless a real correction requires the same owned scope. No staging/commit/ref/push until re-review PASS and separate grant. Release LOCAL READY/FROZEN for same independent reviewer, exact new hashes/artifact only.

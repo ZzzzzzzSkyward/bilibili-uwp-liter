@@ -1,0 +1,12 @@
+# Root read-only intake observations
+
+These are candidate pointers from source inspection at077ef35, not substitutes for specialists' actual reproducers or reviewed contracts. Specialists retain stream ownership and should independently confirm/rule out them.
+
+- RecommendVM.LoadMore dereferences Items.LastOrDefault().idx before its null/empty guard; last_index is also assigned before the Loading gate/request completion. Examine null/empty activation and repeated retry at an unchanged cursor after a failed append; current one-second canloadmore delay does not itself reset last_index. Inspect real page event/command call frequency and async-void exception boundary.
+- RecommendVM.Dislike constructs Dislike into api; feedback branch calls Feedback without assigning its return value, then awaits api.Request. Verify actual menu/caller types and expected behavior before deciding whether it belongs in this recovery slice.
+- DownloadVM.DeleteItem/DeleteAll prompt only about cancellation before PermanentDelete, and catches silently swallow failures. Trace transfer cancellation/removal callbacks and partial-file lifetime before a truthful recovery change; deleting a task is not a transactional rollback of transfer work.
+- VideoPlayHistoryHelper.SetABPlayHistory stores the same dictionary reference as snapshot before Task.Run; ABPlayHistoryEntry is mutable and Find returns its reference. Inspect actual callers and SettingHelper serialization to reproduce aliasing/write order rather than assume a shallow reference assignment is an immutable snapshot.
+- LocalMediaLibraryService imports read/modify/write registry across awaits without an obvious shared gate. Inspect FutureAccessList token rollback and Reopen/GetSaved readers; deterministic overlapping import and write failure fixtures should establish whether data/token loss is real.
+- WebVideoStateParser like/coin and WebRelationParser follower/attribute check Integer then call Value<int>; LegacyDynamicFeedParser also uses Value<long> for integer values. PB1 only bounded envelope codes. Check out-of-range/BigInteger payloads against real typed-failure contracts without broadening accepted scalar coercion or changing optional-field defaults.
+
+Existing docs/FEATURES still describes the now-fixed comment CSRF defect as current in its dynamic-action row; later single documentation owner can reconcile this small drift with actual dispositions. No product/test/doc mutation was made by root.

@@ -9,3 +9,5 @@
 - 2026-11-25：GitHub Actions 的 YAML/Bash 解析成功不代表表达式上下文有效。job-level env 不支持 runner.temp；真实 dispatch HTTP422 才暴露此错误。查官方 Context Availability；运行时路径在受支持的步骤中经 GITHUB_ENV 设置，不能据 workflow active 或空运行历史宣称 CI 通过/服务故障。证据：verification-runner/hosted-validation-execution.md、workflow-env-review.md。
 - 2026-11-25：套件预算和取消也覆盖 git/bash/SDK 元数据子进程。逐次独立的五秒 capture 会在全局到期后继续启动后缀；初始报告应先落地，所有自有进程组共享剩余预算并被清理。新增慢元数据与信号负控，不能只测已启动的测试阶段。证据：verification-runner/final-review.md P1-01 与 review-fix-execution.md。
 - 2026-11-25：CER 扩展名不等于 DER。当前跟踪 CER 是 PEM、有效期到 2024，且指纹不等于两个项目选择的 Windows-store signer；不能据此宣称当前签名证书失效。仅读取并记录，实际签名存储/私钥/发行证书匹配由 Windows 发布准备核验；不改受保护证书/身份。证据：package-layout-guard/release-signing-evidence.md。
+
+- 2026-11-25：嵌套 exec_command 非零退出仍返回结果对象，不一定抛异常；必须检查 exit_code 后才写 PASS/授权依赖动作。一次 ls-remote 认证失败使后续 && 的 index/path 检查未执行，主会话提前写的验证文案已在轮次/memory 纠正。tracking ref 不是实时服务证明；另行实际检查空 index/owned paths，并用仍可用的 connected GitHub Git-ref API 核对服务 SHA。证据：20261125-recovery-integrity/remote-verification.md。不要打印/猜测/替换无效凭证或从401推断仓库权限/服务故障。

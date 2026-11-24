@@ -1,0 +1,16 @@
+{
+  "paths": [
+    "README.md",
+    "AGENTS.md",
+    "cloud/REPO.md",
+    "docs/README.md",
+    "docs/DEVELOPMENT.md",
+    "docs/FEATURES.md",
+    "docs/ROADMAP.md",
+    "plan/PLAN.md",
+    "plan/VALIDATION.md",
+    "plan/REVIEW_LOG.md",
+    "document/BUILD.md",
+    "document/BILIBILI_API_RESEARCH.md"
+  ]
+}

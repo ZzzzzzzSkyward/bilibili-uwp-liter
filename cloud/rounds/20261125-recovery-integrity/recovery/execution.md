@@ -1,3 +1,9 @@
+# Recovery/FA-01 source — PUBLISHED / FROZEN
+
+Normal configured nonforce Git push is verified: actual server dev = local dev = origin/dev = `7fe7a5ff417d0bc2437b5dc3f0507543f744da9b`; sole parent `e928bf0e818869c03485f8ef6f31fa47e98ac0f0`, staged/committed tree `30b9e7d997e25e7a4b04c3c0dab1d9a0eabbf614`. Exact30 reviewed paths were published, all22 runnable inputs are clean and all915 committed/current source blobs equal the complete51/52 executed manifest0a80ac1c…; actual final common reportb33d402f… remains PASS/complete_required=true. Index empty and all30 payload paths initially clean before the two authorized evidence edits; unrelated root metadata preserved. [Publication receipt and exact bindings](publication.md) is authoritative. No extra receipt commit; these evidence edits are unstaged/frozen for the separate archive. Whole-repository clean, final main docs/archive and hosted/native outcomes remain separate gates.
+
+## Prepublication local execution — historical evidence below
+
 # Final FA-09 helper execution — LOCAL PASS / FROZEN
 
 Only the owning ShowLoginDialog try/finally, additive existing recovery Program and exact two-body helper hash allowance changed. Same final fixture on actual current old/fixed helper:348 checks/21 semantic failures →348/348 PASS; all prior312 and original208 PASS in both variants; unchanged g5 PASS335. Three decisive same-VM retry failures expose FA-09;18 downstream failed assertions report its unreleased old-helper admission consequences. All allocated gates naturally settle; green helper usability is proved after success/cancel/fault/cancellation without product flag reset.

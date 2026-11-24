@@ -1,0 +1,9 @@
+# Serialized source commit/push window — boundary_executor
+
+Status: **CLOSED / RELEASED** after source1b6af65 and receipt9beadcc; root verified local/origin/actual remote9beadcc equality, empty index and exact owned source/test paths clean. The active grant below is historical and no longer authorizes another index operation. Storage is next under storage/commit-window.md; recovery's untracked Recommend parser is a separate active owner, not boundary residue.
+
+**GRANTED / ACTIVE.** favorite_executor released all ownership and index after source05149667283affcd4a53056b0bb16623fdbe9aaa and receipt9cb68fb4b3e1e767c070258746931334b10123bf; root independently verified HEAD=origin/dev=actual remote9cb68fb, favorite-owned paths clean, staged index empty. No other index writer is authorized.
+
+boundary_executor alone may stage/commit/push its exact BND-B/C/D paths in execution-dispatch.md: seven owned product paths, c1 harness/new checks, g4/season1/comments Program additions and boundaries/execution.md / implementation-evidence Markdown. FavoriteDetailVM/c2 and all storage/recovery/root files remain excluded and preserved. Implement/test until stable green, then exact argv stage, cached path readback and whitespace check, conventional scoped source/test/evidence commit(s), push dev and verify actual ref equality. Required real-source/assertion/native-limit evidence is unchanged.
+
+One final owned evidence-only receipt commit is allowed if needed; do not leave an after-commit edit dirty or generate a receipt loop. On a failure preserve all state and record an owned blocker; never reset, amend, rebase, force, widen staging or change master. Release all code/test/evidence/index ownership after final push, return artifact/status/final SHA. Storage and recovery may continue disjoint implementation/tests but may not use the index until root's later window. This grant closes automatically at the owner's explicit release.
