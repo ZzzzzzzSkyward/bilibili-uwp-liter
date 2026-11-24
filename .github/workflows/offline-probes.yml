@@ -16,13 +16,6 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
     env:
-      UPSTREAM_UNIT_TOOLS: ${{ runner.temp }}/offline-tools
-      DOTNET_INSTALL_DIR: ${{ runner.temp }}/offline-tools/dotnet
-      DOTNET_ROOT: ${{ runner.temp }}/offline-tools/dotnet
-      DOTNET_CLI_HOME: ${{ runner.temp }}/offline-tools/cache/dotnet-cli
-      NUGET_PACKAGES: ${{ runner.temp }}/offline-tools/cache/nuget
-      XDG_CACHE_HOME: ${{ runner.temp }}/offline-tools/cache/xdg
-      XDG_DATA_HOME: ${{ runner.temp }}/offline-tools/cache/xdg-data
       DOTNET_CLI_TELEMETRY_OPTOUT: '1'
       DOTNET_SKIP_FIRST_TIME_EXPERIENCE: '1'
       DOTNET_NOLOGO: '1'
@@ -32,6 +25,16 @@ jobs:
         with:
           fetch-depth: 1
           persist-credentials: false
+      - name: Configure isolated offline environment
+        run: |
+          printf '%s\n' \
+            "UPSTREAM_UNIT_TOOLS=$RUNNER_TEMP/offline-tools" \
+            "DOTNET_INSTALL_DIR=$RUNNER_TEMP/offline-tools/dotnet" \
+            "DOTNET_ROOT=$RUNNER_TEMP/offline-tools/dotnet" \
+            "DOTNET_CLI_HOME=$RUNNER_TEMP/offline-tools/cache/dotnet-cli" \
+            "NUGET_PACKAGES=$RUNNER_TEMP/offline-tools/cache/nuget" \
+            "XDG_CACHE_HOME=$RUNNER_TEMP/offline-tools/cache/xdg" \
+            "XDG_DATA_HOME=$RUNNER_TEMP/offline-tools/cache/xdg-data" >> "$GITHUB_ENV"
       - name: Install exact offline SDK
         uses: actions/setup-dotnet@0f4a354dd5547a28c70b7853dbd95d5b67886e73 # v6
         with:
