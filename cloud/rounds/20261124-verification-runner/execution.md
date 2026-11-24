@@ -1,4 +1,4 @@
-# QF2 execution — offline PASS, hosted workflow validation FAILED
+# QF2 execution — corrected source/config READY FOR CORE RE-REVIEW
 
 Owner: runner_executor, exclusive granted index/push window. Starting clean source HEAD/origin/dev `2f760c16dd9f7f1f931da78c01aa4b576eb7ce96`; required fetch/checkout/pull succeeded. Preexisting dispatch files and subsequently edited disjoint main docs belong to other owners; none was staged here. This executor's source paths are clean.
 
@@ -20,3 +20,10 @@ Windows UWP/XAML/build/MSIX/install/device/startup/playback/account-session gate
 The no-input manual trigger was published as exact one-line addition at **`636484d3507384ce48cac8a3b32766c497494041`**; all job/source/test/runner bytes remain unchanged. The single authorized `POST .../actions/workflows/429242571/dispatches` with structured `{"ref":"dev"}` was rejected at **2026-11-24T15:57:51Z**, **HTTP 422**, gh exit 1: `Invalid Argument - failed to parse workflow`, unrecognized named-value `runner` in the seven existing job-level `runner.temp` environment entries (lines 19–25). No run/job/artifact started. This identifies a workflow expression-context defect and supersedes the earlier no-run/permission-diagnostic uncertainty; it is **FAILED TO START / BLOCKED by configuration**, not hosted PASS or a proven external permission/enablement failure.
 
 Full exact request/error/publication/equivalence and ownership release: [hosted-validation execution](hosted-validation-execution.md). No second dispatch or job/configuration/settings/identity repair was authorized by the trigger-only amendment, so the concrete defect is returned to independent implementation review for separately reviewed correction. Existing local 11/11 controls and 50/51 suite remain valid; Windows/runtime gates remain BLOCKED. Trigger/evidence/global index/push ownership is released after this receipt publication.
+
+
+## Newest source/configuration outcome — READY FOR CORE RE-REVIEW
+
+P1-01 metadata/preflight deadline/cancellation fix is pushed at **`9c33bce28a6222d73e05be134efa60abf0344ecd`**. Genuine three-case red reproduction is retained; the unchanged expanded controls now pass **14/14**, and one changed-runner full gate passes **50/50 logical / 51/51 executable**, complete_required=true, exit 0, 165.290 seconds. All compiler/extraction/product/selector/default inputs remain unchanged. [Review-fix execution](review-fix-execution.md) binds exact source hashes, actual red/green outputs and full result and requests independent P1 closure.
+
+The separately approved GITHUB_ENV relocation is published at **`c4e9dba27f49e77886598d137f6d3d81b370e60c`**; actionlint v1.7.12 rejects the original seven contexts and passes the corrected workflow. [Environment execution](workflow-env-execution.md) proves exact key/path and every other job/pin/permission/artifact field preservation. This supersedes the defective config bytes but does not turn the earlier HTTP422 into a hosted PASS. No corrected-head manual dispatch has been sent; independent core P1 closure is required first. READY FOR CORE RE-REVIEW, ownership/window released for orchestration; actual hosted/Windows/runtime status remains unpassed.
