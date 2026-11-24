@@ -347,7 +347,9 @@ namespace BiliLite
             if (SystemInformation.Instance.IsFirstRun)
             {
                 var display = DisplayInformation.GetForCurrentView();
-                if (display.ScreenWidthInRawPixels >= 1920 && (display.ScreenWidthInRawPixels / display.ScreenHeightInRawPixels > 16 / 9))
+                //像素宽高是 UInt32、16/9 又是整数除法(=1)，原来的 width/height > 16/9 实际变成「比值 ≥ 2」；判据放在 FirstRunDisplayMode 里，便于探针断言
+                if (BiliLite.Services.FirstRunDisplayMode.PrefersList(
+                    (long)display.ScreenWidthInRawPixels, (long)display.ScreenHeightInRawPixels))
                 {
                     //如果屏幕分辨率大于16：9,设置为List
                     SettingHelper.SetValue<int>(SettingHelper.UI.RECMEND_DISPLAY_MODE, 1);
@@ -505,10 +507,21 @@ namespace BiliLite
                 }
             }
             catch (Exception ex) { }
-            // 关窗口不走 OnNavigatedFrom:在这里把当前进度存下来并报一次
-            await PlayerControl.FlushActivePlaybackAsync();
-            LogHelper.Flush();
-            deferral.Complete();
+            try
+            {
+                // 关窗口不走 OnNavigatedFrom:在这里把当前进度存下来并报一次
+                await PlayerControl.FlushActivePlaybackAsync();
+                LogHelper.Flush();
+            }
+            catch (Exception ex)
+            {
+                // 关窗的 deferral 同样必须放行:不放行,窗口既不关也不退,用户只能杀进程
+                LogHelper.Log("Close flush failed", LogType.ERROR, ex);
+            }
+            finally
+            {
+                deferral.Complete();
+            }
         }
         public string ThemeXamlPath { get; set; } = "DefaultTheme.xaml";
         private void LoadTheme()

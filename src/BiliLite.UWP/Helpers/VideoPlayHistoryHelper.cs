@@ -8,7 +8,9 @@ namespace BiliLite.Helpers
     public class VideoPlayHistoryHelper
     {
         private const int ABPLAY_HISTORES_MAX = 200;
-        private static Dictionary<string, ABPlayHistoryEntry> ABPlayHistories;
+        // 启动时由 App.InitBili 里的一步异步初始化赋值,播放器可能在它之前就读;先给一个空表,不让静态字段成为 null
+        private static Dictionary<string, ABPlayHistoryEntry> ABPlayHistories =
+            new Dictionary<string, ABPlayHistoryEntry>(ABPLAY_HISTORES_MAX);
 
         public class ABPlayHistoryEntry {
             public double PointA { get; set; }
@@ -21,7 +23,8 @@ namespace BiliLite.Helpers
         /// <param name="cleanup">是否顺带清理一下历史记录</param>
         public static void LoadABPlayHistories(bool cleanup)
         {
-            ABPlayHistories = SettingHelper.GetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES, new Dictionary<string, ABPlayHistoryEntry>(ABPLAY_HISTORES_MAX));
+            ABPlayHistories = SettingHelper.GetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES, new Dictionary<string, ABPlayHistoryEntry>(ABPLAY_HISTORES_MAX))
+                ?? new Dictionary<string, ABPlayHistoryEntry>(ABPLAY_HISTORES_MAX);
 
             if (ABPlayHistories.Count > ABPLAY_HISTORES_MAX && cleanup)
             {
@@ -53,15 +56,27 @@ namespace BiliLite.Helpers
         /// <param name="history">null移除AB播放历史</param>
         public static async void SetABPlayHistory(Controls.PlayInfo info, ABPlayHistoryEntry history)
         {
-            if (history == null)
+            try
             {
-                ABPlayHistories.Remove(info.season_id != 0 ? "ep" + info.ep_id : info.cid);
-            } else
-            {
-                ABPlayHistories[info.season_id != 0 ? "ep" + info.ep_id : info.cid] = history;
-            }
+                var key = info.season_id != 0 ? "ep" + info.ep_id : info.cid;
+                if (history == null)
+                {
+                    ABPlayHistories.Remove(key);
+                }
+                else
+                {
+                    ABPlayHistories[key] = history;
+                }
 
-            await Task.Run(() => SettingHelper.SetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES, ABPlayHistories));
+                // 快照之后再写盘:Task.Run 里读静态字段会和下一次 Load 撞上
+                var snapshot = ABPlayHistories;
+                await Task.Run(() => SettingHelper.SetValue(SettingHelper.Player.PLAYER_ABPLAY_HISTORIES, snapshot));
+            }
+            catch (Exception ex)
+            {
+                // async void:写盘失败必须在这里收住,否则会走未处理异常通道把进程带崩
+                LogHelper.Log("AB play history write failed", LogType.ERROR, ex);
+            }
         }
     }
 }
