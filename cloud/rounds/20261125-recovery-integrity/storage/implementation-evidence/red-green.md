@@ -1,6 +1,6 @@
 # Storage implementation evidence
 
-Status: owning source regressions PASS; root-granted serialized publication in progress. Raw artifacts are scratch evidence, not committed logs. Requirements/review/discovery evidence remain immutable.
+Status: owning source regressions PASS; source commit `bdba9ebcddb3de146c4fdf92919c5a3c57eaf90f` published and verified against local/origin/actual remote. Final evidence-only receipt; release condition and external receipt-SHA binding are in execution.md. Raw artifacts are scratch evidence, not committed logs. Requirements/review/discovery evidence remain immutable.
 
 ## Genuine red source binding
 

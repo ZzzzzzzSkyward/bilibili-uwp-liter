@@ -1,6 +1,6 @@
 # Storage execution
 
-Status: **implemented; owning checks PASS; root storage publication window GRANTED and active**. Product/test ownership retained through source and final receipt publication. No ownership release yet. Baseline product source `077ef35ae194d3ae85aa0621daeac07dc29e29ab`; startup `git pull --ff-only` succeeded while preserving declared parallel dirty paths. Source dispatch and independent requirements review authorize only the paths below. See [implementation evidence](implementation-evidence/red-green.md).
+Status: **source/test PASS and published; final evidence-only receipt**. This is the final owned edit. Source/test/evidence/index ownership releases after this receipt is pushed and HEAD/origin/dev/actual remote equality is verified; the final executor response certifies that completed release. No further receipt edit is required. Baseline product source `077ef35ae194d3ae85aa0621daeac07dc29e29ab`; startup `git pull --ff-only` succeeded while preserving declared parallel dirty paths. Source dispatch and independent requirements review authorize only the paths below. See [implementation evidence](implementation-evidence/red-green.md).
 
 ## Implementation and exact scope
 
@@ -28,6 +28,10 @@ Selected success is **partial coverage** of the global current51 logical/52 exec
 
 ## Publication and limits
 
-Root granted `storage/commit-window.md` after boundary source1b6af65/receipt9beadcc publication. Exact tested input hashes still match. Stage only the exact owned argv list, inspect cached names/whitespace, commit/push dev, verify actual remote SHA, then publish the final evidence-only receipt. Source/test/index ownership remains held until both pushes and remote verification complete.
+Root granted `storage/commit-window.md` after boundary source1b6af65/receipt9beadcc publication. Exact tested input hashes still matched before publication (`prepublication-inputs-check.log`). The cached list contained exactly eight assigned product/test paths plus these two owned Markdown artifacts; cached whitespace passed. No recovery/root/other-owner path was staged.
+
+Source commit: **`bdba9ebcddb3de146c4fdf92919c5a3c57eaf90f`** (`fix(storage): serialize history snapshots and library transactions`), pushed to dev. Independently read local HEAD, origin/dev and actual `git ls-remote origin refs/heads/dev`: all three exactly matched that SHA. Index and every owned source/test/evidence path were clean after source push. The final receipt changes only this file and implementation-evidence/red-green.md; its commit is externally identified in the final executor response to avoid a self-reference/dirty-receipt loop. Source/test hashes and targeted results remain unchanged; no repeated product test is justified by evidence-only edits.
+
+After final receipt push, verify exact HEAD/origin/dev/actual remote equality and empty index/clean owned paths, then release all ownership. Independent implementation review and root's common integration gate remain pending.
 
 Windows VS/UWP compilation, native FAL/replacement semantics, real multi-tab/restart persistence and A–B playback controls remain unavailable. Next native action: compile on Windows, exercise parallel imports/reimports/reopen and restart/A–B controls. This source repair claims process-local ordering/ownership, with no cross-process or crash-consistency guarantee.
