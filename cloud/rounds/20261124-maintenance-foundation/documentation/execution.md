@@ -1,6 +1,6 @@
 # Documentation reconciliation execution
 
-Status: **FINAL FACTS RECONCILED — EXACT-FILE COMMIT WINDOW GRANTED**. Main documents now include reviewed final runner/controls/workflow source facts. Hosted CI is **PENDING/UNVERIFIED** on the actual corrected queued run, with its exact head/event/URL; Windows/runtime/signing-store gates remain unavailable. Earlier preparation/continuation sections below are historical records and are superseded by the final reconciliation section. No hosted PASS or repository-wide runtime readiness is claimed.
+Status: **COMMITTED/PUSHED — DOCUMENTATION OWNERSHIP RELEASED AFTER RECEIPT**. Main documents now include reviewed final runner/controls/workflow source facts. Hosted CI is **PENDING/UNVERIFIED** on the actual corrected queued run, with its exact head/event/URL; Windows/runtime/signing-store gates remain unavailable. Earlier preparation/continuation sections below are historical records and are superseded by the final reconciliation section. No hosted PASS or repository-wide runtime readiness is claimed.
 
 ## Ownership and startup
 
@@ -101,3 +101,12 @@ Final documentation verification (no application/test/build rerun):
 - Whole owned diff/name list read back: exactly eleven main Markdown docs plus this owned execution artifact. No test/build/workflow/product/dependency/manifest/certificate/identity/BR/live-data change, no staging of other owners' memory/round receipts.
 
 Commit/push receipt follows after exact-path staging; independent documentation review and orchestrator evidence archive remain separate.
+
+## Documentation publication and ownership release
+
+Main documentation commit: **`7a84957bfe93af1605e6291e4dc0a80da3923ba5`**, `docs: reconcile reviewed maintenance repairs and offline verification gates`.
+Exactly the eleven assigned main docs plus this execution artifact were staged (12 files); cached name list and whitespace checks were read before committing. `git push origin dev` exited **0**; immediately afterward `git rev-parse HEAD` and `git ls-remote origin refs/heads/dev` both returned exactly **`7a84957bfe93af1605e6291e4dc0a80da3923ba5`**.
+
+All eleven main-doc paths are now clean. Remaining dirty/untracked memory/orchestrator/runner/signing/review receipts belong to other owners and remain preserved/unstaged here. No whole-worktree-clean claim is made. This status-only receipt is published in the next evidence-only commit; the orchestrator verifies its final HEAD/remote SHA independently. No history rewrite, master move, source/configuration/test change or repeated local suite occurred.
+
+**Release all eleven documentation paths, this execution artifact and the global index/push window after this evidence-only receipt commit/push.** No documentation write/process remains active after return; later review fixes or real hosted verdict updates need their separately coordinated scope/window. Independent documentation review and orchestrator publication of its other receipt/memory files remain next. Hosted run 45434541348 is recorded at the bound queued timestamp, not silently reinterpreted as a final verdict.
