@@ -15,6 +15,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="obj\probe-generated\HttpResults.cs" Link="HttpResults.actual.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Models\ApiModel.cs" Link="LegacyApiModel.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Dialogs\SendCommentDialog.xaml.cs" Link="SendCommentDialog.xaml.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Api\CommentApi.cs" Link="CommentApi.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiParseResult.cs" Link="ApiParseResult.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Parsing\ApiEnvelope.cs" Link="ApiEnvelope.cs" />

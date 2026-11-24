@@ -17,8 +17,9 @@ namespace CommentsProbe
     /// 和三个动作接口走 Parsing/Comment 这一层，控件只在解析被接受后发布。
     ///
     /// Scope: the probe compiles the real Parsing/ApiEnvelope.cs, Parsing/Comment/*, the comment wire
-    /// DTOs and Models/Common.cs; only the REST transport (HttpResults) and the app services (Utils/
-    /// LogHelper) are stand-ins, plus a member-for-member mirror of the page models that live in the
+    /// DTOs and Models/Common.cs, plus the real request builder and dialog. HttpResults is extracted
+    /// exactly from product source; delivery/app services and platform controls are stand-ins, plus
+    /// a member-for-member mirror of the page models that live in the
     /// UWP-only Controls/CommentControl.xaml.cs. The four failure categories, the pinned-reply merge,
     /// the cursor-source rule and the empty/null semantics are asserted on real behavior.
     /// </summary>
@@ -49,6 +50,9 @@ namespace CommentsProbe
             ParsePathShowsNothing();
             DeadPathsAreGone();
 
+            var dialogChecks = DialogRecoveryChecks.Run();
+            if (dialogChecks < 0) return 1;
+            _passed += dialogChecks;
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
         }

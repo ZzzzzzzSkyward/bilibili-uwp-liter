@@ -35,3 +35,5 @@ Windows command `powershell -NoProfile -ExecutionPolicy Bypass -File ./build-rel
 ## Commit/handoff
 
 Exact owned files: FavoriteAPI.cs, c2/C2Probe.csproj, c2/Program.cs, c2/C2Stubs.cs and this evidence. Commit introducing this artifact: `fix: separate favorite folder privacy form fields`. Stable source/test SHA and immediate exact remote confirmation are recorded after push in the next sequential slice/index. U9 must finish push before E1 begins.
+
+U9 stable commit/push: `7ff548b24dc70a335c6d0d44c4ebc86a984ce96c`. `git push origin dev` returned 0; immediate local HEAD and remote refs/heads/dev both exactly matched. E1 started only afterward (`git pull --ff-only`: Already up to date). Corrected FavoriteAPI SHA-256 `1e1d56bdeb5b9716e49c6160e92a3a31bcd17362121db0a80bbd7717bb81105d`; shared ApiHelper remains `dfb07f377db95023aebce4c68101c6d334444722cf79b07d7d39a6126ba302d9`.

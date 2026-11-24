@@ -6,7 +6,8 @@ using Newtonsoft.Json.Linq;
 
 // Stand-ins for the UWP/API surface the comment parse path needs. The code under test
 // (Parsing/ApiEnvelope.cs, Parsing/Comment/*, Models/Api/Comment/*, Models/Common.cs) is the real
-// product source; only the transport and the app services are replaced here.
+// product source. HttpResults is now extracted exactly from HttpHelper by run.sh; only delivery,
+// platform controls and app services are replaced here.
 //
 // The page models themselves live in Controls/CommentControl.xaml.cs (a UWP UserControl, not
 // compilable outside the UWP toolchain), so they are mirrored below member for member: every member
@@ -48,6 +49,17 @@ namespace BiliLite.Helpers
         /// <summary>弹过的提示文本，按顺序；探针拿它断言解析层一条都不弹。</summary>
         public static readonly List<string> Toasts = new List<string>();
 
+        public static Func<BiliLite.Api.ApiModel, System.Threading.Tasks.Task<HttpResults>> Send;
+        public static readonly List<BiliLite.Api.ApiModel> Requests = new List<BiliLite.Api.ApiModel>();
+
+        public static System.Threading.Tasks.Task<HttpResults> Request(this BiliLite.Api.ApiModel request)
+        {
+            Requests.Add(request);
+            return Send(request);
+        }
+
+        public static void AddALog(string message) { LogHelper.Entries.Add(message); }
+
         public static void ShowMessageToast(string message, int seconds = 2)
         {
             Toasts.Add(message);
@@ -59,31 +71,8 @@ namespace BiliLite.Helpers
         }
     }
 
-    /// <summary>
-    /// REST reply stand-in: the probe hands the fixture JSON through <see cref="results"/>.
-    /// <see cref="TryGetJObject"/> 是产品的静默版（解不出来返回 false，不弹提示），也是解析层用的那个。
-    /// </summary>
-    public sealed class HttpResults
-    {
-        public int code { get; set; }
-        public bool status { get; set; }
-        public string message { get; set; }
-        public string results { get; set; }
+    // Actual HttpResults is extracted verbatim by run.sh; no local decoder policy.
 
-        public bool TryGetJObject(out JObject value)
-        {
-            try
-            {
-                value = JObject.Parse(results ?? string.Empty);
-                return true;
-            }
-            catch (Exception)
-            {
-                value = null;
-                return false;
-            }
-        }
-    }
 }
 
 namespace BiliLite.Controls

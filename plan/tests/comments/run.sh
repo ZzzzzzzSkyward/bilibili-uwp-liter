@@ -7,6 +7,15 @@ set -euo pipefail
 repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../.." && pwd)"
 probe="$repo/plan/tests/comments/CommentsProbe.csproj"
 
+# Keep the complete real response class body byte-for-byte, including salvage compatibility.
+# HttpResults is the last class in HttpHelper.cs; the final namespace brace is retained too.
+generated="$repo/plan/tests/comments/obj/probe-generated"
+mkdir -p "$generated"
+{
+    printf '%s\n' 'using System;' 'using System.Threading.Tasks;' 'using Newtonsoft.Json;' 'using Newtonsoft.Json.Linq;' 'using BiliLite.Models;' 'namespace BiliLite.Helpers' '{'
+    awk '/^    public class HttpResults\r?$/ { found=1 } found { print } END { if (!found) exit 1 }' "$repo/src/BiliLite.UWP/Helpers/HttpHelper.cs"
+} > "$generated/HttpResults.cs"
+
 portable="${UPSTREAM_UNIT_TOOLS:-/nonexistent}/dotnet"
 if [ -f "$portable/dotnet" ]; then
     export DOTNET_ROOT="$portable"

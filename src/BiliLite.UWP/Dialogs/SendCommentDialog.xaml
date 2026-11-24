@@ -1,6 +1,7 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <ContentDialog xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:local="using:BiliLite.Controls" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:modules="using:BiliLite.Modules" x:Class="BiliLite.Dialogs.SendCommentDialog" mc:Ignorable="d" Title="发表评论" PrimaryButtonText="发送" SecondaryButtonText="取消" PrimaryButtonClick="ContentDialog_PrimaryButtonClick" SecondaryButtonClick="ContentDialog_SecondaryButtonClick">
   <ContentDialog.Resources>
+    <Thickness x:Key="CommentSendStatusMargin">0,8,0,0</Thickness>
     <Flyout x:Key="FaceFlyout" x:Name="FaceFlyout">
       <Grid Width="320">
         <Pivot x:Name="pivot_face" ItemsSource="{x:Bind Path=emoteVM.Packages,Mode=OneWay}">
@@ -34,12 +35,16 @@
       </Grid>
     </Flyout>
   </ContentDialog.Resources>
-  <Grid>
-    <TextBox MinHeight="120" Padding="8 8 8 36" TextWrapping="Wrap" x:Name="txt_Comment" AcceptsReturn="True" PlaceholderText="说点什么吧..."/>
-    <Button x:Name="btnOpenFace" Click="btnOpenFace_Click" Width="36" VerticalAlignment="Bottom" Background="Transparent" Height="36" Foreground="Gray">
-      <StackPanel Orientation="Horizontal">
-        <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="14" Glyph=""/>
-      </StackPanel>
-    </Button>
-  </Grid>
+  <StackPanel>
+    <Grid>
+      <TextBox MinHeight="120" Padding="8 8 8 36" TextWrapping="Wrap" x:Name="txt_Comment" AcceptsReturn="True" PlaceholderText="说点什么吧..."/>
+      <Button x:Name="btnOpenFace" Click="btnOpenFace_Click" Width="36" VerticalAlignment="Bottom" Background="Transparent" Height="36" Foreground="Gray">
+        <StackPanel Orientation="Horizontal">
+          <FontIcon FontFamily="Segoe MDL2 Assets" FontSize="14" Glyph=""/>
+        </StackPanel>
+      </Button>
+    </Grid>
+    <ProgressBar x:Name="SendProgress" IsIndeterminate="True" Visibility="Collapsed" Margin="{StaticResource CommentSendStatusMargin}"/>
+    <TextBlock x:Name="SendStatus" TextWrapping="Wrap" Margin="{StaticResource CommentSendStatusMargin}" Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}" AutomationProperties.LiveSetting="Polite"/>
+  </StackPanel>
 </ContentDialog>
