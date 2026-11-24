@@ -371,7 +371,6 @@
     <Compile Include="Helpers\LogHelper.cs" />
     <Compile Include="Helpers\MessageCenter.cs" />
     <Compile Include="Helpers\SettingHelper.cs" />
-    <Compile Include="Helpers\SqlHelper.cs" />
     <Compile Include="Helpers\TapToolTip.cs" />
     <Compile Include="Helpers\Utils.cs" />
     <Compile Include="Helpers\VideoPlayHistoryHelper.cs" />

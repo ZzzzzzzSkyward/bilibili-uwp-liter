@@ -340,3 +340,39 @@ ASALocalRun/
 
 # BeatPulse healthcheck temp database
 healthchecksdb
+
+###############################################################################
+# 本仓库追加：UWP/MSIX 产物、还原目录、探针与本地产物
+###############################################################################
+
+# NuGet 还原目录（packages.config 风格）
+/packages/
+
+# MSIX / APPX 产物与安装辅助（正式产物由 build-release-x64.ps1 写到 -OutputDir）
+*.msix
+*.msixbundle
+*.msixupload
+*.appx
+*.appxbundle
+*.appxupload
+*.appinstaller
+*.appxsym
+*.pri.xml
+
+# 本地构建/打包日志与导出副本
+build*.log
+build-*.txt
+install-*.ps1.bak
+
+# 探针的编译产物与导入的抓包夹具（夹具按需提交时再强制添加）
+plan/tests/**/bin/
+plan/tests/**/obj/
+plan/tests/**/captures/
+
+# 编辑器与系统杂物
+.vscode/
+*.swp
+*.swo
+Thumbs.db
+desktop.ini
+.DS_Store

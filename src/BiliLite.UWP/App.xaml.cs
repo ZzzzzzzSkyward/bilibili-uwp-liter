@@ -62,7 +62,6 @@ namespace BiliLite
             FFmpegInteropLogging.SetLogLevel(LogLevel.Info);
             FFmpegInteropLogging.SetLogProvider(this);
             LogHelper.Log("FFmpeg diagnostics enabled at Info level", LogType.INFO);
-            SqlHelper.InitDB();
             this.Suspending += OnSuspending;
             // Resuming 只在 Application 上，且 OnLaunched 可能因协议激活多次进入：先减后加保证只挂一次
             this.Resuming -= OnAppResuming;
