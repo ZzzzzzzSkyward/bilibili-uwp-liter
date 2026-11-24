@@ -41,17 +41,48 @@ def positive(value):
     return int(value)
 
 
-def capture(argv, cwd, env=None, timeout=5):
-    """Bound even metadata commands; never inherit a source snapshot's parent git repo."""
-    child = subprocess.Popen(argv, cwd=cwd, env=env, stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT, start_new_session=True)
+def capture(argv, cwd, suite_end, env=None):
+    """Metadata owns a process group and the same execution deadline/cancellation."""
+    start = time.monotonic()
+    observation = dict(argv=argv, cwd=str(cwd), attempted=False, started_utc=utc(),
+                       status='BLOCKED', reason=None, exit_code=None)
+    if CANCEL or start >= suite_end:
+        observation['reason'] = 'cancelled' if CANCEL else 'suite_budget'
+        return None, '', observation
+    deadline = min(start + 5, suite_end)
+    budget = 'suite_budget' if suite_end <= start + 5 else 'metadata_budget'
+    log = BoundedLog()
+    child = None
     try:
-        data, _ = child.communicate(timeout=max(.01, timeout))
-        return child.returncode, data[:65536].decode('utf-8', 'replace').strip()
-    except subprocess.TimeoutExpired:
-        os.killpg(child.pid, signal.SIGKILL)
-        child.communicate()
-        return -9, 'metadata/preflight command timeout'
+        child = subprocess.Popen(argv, cwd=cwd, env=env, stdout=subprocess.PIPE,
+                                 stderr=subprocess.STDOUT, start_new_session=True)
+        observation.update(attempted=True, pid=child.pid)
+        reader = selectors.DefaultSelector()
+        os.set_blocking(child.stdout.fileno(), False)
+        reader.register(child.stdout, selectors.EVENT_READ)
+        while True:
+            drain(reader, log, .03)
+            if CANCEL:
+                observation.update(status='CANCELLED', reason='signal:' + signal.Signals(CANCEL).name)
+                break
+            if time.monotonic() >= deadline:
+                observation.update(status='TIMEOUT', reason=budget)
+                break
+            if child.poll() is not None and not reader.get_map():
+                observation.update(status='PASS' if child.returncode == 0 else 'FAIL',
+                                   reason=None if child.returncode == 0 else 'command_exit')
+                break
+        drain_cleanup(child, reader, log)
+        observation['exit_code'] = child.returncode
+    except (OSError, subprocess.SubprocessError) as exc:
+        if child and child.poll() is None:
+            os.killpg(child.pid, signal.SIGKILL)
+            child.wait()
+        observation.update(status='ERROR', reason=str(exc)[:1000])
+    data = bytes(log.head + log.tail)
+    observation.update(duration_seconds=round(time.monotonic() - start, 3),
+                       output_bytes_seen=log.seen, output_truncated=log.seen > 65536)
+    return observation['exit_code'], data[:65536].decode('utf-8', 'replace').strip(), observation
 
 
 class BoundedLog:
@@ -275,14 +306,10 @@ def main():
                   resolved_inputs={'dotnet': str(dotnet / 'dotnet'), 'sdk': str(dotnet / 'sdk/8.0.427'),
                                    'references': str(dotnet / 'packs/Microsoft.NETCore.App.Ref/8.0.33/ref/net8.0')},
                   source_provenance={'head': None, 'dirty': None, 'verified': False},
+                  metadata_commands=[], bash=None,
                   inventory_errors=['unexpected runnable directory: ' + item for item in drift], stages=rows,
                   extra_gates={'package_layout': {'status': 'NOT_CONFIGURED', 'reason': 'separately-owned, excluded'}},
                   stage_timeout=args.stage_timeout, suite_timeout=args.suite_timeout)
-    if (root / '.git').exists():
-        code, head = capture(['git', 'rev-parse', 'HEAD'], root)
-        dirty_code, dirty = capture(['git', 'status', '--porcelain', '--untracked-files=normal'], root)
-        report['source_provenance'] = {'head': head if code == 0 else None, 'dirty': bool(dirty) if dirty_code == 0 else None, 'verified': code == dirty_code == 0}
-    _, report['bash'] = capture(['bash', '--version'], root)
 
     def checkpoint(final=False):
         counts = collections.Counter({status: 0 for status in ('PASS', 'FAIL', 'MISSING', 'BLOCKED', 'TIMEOUT', 'ERROR', 'CANCELLED', 'NOT_SELECTED', 'PENDING')})
@@ -313,6 +340,26 @@ def main():
             temporary.write_text(content)
             temporary.replace(output / name)
 
+    # Initialize all rows before any metadata or SDK child can block/intercept a signal.
+    checkpoint()
+
+    def metadata(name, argv, child_env=None):
+        if CANCEL or time.monotonic() >= suite_end:
+            return None, ''
+        code, value, observation = capture(argv, root, suite_end, child_env)
+        observation['name'] = name
+        report['metadata_commands'].append(observation)
+        checkpoint()
+        return code, value
+
+    if (root / '.git').exists():
+        code, head = metadata('git_head', ['git', 'rev-parse', 'HEAD'])
+        dirty_code, dirty = metadata('git_dirty', ['git', 'status', '--porcelain', '--untracked-files=normal'])
+        report['source_provenance'] = {'head': head if code == 0 else None,
+                                       'dirty': bool(dirty) if dirty_code == 0 else None,
+                                       'verified': code == dirty_code == 0}
+    _, bash_version = metadata('bash_version', ['bash', '--version'])
+    report['bash'] = bash_version or None
     checkpoint()
     prerequisites = []
     required = ['dotnet', 'sdk/8.0.427/Roslyn/bincore/csc.dll', 'sdk/8.0.427/Containers/tasks/net8.0/Newtonsoft.Json.dll',
@@ -326,7 +373,7 @@ def main():
         for flag, key in [('--version', 'dotnet_version'), ('--list-runtimes', 'dotnet_runtimes')]:
             if CANCEL or time.monotonic() >= suite_end:
                 break
-            code, value = capture([str(dotnet / 'dotnet'), flag], root, env, min(5, suite_end - time.monotonic()))
+            code, value = metadata(key, [str(dotnet / 'dotnet'), flag], env)
             report[key] = value
             if code or (flag == '--version' and value != '8.0.427') or (flag == '--list-runtimes' and not re.search(r'^Microsoft.NETCore.App 8\.0\.33 \[', value, re.M)):
                 prerequisites.append('exact toolchain mismatch %s: exit=%s %s' % (flag, code, value))

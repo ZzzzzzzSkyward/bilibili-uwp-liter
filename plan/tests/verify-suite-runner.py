@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """External orchestration controls; these never count toward the legacy 50/51 suite."""
 import argparse
+import ctypes
 import hashlib
 import json
 import os
@@ -103,6 +104,102 @@ def main():
             assert all(p.stat().st_size <= LIMIT for p in (report_dir / 'logs').glob('*.log'))
             assert sum(p.stat().st_size for p in report_dir.rglob('*') if p.is_file()) < 60 * LIMIT
             return rows
+
+        def slow_metadata(name, signum=None):
+            root = fixture(name, 'touch should-not-run\n')
+            (root / '.git').mkdir()
+            wrappers = root / 'metadata-tools'; wrappers.mkdir()
+            real_git, real_bash = shutil.which('git'), shutil.which('bash')
+            assert real_git and real_bash
+            # Make failed controls reap adopted descendants too; no test process is leaked.
+            if sys.platform == 'linux':
+                assert ctypes.CDLL(None, use_errno=True).prctl(36, 1, 0, 0, 0) == 0
+            wrapper = r"""#!PYTHON
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+name = Path(sys.argv[0]).name
+metadata = name == 'git' or sys.argv[1:] == ['--version']
+if metadata:
+    calls = Path('metadata-calls')
+    first = not calls.exists()
+    with calls.open('a') as stream:
+        stream.write(name + ' ' + ' '.join(sys.argv[1:]) + '\n')
+    if first:
+        child = subprocess.Popen([sys.executable, '-c', "import time; from pathlib import Path; time.sleep(5); Path('metadata-late').write_text('survived')"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        Path('metadata-child').write_text(str(child.pid))
+        Path('metadata-ready').write_text('ready')
+    time.sleep(3)
+os.execv(REAL_COMMAND, [REAL_COMMAND] + sys.argv[1:])
+"""
+            for executable, real in [('git', real_git), ('bash', real_bash)]:
+                path = wrappers / executable
+                path.write_text(wrapper.replace('#!PYTHON', '#!' + sys.executable).replace('REAL_COMMAND', repr(real)))
+                path.chmod(0o755)
+            wrapped_env = dict(env, PATH=str(wrappers) + os.pathsep + env.get('PATH', ''))
+            argv = command(root, name, ['--suite-timeout', '30' if signum else '1'])
+            argv[0] = real_bash
+            child = subprocess.Popen(argv, cwd=REPO, env=wrapped_env, stdout=subprocess.PIPE,
+                                     stderr=subprocess.STDOUT, start_new_session=True)
+            start = time.monotonic()
+            observed_pid = None
+            try:
+                until = start + 15
+                while not (root / 'metadata-ready').exists():
+                    assert child.poll() is None and time.monotonic() < until, 'metadata wrapper never became ready'
+                    time.sleep(.02)
+                observed_pid = int((root / 'metadata-child').read_text())
+                initialized = (output / name / 'results.json').is_file()
+                if initialized:
+                    initial = json.loads((output / name / 'results.json').read_text())
+                    assert len(initial['stages']) == 51 and not initial['finished']
+                if signum:
+                    start = time.monotonic()
+                    child.send_signal(signum)
+                child.communicate(timeout=18)
+                elapsed = time.monotonic() - start
+                reason = 'cancelled' if signum else 'suite_budget'
+                check_report(name, child.returncode, ['BLOCKED', 'BLOCKED'], [reason, reason], 128 + signum if signum else 1)
+                problems = []
+                if not initialized:
+                    problems.append('no initialized report while first metadata child was active')
+                if elapsed > (5.5 if signum else 6):
+                    problems.append('metadata exceeded budget/signal cleanup allowance: %.3fs' % elapsed)
+                calls = (root / 'metadata-calls').read_text().splitlines()
+                if calls != ['git rev-parse HEAD']:
+                    problems.append('suffix metadata launched: ' + repr(calls))
+                try:
+                    os.kill(observed_pid, 0)
+                except ProcessLookupError:
+                    pass
+                else:
+                    problems.append('metadata descendant still exists')
+                # Past this bounded descendant's planned write, including fast cleanup cases.
+                time.sleep(max(0, 5.2 - (time.monotonic() - start)))
+                if (root / 'metadata-late').exists():
+                    problems.append('metadata delayed descendant marker survived')
+                assert not (root / 'should-not-run').exists() and not (root / 'later-started').exists()
+                assert not problems, '; '.join(problems)
+                return 'initial report retained; active metadata cancelled/budgeted; no suffix metadata/descendant; %.3fs' % elapsed
+            finally:
+                if child.poll() is None:
+                    os.killpg(child.pid, signal.SIGKILL)
+                    child.communicate()
+                if observed_pid:
+                    try:
+                        os.kill(observed_pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    try:
+                        os.waitpid(observed_pid, 0)
+                    except ChildProcessError:
+                        pass
+        control('metadata-suite-deadline', lambda: slow_metadata('metadata-suite-deadline'))
+        control('metadata-sigint', lambda: slow_metadata('metadata-sigint', signal.SIGINT))
+        control('metadata-sigterm', lambda: slow_metadata('metadata-sigterm', signal.SIGTERM))
 
         def failure():
             root = fixture('failure')
