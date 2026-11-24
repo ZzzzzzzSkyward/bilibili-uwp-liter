@@ -12,6 +12,26 @@ Researched on **2026-11-09** against local `dev` tracking `origin/dev`.
 
 Default host below is `https://api.bilibili.com`; **passport** means `https://passport.bilibili.com`, **live** means `https://api.live.bilibili.com`, **app** means `https://app.bilibili.com`, and **vc** means `https://api.vc.bilibili.com`. Methods and case-sensitive paths are intentional.
 
+## Current dispositions (2026-11-24)
+
+The original tables below retain their **2026-11-09 pinned-source findings**. They are research history,
+not a description of every current caller. Endpoint parity and the research completion do not establish
+live API support. Current reviewed source/offline dispositions are:
+
+| ID | Current disposition |
+| --- | --- |
+| U1 | Fixed `5eec54e`: one explicit encoded csrf field in all four actions, preserving raw Add/pre-escaped Reply conventions. Real-builder red/green and independent review PASS; no live comment write/cookie-store success claimed. |
+| U9 | Fixed `7ff548b`: separate ts/privacy before signing in both folder builders; c2 451 PASS and independent review. Signing recorder checks input, not crypto; no folder write/persistence claim. |
+| U5 / U8 | Fixed `f594c9b`: seven direct/no-area web builders retain saved identity; only nonempty-area mode supplies existing temp compatibility. Encoded app order participates in actual signing. api02 original 12 + search 1258 checks and independent review PASS, with separate exact transport/proxy evidence; WinRT/live/proxy connectivity unverified. |
+| U2 | **FAILED/BLOCKED — identity/session/protocol integration evidence unavailable.** Active `LiveRoomVM` creates `Modules/Live/LiveMessage.cs`, whose current fixed ServerUrl/JoinRoom flow needs investigation as a whole. The legacy `LiveDanmaku.cs` getConf implementation cited below is not the active path. Preserve BR-63 reconnect; obtain genuine existing BUVID or verified app fallback, token/hosts/auth/protocol fixtures and a controlled session before changing discovery/auth together. |
+
+Exact execution and review: [U1/PB1](../cloud/rounds/20261124-maintenance-foundation/logic-data-errors/final-review.md),
+[U9](../cloud/rounds/20261124-api-request-maintenance/favorites/final-review.md),
+[U5/U8](../cloud/rounds/20261124-api-request-maintenance/search/final-review.md).
+Windows/UWP compilation and real authenticated service behavior remain unavailable on the Linux host.
+The original implementation ordering below is retained as historical research guidance; U1/U5/U8/U9
+now have the dispositions above, while U2 and evidence-dependent route migrations remain separate.
+
 ## APIs to update
 
 | ID / priority | API and local state | Required update or investigation | Evidence |
@@ -63,4 +83,4 @@ These are missing capabilities or alternate workflows. Implement only with their
 2. Port transport capabilities before C4/C8/C9: local `ApiModel` has `ExtraCookies`, but `Utils.Request` only merges them on GET; POST goes straight to `HttpHelper.Post`. The latter uses the platform cookie jar and hardcodes form content. A `need_cookie` flag alone does not implement POST cookie overrides or multipart. Verify actual outgoing cookies, CSRF, content type and field encoding with dummy credentials in a controlled transport. Do not conclude from the unused flag that the platform sends no cookies.
 3. For U2, verify token/host-list parsing, a complete socket join payload, failure/cancellation handling and response-protocol decoding. For U3/U4, validate request/response schemas before replacing routes. These migrations need Windows/UWP integration checks and a consenting test session; static source comparison is insufficient.
 4. For complement work, capture sanitized response fixtures for QR pending/expiry/success, ticket expiry/challenge, history/message pagination, image upload, favorites and group operations. Keep web-cookie and app-token refresh credentials separate. Test logged-out and expired-session failures without destroying another usable credential type.
-5. This documentation commit changes no application code. Validation performed for the research consists of endpoint-set reconciliation, pinned source path/line checks, documentation-link checks and `git diff --check`. No build or app test is claimed, and no endpoint liveness or authenticated behavior is certified.
+5. The original research documentation commit changed no application code. Validation performed for the research consists of endpoint-set reconciliation, pinned source path/line checks, documentation-link checks and `git diff --check`. No build or app test is claimed, and no endpoint liveness or authenticated behavior is certified.

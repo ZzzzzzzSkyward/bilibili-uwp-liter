@@ -11,10 +11,10 @@
 | Visual Studio 2022 | 必须安装 **通用 Windows 平台开发**（UWP）工作负载，含 Windows 10 SDK **10.0.19041.0** |
 | .NET SDK | 8.0+（`BiliLite.gRPC`、`BiliLite.WebApi` 是 SDK 风格项目；UWP 项目本身走 MSBuild 而非 dotnet CLI）。批次探针需要 **8.0** 目标包，`plan/tests/run.sh` 还需要 `$UPSTREAM_UNIT_TOOLS` 下的 8.0.427 SDK |
 | PowerShell | Windows PowerShell 5.1 即可（脚本自带 UTF-8 输出设置） |
-| Git / MSYS2 bash | 用于 `plan/tests/*/run.sh` 与日常命令行操作 |
+| Bash / Python | 完整离线 runner 用 Linux、Bash ≥4、Python ≥3.9（标准库），以及 awk/sed/grep/cut/cp/mktemp 等现有脚本工具；Windows 的单批次可用 Git/MSYS2 Bash，UWP 构建仍走 Windows |
 | 网络 | 拉依赖与 `git push` 需要；本机 GitHub 的 TLS 会间歇性中断，用 `sync-dev.ps1` 重试 |
 
-不需要预先安装任何环境变量。App 的接口基址与 appkey 编译在产品里，不在运行时读取环境变量。
+App 的接口基址与 appkey 编译在产品里，不在运行时读取环境变量；离线探针的工具根、PATH 和缓存需要按 §6 设置。
 
 ## 2. 分支模型
 
@@ -48,8 +48,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Res
 BiliLite.Packages_<version>_x64_Test\BiliLite.Packages_<version>_x64.msix
 ```
 
-安装前需要：系统设置里打开「开发人员模式」，并信任随包的测试证书（`src/BiliLite.UWP/BiliLite.UWP.cer`，
-`PackageCertificateThumbprint` 记录在 `BiliLite.UWP.csproj`）。安装后包名 `BilibiliUWPLiter`。
+安装前需要：系统设置里打开「开发人员模式」，核对发布包的实际签名及该发布包随附的安装证书，再按需信任。
+不要把仓库内 `src/BiliLite.UWP/BiliLite.UWP.cer` 自动视为当前包的 signer。
+发布准备时检查 UWP csproj 与 Packages wapproj 实际选择的 `PackageCertificateThumbprint`，
+在目标 Windows 证书存储中核对对应证书的有效期、签名私钥可用性、publisher/manifest 匹配，
+再核对实际 MSIX 签名与分发安装证书一致。跟踪 CER 的日期不能证明当前所选 signer 已过期或可用；
+没有 Windows 存储/实际包证据时此项仍为 BLOCKED。证书/指纹/清单身份/密钥的调整由维护者在获授权的发布准备中处理。
+安装后包名 `BilibiliUWPLiter`。
 
 ```powershell
 Add-AppxPackage .\BiliLite.Packages_<version>_x64_Test\BiliLite.Packages_<version>_x64.msix
@@ -74,23 +79,100 @@ Add-AppxPackage .\BiliLite.Packages_<version>_x64_Test\BiliLite.Packages_<versio
 ## 6. 探针（离线行为测试）
 
 ```bash
-sh plan/tests/<batch>/run.sh      # 目录批次，43 个，例：sh plan/tests/season1/run.sh
-sh plan/tests/run.sh              # 单文件探针 LM01–LM05 / API01 / AUTH01B（需要 8.0.427 SDK 根）
+# UPSTREAM_UNIT_TOOLS 是工具根，里面包含 dotnet/；用实际绝对路径替换
+export UPSTREAM_UNIT_TOOLS=/absolute/path/to/probe-tools
+export DOTNET_ROOT="$UPSTREAM_UNIT_TOOLS/dotnet"
+export PATH="$DOTNET_ROOT:$PATH"
+export DOTNET_CLI_HOME="$UPSTREAM_UNIT_TOOLS/cache/dotnet-cli"
+export NUGET_PACKAGES="$UPSTREAM_UNIT_TOOLS/cache/nuget"
+dotnet --list-sdks
+dotnet --list-runtimes
+bash plan/tests/season1/run.sh      # 其它目录批次同形
+bash plan/tests/run-g1.sh           # g1 的根 runner
+bash plan/tests/run.sh              # LM01–LM05、API01、AUTH01B 的旧顺序链
 ```
 
-- 每个目录批次是一个 `net8.0` 控制台项目，`<Compile Include>` 直接链接真实产品源文件
-  （`src/BiliLite.UWP/...`），再加少量 stub 顶替 UWP 类型；断言写在 `Program.cs` 里，失败时非零退出并
-  打印失败计数。
-- 目录批次共 43 个：认证与刷新（`auth1`–`auth4`、`webrefresh`、`api02`）、动态（`g1`–`g5`、`cardlayout`、
-  `cap`、`cm1`）、播放器（`playersess`、`playertoolbar`、`localdir`、`focus`、`dirpress`、`toastalign`）、
-  列表与分页（`c1`–`c3`、`ux0`、`ux1a`–`ux1d`、`ux2a`/`ux2b`、`ux3`–`ux5`、`uxfix`、`stab`、`smart1`）、
-  评论（`comments`）、季节（`season1`）、设置（`settings1`）、启动判据（`firstrun`）、其他（`d1`/`d2`、`ov`）。
-- 另有 7 个单文件探针（`LM01`–`LM05` 本地媒体与字幕、`API01`、`AUTH01B`）不建项目：`plan/tests/run.sh`
-  用 `$UPSTREAM_UNIT_TOOLS/dotnet/sdk/8.0.427` 的 `csc` 直接编译并运行，末尾还会调用 `run-api01.sh`、
-  `run-auth01b.sh`。这个脚本要求那个 SDK 根真实存在（不设时默认 `/workspace/work/upstream-unit-tools`）。
-- **脚本必须是 LF**：`.gitattributes` 已钉 `*.sh text eol=lf`；若某个克隆里 `run.sh` 是 CRLF，
-  `sh` 会在第一行报 `set: pipefail: invalid option name`，先转换再跑。
-- 探针只读产品源码，不改产品源码；修缺陷时优先把断言加进已经拥有该代码的批次。
+工具根需安装 **SDK 8.0.427**、**Microsoft.NETCore.App 8.0.33** 运行时与
+`Microsoft.NETCore.App.Ref` **8.0.33** 引用包。
+从微软官方 .NET 8 下载安装到该 `dotnet/` 根，确认 `sdk/8.0.427/Roslyn/bincore/csc.dll`、
+`packs/Microsoft.NETCore.App.Ref/8.0.33/ref/net8.0` 和运行时真实存在；只把 SDK 放在 PATH 不满足旧 csc runner 的绝对路径约定。
+还需 `sdk/8.0.427/Containers/tasks/net8.0/Newtonsoft.Json.dll`。完整 runner 校验该工具根的
+`dotnet --version` 必须为 8.0.427、运行时列表含 8.0.33，且 Linux `libcoreclr.so` 存在；不能用其他 SDK 替代。
+依赖通过现有项目还原，缓存和构建产物不提交。
+
+### 完整套件与选择执行
+
+工具根准备后，一条命令运行全部必需离线检查：
+
+```bash
+bash plan/tests/run-all.sh --tools-root "$UPSTREAM_UNIT_TOOLS"
+# --list 不要求 SDK，也不执行测试；须单独使用
+bash plan/tests/run-all.sh --list
+# --only 可重复，按清单顺序去重执行；这里只覆盖选择范围
+bash plan/tests/run-all.sh --tools-root "$UPSTREAM_UNIT_TOOLS" --only batch:comments --only LM05
+bash plan/tests/run-all.sh --tools-root "$UPSTREAM_UNIT_TOOLS" --only AUTH01B
+# 独立旧脚本选择：不需要此前阶段成功
+bash plan/tests/run.sh --stage LM05
+bash plan/tests/run-auth01b.sh --stage loginvm
+```
+
+`--tools-root` 优先于 `UPSTREAM_UNIT_TOOLS`；未设时默认 `/workspace/work/upstream-unit-tools`，根下必须有
+`dotnet/`。runner 自动为子进程设置该 dotnet 的 PATH/DOTNET_ROOT、工具根内 CLI/NuGet/XDG 缓存，禁用多层 SDK 查找。
+入口从脚本位置定位仓库，可从其它 cwd 调用；`--repo-root PATH` 仅用于明确的源码快照/控制夹具根。
+
+ID 区分大小写：目录是 `batch:<name>`（含 g1、stab），单文件是 LM01–LM05、API01、
+`AUTH01B.account`、`AUTH01B.loginvm`。逻辑 ID `AUTH01B` 选两个阶段；只选其中一个时该逻辑项不算完整 PASS。
+`run.sh --stage all|LM01|LM02|LM03|LM04|LM05|API01|AUTH01B` 与
+`run-auth01b.sh --stage all|account|loginvm` 保留无参/all 的旧 fail-fast 顺序。
+新 aggregate 顺序执行，普通失败/缺项后仍尝试后续选中项；新增 runnable 目录须先更新受审清单，不能静默遗漏。
+
+`--output PATH` 指向不存在或空的报告目录，非空目录拒绝覆盖。默认在临时目录创建唯一的
+`bili-offline-<UTC>-<pid>-...` 目录并打印位置。输出是原子增量 `results.json`、`summary.md` 和逐阶段
+`logs/`（每份保留最多 1 MiB 的首尾），记录源 SHA/dirty、工具/命令、完整清单与所选数量、退出码/原因/阶段等。
+源码/工具根不可放进输出树；报告、夹具、缓存、bin/obj 都不提交。缺少最终报告或 `finished=false` 不能视为完成。
+
+完整 `PASS` 要求全部 **50 逻辑项 / 51 可执行阶段** 实际通过，且 `complete_required=true`。
+选择范围全部通过返回 `PARTIAL_PASS`、exit 0，但 `complete_required=false`；其它未选项仍显示 `NOT_SELECTED`。
+缺源码是 `MISSING`，缺精确工具链是 `BLOCKED`（shell-only stab 仍可独立运行）；失败、超时、执行/协议错误保留各自状态。
+未知选择/参数或报告设置错误退出 2，任一选中必需项失败/缺失/阻塞退出 1。
+
+`--stage-timeout` 默认 300 秒，`--suite-timeout` 默认 1800 秒，均须正整数。活动子进程按更早的阶段/套件截止终止并清理后代；
+阶段超时在套件预算仍有余量时继续后项，套件耗尽则活动项 `TIMEOUT/suite_budget`、后项 `BLOCKED/suite_budget`。
+Git/Bash/SDK 元数据前置同样服从套件截止与取消，报告在首个元数据子进程前初始化；中断的来源信息保留 unavailable/unverified。
+SIGINT/SIGTERM 尽力清理进程组并完成报告，分别退出 130/143；硬杀/宿主失效不能保证最终报告。
+
+runner 自身的外部契约控制另跑，**不计入 50/51**：
+
+```bash
+python3 plan/tests/verify-suite-runner.py --tools-root "$UPSTREAM_UNIT_TOOLS"
+```
+
+它也接受不存在/空的 `--output PATH`；测试临时源码/夹具根与工具/缓存须在报告树之外。
+控制失败退出 1，参数/设置错误退出 2；不要因控制失败跳过真实完整 suite，两项结果都须保留。
+已发布的 workflow 见 [.github/workflows/offline-probes.yml](../.github/workflows/offline-probes.yml)：
+dev push/PR 与无输入 workflow_dispatch，Ubuntu 24.04；运行时步骤通过 GITHUB_ENV 设置独立工具/缓存路径，
+先跑控制与全套并分别捕获退出状态，always 上传七天保留的有界报告。真实 CI 结论必须检查实际 pushed SHA 的
+GitHub run；排队/尚无 job 是 PENDING，不能由配置、lint、控制或本地 suite PASS 推断 hosted PASS。
+
+
+- 固定清单为 **43 个目录批次 + 7 个单文件逻辑探针 = 50 个逻辑项 / 51 个可执行阶段**。
+  目录批次含 42 个 net8.0 控制台项目和 shell-only `stab`；42 个目录带 `run.sh`，`g1` 使用根
+  `run-g1.sh`。项目直接链接真实产品源码，以少量 stub 提供平台/网络边界，不能替代 UWP 编译或真机。
+- 七个逻辑探针是 LM01–LM05、API01、AUTH01B；最后一个分 Account 与 LoginVM 两个可执行阶段。
+  旧无参链遇失败即停，成功前缀不表示后面的阶段执行过。
+- **显式用 Bash，并保留 LF**：Linux 的 `sh` 可能是 dash，不支持 `BASH_SOURCE`/`pipefail`，LF 也会失败。
+  CRLF 是另一个问题，会产生 `^M` 路径/选项；`.gitattributes` 钉 `*.sh text eol=lf`。
+- 单个/选定批次通过仅覆盖其范围；全套通过需要所有必需项实际完成，缺文件、缺 SDK、失败或未执行都不能省略。
+- 独立包布局门禁（不计入上述 50/51）：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ./plan/tests/package-layout-probe.ps1
+# PowerShell Core 可用 pwsh -NoProfile -File ./plan/tests/package-layout-probe.ps1
+```
+
+  该门禁从实际构建脚本提取两个函数，对 inert ZIP 运行 **15 个内部案例**，不执行完整发布脚本、不升版本。
+  退出 0 为全部通过，1 为断言失败，2 为解析/提取/设置/清理失败。它不证明真实 MSIX 可安装、签名有效或能启动。
+  Windows PowerShell 5.1、UWP/XAML 编译、完整打包、安装启动和设备路径仍需各自的平台证据。
 
 ## 7. 提交与同步
 
@@ -112,7 +194,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\watch-remote.ps1 -Fetch   
 | `error CS2012 … BiliLiter.exe` + `MSB4181 CompileXaml returned false` | 上一轮编译器进程还占着 `obj\x64\Release\intermediatexaml`。脚本会杀掉持有者、等文件可独占打开、再 `-t:Rebuild` 重试两次；连续失败时用 `-Clean` 并关闭残留 VS |
 | `XamlCompiler error WMC1006: Cannot resolve … BiliLite.gRPC.dll / BiliLite.JSBridge.winmd` | 被引用项目还没生成。先跑完整解决方案（不带 `-SkipProjectReferences`），生成后再用 `-Fast -SkipProjectReferences` 提速 |
 | `error CS2001: 未能找到源文件 …` 指向 `PlayerControl.xaml.cs`、`DynamicVM.cs`、`VideoDetailPage.xaml.cs`、`EFontAwesomeIcon.cs` | 这是一个 partial clone，>100 KB 的 blob 被按需排除；这些文件在本地不存在。不要改 sparse 配置去拉二进制（见 §9） |
-| `sh` 报 `set: pipefail: invalid option name` 或路径里带 `^M` | 脚本是 CRLF；按 §6 转成 LF |
+| `sh` 报 Bash 特性/`pipefail` 错误，或路径带 `^M` | 先显式用 `bash`；若仍含 `^M`，另按 §6 恢复 LF |
 | `playersess` 批次抛 `FileNotFoundException` | 该批次读 `Controls/PlayerControl.xaml.cs` 做源码接线断言，而该文件被 sparse 排除；环境问题，不是代码问题 |
 | `WMC1500` / `WMC1506` / `PRI257` / `NETSDK1138` | 已知可忽略警告（`DropShadowPanel` 弃用、缺失变更通知的 OneWay 绑定、默认语言资源、`netcoreapp3.0` 过期） |
 | 装完启动图一闪就退，无日志 | 装成了 `BiliLite.UWP_*.msix`；改装 `BiliLite.Packages_*.msix` |
@@ -120,7 +202,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\watch-remote.ps1 -Fetch   
 
 ## 9. partial clone 提醒
 
-本仓库常用带 `--filter=blob:limit=102400` 的克隆。这种情况下 29 个大于 100 KB 的 blob 不在本地，
+历史工作副本曾以 `--filter=blob:limit=102400` 配合 sparse-checkout 排除 29 个大于 100 KB 的 blob。
+先检查实际 checkout 的文件是否存在；完整 checkout 不继承这个阻塞。缺失时，
 `git status` 仍然干净（它们被标记为 skip-worktree），但**构建会失败**：
 
 - `src/BiliLite.gRPC/bilibili/app/dynamic/v2/dynamic.proto`（117 KB）→ `BiliLite.gRPC` 无法编译，
@@ -130,7 +213,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\watch-remote.ps1 -Fetch   
 - `plan/tests/g3/Program.cs` → `g3` 批次整个不能跑；
 - 以及字体、splash 图、`ffmpeg.7z`、`screenshot/ui.png`、`Assets/JiYan/**` 等二进制。
 
-在这种克隆里，代码审查只能做静态阅读，任何「编译通过」的说法都必须先说明这一点。
+缺源码时记录实际路径与命令错误，不改 sparse 配置或主动拉取被排除 blob；可继续不依赖缺失输入的离线验证。
+任何编译/探针结论都必须说明实际执行范围；Linux 缺 VS/UWP/Windows SDK 另属平台阻塞。
 
 ## 10. 一次改动的验收清单
 
@@ -138,4 +222,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\watch-remote.ps1 -Fetch   
 2. 相关探针批次全绿；新行为至少加一条会在旧代码上失败的断言。
 3. 影响布局/播放/账号/生命周期的改动，在 `plan/VALIDATION.md` 里写清「设备上要看什么」，不自行宣称已通过。
 4. `plan/PLAN.md` 的 Open/Done 状态与 `docs/ROADMAP.md` 同步更新；缺陷留在 `bug_report.md`。
-5. 发布前跑一次不带 `-Fast` 的完整构建，确认产物路径与 `entrypoint/BiliLiter.exe` 布局。
+5. 发布前跑一次不带 `-Fast` 的完整构建，确认 Packages 产物路径、entrypoint/companion/fullTrustProcess 与存在且 <65,536 字节的根启动器，再安装启动并走受影响设备路径。

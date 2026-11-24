@@ -9,11 +9,11 @@
 
 | 项 | 值 |
 | --- | --- |
-| 开发线 | `dev`，tip `25795eb`（2026-11-09，「docs: research sibling Bilibili APIs and migration gaps」） |
+| 开发线 | `dev`；可变 tip 与同步状态以实际 git/轮次证据为准 |
 | 发布线 | `master`，tip 为 1.0.9.61 同步（2026-11-07）+ 仓库文档化提交 |
 | 分叉点 | `e2c7958`（2026-10-31）；`dev` 在此之后 510 个提交，`master` 8 个（两次同步提交的内容 `dev` 已全部包含） |
 | 设备验收策略 | 维护者的设备检查「默认通过」；只有真实报告的缺陷才重开（`plan/VALIDATION.md`） |
-| 探针 | `plan/tests/` 43 个目录批次 + 7 个单文件探针；最近记录的统一运行是 2026-11-02 的 35 个批次（`TOTAL_FAILURES=0`），此后各批次单独跑通 |
+| 探针 | 43 目录批次 + 7 逻辑 legacy 探针 / 8 可执行阶段 = 50/51；QF1 `ca99149` 修复后完整 sweep 与独立审查 PASS。后续修复有 owning regression；新 runner/CI 的结果另行记录 |
 
 ## 1. 未完成项
 
@@ -51,20 +51,14 @@
 - 现状：代码侧已收口（十页滚动窗口、锚点保护、两级转发上限、卡片模型淘汰），没有代码可写；缺量测。
 - 验收：给出滚动深度 vs 工作集曲线，并说明是否由卡片模型主导。下一步：与 1.1 合并成一次设备行程。
 
-### 1.5 [x] 与姊妹仓库的 API 差距清单（P0/P1 已定级，代码未动）
+### 1.5 [x] 姊妹仓库 API 研究；已确认缺陷修复与活动 U2 分开
 
-- 来源：[document/BILIBILI_API_RESEARCH.md](../document/BILIBILI_API_RESEARCH.md)（2026-11-09，对
-  `ywmoyue/biliuwp-lite` `ca2cadd` 的源码对照）、[document/BILIBILI_API_ENDPOINTS.md](../document/BILIBILI_API_ENDPOINTS.md)。
-- 结论：203 个方法/路由对里 165 个本地已有，38 个没有完全对应的路由。其中两条是**已确认的本地缺陷**：
-  - **U1 / P0 — 评论写入的 CSRF 拼装**：`ApiHelper.GetCSRF(bool)` 无论参数都只返回裸 token，而
-    `Api/CommentApi.cs` 把它直接拼在 `type=…` / `message=…` 后面，于是 body 变成 `type=1<token>`，且没有
-    `csrf` 字段。验收：`POST /x/v2/reply/action` 与 `/x/v2/reply/add` 的 body 只有一个显式 `csrf=<token>`，
-    点赞/回复/删除在真实会话下成功。
-  - **U2 / P1 — 直播弹幕发现与鉴权**：本地用 `live/room/v1/Danmu/getConf` 且不使用发现 token；
-    需要迁到 `xlive/web-room/v1/index/getDanmuInfo`（WBI + 真 buvid）或 app 回退，按 `data.token`/`host_list`
-    鉴权。与 BR-63 的重连是两件事：重连修好了，鉴权路径仍是旧的。
-- 下一步：U1 是纯请求构造缺陷、可离线断言（构造出的 body 字符串），适合作为下一批的第一个切片；U2 需要
-  真实会话与网络，排在 U1 之后。
+- [原研究](../document/BILIBILI_API_RESEARCH.md) 保留 2026-11-09 pinned 基线与 203 方法/路由对（165 已有、38 无精确对应）；完成研究不等于端点迁移或服务可用。
+- **U1/P0 已修 `5eec54e`**：四个评论写动作的单一编码 csrf 字段，保留文本/ID；真实 builder red/green 和独立审查 PASS。
+- **U9/P1 已修 `7ff548b`**：收藏夹 ts/privacy 分隔，c2 451 断言与独立审查 PASS。
+- **U5/P1、U8/P2 已修 `f594c9b`**：直接 web 搜索保留保存身份，非空 area 的 temp 兼容行为保留；app order 编码进入真实签名，api02 原 12 + 搜索 1258 检查与独立审查 PASS。
+- **U2/P1 FAILED/BLOCKED：身份/会话/协议集成证据不可得**。真实调用方是 `LiveRoomVM → Modules/Live/LiveMessage.cs`，目前使用固定 `ServerUrl` 加 JoinRoom；旧 `LiveDanmaku.getConf` 不是活动路径。下一步须先取得可信现有 BUVID 或验证 app 回退、token/host/auth/protocol fixtures 及受控真实 session，再一起迁发现/鉴权并验证取消/断线/离开，保留 BR-63 重连。
+- 上述离线修复未进行真实评论/收藏写入或实时搜索会话；Windows/session 跟进见 VALIDATION，不宣称端点可用。
 
 ### 1.6 [~] 三条只编译过的修复（阻塞：需要真机）
 
@@ -106,14 +100,23 @@
 - [ ] **`Helpers/HttpHelper.cs` 的请求节流是空转的**：`lasttime` 在 `Get` 里被读、从未被写，所以「最小间隔」
   永远不生效（`concurrent_get_count` 也就不可能大于 1）。验收：要么给出上限测量后接回节流（写 `lasttime`），
   要么把这段死逻辑删掉；两者都会改变全局请求节奏，必须先量。
-- [ ] **partial clone 的构建前置**：带 `blob:limit=102400` 的克隆缺 29 个大 blob（含
-  `BiliLite.gRPC/.../dynamic.proto`、`PlayerControl.xaml.cs`、`DynamicVM.cs`、`VideoDetailPage.xaml.cs`、
-  `EFontAwesomeIcon.cs`、`plan/tests/g3/Program.cs`），因此无法编译，`playersess` 与 `g3` 也跑不了。
-  下一步：需要完整校验时用完整克隆或换机器，判据见 [DEVELOPMENT.md](DEVELOPMENT.md) §9。
-- [x] **`*.sh` 的换行**：`.gitattributes` 钉住 `*.sh text eol=lf`，Windows 克隆里 `sh` 不再因 CRLF 报
-  `set: pipefail: invalid option name`。
+- [ ] **partial/sparse checkout 前置**：历史工作副本曾缺 29 个大 blob（含 dynamic.proto、PlayerControl、DynamicVM、VideoDetailPage、EFontAwesomeIcon、g3/Program）。先检查实际 checkout；源文件存在时不沿用缺失阻塞。缺失时记录命令/路径，不改 sparse 配置或主动拉取排除 blob，见 [DEVELOPMENT.md](DEVELOPMENT.md) §9。
+- [x] **Bash 与 LF 分开处理**：`.gitattributes` 钉 `*.sh text eol=lf`；命令须显式 `bash`。`sh` 若是 dash，即使 LF 也不支持 Bash 特性，不能只靠换行修复。
+- [x] **PB1/P1 `edbd873`**：业务码越界/BigInteger 转 typed failure；comments/c1/season1 回归与独立审查 PASS。
+- [x] **QF1/P1 `ca99149`**：当前源码 harness 对齐与完整 50/51 离线 sweep、独立审查 PASS。
+- [~] **QF2/P2**：stage-aware runner/selector/control 已实作，metadata/preflight P1 于 `9c33bce` 修复；changed-runner 完整 50/50 逻辑、51/51 可执行 PASS、complete_required=true，契约控制 **14/14**、旧无参链 exit 0。独立源码复审 **PASS / P1 CLOSED**；修正 workflow `c4e9dba` 源码 PASS，dev push/PR/manual 入口已发布。命令 `bash plan/tests/run-all.sh --tools-root PATH`，选择范围为 PARTIAL_PASS。
+  **Hosted PENDING/UNVERIFIED**：[实际 run 45434541348](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348)，workflow_dispatch，head `169b2b0a0205a14cad7d24558920250989720cc2`，2026-11-24 16:17:58 UTC 为 QUEUED、0 jobs/0 artifacts。下一步只观察同一 run 至实际 job/step/conclusion/artifact；不将排队当 PASS/失败或已证 outage，不重复派发。旧 HTTP422 配置失败已被修复，作为历史证据保留。本地/source PASS 不替代 hosted 或 Windows 门禁。
+- [~] **QF3/发布前 P1 `8f55968`**：Packages 根启动器守卫与独立 15-case probe/实现审查 PASS。**Windows compile/full-package/install/launch FAILED/BLOCKED**：Linux 缺 PowerShell/VS/UWP/Windows SDK。下一步在 Windows 完成实际发布门禁，不以 ZIP fixture 代替。
+- [~] **发布签名前置：Windows 证据 BLOCKED**。只读盘点确认仓库 CER（PEM）有效期截至 2024-05-16 22:27:48 GMT，公开 SHA-1 `42621A9CE0525C9351F5142E87F349D063DFE89B`；两个项目当前选择 `3F95D7B0B185635BA827AF4A3E82E31EC3675FCF`，两者不同。未检查 Windows 证书存储/私钥或真实包，因此不能推断当前 signer 过期或已发生签名失败。下一次获授权的发布准备须核对所选证书有效期/私钥/publisher、真实 MSIX 签名及分发证书；不擅改 CER/指纹/身份/密钥。只读证据见 [release-signing-evidence.md](../cloud/rounds/20261124-package-layout-guard/release-signing-evidence.md)。
+- [ ] **QF4/P2 依赖兼容性**：完整 shipped graph、SDK/transitive/native 支持与 Windows 播放/导出证据缺失；需单独 owner 做 advisory/pin inventory，禁止批量升级。gRPC 单项目查询不认证全应用。
+- [ ] **P2 持久化假设**：先用延迟写入/并发调用重现 history snapshot alias 与 local registry interleaving，再决定不可变有序写入；尚非已确认缺陷。
+- [ ] **UX-03–06/P2**：推荐初始失败/空态/重试、下载删除的真实部分失败反馈，以及窄窗/缩放/可访问性。保留既有批量操作、导入导出、完整标题与主题成果；布局缺陷先取 Windows 最小窗口/800×600/1280×720、100/150/200% 字号、主题/键盘/Narrator 证据。
 
 ## 6. 最近完成
+
+- [x] **2026-11-24 E1/UX-02 `1c7f6e4`**：评论发送 single-flight、等待反馈、保草稿失败重试与关闭后迟到拒绝；真实 dialog/HttpResults/typed parser 的 153 新检查、comments 总 1070 与独立审查 PASS。实际 XAML/焦点/会话仍 FAILED/BLOCKED。
+- [x] 本次 U1/PB1/U9/U5/U8/QF1/QF3 的准确行为、测试归属和提交见 [PLAN.md 维护修复表](../plan/PLAN.md#2026-11-24-维护修复已提交与离线验收)。Windows 平台限制保留；账号 P4/P5 仍为维护者 hold；parked 范围不扩张。
+
 
 - [x] 2026-11-08 批次（全部只编译过，除了 BR-62 已设备确认）：BR-62 评论浮窗暗色令牌（`44d7f0e`）、
   第 11 项待报尾巴（`cfc4a15`）、BR-63 直播弹幕重连（`722555b`）、BR-61 窗口还原（`bbfaf7f`）、

@@ -19,12 +19,31 @@ below were removed on purpose — they are all fixed and `git log` has them.
 | `ad1bb39` | `094cdb0` | Empty review marker (no findings) | No action. |
 | `8d496eb` | `09ee480` | The live-room parse guards still dereferenced null in their error branches (`data.message` on a failed model), and the ordinary legacy unsupported card had no `WebCommand`, so it had no web escape | Fixed in `2276f28`; `g5` pins both, BR-53 keeps its open status until the device log names the failing step. |
 
+## 2026-11-24 independent implementation reviews
+
+以下使用文件审查记录而非虚构 reviewer commit；其源码提交已推送。旧表处置完整保留。
+
+| Review evidence | Reviewed source/test commit | Disposition |
+| --- | --- | --- |
+| [U1/PB1](../cloud/rounds/20261124-maintenance-foundation/logic-data-errors/final-review.md) | `5eec54e` / `edbd873` | PASS：四动作 csrf 编码与单一有界业务码读取；独立不可变源码 red/green，无未闭环 P0/P1/P2 |
+| [QF1](../cloud/rounds/20261124-maintenance-foundation/verification/final-review.md) | `ca99149` | PASS：当前源 harness、历史串行尾巴正负控、完整 50 逻辑/51 阶段 sweep；不把旧 literal 恢复成产品要求 |
+| [U9](../cloud/rounds/20261124-api-request-maintenance/favorites/final-review.md) | `7ff548b` | PASS：两处分隔，真实 builder 64 failures → 451 PASS，sign recorder 边界明确 |
+| [U5/U8](../cloud/rounds/20261124-api-request-maintenance/search/final-review.md) | `f594c9b` | PASS：直接身份/area 兼容/真实签名与 app order，api02/shared-stub regressions；不声称实际 cookie/session |
+| [E1](../cloud/rounds/20261124-api-request-maintenance/comment-recovery/final-review.md) | `1c7f6e4` | PASS：single-flight、实际 typed response、保草稿重试与最早 Closing retirement；真实 dialog 153 checks / comments 1070 |
+| [QF3](../cloud/rounds/20261124-package-layout-guard/final-review.md) | `8f55968` | PASS：仅补根启动器存在/<64 KiB；独立 actual-function 15 cases red/green、结构/所有权接受；零字节接受是限定 predicate，不是可启动认证 |
+
+这些实现审查包含实际离线重跑，故不适用下文历史“static only”的范围描述。其 PASS 均局限于
+assigned source/offline scope，Windows compile/PS5.1/installed launch/device/live-session 仍 FAILED/BLOCKED。
+QF2 的 [独立复审](../cloud/rounds/20261124-verification-runner/final-review.md) 对 runner 源码 **PASS / P1 CLOSED**（`9c33bce`），修正 workflow 源码 PASS（`c4e9dba`）。最初 metadata/preflight 未遵从整套 deadline/signal 的 P1 由真实 red→green 闭环，14/14 外部控制与 changed-runner 完整 50/51 PASS；原 compiler/extraction/default/assertion bodies 保留。最初 workflow job env 的 runner context 错误导致 HTTP422，现已移至 GITHUB_ENV runtime step，旧证据保留。
+
+[当前 hosted receipt](../cloud/rounds/20261124-verification-runner/corrected-hosted-execution.md) 是 corrected-head workflow_dispatch run [45434541348](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348)，head `169b2b0a0205a14cad7d24558920250989720cc2`；2026-11-24 16:17:58 UTC QUEUED、0 jobs/0 artifacts。**Hosted PENDING/UNVERIFIED**，源码 PASS 不表示 hosted PASS；排队也不是 failed job 或已证 outage/permission blocker。
+
 ## Standing review notes
 
 - **The external reviewer is no longer a scheduled watcher**; passes land when the maintainer runs one
   (`b7fb5bc` on its own, `ac6867c` 2026-11-07, `c4aa630` 2026-11-08). Rows above stay as the record of what was
   found and what happened to it.
-- Reviews were static source inspection only: no build, no launch, no API call. A finding marked here
+- Historical reviewer-commit rows above were static source inspection only: no build, no launch, no API call. A finding marked here
   as fixed means "fixed in source", not "verified on device".
 - The reviewer re-reads earlier findings every round, so an open row must stay accurate; close it in
   the same commit that fixes it.

@@ -11,10 +11,10 @@ in `bug_report.md` first.
 
 | Fact | Value |
 | --- | --- |
-| workspace | `Z:\bilibili-uwp-liter` as of 2026-11-02 (the `H:\uwp\bilibili-uwp-liter` copy is left behind at `e3b8436`, holds stray uncommitted edits and is no longer the working tree). The Z: clone was made from the H: path, so its `origin` had to be reset to the GitHub URL, and a fresh clone needs `-Restore` plus the referenced project outputs (`src/BiliLite.gRPC/bin`, `src/BiliLite.JSBridge/bin`, and the other `src/*/bin`) before `-SkipProjectReferences` compiles — otherwise `CompileXaml` fails with `WMC1006` on `BiliLite.gRPC.dll`/`BiliLite.JSBridge.winmd` |
-| branch | `dev`, in sync with `origin/dev` |
-| build | `powershell -NoProfile -ExecutionPolicy Bypass -File build-release-x64.ps1 -Fast -SkipProjectReferences` (compile only; this machine's VS has no .NET SDK component, so the script evaluates the skipped SDK-style `BiliLite.gRPC` through the installed dotnet SDK) or without `-Fast` to package into `Z:\`. **Every build bumps the revision** (both `Package.appxmanifest` files, same source of truth); `-NoVersionBump` is for a throwaway repeated package, not for a batch that ships |
-| probe checks | `sh plan/tests/<batch>/run.sh` — net8.0 probe projects under `plan/tests/` compile the real product sources and assert behavior. The scripts expect a portable drop at `$UPSTREAM_UNIT_TOOLS/dotnet` with SDK 8.0.427; that drop is absent on this machine, the installed SDK is 10.0.302 with the 8.0.33 ref pack and an 8.0.33 runtime, so a batch either points `UPSTREAM_UNIT_TOOLS` at a directory containing a `dotnet` root or resolves the installed SDK. `sh` here is MSYS2 (Git Bash) |
+| workspace | 路径取当前 checkout；历史 Z:/H: 说明只适用于原维护者工作副本。先核对实际输入是否存在，不把历史 sparse 缺失自动套给完整 checkout |
+| branch | `dev` 是唯一开发线；同步状态取实际 git 证据 |
+| build | `powershell -NoProfile -ExecutionPolicy Bypass -File ./build-release-x64.ps1 -Fast -NoVersionBump -Restore` 编译循环；不带 `-NoVersionBump` 才自增两份清单。全量发布构建与真实安装启动另行验证；`-SkipProjectReferences` 只在引用输出已存在时使用 |
+| probe checks | 显式 Bash；43 目录批次含 g1 根 runner 与 shell-only stab，另七逻辑探针/八 legacy executables，总计 50/51。精确 SDK/运行时/引用包与命令见 `docs/DEVELOPMENT.md` §6；成功前缀不算完整通过 |
 | sync | `powershell -NoProfile -ExecutionPolicy Bypass -File sync-dev.ps1` — fetch+rebase+push with TLS retries, stashes the two `Package.appxmanifest` around it (`-NoPull`, `-NoPush`, `-Attempts`, `-RetrySeconds`) |
 | review cache | `plan/REVIEW_LOG.md` |
 | bug device log | `bug_report.md`, `code_review.md` at the repo root |
@@ -30,6 +30,34 @@ compiled into `BiliLite.Packages_1.0.9.42_x64.msix` (package directory dated 202
 are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no probe run is recorded for them.
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
+
+### 2026-11-24 维护修复：已提交与离线验收
+
+以下是源码/离线范围的完成，不给历史设备行改判，也不声称本次编译、真实登录会话或安装运行通过。
+Linux 上 Windows 编译前置命令退出 127（`powershell: command not found`）；VS/UWP/Windows SDK/运行时不可用。
+
+| ID | 已提交行为 | 实际 owning tests / 独立审查 |
+| --- | --- | --- |
+| U1 / P0 | `5eec54e`：评论 like/add/reply 分离显式 csrf，含 delete 四个动作将裸 token 编码一次；保留 Add 原文 / Reply 预编码约定、ID/type/root/parent | `comments` 保留旧断言并新增 757 请求断言；旧源码 174 失败 → 856 通过；独立实现审查 PASS |
+| PB1 / P1 | `edbd873`：ApiEnvelope 的单一有界整数读取供 data/result、VideoEnvelope、comment-action 使用；越界/BigInteger 返回 Envelope / envelope.code，保留合法拒绝码/消息与各自 payload 规则 | 旧源码 comments 12 + c1 4 异常；不变断言修复后 comments 917、c1 186、season1 117 通过；独立实现审查 PASS |
+| U9 / P1 | `7ff548b`：收藏夹 add/edit 的 ts 与 privacy 分隔；公开/私有映射、文本/ID、Android 签名输入顺序不变 | `c2` 链接实际 FavoriteAPI，64 失败 → 451 通过；签名记录器只证明完整输入，不证明密码学；独立实现审查 PASS |
+| U5 / P1、U8 / P2 | `f594c9b`：七个 web 搜索 builder 仅在非空 area 分支保留 temp BUVID，直接请求不覆盖保存的身份；app 搜索排序编码后参与原签名 | `api02` 原 12 + 搜索 1258 断言，旧源码 36 失败 → 0；真实 WBI/app signer 与 exact transport/proxy 提取校验，auth1/API01 回归；独立实现审查 PASS |
+| E1 / UX-02 / P1 | `1c7f6e4`：评论对话框持有单个发送 Task，等待期间锁编辑/表情/重复发送；仅 typed accepted success 关闭；失败保留草稿、可显式重试，secondary/Closing/Closed 退休后拒绝迟到回调 | `comments` 真实 dialog + 实际 HttpResults/typed parser，153 新检查由 109 失败 → 0，总 1070 通过；独立实现审查 PASS；实际 XAML/焦点/会话仍未验证 |
+| QF1 / P1 | `ca99149`：g3、LM05、凭据与 playersess harness 对齐当前实际源码；保留旧断言意图并加强串行上报/最新尾巴负控 | 43/43 目录 + 7/7 逻辑探针 = 50/50 逻辑项、51/51 可执行阶段通过；API01 76、AUTH01B 70+39、playersess 217；独立审查 PASS |
+| QF3 / 发布前 P1 | `8f55968`：实际 Packages 布局守卫补根启动器存在且未压缩 Int64 长度 <65,536 字节，保留 entrypoint/companion/fullTrustProcess 与诊断优先级 | 独立 PowerShell probe 的 15 个 ZIP 案例，旧源码 10/15 → 15/15，独立审查 PASS；Core/Linux 证据，不证明 PS5.1/真实 MSIX/安装启动 |
+
+精确执行、red/green 与独立审查：[foundation](../cloud/rounds/20261124-maintenance-foundation/maintenance-plan.md)、
+[API/action recovery](../cloud/rounds/20261124-api-request-maintenance/execution-index.md)、
+[package guard](../cloud/rounds/20261124-package-layout-guard/final-review.md)。QF2 runner 已实作（`0368569`、默认前缀控制 `f1963e0`，最终 metadata/preflight 修复 `9c33bce`）：
+`bash plan/tests/run-all.sh --tools-root PATH` 的 changed-runner 本地完整报告 50/50 逻辑、51/51 可执行阶段 PASS、
+`complete_required=true`；独立契约控制 **14/14 PASS**，旧无参链 exit 0。初审 P1 已由真实前置 deadline/signal
+red→green 闭环，独立 runner 源码复审 PASS/P1 CLOSED；修正 workflow `c4e9dba` 源码审查 PASS。
+真实 corrected workflow_dispatch run [45434541348](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348)
+绑定 `169b2b0a0205a14cad7d24558920250989720cc2`，2026-11-24 16:17:58 UTC 观察为 **QUEUED、0 jobs/0 artifacts**。
+故 hosted CI **PENDING/UNVERIFIED**，不是 PASS、失败 job 或已证明的 outage/permission 问题。旧 HTTP422 是已修配置的历史失败，
+不再是当前 run 诊断。精确 [source review](../cloud/rounds/20261124-verification-runner/final-review.md) 与
+[hosted receipt](../cloud/rounds/20261124-verification-runner/corrected-hosted-execution.md) 分开；
+QF1 sweep、changed-runner local gate 与 hosted 验收也分开。选择/报告/预算/前置详见 DEVELOPMENT §6。Windows 新行见 [VALIDATION.md](VALIDATION.md)。
 
 - **Agent 化整理与 master 移植 (2026-11-24):** `dev` 成为唯一开发线之后，把 `master` 上 8 个提交里仍适用的部分移植过来：新增 `AGENTS.md` + `docs/` 五篇（架构/功能/开发/路线图/索引，按 `dev` 的实际代码重写）；删除死代码 `Helpers/SqlHelper.cs`（只创建一只没人读取的 bili.db）连同 csproj 项与 `App` 调用；首启布局判据移进 `Services/FirstRunDisplayMode.cs`（旧的 `width/height > 16/9` 在 UInt32 上是地板除，实际要求比值 ≥ 2，高为 0 还抛除零），带探针 `plan/tests/firstrun` 15 项（旧判据下 2 项红，本机实跑全绿）；`OnExiting` 的 deferral 改为 `finally` 放行（`OnSuspending` 本仓库早就有 try/catch 与耗时预算，未覆盖）；`VideoPlayHistoryHelper` 的静态表不再可能为 null，`async void` 写盘失败改为记日志；`.gitignore` 补 UWP 产物与探针输出，`.gitattributes` 钉 `*.sh text eol=lf`（CRLF 会让 `set -euo pipefail` 直接失败）。两次同步提交（`086ec90`、`eb1f1df`）的内容经逐文件比对已全部在 `dev` 里（209/318 与 290/317 个 blob 相同，其余是 `dev` 更新的版本），因此没有合并。**未编译、未上设备**：该克隆是 partial clone，缺 `PlayerControl.xaml.cs`、`DynamicVM.cs`、`VideoDetailPage.xaml.cs`、`EFontAwesomeIcon.cs` 与 `BiliLite.gRPC` 的 `dynamic.proto`；实跑的是 `firstrun` 15/15 与 `season1` 117 断言。
 - **Playback checkpoint survives a pending report (review `c4aa630`):** `cfc4a15` — `CheckpointHistoryAsync` now writes the local position before any report decision (`PlayerControl.xaml.cs:3404`), and `DrainHistoryReportsAsync` reports the latest pending snapshot until it stops changing, so a pause or the exit flush that lands during a 30 s report still stores and reports the position the slider set. Compile only (`-Fast -NoVersionBump -SkipProjectReferences`, 0 errors).

@@ -23,12 +23,37 @@ If a run still fails, rerun with `-NoVersionBump` so the failed attempt does not
 
 ### The MSIX layout that actually boots
 
-`BiliLiter.exe` at the package root must be the **8 KB launcher**, with the managed app at `entrypoint\BiliLiter.exe`. That is the layout the packaging project produces. The app project's own `-t:Package` writes a different layout into the **same** `Z:\BiliLite.UWP_<version>_x64_Test\BiliLite.UWP_<version>_x64.msix` path: the ~4.2 MB managed exe at the root, no `entrypoint/`. Installing that one gives an immediate exit at the splash screen with no application log at all (`LogHelper.Initialize` runs after `App.InitializeComponent`, so a failure inside XAML initialisation has nowhere to log) - it shows up only as Event 1000/1026 in the Application log with `e0434352` and an empty stack.
+The intended layout is a small root `BiliLiter.exe` launcher (historically 8 KB), with the managed
+app at `entrypoint/BiliLiter.exe`. Deliver only
+`BiliLite.Packages_<version>_x64_Test/BiliLite.Packages_<version>_x64.msix`.
+The app project's `BiliLite.UWP_*.msix` uses its own directory and lacks the required entrypoint layout;
+installing it historically exited at the splash screen before application logging. The former
+same-name collision explanation and UWP-package retry/recheck do not describe the current script.
 
-Because both projects race for one filename, the file left in `Z:\` is not necessarily the bootable one. The script now checks after packaging:
+The script filters discovered MSIX paths to Packages deliverables, selects the first one and validates it.
+It rejects missing `entrypoint/BiliLiter.exe`, missing `BiliLite.Win32Tools/BiliLite.Win32Tools.exe`,
+missing manifest `fullTrustProcess`, missing root `BiliLiter.exe`, or a root entry whose **uncompressed
+Int64 ZIP length is >=65,536 bytes**. Exactly 65,535 is allowed; there is no minimum-size, PE/signature
+or bootability check. A zero-byte fixture can satisfy the limited root predicate.
+A layout failure throws; there is no UWP-package retry. On success it prints `交付包` and removes only
+guarded UWP byproduct folders, preserving delivery packages, symbols, certificates and dependencies.
 
-- UWP package: `entrypoint/BiliLiter.exe` present **and** root `BiliLiter.exe` under 64 KB, otherwise it re-runs the packaging project's `-t:Package` once and re-checks, then fails the build rather than handing over a package that cannot start.
-- Packages package: `entrypoint/BiliLiter.exe`, `BiliLite.Win32Tools/BiliLite.Win32Tools.exe` and `fullTrustProcess` in its manifest (that extension is what `AppHelper.LaunchConverter` needs for video export).
+The separate source-function archive probe is:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ./plan/tests/package-layout-probe.ps1
+```
+
+It runs 15 inert archive cases without executing the release script or changing versions. Exit 0 means
+all cases passed, 1 means an assertion failed, 2 means setup/parser/extraction/cleanup failure.
+`pwsh -NoProfile -File ./plan/tests/package-layout-probe.ps1` is the PowerShell Core equivalent.
+This optional gate is separate from the 43 directory + seven logical legacy probes (50 logical /
+51 executable stages). The complete offline command is `bash plan/tests/run-all.sh --tools-root /absolute/path/to/probe-tools`
+on Linux with Bash >=4/Python >=3.9; see [DEVELOPMENT.md](../docs/DEVELOPMENT.md#6-探针离线行为测试) for exact SDK setup,
+selectors, reports and partial-vs-complete results. It cannot replace the Windows release gates.
+Fixtures do not establish a valid signed MSIX, installed launch or converter behavior. Before an
+authorized release, run the actual Windows UWP/XAML compile, full version-bumping build, inspect the
+selected real Packages archive, install and launch it, then complete affected device journeys.
 
 Verify an installed package before blaming the source:
 
@@ -38,6 +63,21 @@ Get-ChildItem $p -Recurse -Filter *.exe | Select-Object FullName, Length
 ```
 
 `<loc>\BiliLiter.exe` = 8192 with `<loc>\entrypoint\BiliLiter.exe` = ~4.28 MB is the good shape. A 4.28 MB exe at the root with no `entrypoint/` cannot start this app.
+
+### Signing and installation certificate prerequisites
+
+Before an authorized release, inspect the certificate actually selected by
+`PackageCertificateThumbprint` in both the UWP csproj and Packages wapproj in the target Windows
+certificate store. Check its validity interval, accessible signing private key and publisher match
+against the package manifest. Verify the emitted MSIX signature and ensure the certificate supplied
+to installers matches that actual signer. Do not assume the tracked `BiliLite.UWP.cer` is the active
+signing certificate or that its dates describe the selected Windows-store certificate.
+
+Without the Windows store/private-key and actual-package evidence, active signing readiness is
+BLOCKED; a repository certificate inspection alone is not a current signing failure reproduction.
+Reconciliation of certificate material, selected thumbprints, keys or package identity belongs to a
+maintainer's authorized release preparation. See [ROADMAP](../docs/ROADMAP.md) for the recorded
+tracked-certificate discrepancy; do not replace protected signing material as a documentation fix.
 
 ### Fast compile loop
 
@@ -88,7 +128,7 @@ iconv -f GB18030 -t UTF-8 -c build.log | grep -a "error"
 
 - `error CS####` lines are real compiler errors. Fix those first.
 - `error MSB4181: the "CompileXaml" task returned false but did not log an error` and `XamlCompiler error WMC####` are usually cascades of the C# errors in the same output. They disappear once the compile errors are fixed; do not treat them as separate defects.
-- A successful run prints `-> Z:\BiliLite.UWP_<version>_x64_Test\..._x64.msix` and `-> Z:\BiliLite.Packages_<version>_x64_Test\..._x64.msix`, followed by a `生成产物:` list.
+- A successful full run prints the Packages-only `生成产物:` list, validates its layout, then prints `交付包:`. Never treat an intermediate output line as final success.
 - Warnings that are expected in this tree and are not failures:
   - `WMC1500` `DropShadowPanel` is deprecated
   - `WMC1506` OneWay bindings without change notification
@@ -106,7 +146,7 @@ iconv -f GB18030 -t UTF-8 -c build.log | grep -a "error"
 ## Verify
 
 - Re-run the same command. A real verification is the full pipeline: NuGet restore, C# compile, XAML compile, PRI generation, and MSIX packaging.
-- Check the produced files on disk (`ls -l` on the two `.msix` paths) and report their sizes, not just the exit code. The filenames must carry the version the build just bumped to; a package still at the previous version means the run used `-NoVersionBump` by mistake.
+- Check the selected Packages delivery file on disk (`ls -l` on its `.msix` path) and report their sizes, not just the exit code. The filenames must carry the version the build just bumped to; a package still at the previous version means the run used `-NoVersionBump` by mistake.
 
 ## Commit and push
 

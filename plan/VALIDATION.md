@@ -32,6 +32,23 @@ starts that.
 | Cookie jar reads every login origin | `fe335f3` | the first preflight of a launch writes `Cookie refresh state refresh=… timestamp=…; token=present`, and once the server reports `refresh=True` the log shows the correspond → refresh → confirm chain instead of nothing |
 | Only the installable package is delivered | `862e61c` | a full build prints one 交付包 path under `Z:\BiliLite.Packages_<version>_x64_Test\`, no `BiliLite.UWP_*` folder is left beside it, and installing that file starts the app instead of blinking out |
 
+## 2026-11-24 — 新修复的 scoped Windows 跟进（本次未编译/未运行）
+
+历史维护者默认通过策略保持。以下仅列新改动需要的 Windows/真实会话证据；不把旧行重开，
+也不从离线探针推断 render/focus/session/device PASS。Linux 前置命令
+`powershell -NoProfile -ExecutionPolicy Bypass -File ./build-release-x64.ps1 -Fast -NoVersionBump -Restore`
+退出 127（`powershell: command not found`），VS/UWP/Windows SDK/运行时不可用，故当前 **FAILED/BLOCKED**。
+运行后需记录实际版本、设备、时间、场景/结果；只有新真实缺陷才新增 BR。
+
+| 新改动 | Windows/会话确认范围 |
+| --- | --- |
+| U1 `5eec54e`、PB1 `edbd873` | 实际登录 cookie 下评论 like/unlike、顶层/子回复、delete；Unicode/换行/特殊字符、正确目标/类型；失败保留已有列表/可重试；typed failure 不变成 false success。离线不证明 cookie jar/wire 或服务写入 |
+| U9 `7ff548b` | 受控测试账号新建/编辑收藏夹，公开/私有、空和特殊文本、保存后重新进入确认；记录与清理实际创建的数据，不从签名 recorder 推断服务持久化 |
+| U5/U8 `f594c9b` | direct/configured-host 搜索保留现有 BUVID，area/proxy 按选择；page/filter/order 与结果一致；无身份/过期/断网不伤保存会话。需实际 WinRT cookie、网络/代理证据 |
+| E1 `1c7f6e4` | 真 ContentDialog 点击/键盘发送空白、延迟发送/连续激活、失败保草稿/显式重试、成功只关一次；secondary/系统关闭/快速新开对话框不受迟到结果污染；busy/progress、表情锁定、编辑焦点与取消后焦点恢复 |
+| E1 显示/可访问性 | 实际支持最小窗口及 800×600/1280×720 effective pixels，100/150/200% text，light/dark/follow-system/high contrast；状态不遮操作，键盘可达，Narrator/UIA 名称与 live-region 公告正确 |
+| QF3 `8f55968` | Windows PowerShell 5.1 跑独立 15-case probe；实际 UWP/XAML compile，然后获授权的完整版本递增构建；Packages archive 内 entrypoint/companion/fullTrustProcess 与存在且 <65,536 字节根启动器；安装启动、导出/转换器及受影响路径。ZIP fixture 不证明安装/启动 |
+
 ## Shipped 2026-11-01 — the batch that was uncommitted, now built
 
 Compiled with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (0 errors), probes green:

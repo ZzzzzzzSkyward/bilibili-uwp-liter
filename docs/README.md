@@ -19,7 +19,7 @@
 | --- | --- |
 | [BUILD.md](../document/BUILD.md) | 构建脚本参数、`CS2012` 锁文件、能启动的 MSIX 布局、快速编译循环、PowerShell 编码、错误分类 |
 | [DIAGNOSTICS.md](../document/DIAGNOSTICS.md) | 怎么让用户取日志与诊断包（设置 → 诊断） |
-| [BILIBILI_API_RESEARCH.md](../document/BILIBILI_API_RESEARCH.md) | 2026-11-09 与姊妹仓库 `ywmoyue/biliuwp-lite` 的对照：要补的接口、优先级、已确认的本地缺陷（评论写入 CSRF、直播弹幕发现） |
+| [BILIBILI_API_RESEARCH.md](../document/BILIBILI_API_RESEARCH.md) | 与姊妹仓库的 pinned 源码对照、当前修复处置与仍需真实身份/会话证据的活动直播鉴权路径 |
 | [BILIBILI_API_ENDPOINTS.md](../document/BILIBILI_API_ENDPOINTS.md) | 姊妹仓库的端点目录（203 个 HTTP 方法/路由对 + 8 个 gRPC 路由），标出本仓库已有/没有 |
 | [new_version.json](../document/new_version.json) / [entrance.json](../document/entrance.json) | **应用运行时抓取的线上数据**（版本提示 / 首页入口），不是说明书，改它等于给所有客户端推新内容 |
 
@@ -35,7 +35,8 @@
 | [HOT_CARD_PLAN.md](../plan/HOT_CARD_PLAN.md) | 热榜卡片的高度预算与响应式布局 |
 | [REFRESH_PLAN.md](../plan/REFRESH_PLAN.md) | 登录刷新：cookie/appkey 归属、对应关系与事务 |
 | [SETTINGS_PLAN.md](../plan/SETTINGS_PLAN.md) | 设置页十个页签的顺序、文案与失效控件 |
-| [tests/](../plan/tests) | 43 个目录批次（每个 `run.sh` 一行 `dotnet run`）+ 7 个单文件探针（由 `plan/tests/run.sh` 直接 `csc` 编译），都编译真实产品源码并断言行为 |
+| [offline-probes.yml](../.github/workflows/offline-probes.yml) | dev push/PR 与无输入手动入口的 Ubuntu 离线 controls + 完整 suite；实际 hosted 结论另看对应 SHA 的 run |
+| [tests/](../plan/tests) | `bash plan/tests/run-all.sh` 统一运行 43 目录 + 7 逻辑项 / 8 legacy executables（50/51）；Bash/Python/SDK/选择/报告与独立 controls 见 DEVELOPMENT；独立 PowerShell 包布局探针不计入该总数 |
 
 ## 根目录
 

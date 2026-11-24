@@ -1,12 +1,12 @@
 # Bilibili Lite UWP
 
-A third-party Bilibili client for Windows 10/11, written in C#/XAML as a UWP application (7 projects,
-440 C# files). `dev` is the development line; `master` carries releases. Code under `src/BiliLite.UWP`,
+A third-party Bilibili client for Windows 10/11, written in C#/XAML as a UWP application.
+`dev` is the development line; `master` carries releases. Code under `src/BiliLite.UWP`,
 work plan and offline probes under `plan/`, long-form documentation under `docs/`.
 
 第三方哔哩哔哩 UWP 客户端。上游是 [逍遥橙子](https://github.com/xiaoyaocz/biliuwp-lite) 的 `biliuwp-lite`，
 本仓库用 VS2022 与 Windows 10 SDK 10.0.19041（最低 18362）维护，改用亚克力背景、换过包名与版本号，
-签名有效期到 2026 年。
+安装前核对发布包的实际签名与随包证书，说明见 [构建文档](document/BUILD.md)。
 
 ## 功能特性
 
@@ -37,8 +37,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Out
 ```
 
 安装 `BiliLite.Packages_<version>_x64_Test\BiliLite.Packages_<version>_x64.msix`（**不要**装
-`BiliLite.UWP_*.msix`，那份在启动图就会退出）。行为测试：`sh plan/tests/<batch>/run.sh`
-（43 个目录批次）或 `sh plan/tests/run.sh`（7 个单文件探针，需 8.0.427 SDK 根）。
+`BiliLite.UWP_*.msix`，那份在启动图就会退出）。完整离线检查在 Linux 上用 Bash ≥4、Python ≥3.9，
+准备 8.0.427 SDK/8.0.33 runtime/ref-pack 工具根后运行：
+
+```bash
+bash plan/tests/run-all.sh --tools-root /absolute/path/to/probe-tools
+```
+
+固定 43 目录 + 7 逻辑探针 = 50 逻辑项 / 51 可执行阶段；选择部分通过只表示 PARTIAL_PASS。
+`--list`、选择命令、独立 PowerShell 布局门禁与工具设置见开发文档；
+离线 CI 使用同一入口，配置见 [offline-probes.yml](.github/workflows/offline-probes.yml)。
 环境、调试、排障与 partial clone 的限制见 [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)，
 构建故障逐个症状见 [document/BUILD.md](document/BUILD.md)。
 

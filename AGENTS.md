@@ -10,8 +10,8 @@
 - 记忆只写 `cloud/memory/`（按需读 `cloud/memory/INDEX.md`），**禁止把记忆或轮次结论写进本文件**。
 - 允许联网与安装依赖；全程自主运行，不向用户提问。
 
-Third-party Bilibili client for Windows 10/11, written as a C#/XAML UWP application (7 projects,
-440 tracked C# files). This file is the entry point for an agent or a new maintainer: it maps the
+Third-party Bilibili client for Windows 10/11, written as a C#/XAML UWP application.
+This file is the entry point for an agent or a new maintainer: it maps the
 tree, gives the exact build/verify commands, states the invariants that must not be broken, and
 lists the traps that have already cost time once.
 
@@ -55,12 +55,36 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Cle
 Behavioural probes (offline, no device, compile the real product sources):
 
 ```bash
-sh plan/tests/<batch>/run.sh        # 43 directory batches, e.g. sh plan/tests/season1/run.sh
-sh plan/tests/run.sh                # the 7 single-file probes (LM01–LM05, API01, AUTH01B)
+# Linux, Bash >=4, Python >=3.9; root contains exact SDK/runtime/ref packs in dotnet/
+bash plan/tests/run-all.sh --tools-root /absolute/path/to/probe-tools
+bash plan/tests/run-all.sh --list     # list only; no SDK required
+bash plan/tests/run-all.sh --only batch:comments --only LM05  # selected scope only
+bash plan/tests/<batch>/run.sh        # directory batch; g1 uses plan/tests/run-g1.sh
+bash plan/tests/run.sh                # legacy fail-fast chain
 ```
 
-Each directory batch is a `net8.0` console project whose `<Compile Include>` list links product
-sources plus stubs; it asserts behaviour, not plumbing, and exits non-zero on a failed assertion.
+Full PASS requires all 50 logical / 51 executable stages and `complete_required=true` in the
+printed report directory's `results.json`. Selected success is `PARTIAL_PASS`, not a complete gate.
+Tools default to `$UPSTREAM_UNIT_TOOLS` or `/workspace/work/upstream-unit-tools`; `--tools-root`
+overrides it. Exact SDK 8.0.427, runtime/ref pack 8.0.33, selectors, reports and budgets are documented
+in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#6-探针离线行为测试). Runner controls are separate:
+`python3 plan/tests/verify-suite-runner.py --tools-root /absolute/path/to/probe-tools`.
+
+Optional separate archive-layout gate (15 internal cases; no full release-script execution):
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ./plan/tests/package-layout-probe.ps1
+```
+
+Its fixture PASS does not establish a valid signed/installable package or Windows startup.
+The published workflow is [.github/workflows/offline-probes.yml](.github/workflows/offline-probes.yml)
+(dev push/PR and no-input workflow_dispatch, Ubuntu 24.04). Check actual pushed-SHA hosted
+results before reporting CI success; a queued run is pending.
+
+The inventory contains 43 directory batches: 42 `net8.0` projects link product sources plus
+stubs, while `stab` is shell-only. `g1` uses `bash plan/tests/run-g1.sh`; the other 42
+directories have `run.sh`. Assertions fail nonzero. The seven legacy logical probes run eight
+executables because AUTH01B has separate Account and LoginVM stages (50 logical / 51 total).
 `plan/tests/run.sh` instead compiles its probes with `csc` from the SDK at
 `$UPSTREAM_UNIT_TOOLS/dotnet/sdk/8.0.427`, so that one script needs an explicit .NET 8 SDK root.
 
@@ -176,11 +200,12 @@ XAML
    retries with `-t:Rebuild` at most twice. Do not retry blindly and do not "fix" it in source.
 3. **The MSIX layout that boots** is the 8 KB launcher at the package root plus
    `entrypoint/BiliLiter.exe`. The app project's own `-t:Package` writes a ~4.2 MB managed exe at the
-   root into the *same* filename; installing that one exits at the splash screen with no log. Details:
+   root in its own UWP package directory; installing that one exits at the splash screen with no log.
+   The script selects and validates only the Packages delivery package. Details:
    `document/BUILD.md`.
-4. **Shell scripts must stay LF.** With `core.autocrlf=true` a CRLF `set -euo pipefail` line fails
-   under `sh` (`set: pipefail: invalid option name`) and `../..` path arithmetic breaks. `.gitattributes`
-   pins `*.sh text eol=lf`; if a clone already has CRLF scripts, rewrite them before running probes.
+4. **Use Bash and LF scripts.** `sh` can be dash, which lacks Bash features such as
+   `BASH_SOURCE` and `pipefail` even with LF files. Invoke `bash` explicitly. CRLF is a separate
+   failure (`^M` paths/options); `.gitattributes` pins `*.sh text eol=lf`. Restore LF before probes.
 5. **Console encoding.** Windows PowerShell 5.1 writes GBK on this machine. The build script sets
    UTF-8 for its own output; ad-hoc PowerShell must do the same
    (`[Console]::OutputEncoding=[Text.Encoding]::UTF8; …`), and reading an existing GBK log needs
@@ -196,8 +221,8 @@ XAML
    measuring: the whole app's request pacing would change at once. Tracked in `docs/ROADMAP.md`.
 9. **This clone may be partial.** Large blobs (`>100 KB`) can be sparse-excluded; they are listed in
    §8. A build in such a clone fails on missing sources, and probes that read those files from disk
-   (`plan/tests/playersess` reads `PlayerControl.xaml.cs`, `g3` *is* a sparse file) cannot run — that
-   is the clone, not the repo.
+   (`plan/tests/playersess` reads `PlayerControl.xaml.cs`, `g3` needs its `Program.cs`) cannot run
+   when those inputs are absent. Check the actual checkout before declaring a missing-source blocker.
 
 ## 8. Do not touch
 
