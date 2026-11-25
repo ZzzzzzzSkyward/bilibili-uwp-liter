@@ -1,0 +1,599 @@
+{
+  "verdict": "PASS",
+  "phase": "independent SR1 requirements review; no implementation grant",
+  "utc": "2026-11-25T06:37:08.631812+00:00",
+  "baseline": "7fc3c524fde4139d01e7ecd362647ca771c64ea8",
+  "reviewedRequirements": {
+    "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-index-dynamic-contracts/short-review/requirements.md",
+    "sha256": "05294ee381267a536640a901d0afb364b5e4b262b45c4fe364bbc2605789912e",
+    "bytes": 8266
+  },
+  "reviewedAuthorEvidence": {
+    "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-index-dynamic-contracts/short-review/evidence.md",
+    "sha256": "98293122f9e305282312ab3d75230e7d01add4f0f83fe7d86fb0a295fb6f09e1",
+    "bytes": 11282
+  },
+  "authorSourceManifest": {
+    "path": "/workspace/work/index-dynamic-contracts/short-review-discovery/source-manifest.json",
+    "sha256": "7d60d1bf65e0be71323692731e36c231b76db10570959731a96110200d5f13d5",
+    "bytes": 5398
+  },
+  "authorProof": {
+    "path": "/workspace/work/index-dynamic-contracts/short-review-discovery/proof-binding.json",
+    "sha256": "c3cc56659edc0efb098e90cf09bcd9a443d64632cb222e15f3d45d406f4050a2",
+    "bytes": 7627
+  },
+  "authorRelease": {
+    "path": "/workspace/work/index-dynamic-contracts/short-review-discovery/release.json",
+    "sha256": "ad1fbb96905673399100c679412f7c62234f002091ae12cc297cd61fabbc7f7d",
+    "bytes": 3604
+  },
+  "fixtureInputs": [
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/AccountApi.cs",
+      "sha256": "2d4696c66a2be8220e135fbbcf57f46357303c22eb59a53369a5aca6e947d7ff",
+      "bytes": 23444
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/ActualToInt32.cs",
+      "sha256": "a5781d1d42b6685c659857cfb8e157bad8d0532d1cc13a1823bd0a5250a7c86c",
+      "bytes": 331
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/ApiHelper.cs",
+      "sha256": "dfb07f377db95023aebce4c68101c6d334444722cf79b07d7d39a6126ba302d9",
+      "bytes": 10554
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/ApiModel.cs",
+      "sha256": "6493168767c4c9a92637b3ac82b9ec7d67e92ac2840cf0680655887996611671",
+      "bytes": 1416
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/CookieOrigins.cs",
+      "sha256": "ef7f9c32371d67619a63c5173f2acc0c32bb64524ea72755e95164adec0e1de6",
+      "bytes": 1283
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/CookieService.cs",
+      "sha256": "447cadc5bfb66eae88887cdb716b3446817048006e6361c37b7be036dc7f38dc",
+      "bytes": 31867
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/HttpResults.cs",
+      "sha256": "46fbe440e03ff3d172322dbdd2ea7237665223b9ed073575a10d6fcc4aca6965",
+      "bytes": 4579
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/IModules.cs",
+      "sha256": "cef5334b540d7e74513d59b513e3d7671fce98e9be62b7d50bad471df14ed3c6",
+      "bytes": 1055
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/PasswordLoginSession.cs",
+      "sha256": "2cb5cf8cc1e55ed6038a09031b60451368591963cd46db797dcc035426331e4b",
+      "bytes": 12248
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/PlatformStubs.cs",
+      "sha256": "864ecc5feb17f035048f2cf03d98dbf4319b7014d7260875972940c8da94bfca",
+      "bytes": 5937
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/Program.cs",
+      "sha256": "91a509e5ec041a9f179f308a8ef39d7f5061be48781123498a83ad177155ff9a",
+      "bytes": 6810
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/RefreshCredentialPolicy.cs",
+      "sha256": "b3492491ff0431ad844023f1326cf5b1f57f52c26d7b689e2b7521637021db5a",
+      "bytes": 15870
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/RelayCommand.cs",
+      "sha256": "2941ad18ba1a0aed08d0803cb6ddead223d20e750d4541f4284ecb828a1c74e8",
+      "bytes": 1630
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/ReturnModel.cs",
+      "sha256": "0c5192f37d4447954937a8b226b5667dba77ed09f3d5a345b226e1e6c8994a1c",
+      "bytes": 206
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/SeasonApi.cs",
+      "sha256": "54dabff0be900eef7075850c8a08a05eee731db2e6054b92a192efa127b0ee80",
+      "bytes": 4305
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/SeasonReviewVM.cs",
+      "sha256": "c6e36bf65234c3dfc59471d4d3793891b4d4d033b2962e6e2e4912ca1d819abb",
+      "bytes": 9821
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/ShortReview.csproj",
+      "sha256": "81d345c8d661694d49c2bd6d8e1c469aefd34a0e8d14ef6cd3e8d4e86e4bc02a",
+      "bytes": 454
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/WbiKeyService.cs",
+      "sha256": "2420c42dbffcb6eec8293fbd0580ddb76ab80a51ebf1a60ef58d57e819ebb32d",
+      "bytes": 8401
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/WebRefreshTransaction.cs",
+      "sha256": "5916d4b1d96e724be5d0dfe81c60ff54cb4e874a7a08dbf177a96ffb852b41d8",
+      "bytes": 19115
+    }
+  ],
+  "compiledCompleteProductSources": [
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/AccountApi.cs",
+      "source": "src/BiliLite.UWP/Api/AccountApi.cs",
+      "sha256": "2d4696c66a2be8220e135fbbcf57f46357303c22eb59a53369a5aca6e947d7ff"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/ApiHelper.cs",
+      "source": "src/BiliLite.UWP/Api/ApiHelper.cs",
+      "sha256": "dfb07f377db95023aebce4c68101c6d334444722cf79b07d7d39a6126ba302d9"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/ApiModel.cs",
+      "source": "src/BiliLite.UWP/Models/ApiModel.cs",
+      "sha256": "6493168767c4c9a92637b3ac82b9ec7d67e92ac2840cf0680655887996611671"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/CookieOrigins.cs",
+      "source": "src/BiliLite.UWP/Models/CookieOrigins.cs",
+      "sha256": "ef7f9c32371d67619a63c5173f2acc0c32bb64524ea72755e95164adec0e1de6"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/CookieService.cs",
+      "source": "src/BiliLite.UWP/Services/CookieService.cs",
+      "sha256": "447cadc5bfb66eae88887cdb716b3446817048006e6361c37b7be036dc7f38dc"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/IModules.cs",
+      "source": "src/BiliLite.UWP/Modules/IModules.cs",
+      "sha256": "cef5334b540d7e74513d59b513e3d7671fce98e9be62b7d50bad471df14ed3c6"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/PasswordLoginSession.cs",
+      "source": "src/BiliLite.UWP/Services/PasswordLoginSession.cs",
+      "sha256": "2cb5cf8cc1e55ed6038a09031b60451368591963cd46db797dcc035426331e4b"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/RefreshCredentialPolicy.cs",
+      "source": "src/BiliLite.UWP/Services/RefreshCredentialPolicy.cs",
+      "sha256": "b3492491ff0431ad844023f1326cf5b1f57f52c26d7b689e2b7521637021db5a"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/RelayCommand.cs",
+      "source": "src/BiliLite.UWP/Modules/RelayCommand.cs",
+      "sha256": "2941ad18ba1a0aed08d0803cb6ddead223d20e750d4541f4284ecb828a1c74e8"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/ReturnModel.cs",
+      "source": "src/BiliLite.UWP/Models/ReturnModel.cs",
+      "sha256": "0c5192f37d4447954937a8b226b5667dba77ed09f3d5a345b226e1e6c8994a1c"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/SeasonApi.cs",
+      "source": "src/BiliLite.UWP/Api/SeasonApi.cs",
+      "sha256": "54dabff0be900eef7075850c8a08a05eee731db2e6054b92a192efa127b0ee80"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/SeasonReviewVM.cs",
+      "source": "src/BiliLite.UWP/Modules/Season/SeasonReviewVM.cs",
+      "sha256": "c6e36bf65234c3dfc59471d4d3793891b4d4d033b2962e6e2e4912ca1d819abb"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/WbiKeyService.cs",
+      "source": "src/BiliLite.UWP/Services/WbiKeyService.cs",
+      "sha256": "2420c42dbffcb6eec8293fbd0580ddb76ab80a51ebf1a60ef58d57e819ebb32d"
+    },
+    {
+      "compiled": "/workspace/work/index-dynamic-contracts/short-review-review/repro/WebRefreshTransaction.cs",
+      "source": "src/BiliLite.UWP/Services/WebRefreshTransaction.cs",
+      "sha256": "5916d4b1d96e724be5d0dfe81c60ff54cb4e874a7a08dbf177a96ffb852b41d8"
+    }
+  ],
+  "actualHelperExtractions": {
+    "HttpResults": "complete actual class body equals immutable Helpers/HttpHelper.cs extraction",
+    "ToInt32": "complete actual method equals immutable Helpers/Utils.cs extraction",
+    "exact": true
+  },
+  "tools": [
+    {
+      "path": "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+      "sha256": "db40da462b13ec4c07df7a75c4b0395223d360b8dc9a477d9e31fb71759b05f4",
+      "bytes": 68360
+    },
+    {
+      "path": "/workspace/work/maintenance-foundation/quality/dotnet/sdk/8.0.427/Roslyn/bincore/csc.dll",
+      "sha256": "2b9a5bbe002b353e44c78506e1bccbbc55dcdf2338abb11a68a5056329cb7334",
+      "bytes": 122880
+    },
+    {
+      "path": "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Private.CoreLib.dll",
+      "sha256": "98fec20c823887e41d4fbd2d2e900175e5b1ba7d671e29704c9ce4632dcc5432",
+      "bytes": 12775936
+    },
+    {
+      "path": "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Private.Uri.dll",
+      "sha256": "a077553d15cfa75cb5ab994384d0f32a6de94b49a5f6e8ecdf190ff2eb928b2a",
+      "bytes": 238592
+    },
+    {
+      "path": "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Web.HttpUtility.dll",
+      "sha256": "41aff6421fde1711eef7a52db52c9016ab5fa10fae235e7fde17e841651a7683",
+      "bytes": 39424
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/requirements-review/nuget/newtonsoft.json/13.0.3/lib/net6.0/Newtonsoft.Json.dll",
+      "sha256": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07",
+      "bytes": 712464
+    }
+  ],
+  "environment": {
+    "DOTNET_ROOT": "/workspace/work/maintenance-foundation/quality/dotnet",
+    "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/short-review-review/dotnet-home",
+    "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/short-review-review/nuget",
+    "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+    "DOTNET_NOLOGO": "1",
+    "NUGET_XMLDOC_MODE": "skip"
+  },
+  "commands": [
+    {
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "build",
+        "/workspace/work/index-dynamic-contracts/short-review-review/repro/ShortReview.csproj",
+        "--nologo",
+        "--configfile",
+        "/workspace/work/index-dynamic-contracts/short-review-review/NuGet.Config"
+      ],
+      "cwd": "/workspace/work/index-dynamic-contracts/short-review-review",
+      "exit": 0,
+      "expectedExit": 0,
+      "stdout": {
+        "path": "/workspace/work/index-dynamic-contracts/short-review-review/short-review-build.log",
+        "sha256": "5e6a5562ce9a969d613825ddb104603e28690ada8f7258458a4c23bb453d2065",
+        "bytes": 3378
+      }
+    },
+    {
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--no-build",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/short-review-review/repro/ShortReview.csproj"
+      ],
+      "cwd": "/workspace/work/index-dynamic-contracts/short-review-review",
+      "exit": 1,
+      "expectedExit": 1,
+      "stdout": {
+        "path": "/workspace/work/index-dynamic-contracts/short-review-review/short-review-replay.log",
+        "sha256": "8c829b3709f6405cf1fdfa55b09878821fbc286791135c4d56f6bf3330925dac",
+        "bytes": 37668
+      },
+      "summary": {
+        "checks": 3446,
+        "failures": 488,
+        "positiveChecks": 1572,
+        "positiveFailures": 0,
+        "desiredChecks": 1874,
+        "desiredFailures": 488
+      },
+      "matrixFailureCount": 486,
+      "actualVMAppendRetryFailureCount": 2,
+      "byteIdenticalAuthorOutput": true
+    },
+    {
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "build",
+        "/workspace/work/index-dynamic-contracts/short-review-review/current-FD1-link-only/plan/tests/api02/API02.csproj",
+        "--nologo",
+        "--configfile",
+        "/workspace/work/index-dynamic-contracts/short-review-review/NuGet.Config"
+      ],
+      "cwd": "/workspace/work/index-dynamic-contracts/short-review-review",
+      "exit": 0,
+      "expectedExit": 0,
+      "stdout": {
+        "path": "/workspace/work/index-dynamic-contracts/short-review-review/current-FD1-link-build.log",
+        "sha256": "a049fd809770bbc5a4affb5ef1f2dedf0c7a0489d20c8b7c4332541c31f4ac28",
+        "bytes": 1875
+      }
+    },
+    {
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--no-build",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/short-review-review/current-FD1-link-only/plan/tests/api02/API02.csproj"
+      ],
+      "cwd": "/workspace/work/index-dynamic-contracts/short-review-review",
+      "exit": 0,
+      "expectedExit": 0,
+      "stdout": {
+        "path": "/workspace/work/index-dynamic-contracts/short-review-review/current-FD1-link-run.log",
+        "sha256": "adb972cb0a124a7fab7f9e3efcf5e5644878adfcc255c6ac199aead38a54cffb",
+        "bytes": 375
+      },
+      "assertionCounts": {
+        "original": 12,
+        "search": 1258,
+        "query": 3831,
+        "FD1": 270,
+        "total": 5371
+      }
+    }
+  ],
+  "compiledArtifacts": [
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/repro/bin/Debug/net8.0/ShortReview.dll",
+      "sha256": "75f93e2611140d02faa90bd3fc778c0e284e0ac627516c5ea9bbc8f1c33e4794",
+      "bytes": 125952
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/current-FD1-link-only/plan/tests/api02/bin/Debug/net8.0/API02.dll",
+      "sha256": "cc17c1e2708d30e200c42dcbf667e6952a1ae0f202eeece396dd7949b5cc264e",
+      "bytes": 157696
+    }
+  ],
+  "replay": {
+    "requests": 684,
+    "factorization": "19 cursor cases × 2 hosts × 2 login states × 3 media IDs × 3 sort values",
+    "checksPerRequest": 5,
+    "defaultVMControls": 26,
+    "checks": 3446,
+    "pass": 2958,
+    "fail": 488,
+    "compatibilityChecks": 1572,
+    "compatibilityFailures": 0,
+    "desiredSafeChecks": 1874,
+    "desiredSafeFailures": 488,
+    "matrixFailures": 486,
+    "actualVMAppendRetryFailures": 2,
+    "byteIdenticalAuthorFixture": true,
+    "byteIdenticalAuthorReplayOutput": true
+  },
+  "currentFD1Link": {
+    "copiedInputs": [
+      {
+        "path": "/workspace/bilibili-uwp-liter/plan/tests/API01Stubs.cs",
+        "sha256": "034c9d0362e8866b39f252bf0c0420901963b1a31b8d115eba0189d620ca568d",
+        "bytes": 5566
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/plan/tests/api02/API02.csproj",
+        "sha256": "ab8237d1d135c1b3d35e3c4ce1c8342c8f5f3163f31ac64dc16e10cd163db41a",
+        "bytes": 1784
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/plan/tests/api02/ApiQueryShapeProbe.cs",
+        "sha256": "28abac1738b3e3f0051691deda71c2bf1425270c1800b0ea9f7e1f460c58c18a",
+        "bytes": 12347
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/plan/tests/api02/DynamicFeedRequestChecks.cs",
+        "sha256": "5f8df3e270dedb59a50afb18bae44ecf9a02128c50c9af877d6fa4d4aee88f4d",
+        "bytes": 3313
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/plan/tests/api02/Program.cs",
+        "sha256": "e5d50a678cd5f4ef8474b5275644b1aabcace3eabaeecfbe5083dc84005657b4",
+        "bytes": 6894
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/plan/tests/api02/SearchRequestChecks.cs",
+        "sha256": "fe366983030cb255dca05b9dfdf61c029dd687d44260a56118e16ab4a2864584",
+        "bytes": 11046
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/plan/tests/api02/run.sh",
+        "sha256": "47452969fb960c53d83a6021a8f22f4a98d01edc4480a568cee69e757015f93a",
+        "bytes": 332
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Api/AccountApi.cs",
+        "sha256": "2d4696c66a2be8220e135fbbcf57f46357303c22eb59a53369a5aca6e947d7ff",
+        "bytes": 23444
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Api/ApiHelper.cs",
+        "sha256": "dfb07f377db95023aebce4c68101c6d334444722cf79b07d7d39a6126ba302d9",
+        "bytes": 10554
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Api/CommentApi.cs",
+        "sha256": "1578461fe31d2b50f5106280ebed24c57f5adb4448073db7cec9ed33d908bdb2",
+        "bytes": 5284
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Api/SearchAPI.cs",
+        "sha256": "9f9b00550b5575be6a137c7cf7f696fe66fa497c68cceed8a51a8da3c8d7735b",
+        "bytes": 9278
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Api/SeasonApi.cs",
+        "sha256": "54dabff0be900eef7075850c8a08a05eee731db2e6054b92a192efa127b0ee80",
+        "bytes": 4305
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Api/User/UserDetailAPI.cs",
+        "sha256": "2c263ecaaf65d29e62fb3bd313b37c78c52496afcf872a6daf6471eb8f557225",
+        "bytes": 7830
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Api/User/WebDynamicFeedApi.cs",
+        "sha256": "e10feceedf3369e1ba11b8ba353805cdd9212db400a46f5300e3ddaa8d8b91c9",
+        "bytes": 1497
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/CookieOrigins.cs",
+        "sha256": "ef7f9c32371d67619a63c5173f2acc0c32bb64524ea72755e95164adec0e1de6",
+        "bytes": 1283
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Services/CookieService.cs",
+        "sha256": "447cadc5bfb66eae88887cdb716b3446817048006e6361c37b7be036dc7f38dc",
+        "bytes": 31867
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Services/PasswordLoginSession.cs",
+        "sha256": "2cb5cf8cc1e55ed6038a09031b60451368591963cd46db797dcc035426331e4b",
+        "bytes": 12248
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Services/RefreshCredentialPolicy.cs",
+        "sha256": "b3492491ff0431ad844023f1326cf5b1f57f52c26d7b689e2b7521637021db5a",
+        "bytes": 15870
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Services/WbiKeyService.cs",
+        "sha256": "2420c42dbffcb6eec8293fbd0580ddb76ab80a51ebf1a60ef58d57e819ebb32d",
+        "bytes": 8401
+      },
+      {
+        "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Services/WebRefreshTransaction.cs",
+        "sha256": "5916d4b1d96e724be5d0dfe81c60ff54cb4e874a7a08dbf177a96ffb852b41d8",
+        "bytes": 19115
+      }
+    ],
+    "privateProject": {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/current-FD1-link-only/plan/tests/api02/API02.csproj",
+      "sha256": "fe6d921e0dbf1f8c40e034a47cc1290788adf48056125be528c33b813cc2c356",
+      "bytes": 1873
+    },
+    "onlyMutation": "one additive complete SeasonApi Compile link in private project",
+    "inverseRestoresCurrentProject": true,
+    "sharedStubEdits": 0,
+    "enumTypeEdits": 0,
+    "compileErrors": 0,
+    "compileWarnings": 2,
+    "assertions": {
+      "original": 12,
+      "search": 1258,
+      "query": 3831,
+      "FD1": 270,
+      "total": 5371
+    },
+    "separateSeason1Stubs": {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/season1/Season1Stubs.cs",
+      "sha256": "a27b570ad6be0a060606fd6f1099776c24bcb4cffc9c27e32dfbcb3facab4248",
+      "bytes": 9707
+    }
+  },
+  "siblingInputs": [
+    {
+      "path": "/workspace/work/api-shape-comparison/siblings/PiliPlus-217fb54f/lib/http/api.dart",
+      "sha256": "dbd247af91ea6e5b6898213cc4fc63edd27a2b625b7d823aa2cec79de335a41f",
+      "bytes": 37480
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/siblings/PiliPlus-217fb54f/lib/http/constants.dart",
+      "sha256": "605f5b6e408207b8c5ac01bb5adb102e98ef23822d85d1f49f3f3f7097ebec51",
+      "bytes": 1040
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/siblings/PiliPlus-217fb54f/lib/http/init.dart",
+      "sha256": "012879b4135d04ada5b5342711da1759cd070952f2bab2bda45e585a466cb0cb",
+      "bytes": 11512
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/siblings/PiliPlus-217fb54f/lib/http/pgc.dart",
+      "sha256": "3a796e6480df52b223e659b03631cc3f82d76fcd8d8f8a8bce9e920c44f83811",
+      "bytes": 6912
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/siblings/PiliPlus-217fb54f/lib/models/common/pgc_review_type.dart",
+      "sha256": "40d7b95c7b8be22eb69d9fff3448c1b37df908035b5fbbfe0da609457e3267d5",
+      "bytes": 449
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/siblings/PiliPlus-217fb54f/lib/models_new/pgc/pgc_review/data.dart",
+      "sha256": "c0b593a5b4e262f3b1d1a77a6654f66a3f853056c28b5eb1871bd340a77248bb",
+      "bytes": 507
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/siblings/PiliPlus-217fb54f/lib/pages/pgc_review/child/controller.dart",
+      "sha256": "2c7c3961d0341acb4852979ecf12ac29d046a03dee4bd8d5817a1e1fbc43a4df",
+      "bytes": 3101
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/siblings/bilibili-api-4789508a/bilibili_api/bangumi.py",
+      "sha256": "04da24e899e9b53bb74a597538554d9a4bbaa8e2b93a5653de8cf9fda12e036e",
+      "bytes": 51743
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/siblings/bilibili-api-4789508a/bilibili_api/data/api/bangumi.json",
+      "sha256": "1cbb3d0d00582987a85276b93e4cc8005c0a2c9bac7e4c48d5402b59a4fcd080",
+      "bytes": 4903
+    }
+  ],
+  "preservation": {
+    "count": 150,
+    "before": {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/preservation-before.json",
+      "sha256": "7c96d22fb654c39df1de334909db72dbb097495a80f2aa6c59d11145f74fce45",
+      "bytes": 32351
+    },
+    "after": {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/preservation-after.json",
+      "sha256": "7c96d22fb654c39df1de334909db72dbb097495a80f2aa6c59d11145f74fce45",
+      "bytes": 32351
+    },
+    "equal": true,
+    "scope": "named private author inputs, original118/supplement34/G4 fixture files and G4 references, cited sibling files, frozen SeasonApi/current FD1 API02 closure and reviewed SR1 metadata",
+    "movingFI2FI3Excluded": true,
+    "wholeTreeStabilityClaim": false
+  },
+  "privateArtifacts": [
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/review-proof.py",
+      "sha256": "67fa9ba414b7bbeecc9848cdcd556464e10aabb70a18a01b95e5f6233f2c9bf8",
+      "bytes": 9838
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/resume-finalize.py",
+      "sha256": "180c6c1933815a2d2d8536522a119d0ef4d90f3b800a196b5ea0d06059ba0b7b",
+      "bytes": 3430
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/prepared.json",
+      "sha256": "dea4fa6a57d719291d2bc57407ae359874a6d8f0f19fbf679d9c8ab818964bcf",
+      "bytes": 15131
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/result.json",
+      "sha256": "1bcdfb4689dfb4589233ecba79867031c4f6741699ea82985bd185ac93ab92f9",
+      "bytes": 8719
+    },
+    {
+      "path": "/workspace/work/index-dynamic-contracts/short-review-review/NuGet.Config",
+      "sha256": "9508cae5f76364f56e80eb97cb16493977243cf38e5cca6284e3d74f83b20a2c",
+      "bytes": 74
+    }
+  ],
+  "proofDriverCorrection": {
+    "reason": "Post-run summary parser expected descriptive labels rather than actual SEARCH/QUERY output. Commands and fixtures passed as expected; corrected parser and finalized from saved outputs without rerunning tests.",
+    "originalDriverExit": 1,
+    "resumeCommand": [
+      "python3",
+      "/workspace/work/index-dynamic-contracts/short-review-review/resume-finalize.py"
+    ],
+    "resumeExit": 0
+  },
+  "limits": [
+    "No source/test/main-document/Git/index/ref/cache/auth/dependency mutation; copied existing packages into private workspace only",
+    "No candidate constructed; no foreign or shared build; no shared or full suite execution",
+    "No live service, endpoint acceptance, production cursor frequency, Windows/UWP/XAML/native or hosted claim",
+    "Requirements PASS requires root exact-current-baseline rebind and same dynamic-owner additive grant before implementation"
+  ],
+  "custody": "FROZEN/RELEASED; private synchronous build/run commands ended; no review-owned dotnet process remains"
+}

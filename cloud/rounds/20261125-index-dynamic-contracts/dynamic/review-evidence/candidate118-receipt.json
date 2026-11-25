@@ -1,0 +1,15 @@
+{
+  "kind": "concise receipt reference; full unchanged generated receipt is private",
+  "checks": 118,
+  "failures": 5,
+  "pass": 113,
+  "groups": {
+    "PGC-initial-red": 2,
+    "PGC-owner-red": 3
+  },
+  "fullReceipt": {
+    "path": "/workspace/work/index-dynamic-contracts/dynamic-review/evidence-hygiene/raw/candidate118-receipt.json",
+    "sha256": "a0aec89ab95d26ea2e5da8c9769d28626f0acf00870dd9047c194cd9e7703f8e",
+    "bytes": 27412
+  }
+}

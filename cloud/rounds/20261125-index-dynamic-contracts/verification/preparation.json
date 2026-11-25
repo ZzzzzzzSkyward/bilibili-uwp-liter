@@ -1,0 +1,113 @@
+{
+  "artifacts": {
+    "artifact-hashes.json": "643290cdf3daae46080f2bf71de7a9eeb2d17c5bf62e87cb796e8ba4caac0d21",
+    "candidate-generated.json": "a6116f79ce8c79bdbd1ce8d12cc4400411e3d18dfc80edea54f3b1d827b7227a",
+    "candidate-new-inputs.json": "d4efb8090b146231cc1f491cff75b7a9d6ba170d44c0fc45c5e3c1c9e0d3549d",
+    "candidate-source.json": "e1a2060c36aba3e2f786566f0554ec6b7ecf79152aa83c47a184b2feb995f93a",
+    "compile-and-imports.json": "68be228370d2b61b661d434c01e3066536ec4426932cf3993ea163d50376793d",
+    "expected-suite-manifest.json": "148456cf2d62f886d621326341fdc5e6af1df9160afd22688fcca150495c9072",
+    "host-current.json": "d486202e1463a84b8fcb63651ea5d8827ac4bc8179370bf84347d783f2da3779",
+    "ignored-noncloud-inventory.json": "a541044efbe69fcdae64beac1c80af94f165b149c851f6eb0eba5b9c670d73dc",
+    "powershell-current.json": "47a72d2ef3b44514a360ce2ba59c6d649df3099a7744a79b21979d8e27baf6d5",
+    "provenance-current.json": "b637683b4831a55ef8ff906a0a130b2d073ebeb4cdc168e1cb671a44e1aa4962",
+    "reuse-validation.json": "f4e07ea5479397cceee9f06d242dbdea49f9db412905adfb90e848bee3bc8372",
+    "runtime-source-read-lines.json": "3c86658e57f34fe12ac66503944cca0730fb622da5c91d2ae620a6cff9e3d2ba",
+    "static-commands.json": "d7135bc7d085d0989a48253e58cc4875e78b9ced7d64c2275d6a39bf353f921d",
+    "summary.json": "5235e9a5e79134286a07326ae74290326da311c302bcb44cad9ca80729343b7e",
+    "tools-current.json": "66f538a02d410e16fb24e6ac8024606e5112ef1bda1eb5e674c996affcc68267"
+  },
+  "authority": "cloud/rounds/20261125-index-dynamic-contracts/verification-preparation-dispatch.md",
+  "baseline_A_noncloud_count": 937,
+  "candidate_noncloud_inputs": 939,
+  "candidate_scope": "point-in-time while source writers active; never final/stable acceptance",
+  "deadline_utc": "2026-11-25T08:29:30Z",
+  "fixed_inventory": {
+    "directory_batches": 44,
+    "executable": 52,
+    "legacy_executable": 8,
+    "legacy_logical": 7,
+    "logical": 51,
+    "manifest_sha256": "84730c2d99a5823a7fdc13d2b297c673c82d8d866158cbf1da6172dbe868b7c7",
+    "net8_projects": 43,
+    "unique_executable": 52
+  },
+  "generated_existing_count": 1263,
+  "historical_full_report": {
+    "path": "/workspace/work/video-memory/final-verification/combined-corrected/aggregate/results.json",
+    "scope": "dirty7356/935-source C; not this round",
+    "sha256": "ca43ccc8c2b5fe8b33327965e4f18c4ab7e73c3926e91b09adf9020026575a16"
+  },
+  "host_scope": "actual current Linux/platform/Python metadata, resolved Python/Bash/awk/Git hashes, /etc/os-release and five known PowerShell launch libraries; no whole-host or retroactive identity",
+  "ignored_non_generated_disposition": {
+    "__pycache__": "derived Python bytecode, captured in ignored manifest; not runnable source",
+    "plan/tests/c1/build/DetailModels.cs": "explicit Compile Remove build/**/*.cs in C1Probe.csproj; unused legacy generated file captured separately and will be before/after bound"
+  },
+  "new_tests": [
+    "plan/tests/api02/DynamicFeedRequestChecks.cs",
+    "plan/tests/season1/SeasonIndexProbe.cs"
+  ],
+  "powershell": {
+    "binary": "/workspace/work/maintenance-foundation/package-layout/powershell/pwsh",
+    "binary_sha256": "3f27efac38d345f9a39dbb68c7ca519bcab35884a4f12e36ce0e456f876d275a",
+    "count": 732,
+    "exact_current_bound_receipt_dictionary": true,
+    "separate_portable_installation": "Core7.7/net11; not an app/probe framework upgrade"
+  },
+  "prepared_utc": "2026-11-25T06:38:08.352038+00:00",
+  "private_preparation": "/workspace/work/index-dynamic-contracts/final-verification/preparation-20261125",
+  "private_root": "/workspace/work/index-dynamic-contracts/final-verification",
+  "quality": {
+    "SDK": "8.0.427",
+    "count": 5073,
+    "exact_accepted_dictionary": true,
+    "root": "/workspace/work/maintenance-foundation/quality",
+    "runtime_and_reference": "8.0.33"
+  },
+  "release_utc": "2026-11-25T06:40:03.485538+00:00",
+  "reuse": {
+    "accepted": true,
+    "accepted_synthetic_rows": 52,
+    "artifact_mismatches": {},
+    "changed_relevant_inputs": {},
+    "controlled_groups": 21,
+    "current_sampler_package_artifact_manifest_sha256": "1d1bda4745da541e3c64bf9191c069251f0635129e13c288ce59884c94b45a50",
+    "helper_calls": 55,
+    "historical_host_identity": "not claimed",
+    "old_historical_interpreter_hash_gap": "not retroactively asserted; current interpreter-bound receipts supply current provenance",
+    "package_cases": 15,
+    "revision_checks": 106,
+    "runner14_report_sha256": "427d42beffae5b83956bd731a96f7474740f3b916812dfefcaf2de171600448e",
+    "sampler_outer": 46
+  },
+  "seam_inventory": {
+    "compile_import_reference_rows": 824,
+    "runtime_read_extraction_evidence_lines": 205
+  },
+  "status": "PREPARED_FROZEN_RELEASED_GATE_INACTIVE",
+  "tests_builds_runner_controls_package_sampler_executed": false,
+  "unverified": [
+    "native Windows VS/UWP/XAML/PowerShell5.1",
+    "true50 decoded-video journey and RAM/heap/native/GPU",
+    "live service/account/session",
+    "signing/install/startup",
+    "observed pushed-SHA hosted CI"
+  ],
+  "wrapper": {
+    "activation_requirements": [
+      "all selected product/test writers and owning/fresh reviews frozen/released",
+      "exact final full noncloud manifest and source/test hashes",
+      "accepted review hashes and owning log assertions",
+      "exact active dispatch and output path",
+      "no changed reusable control inputs or unresolved provenance gap"
+    ],
+    "actual_gate": "bash plan/tests/run-all.sh --tools-root /workspace/work/maintenance-foundation/quality --output <fresh-private-attempt>/aggregate",
+    "hashes": {
+      "/workspace/work/index-dynamic-contracts/final-verification/activate.py": "1fca346d5305a2324434e5f9fff8b342bcd1bdbd3f71c6efce9ddf0c97f402af",
+      "/workspace/work/index-dynamic-contracts/final-verification/custody.py": "2cd4ea392f43199bf20ff3d23047f9b1c2aefb7c8b8227ca5a76daf6c705c07f",
+      "/workspace/work/index-dynamic-contracts/final-verification/prepare.py": "192bf6b2a42bc616fd27410a6e9bf8aac276581cf7498bdc9b5983a48dbc0fbd"
+    },
+    "invocation": "python3 /workspace/work/index-dynamic-contracts/final-verification/activate.py --activation <root-bound-active-json> --attempt <fresh-private-attempt>",
+    "path": "/workspace/work/index-dynamic-contracts/final-verification/activate.py",
+    "template": "/workspace/work/index-dynamic-contracts/final-verification/activation-template.json"
+  }
+}

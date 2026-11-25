@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "currentAcceptedInputSha256": {
+    "documentation/main-execution-dispatch.md": "d8dbf5d4bb432e9f42078fb8f0e88f3356c1173592cf798baf35bd8252fa310b",
+    "documentation/final-payload-draft.md": "755d441279a0e1e3e3b94923791206b00115b61b22642c737ae8defd0b038aa6",
+    "documentation/final-preparation.json": "48a2eb1a6f55660e18d474a481837a592756768c682223a63d566464a236037e",
+    "documentation/draft.md": "9d365d23432704b9908a75f859648ce4f933b822b584f6015813236353190d00",
+    "documentation/preparation.json": "b5aaa747956897f46b1834c89b6e37e4589082e735d19764abc714680e0374ce",
+    "publication/execution.md": "d9de005d9d3a294df09af6cf8db1885cbebdd038721efde36b0263761615ffbb",
+    "publication/root-source-check.json": "cb8f81cfb794d730151ee48bc178e64acd34dc4a392934ba0e0bda9e47c6d8ca",
+    "publication/source-inputs.json": "6c8ec8c77763a2f771988cebbb3d2a157b297b0836a7098ef1432c8ead785684",
+    "publication/source-paths.json": "8ac5d0049d9d40fb9a55ff2099c5ce79fbfd8cd2318cc0b5c8569e3d5bcd2e48",
+    "publication/manifest-review.md": "97dbb663bb1c31edb968df5ec8ab4bf687176388a3980037b56c89ae0e93a9b9",
+    "index/final-review.md": "7ee2579bbfd7774f9422af47aca990779039d3c5bcf2ab6c0bdd1d4f87852a49",
+    "dynamic/final-review.md": "60908557b48abe722ed5e1c9aa5c23dd1b2f48bf446f5dcd3c8e07fb5ff44d8c",
+    "later-pgc/requirements.md": "6c13cd1653e5078b4c82ce25c049fda978cc222b6b28718ae8bec9c7ee271fce",
+    "later-pgc/amendment.md": "a261bff0308080e773a982db04c53618dbf99e33bb67e141a86a59695dc94967",
+    "later-pgc/amendment-review.md": "8a24b7b18bf0b4b1ad7a6decd96519a324fc8a882b1456ddac5e58ca5f78e277",
+    "later-pgc/execution.md": "60b5008660cc54eada4b19ddeb64c664448bac360b32251fc584cf43be9a48af",
+    "later-pgc/final-review.md": "6fccdf6695ab854909977f5496aab1ba9dad47c2c4c5969d25134f07c44f68ff",
+    "short-review/requirements.md": "05294ee381267a536640a901d0afb364b5e4b262b45c4fe364bbc2605789912e",
+    "short-review/review.md": "0db64196e37438b60c57f48ed8793e84714fc152b12cb9fbf53a9b0acba1859c",
+    "short-review/execution.md": "75239f2b9f15a46c8980a13b584c10ba5a7e3a46aa380f0c463a354c0f7569f9",
+    "short-review/final-review.md": "4d833e27d4baa26c2080a750c4168b6da282bd709a6011e450bd7834a4fa60f7",
+    "final-fresh-audit.md": "8e92ccb90dd75a67389c8475ece4052b1a347879b6f1c856408e5a2809d38977",
+    "verification/execution.md": "7e9d7231880386b719b497baa04690d7e67eacd1cb01378e2c064e1d1650273e",
+    "verification/evidence/final-common-gate.md": "c08b032912ef314ae4d18c74074509e65c995e6752e9cc5e1d748433a0c4e4ea",
+    "verification/evidence/result.json": "48662f99753932d2afc9e59a2f0356e2d757e93579c9980684c1cfb70fc1a5e5",
+    "hosted-observation.md": "8aced4d914d44a70c152b80089af503b2c4c2f39cbf7e57ea1db9a04dcf30fc5"
+  },
+  "rulesDeadlineSha256": {
+    "AGENTS.md": "a00c0888fab48a2b7e16847c21f74b7b78a2c9fe879a01351feddc4f826472c1",
+    "cloud/CONTRACT.md": "db9d2ca6ffbe9dc51e26d8f20b6cc8357e9a065a03dbfb40c4cd58db0340085c",
+    "cloud/REPO.md": "e005f06b3d46a36a85e0c945c4a58a948f41a0be37e9591705924f18729bbad3",
+    "cloud/memory/deadline-20261125.md": "8710ea8409d08486aa1456104b60ad193cc8d14a0cd3abb530ebb09fa679d2ee"
+  },
+  "gitMetadataReadOnlyBeforeAfterSha256": {
+    ".git/HEAD": "bda77d7d12a90332080071375095fb080d8cd2a6702e6ee44552863a0ca4317e",
+    ".git/index": "3e183379a2265b61a48cd739767d2d6b1c833853322e3559b5862e4b110dd20c",
+    ".git/refs/heads/work": "1583baa10c5843673e71e77be26307ce01f36547f4c2161c00de8ce8e5b29feb",
+    ".git/refs/heads/dev": "70c6e7eb36c41770771bc30c26ce66e581fb9ed6eb32c7a7d99a873373b3748e",
+    ".git/refs/remotes/origin/HEAD": "b0099158467f3461db97f236cfd30b07c7414af93bcfb78ad79b6d7eb9992b5c",
+    ".git/refs/remotes/origin/dev": "70c6e7eb36c41770771bc30c26ce66e581fb9ed6eb32c7a7d99a873373b3748e"
+  },
+  "frozenDraftBeforeAfterSha256": {
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/draft.md": "9d365d23432704b9908a75f859648ce4f933b822b584f6015813236353190d00",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/preparation.json": "b5aaa747956897f46b1834c89b6e37e4589082e735d19764abc714680e0374ce",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/final-payload-draft.md": "755d441279a0e1e3e3b94923791206b00115b61b22642c737ae8defd0b038aa6",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/final-preparation.json": "48a2eb1a6f55660e18d474a481837a592756768c682223a63d566464a236037e"
+  }
+}

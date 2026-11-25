@@ -1,0 +1,86 @@
+{
+  "environment": {
+    "UPSTREAM_UNIT_TOOLS": "/workspace/work/maintenance-foundation/quality",
+    "DOTNET_ROOT": "/workspace/work/maintenance-foundation/quality/dotnet",
+    "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/index-review/dotnet-home",
+    "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/index-review/nuget",
+    "DOTNET_NOLOGO": "1",
+    "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+    "DOTNET_CLI_TELEMETRY_OPTOUT": "1"
+  },
+  "runs": [
+    {
+      "label": "maintained-old-A",
+      "utc": "2026-11-25T06:13:58.994364+00:00",
+      "cwd": "/workspace/work/index-dynamic-contracts/index-review/maintained-old-A",
+      "command": [
+        "bash",
+        "/workspace/work/index-dynamic-contracts/index-review/maintained-old-A/plan/tests/season1/run.sh"
+      ],
+      "exit": 1,
+      "seconds": 12.299,
+      "log": "/workspace/work/index-dynamic-contracts/index-review/maintained-old-A.log",
+      "logSha256": "6f32fab0d1dc79fe9c907e5607d95b6d6094daeffd11b776abf8567b312fdfde"
+    },
+    {
+      "label": "maintained-candidate",
+      "utc": "2026-11-25T06:14:11.293768+00:00",
+      "cwd": "/workspace/work/index-dynamic-contracts/index-review/maintained-candidate",
+      "command": [
+        "bash",
+        "/workspace/work/index-dynamic-contracts/index-review/maintained-candidate/plan/tests/season1/run.sh"
+      ],
+      "exit": 0,
+      "seconds": 2.105,
+      "log": "/workspace/work/index-dynamic-contracts/index-review/maintained-candidate.log",
+      "logSha256": "a4e17950b3b43173c56dac39301d43ace2eab21bb3eb97f28de7f349424c6d89"
+    },
+    {
+      "label": "original-candidate",
+      "utc": "2026-11-25T06:14:13.399287+00:00",
+      "cwd": "/workspace/work/index-dynamic-contracts/index-review/original-candidate",
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/index-review/original-candidate/Followup.csproj",
+        "-c",
+        "Debug"
+      ],
+      "exit": 1,
+      "seconds": 1.617,
+      "log": "/workspace/work/index-dynamic-contracts/index-review/original-candidate.log",
+      "logSha256": "ef43f62c871c408c6556256d19952aea4de0bc95d3bb8df61cc612afa47b4d3b",
+      "receipt": "/workspace/work/index-dynamic-contracts/index-review/original-candidate/bin/Debug/net8.0/receipt.json",
+      "receiptSha256": "81ea47800696ddbcf508cbdff9439a63a150c7aa739deb77690a1dabcca23d5e",
+      "checks": 118,
+      "failures": 24,
+      "groups": {
+        "dynamic-roundtrip-red": 18,
+        "dynamic-controls-red": 6
+      }
+    },
+    {
+      "label": "supplement-candidate",
+      "utc": "2026-11-25T06:14:15.018050+00:00",
+      "cwd": "/workspace/work/index-dynamic-contracts/index-review/supplement-candidate",
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/index-review/supplement-candidate/Followup.csproj",
+        "-c",
+        "Debug"
+      ],
+      "exit": 0,
+      "seconds": 1.647,
+      "log": "/workspace/work/index-dynamic-contracts/index-review/supplement-candidate.log",
+      "logSha256": "4f04a1bef98eab2d0e31d57c030ecf5f3b900880f0f1d7faa532bc903c7ff88c",
+      "receipt": "/workspace/work/index-dynamic-contracts/index-review/supplement-candidate/bin/Debug/net8.0/receipt.json",
+      "receiptSha256": "0c5e364fc24bcd23b8460bc19cb69d0487602b97ec0c65e18d66284c1af18887",
+      "checks": 34,
+      "failures": 0,
+      "groups": {}
+    }
+  ]
+}

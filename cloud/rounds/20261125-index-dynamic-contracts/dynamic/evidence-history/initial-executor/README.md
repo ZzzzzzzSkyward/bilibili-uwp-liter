@@ -1,0 +1,3 @@
+# Superseded initial executor metadata
+
+These are byte-identical copies of the first FD1 executor execution and binding metadata. Their initial repository raw-log/receipt locations are **historical and superseded**, not current links. Current custody and compact summaries are recorded in `../../evidence/relocation.json`, current `../../evidence/binding.json` and `../../evidence/release.json`. The first release contained no separate executor release.json. Initial independent review metadata belongs to its reviewer and was not modified here. Full raw logs and generated receipts remain only in excluded private scratch; no source/test/result change or rerun occurred.

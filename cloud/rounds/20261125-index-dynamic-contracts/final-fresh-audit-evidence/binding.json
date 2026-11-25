@@ -1,0 +1,180 @@
+{
+  "utc": "2026-11-25T06:49:20.967273+00:00",
+  "verdict": "PASS",
+  "scope": "Exact final FI1/FD1/FI2/FI3/SR1 frozen union; selected PARTIAL_PASS only",
+  "rootFinalBinding": {
+    "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-index-dynamic-contracts/final-source-binding.json",
+    "sha256": "6f2b48b4207d439b1b1a18a6e5a31dcff34f1f865a75275ec10010c865e0833e"
+  },
+  "baselineManifest": {
+    "path": "/workspace/work/api-shape-comparison/combined-archive-review/baseline-private.json",
+    "sha256": "9484454319e7e0fdcacb0ad116e19caaee33d22200077eacedfb6f80c0bbb070"
+  },
+  "nonCloudCount": 940,
+  "modifiedExistingCount": 8,
+  "newTestCount": 3,
+  "unchangedExistingCount": 929,
+  "selectedPaths": {
+    "src/BiliLite.UWP/Modules/Season/SeasonIndexVM.cs": "34536344c659d90394246e65c6dda34252be450f056b6aa7c926621429988a87",
+    "src/BiliLite.UWP/Api/User/WebDynamicFeedApi.cs": "e10feceedf3369e1ba11b8ba353805cdd9212db400a46f5300e3ddaa8d8b91c9",
+    "src/BiliLite.UWP/Api/SeasonApi.cs": "7c0695b00d529a79dc5f723127d174454c1d179942d76b8e83fc2503e34500a1",
+    "plan/tests/season1/Season1Probe.csproj": "8eb31a41d340d0b159b20f3ef950961dc0c0fcb16e5a4f69b3bdef5054a44e52",
+    "plan/tests/season1/Program.cs": "9e0d0af8d9299965de65d6903ac30f9ddb5f2fff79d21630fb52ff2aeb7c64c4",
+    "plan/tests/season1/Season1Stubs.cs": "a27b570ad6be0a060606fd6f1099776c24bcb4cffc9c27e32dfbcb3facab4248",
+    "plan/tests/season1/SeasonIndexProbe.cs": "0a74f449f7594fd5e9d064ce6b4f68feea2cb45a9d3eb0fb4022df60f078c593",
+    "plan/tests/api02/API02.csproj": "d93bf6c6afa8a9ab0abebc748e3be60259d0c205d74e113e6d7624d10dd6e39b",
+    "plan/tests/api02/Program.cs": "415f78d0a816189ee3217f3aacc85cf5bb6e61d8f2a70cfb41f760e112e4a12c",
+    "plan/tests/api02/DynamicFeedRequestChecks.cs": "5f8df3e270dedb59a50afb18bae44ecf9a02128c50c9af877d6fa4d4aee88f4d",
+    "plan/tests/api02/SeasonShortReviewRequestChecks.cs": "4d262da48bf0b376ef81a3bb13805945f7b3463f75f81d02aa21b8361e23ad21"
+  },
+  "all940BeforeAfterExact": true,
+  "firstAuditHistoryPreserved": true,
+  "firstAuditHistoryBinding": {
+    "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/first-audit-history.json",
+    "sha256": "07bdd7473a4a98208df73d17468f334a715acbdff9e93c142e23c476031bc869"
+  },
+  "acceptedFirstRequirements": {
+    "cloud/rounds/20261125-api-shape-comparison/followup/requirements.md": "388bf069bdcb4ab0360159f8827a1c6d4c2101788975cf740c36ba2ee95a603c",
+    "cloud/rounds/20261125-api-shape-comparison/followup/evidence.md": "a8a9356cdd30c9116b72e39e6780036672701b40c2310ee835054b2a6c789641",
+    "cloud/rounds/20261125-api-shape-comparison/followup/fi1-amendment.md": "346566bb67b9ec3f14663266b973eaac5dc1bdbfb40aea4dc21500c9000a2fed",
+    "cloud/rounds/20261125-api-shape-comparison/followup/review.md": "6129f1af188469efba646d2974a33745932af4408aae7bec9caf1e10464c413b",
+    "cloud/rounds/20261125-api-shape-comparison/followup/fi1-review.md": "631407d9a346f1d433aca01b13b15dce572314138a976e41b3e478bc8929abe5"
+  },
+  "finalRoleDocumentsAndReleasedReviews": {
+    "later-pgc/requirements.md": "6c13cd1653e5078b4c82ce25c049fda978cc222b6b28718ae8bec9c7ee271fce",
+    "later-pgc/review.md": "baab8c7b674b8424fa691c5a962cb17b1d006f7f4964ec577b8bbe3192d3cbc9",
+    "later-pgc/amendment.md": "a261bff0308080e773a982db04c53618dbf99e33bb67e141a86a59695dc94967",
+    "later-pgc/amendment-review.md": "8a24b7b18bf0b4b1ad7a6decd96519a324fc8a882b1456ddac5e58ca5f78e277",
+    "short-review/requirements.md": "05294ee381267a536640a901d0afb364b5e4b262b45c4fe364bbc2605789912e",
+    "short-review/review.md": "0db64196e37438b60c57f48ed8793e84714fc152b12cb9fbf53a9b0acba1859c",
+    "index/evidence/release.json": "5d1281b8b222d5422b1c0b17215f39474c723853c4705f9b5678735768fc270e",
+    "dynamic/evidence/release.json": "351ca14b6560f20147eece719a8818f79c0ae64dc3702d0edf5e9e0109fa3905",
+    "dynamic/review-evidence/release.json": "ec723a38cb53f4e7fea58944b9d116c5df4075ccb4744ce75ea6561ff14060c7",
+    "later-pgc/implementation-evidence/release.json": "f823b7f30f547a1315d310b89e1b33c64b508d8e2b968c0076b4dd96cec0984b",
+    "later-pgc/implementation-review-evidence/release.json": "40bc5e94faa95fb8e8acaf1b889a41b05c410114e018a0548965806fb4ce0d2f",
+    "short-review/implementation-evidence/release.json": "20710c41e1f8181b4bfd37fc8a2a372092efffa429dd3e5199479c0511dbba5e",
+    "short-review/implementation-review-evidence/release.json": "d62439d26a473d734646c1658485af9596dfe71c5790825455999c8da68ce154",
+    "index/final-review.md": "7ee2579bbfd7774f9422af47aca990779039d3c5bcf2ab6c0bdd1d4f87852a49",
+    "dynamic/final-review.md": "60908557b48abe722ed5e1c9aa5c23dd1b2f48bf446f5dcd3c8e07fb5ff44d8c",
+    "later-pgc/final-review.md": "6fccdf6695ab854909977f5496aab1ba9dad47c2c4c5969d25134f07c44f68ff",
+    "short-review/final-review.md": "4d833e27d4baa26c2080a750c4168b6da282bd709a6011e450bd7834a4fa60f7"
+  },
+  "toolchain": {
+    "/workspace/work/maintenance-foundation/quality/dotnet/dotnet": "db40da462b13ec4c07df7a75c4b0395223d360b8dc9a477d9e31fb71759b05f4",
+    "/workspace/work/maintenance-foundation/quality/dotnet/sdk/8.0.427/Roslyn/bincore/csc.dll": "2b9a5bbe002b353e44c78506e1bccbbc55dcdf2338abb11a68a5056329cb7334",
+    "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Private.CoreLib.dll": "98fec20c823887e41d4fbd2d2e900175e5b1ba7d671e29704c9ce4632dcc5432",
+    "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Private.Uri.dll": "a077553d15cfa75cb5ab994384d0f32a6de94b49a5f6e8ecdf190ff2eb928b2a",
+    "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Web.HttpUtility.dll": "41aff6421fde1711eef7a52db52c9016ab5fa10fae235e7fde17e841651a7683",
+    "/workspace/work/api-shape-comparison/requirements-review/nuget/newtonsoft.json/13.0.3/lib/net6.0/Newtonsoft.Json.dll": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07"
+  },
+  "resultCounts": {
+    "original118": {
+      "checks": 118,
+      "failures": 0
+    },
+    "supplement34": {
+      "checks": 34,
+      "failures": 0
+    },
+    "pgc140": {
+      "checks": 140,
+      "failures": 0
+    },
+    "sr13446": {
+      "checks": 3446,
+      "failures": 0
+    },
+    "season1": {
+      "original": 141,
+      "lifetime": 497,
+      "index": 152,
+      "total": 790,
+      "failures": 0
+    },
+    "api02": {
+      "original": 12,
+      "search": 1258,
+      "query": 3831,
+      "FD1": 270,
+      "SR1": 3424,
+      "total": 8795,
+      "failures": 0
+    }
+  },
+  "g4": {
+    "reused": true,
+    "count": 179,
+    "entireClosureExact": true
+  },
+  "historicalArtifactCounts": {
+    "original": 18,
+    "supplemental": 16,
+    "initialWrongOracle140": 14,
+    "originalSR1FrozenArtifacts": 27
+  },
+  "assertionPreservation": {
+    "allFirstProbeLinesExactSubsequence": true,
+    "all75FirstAssertionsExactNamesOrderAndPassingOutcomes": true,
+    "newAssertions": 77,
+    "publicRefreshSetupBeforeMissingList": "Restores nonterminal rows104,105/Page3 through real Refresh plus append; the old missing-list assertion remains exact. Terminal behavior independently tested."
+  },
+  "approvedPGCProgramSha256": "a1b843fae39658e378083ecc78dc50a0f98b1e73f1e0affdb90460fe7e724b14",
+  "originalSR1ProgramSha256": "91a509e5ec041a9f179f308a8ef39d7f5061be48781123498a83ad177155ff9a",
+  "privateEvidence": {
+    "prepare.py": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/prepare.py",
+      "sha256": "8a675e84a91e7779a2303a8185d7dc95258114cbb2a25a3178ada1b6e43229ea"
+    },
+    "run.py": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/run.py",
+      "sha256": "b834797ac9da721315b4b50a7ecdbcf14e79f011d3b7802ca145bfbf34bb898b"
+    },
+    "finalize.py": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/finalize.py",
+      "sha256": "fe4506e5b3559e8de960221752867f387160ca532c4b8670c5e855ada733c8c2"
+    },
+    "noncloud-before.json": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/noncloud-before.json",
+      "sha256": "ed1364c6884176a5d85967ad78ff85e8352287971db454f08c98bb81d7cc28c9"
+    },
+    "noncloud-after.json": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/noncloud-after.json",
+      "sha256": "ed1364c6884176a5d85967ad78ff85e8352287971db454f08c98bb81d7cc28c9"
+    },
+    "delta.json": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/delta.json",
+      "sha256": "eb1c6ea7c0bce24123f2d7fa5b8c84efe7a85ef4159ac0206dc79dfdf751f2ac"
+    },
+    "prepared-inputs.json": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/prepared-inputs.json",
+      "sha256": "ba90fbef85c3dd993f1d98a2b81159c866d80c14e22fb27cef60ef6710462001"
+    },
+    "historical-preservation.json": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/historical-preservation.json",
+      "sha256": "3becd074d23cef72ea0d645ad7b5ff0d2e89300b98aa3fba0089a16f132e9b72"
+    },
+    "assertion-preservation.json": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/assertion-preservation.json",
+      "sha256": "9d4727a451d75a422cf1f4e13b6749c12121b485a5dd13a2832b40800febe0fb"
+    },
+    "later-delta.patch": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/later-delta.patch",
+      "sha256": "801827f661105ba63a1c4c00135cbf7fb13dc511bca1f525415d3b7945183630"
+    },
+    "compiled-artifacts.json": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/compiled-artifacts.json",
+      "sha256": "9a588ff57d002301a18b6f01e4f4eb0338798cdfc897e34955fca2d87eb08921"
+    },
+    "final-role-bindings.json": {
+      "path": "/workspace/work/index-dynamic-contracts/fresh-audit/final-union/final-role-bindings.json",
+      "sha256": "9b335f0ddbfa3a31b4c95145a031ce2f5cf1e6f70652e52a99acf675732f01c9"
+    }
+  },
+  "preparationNote": "A private flat-file basename collision was caught by the Program hash guard before any replay. The copy filter was restricted to src inputs and all original fixture bytes revalidated; no test was rerun for this preparation correction.",
+  "limitations": [
+    "No Git operation or source/test/main-doc mutation; no shared project/full suite executed.",
+    "Managed generic platform/delivery primitives, no native UWP/XAML/Windows/device/server/account/live/hosted acceptance.",
+    "Full 51 logical/52 executable gate and publication remain separate."
+  ],
+  "custody": "FROZEN / RELEASED all fresh final-union audit write/read custody; first fresh history untouched."
+}

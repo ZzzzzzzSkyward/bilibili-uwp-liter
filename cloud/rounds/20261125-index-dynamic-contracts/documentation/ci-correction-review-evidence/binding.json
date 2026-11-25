@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "utc": "2026-11-25T08:09:52.345588+00:00",
+  "verdict": "PASS",
+  "correction": "DOC-E-CI-01/P2 closed",
+  "mainSha256": {
+    "bug_report.md": "7addfe4d40a7c3216e57b51a3d95907a680b9666864c4c68f58b221a4c8765df",
+    "docs/ROADMAP.md": "14c225740ff8718c0c99874e478b35f27d19482b5f74d015248b58bf27794fa4",
+    "plan/PLAN.md": "81dc094614c99d68d703af8624ab5e58c4aef76ebfbcb9db1d5e3d09093d9051",
+    "plan/VALIDATION.md": "13e41e608c88e7ccdefc0c870fd743ae41ed05fc40e228afa18faca50033f460",
+    "document/BILIBILI_API_SHAPE_COMPARISON.md": "58a69578391c291c4489f6cffe10b81cacd4121d06d5a570ca032c9524b4f47d"
+  },
+  "authorCorrectionReleaseSha256": "53afb324808b872e7179224728545bcfa45ba9709ba49811e9dd49650646d4eb",
+  "firstReviewReleaseSha256": "46b9b71895312770ec3a97eabf26b74e75224a65e99e172cb3231ca22d7498eb",
+  "firstHistorySha256": {
+    "documentation/execution.md": "bb0e8929f07eee9b838046aefc05ce32aacd80327ae7b90aa3129906313270a8",
+    "documentation/evidence/main-paths.json": "0e1ef5fb7ceb1133f84163dfd46919f54d5e750f4343a3a2b425ec3804f0a181",
+    "documentation/evidence/checks.json": "42415f4b007dbe2eda167ef0699542b5941579b6781e2eda1ed463bd07c32e03",
+    "documentation/evidence/input-bindings.json": "dd0e616fee5942ea196630458ebd4ded33252e6e7174ad2e8a194f949a43afab",
+    "documentation/evidence/release.json": "ef1cb3a574c2eb175fc044d63afea78d8283136b8cc6595e6bee6d19aa6c75ed",
+    "documentation/final-review.md": "cd0cb66c9f7312f96e1bfd31d8ddc5871db981f73013ba433c18296ba7089efc",
+    "documentation/review-evidence/binding.json": "3b251387c5b3189c7aee3bce794e72c704f9da0b6b5006f3d901f84ed17733ae",
+    "documentation/review-evidence/checks.json": "bc1cd11b9ceb8d2a5d93a0d64b84caeaece1a8e7faeb6768e1feced7d331cb06",
+    "documentation/review-evidence/release.json": "46b9b71895312770ec3a97eabf26b74e75224a65e99e172cb3231ca22d7498eb"
+  },
+  "inputSha256": {
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/ci-correction/evidence/release.json": "53afb324808b872e7179224728545bcfa45ba9709ba49811e9dd49650646d4eb",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/ci-correction/execution.md": "315134fb6bab0c8d8b173d3db3d61e1ba063bf7f532e7409168ba2aeaed5c5a5",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/ci-correction/evidence/checks.json": "2de370a901d5eb7b81ae4aa3b2d91976d82c023ca15da7683aa199933f288d56",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/ci-correction/evidence/input-bindings.json": "17c403c9de5c0e2f24567d0bbaea64d8d0d30a9ab3657e427252de33c9eb675b",
+    "cloud/rounds/20261125-index-dynamic-contracts/publication/root-hosted-source-e.md": "ef5f446e94e1e153d793f4ba4a6097678ffd3804f662ae4b76ca409044cd6faf",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/ci-correction-review-dispatch.md": "594ee173fa65cd71853265be1d1da9f5520e403ee8aa907edfd3454d1931f734"
+  },
+  "privateProofRoot": "/workspace/work/index-dynamic-contracts/documentation-review/ci-correction",
+  "privateProofSha256": {
+    "recheck.py": "ace18571d054af303739aefab96d839bb438093d9f328806a219c8d02469baaa",
+    "correction.diff": "43da10aef93ba9ad56e42f5f7c2e32f29c62db4e65b52bd7d1851ff92bf66f36",
+    "current-inputs.json": "b71e7b764bffffc5ce68aaeaa8a57e5460d2a652d2524fe6faf5053870c5d9cf",
+    "checks.json": "c96dc9fbe6d052ef655db1e0821741c1b780a9e2d7e87d5dbb664d168a6f938c"
+  },
+  "noGitTestsQueriesMainSourceMutation": true
+}

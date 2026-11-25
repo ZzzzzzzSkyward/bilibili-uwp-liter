@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "utc": "2026-11-25T06:17:30.319121+00:00",
+  "verdict": "PASS",
+  "custody": "FROZEN / RELEASED; exact reviewed five code/test paths and all review evidence stable; no reviewer writer remains",
+  "ownedReviewed": {
+    "src/BiliLite.UWP/Modules/Season/SeasonIndexVM.cs": "ca599d3d7f56f86d015b6a0a110e0887ab6d0ec449ce71428156e714c684b0ff",
+    "plan/tests/season1/Season1Probe.csproj": "8eb31a41d340d0b159b20f3ef950961dc0c0fcb16e5a4f69b3bdef5054a44e52",
+    "plan/tests/season1/Program.cs": "9e0d0af8d9299965de65d6903ac30f9ddb5f2fff79d21630fb52ff2aeb7c64c4",
+    "plan/tests/season1/Season1Stubs.cs": "a27b570ad6be0a060606fd6f1099776c24bcb4cffc9c27e32dfbcb3facab4248",
+    "plan/tests/season1/SeasonIndexProbe.cs": "b383ee1f3f5757525bc3948fd591ad8252658b9708527c4aeddef0b4ccc4f1a4"
+  },
+  "finalReviewSha256": "7ee2579bbfd7774f9422af47aca990779039d3c5bcf2ab6c0bdd1d4f87852a49",
+  "evidence": {
+    "binding.json": "c76f5bd1188630e959ec994164d27bfe6eda8a5560e5f5879755e4119c802ac9",
+    "commands.json": "9895b99e7120f96029ee915dcafbd49014a34a465f15ecec221385349db49955",
+    "summary.json": "c8a360999231e5311adef135f22c855d3473c71d41f8cf8c3b4d644642375321"
+  },
+  "privateScratch": "/workspace/work/index-dynamic-contracts/index-review",
+  "privateAudit": {
+    "commands.json": "1e672f1de12f7bc4968f0b48320fa94f8c80477b9a86449e035051c23c1fe497",
+    "setup-checks.json": "442dbb26a844be4ac31ba90aff2885bc783a308de6c5ae6550a586cafa088c1d",
+    "verification.json": "c99ac03c05a88dc93099555bc5b0173c3e54ed43c4e0b8dfd89757b4e29d2833",
+    "candidate.diff": "4a17fa98585adb1339cb2c322faf88a564e9b415d0de622750efbc2de022449d"
+  },
+  "sourceTestWrites": false,
+  "gitOperations": false,
+  "sharedProjectOrFullSuite": false
+}

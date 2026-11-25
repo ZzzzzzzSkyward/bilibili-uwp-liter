@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "utc": "2026-11-25T06:43:23.018936+00:00",
+  "verdict": "PASS",
+  "custody": "FROZEN / RELEASED exact FI2/FI3 amendment; no reviewer writer remains",
+  "ownedReviewed": {
+    "src/BiliLite.UWP/Modules/Season/SeasonIndexVM.cs": {
+      "startingSha256": "ca599d3d7f56f86d015b6a0a110e0887ab6d0ec449ce71428156e714c684b0ff",
+      "candidateSha256": "34536344c659d90394246e65c6dda34252be450f056b6aa7c926621429988a87",
+      "mode": "0o600"
+    },
+    "plan/tests/season1/SeasonIndexProbe.cs": {
+      "startingSha256": "b383ee1f3f5757525bc3948fd591ad8252658b9708527c4aeddef0b4ccc4f1a4",
+      "candidateSha256": "0a74f449f7594fd5e9d064ce6b4f68feea2cb45a9d3eb0fb4022df60f078c593",
+      "mode": "0o600"
+    }
+  },
+  "sourceUnion": {
+    "SeasonIndexVM": "34536344c659d90394246e65c6dda34252be450f056b6aa7c926621429988a87",
+    "WebDynamicFeedApi": "e10feceedf3369e1ba11b8ba353805cdd9212db400a46f5300e3ddaa8d8b91c9"
+  },
+  "finalReviewSha256": "6fccdf6695ab854909977f5496aab1ba9dad47c2c4c5969d25134f07c44f68ff",
+  "evidence": {
+    "binding.json": "075ca2a44a62e73719aded446016361591a4258d0b2b64fcea54aa6f112880b3",
+    "commands.json": "4e56ef09c7e9eaca9e87e5c8d8971d279f8b58557bad07bb7c67d33fd2674baa",
+    "summary.json": "a47eaf907c0180190615d44694f326b2d257ec75d2401b192d3221e448c61ec1"
+  },
+  "privateScratch": "/workspace/work/index-dynamic-contracts/index-review/pgc-amendment",
+  "privateAudit": {
+    "commands.json": "4e56ef09c7e9eaca9e87e5c8d8971d279f8b58557bad07bb7c67d33fd2674baa",
+    "setup-evidence.json": "ba8ca17207d075d4d3379d593788de6fe8063fca9559bf81f394495f25db41a2",
+    "verification.json": "3101059e73df17cd6e8947995e8f7550397c2b62b9da5ef9adb9c4331624b5f2",
+    "candidate.diff": "963e70e270b293d5d56056d5e8d36e0ed3b97146241e49e2b3c7160470a13204"
+  },
+  "firstFI1ReviewPreserved": true,
+  "requirementsReviewsPreserved": true,
+  "sourceTestMainDocGitSharedSuiteMutation": false,
+  "SR1Acceptance": false,
+  "fullNativeHostedAcceptance": false
+}

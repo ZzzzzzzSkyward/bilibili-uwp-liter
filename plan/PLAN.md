@@ -33,6 +33,26 @@ are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no p
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
 
+### 2026-11-25 index/dynamic：sourceE源码与完整离线PASS，native未验证
+
+`d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 实际交付FI1/FD1/FI2/FI3/SR1；[publication receipt](../cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)把最终committed blobs绑定到真实执行字节。[FI1 owning](../cloud/rounds/20261125-index-dynamic-contracts/index/final-review.md)、[FI2/FI3 owning](../cloud/rounds/20261125-index-dynamic-contracts/later-pgc/final-review.md)、[FD1 owning](../cloud/rounds/20261125-index-dynamic-contracts/dynamic/final-review.md)、[SR1 owning](../cloud/rounds/20261125-index-dynamic-contracts/short-review/final-review.md)、[final fresh](../cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)均PASS。旧sourceC/docsD/archiveA及sourceC初次ux1dFAIL/corrected52PASS仍为各自历史结果。
+
+| Scope | 最终有界行为 | 保留政策 |
+| --- | --- | --- |
+| FI1 / BR70 | 独立conditions/results owner；fresh metadata后首result；冲突安静拒绝；metadata失败一次Refresh retry；同步通知前acquire，rows/Page先于Loading=false，真实page2 autofill保持 | legacy data/filter/default/casts/请求签名及first/append/empty/error/retry不迁移 |
+| FI2 / BR72 | 精确keyword==requested order code优先，再旧label、first fallback | default3、目录顺序、string equality、未知code与原编码保持，不规范化 |
+| FI3 / BR73 | accepted nonempty list且JSON Integer恰0先安全提交terminal；rows/Page恰增一次，无新notice/property | Integer1/absent真实grid继续；其他optional flags旧list行为及empty/error/retry/Refresh保持 |
+| FD1 / BR71 | nonnull dynamic offset编码为一个值，null省略/empty包含 | all/video/article、GET/cookies/page/timezone/features、unsigned web及parser/mapper/source cursor/legacy/gRPC家族保持 |
+| SR1 / BR74 | 仅ShortReview cursor operand一次编码，default/null/empty均包含空cursor | 配置host、media_id/ps20/sort/default0、可选access_key原位置/条件、GET/noCookie/noappWBI及原VM response/paging保持 |
+
+[Final fresh exact-union](../cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)独立重放PGC-REV1-140为140/140、原SR1为3446/3446、original118为118/118、supplement34为34/34；season141+497+152=790、API0212+1258+3831+270+3424=8795 PASS。G4179在final fresh仅以完整精确输入/工具/报告绑定沿用，没有再跑；完整suite随后正常执行既有stage。初始FI1/FD1 union的713/5371只描述该早期冻结候选，不能盲目作为最终输入hash。
+
+[当前完整gate](../cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)：exit0、51/51logical、52/52executable PASS，finished=true、complete_required=true；实际06:52:25.306397→06:55:21.987887UTC，176.681秒，dirty devA`7fc3c524fde4139d01e7ecd362647ca771c64ea8`。Results SHA256`12d25b77236ce59569f831494e8220212c25e30b5c5d871eee6833ff33d0d6d1`；940输入canonical SHA256`3c5dd387072e163c5b99c27fbd17a36bc93f06b3a6f734e433d4e07e205c104e`，raw source-before.json文件SHA256`f9f79d74cfc8ec65722c6abcecb38f83f221701a804d8809af7eda6ee8b791b3`；文件hash与canonical字典hash含义不同。All940source、5073quality、732PowerShell及120review/requirement/history输入前后相同；sourceE已按实际committed blob等价核对绑定；报告不改称clean-E run。Runner14、package15和current sampler46invocations/21groups/106checks/55helpercalls52syntheticrows独立精确沿用，非额外52stage、非WindowsPS5.1/native samples。
+
+原initial140错误absolute Refresh oracle与CHANGES保留；独立批准的PGC-REV1-140改用更强delta1/metadata/row/owner条件，139其他checks未变。它在A127/13、FI1129/11、final140/140的结果分开。FI1原75断言字面/顺序保持；77新增断言，public Refresh+nonterminal append只恢复旧missing-list检查所需状态。SR1原3446=3420matrix+26default/VM controls；maintained3424=3420matrix+4default controls，二者不可混称。原118/supplement34/G4179与旧141/lifetime497/API02断言完整保留，无弱化或源码假服务成功。
+
+Hosted：UNVERIFIED：最近已接受的[实际sourceE hosted观察](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-hosted-source-e.md)于2026-11-25 07:35:28UTC以 `head_sha=d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 过滤Actions collection，返回 `total_count=0` / `workflow_runs=[]`，尚未建立E的hosted result，不推断原因。2026-11-25 06:07:01UTC旧run45434541348/head169b2b0（queued/null）仅为历史观察，不能认证E。Windowscompile/UWP/XAML/PS5.1/50decoded/RAM/root/heap/GPU/playback/cookie/service/write/account/live/session/signing/install/startup仍未验证，按[新增VALIDATION](VALIDATION.md)执行；BR21native-unmeasured、accountP4/P5hold/U2前置保持。所有raw proof私有，仓库仅精确MD/JSON custody/count/hash。
+
 ### 2026-11-25 combined memory/API：源码与离线完成，native未验证
 
 [source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) 已普通提交/推送；唯一parent `7356b94893377558191b0d70576a52bae704c1f9`，tree `2565a48424882c76acfe3217c7fb610b7b193b91`。[publication receipt](../cloud/rounds/20261125-api-shape-comparison/publication/execution.md) 与 [独立 blob/ref 核对](../cloud/rounds/20261125-api-shape-comparison/publication/root-source-check.md)已核对107交付路径与935个已测输入的实际committed blobs，保留执行时dirty7356与生成Git metadata的原始provenance。
@@ -51,7 +71,7 @@ The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 
 
 [VIDEO_MEMORY](../document/VIDEO_MEMORY.md)给出真实artifact/source/tool/run/fixture/PID+start绑定、16checkpoint、50视频与对照/归因命令；[API comparison](../document/BILIBILI_API_SHAPE_COMPARISON.md)固定三来源pins/licenses/实质维护与Python继承catalog窄维护限制。新处置见 [BR-68/69](../bug_report.md)。BR-21仍native-unmeasured；后台/SMTC/整体player rewrite仍测量前置。Windows VS/UWP/XAML/PS5.1/Win2D dependency/pixels/cache/codec/root/heap/GPU及cookie/service/write/live/account/session/签名安装启动未验证，按 [新增VALIDATION](VALIDATION.md) 执行，旧设备行不改判。OAuthv2 provenance、账号P4/P5 hold和U2身份/token/hosts/auth/protocol/cancel/session门禁保持。
 
-**后续FI1/FD1只有requirements PASS，代码未实现**：见Open18/19与BR-70/71，不在此sourceC或完整gate修复声明中。须待本批source/docs/archive释放、fresh safe baseline和精确owner grant后实施同fixture原红→新绿及owning/fresh/common gate。
+**sourceC/docD时点的历史计划：后续FI1/FD1只有requirements PASS，代码未实现**：见Open18/19与BR-70/71，不在此sourceC或完整gate修复声明中。须待本批source/docs/archive释放、fresh safe baseline和精确owner grant后实施同fixture原红→新绿及owning/fresh/common gate。
 
 ### 2026-11-25 恢复与数据完整性：源码已提交、离线与独立审查完成
 
@@ -359,8 +379,8 @@ QF1 sweep、changed-runner local gate 与 hosted 验收也分开。选择/报告
 | 15 | Season page requests use the season id (BR-65) | **shipped** — `5132840`. `LoadSeasonDetail` received `ep_id`, which is empty for every in-app entry point (they pass only `season_id`), so both `pgc/view/web/season` and `pgc/view/web/ep/list` were asked with an empty id and the page published an empty `Detail`/`Episodes`. The VM now takes `season_id`, asks both endpoints with `SeasonIdType.SeasonId`, and keeps `ep_id` only to pick the initial episode; the season1 probe follows the new contract. Compile only (0 errors) |
 | 16 | Comment text is HTML-decoded before markup (BR-66) | **shipped** — `ec92550`. `ControlHelper.StringToRichText` escaped `&` first, so API text already carrying `&quot;`/`&amp;` rendered as literal entity text; it now decodes once with `WebUtility.HtmlDecode` before the escape pass, and `SeasonReviewVM` decodes short-review `content` the same way. Compile only (0 errors) |
 | 17 | Empty player pivots stay hidden (BR-67) | **shipped** — `9fdfbf4` + `b95f2ab`. `NodePivot` was visible by default and the verdict only looked at `IsInteraction`; `Visibility` turned out to be the wrong lever because a `Pivot` draws a header for every entry in `Pivot.Items` regardless of the item's visibility (`LocalTracksPivot` had been `Collapsed` all along and still showed). The tabs are now removed from / inserted back into `Pivot.Items` at slots 0/1 — dropped in the constructor, so nothing shows before the first verdict — gated on the loaded node count and on manifest playback for the video/audio rows, re-judged after `GetNodes()`, with the interaction VM rebuilt per episode. Probe updated. Compile only (0 errors) |
-| 18 | FI1 PGC index initial/result ownership — BR-70 | **requirements PASS / UNIMPLEMENTED**；[FI1 amended review](../cloud/rounds/20261125-api-shape-comparison/followup/fi1-review.md)。本批释放/fresh safe baseline/精确SeasonIndexVM+season1 grant后才实施；保留conditions互斥、reentrant通知与grid autofill，samefixture red→green/owning/fresh/common gate |
-| 19 | FD1 polymer dynamic offset query value — BR-71 | **requirements PASS / UNIMPLEMENTED**；[FD1 review](../cloud/rounds/20261125-api-shape-comparison/followup/review.md)。本批释放/fresh safe baseline/精确WebDynamicFeedApi+API02 grant后才实施；保留null/empty/source cursor与byte-identical parser/mapper，samefixture red→green/owning/fresh/common gate |
+| 18 | FI1 PGC index initial/result ownership — BR-70 | **sourceE源码/离线完成**：`d11dbf867c1896bce7d41956a4b78fc2580d5a5c`，owning/final fresh/完整gate见本轮Done；conditions/result互斥、reentrant通知和genuine grid autofill保持。Windows index/navigation/binding/grid场景未验证，按VALIDATION |
+| 19 | FD1 polymer dynamic offset query value — BR-71 | **sourceE源码/离线完成**：`d11dbf867c1896bce7d41956a4b78fc2580d5a5c`，owning/final fresh/完整gate见本轮Done；null省略/empty包含、parser/mapper/source cursor保持。Windows feed分页/retry/service场景未验证，按VALIDATION |
 
 **Order** (dispatcher, 2026-11-02, updated after the parallel wave): the engine-fallback disposal finding
 (`0b70113`) is closed; D2 and D4/D5 are in; the first slices of the Hot-card, settings and dynamics plans are in
@@ -368,7 +388,7 @@ and were 默认通过. `plan/REFRESH_PLAN.md` is fully shipped (D1 `000bfd0`, D3
 row has no code left, and its device rows are 默认通过. `plan/SETTINGS_PLAN.md` slice 3 (`b9b58c5`) and `plan/CARD_PLAN.md` §3/§4 (`1b51db4`, `0b8ad87`) are in and were 默认通过. `7e628c3` then closed the settings row and
 `65fd423` closed all but two card items, and `798a03a` closed those two (grid, attachments). `4dc85ce` then
 taught the player to hide entries whose content does not exist. Next: `plan/CARD_PLAN.md` §9 measurement with
-BR-21 (native50-cycle collection/attribution; narrow source work is recorded above), with FI1/FD1 following current-batch release and a fresh safe grant, then whatever the 1.0.9.4x device pass reports. BR-53 (any live room shows
+BR-21 (native50-cycle collection/attribution; narrow source work is recorded above), with FI1/FD1/FI2/FI3/SR1 source/offline completion now recorded in the sourceE Done section, then whatever the 1.0.9.4x device pass reports. BR-53 (any live room shows
 a `NullReferenceException` message) is recorded in `bug_report.md` and waits for a log line before any live-room
 code changes; BR-54 (toast pill width and content centring) is fixed in `01e51a7` and waits only for the device
 look.

@@ -1,0 +1,3 @@
+# Initial FI1 evidence release — historical metadata
+
+The `initial/` files are exact, unedited metadata copies of the first release. Their original repository raw-log/text/diff paths are superseded and no longer designate available repository files. Current raw custody and exact unchanged hashes are recorded in `../evidence/hygiene.json`; the actual preserved bytes are under `/workspace/work/index-dynamic-contracts/index/evidence-hygiene/raw/`. Historical commands, results, fixtures and hashes remain evidence of the first release. No source/test rerun or proof alteration accompanied relocation. Use the current `../evidence/release.json` for present custody.

@@ -1,0 +1,24 @@
+{
+  "utc": "2026-11-25T06:29:34.646262+00:00",
+  "state": "ROOT_REBOUND_FROZEN_FI1_FOR_ACCEPTED_FI2_FI3",
+  "startingSourceTestHashes": {
+    "src/BiliLite.UWP/Modules/Season/SeasonIndexVM.cs": "ca599d3d7f56f86d015b6a0a110e0887ab6d0ec449ce71428156e714c684b0ff",
+    "plan/tests/season1/Season1Probe.csproj": "8eb31a41d340d0b159b20f3ef950961dc0c0fcb16e5a4f69b3bdef5054a44e52",
+    "plan/tests/season1/Program.cs": "9e0d0af8d9299965de65d6903ac30f9ddb5f2fff79d21630fb52ff2aeb7c64c4",
+    "plan/tests/season1/Season1Stubs.cs": "a27b570ad6be0a060606fd6f1099776c24bcb4cffc9c27e32dfbcb3facab4248",
+    "plan/tests/season1/SeasonIndexProbe.cs": "b383ee1f3f5757525bc3948fd591ad8252658b9708527c4aeddef0b4ccc4f1a4"
+  },
+  "normativeDocuments": {
+    "requirements.md": "6c13cd1653e5078b4c82ce25c049fda978cc222b6b28718ae8bec9c7ee271fce",
+    "evidence.md": "a31512d423f681dec407ae1e89821b72a27bc482298720457abe4c0a4980a4d6",
+    "amendment.md": "a261bff0308080e773a982db04c53618dbf99e33bb67e141a86a59695dc94967",
+    "amendment-evidence.md": "4b8d8d66bc2ebb30ff45c71588c3a448f9b00806b80aeb7e1a768ed51049fc38",
+    "review.md": "baab8c7b674b8424fa691c5a962cb17b1d006f7f4964ec577b8bbe3192d3cbc9",
+    "amendment-review.md": "8a24b7b18bf0b4b1ad7a6decd96519a324fc8a882b1456ddac5e58ca5f78e277"
+  },
+  "approvedFixtureProgram": "/workspace/work/index-dynamic-contracts/later-pgc-discovery/revision/frozen-FI1/Program.cs",
+  "approvedFixtureSha256": "a1b843fae39658e378083ecc78dc50a0f98b1e73f1e0affdb90460fe7e724b14",
+  "FI1OwningAndFreshCustody": "PASS/FROZEN/RELEASED; all five source/tests unchanged",
+  "FD1SourceHash": "e10feceedf3369e1ba11b8ba353805cdd9212db400a46f5300e3ddaa8d8b91c9",
+  "deadlineUtc": "2026-11-25T08:29:30Z"
+}

@@ -1,0 +1,158 @@
+[
+  {
+    "label": "original118",
+    "argv": [
+      "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+      "run",
+      "--project",
+      "/workspace/work/index-dynamic-contracts/fresh-audit/original118/Followup.csproj",
+      "-c",
+      "Debug"
+    ],
+    "cwd": "/workspace/work/index-dynamic-contracts/fresh-audit/original118",
+    "environment": {
+      "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/fresh-audit/cli-original118",
+      "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/fresh-audit/nuget-original118",
+      "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+      "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+      "DOTNET_ROOT": "/workspace/work/maintenance-foundation/quality/dotnet",
+      "UPSTREAM_UNIT_TOOLS": "/workspace/work/maintenance-foundation/quality"
+    },
+    "exit": 0,
+    "elapsedSeconds": 3.413,
+    "logPath": "/workspace/work/index-dynamic-contracts/fresh-audit/original118.log",
+    "logSha256": "a1b380d3bca2f5f00d9d1c3a4a21cb368d0b9dcd8dac7b7675dbcfbe2f637928",
+    "receiptPath": "/workspace/work/index-dynamic-contracts/fresh-audit/original118/bin/Debug/net8.0/receipt.json",
+    "receiptSha256": "e1737915953de5833ff3071f704ae247045c5b6b49fc5da26be7142759da16d3",
+    "counts": {
+      "checks": 118,
+      "failures": 0,
+      "groups": {}
+    },
+    "result": {
+      "checks": 118,
+      "passed": 118,
+      "failures": 0
+    }
+  },
+  {
+    "label": "supplement34",
+    "argv": [
+      "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+      "run",
+      "--project",
+      "/workspace/work/index-dynamic-contracts/fresh-audit/supplement34/Followup.csproj",
+      "-c",
+      "Debug"
+    ],
+    "cwd": "/workspace/work/index-dynamic-contracts/fresh-audit/supplement34",
+    "environment": {
+      "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/fresh-audit/cli-supplement34",
+      "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/fresh-audit/nuget-supplement34",
+      "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+      "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+      "DOTNET_ROOT": "/workspace/work/maintenance-foundation/quality/dotnet",
+      "UPSTREAM_UNIT_TOOLS": "/workspace/work/maintenance-foundation/quality"
+    },
+    "exit": 0,
+    "elapsedSeconds": 3.259,
+    "logPath": "/workspace/work/index-dynamic-contracts/fresh-audit/supplement34.log",
+    "logSha256": "368e9962cd1656b0079f09b1cd84e215a2d45d9fc3fa56843b2bcfe6d1166354",
+    "receiptPath": "/workspace/work/index-dynamic-contracts/fresh-audit/supplement34/bin/Debug/net8.0/receipt.json",
+    "receiptSha256": "0c5e364fc24bcd23b8460bc19cb69d0487602b97ec0c65e18d66284c1af18887",
+    "counts": {
+      "checks": 34,
+      "failures": 0,
+      "groups": {}
+    },
+    "result": {
+      "checks": 34,
+      "passed": 34,
+      "failures": 0
+    }
+  },
+  {
+    "label": "g4",
+    "argv": [
+      "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+      "run",
+      "--project",
+      "/workspace/work/index-dynamic-contracts/fresh-audit/g4/plan/tests/g4/G4Probe.csproj",
+      "-c",
+      "Debug"
+    ],
+    "cwd": "/workspace/work/index-dynamic-contracts/fresh-audit/g4/plan/tests/g4",
+    "environment": {
+      "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/fresh-audit/cli-g4",
+      "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/fresh-audit/nuget-g4",
+      "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+      "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+      "DOTNET_ROOT": "/workspace/work/maintenance-foundation/quality/dotnet",
+      "UPSTREAM_UNIT_TOOLS": "/workspace/work/maintenance-foundation/quality"
+    },
+    "exit": 0,
+    "elapsedSeconds": 3.895,
+    "logPath": "/workspace/work/index-dynamic-contracts/fresh-audit/g4.log",
+    "logSha256": "780b69c10b4ef9b914accd6d8fade7dab04d17a124d17ca262522cca8a1b8475",
+    "result": {
+      "checks": 179,
+      "passed": 179,
+      "failures": 0
+    }
+  },
+  {
+    "label": "season1",
+    "argv": [
+      "bash",
+      "/workspace/work/index-dynamic-contracts/fresh-audit/snapshot/plan/tests/season1/run.sh"
+    ],
+    "cwd": "/workspace/work/index-dynamic-contracts/fresh-audit/snapshot",
+    "environment": {
+      "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/fresh-audit/cli-season1",
+      "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/fresh-audit/nuget-season1",
+      "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+      "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+      "DOTNET_ROOT": "/workspace/work/maintenance-foundation/quality/dotnet",
+      "UPSTREAM_UNIT_TOOLS": "/workspace/work/maintenance-foundation/quality"
+    },
+    "exit": 0,
+    "elapsedSeconds": 4.375,
+    "logPath": "/workspace/work/index-dynamic-contracts/fresh-audit/season1.log",
+    "logSha256": "05db6a69035191403fdc68b817b1cb645953dfe1a4d710784a9d82f6039d7f12",
+    "result": {
+      "original": 141,
+      "lifetime": 497,
+      "index": 75,
+      "passed": 713,
+      "failures": 0
+    }
+  },
+  {
+    "label": "api02",
+    "argv": [
+      "bash",
+      "/workspace/work/index-dynamic-contracts/fresh-audit/snapshot/plan/tests/api02/run.sh"
+    ],
+    "cwd": "/workspace/work/index-dynamic-contracts/fresh-audit/snapshot",
+    "environment": {
+      "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/fresh-audit/cli-api02",
+      "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/fresh-audit/nuget-api02",
+      "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+      "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+      "DOTNET_ROOT": "/workspace/work/maintenance-foundation/quality/dotnet",
+      "UPSTREAM_UNIT_TOOLS": "/workspace/work/maintenance-foundation/quality"
+    },
+    "exit": 0,
+    "elapsedSeconds": 11.477,
+    "logPath": "/workspace/work/index-dynamic-contracts/fresh-audit/api02.log",
+    "logSha256": "57d15d8fd75fc3aac6fce3de3f25e8e31cc5f0668af88cd309bac76e49bdd964",
+    "result": {
+      "original": 12,
+      "search": 1258,
+      "query": 3831,
+      "dynamic": 270,
+      "passed": 5371,
+      "failures": 0
+    }
+  }
+]

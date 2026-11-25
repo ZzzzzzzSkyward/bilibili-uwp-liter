@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "state": "PREPARATORY_DRAFT_FROZEN_RELEASED",
+  "utc": "2026-11-25T06:38:50.793361+00:00",
+  "owner": "combined_documentation_executor",
+  "inputStatusCutoff": "2026-11-25T06:33:15Z; accepted/pending statuses stated from released artifacts read for this draft, not final live source",
+  "authority": "documentation-preparation-dispatch.md",
+  "mainPathsReadOnlySha256": {
+    "bug_report.md": "fc7f11f30a296a7d88313f7cd7623978d2b8ed9f7aa28b696e5fd825b2c264d8",
+    "docs/ROADMAP.md": "b86ffbdb75ab67d12abd293ed3f0857431065106b22882df49360327dbe1046f",
+    "plan/PLAN.md": "dc9ffd416f74d91e9bfa32eea679e0a4f0813a44ec91376e5098fe04a4ec5df9",
+    "plan/VALIDATION.md": "bad441510ee46fd901cc5e8570f017e604bfb941131a3857c1f3c8b70aa84961",
+    "document/BILIBILI_API_SHAPE_COMPARISON.md": "0c867a526a7b1f9fb5a0247e5225fd6c190320e28d8567d82f007de0fc76ac1c"
+  },
+  "mainFiveUnchanged": true,
+  "mainFiveEqualPublishedDocsD": true,
+  "draftSha256": "9d365d23432704b9908a75f859648ce4f933b822b584f6015813236353190d00",
+  "inputSha256": {
+    "AGENTS.md": "a00c0888fab48a2b7e16847c21f74b7b78a2c9fe879a01351feddc4f826472c1",
+    "cloud/CONTRACT.md": "db9d2ca6ffbe9dc51e26d8f20b6cc8357e9a065a03dbfb40c4cd58db0340085c",
+    "cloud/REPO.md": "e005f06b3d46a36a85e0c945c4a58a948f41a0be37e9591705924f18729bbad3",
+    "cloud/memory/INDEX.md": "334485af40d5199e141567a8227240b05e619c832a8622b5b47c27788ec86dc3",
+    "cloud/memory/deadline-20261125.md": "8710ea8409d08486aa1456104b60ad193cc8d14a0cd3abb530ebb09fa679d2ee",
+    "cloud/memory/runs/20261125-index-dynamic-contracts.md": "e1ce5918d4eac870b7e99e8c3945c3e76a77bef50ed002287043fee1599ce709",
+    "cloud/rounds/20261125-api-shape-comparison/documentation/publication.md": "173d2251f5efcb54d4e0f6ee73fe7004ef86d633f1059aab577be307fda30969",
+    "cloud/rounds/20261125-api-shape-comparison/documentation/correction/evidence/release.json": "8f79ca5e2deebedc055d81b79731ecb4c427df7799e38abff36fd16908bcfdb9",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation-preparation-dispatch.md": "d46dc7484efa667f183f85ca3ae1bb3a5cfb56ecb765e26758b89e81ff841ca3",
+    "cloud/rounds/20261125-index-dynamic-contracts/plan.md": "82336dff1f16bfd9f148e8293b3b8700ab03452039acbd136939ff1d1666fd07",
+    "cloud/rounds/20261125-index-dynamic-contracts/evidence-policy.md": "f9764a9cbd8256f6b49e591815ab7c7345708d42784af312297e3e5bdad33db9",
+    "cloud/rounds/20261125-index-dynamic-contracts/checkpoint.md": "be6109141cb16df3103e80e501c2a9f31a931e48c75ce33b8ee4d53db0e45060",
+    "cloud/rounds/20261125-index-dynamic-contracts/baseline.json": "06dcf0554cc98d58988d944969aac42b19c5ceaf16ba555a85abc36a4660dbdb",
+    "cloud/rounds/20261125-index-dynamic-contracts/hosted-observation.md": "8aced4d914d44a70c152b80089af503b2c4c2f39cbf7e57ea1db9a04dcf30fc5",
+    "cloud/rounds/20261125-index-dynamic-contracts/index/execution.md": "04a75eeaa4ce606490d4dcae2abe082758612060db8e0ece8ef0d0681890266f",
+    "cloud/rounds/20261125-index-dynamic-contracts/index/final-review.md": "7ee2579bbfd7774f9422af47aca990779039d3c5bcf2ab6c0bdd1d4f87852a49",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/execution.md": "640970b5fee3bee3a0f8ed639dd4e73ba8e4990a538c0641ab245fb61a6b4f0c",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/final-review.md": "60908557b48abe722ed5e1c9aa5c23dd1b2f48bf446f5dcd3c8e07fb5ff44d8c",
+    "cloud/rounds/20261125-index-dynamic-contracts/fresh-audit.md": "8e9dfa4d2ffc11d4fc1c5747f592600891eaab66558af7dc81d81844dd1e4690",
+    "cloud/rounds/20261125-index-dynamic-contracts/later-pgc/requirements.md": "6c13cd1653e5078b4c82ce25c049fda978cc222b6b28718ae8bec9c7ee271fce",
+    "cloud/rounds/20261125-index-dynamic-contracts/later-pgc/amendment.md": "a261bff0308080e773a982db04c53618dbf99e33bb67e141a86a59695dc94967",
+    "cloud/rounds/20261125-index-dynamic-contracts/later-pgc/amendment-review.md": "8a24b7b18bf0b4b1ad7a6decd96519a324fc8a882b1456ddac5e58ca5f78e277",
+    "cloud/rounds/20261125-index-dynamic-contracts/later-pgc/execution-dispatch.md": "83b14fd4ea4b35342fdc8fe4e57ae7aee1463303e5d0d3f77df0f982d05a7122",
+    "cloud/rounds/20261125-index-dynamic-contracts/short-review/requirements.md": "05294ee381267a536640a901d0afb364b5e4b262b45c4fe364bbc2605789912e",
+    "cloud/rounds/20261125-index-dynamic-contracts/short-review/evidence.md": "98293122f9e305282312ab3d75230e7d01add4f0f83fe7d86fb0a295fb6f09e1"
+  },
+  "checks": {
+    "markdownWhitespaceAndFences": "PASS",
+    "realRelativeLinksChecked": 26,
+    "realRelativeLinkErrors": [],
+    "unresolvedFinalLinkOccurrencesIntentionallyDeferred": 34,
+    "maxObservedExistingBR": 71,
+    "reservedConditionalBRs": [
+      72,
+      73,
+      74
+    ],
+    "actualSourceReadAsFinal": false,
+    "gitOperations": false,
+    "testsBuildSamplerNativeNetworkOperations": false,
+    "mainDocumentWrites": false,
+    "scope": "draft.md and preparation.json only; private scratch exclusive"
+  },
+  "pendingFinalTokens": [
+    "FINAL_API02_MAINTAINED_RESULT",
+    "FINAL_DYNAMIC_OWNING_REVIEW",
+    "FINAL_FRESH_REVIEW",
+    "FINAL_INDEX_MAINTAINED_RESULT",
+    "FINAL_INDEX_OWNING_REVIEW",
+    "FINAL_PGC_REV1_RESULT",
+    "FINAL_SELECTED_SCOPES",
+    "FINAL_SR1_PRIVATE_RESULT",
+    "FULL_E_GATE_LINK",
+    "FULL_E_GATE_RESULT",
+    "HOSTED_E_STATUS",
+    "SOURCE_E_BINDING",
+    "SOURCE_E_COMMIT",
+    "SR1_REQUIREMENTS_REVIEW"
+  ],
+  "statusBoundaries": {
+    "FI1_FD1": "owning/fresh exact frozen local union PASS; later final-source/fullgate/publication pending",
+    "FI2_FI3": "amended requirements PASS, same-owner execution active; no implementation/140green/final acceptance claimed",
+    "SR1": "independent requirements review/adoption/execution pending at cutoff;3446old/488red/1572compat positive only",
+    "sourceC_docsD_archiveA": "immutable historical results;no newcleanrun relabel",
+    "nativeHosted": "unverified;06:07 observation only old queued45434541348/head169b2b0"
+  },
+  "privateScratch": "/workspace/work/index-dynamic-contracts/documentation-preparation/",
+  "deadline": "2026-11-25T08:29:30Z",
+  "timers": [
+    "19",
+    "preflight122"
+  ],
+  "custody": "draft/preparation/scratch frozen and read custody released; no final main-doc or publication authority"
+}

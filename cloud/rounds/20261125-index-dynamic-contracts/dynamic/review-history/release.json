@@ -1,0 +1,21 @@
+{
+  "status": "PASS_FROZEN_RELEASED",
+  "utc": "2026-11-25T06:08:10.834452+00:00",
+  "reviewer": "dynamic_offset_review",
+  "files": {
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/final-review.md": "161627029a9aeb8b61ea8dac67ef46206904edd08fa39c100a4ed180c3be890b",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/review-evidence/binding.json": "006bbceacd138a9f82cdba22c908e56cf9d9ecc28e40d790e524ebb3863deec8",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/review-evidence/candidate-maintained.log": "d44d16ab95cd55e843aba71701726f1a6b0a533c01abd44264fcac4f28e3ec8f",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/review-evidence/candidate118-receipt.json": "a0aec89ab95d26ea2e5da8c9769d28626f0acf00870dd9047c194cd9e7703f8e",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/review-evidence/candidate118.log": "e75a4486751a36a950d9ece4d45d4fd5c49e0b8d2b9e61fa5fb7585c25505b64",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/review-evidence/old-maintained.log": "605ba588222399d38c0322e989ef66b47dc37babe74099eb1823440570d9271f",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/review-evidence/original118-old-receipt.json": "c7279ac8188488a57ded0352ab73a3afc01ec6943f88dd45337cbf5dfaa23854",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/review-evidence/original118-old.log": "ff63dd0e9d02043de0243b0f3066efcbb5b4225bbbde9f4f96ecc39146428095",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/review-evidence/source-diff.patch": "34ecbe1b2cd77f5ddf777d8c48cf136b8210f3ec21c627403daca982ebf0d6ee"
+  },
+  "sourceWrites": false,
+  "GitOperations": false,
+  "sharedFullSuite": false,
+  "wholeTreeStabilityClaim": false,
+  "deadlineUtc": "2026-11-25T08:29:30Z"
+}

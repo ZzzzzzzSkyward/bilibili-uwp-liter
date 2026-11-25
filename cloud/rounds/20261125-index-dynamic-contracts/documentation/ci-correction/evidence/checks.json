@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS",
+  "utc": "2026-11-25T08:07:25.950036+00:00",
+  "correction": "DOC-E-CI-01",
+  "paragraphCounts": {
+    "docs/ROADMAP.md": 2,
+    "plan/PLAN.md": 1,
+    "plan/VALIDATION.md": 1,
+    "document/BILIBILI_API_SHAPE_COMPARISON.md": 1
+  },
+  "changedInputsExactFour": [
+    "docs/ROADMAP.md",
+    "document/BILIBILI_API_SHAPE_COMPARISON.md",
+    "plan/PLAN.md",
+    "plan/VALIDATION.md"
+  ],
+  "other936InputsUnchanged": true,
+  "all912NonMarkdownInputsUnchanged": true,
+  "bugReportUnchanged": true,
+  "inverseReplacementRecoversAllFourBeforeBytes": true,
+  "originalDocumentationHistoryFilesUnchanged": 17,
+  "sourceEReceiptUnchanged": true,
+  "markdownWhitespaceFencesFinalNewline": "PASS",
+  "localLinkPathsResolved": 180,
+  "newRootReceiptLinksResolved": 5,
+  "historyPreserved": "06:07:01 old queued observation retained explicitly as history; all other bytes inverse-recover exactly",
+  "hosted": "UNVERIFIED; accepted07:35:28UTC head_sha-filtered collection total_count=0/workflow_runs=[]; no cause inferred",
+  "noGitNetworkTestsBuildSourceMutation": true,
+  "privateDiffSha256": "692869616377b56f10cabc1891e531ba9472b1111b9bc09fcbd40cb2d7c38f87",
+  "privateBeforeInputsSha256": "d75ba39a3b809a7ce9d94a9b83aef64b005d4efc08d0655988efc14e55e753a3",
+  "privateAfterInputsSha256": "69f06cd37c349cf2967aefc41a60436f22407ed7af20254d4d82c641396f1487",
+  "privateOldParagraphsSha256": "c08b08315d49f1c33a61d99c46c69be699d1076643c3d0bdd8a336e63b00cbd8"
+}

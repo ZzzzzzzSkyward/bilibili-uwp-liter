@@ -1,0 +1,86 @@
+{
+  "verdict": "PASS",
+  "scope": "FI1 independent owning implementation review; selected PARTIAL_PASS",
+  "utc": "2026-11-25T06:17:30.318990+00:00",
+  "maintained": {
+    "maintained-old-A": {
+      "original": 141,
+      "lifetime": 497,
+      "newReached": 60,
+      "newPassed": 17,
+      "newFailed": 43,
+      "scenarioFailures": 3,
+      "scenarioFailureDescriptions": [
+        "FAIL index condition retry threw index completion timeout",
+        "FAIL index structural readiness threw Sequence contains no elements",
+        "FAIL index grid completion threw index completion timeout"
+      ],
+      "ordinaryReached": 57,
+      "ordinaryFailed": 40
+    },
+    "maintained-candidate": {
+      "original": 141,
+      "lifetime": 497,
+      "newReached": 75,
+      "newPassed": 75,
+      "newFailed": 0,
+      "scenarioFailures": 0,
+      "scenarioFailureDescriptions": [],
+      "ordinaryReached": 75,
+      "ordinaryFailed": 0
+    }
+  },
+  "unchangedPrivateFixtures": {
+    "original-candidate": {
+      "historicalChecks": 118,
+      "historicalFailures": 29,
+      "oldPositives": 89,
+      "oldPositivesRetained": 89,
+      "closed": 5,
+      "remaining": 24,
+      "remainingGroups": {
+        "dynamic-roundtrip-red": 18,
+        "dynamic-controls-red": 6
+      },
+      "candidateReceiptSha256": "81ea47800696ddbcf508cbdff9439a63a150c7aa739deb77690a1dabcca23d5e",
+      "authorCandidateReceiptIdentical": true
+    },
+    "supplement-candidate": {
+      "historicalChecks": 34,
+      "historicalFailures": 12,
+      "oldPositives": 22,
+      "oldPositivesRetained": 22,
+      "closed": 12,
+      "remaining": 0,
+      "remainingGroups": {},
+      "candidateReceiptSha256": "0c5e364fc24bcd23b8460bc19cb69d0487602b97ec0c65e18d66284c1af18887",
+      "authorCandidateReceiptIdentical": true
+    }
+  },
+  "expectedExits": {
+    "maintained-old-A": 1,
+    "maintained-candidate": 0,
+    "original-candidate": 1,
+    "supplement-candidate": 0
+  },
+  "actualExits": {
+    "maintained-old-A": 1,
+    "maintained-candidate": 0,
+    "original-candidate": 1,
+    "supplement-candidate": 0
+  },
+  "noAssertionOrFixtureWeakening": true,
+  "sameMaintainedFixture": true,
+  "freshNavigationHasNoLifecycleAssignmentOrWarmup": true,
+  "allInputBytesStable": true,
+  "actualHttpResultsClassExact": true,
+  "unresolvedFindings": [],
+  "limits": [
+    "Isolated original118 keeps immutable old-A FD1; 24 foreign failures are not PASS",
+    "No combined union118/118 claim",
+    "No full51/52 suite rerun or acceptance",
+    "No Windows UWP/XAML/native/device/client/server/hosted acceptance",
+    "Historical G4 179 controls preserved exactly; not rerun"
+  ],
+  "custody": "All review outputs and private snapshots frozen/released; no source/test/Git/shared project/full-suite action"
+}

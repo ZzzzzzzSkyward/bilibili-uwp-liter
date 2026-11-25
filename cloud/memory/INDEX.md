@@ -19,3 +19,4 @@
 | 2026-11-25 | 进行中 | `runs/20261125-timeboxed-maintenance.md` | Timeboxed continuation of reviewed memory/API repairs, AF2 staged folder publication, shared final gate and exact GitHub handoff; fixed checkpoint/deadline governs later rounds. |
 | 2026-11-25 | 最新时限覆盖 | `deadline-20261125.md` | Latest user resets to one exact4-hour deadline:16:29:30Asia/Shanghai(08:29:30UTC); continue until then, freeze/mark/push at deadline, no post-deadline implementation. |
 | 2026-11-25 | 源码/文档完成，归档中 | `runs/20261125-api-shape-comparison.md` | Source ff5d2855 + docs db0d2512 independently verified, complete51/52 PASS; native/hosted unverified; next FI1/FD1 code remains pending after exact archive/clean sync. |
+| 2026-11-25 | 新轮执行中 | `runs/20261125-index-dynamic-contracts.md` | Prior archive7fc3c524 clean/ref/source verified and dev synced; two disjoint FI1 index ownership/FD1 opaqueoffset executors active, no Git/full-suite/main-doc window; fixed08:29:30UTC deadline. |

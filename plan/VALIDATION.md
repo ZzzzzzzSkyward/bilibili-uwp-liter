@@ -87,7 +87,22 @@ starts that.
 | AF2 folder publication | 通过initial/Refresh/create/edit/delete后刷新/append/reorder检查实际UI接线；成功次序仍为created引用→default Insert0→flag/Page→collected。迟到的malformed default/bool/collected及append metadata不能提前发布部分row，retry不能复制失败row。保留CLR missing/JSON null/legacy casts/salvage/duplicates/CollectFavorite策略；不是新parser/schema或任意subscriber事务。 |
 | PS5.1 / roots / native / service | 先对一个已观察、无害的Windows PID验证采样/identity/error/observer dispose，再采UWP。PS5.1、VS roots、WPR outstanding allocations与GPU只记录实际支持证据，null/error不能填0；真实cookie/account/session/service/write/live门禁独立，U2/P4/P5 hold保持。 |
 
-FI1/FD1 requirements PASS但代码未实现，只有未来授权后才新增其实现设备行；本表不声称当前C已修。原始JSONL/log/ETL/snapshots/captures留Git外，记录版本/设备/时间/来源与实际结果；发现真实新缺陷再新增BR。
+**sourceC/docD时点范围说明（历史）：** FI1/FD1 requirements PASS但代码未实现，只有未来授权后才新增其实现设备行；本表不声称当前C已修。原始JSONL/log/ETL/snapshots/captures留Git外，记录版本/设备/时间/来源与实际结果；发现真实新缺陷再新增BR。
+
+## 2026-11-25 — sourceE index/dynamic新增Windows与服务跟进（未运行）
+
+以下是`d11dbf867c1896bce7d41956a4b78fc2580d5a5c`新增FI1/FD1/FI2/FI3/SR1场景。源码/离线和synthetic fixture不能代替Windows/UI/service验收。先在Windows执行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Fast -NoVersionBump -Restore`，记录实际VS/UWP/SDK/还原依赖、设备/版本/时间/source/artifact与结果；full package/签名安装启动另按BUILD。旧维护者device-passed行不重开，实际新缺陷才开BR。
+
+| 范围 | 实际Windows/UI或受控服务要观察 |
+| --- | --- |
+| FI1 fresh/conditions | 从新index导航开始，conditions与首result各一次；metadata等待时快速Refresh/selection/LoadMore安静拒绝，不重复请求/清owner/制造notice。metadata业务/transport/结构失败后一次合法Refresh重试，usable metadata后首result一次；不设置私有flag准备起点。 |
+| FI1 result/grid | Loading/reset通知时重复命令不能抢owner；真实短grid正常page2 autofill，page1 rows/Page已提交，page2等待时旧completion不能清busy。append错误保留rows/同Page retry，正常selection/Refresh保持。 |
+| FI2 code/label | 默认3在非首field3目录中仍选code3；显式4、label冲突、展示名变化仍code优先。无code时保留旧label再首项fallback。真实selection/Refresh发送所选keyword；未知opaque code、空白/大小写不规范化，filter/default/签名保持。synthetic目录与真实response分开记录。 |
+| FI3 terminal/compatibility | 首/append非空list+JSON Integer0保留全部rows，Page只增一次，无新notice，manual/grid不再追加；integer1/absent仍允许真实page2。null/string0/boolfalse/float0/其他或巨大integer/object/array沿用旧list行为；empty/error/failedappend/retry/terminal后Refresh保持。特殊flags标synthetic，不称live capture。 |
+| FD1 dynamic cursor | 真实Home/User all/video/article分页、刷新、failedappend保留last-good source cursor/同Page retry。受控+/%/&/#/duplicate-looking token一次query decode后仍为原值，controls唯一；null省略offset、empty包含一个空offset。REST/legacy/gRPC不混游标，原GET/cookies/identity保持。 |
+| SR1 shortreview | 从真实Season detail review入口加载、LoadMore、failedappend/retry/Refresh；Next/total/count/content规则保持。default/null/empty仍包含空cursor；受控opaque值从response→Next→下一request完整roundtrip。配置host、media_id/ps20/sort/default0、可选access_key末尾位置/条件、GET/noCookie/noappWBI保持，不做review写动作。 |
+
+当前本地完整51/52 PASS与上述实际设备结果分开。UNVERIFIED：最近已接受的[实际sourceE hosted观察](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-hosted-source-e.md)于2026-11-25 07:35:28UTC以 `head_sha=d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 过滤Actions collection，返回 `total_count=0` / `workflow_runs=[]`，尚未建立E的hosted result，不推断原因。2026-11-25 06:07:01UTC旧run45434541348/head169b2b0（queued/null）仅为历史观察，不能认证E。特殊cursor/metadata只是synthetic边界覆盖，sanitized真实response来源另记；没有实际服务结果不写可用性PASS。原始JSONL/log/capture/profiler文件留Git外。BR21的50真实视频/RAM/root/heap/GPU/PS5.1/playback/签名安装启动及accountP4/P5hold/U2/live/session前置不因本表解除。
 
 ## Shipped 2026-11-01 — the batch that was uncommitted, now built
 

@@ -67,11 +67,11 @@
 - BR-63 直播弹幕重连（`722555b`）：需要一次真实断线（切网/代理断流）看是否 2→4→8→10 s 退避后重连。
 - 第 11 项待报尾巴（`cfc4a15`）：暂停后立即关窗，历史应仍上报一次。
 
-### 1.7 [ ] 后续FI1/FD1（P1；requirements PASS，代码未实现）
+### 1.7 [x] PGC index与opaque cursor：sourceE源码/离线完成
 
-- [BR-70/71](../bug_report.md)：FI1修SeasonIndexVM初始conditions/results与reentrant command所有权；FD1保护polymer dynamic opaque offset的query value。
-- [FI1修订需求PASS](../cloud/rounds/20261125-api-shape-comparison/followup/fi1-review.md)、[FD1需求PASS](../cloud/rounds/20261125-api-shape-comparison/followup/review.md)仅接受规格，不在本次sourceC修复或完整gate声明中。
-- 下一步：当前source/docs/archive释放并取得fresh safe baseline与精确owner grant后，同fixture原红→新绿，保留兼容断言，完成owning/fresh审查与新完整gate；不迁parser/auth/route。
+- `d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 交付FI1/FD1/FI2/FI3/SR1：独立conditions/results与reentrant通知所有权、order code优先/旧fallback、仅Integer0终止非空index页、dynamic offset与short-review cursor单值编码。见[当前字段/兼容表](../document/BILIBILI_API_SHAPE_COMPARISON.md)、[BR70–74](../bug_report.md)。
+- [最终index owning](../cloud/rounds/20261125-index-dynamic-contracts/later-pgc/final-review.md)、[最终SR1 owning](../cloud/rounds/20261125-index-dynamic-contracts/short-review/final-review.md)、[FD1 owning](../cloud/rounds/20261125-index-dynamic-contracts/dynamic/final-review.md)、[final fresh](../cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)与[完整gate](../cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)均PASS；[publication receipt](../cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)已核对最终committed字节身份。Final fresh为PGC140/140、SR13446/3446、118/118、34/34，season790/API028795；fresh的G4179仅精确绑定沿用，后续完整suite正常执行既有G4 stage。
+- Windows实际navigation/conditions/selection/grid/order/terminal/feed/review分页与错误重试未验证，按[新增VALIDATION](../plan/VALIDATION.md)跟进。UNVERIFIED：最近已接受的[实际sourceE hosted观察](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-hosted-source-e.md)于2026-11-25 07:35:28UTC以 `head_sha=d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 过滤Actions collection，返回 `total_count=0` / `workflow_runs=[]`，尚未建立E的hosted result，不推断原因。2026-11-25 06:07:01UTC旧run45434541348/head169b2b0（queued/null）仅为历史观察，不能认证E；BR21native-unmeasured、50视频/RAM/root/heap/GPU/PS5.1/playback/安装签名启动、accountP4/P5hold/U2前置不变。
 
 ## 2. 已知债务
 
@@ -93,7 +93,7 @@
   其余按 §1.3/§1.6 等设备。
 
 - [x] **BR-68/69 源码审计处置** — 播放迟到所有权/RF1/IG1、query/cursor、favorite分页/通知/响应发布已独立PASS并交付sourceC；Windows/native/service仍未验证。
-- [ ] **BR-70/71 后续源码审计发现** — FI1/FD1 requirements PASS，代码未实现；验收与依赖见1.7。
+- [x] **BR-70–74 sourceE源码审计处置** — FI1/FD1/FI2/FI3/SR1有界源码与离线独立PASS；真实Windows/UI/service验证仍未运行，见1.7和VALIDATION。
 
 ## 4. 停放（明确不做，除非另有需求）
 
@@ -125,10 +125,14 @@
 
 ## 6. 最近完成
 
+- [x] **2026-11-25 index/dynamic sourceE**：`d11dbf867c1896bce7d41956a4b78fc2580d5a5c`，FI1/FD1/FI2/FI3/SR1；[publication receipt](../cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)、[final fresh](../cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)与最终owning PASS。当前行为见[API比较](../document/BILIBILI_API_SHAPE_COMPARISON.md)，sourceC/docD及旧ux1dFAIL/corrected52PASS保留历史。
+- [x] **当前sourceE完整gate**：[actual receipt](../cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)，exit0、51/51logical、52/52executable PASS、finished=true、complete_required=true；2026-11-25 06:52:25.306397→06:55:21.987887UTC，176.681秒。Results SHA256`12d25b77236ce59569f831494e8220212c25e30b5c5d871eee6833ff33d0d6d1`；940输入canonical SHA256`3c5dd387072e163c5b99c27fbd17a36bc93f06b3a6f734e433d4e07e205c104e`。实际运行于dirty A`7fc3c524fde4139d01e7ecd362647ca771c64ea8`，随后以实际E committed blobs绑定，不能称clean-E run。All5073quality/732PowerShell/120review-history输入前后稳定；runner14/package15/current sampler独立沿用，不计52stage。
+- [~] **当前sourceE hosted/native**：UNVERIFIED：最近已接受的[实际sourceE hosted观察](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-hosted-source-e.md)于2026-11-25 07:35:28UTC以 `head_sha=d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 过滤Actions collection，返回 `total_count=0` / `workflow_runs=[]`，尚未建立E的hosted result，不推断原因。2026-11-25 06:07:01UTC旧run45434541348/head169b2b0（queued/null）仅为历史观察，不能认证E。Windows/UWP/XAML/PS5.1/50decoded/RAM/roots/heap/GPU/playback/cookie/service/write/account/live/session/签名安装启动均未验证；按新增VALIDATION，旧device-passed行与BR21不改判。
+
 - [x] **2026-11-25 combined memory/API源码**：[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)，Season M1、player R1/R2/R3/RR1、PF1/FA1–3/RF1/IG1、G1自有临时对象及API AS1–3/AF1/AF2已独立源码/fixture PASS。见 [VIDEO_MEMORY](../document/VIDEO_MEMORY.md)、[API comparison](../document/BILIBILI_API_SHAPE_COMPARISON.md)、[BR-68/69](../bug_report.md)。[publication receipt](../cloud/rounds/20261125-api-shape-comparison/publication/execution.md) 与 [独立 blob/ref 核对](../cloud/rounds/20261125-api-shape-comparison/publication/root-source-check.md)核对107payload及935已测输入的实际committed blobs。
-- [x] **当前 corrected combined gate**：[exact receipt](../cloud/rounds/20261125-video-memory/verification/corrected-execution.md)，51/51逻辑、52/52可执行PASS、complete_required=true。Results SHA256 `ca43ccc8c2b5fe8b33327965e4f18c4ab7e73c3926e91b09adf9020026575a16`；935输入manifest `c40d13c9428fa910b7066d223ac12a9295f136f213acab7303865cc6e401dc1d`。执行于dirty7356；随后blob绑定sourceC。首轮50/51逻辑、51/52可执行PASS/1FAIL（ux1d）保留历史，IG1两方法修正后新run PASS、tests不变。runner14/package15/sampler分母独立；[当前interpreter receipt](../cloud/rounds/20261125-video-memory/verification/evidence/interpreter-checks.md)为LinuxPSCore7.7，非PS5.1/native samples。
-- [~] **当前 hosted/native**：UNVERIFIED：2026-11-25 05:09:51 UTC 的实际 Actions collection 只见旧 run45434541348（head169b2b0、queued/null），没有本次 sourceC 的 hosted result。Windows VS/UWP/XAML/PS5.1、实际PID/50decoded视频、cache/codec/WinRT/RAM/root/heap/GPU/pixels、签名安装启动与live/account/session/service/write均未验证；按 [新增VALIDATION](../plan/VALIDATION.md) 和两guide跟进。BR-21仍native-unmeasured，旧设备默认通过不重开。
-- [ ] **后续FI1/FD1**：requirements PASS、代码未实现；见1.7，不在本次修复/gate声明中。
+- [x] **sourceC corrected gate（历史）**：[exact receipt](../cloud/rounds/20261125-video-memory/verification/corrected-execution.md)，51/51逻辑、52/52可执行PASS、complete_required=true。Results SHA256 `ca43ccc8c2b5fe8b33327965e4f18c4ab7e73c3926e91b09adf9020026575a16`；935输入manifest `c40d13c9428fa910b7066d223ac12a9295f136f213acab7303865cc6e401dc1d`。执行于dirty7356；随后blob绑定sourceC。首轮50/51逻辑、51/52可执行PASS/1FAIL（ux1d）保留历史，IG1两方法修正后新run PASS、tests不变。runner14/package15/sampler分母独立；[当前interpreter receipt](../cloud/rounds/20261125-video-memory/verification/evidence/interpreter-checks.md)为LinuxPSCore7.7，非PS5.1/native samples。
+- [~] **sourceC publication时点 hosted/native（历史）**：UNVERIFIED：2026-11-25 05:09:51 UTC 的实际 Actions collection 只见旧 run45434541348（head169b2b0、queued/null），没有本次 sourceC 的 hosted result。Windows VS/UWP/XAML/PS5.1、实际PID/50decoded视频、cache/codec/WinRT/RAM/root/heap/GPU/pixels、签名安装启动与live/account/session/service/write均未验证；按 [新增VALIDATION](../plan/VALIDATION.md) 和两guide跟进。BR-21仍native-unmeasured，旧设备默认通过不重开。
+- [ ] **sourceC/docD时点FI1/FD1计划（历史）**：requirements PASS、代码未实现；见1.7，不在本次修复/gate声明中。
 
 - [x] **2026-11-25 recovery/integrity 源码完成**：`0514966` favorite typed acknowledgements、`1b6af65` payload/null-row/raw-paging 与 detail action/list 归属、`bdba9eb` 深值有序 A–B snapshot/首次初始化/registry 事务与 reopen；最终 `7fe7a5f` 含推荐恢复、下载扫描/每 GUID observer/真实清理重试、creator/subtree/revision 协作、MultiFLV/失败重试/稳定 selection 与 login helper lifetime。RF1/RF2/FA-01–09/CR1 全部独立 CLOSED，范围/red→green/兼容边界见 [PLAN 处置表](../plan/PLAN.md#2026-11-25-恢复与数据完整性源码已提交离线与独立审查完成)、[owning review](../cloud/rounds/20261125-recovery-integrity/recovery/final-review.md)、[fresh audit](../cloud/rounds/20261125-recovery-integrity/final-audit.md)。
 - [x] **恢复轮历史完整 gate**：[final integration](../cloud/rounds/20261125-recovery-integrity/verification/execution.md) 为 51/51 逻辑、52/52 可执行 PASS、complete_required=true，recovery 348 / g5 335；源 915 与工具 5073字节绑定最终已推源码 7fe7a5f。14 controls/package15各自独立且输入未变，未重复执行。旧50/51及早期51/52保持历史 provenance。

@@ -1,0 +1,52 @@
+{
+  "status": "READ_ONLY_FINALIZATION_PASS",
+  "checker_selection_sha256": "c87b8963e72e345fd3d1218c67ca46a2087d82e6675070f1aa6efc0b21b1f6f1",
+  "all940_current_tested_canonical": true,
+  "all31_regular_nonexec_mode100644_raw_canonical": true,
+  "compact_owner_proof20_inspected": true,
+  "all2313_artifacts_hash_verified": true,
+  "exact11_noncloud_delta": true,
+  "no_git_object_index_ref_mutation": true,
+  "command_families": [
+    {
+      "command": "branch",
+      "exit": 0,
+      "calls": 1
+    },
+    {
+      "command": "check-attr",
+      "exit": 0,
+      "calls": 31
+    },
+    {
+      "command": "diff",
+      "exit": 0,
+      "calls": 2
+    },
+    {
+      "command": "hash-object",
+      "exit": 0,
+      "calls": 1942
+    },
+    {
+      "command": "ls-files",
+      "exit": 0,
+      "calls": 2
+    },
+    {
+      "command": "ls-remote",
+      "exit": 0,
+      "calls": 1
+    },
+    {
+      "command": "rev-parse",
+      "exit": 0,
+      "calls": 4
+    }
+  ],
+  "full_private_read_command_receipt": {
+    "path": "/workspace/work/index-dynamic-contracts/source-publication/finalization/commands-full.json",
+    "sha256": "60afce35b061bc6fd67aa5c850245da0236394937ee5ae0691302db4f497e730",
+    "count": 1983
+  }
+}

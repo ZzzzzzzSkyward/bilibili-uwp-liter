@@ -1,0 +1,190 @@
+{
+  "fixture": "Byte-identical Program.cs, project, stubs, platform, complete real HttpResults/ToInt32 and all immutable A source inputs; frozen-FI1 arm changes only full released VM.",
+  "replays": {
+    "old-A": {
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/later-pgc-review/old-A/Followup.csproj",
+        "-c",
+        "Debug"
+      ],
+      "env": {
+        "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/later-pgc-review/old-A-cli",
+        "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/later-pgc-review/old-A-nuget"
+      },
+      "exit": 1,
+      "checks": 140,
+      "failures": 13,
+      "pass": 127,
+      "groups": {
+        "FI1-history-red": 2,
+        "sort-red": 6,
+        "terminal-red": 4,
+        "terminal-grid-red": 1
+      },
+      "logSha256": "6a4bb90d2a1c119b956668f126b2d9cfe0b948d6d263176d2d8ce1af78511515",
+      "receiptSha256": "a572d16d008946dc9a279bcfd5c580071c9f8ee01435f1b9030256e5f56c6e0a"
+    },
+    "frozen-FI1": {
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/later-pgc-review/frozen-FI1/Followup.csproj",
+        "-c",
+        "Debug"
+      ],
+      "env": {
+        "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/later-pgc-review/frozen-FI1-cli",
+        "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/later-pgc-review/frozen-FI1-nuget"
+      },
+      "exit": 1,
+      "checks": 140,
+      "failures": 12,
+      "pass": 128,
+      "groups": {
+        "positive": 1,
+        "sort-red": 6,
+        "terminal-red": 4,
+        "terminal-grid-red": 1
+      },
+      "logSha256": "04f958920ef046a2ff47add865a10d836740ae3aead3b959691b94491f464a91",
+      "receiptSha256": "0f687242fd816b9fb79d42ebb432678292f93fca3f77a0841826ced9b651f9b9"
+    }
+  },
+  "rawPaths": {
+    "old-A": {
+      "log": "/workspace/work/index-dynamic-contracts/later-pgc-review/old-A-run.log",
+      "receipt": "/workspace/work/index-dynamic-contracts/later-pgc-review/old-A/bin/Debug/net8.0/receipt.json"
+    },
+    "frozen-FI1": {
+      "log": "/workspace/work/index-dynamic-contracts/later-pgc-review/frozen-FI1-run.log",
+      "receipt": "/workspace/work/index-dynamic-contracts/later-pgc-review/frozen-FI1/bin/Debug/net8.0/receipt.json"
+    }
+  },
+  "oldAReceiptByteIdenticalToAuthor": true,
+  "changedAssertions": [
+    {
+      "index": 2,
+      "name": "fresh navigation must dispatch first result without public retry",
+      "group": "FI1-history-red",
+      "oldA": false,
+      "frozenFI1": true
+    },
+    {
+      "index": 3,
+      "name": "fresh navigation must publish first page without public retry",
+      "group": "FI1-history-red",
+      "oldA": false,
+      "frozenFI1": true
+    },
+    {
+      "index": 4,
+      "name": "real public Refresh reaches existing successful-result state on old A",
+      "group": "positive",
+      "oldA": true,
+      "frozenFI1": false
+    }
+  ],
+  "oldAPositives": 127,
+  "oldAPositivesRetainedUnderFrozenFI1": 126,
+  "FI1HistoryClosed": 2,
+  "FI2FailuresRemaining": 6,
+  "FI3FailuresRemaining": 5,
+  "unexpectedFailure": {
+    "priority": "P1",
+    "id": "PGC-REV1",
+    "fixtureLine": 77,
+    "group": "positive",
+    "name": "real public Refresh reaches existing successful-result state on old A",
+    "reason": "FreshHistory unconditionally refreshes, but asserts absolute total result calls ==1. FI1 already dispatched result call1 before that valid Refresh; call2 is correct."
+  },
+  "separateRefreshDiagnostic": {
+    "old-A": {
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/later-pgc-review/old-A-refresh-diagnostic/Followup.csproj",
+        "-c",
+        "Debug"
+      ],
+      "exit": 0,
+      "observations": [
+        {
+          "phase": "after-fresh-navigation",
+          "conditions": 1,
+          "resultCalls": 0,
+          "rows": null,
+          "page": 1,
+          "loading": false
+        },
+        {
+          "phase": "after-public-refresh",
+          "before": 0,
+          "resultCalls": 1,
+          "conditions": 1,
+          "rows": 1,
+          "page": 2,
+          "seasonId": 1,
+          "notices": 0,
+          "loading": false,
+          "delta": 1
+        }
+      ],
+      "logSha256": "8c029a06d28ffb1809890c1381c186254e9866c2606c2e2e805b6da36327ac69",
+      "programSha256": "458577013a8f57211bb08f67f06b7d1b7417552cfff3baf9aad884c580aed0fe"
+    },
+    "frozen-FI1": {
+      "command": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/later-pgc-review/frozen-FI1-refresh-diagnostic/Followup.csproj",
+        "-c",
+        "Debug"
+      ],
+      "exit": 0,
+      "observations": [
+        {
+          "phase": "after-fresh-navigation",
+          "conditions": 1,
+          "resultCalls": 1,
+          "rows": 1,
+          "page": 2,
+          "loading": false
+        },
+        {
+          "phase": "after-public-refresh",
+          "before": 1,
+          "resultCalls": 2,
+          "conditions": 1,
+          "rows": 1,
+          "page": 2,
+          "seasonId": 2,
+          "notices": 0,
+          "loading": false,
+          "delta": 1
+        }
+      ],
+      "logSha256": "4b0a3b5a9d0c14ebe34a9cc992fdd2aff6fb18a3d60dd32a105ccbdf8d762721",
+      "programSha256": "458577013a8f57211bb08f67f06b7d1b7417552cfff3baf9aad884c580aed0fe"
+    }
+  },
+  "diagnosticScope": "Separate additional complete-source diagnostic; original 140 fixture and both exact replay arms were unchanged. No lifecycle/private-owner assignment.",
+  "commands": {
+    "setup": "python3 /workspace/work/index-dynamic-contracts/later-pgc-review/review_setup.py",
+    "replay": "python3 /workspace/work/index-dynamic-contracts/later-pgc-review/run_replays.py",
+    "custody": "python3 /workspace/work/index-dynamic-contracts/later-pgc-review/verify_custody.py",
+    "diagnostic": "python3 /workspace/work/index-dynamic-contracts/later-pgc-review/diagnose_refresh.py"
+  },
+  "wrapperExits": {
+    "setup": 0,
+    "replay": 0,
+    "custody": 0,
+    "diagnostic": 0
+  },
+  "limits": "Selected private requirements evidence only; no FI2/FI3 repair, shared/full-suite build, live/server/account/auth/native/UWP-rendering/Windows/hosted acceptance."
+}

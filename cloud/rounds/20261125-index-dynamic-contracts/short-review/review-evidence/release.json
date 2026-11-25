@@ -1,0 +1,34 @@
+{
+  "utc": "2026-11-25T06:37:08.632806+00:00",
+  "verdict": "PASS",
+  "custody": "FROZEN/RELEASED; no review-owned processes remain",
+  "repositoryOutputs": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-index-dynamic-contracts/short-review/review.md",
+      "sha256": "0db64196e37438b60c57f48ed8793e84714fc152b12cb9fbf53a9b0acba1859c",
+      "bytes": 6151
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-index-dynamic-contracts/short-review/review-evidence/binding.json",
+      "sha256": "1acf9307c2686d95b5d552cbb4e3999424bacef0c9424bba3e4202f81115eeec",
+      "bytes": 25747
+    }
+  ],
+  "privateResult": {
+    "path": "/workspace/work/index-dynamic-contracts/short-review-review/result.json",
+    "sha256": "1bcdfb4689dfb4589233ecba79867031c4f6741699ea82985bd185ac93ab92f9",
+    "bytes": 8719
+  },
+  "reviewPublisher": {
+    "path": "/workspace/work/index-dynamic-contracts/short-review-review/publish-review.py",
+    "sha256": "345e0080b32d9b4ba96c228e475e26f7c30c0a35a42d1b62b7f5d3344153fc93",
+    "bytes": 10922
+  },
+  "guardCount": 150,
+  "namedInputsUnchanged": true,
+  "movingIndexExcluded": true,
+  "wholeTreeStabilityClaim": false,
+  "implementationAuthorized": false,
+  "rootRebindAndSameOwnerGrantRequired": true,
+  "noSourceTestGitSharedSuiteMutation": true
+}

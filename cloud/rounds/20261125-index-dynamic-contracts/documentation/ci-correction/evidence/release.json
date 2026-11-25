@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "state": "FROZEN_RELEASED_FOR_INDEPENDENT_REVIEW",
+  "utc": "2026-11-25T08:07:25.950036+00:00",
+  "correction": "DOC-E-CI-01",
+  "sourceE": "d11dbf867c1896bce7d41956a4b78fc2580d5a5c",
+  "mainPaths": {
+    "bug_report.md": "7addfe4d40a7c3216e57b51a3d95907a680b9666864c4c68f58b221a4c8765df",
+    "docs/ROADMAP.md": "14c225740ff8718c0c99874e478b35f27d19482b5f74d015248b58bf27794fa4",
+    "plan/PLAN.md": "81dc094614c99d68d703af8624ab5e58c4aef76ebfbcb9db1d5e3d09093d9051",
+    "plan/VALIDATION.md": "13e41e608c88e7ccdefc0c870fd743ae41ed05fc40e228afa18faca50033f460",
+    "document/BILIBILI_API_SHAPE_COMPARISON.md": "58a69578391c291c4489f6cffe10b81cacd4121d06d5a570ca032c9524b4f47d"
+  },
+  "evidenceSha256": {
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/ci-correction/execution.md": "315134fb6bab0c8d8b173d3db3d61e1ba063bf7f532e7409168ba2aeaed5c5a5",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/ci-correction/evidence/checks.json": "2de370a901d5eb7b81ae4aa3b2d91976d82c023ca15da7683aa199933f288d56",
+    "cloud/rounds/20261125-index-dynamic-contracts/documentation/ci-correction/evidence/input-bindings.json": "17c403c9de5c0e2f24567d0bbaea64d8d0d30a9ab3657e427252de33c9eb675b"
+  },
+  "previousReleaseSha256": "ef1cb3a574c2eb175fc044d63afea78d8283136b8cc6595e6bee6d19aa6c75ed",
+  "sourceEReceiptSha256": "ef5f446e94e1e153d793f4ba4a6097678ffd3804f662ae4b76ca409044cd6faf",
+  "selfHashExcluded": true,
+  "publication": "no Git authority; no Git command",
+  "nativeHosted": "UNVERIFIED",
+  "custody": "all main/evidence/private custody released to root"
+}
