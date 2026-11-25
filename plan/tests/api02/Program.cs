@@ -33,6 +33,8 @@ internal static class Program
         Console.WriteLine("PASS " + assertions + " original API02 assertions");
         await SearchRequestChecks.RunAsync();
         await ApiQueryShapeProbe.RunAsync();
+        DynamicFeedRequestChecks.Run();
+        SeasonShortReviewRequestChecks.Run();
     }
 
     private static async Task FailedRefreshKeepsTimestamp()

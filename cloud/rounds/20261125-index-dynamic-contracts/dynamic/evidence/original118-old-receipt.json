@@ -1,0 +1,14 @@
+{
+  "artifactKind": "compact metadata summary, not the full generated receipt",
+  "rawPrivatePath": "/workspace/work/index-dynamic-contracts/dynamic/original118/bin/Debug/net8.0/receipt.json",
+  "rawSha256": "c7279ac8188488a57ded0352ab73a3afc01ec6943f88dd45337cbf5dfaa23854",
+  "checks": 118,
+  "failures": 29,
+  "failureGroups": {
+    "PGC-initial-red": 2,
+    "PGC-owner-red": 3,
+    "dynamic-roundtrip-red": 18,
+    "dynamic-controls-red": 6
+  },
+  "outcomeUnchanged": true
+}

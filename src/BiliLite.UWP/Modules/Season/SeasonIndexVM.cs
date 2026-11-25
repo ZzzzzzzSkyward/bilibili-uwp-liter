@@ -42,7 +42,7 @@ namespace BiliLite.Modules
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
 
-        private bool _loading = true;
+        private bool _loading;
         public bool Loading
         {
             get { return _loading; }
@@ -53,7 +53,7 @@ namespace BiliLite.Modules
         private bool CanLoadMore = true;
       
 
-        private bool _Conditionsloading = true;
+        private bool _Conditionsloading;
         public bool ConditionsLoading
         {
             get { return _Conditionsloading; }
@@ -81,8 +81,17 @@ namespace BiliLite.Modules
             set { _page = value; }
         }
 
+        private bool HasUsableConditions()
+        {
+            return Conditions != null && Conditions.Count != 0 && Conditions.All(item =>
+                item != null && !string.IsNullOrEmpty(item.field) &&
+                item.current != null && item.current.keyword != null);
+        }
+
         public async Task LoadConditions()
         {
+            if (Parameter == null || ConditionsLoading || Loading) return;
+
             try
             {
                 ConditionsLoading = true;
@@ -132,7 +141,7 @@ namespace BiliLite.Modules
                             name = "排序",
                             values = orders,
                             field = "order",
-                            current = orders.FirstOrDefault(x => x.name == Parameter.order) ?? orders[0],
+                            current = orders.FirstOrDefault(x => x.keyword == Parameter.order) ?? orders.FirstOrDefault(x => x.name == Parameter.order) ?? orders[0],
                         });
                         Conditions = items;
                     }
@@ -155,24 +164,17 @@ namespace BiliLite.Modules
 
         public async Task LoadResult()
         {
+            if (Parameter == null || ConditionsLoading || Loading || !HasUsableConditions()) return;
+            if (Page != 1 && !CanLoadMore) return;
+
             try
             {
-                if (Loading) return;
-               
+                Loading = true;
                 if (Page == 1)
                 {
                     CanLoadMore = true;
                     Result = null;
                 }
-                else
-                {
-                    if (!CanLoadMore)
-                    {
-                        Loading = false;
-                        return;
-                    }
-                }
-                Loading = true;
                 var con = "";
                 foreach (var item in Conditions)
                 {
@@ -188,6 +190,10 @@ namespace BiliLite.Modules
                         var items = JsonConvert.DeserializeObject<ObservableCollection<SeasonIndexResultItemModel>>(data["data"]["list"]?.ToString() ?? "[]");
                         if (items != null && items.Count != 0)
                         {
+                            var hasNext = data["data"]["has_next"];
+                            var isLastPage = hasNext != null && hasNext.Type == Newtonsoft.Json.Linq.JTokenType.Integer && hasNext.ToString() == "0";
+                            if (isLastPage) CanLoadMore = false;
+
                             if (Page == 1)
                             {
                                 Result = items;
@@ -227,27 +233,27 @@ namespace BiliLite.Modules
 
         public async void Refresh()
         {
-            if (Loading)
+            if (Parameter == null || ConditionsLoading || Loading)
             {
                 return;
             }
             Page = 1;
-            if (Conditions == null)
+            if (!HasUsableConditions())
             {
                 await LoadConditions();
             }
-            if (Conditions != null)
+            if (HasUsableConditions())
             {
                 await LoadResult();
             }
         }
         public async void LoadMore()
         {
-            if (Loading)
+            if (Parameter == null || ConditionsLoading || Loading || !HasUsableConditions())
             {
                 return;
             }
-            if (Conditions == null || Conditions.Count == 0 || Result == null || Result.Count == 0)
+            if (Result == null || Result.Count == 0)
             {
                 return;
             }

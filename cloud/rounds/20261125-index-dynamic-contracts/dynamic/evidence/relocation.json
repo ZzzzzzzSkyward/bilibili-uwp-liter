@@ -1,0 +1,69 @@
+{
+  "utc": "2026-11-25T06:11:15.551765+00:00",
+  "owner": "dynamic_offset_executor",
+  "scope": "metadata-only evidence hygiene; four raw repository logs relocated; full receipt JSON compacted into pointer/count metadata",
+  "initialMetadata": {
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence-history/initial-executor/execution.md": "58926faa072ba0026fb922eec2c193312030065b9386f5e1ddb8cf17eb588882",
+    "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence-history/initial-executor/binding.json": "8f97c7951e415b19a6cc8e68a4a7e7537d25b421df4d6e5b91b547611a7f4bfe"
+  },
+  "initialExecutorReleaseJsonExisted": false,
+  "artifacts": [
+    {
+      "kind": "raw-stdout-stderr",
+      "historicalRepositoryPath": "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence/old-maintained.log",
+      "currentPrivatePath": "/workspace/work/index-dynamic-contracts/dynamic/old-maintained.log",
+      "sha256": "30dec461c64b26688c763077ca263cd3b96b5713acdfef4c8cafb8a392488dea",
+      "verifiedIdenticalBeforeRemoval": true,
+      "action": "removed only owner-generated repository log copy after private verification"
+    },
+    {
+      "kind": "raw-stdout-stderr",
+      "historicalRepositoryPath": "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence/candidate-maintained.log",
+      "currentPrivatePath": "/workspace/work/index-dynamic-contracts/dynamic/candidate-maintained.log",
+      "sha256": "910c11f6a1de2dd561951b6ac5d36c7755c067768d709676564cf2be0791c98a",
+      "verifiedIdenticalBeforeRemoval": true,
+      "action": "removed only owner-generated repository log copy after private verification"
+    },
+    {
+      "kind": "raw-stdout-stderr",
+      "historicalRepositoryPath": "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence/original118-old.log",
+      "currentPrivatePath": "/workspace/work/index-dynamic-contracts/dynamic/original118-old.log",
+      "sha256": "54bbaacd5358e596d0f9b4ada969593027ea2e8f84e22df18e961c75b4be5fb8",
+      "verifiedIdenticalBeforeRemoval": true,
+      "action": "removed only owner-generated repository log copy after private verification"
+    },
+    {
+      "kind": "raw-stdout-stderr",
+      "historicalRepositoryPath": "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence/candidate118.log",
+      "currentPrivatePath": "/workspace/work/index-dynamic-contracts/dynamic/candidate118.log",
+      "sha256": "3021e91ed943e5a3a97e52ebd03a28c5f1e30d6540d66c7b4581152bae0929a8",
+      "verifiedIdenticalBeforeRemoval": true,
+      "action": "removed only owner-generated repository log copy after private verification"
+    },
+    {
+      "kind": "full-generated-receipt",
+      "historicalRepositoryPath": "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence/original118-old-receipt.json",
+      "currentPrivatePath": "/workspace/work/index-dynamic-contracts/dynamic/original118/bin/Debug/net8.0/receipt.json",
+      "sha256": "c7279ac8188488a57ded0352ab73a3afc01ec6943f88dd45337cbf5dfaa23854",
+      "verifiedIdenticalBeforeCompaction": true,
+      "action": "compacted existing repository JSON into a custody/count summary; full receipt preserved private"
+    },
+    {
+      "kind": "full-generated-receipt",
+      "historicalRepositoryPath": "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence/candidate118-receipt.json",
+      "currentPrivatePath": "/workspace/work/index-dynamic-contracts/dynamic/candidate118/bin/Debug/net8.0/receipt.json",
+      "sha256": "a0aec89ab95d26ea2e5da8c9769d28626f0acf00870dd9047c194cd9e7703f8e",
+      "verifiedIdenticalBeforeCompaction": true,
+      "action": "compacted existing repository JSON into a custody/count summary; full receipt preserved private"
+    }
+  ],
+  "frozenOwnedFilesUnchanged": {
+    "src/BiliLite.UWP/Api/User/WebDynamicFeedApi.cs": "e10feceedf3369e1ba11b8ba353805cdd9212db400a46f5300e3ddaa8d8b91c9",
+    "plan/tests/api02/API02.csproj": "ab8237d1d135c1b3d35e3c4ce1c8342c8f5f3163f31ac64dc16e10cd163db41a",
+    "plan/tests/api02/Program.cs": "e5d50a678cd5f4ef8474b5275644b1aabcace3eabaeecfbe5083dc84005657b4",
+    "plan/tests/api02/DynamicFeedRequestChecks.cs": "5f8df3e270dedb59a50afb18bae44ecf9a02128c50c9af877d6fa4d4aee88f4d"
+  },
+  "noTestsOrBuildsRerun": true,
+  "noGitOperations": true,
+  "independentReviewUntouched": true
+}

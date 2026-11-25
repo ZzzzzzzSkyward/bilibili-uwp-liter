@@ -1,0 +1,146 @@
+[
+  {
+    "label": "approved-old-FI1",
+    "command": [
+      "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+      "run",
+      "--project",
+      "/workspace/work/index-dynamic-contracts/index/pgc-amendment/approved-old-FI1/Followup.csproj",
+      "-c",
+      "Debug"
+    ],
+    "cwd": "/workspace/bilibili-uwp-liter",
+    "exit": 1,
+    "checks": 140,
+    "pass": 129,
+    "failures": 11,
+    "failureGroups": {
+      "sort-red": 6,
+      "terminal-red": 4,
+      "terminal-grid-red": 1
+    },
+    "rawLog": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/approved-old-FI1/run.log",
+    "rawLogSha256": "90a7b6bc300b389adcf022878ef36f9ec2638ac7c63a56309832d41d6223e8ad",
+    "receipt": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/approved-old-FI1/bin/Debug/net8.0/receipt.json",
+    "receiptSha256": "d991df8c2424dfac420381ccdd573b620becae3f0bc6fc0db54c965667651aee"
+  },
+  {
+    "label": "approved-candidate",
+    "command": [
+      "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+      "run",
+      "--project",
+      "/workspace/work/index-dynamic-contracts/index/pgc-amendment/approved-candidate/Followup.csproj",
+      "-c",
+      "Debug"
+    ],
+    "cwd": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/approved-candidate",
+    "exit": 0,
+    "checks": 140,
+    "pass": 140,
+    "failures": 0,
+    "failureGroups": {},
+    "rawLog": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/approved-candidate/run.log",
+    "rawLogSha256": "6ed7d04cd87e5d55bddd778259940c22c4bdabf0a2d60a45a91904edc1bcd671",
+    "receipt": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/approved-candidate/bin/Debug/net8.0/receipt.json",
+    "receiptSha256": "acb1ddec14ebde963561b19b76fb55c05e5ca57c85451c13daab4593b3bb7701"
+  },
+  {
+    "label": "original118-candidate",
+    "command": [
+      "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+      "run",
+      "--project",
+      "/workspace/work/index-dynamic-contracts/index/pgc-amendment/original118-candidate/Followup.csproj",
+      "-c",
+      "Debug"
+    ],
+    "cwd": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/original118-candidate",
+    "exit": 0,
+    "checks": 118,
+    "pass": 118,
+    "failures": 0,
+    "failureGroups": {},
+    "rawLog": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/original118-candidate/run.log",
+    "rawLogSha256": "100ec629c154c2ef7d69b2917913c85cd8e603a8f6513fc2f752ee261b96d631",
+    "receipt": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/original118-candidate/bin/Debug/net8.0/receipt.json",
+    "receiptSha256": "e1737915953de5833ff3071f704ae247045c5b6b49fc5da26be7142759da16d3"
+  },
+  {
+    "label": "supplement34-candidate",
+    "command": [
+      "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+      "run",
+      "--project",
+      "/workspace/work/index-dynamic-contracts/index/pgc-amendment/supplement34-candidate/Followup.csproj",
+      "-c",
+      "Debug"
+    ],
+    "cwd": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/supplement34-candidate",
+    "exit": 0,
+    "checks": 34,
+    "pass": 34,
+    "failures": 0,
+    "failureGroups": {},
+    "rawLog": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/supplement34-candidate/run.log",
+    "rawLogSha256": "8f56b4b0fe2fbb4f3e6d78e2d3fdca31741edb66d6041d5af8dca010ad62d545",
+    "receipt": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/supplement34-candidate/bin/Debug/net8.0/receipt.json",
+    "receiptSha256": "0c5e364fc24bcd23b8460bc19cb69d0487602b97ec0c65e18d66284c1af18887"
+  },
+  {
+    "label": "maintained-old-FI1",
+    "command": [
+      "bash",
+      "/workspace/work/index-dynamic-contracts/index/pgc-amendment/maintained-old-FI1/plan/tests/season1/run.sh"
+    ],
+    "cwd": "/workspace/bilibili-uwp-liter",
+    "environment": {
+      "UPSTREAM_UNIT_TOOLS": "/workspace/work/maintenance-foundation/quality"
+    },
+    "exit": 1,
+    "originalAssertions": 141,
+    "lifetimeAssertions": 497,
+    "indexAssertions": 152,
+    "indexFailures": 13,
+    "retainedFirstFI1AssertionsPassing": 75,
+    "rawLog": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/maintained-old-FI1/run.log",
+    "rawLogSha256": "ae7880ec879313092eb1c21e887459019710593a9f4f52b2b3dcf499c202d06f"
+  },
+  {
+    "label": "maintained-candidate",
+    "command": [
+      "bash",
+      "/workspace/work/index-dynamic-contracts/index/pgc-amendment/maintained-candidate/plan/tests/season1/run.sh"
+    ],
+    "cwd": "/workspace/bilibili-uwp-liter",
+    "environment": {
+      "UPSTREAM_UNIT_TOOLS": "/workspace/work/maintenance-foundation/quality"
+    },
+    "exit": 0,
+    "originalAssertions": 141,
+    "lifetimeAssertions": 497,
+    "indexAssertions": 152,
+    "indexFailures": 0,
+    "retainedFirstFI1AssertionsPassing": 75,
+    "rawLog": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/maintained-candidate/run.log",
+    "rawLogSha256": "6a1e4d193a2408e47209ca99efac5905b5e1abffb80cdf16c0a4cb16cff6b16d"
+  },
+  {
+    "label": "maintained-repository-final",
+    "command": [
+      "bash",
+      "plan/tests/season1/run.sh"
+    ],
+    "cwd": "/workspace/bilibili-uwp-liter",
+    "environment": {
+      "UPSTREAM_UNIT_TOOLS": "/workspace/work/maintenance-foundation/quality"
+    },
+    "exit": 0,
+    "originalAssertions": 141,
+    "lifetimeAssertions": 497,
+    "indexAssertions": 152,
+    "indexFailures": 0,
+    "rawLog": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/maintained-repository-final.log",
+    "rawLogSha256": "7bd4260ca766fa59be37ed8746024fb9217ed7dc0789666e8fc784a952222a78"
+  }
+]

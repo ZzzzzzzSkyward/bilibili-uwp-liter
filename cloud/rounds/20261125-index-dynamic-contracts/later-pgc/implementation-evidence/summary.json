@@ -1,0 +1,31 @@
+{
+  "state": "FROZEN; independent owning/fresh review pending",
+  "versionedApproved140": {
+    "releasedFI1Pass": 129,
+    "releasedFI1Fail": 11,
+    "candidatePass": 140,
+    "candidateFail": 0,
+    "all127ApplicableOldPositivesRetained": true
+  },
+  "maintained": {
+    "old141": 141,
+    "lifetime497": 497,
+    "retainedFI1": 75,
+    "additiveFI2FI3": 77,
+    "finalIndex": 152,
+    "releasedFI1FailuresWithSameFinalFixture": 13,
+    "candidateFailures": 0,
+    "selectedResult": "PARTIAL_PASS"
+  },
+  "original118Union": {
+    "pass": 118,
+    "fail": 0
+  },
+  "supplement34Union": {
+    "pass": 34,
+    "fail": 0
+  },
+  "G4179": "historical exact inputs/artifacts preserved; no rerun",
+  "rawDiff": "/workspace/work/index-dynamic-contracts/index/pgc-amendment/candidate.diff",
+  "rawDiffSha256": "963e70e270b293d5d56056d5e8d36e0ed3b97146241e49e2b3c7160470a13204"
+}

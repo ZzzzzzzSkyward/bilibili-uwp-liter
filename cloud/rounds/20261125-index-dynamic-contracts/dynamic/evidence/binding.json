@@ -1,0 +1,350 @@
+{
+  "status": "FD1 implementation frozen/released for independent review; selected owning gate only",
+  "utc": "2026-11-25T06:01:14.299888+00:00",
+  "baseline": "7fc3c524fde4139d01e7ecd362647ca771c64ea8",
+  "ownedFiles": {
+    "src/BiliLite.UWP/Api/User/WebDynamicFeedApi.cs": "e10feceedf3369e1ba11b8ba353805cdd9212db400a46f5300e3ddaa8d8b91c9",
+    "plan/tests/api02/API02.csproj": "ab8237d1d135c1b3d35e3c4ce1c8342c8f5f3163f31ac64dc16e10cd163db41a",
+    "plan/tests/api02/Program.cs": "e5d50a678cd5f4ef8474b5275644b1aabcace3eabaeecfbe5083dc84005657b4",
+    "plan/tests/api02/DynamicFeedRequestChecks.cs": "5f8df3e270dedb59a50afb18bae44ecf9a02128c50c9af877d6fa4d4aee88f4d"
+  },
+  "preservationChecks": {
+    "plan/tests/API01Stubs.cs": true,
+    "plan/tests/api02/SearchRequestChecks.cs": true,
+    "plan/tests/api02/Program.cs": true,
+    "plan/tests/api02/run.sh": true,
+    "plan/tests/api02/API02.csproj": true,
+    "plan/tests/api02/ApiQueryShapeProbe.cs": true,
+    "src/BiliLite.UWP/Api/SearchAPI.cs": true,
+    "src/BiliLite.UWP/Api/CommentApi.cs": true,
+    "src/BiliLite.UWP/Api/ApiHelper.cs": true,
+    "src/BiliLite.UWP/Api/AccountApi.cs": true,
+    "src/BiliLite.UWP/Models/CookieOrigins.cs": true,
+    "src/BiliLite.UWP/Services/WbiKeyService.cs": true,
+    "src/BiliLite.UWP/Services/PasswordLoginSession.cs": true,
+    "src/BiliLite.UWP/Services/CookieService.cs": true,
+    "src/BiliLite.UWP/Services/WebRefreshTransaction.cs": true,
+    "src/BiliLite.UWP/Services/RefreshCredentialPolicy.cs": true,
+    "src/BiliLite.UWP/Api/User/WebDynamicFeedApi.cs": true,
+    "src/BiliLite.UWP/Api/User/UserDetailAPI.cs": true
+  },
+  "originalPrivateArtifactsUnchanged": {
+    "repro/Program.cs": true,
+    "repro/Stubs.cs": true,
+    "repro/Followup.csproj": true,
+    "repro/global.json": true,
+    "repro/HttpResults.actual.cs": true,
+    "repro/source-manifest.json": true,
+    "repro/run.log": true,
+    "repro/bin/Debug/net8.0/receipt.json": true,
+    "controls/plan/tests/g4/Program.cs": true,
+    "controls/plan/tests/g4/G4Stubs.cs": true,
+    "controls/plan/tests/g4/G4Probe.csproj": true,
+    "controls/source-manifest.json": true,
+    "controls/run.log": true,
+    "dotnet-info.txt": true,
+    "setup.py": true,
+    "controls-setup.py": true,
+    "bind.py": true,
+    "returncodes.json": true
+  },
+  "toolchain": {
+    "/workspace/work/maintenance-foundation/quality/dotnet/dotnet": "db40da462b13ec4c07df7a75c4b0395223d360b8dc9a477d9e31fb71759b05f4",
+    "/workspace/work/maintenance-foundation/quality/dotnet/sdk/8.0.427/Roslyn/bincore/csc.dll": "2b9a5bbe002b353e44c78506e1bccbbc55dcdf2338abb11a68a5056329cb7334",
+    "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Private.CoreLib.dll": "98fec20c823887e41d4fbd2d2e900175e5b1ba7d671e29704c9ce4632dcc5432",
+    "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Private.Uri.dll": "a077553d15cfa75cb5ab994384d0f32a6de94b49a5f6e8ecdf190ff2eb928b2a",
+    "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Web.HttpUtility.dll": "41aff6421fde1711eef7a52db52c9016ab5fa10fae235e7fde17e841651a7683",
+    "/workspace/work/api-shape-comparison/requirements-review/nuget/newtonsoft.json/13.0.3/lib/net6.0/Newtonsoft.Json.dll": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07"
+  },
+  "maintainedInputs": {
+    "old-maintained": {
+      "global.json": "02fb902cb78901f5986f9b26fae7fa8f72242ce4dd6fd5020293fead03847e57",
+      "plan/tests/API01Stubs.cs": "034c9d0362e8866b39f252bf0c0420901963b1a31b8d115eba0189d620ca568d",
+      "plan/tests/api02/API02.csproj": "ab8237d1d135c1b3d35e3c4ce1c8342c8f5f3163f31ac64dc16e10cd163db41a",
+      "plan/tests/api02/ApiQueryShapeProbe.cs": "28abac1738b3e3f0051691deda71c2bf1425270c1800b0ea9f7e1f460c58c18a",
+      "plan/tests/api02/DynamicFeedRequestChecks.cs": "5f8df3e270dedb59a50afb18bae44ecf9a02128c50c9af877d6fa4d4aee88f4d",
+      "plan/tests/api02/Program.cs": "e5d50a678cd5f4ef8474b5275644b1aabcace3eabaeecfbe5083dc84005657b4",
+      "plan/tests/api02/SearchRequestChecks.cs": "fe366983030cb255dca05b9dfdf61c029dd687d44260a56118e16ab4a2864584",
+      "plan/tests/api02/run.sh": "47452969fb960c53d83a6021a8f22f4a98d01edc4480a568cee69e757015f93a",
+      "src/BiliLite.UWP/Api/AccountApi.cs": "2d4696c66a2be8220e135fbbcf57f46357303c22eb59a53369a5aca6e947d7ff",
+      "src/BiliLite.UWP/Api/ApiHelper.cs": "dfb07f377db95023aebce4c68101c6d334444722cf79b07d7d39a6126ba302d9",
+      "src/BiliLite.UWP/Api/CommentApi.cs": "1578461fe31d2b50f5106280ebed24c57f5adb4448073db7cec9ed33d908bdb2",
+      "src/BiliLite.UWP/Api/SearchAPI.cs": "9f9b00550b5575be6a137c7cf7f696fe66fa497c68cceed8a51a8da3c8d7735b",
+      "src/BiliLite.UWP/Api/User/UserDetailAPI.cs": "2c263ecaaf65d29e62fb3bd313b37c78c52496afcf872a6daf6471eb8f557225",
+      "src/BiliLite.UWP/Api/User/WebDynamicFeedApi.cs": "775ac5004bde97d6a5d02e16d52792af1272ee4d4901f0402a59e297f9ea2efb",
+      "src/BiliLite.UWP/Models/CookieOrigins.cs": "ef7f9c32371d67619a63c5173f2acc0c32bb64524ea72755e95164adec0e1de6",
+      "src/BiliLite.UWP/Services/CookieService.cs": "447cadc5bfb66eae88887cdb716b3446817048006e6361c37b7be036dc7f38dc",
+      "src/BiliLite.UWP/Services/PasswordLoginSession.cs": "2cb5cf8cc1e55ed6038a09031b60451368591963cd46db797dcc035426331e4b",
+      "src/BiliLite.UWP/Services/RefreshCredentialPolicy.cs": "b3492491ff0431ad844023f1326cf5b1f57f52c26d7b689e2b7521637021db5a",
+      "src/BiliLite.UWP/Services/WbiKeyService.cs": "2420c42dbffcb6eec8293fbd0580ddb76ab80a51ebf1a60ef58d57e819ebb32d",
+      "src/BiliLite.UWP/Services/WebRefreshTransaction.cs": "5916d4b1d96e724be5d0dfe81c60ff54cb4e874a7a08dbf177a96ffb852b41d8"
+    },
+    "candidate-maintained": {
+      "global.json": "02fb902cb78901f5986f9b26fae7fa8f72242ce4dd6fd5020293fead03847e57",
+      "plan/tests/API01Stubs.cs": "034c9d0362e8866b39f252bf0c0420901963b1a31b8d115eba0189d620ca568d",
+      "plan/tests/api02/API02.csproj": "ab8237d1d135c1b3d35e3c4ce1c8342c8f5f3163f31ac64dc16e10cd163db41a",
+      "plan/tests/api02/ApiQueryShapeProbe.cs": "28abac1738b3e3f0051691deda71c2bf1425270c1800b0ea9f7e1f460c58c18a",
+      "plan/tests/api02/DynamicFeedRequestChecks.cs": "5f8df3e270dedb59a50afb18bae44ecf9a02128c50c9af877d6fa4d4aee88f4d",
+      "plan/tests/api02/Program.cs": "e5d50a678cd5f4ef8474b5275644b1aabcace3eabaeecfbe5083dc84005657b4",
+      "plan/tests/api02/SearchRequestChecks.cs": "fe366983030cb255dca05b9dfdf61c029dd687d44260a56118e16ab4a2864584",
+      "plan/tests/api02/run.sh": "47452969fb960c53d83a6021a8f22f4a98d01edc4480a568cee69e757015f93a",
+      "src/BiliLite.UWP/Api/AccountApi.cs": "2d4696c66a2be8220e135fbbcf57f46357303c22eb59a53369a5aca6e947d7ff",
+      "src/BiliLite.UWP/Api/ApiHelper.cs": "dfb07f377db95023aebce4c68101c6d334444722cf79b07d7d39a6126ba302d9",
+      "src/BiliLite.UWP/Api/CommentApi.cs": "1578461fe31d2b50f5106280ebed24c57f5adb4448073db7cec9ed33d908bdb2",
+      "src/BiliLite.UWP/Api/SearchAPI.cs": "9f9b00550b5575be6a137c7cf7f696fe66fa497c68cceed8a51a8da3c8d7735b",
+      "src/BiliLite.UWP/Api/User/UserDetailAPI.cs": "2c263ecaaf65d29e62fb3bd313b37c78c52496afcf872a6daf6471eb8f557225",
+      "src/BiliLite.UWP/Api/User/WebDynamicFeedApi.cs": "e10feceedf3369e1ba11b8ba353805cdd9212db400a46f5300e3ddaa8d8b91c9",
+      "src/BiliLite.UWP/Models/CookieOrigins.cs": "ef7f9c32371d67619a63c5173f2acc0c32bb64524ea72755e95164adec0e1de6",
+      "src/BiliLite.UWP/Services/CookieService.cs": "447cadc5bfb66eae88887cdb716b3446817048006e6361c37b7be036dc7f38dc",
+      "src/BiliLite.UWP/Services/PasswordLoginSession.cs": "2cb5cf8cc1e55ed6038a09031b60451368591963cd46db797dcc035426331e4b",
+      "src/BiliLite.UWP/Services/RefreshCredentialPolicy.cs": "b3492491ff0431ad844023f1326cf5b1f57f52c26d7b689e2b7521637021db5a",
+      "src/BiliLite.UWP/Services/WbiKeyService.cs": "2420c42dbffcb6eec8293fbd0580ddb76ab80a51ebf1a60ef58d57e819ebb32d",
+      "src/BiliLite.UWP/Services/WebRefreshTransaction.cs": "5916d4b1d96e724be5d0dfe81c60ff54cb4e874a7a08dbf177a96ffb852b41d8"
+    }
+  },
+  "original118Inputs": {
+    "original118": {
+      "Followup.csproj": "81d345c8d661694d49c2bd6d8e1c469aefd34a0e8d14ef6cd3e8d4e86e4bc02a",
+      "HttpResults.actual.cs": "8aa4c8734aed85517df1dc3863a479fc076a262e775a7c657e45e9f8b9bc6a93",
+      "Program.cs": "fd3ac1f728b26c07e4cd4a47c6882d936095558d85630ead75e254e2718c7e6f",
+      "Stubs.cs": "6b67ae0af9500c16d979620aa41acb9773dd55bc371fbca4c1a22aa2f70bc201",
+      "global.json": "02fb902cb78901f5986f9b26fae7fa8f72242ce4dd6fd5020293fead03847e57",
+      "run.log": "764e745eee7c663aa95d6623325ec1c6208682db441e3d4c07b79600cbbd90c7",
+      "source/src/BiliLite.UWP/Api/ApiHelper.cs": "dfb07f377db95023aebce4c68101c6d334444722cf79b07d7d39a6126ba302d9",
+      "source/src/BiliLite.UWP/Api/SeasonIndexAPI.cs": "2f52e361f3f7635f33cdff670be5530f1e4465ea08c2311b4b31e1abe6987f0b",
+      "source/src/BiliLite.UWP/Api/User/DynamicAPI.cs": "39d3be6453c7b8f959af2f01c19e08cc155a9ba83f3669052d8119e918e3c58e",
+      "source/src/BiliLite.UWP/Api/User/WebDynamicFeedApi.cs": "775ac5004bde97d6a5d02e16d52792af1272ee4d4901f0402a59e297f9ea2efb",
+      "source/src/BiliLite.UWP/Models/ApiModel.cs": "6493168767c4c9a92637b3ac82b9ec7d67e92ac2840cf0680655887996611671",
+      "source/src/BiliLite.UWP/Models/ReturnModel.cs": "0c5192f37d4447954937a8b226b5667dba77ed09f3d5a345b226e1e6c8994a1c",
+      "source/src/BiliLite.UWP/Modules/IModules.cs": "cef5334b540d7e74513d59b513e3d7671fce98e9be62b7d50bad471df14ed3c6",
+      "source/src/BiliLite.UWP/Modules/RelayCommand.cs": "2941ad18ba1a0aed08d0803cb6ddead223d20e750d4541f4284ecb828a1c74e8",
+      "source/src/BiliLite.UWP/Modules/Season/SeasonIndexVM.cs": "e7eef5dd3c69852f9b17c676122c4c1bec19eae729e49fb2e4c2ad02b19e14c3",
+      "source/src/BiliLite.UWP/Parsing/ApiEnvelope.cs": "050317cddde277c46c6169f3878cb6c7accef3cec0dbbf018006cbc411948421",
+      "source/src/BiliLite.UWP/Parsing/ApiParseResult.cs": "f708c0a8cf8cddad1aa2f3b0abc1346cde0a10cf37313c4fee9aecd3c0c0e3ab",
+      "source/src/BiliLite.UWP/Parsing/Dynamic/WebDynamicFeedParser.cs": "af784f82b10658104bf44eb4504f5f7425aaf621ea9bf82200d02e41163e2ae7",
+      "source-manifest.json": "b98a7feef60562fc863bc8d0fe6948de31298102bb9b0812376ddcde0a1e3ad1"
+    },
+    "candidate118": {
+      "Followup.csproj": "81d345c8d661694d49c2bd6d8e1c469aefd34a0e8d14ef6cd3e8d4e86e4bc02a",
+      "HttpResults.actual.cs": "8aa4c8734aed85517df1dc3863a479fc076a262e775a7c657e45e9f8b9bc6a93",
+      "Program.cs": "fd3ac1f728b26c07e4cd4a47c6882d936095558d85630ead75e254e2718c7e6f",
+      "Stubs.cs": "6b67ae0af9500c16d979620aa41acb9773dd55bc371fbca4c1a22aa2f70bc201",
+      "global.json": "02fb902cb78901f5986f9b26fae7fa8f72242ce4dd6fd5020293fead03847e57",
+      "run.log": "764e745eee7c663aa95d6623325ec1c6208682db441e3d4c07b79600cbbd90c7",
+      "source/src/BiliLite.UWP/Api/ApiHelper.cs": "dfb07f377db95023aebce4c68101c6d334444722cf79b07d7d39a6126ba302d9",
+      "source/src/BiliLite.UWP/Api/SeasonIndexAPI.cs": "2f52e361f3f7635f33cdff670be5530f1e4465ea08c2311b4b31e1abe6987f0b",
+      "source/src/BiliLite.UWP/Api/User/DynamicAPI.cs": "39d3be6453c7b8f959af2f01c19e08cc155a9ba83f3669052d8119e918e3c58e",
+      "source/src/BiliLite.UWP/Api/User/WebDynamicFeedApi.cs": "e10feceedf3369e1ba11b8ba353805cdd9212db400a46f5300e3ddaa8d8b91c9",
+      "source/src/BiliLite.UWP/Models/ApiModel.cs": "6493168767c4c9a92637b3ac82b9ec7d67e92ac2840cf0680655887996611671",
+      "source/src/BiliLite.UWP/Models/ReturnModel.cs": "0c5192f37d4447954937a8b226b5667dba77ed09f3d5a345b226e1e6c8994a1c",
+      "source/src/BiliLite.UWP/Modules/IModules.cs": "cef5334b540d7e74513d59b513e3d7671fce98e9be62b7d50bad471df14ed3c6",
+      "source/src/BiliLite.UWP/Modules/RelayCommand.cs": "2941ad18ba1a0aed08d0803cb6ddead223d20e750d4541f4284ecb828a1c74e8",
+      "source/src/BiliLite.UWP/Modules/Season/SeasonIndexVM.cs": "e7eef5dd3c69852f9b17c676122c4c1bec19eae729e49fb2e4c2ad02b19e14c3",
+      "source/src/BiliLite.UWP/Parsing/ApiEnvelope.cs": "050317cddde277c46c6169f3878cb6c7accef3cec0dbbf018006cbc411948421",
+      "source/src/BiliLite.UWP/Parsing/ApiParseResult.cs": "f708c0a8cf8cddad1aa2f3b0abc1346cde0a10cf37313c4fee9aecd3c0c0e3ab",
+      "source/src/BiliLite.UWP/Parsing/Dynamic/WebDynamicFeedParser.cs": "af784f82b10658104bf44eb4504f5f7425aaf621ea9bf82200d02e41163e2ae7",
+      "source-manifest.json": "b98a7feef60562fc863bc8d0fe6948de31298102bb9b0812376ddcde0a1e3ad1"
+    }
+  },
+  "g4InputsUnchanged": {
+    "plan/tests/g4/G4Stubs.cs": {
+      "sha256": "df482f9e46f24b4d30a9e224a10566d53ec661df1ad05e5d48afbeb3d0d9031d",
+      "unchanged": true
+    },
+    "plan/tests/g4/Program.cs": {
+      "sha256": "78fef3971086a29dd96ef6fee9c658e1d0e51a34d08c41acc5f6573bc094da05",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Services/DynamicApiSelector.cs": {
+      "sha256": "89d6053fee569af2e8178ef053d33f522dbc53fbd39cabfb8d51c87d61c9ef90",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Services/DynamicApiSelection.cs": {
+      "sha256": "f2cec7df24d60f8fbc61fe0a0cb793adf7bbf13cc4538ef142227cf0102f30d1",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Parsing/ApiEnvelope.cs": {
+      "sha256": "050317cddde277c46c6169f3878cb6c7accef3cec0dbbf018006cbc411948421",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Parsing/Dynamic/LegacyDynamicFeedParser.cs": {
+      "sha256": "d340999de9abb5bd44852492b0afec4495b3381386fef7edb5314b79da0a5705",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Parsing/ApiParseResult.cs": {
+      "sha256": "f708c0a8cf8cddad1aa2f3b0abc1346cde0a10cf37313c4fee9aecd3c0c0e3ab",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Parsing/Dynamic/WebDynamicFeedMapper.cs": {
+      "sha256": "0fe33e05f93e4616f7a9d5657f0e255b843dd23726da2e30af673e89b043644f",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Parsing/Dynamic/WireScalars.cs": {
+      "sha256": "1a252170f0c500230f9505f1588c8c45d98ea84fabf5d7d1f564e992a5678910",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Parsing/Dynamic/WebDynamicFeedParser.cs": {
+      "sha256": "af784f82b10658104bf44eb4504f5f7425aaf621ea9bf82200d02e41163e2ae7",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Helpers/DynamicGrpcMapper.cs": {
+      "sha256": "9085cacfc6fde58f78d74af65d18c35ecb17d35c163fc702b901a9bca42d15f0",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Modules/Home/DynamicVM.cs": {
+      "sha256": "4d68c4705be590c67212d54d1a6747002306b90b811ccebafbb2f2544895079b",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Modules/IModules.cs": {
+      "sha256": "cef5334b540d7e74513d59b513e3d7671fce98e9be62b7d50bad471df14ed3c6",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Modules/RelayCommand.cs": {
+      "sha256": "2941ad18ba1a0aed08d0803cb6ddead223d20e750d4541f4284ecb828a1c74e8",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Models/ReturnModel.cs": {
+      "sha256": "0c5192f37d4447954937a8b226b5667dba77ed09f3d5a345b226e1e6c8994a1c",
+      "unchanged": true
+    },
+    "reference/BiliLite.gRPC.dll": {
+      "sha256": "74588f0c776c5c8273d7c54d53db2355ee57bf84b5388bd753c703f073a448a7",
+      "unchanged": true
+    },
+    "reference/Google.Protobuf.dll": {
+      "sha256": "0f93ce18692e0b789c41299d0d2af2b477644fc4b13482bd0680b29289603996",
+      "unchanged": true
+    },
+    "reference/Grpc.Core.Api.dll": {
+      "sha256": "5146f47f06b783f7ad9f9d6f408538a47016f188a03d1615df81c77efe3ef5aa",
+      "unchanged": true
+    },
+    "reference/Grpc.Core.dll": {
+      "sha256": "801311a9bee0f8332bfe306b696f0a2dd800f3fd474d3a8415da6db5610e5189",
+      "unchanged": true
+    },
+    "reference/Newtonsoft.Json.dll": {
+      "sha256": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Services/GrpcService.cs": {
+      "sha256": "c2f0029506bf1f26800a413af915d0bc4464ece3eb8b95dcbb7107c3674d4691",
+      "unchanged": true
+    },
+    "src/BiliLite.UWP/Modules/User/DynamicVM.cs": {
+      "sha256": "8ed6d964993dbfd5558fcd956cc8fe1b8931c033ddb51e7f4db936c816dc94dd",
+      "unchanged": true
+    }
+  },
+  "commands": [
+    {
+      "label": "old-maintained",
+      "cwd": "/workspace/work/index-dynamic-contracts/dynamic/old-maintained",
+      "environment": {
+        "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/dynamic/cli-old",
+        "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/dynamic/nuget",
+        "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "PATH": "/workspace/work/maintenance-foundation/quality/dotnet:$PATH",
+        "DOTNET_ROOT": "/workspace/work/maintenance-foundation/quality/dotnet"
+      },
+      "argv": [
+        "bash",
+        "/workspace/work/index-dynamic-contracts/dynamic/old-maintained/plan/tests/api02/run.sh"
+      ],
+      "exit": 134,
+      "logSha256": "30dec461c64b26688c763077ca263cd3b96b5713acdfef4c8cafb8a392488dea",
+      "logPath": "/workspace/work/index-dynamic-contracts/dynamic/old-maintained.log"
+    },
+    {
+      "label": "candidate-maintained",
+      "cwd": "/workspace/work/index-dynamic-contracts/dynamic/candidate-maintained",
+      "environment": {
+        "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/dynamic/cli-candidate",
+        "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/dynamic/nuget",
+        "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "PATH": "/workspace/work/maintenance-foundation/quality/dotnet:$PATH",
+        "DOTNET_ROOT": "/workspace/work/maintenance-foundation/quality/dotnet"
+      },
+      "argv": [
+        "bash",
+        "/workspace/work/index-dynamic-contracts/dynamic/candidate-maintained/plan/tests/api02/run.sh"
+      ],
+      "exit": 0,
+      "logSha256": "910c11f6a1de2dd561951b6ac5d36c7755c067768d709676564cf2be0791c98a",
+      "logPath": "/workspace/work/index-dynamic-contracts/dynamic/candidate-maintained.log"
+    },
+    {
+      "label": "original118-old",
+      "cwd": "/workspace/work/index-dynamic-contracts/dynamic/original118",
+      "environment": {
+        "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/dynamic/cli-proof",
+        "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/dynamic/nuget",
+        "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1"
+      },
+      "argv": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/dynamic/original118/Followup.csproj",
+        "-c",
+        "Debug"
+      ],
+      "exit": 1,
+      "checks": 118,
+      "failures": 29,
+      "failureGroups": {
+        "PGC-initial-red": 2,
+        "PGC-owner-red": 3,
+        "dynamic-roundtrip-red": 18,
+        "dynamic-controls-red": 6
+      },
+      "receiptSha256": "c7279ac8188488a57ded0352ab73a3afc01ec6943f88dd45337cbf5dfaa23854",
+      "logSha256": "54bbaacd5358e596d0f9b4ada969593027ea2e8f84e22df18e961c75b4be5fb8",
+      "logPath": "/workspace/work/index-dynamic-contracts/dynamic/original118-old.log",
+      "receiptPath": "/workspace/work/index-dynamic-contracts/dynamic/original118/bin/Debug/net8.0/receipt.json",
+      "compactReceiptSummaryPath": "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence/original118-old-receipt.json",
+      "compactReceiptSummarySha256": "cda8c0d83020b650af24cc60af112229014a4112ff14efdf94356410308107e7"
+    },
+    {
+      "label": "candidate118",
+      "cwd": "/workspace/work/index-dynamic-contracts/dynamic/candidate118",
+      "environment": {
+        "DOTNET_CLI_HOME": "/workspace/work/index-dynamic-contracts/dynamic/cli-proof",
+        "NUGET_PACKAGES": "/workspace/work/index-dynamic-contracts/dynamic/nuget",
+        "DOTNET_SKIP_FIRST_TIME_EXPERIENCE": "1",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1"
+      },
+      "argv": [
+        "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+        "run",
+        "--project",
+        "/workspace/work/index-dynamic-contracts/dynamic/candidate118/Followup.csproj",
+        "-c",
+        "Debug"
+      ],
+      "exit": 1,
+      "checks": 118,
+      "failures": 5,
+      "failureGroups": {
+        "PGC-initial-red": 2,
+        "PGC-owner-red": 3
+      },
+      "receiptSha256": "a0aec89ab95d26ea2e5da8c9769d28626f0acf00870dd9047c194cd9e7703f8e",
+      "logSha256": "3021e91ed943e5a3a97e52ebd03a28c5f1e30d6540d66c7b4581152bae0929a8",
+      "logPath": "/workspace/work/index-dynamic-contracts/dynamic/candidate118.log",
+      "receiptPath": "/workspace/work/index-dynamic-contracts/dynamic/candidate118/bin/Debug/net8.0/receipt.json",
+      "compactReceiptSummaryPath": "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence/candidate118-receipt.json",
+      "compactReceiptSummarySha256": "55713a00a4ac5b7bc7b41be7a9574e8bf533bd1f37a338a7b152d063733f1282"
+    }
+  ],
+  "evidenceHygiene": {
+    "utc": "2026-11-25T06:11:15.551765+00:00",
+    "initialBindingSha256": "8f97c7951e415b19a6cc8e68a4a7e7537d25b421df4d6e5b91b547611a7f4bfe",
+    "relocationMetadataPath": "cloud/rounds/20261125-index-dynamic-contracts/dynamic/evidence/relocation.json",
+    "relocationMetadataSha256": "477bb6e7034587e4fb8ef3cdb43e49562b04a57eb0a92186a7576593ddaf5ce6",
+    "status": "current compact metadata; raw evidence excluded in private scratch; original recorded commands/exits/counts and source/fixture/tool hashes unchanged"
+  }
+}

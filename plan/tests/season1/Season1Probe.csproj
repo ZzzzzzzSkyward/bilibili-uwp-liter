@@ -29,6 +29,9 @@
     <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Modules/IModules.cs" Link="IModules.cs" />
     <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Modules/RelayCommand.cs" Link="RelayCommand.cs" />
     <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Modules/Detail/SeasonDetailVM.cs" Link="SeasonDetailVM.cs" />
+    <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Modules/Season/SeasonIndexVM.cs" Link="SeasonIndexVM.cs" />
+    <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Pages/Bangumi/AnimeIndexPage.xaml.cs" Link="AnimeIndexPage.xaml.cs" />
+    <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Controls/MyAdaptiveGridView.cs" Link="MyAdaptiveGridView.cs" />
   </ItemGroup>
 
 </Project>

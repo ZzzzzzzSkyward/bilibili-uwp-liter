@@ -33,6 +33,12 @@ namespace BiliLite.Helpers
 
     public static class Utils
     {
+        public static string HandelTimestamp(string value) { return value; }
+        public static int ToInt32(this object value)
+        {
+            return int.TryParse(value?.ToString(), out var number) ? number : 0;
+        }
+
         /// <summary>弹出过的提示文本，按顺序；探针用它断言解析/发布路径不弹 toast。</summary>
         public static readonly List<string> Toasts = new List<string>();
 

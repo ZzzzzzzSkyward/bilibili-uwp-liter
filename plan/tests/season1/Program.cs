@@ -47,7 +47,9 @@ namespace Season1Probe
             NullWireRowsKeepNeighbors();
 
             Console.WriteLine("PASS " + _passed + " assertions");
-            return SeasonLifetimeHarness.LifetimeProbe.Run() ? 0 : 1;
+            bool lifetime = SeasonLifetimeHarness.LifetimeProbe.Run();
+            bool index = SeasonIndexChecks.Run().GetAwaiter().GetResult();
+            return lifetime && index ? 0 : 1;
         }
 
         /// <summary>result 信封的成功路径：字段映射、正片/预告划分、Detail.episodes 是合并后整份片单。</summary>

@@ -45,7 +45,7 @@ namespace BiliLite.Api
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/pgc/review/short/list",
-                parameter = $"media_id={media_id}&ps=20&sort={sort}&cursor={next}"
+                parameter = $"media_id={media_id}&ps=20&sort={sort}&cursor={Uri.EscapeDataString(next ?? "")}"
             };
             if (SettingHelper.Account.Logined)
             {

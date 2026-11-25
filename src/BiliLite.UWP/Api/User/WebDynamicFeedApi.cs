@@ -24,7 +24,7 @@ namespace BiliLite.Api.User
             };
             if (offset != null)
             {
-                api.parameter += $"&offset={offset}";
+                api.parameter += $"&offset={System.Uri.EscapeDataString(offset)}";
             }
             return api;
         }
