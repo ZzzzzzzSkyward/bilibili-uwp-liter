@@ -25,8 +25,7 @@
   `OnSuspending` 现在有 deferral 与耗时预算，但仍在挂起窗口里强制等待终结器。
 - 验收：一个活动播放所有者跨标签页与可见性变化保持 SMTC 会话；切后台释放可选的视觉/弹幕工作；挂起窗口内
   的等待有界；回到前台不重建播放器。
-- 下一步：先按 BR-21 拿到分层测量（仅滚动动态 / 仅播放 / 开弹幕 三种行程的 N 分钟后工作集，托管堆 vs 原生），
-  再决定是否值得重构。
+- 下一步：按 [VIDEO_MEMORY](../document/VIDEO_MEMORY.md) 固定50视频/滚动/弹幕与活动播放/最小化对照，取得过程曲线及managed roots/native/GPU证据，再决定整体重构。BR-68窄源码修复已完成，BR-21的Windows RAM归因仍未测量。
 
 ### 1.2 [ ] API 解析结构 P4 剩余：账号（P2，阻塞：维护者保留）
 
@@ -49,7 +48,7 @@
 
 - 来源：[plan/CARD_PLAN.md](../plan/CARD_PLAN.md) §9、BR-21。
 - 现状：代码侧已收口（十页滚动窗口、锚点保护、两级转发上限、卡片模型淘汰），没有代码可写；缺量测。
-- 验收：给出滚动深度 vs 工作集曲线，并说明是否由卡片模型主导。下一步：与 1.1 合并成一次设备行程。
+- 验收：给出滚动深度 vs 工作集曲线，并以root/heap证据判断卡片模型归因。下一步：按 [VIDEO_MEMORY](../document/VIDEO_MEMORY.md) 的F与I/S/D对照，同1.1一起采集；源码所有权修复不代替该量测。
 
 ### 1.5 [x] 姊妹仓库 API 研究；已确认缺陷修复与活动 U2 分开
 
@@ -60,18 +59,26 @@
 - **U2/P1 FAILED/BLOCKED：身份/会话/协议集成证据不可得**。真实调用方是 `LiveRoomVM → Modules/Live/LiveMessage.cs`，目前使用固定 `ServerUrl` 加 JoinRoom；旧 `LiveDanmaku.getConf` 不是活动路径。下一步须先取得可信现有 BUVID 或验证 app 回退、token/host/auth/protocol fixtures 及受控真实 session，再一起迁发现/鉴权并验证取消/断线/离开，保留 BR-63 重连。
 - 上述离线修复未进行真实评论/收藏写入或实时搜索会话；Windows/session 跟进见 VALIDATION，不宣称端点可用。
 
+- **2026-11-25 当前字段/发布边界**：见 [三个固定来源与shape比较](../document/BILIBILI_API_SHAPE_COMPARISON.md)。`ff5d2855` 已修AS1/AS2 parser前单值编码、AS3 normal present-boolean优先与兼容fallback、AF1引用通知和AF2解码后发布。原203/165/38研究与端点目录未重算；WBI sanitation、route/source家族、OAuthv2、账号P4/P5 hold和U2前置保持。源码/fixture PASS不代表cookie/service/live/write可用。
+
 ### 1.6 [~] 三条只编译过的修复（阻塞：需要真机）
 
 - BR-61 最小化还原（`bbfaf7f`，0 错误）：设备上最小化 ≥10 s 后点任务栏图标应回到原来的最大化状态。
 - BR-63 直播弹幕重连（`722555b`）：需要一次真实断线（切网/代理断流）看是否 2→4→8→10 s 退避后重连。
 - 第 11 项待报尾巴（`cfc4a15`）：暂停后立即关窗，历史应仍上报一次。
 
+### 1.7 [ ] 后续FI1/FD1（P1；requirements PASS，代码未实现）
+
+- [BR-70/71](../bug_report.md)：FI1修SeasonIndexVM初始conditions/results与reentrant command所有权；FD1保护polymer dynamic opaque offset的query value。
+- [FI1修订需求PASS](../cloud/rounds/20261125-api-shape-comparison/followup/fi1-review.md)、[FD1需求PASS](../cloud/rounds/20261125-api-shape-comparison/followup/review.md)仅接受规格，不在本次sourceC修复或完整gate声明中。
+- 下一步：当前source/docs/archive释放并取得fresh safe baseline与精确owner grant后，同fixture原红→新绿，保留兼容断言，完成owning/fresh审查与新完整gate；不迁parser/auth/route。
+
 ## 2. 已知债务
 
 来源：[plan/PLAN.md](../plan/PLAN.md) § 已知债务（源码内已无 `TODO/FIXME`）。
 
 - [ ] **重写播放器类**（`Controls/Player.xaml.cs`，~175 KB）。阻塞：会动到 BR-1/BR-21/BR-43/BR-54 已验收的
-  播放路径，没有设备测量支撑不做。
+  播放路径，没有设备测量支撑不做；本轮窄修复不解除整体重写门禁，先按 [VIDEO_MEMORY](../document/VIDEO_MEMORY.md) 取证。
 - [ ] **旧版合集卡逐字段手写解析**（`Controls/Dynamic/DynamicParse.cs` 的 `MediaList` 分支，样例
   `https://t.bilibili.com/625835271145782341`）。阻塞：现代合集已走共享解析器，旧路径只在老接口回退时命中。
 - [ ] **多窗口改字形可能撞线程约束**（`Controls/FontAwesome5/FontAwesome.cs`，当前只 `Debug.WriteLine`）。
@@ -79,11 +86,14 @@
 
 ## 3. 缺陷（`bug_report.md`）
 
-- [ ] **BR-21 内存随时间增长** — 2026-10-31 报告，无日志无测量。见 1.1 / 1.4。
+- [ ] **BR-21 内存随时间增长** — 新行程约50视频；BR-68窄源码修复/完整离线PASS不等于已测RAM。见1.1/1.4与 [VIDEO_MEMORY](../document/VIDEO_MEMORY.md)。
 - [x] **BR-31 文案规范** — 两条硬规则已全量改过，新增文案按规则写。
 - [x] **BR-53 直播间打开报空引用** — `c0b7eb1` 修好，设备确认 2026-11-08 13:02。
 - [~] **BR-61 / BR-63 / BR-54/55/56/57/58/59/60/62/64/65/66/67** — 均已提交，其中 BR-62 已设备确认，
   其余按 §1.3/§1.6 等设备。
+
+- [x] **BR-68/69 源码审计处置** — 播放迟到所有权/RF1/IG1、query/cursor、favorite分页/通知/响应发布已独立PASS并交付sourceC；Windows/native/service仍未验证。
+- [ ] **BR-70/71 后续源码审计发现** — FI1/FD1 requirements PASS，代码未实现；验收与依赖见1.7。
 
 ## 4. 停放（明确不做，除非另有需求）
 
@@ -115,9 +125,14 @@
 
 ## 6. 最近完成
 
+- [x] **2026-11-25 combined memory/API源码**：[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)，Season M1、player R1/R2/R3/RR1、PF1/FA1–3/RF1/IG1、G1自有临时对象及API AS1–3/AF1/AF2已独立源码/fixture PASS。见 [VIDEO_MEMORY](../document/VIDEO_MEMORY.md)、[API comparison](../document/BILIBILI_API_SHAPE_COMPARISON.md)、[BR-68/69](../bug_report.md)。[publication receipt](../cloud/rounds/20261125-api-shape-comparison/publication/execution.md) 与 [独立 blob/ref 核对](../cloud/rounds/20261125-api-shape-comparison/publication/root-source-check.md)核对107payload及935已测输入的实际committed blobs。
+- [x] **当前 corrected combined gate**：[exact receipt](../cloud/rounds/20261125-video-memory/verification/corrected-execution.md)，51/51逻辑、52/52可执行PASS、complete_required=true。Results SHA256 `ca43ccc8c2b5fe8b33327965e4f18c4ab7e73c3926e91b09adf9020026575a16`；935输入manifest `c40d13c9428fa910b7066d223ac12a9295f136f213acab7303865cc6e401dc1d`。执行于dirty7356；随后blob绑定sourceC。首轮50/51逻辑、51/52可执行PASS/1FAIL（ux1d）保留历史，IG1两方法修正后新run PASS、tests不变。runner14/package15/sampler分母独立；[当前interpreter receipt](../cloud/rounds/20261125-video-memory/verification/evidence/interpreter-checks.md)为LinuxPSCore7.7，非PS5.1/native samples。
+- [~] **当前 hosted/native**：UNVERIFIED：2026-11-25 05:09:51 UTC 的实际 Actions collection 只见旧 run45434541348（head169b2b0、queued/null），没有本次 sourceC 的 hosted result。Windows VS/UWP/XAML/PS5.1、实际PID/50decoded视频、cache/codec/WinRT/RAM/root/heap/GPU/pixels、签名安装启动与live/account/session/service/write均未验证；按 [新增VALIDATION](../plan/VALIDATION.md) 和两guide跟进。BR-21仍native-unmeasured，旧设备默认通过不重开。
+- [ ] **后续FI1/FD1**：requirements PASS、代码未实现；见1.7，不在本次修复/gate声明中。
+
 - [x] **2026-11-25 recovery/integrity 源码完成**：`0514966` favorite typed acknowledgements、`1b6af65` payload/null-row/raw-paging 与 detail action/list 归属、`bdba9eb` 深值有序 A–B snapshot/首次初始化/registry 事务与 reopen；最终 `7fe7a5f` 含推荐恢复、下载扫描/每 GUID observer/真实清理重试、creator/subtree/revision 协作、MultiFLV/失败重试/稳定 selection 与 login helper lifetime。RF1/RF2/FA-01–09/CR1 全部独立 CLOSED，范围/red→green/兼容边界见 [PLAN 处置表](../plan/PLAN.md#2026-11-25-恢复与数据完整性源码已提交离线与独立审查完成)、[owning review](../cloud/rounds/20261125-recovery-integrity/recovery/final-review.md)、[fresh audit](../cloud/rounds/20261125-recovery-integrity/final-audit.md)。
-- [x] **当前本地完整 gate**：[final integration](../cloud/rounds/20261125-recovery-integrity/verification/execution.md) 为 51/51 逻辑、52/52 可执行 PASS、complete_required=true，recovery 348 / g5 335；源 915 与工具 5073字节绑定最终已推源码 7fe7a5f。14 controls/package15各自独立且输入未变，未重复执行。旧50/51及早期51/52保持历史 provenance。
-- [~] **当前 hosted 与 native 跟进**：root 2026-11-25 04:11 Asia/Shanghai 实际 Actions collection 只见旧 169b2b0的 run45434541348 queued/null；没有经验证的7fe7a5f hosted run/result。旧head即使最终通过也不能认证新 runnable bytes/51/52 inventory；只观察实际服务结果，不推断原因或重复派发。Windows compile/XAML/BackgroundTransfer/FAL/文件锁/会话/签名与设备仍 FAILED/BLOCKED，下一步按 [新增 Windows 场景](../plan/VALIDATION.md#2026-11-25--恢复与数据完整性的新增-windows-跟进未运行)执行；不更改历史默认验收。
+- [x] **恢复轮历史完整 gate**：[final integration](../cloud/rounds/20261125-recovery-integrity/verification/execution.md) 为 51/51 逻辑、52/52 可执行 PASS、complete_required=true，recovery 348 / g5 335；源 915 与工具 5073字节绑定最终已推源码 7fe7a5f。14 controls/package15各自独立且输入未变，未重复执行。旧50/51及早期51/52保持历史 provenance。
+- [~] **恢复轮 hosted 与 native 记录**：root 2026-11-25 04:11 Asia/Shanghai 实际 Actions collection 只见旧 169b2b0的 run45434541348 queued/null；没有经验证的7fe7a5f hosted run/result。旧head即使最终通过也不能认证新 runnable bytes/51/52 inventory；只观察实际服务结果，不推断原因或重复派发。Windows compile/XAML/BackgroundTransfer/FAL/文件锁/会话/签名与设备仍 FAILED/BLOCKED，下一步按 [新增 Windows 场景](../plan/VALIDATION.md#2026-11-25--恢复与数据完整性的新增-windows-跟进未运行)执行；不更改历史默认验收。
 
 - [x] **2026-11-24 E1/UX-02 `1c7f6e4`**：评论发送 single-flight、等待反馈、保草稿失败重试与关闭后迟到拒绝；真实 dialog/HttpResults/typed parser 的 153 新检查、comments 总 1070 与独立审查 PASS。实际 XAML/焦点/会话仍 FAILED/BLOCKED。
 - [x] 本次 U1/PB1/U9/U5/U8/QF1/QF3 的准确行为、测试归属和提交见 [PLAN.md 维护修复表](../plan/PLAN.md#2026-11-24-维护修复已提交与离线验收)。Windows 平台限制保留；账号 P4/P5 仍为维护者 hold；parked 范围不扩张。

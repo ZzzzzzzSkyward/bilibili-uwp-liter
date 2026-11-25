@@ -70,6 +70,25 @@ starts that.
 | 实际下载对话框 `7fe7a5f` | 多段MultiFLV按序写不同0.blv/1.blv/…及VideoPath；SingleFLV、DASH有/无音轨、headers/导出保持。空/坏media不改旧目标/metadata；typed失败、mixed成功/失败保留可重试行，ErrorMessage可见，retry不重复成功任务。等待playurl/准备时取消勾选/清空/加选，原选择按序处理且新增行不混入；异常恢复主按钮、已接纳sibling可发现、仅全成功关闭一次。 |
 | 显示/可访问性与登录owner `7fe7a5f` | 最小窗口/800×600/1280×720，100/150/200%字号、light/dark/follow-system/high contrast；新状态/重试/清理操作不遮挡且键盘/Narrator可达。受控native登录show fault/cancellation后可再次打开；已有show期间非owner不能解除其占用，不声称新的跨线程串行策略。 |
 
+## 2026-11-25 — combined memory/API新增 Windows与真实会话跟进（未运行）
+
+[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) 的新source场景；Windows/native/live均未验证。先Windows执行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Fast -NoVersionBump -Restore`，记录VS/UWP/SDK/实际resolved依赖和结果；fullpackage/签名安装另按BUILD。不把fixture、Mark、PSCore或51/52PASS当设备通过；旧维护者默认通过行不重开。详细步骤见[VIDEO_MEMORY](../document/VIDEO_MEMORY.md)与[APIcomparison](../document/BILIBILI_API_SHAPE_COMPARISON.md)。
+
+| 新范围 | 实际Windows/UI/会话要看什么 |
+| --- | --- |
+| Season / terminal / fresh / live | metadata或episode请求/解码期间关闭，迟到结果不能复活旧title/review/player/comment/QR；新打开取得fresh owner。活页refresh/history/unload/reload不能误终结，实际cache交付另记。 |
+| Player info / quality / settings | 关闭时迟到info/quality/open不能重建timer/session；活页quality/engine/item fallback保持。反复Loaded后外部设置仍刷新，一次用户设置只产生一次自有subscriber效果。 |
+| PF1 / IG1 | A轨道切换等待时接受distinct或same-reference B；B无需等A即可按当前条件使用selectors/Next。B自己的switch与transition各自保有disable权，清除一个不能释放另一个，terminal不启用；label/overlay/keyboard正常。 |
+| FA1 / FA2 | close先解绑两个child DataContext；允许有限旧child工作，但不能修改当前绑定视图。新节点独占自己的cid/segment1/pool/settled/lease；旧success/fault/finally不能发布或解锁新lease。记录旧position timer压力、失败重试、manual refresh及再替换为C。 |
+| FA3 / history / RF1 | A的ended report等待时close/replace仍保留A report，其后续不能loop/next/toast或修改B。当前ordered/single/list/auto-next/manifest/互动与等待中设置变更保持。Season初始/失败/无可播项时点Update，无item不能throw或开始工作；当前item正常刷新。 |
+| G1 / 50 videos | 实际还原的Win2D/codec/display下字幕样式、返回pixels与共享device正常；native heap/GPU单独取证。固定source/artifact/tool/run/fixture/PID+start，5次warm-up、50次真实解码/watch30s/close10s、16checkpoints到idle300，记录attempted/completed与失败。I/F/S/D/SD/DD筛查后，疑似/最近对照各做3次fresh-process重复，A/M另作解释。 |
+| AS1 / AS2 | UI搜索`C++`、`A&B`、literal`%2B`、Unicode及原null/empty/tid/order分支；文本不能改写query controls。comment cursor中的`+/%/&/JSON`可用标明synthetic的fixture，真实service cursor另记来源；hot/new/ps/login/source fallback/last-good cursor/retry保持。U1 write form语义不变，不进行未授权真实写。 |
+| AS3 / AF1 | normal present bool控制终止/继续，absent/null/Type21保留COUNT；first-empty/missing-info/failed-append/同Page retry保持。notification驱动的initial→Search→Refresh→append绑定跟随distinct collection，same-reference echo/null不递归，旧rows/info语义保持。 |
+| AF2 folder publication | 通过initial/Refresh/create/edit/delete后刷新/append/reorder检查实际UI接线；成功次序仍为created引用→default Insert0→flag/Page→collected。迟到的malformed default/bool/collected及append metadata不能提前发布部分row，retry不能复制失败row。保留CLR missing/JSON null/legacy casts/salvage/duplicates/CollectFavorite策略；不是新parser/schema或任意subscriber事务。 |
+| PS5.1 / roots / native / service | 先对一个已观察、无害的Windows PID验证采样/identity/error/observer dispose，再采UWP。PS5.1、VS roots、WPR outstanding allocations与GPU只记录实际支持证据，null/error不能填0；真实cookie/account/session/service/write/live门禁独立，U2/P4/P5 hold保持。 |
+
+FI1/FD1 requirements PASS但代码未实现，只有未来授权后才新增其实现设备行；本表不声称当前C已修。原始JSONL/log/ETL/snapshots/captures留Git外，记录版本/设备/时间/来源与实际结果；发现真实新缺陷再新增BR。
+
 ## Shipped 2026-11-01 — the batch that was uncommitted, now built
 
 Compiled with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (0 errors), probes green:

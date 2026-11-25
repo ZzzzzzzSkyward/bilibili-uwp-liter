@@ -19,7 +19,9 @@
 | --- | --- |
 | [BUILD.md](../document/BUILD.md) | 构建脚本参数、`CS2012` 锁文件、能启动的 MSIX 布局、快速编译循环、PowerShell 编码、错误分类 |
 | [DIAGNOSTICS.md](../document/DIAGNOSTICS.md) | 怎么让用户取日志与诊断包（设置 → 诊断） |
+| [VIDEO_MEMORY.md](../document/VIDEO_MEMORY.md) | Windows50视频采集、固定fixture/对照/16checkpoints、外部tool与native-unmeasured边界；源码PASS不等于RAM修复 |
 | [BILIBILI_API_RESEARCH.md](../document/BILIBILI_API_RESEARCH.md) | 与姊妹仓库的 pinned 源码对照、当前修复处置与仍需真实身份/会话证据的活动直播鉴权路径 |
+| [BILIBILI_API_SHAPE_COMPARISON.md](../document/BILIBILI_API_SHAPE_COMPARISON.md) | 三个不可变维护来源/license/字段对照，AS1–3/AF1/AF2处置与未实现的FI1/FD1；保留WBI/paging/account/live门禁与旧catalog |
 | [BILIBILI_API_ENDPOINTS.md](../document/BILIBILI_API_ENDPOINTS.md) | 姊妹仓库的端点目录（203 个 HTTP 方法/路由对 + 8 个 gRPC 路由），标出本仓库已有/没有 |
 | [new_version.json](../document/new_version.json) / [entrance.json](../document/entrance.json) | **应用运行时抓取的线上数据**（版本提示 / 首页入口），不是说明书，改它等于给所有客户端推新内容 |
 

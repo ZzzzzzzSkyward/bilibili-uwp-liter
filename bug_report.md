@@ -11,21 +11,11 @@ reported; a new report starts a new entry here before any code changes.
 Maintainer: memory use grows over time during a session. No log evidence and no measurement yet — this is
 the report, not a diagnosis.
 
-Where the growth can plausibly come from, from what the code already does:
+2026-11-25 follow-up: the reported journey now concerns roughly 50 video open/watch/ordinary-close cycles. **BR-21 remains native-unmeasured.** Reviewed narrow source repairs are recorded under BR-68; they do not reproduce or attribute the Windows RAM slope. The broader player/background/SMTC rewrite still requires measurements.
 
-- the player keeps one live `PlayerControl` per opened item, and each holds a `PlayerToastService` plus an
-  engine (`Player.xaml.cs`, native DASH / FFmpegInterop DASH / SYEngine swap paths) — sessions are only
-  released through the existing `Completed`/`SetPlayItem`/`OnUnload` paths;
-- the `Home`/`User` dynamic feeds page indefinitely through the web source, so item collections and the
-  per-item `RichTextBlock`/image state grow with scroll depth;
-- every response goes through `HttpResults`, which keeps the deserialized `JObject` alive as long as
-  anything holds its `HttpResults`;
-- `Modules/Home/DynamicVM` and `Modules/User/DynamicVM` hold `ObservableCollection` items that are never
-  trimmed.
+Use [VIDEO_MEMORY](document/VIDEO_MEMORY.md) for artifact/source/tool/run/fixture and PID+start binding, prewarm/warm0, active/post-close/settled checkpoints at 5/10/25/50, idle60/300, attempted/completed counts and repeated matched controls. Separate process trends from managed-root/native/GPU attribution. Unavailable metrics remain null with a reason; operator Mark events do not verify playback.
 
-What an actionable report needs: the working set after N minutes for one specific journey (feed paging only
-/ playback only / danmaku on), and whether the process is managed-heap bound or native bound. Without that
-split, the background-playback and memory work in `plan/PLAN.md` cannot be scoped.
+[Source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) is published and [independently bound to the tested blobs](cloud/rounds/20261125-api-shape-comparison/publication/root-source-check.md). The [corrected local gate](cloud/rounds/20261125-video-memory/verification/corrected-execution.md) passed 51/51 logical and 52/52 executable stages with complete_required=true. The first integration remains a recorded FAIL: 50/51 logical and 51/52 executable stages passed; IG1's two real method assignments corrected the ux1d failure with tests unchanged. At 05:09:51 UTC on 2026-11-25, the actual Actions collection contained only old queued run45434541348 at head169b2b0; no hosted result for sourceC was established. Windows build/PS5.1, actual PID/50 decoded videos, cache/codec/WinRT, roots/heap/GPU/pixels and live/account/session acceptance remain unverified. Follow [additive validation](plan/VALIDATION.md); historical device rows stay unchanged.
 
 ## BR-31 — 文案规范：短文本不写解释，图标不与文字重复（维护者 2026-11-01）
 
@@ -513,3 +503,27 @@ getter，主评论与每条回复都走它；`VideoDetailPage.xaml.cs:372` 的�
 - XAML 去掉两个页签上的 `Visibility="Collapsed"`（去留已经不由它决定）；
 - `plan/tests/playertoolbar` 里针对 XAML `Visibility` 的断言改成针对 `Items` 接线的断言。
 换节点后跟着更新，换集后不显示上一集的节点；合集播放里有可选轨道时「本地轨道」出现，没有时消失。
+
+## BR-68 — 播放所有权与无当前项的弹幕刷新边界（2026-11-25源码审计）
+
+审计发现关闭后的season/player迟到工作、重复设置订阅、替代项轨道/Next可用性、仍绑定的互动子VM、新节点弹幕状态/加载租约，以及history await后的ended归属问题。修复中又发现RF1无当前项Update入口与IG1既有transition检查缺口。以上是源码审计，不是新维护者设备报告、Windows崩溃复现或RAM诊断。可重现边界包括Season初始/失败/无可播项时点击弹幕Update，或A轨道切换未完成时接受B，再完成A；完整实际方法fixtures验证迟到工作不能取得当前授权。
+
+[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) 的处置：显式close终结旧所有者，正常重开使用fresh owner；活页history/unload/refresh保持。替代项按当前switch与transition共同决定可用性；close先解绑child/context；旧节点工作不能发布或解锁新lease；旧ended可完成原report，suffix不能操作B。无item的Update拒绝工作；Show/Clear执行真正null-safe Next赋值。五个自有绘制临时对象确定性cleanup，共享device和返回图像保持原归属。
+
+[残留owning PASS](cloud/rounds/20261125-video-memory/resources/residual-final-review.md)、[RF1 fresh PASS](cloud/rounds/20261125-video-memory/rf1-final-audit.md)、[IG1 fresh PASS](cloud/rounds/20261125-video-memory/ig1-final-audit.md) 与[corrected完整gate](cloud/rounds/20261125-video-memory/verification/corrected-execution.md)接受这些有界源码行为。BR-21/native RAM仍未测量，不宣称永久native泄漏、字节节省或像素等价。实际源码/fixtures固定在 [VIDEO_MEMORY](document/VIDEO_MEMORY.md) 的sourceC链接；新增native场景见 [VALIDATION](plan/VALIDATION.md)。
+
+## BR-69 — query/cursor边界与收藏绑定/响应发布（2026-11-25源码审计）
+
+完整真实源码的synthetic proof发现personal-space/following文本和serialized comment cursor中的+/%/&被当query语法；normal favorite忽略has_more；detail/folder列表另有引用通知与迟到metadata部分发布缺陷。这些不是live captures或官方API schema。复现输入为personal-space/following搜索`C++`、`A&B`或literal`%2B`，comment的serialized JSON cursor含`+/%/&`，以及foldercount大于filtered rows但`has_more=false`的收藏终页。notification-only observer与迟到malformed folder metadata另覆盖initial→Search→Refresh及append失败/同Page retry。
+
+[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) 的处置：AS1/AS2在query parser之前保护一个value，保留global WBI sanitation/signing和请求家族；AS3使用normal present boolean，absent/null/Type21保留count`!=`及first-empty/failed append/同Page retry。AF1/AF2仅对distinct reference存储后通知一次，相同引用echo/null不通知；folder先完成selected list/default/flag/collected解码再发布，拒绝的append metadata不留下可在retry重复的row。原legacy casts/null/salvage/duplicates与CollectFavorite策略保持；没有新endpoint/parser/auth迁移，也不保证任意subscriber的通用事务。
+
+[当前比较](document/BILIBILI_API_SHAPE_COMPARISON.md)、[query PASS](cloud/rounds/20261125-api-shape-comparison/query/final-review.md)、[AS3 PASS](cloud/rounds/20261125-api-shape-comparison/favorite/final-review.md)、[AF1 fresh PASS](cloud/rounds/20261125-api-shape-comparison/af1-final-audit.md)、[AF2 fresh PASS](cloud/rounds/20261125-api-shape-comparison/af2-final-audit.md)与 [corrected combined gate](cloud/rounds/20261125-video-memory/verification/corrected-execution.md) 绑定离线接受范围；实际sourceC代码/fixtures见当前比较。Windows/cookie/service/live/account/session/write均未验证；U2/P4/P5 hold不变。
+
+## BR-70 — PGC index初始加载与请求所有权（2026-11-25源码审计；计划后续）
+
+FI1实际源码proof显示fresh navigation可在conditions完成后不请求首个result；被拒的并发load又可能释放另一个result owner，造成重复发布和Page递增。修订需求也要求conditions/Refresh/selection的互斥与reentrant安全，同时保留grid autofill。[FI1 requirements PASS](cloud/rounds/20261125-api-shape-comparison/followup/fi1-review.md)仅是规格接受：**UNIMPLEMENTED**，不在[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)的修复/gate声明中。下一步待当前批source/docs/archive释放与fresh safe baseline后，按精确SeasonIndexVM/season1 grant执行相同fixture原红→新绿、owning/fresh与完整gate。保留app signing/page/pagesize/data/filter/order/default/has_next/error策略，不迁parser/auth。
+
+## BR-71 — polymer dynamic opaque offset query value（2026-11-25源码审计；计划后续）
+
+FD1实际parser→builder→URI proof显示raw +/%/&/#或duplicate offset可改变已接受token或query controls。[需求接受](cloud/rounds/20261125-api-shape-comparison/followup/review.md)仍是**UNIMPLEMENTED**，不在[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)的修复/gate声明中。后续精确WebDynamicFeedApi/API02 grant需将现有nonnull offset编码一次，保留null省略/empty包含、all/video/article、cookies/page/features及byte-identical parser/mapper/source cursor所有权；相同fixture原红→新绿、owning/fresh/gate后才能标done。没有app/WBI/route/parser迁移。

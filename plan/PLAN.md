@@ -21,6 +21,8 @@ in `bug_report.md` first.
 
 ## Done
 
+**Current maintenance entries:** the 2026-11-24/25 source/offline sections below state their own unverified native gates; their completion does not imply device acceptance. The dated historical shipping summary remains below.
+
 Newest first; every one of these is device-accepted per the policy above, except the 2026-11-01 entries: BR-44 is
 device-confirmed, while P4 step 1, BR-45 and the second BR-43 attempt are compiled and probe-covered only — their
 device rows are still open in `plan/VALIDATION.md`. The 2026-11-02 entries are compiled
@@ -30,6 +32,26 @@ compiled into `BiliLite.Packages_1.0.9.42_x64.msix` (package directory dated 202
 are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no probe run is recorded for them.
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
+
+### 2026-11-25 combined memory/API：源码与离线完成，native未验证
+
+[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) 已普通提交/推送；唯一parent `7356b94893377558191b0d70576a52bae704c1f9`，tree `2565a48424882c76acfe3217c7fb610b7b193b91`。[publication receipt](../cloud/rounds/20261125-api-shape-comparison/publication/execution.md) 与 [独立 blob/ref 核对](../cloud/rounds/20261125-api-shape-comparison/publication/root-source-check.md)已核对107交付路径与935个已测输入的实际committed blobs，保留执行时dirty7356与生成Git metadata的原始provenance。
+
+| 范围 | 最终有界结果 | 独立证据 |
+| --- | --- | --- |
+| M1/R1/R2/R3/RR1 | terminal close后的迟到拒绝；fresh owner正常打开；活页refresh/history/unload语义保留；owned settings订阅一次且每次仍刷新 | [managed PASS](../cloud/rounds/20261125-video-memory/managed/final-review.md)、[residual PASS](../cloud/rounds/20261125-video-memory/resources/residual-final-review.md) |
+| PF1/FA1–3/RF1/IG1 | 替代轨道/Next按current switch与transition共同限制；close先解绑child；节点拥有pool/segment/lease；history后旧ended suffix拒绝；无item Update不工作；Show/Clear真正null-safe Next赋值 | [RF1 owning](../cloud/rounds/20261125-video-memory/resources/rf1-final-review.md)、[RF1 fresh](../cloud/rounds/20261125-video-memory/rf1-final-audit.md)、[IG1 owning](../cloud/rounds/20261125-video-memory/resources/ig1-final-review.md)、[IG1 fresh](../cloud/rounds/20261125-video-memory/ig1-final-audit.md) |
+| G1/tool | 五个自有绘制临时对象确定性cleanup；borrowed device/returned image保留；四模式工具提供typed-null/identity/order/stop/disposal，未测native | [graphics PASS](../cloud/rounds/20261125-video-memory/graphics/final-review.md)、[tool PASS](../cloud/rounds/20261125-video-memory/measurement/final-review.md)、[当前interpreter receipt](../cloud/rounds/20261125-video-memory/verification/evidence/interpreter-checks.md) |
+| AS1/AS2/AS3 | parser前保护单query value并保留WBI sanitation；normal present bool控制paging，absent/null/Type21 count`!=`与first-empty/failedappend/retry保持 | [query PASS](../cloud/rounds/20261125-api-shape-comparison/query/final-review.md)、[AS3 PASS](../cloud/rounds/20261125-api-shape-comparison/favorite/final-review.md) |
+| AF1/AF2 | distinct reference先存后通知一次，same-reference/null echo不通知；folder的list/default/bool/collected解码先于publication，append拒绝late metadata不先加入row；legacy casts/null/salvage/duplicates与成功发布顺序保留 | [AF1 owning](../cloud/rounds/20261125-api-shape-comparison/favorite/af1-final-review.md)、[AF2 owning](../cloud/rounds/20261125-api-shape-comparison/favorite/af2-final-review.md)、[AF2 fresh](../cloud/rounds/20261125-api-shape-comparison/af2-final-audit.md) |
+
+当前 [corrected combined gate](../cloud/rounds/20261125-video-memory/verification/corrected-execution.md)：**51/51逻辑、52/52可执行 PASS，complete_required=true**，exit0。报告SHA256 `ca43ccc8c2b5fe8b33327965e4f18c4ab7e73c3926e91b09adf9020026575a16`；935输入manifest `c40d13c9428fa910b7066d223ac12a9295f136f213acab7303865cc6e401dc1d`。第一次完整gate的50/51逻辑、51/52可执行PASS与ux1d FAIL保留；IG1两方法修正后才有新的完整PASS，tests/assertions字节未改。原player240/aggregate241、66residual/39lifetime/5graphics groups、season141+497及API兼容断言保留。
+
+独立runner14、package15及sampler不计入52。当前Linux PSCore7.7 portable receipt为46次调用（6exit0/40预期exit1）、21groups、106checks、55helper calls/52synthetic rows；没有自动summarizer，也没有nativePS5.1/PID/视频/RAM样本。Hosted：UNVERIFIED：2026-11-25 05:09:51 UTC 的实际 Actions collection 只见旧 run45434541348（head169b2b0、queued/null），没有本次 sourceC 的 hosted result。
+
+[VIDEO_MEMORY](../document/VIDEO_MEMORY.md)给出真实artifact/source/tool/run/fixture/PID+start绑定、16checkpoint、50视频与对照/归因命令；[API comparison](../document/BILIBILI_API_SHAPE_COMPARISON.md)固定三来源pins/licenses/实质维护与Python继承catalog窄维护限制。新处置见 [BR-68/69](../bug_report.md)。BR-21仍native-unmeasured；后台/SMTC/整体player rewrite仍测量前置。Windows VS/UWP/XAML/PS5.1/Win2D dependency/pixels/cache/codec/root/heap/GPU及cookie/service/write/live/account/session/签名安装启动未验证，按 [新增VALIDATION](VALIDATION.md) 执行，旧设备行不改判。OAuthv2 provenance、账号P4/P5 hold和U2身份/token/hosts/auth/protocol/cancel/session门禁保持。
+
+**后续FI1/FD1只有requirements PASS，代码未实现**：见Open18/19与BR-70/71，不在此sourceC或完整gate修复声明中。须待本批source/docs/archive释放、fresh safe baseline和精确owner grant后实施同fixture原红→新绿及owning/fresh/common gate。
 
 ### 2026-11-25 恢复与数据完整性：源码已提交、离线与独立审查完成
 
@@ -322,7 +344,7 @@ QF1 sweep、changed-runner local gate 与 hosted 验收也分开。选择/报告
 | # | Item | State |
 | --- | --- | --- |
 | 1 | Player open/replace/close session ownership | **done** — `2c3fc09`; its device rows are 默认通过（维护者 2026-11-04） |
-| 2 | Background playback ownership (SMTC + memory budget) | not started, needs device evidence (BR-21 recorded 2026-10-31) |
+| 2 | Background playback ownership (SMTC + memory budget) | measurement-gated — BR-68窄源码修复完成；BR-21 Windows50-cycle process/root/native/GPU归因仍未测量。先按 [VIDEO_MEMORY](../document/VIDEO_MEMORY.md) 取证，再审background/SMTC/global rewrite |
 | 4 | API parsing structure (P4 other features, P5 retire the rest) | P0–P3 done: one `ApiEnvelope` reads every REST response, `WebDynamicFeedParser`/`LegacyDynamicFeedParser` own all dynamic sources, gRPC mapping is protobuf-only. P4 steps 1, 2 and 5 shipped: season detail `ed9f248`, playlists `1838108`, comments `f03078c` — each with a parser/mapper layer, DTOs under `Models/Api/`, a field table beside the parser and its own probe (`season1` 109, `c2` 162 + `c3` 117, `comments` 99). Remaining for P4: **account** only (step 4), which the maintainer is holding back; the video-detail step shipped in `e6c2fb5` and `c1` grew to 161 assertions. Order and traps: `plan/P4_INVENTORY.md` §5 |
 | 5 | Collection and playlist navigation / UI | **done** — see the first Done entry; its device rows are 默认通过（维护者 2026-11-04） |
 | 6 | Auth refresh defects — `plan/REFRESH_PLAN.md` | **shipped**: D2 `6ee8a81`, D4/D5 `75fe40f`, review findings `b4cd995` (rejected cookie write) and `14ac4c3` (a login is a new credential session), D3 `bba2df4` (explicit, resumable web-refresh transaction with a persisted pending record) and D1 `000bfd0` (cookie-to-app bridge plus one recovery decision table for Home and startup), logout cleanup `e0e454e`, and the review finding `ff26db7` (an account switch drops the saved web token even when the record carries no owner). Device rows are in `VALIDATION.md` and are 默认通过. P4 step 4 (account) stays held back by the maintainer |
@@ -337,6 +359,8 @@ QF1 sweep、changed-runner local gate 与 hosted 验收也分开。选择/报告
 | 15 | Season page requests use the season id (BR-65) | **shipped** — `5132840`. `LoadSeasonDetail` received `ep_id`, which is empty for every in-app entry point (they pass only `season_id`), so both `pgc/view/web/season` and `pgc/view/web/ep/list` were asked with an empty id and the page published an empty `Detail`/`Episodes`. The VM now takes `season_id`, asks both endpoints with `SeasonIdType.SeasonId`, and keeps `ep_id` only to pick the initial episode; the season1 probe follows the new contract. Compile only (0 errors) |
 | 16 | Comment text is HTML-decoded before markup (BR-66) | **shipped** — `ec92550`. `ControlHelper.StringToRichText` escaped `&` first, so API text already carrying `&quot;`/`&amp;` rendered as literal entity text; it now decodes once with `WebUtility.HtmlDecode` before the escape pass, and `SeasonReviewVM` decodes short-review `content` the same way. Compile only (0 errors) |
 | 17 | Empty player pivots stay hidden (BR-67) | **shipped** — `9fdfbf4` + `b95f2ab`. `NodePivot` was visible by default and the verdict only looked at `IsInteraction`; `Visibility` turned out to be the wrong lever because a `Pivot` draws a header for every entry in `Pivot.Items` regardless of the item's visibility (`LocalTracksPivot` had been `Collapsed` all along and still showed). The tabs are now removed from / inserted back into `Pivot.Items` at slots 0/1 — dropped in the constructor, so nothing shows before the first verdict — gated on the loaded node count and on manifest playback for the video/audio rows, re-judged after `GetNodes()`, with the interaction VM rebuilt per episode. Probe updated. Compile only (0 errors) |
+| 18 | FI1 PGC index initial/result ownership — BR-70 | **requirements PASS / UNIMPLEMENTED**；[FI1 amended review](../cloud/rounds/20261125-api-shape-comparison/followup/fi1-review.md)。本批释放/fresh safe baseline/精确SeasonIndexVM+season1 grant后才实施；保留conditions互斥、reentrant通知与grid autofill，samefixture red→green/owning/fresh/common gate |
+| 19 | FD1 polymer dynamic offset query value — BR-71 | **requirements PASS / UNIMPLEMENTED**；[FD1 review](../cloud/rounds/20261125-api-shape-comparison/followup/review.md)。本批释放/fresh safe baseline/精确WebDynamicFeedApi+API02 grant后才实施；保留null/empty/source cursor与byte-identical parser/mapper，samefixture red→green/owning/fresh/common gate |
 
 **Order** (dispatcher, 2026-11-02, updated after the parallel wave): the engine-fallback disposal finding
 (`0b70113`) is closed; D2 and D4/D5 are in; the first slices of the Hot-card, settings and dynamics plans are in
@@ -344,11 +368,11 @@ and were 默认通过. `plan/REFRESH_PLAN.md` is fully shipped (D1 `000bfd0`, D3
 row has no code left, and its device rows are 默认通过. `plan/SETTINGS_PLAN.md` slice 3 (`b9b58c5`) and `plan/CARD_PLAN.md` §3/§4 (`1b51db4`, `0b8ad87`) are in and were 默认通过. `7e628c3` then closed the settings row and
 `65fd423` closed all but two card items, and `798a03a` closed those two (grid, attachments). `4dc85ce` then
 taught the player to hide entries whose content does not exist. Next: `plan/CARD_PLAN.md` §9 measurement with
-BR-21 (device journey, no code left), then whatever the 1.0.9.4x device pass reports. BR-53 (any live room shows
+BR-21 (native50-cycle collection/attribution; narrow source work is recorded above), with FI1/FD1 following current-batch release and a fresh safe grant, then whatever the 1.0.9.4x device pass reports. BR-53 (any live room shows
 a `NullReferenceException` message) is recorded in `bug_report.md` and waits for a log line before any live-room
 code changes; BR-54 (toast pill width and content centring) is fixed in `01e51a7` and waits only for the device
 look.
-Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step, still held back. The 1.0.9.42–1.0.9.60 device rows are the next device pass (BR-56, local playback, the BR-57 copy row and the BR-58 tooltip row are the 1.0.9.59 rows; the BR-59 recommend-tooltip row and the BR-60 progress row are the 1.0.9.60 rows). 2026-11-08: BR-62 (comment popup dark color values) is in as `44d7f0e` and device-confirmed by the maintainer. Row 11 (review `c4aa630`) shipped as `cfc4a15` and BR-53 as `c0b7eb1`; BR-53 is device-confirmed (2026-11-08 13:02), row 11 still wants the pause-then-exit check. BR-63 (live danmaku reconnect) shipped as `722555b`; it needs a real disconnect before it counts. BR-61's first attempt failed on the device and `bbfaf7f` replaces it with the Win32 restore.
+Item 2 stays parked until BR-21 has measurements; use [VIDEO_MEMORY](../document/VIDEO_MEMORY.md) and preserve the source/measurement distinction; P4 keeps only the account step, still held back. The 1.0.9.42–1.0.9.60 device rows are the next device pass (BR-56, local playback, the BR-57 copy row and the BR-58 tooltip row are the 1.0.9.59 rows; the BR-59 recommend-tooltip row and the BR-60 progress row are the 1.0.9.60 rows). 2026-11-08: BR-62 (comment popup dark color values) is in as `44d7f0e` and device-confirmed by the maintainer. Row 11 (review `c4aa630`) shipped as `cfc4a15` and BR-53 as `c0b7eb1`; BR-53 is device-confirmed (2026-11-08 13:02), row 11 still wants the pause-then-exit check. BR-63 (live danmaku reconnect) shipped as `722555b`; it needs a real disconnect before it counts. BR-61's first attempt failed on the device and `bbfaf7f` replaces it with the Win32 restore.
 
 ## 已知债务（2026-11-06，从源码 TODO 收拢）
 
@@ -356,7 +380,7 @@ Item 2 stays parked until BR-21 has measurements; P4 keeps only the account step
 
 | 位置 | 欠账 | 为什么现在不做 |
 | --- | --- | --- |
-| `Controls/Player.xaml.cs` | 播放器类写得过于复杂，需要整体重写 | 重写会动到 BR-1/BR-21/BR-43/BR-54 都已验收过的播放路径，没有设备测量支撑不做 |
+| `Controls/Player.xaml.cs` | 播放器类写得过于复杂，需要整体重写 | 重写会动到 BR-1/BR-21/BR-43/BR-54 都已验收过的播放路径，没有设备测量支撑不做；本轮窄修复不解除整体重写门禁，先按 [VIDEO_MEMORY](../document/VIDEO_MEMORY.md) 取证 |
 | `Controls/Dynamic/DynamicParse.cs`（`MediaList` 分支） | 旧版合集卡的解析仍是逐字段手写，样例 `https://t.bilibili.com/625835271145782341` | 现代合集已走共享解析器；旧路径只在老接口回退时命中 |
 | `Controls/FontAwesome5/FontAwesome.cs` | 多窗口下改字形可能撞线程约束，当前只 `Debug.WriteLine` | 只在多窗口改图标时可能复现，没有设备复现步骤 |
 
@@ -389,8 +413,7 @@ Fix shape: one active playback owner keeps the SMTC session across tab and visib
 visual/danmaku work is released when backgrounded, and suspension work stays bounded. Do not recreate
 the player on every foreground return.
 
-This one has no device evidence behind it — only source reading. It needs the maintainer's
-observation (minimize vs tab switch, engine, crash details) before it is worth a refactor.
+This broader background/SMTC design still has no measured Windows evidence. Narrow close/replacement/subscriber/temporary-resource source work is recorded in Done and does not establish the user's RAM trend. Follow [VIDEO_MEMORY](../document/VIDEO_MEMORY.md) to separate ordinary close from active retained playback, tab visibility, minimize/suspend and feed growth before a broader refactor. Native cache delivery and real playback/SMTC remain unverified.
 
 ## 4. API parsing structure — names, fields, and methods
 
