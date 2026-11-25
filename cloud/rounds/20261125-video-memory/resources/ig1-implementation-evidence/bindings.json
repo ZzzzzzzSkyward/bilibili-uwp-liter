@@ -1,0 +1,190 @@
+{
+  "status": "FROZEN / RELEASED",
+  "only_changed_code_file": "src/BiliLite.UWP/Controls/PlayerControl.xaml.cs",
+  "original_source_sha256": "b3823bdb9fe15e7f90465a78446f6480fc81c8c92832de6f72d1762621a0a3b7",
+  "final_source_sha256": "262e0719cf4589ebd9e493937f377bcc95d43e092962aad30dbfc137275bcb89",
+  "same_readonly_fixture_source_tooling_inputs": {
+    "plan/tests/playersess/.gitignore": "6c5082c7e6de3e350189c67a1aacf757485ecc26e0a3cf96683528565f3e5f12",
+    "plan/tests/playersess/PlayersessProbe.csproj": "71129cbbabc56f21a6613247958b7adc9d801e20189749a453df5829795bedae",
+    "plan/tests/playersess/Program.cs": "eecb9205367c71c1ca3dbfa017033763cb12faeeeb0a6078b4378559541272ab",
+    "plan/tests/playersess/run.sh": "5d3f8dbb01bdf82e7190ef69170acf235ba84893d7de8a1cd3242f7b345580a0",
+    "plan/tests/playersess/PlayerLifetimeStubs.cs": "3f220267a9f41ca4781a671f9903fce7eee5cbe2e62243ea6dc64e99446009fc",
+    "plan/tests/playersess/PlayerLifetimeProbe.cs": "82fa7034ca8085325c388d65e9e0cc1ab388b8580e556adeaf986a9cc7c72a6b",
+    "plan/tests/playersess/SubtitleGraphicsBaseline.cs": "d7844c564cba44289294913062eacd09ee54512fdc33bbe9533a079e797e0bb7",
+    "plan/tests/playersess/PlayerResidualStubs.cs": "9d8e13397d22fae64737a4f4411053d5309c2b1f4749616dc7aa9d42c585d47b",
+    "plan/tests/playersess/extract-player-lifetime.py": "ebb092239694b35d19ab64fc69c7a5d8ff9a1ffdb4d96a141b71e42c3d3a5979",
+    "plan/tests/playersess/SubtitleGraphicsProbe.cs": "a6fb7a1dc157691ead5cc147d336e3b695c821b7ef5bbf134091b4d223580764",
+    "plan/tests/playersess/HistoryStorageProbe.cs": "b1fb6568851ab4c15b689d4fa89af1a121a59eb6b0a8a05568758f438367ad1f",
+    "plan/tests/playersess/HistoryStorageStubs.cs": "e865e8a598ac7e5b5b391e9dd63a131f9d0e7c3ad3305d5536c0caec37432acd",
+    "plan/tests/playersess/PlayerResidualProbe.cs": "c783a5f32aef9043cb68be30d9f976e25c261dcd3bf00473661fb6f645528916",
+    "plan/tests/playersess/SubtitleGraphicsStubs.cs": "47d6260a14bad0dec2ce8fe4f16342b22734a46f392ca8f9f3d096126d1df754",
+    "plan/tests/playersess/HistoryCheckpointProbe.cs": "48ce7e2ba9884f0fd0791893367054eeb90fd6ff907ef37746c0797349c00e5f",
+    "src/BiliLite.UWP/Services/PlayerSessionState.cs": "508f5de763cd5ef4135f8fd87f7c37a3887dff8836e36f365458127a50338b3a",
+    "src/BiliLite.UWP/Services/LocalMedia/LocalMediaAsyncLoadGuard.cs": "a46abc7a0c598b767e02e0d7b2bc4c17c89362b9d713b46b203529a56934d8e3",
+    "src/BiliLite.UWP/Services/LocalMedia/LocalMediaTrackSelection.cs": "743bc4d72bbf8aa7bf784035946a9e5bcf02dd4e8136aaa3199c54f70e15d09c",
+    "src/BiliLite.UWP/Modules/Player/InteractionVideoVM.cs": "9d58001e73b2cc000213d1428fca4262b3748aa7ac8d7a2430a6aa66289f8569",
+    "src/BiliLite.UWP/Modules/IModules.cs": "cef5334b540d7e74513d59b513e3d7671fce98e9be62b7d50bad471df14ed3c6",
+    "src/BiliLite.UWP/Helpers/SettingHelper.cs": "64983dea3c3f861214401aba4138bcdff6184c3e1cc73155d217db120a519f69",
+    "src/BiliLite.UWP/Helpers/VideoPlayHistoryHelper.cs": "1d1ffb66031083e35a58bc90a05f9ae529319b0b9ee0b136738140228349961e",
+    "src/BiliLite.UWP/Controls/Player.xaml.cs": "97394caf6013c2588f7137ae9d267b24f7247189e418ba897336cb8ae89ac4b0",
+    "src/BiliLite.UWP/Controls/PlayerControl.xaml": "6d7ce0ee0b80867f7445d8cc1ecf932c9cb0fd31ad35c2645120606141a89db1",
+    "src/BiliLite.UWP/Modules/Player/PlayerVM.cs": "7e0e0653c244759539ab8b0defebf0dd00eacb9758dd652913836096fc3aa3d6",
+    "src/BiliLite.UWP/App.xaml.cs": "0d1a0279e4efbff0a96f4437b99748f56d82757e4f306c027fbb82fb7099621a",
+    "src/BiliLite.UWP/Pages/SeasonDetailPage.xaml": "ac68653a40f45232eda971e10ad1ae9af02f352efc2e712c846eeead21bc667c",
+    "src/BiliLite.UWP/Pages/SeasonDetailPage.xaml.cs": "c91ceea2e58aa8318311841eaf22ef473711710c6222289baa6bed9b79bf4f5d",
+    "src/BiliLite.UWP/Pages/VideoDetailPage.xaml": "7c9202b9effda98f91def99f7348ed2e2b1bfccb4c345b80d669f0d61560a2e8",
+    "plan/tests/ux1d/.gitignore": "10d6effab78b13bd64e8a1d55c5d39aabca05a307b7c26434ae18dda644e482d",
+    "plan/tests/ux1d/Program.cs": "2785156302529adf2c61c0f8f60815639095fe973236d062a1d9ef2a05411561",
+    "plan/tests/ux1d/QueueStubs.cs": "a76bd18cdc7d991987357aa6b608a9ab81c59315a4943c1c1c7c363b6bbfe322",
+    "plan/tests/ux1d/Ux1dProbe.csproj": "0436e54c8265fc8415bc32246c8ae3aa5f10934ab587297ac8661244d8702bbe",
+    "plan/tests/ux1d/run.sh": "c52143f44be93f6c36eb44cf43b56266a12fb86bf3794839e41db54313a87b21",
+    "src/BiliLite.UWP/Models/PlayContinuation.cs": "15f9426359a43baa1d90eec958018ba196e17997274e034a5c7b301874072a40",
+    "src/BiliLite.UWP/Models/PlayDirectory.cs": "7a3e1690ad7ebb456a762f8850796a5bbbd0a171e65cfd8a0e8437d6e018e9b1",
+    "src/BiliLite.UWP/Models/MediaListResources.cs": "28d8575924e1629c70c9967dd9384c2f71bead2a49844d4089ba9735df05a7fc",
+    "src/BiliLite.UWP/Models/VideoQueue.cs": "5995471cc7eee24552ed1d3e591a95b2d87f38fb239b3493c21aa1f4702812e5",
+    "src/BiliLite.UWP/Models/VideoCollections.cs": "10bb7413f695ba6e30ae6a009f2947c9629eecfb16d5c5e01a26e672187b93b3",
+    "src/BiliLite.UWP/Models/WatchSequence.cs": "22e4f7e88b848c11aabf3cf199a749547475da884f1cc900a8893092b222b7b9",
+    "src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs": "a057e1a6bde0b29f62809e51bf7f691c9ed28a56865cd391b7982a091ef118e3",
+    "src/BiliLite.UWP/Controls/PlayDirectoryControl.xaml.cs": "16d457e712da510d99896d2410c038da05eecffee36ec8f65e511007df49fc61",
+    "src/BiliLite.UWP/Controls/PlayDirectoryControl.xaml": "5a24e9c96b2aec04927a9a86f05f88b7b124490b577aa83704400bc4176b1387",
+    "src/BiliLite.UWP/BiliLite.UWP.csproj": "b0ccc591ddc5c1f8fd469e9c22cb735ca121fd2b64be5a0ba536ff59adfe8677",
+    "plan/tests/run-all.sh": "6b9cc38288b5bea7e07e50bed43a6c2027923ebcf0acf5c706f33a7dce1fd941",
+    "plan/tests/run-all.py": "afc18ae7e9fa6256a0b63e49846d90f2d4d8ae8ebdb32b0e4c753bcd6ecd11f5"
+  },
+  "compiler_runtime_Newtonsoft_DLLs": {
+    "/workspace/work/maintenance-foundation/quality/dotnet/dotnet": "db40da462b13ec4c07df7a75c4b0395223d360b8dc9a477d9e31fb71759b05f4",
+    "/workspace/work/maintenance-foundation/quality/dotnet/sdk/8.0.427/Roslyn/bincore/csc.dll": "2b9a5bbe002b353e44c78506e1bccbbc55dcdf2338abb11a68a5056329cb7334",
+    "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Private.CoreLib.dll": "98fec20c823887e41d4fbd2d2e900175e5b1ba7d671e29704c9ce4632dcc5432",
+    "/workspace/work/maintenance-foundation/quality/dotnet/packs/Microsoft.NETCore.App.Ref/8.0.33/ref/net8.0/System.Runtime.dll": "20b0357b92db5aea8c402747d1c39ae5f91fa061df91625f20542285659638f2",
+    "/home/agent/.nuget/packages/newtonsoft.json/13.0.3/lib/net6.0/Newtonsoft.Json.dll": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07"
+  },
+  "commands": [
+    {
+      "mode": "baseline",
+      "source_sha256": "b3823bdb9fe15e7f90465a78446f6480fc81c8c92832de6f72d1762621a0a3b7",
+      "source_after_sha256": "b3823bdb9fe15e7f90465a78446f6480fc81c8c92832de6f72d1762621a0a3b7",
+      "command": [
+        "bash",
+        "plan/tests/run-all.sh",
+        "--tools-root",
+        "/workspace/work/maintenance-foundation/quality",
+        "--only",
+        "batch:playersess",
+        "--only",
+        "batch:ux1d",
+        "--output",
+        "/workspace/work/video-memory/player-ig1-fix/baseline-report"
+      ],
+      "environment": {
+        "PLAYER_LIFETIME_EVIDENCE_DIR": "/workspace/work/video-memory/player-ig1-fix/baseline-extraction"
+      },
+      "exit": 1,
+      "suite_status": "FAIL",
+      "complete_required": false,
+      "log": "/workspace/work/video-memory/player-ig1-fix/baseline.log",
+      "log_sha256": "546f5f566052df46314838ff0c540584f7205d39128e6b6147f89e2b9be41409",
+      "report": "/workspace/work/video-memory/player-ig1-fix/baseline-report/results.json",
+      "report_sha256": "f087213ca5d70b231f0dbb225464bf857f8716f5e0fd6d6d8c70014c891a6d91",
+      "input_bytes_unchanged": true,
+      "tool_bytes_unchanged": true,
+      "prior66": {
+        "pass": 66,
+        "fail": 0
+      },
+      "lifetime39_pass": 39,
+      "graphics5_pass": 5,
+      "binary_outputs": {
+        "playersess": {
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/playersess/PlayersessProbe": "1736b02470713b72a00fd2e4c9f41b4f0baef97f383df30b0c24f95e8854e22a",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/playersess/PlayersessProbe.deps.json": "cc8d9d81eb0a227996629cd87ca5d4fe9f27acfaf2ef959372470448c5f962cb",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/playersess/PlayersessProbe.runtimeconfig.json": "088bcc1a867d80d3923a812855f7ae9297fc8ac3d844cf9a83510bd8d1352af8",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/playersess/Newtonsoft.Json.dll": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/playersess/PlayersessProbe.dll": "c5f37f11b7ab0542190cef769e4d10a50f69a2a16d73e9b3e16eba911c369596",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/playersess/PlayersessProbe.pdb": "5687607cc3999a26504cbfc0b0375ef3fb9a3e27cd8e16300fbd91ec0273d351"
+        },
+        "ux1d": {
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/ux1d/Ux1dProbe": "d5e7b779cb323ac6b9bd5b2d91fca21f6bcf0328a2686f49864ffeb15a1f1402",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/ux1d/Ux1dProbe.pdb": "15419f9c2dd2ded98a7360435b1d8e45f1dd4cd04dcdaec5d1ae18df45e0a160",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/ux1d/Newtonsoft.Json.dll": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/ux1d/Ux1dProbe.runtimeconfig.json": "088bcc1a867d80d3923a812855f7ae9297fc8ac3d844cf9a83510bd8d1352af8",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/ux1d/Ux1dProbe.dll": "55ca5722c16e3930fa55d941131ad066e4f6418d71f13f1eaad4c2a93bd9965a",
+          "/workspace/work/video-memory/player-ig1-fix/baseline-binary/ux1d/Ux1dProbe.deps.json": "e6685dc16e011579d586a5006f8729566a850b8357a807e0cdc1d47202f3516d"
+        }
+      },
+      "stages": {
+        "batch:playersess": {
+          "status": "PASS",
+          "exit": 0
+        },
+        "batch:ux1d": {
+          "status": "FAIL",
+          "exit": 1
+        }
+      }
+    },
+    {
+      "mode": "final",
+      "source_sha256": "262e0719cf4589ebd9e493937f377bcc95d43e092962aad30dbfc137275bcb89",
+      "source_after_sha256": "262e0719cf4589ebd9e493937f377bcc95d43e092962aad30dbfc137275bcb89",
+      "command": [
+        "bash",
+        "plan/tests/run-all.sh",
+        "--tools-root",
+        "/workspace/work/maintenance-foundation/quality",
+        "--only",
+        "batch:playersess",
+        "--only",
+        "batch:ux1d",
+        "--output",
+        "/workspace/work/video-memory/player-ig1-fix/final-report"
+      ],
+      "environment": {
+        "PLAYER_LIFETIME_EVIDENCE_DIR": "/workspace/work/video-memory/player-ig1-fix/final-extraction"
+      },
+      "exit": 0,
+      "suite_status": "PARTIAL_PASS",
+      "complete_required": false,
+      "log": "/workspace/work/video-memory/player-ig1-fix/final.log",
+      "log_sha256": "cfdf8bb7e8af2daae338f2d21d14774fe9b353338a781291328e1daf09cc66c9",
+      "report": "/workspace/work/video-memory/player-ig1-fix/final-report/results.json",
+      "report_sha256": "98734a1dd7b2d22af17e2b157ae9492ed29b9bf4495040c1db315db5922a134e",
+      "input_bytes_unchanged": true,
+      "tool_bytes_unchanged": true,
+      "prior66": {
+        "pass": 66,
+        "fail": 0
+      },
+      "lifetime39_pass": 39,
+      "graphics5_pass": 5,
+      "binary_outputs": {
+        "playersess": {
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/playersess/PlayersessProbe": "1736b02470713b72a00fd2e4c9f41b4f0baef97f383df30b0c24f95e8854e22a",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/playersess/PlayersessProbe.deps.json": "cc8d9d81eb0a227996629cd87ca5d4fe9f27acfaf2ef959372470448c5f962cb",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/playersess/PlayersessProbe.runtimeconfig.json": "088bcc1a867d80d3923a812855f7ae9297fc8ac3d844cf9a83510bd8d1352af8",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/playersess/Newtonsoft.Json.dll": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/playersess/PlayersessProbe.dll": "da5f839db85fca92094ba1722450d7a8da28f54aca6b5e1cec0a35f59ff8f115",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/playersess/PlayersessProbe.pdb": "4b366424c89d30ae411344892b729af8c905e18ff2a6b35b23cfca1ffc736152"
+        },
+        "ux1d": {
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/ux1d/Ux1dProbe": "d5e7b779cb323ac6b9bd5b2d91fca21f6bcf0328a2686f49864ffeb15a1f1402",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/ux1d/Ux1dProbe.pdb": "15419f9c2dd2ded98a7360435b1d8e45f1dd4cd04dcdaec5d1ae18df45e0a160",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/ux1d/Newtonsoft.Json.dll": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/ux1d/Ux1dProbe.runtimeconfig.json": "088bcc1a867d80d3923a812855f7ae9297fc8ac3d844cf9a83510bd8d1352af8",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/ux1d/Ux1dProbe.dll": "55ca5722c16e3930fa55d941131ad066e4f6418d71f13f1eaad4c2a93bd9965a",
+          "/workspace/work/video-memory/player-ig1-fix/final-binary/ux1d/Ux1dProbe.deps.json": "e6685dc16e011579d586a5006f8729566a850b8357a807e0cdc1d47202f3516d"
+        }
+      },
+      "stages": {
+        "batch:playersess": {
+          "status": "PASS",
+          "exit": 0
+        },
+        "batch:ux1d": {
+          "status": "PASS",
+          "exit": 0
+        }
+      }
+    }
+  ],
+  "deadline": "2026-11-25 08:29:30 UTC /16:29:30 Asia/Shanghai; no clock reset"
+}

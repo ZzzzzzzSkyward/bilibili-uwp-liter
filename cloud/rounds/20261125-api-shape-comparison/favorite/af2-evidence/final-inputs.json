@@ -1,0 +1,234 @@
+[
+  {
+    "path": "/home/agent/.nuget/packages/newtonsoft.json/13.0.3/lib/net6.0/Newtonsoft.Json.dll",
+    "sha256": "22c649f75fce5be7c7ccda8880473b634ef69ecf33f5d1ab8ad892caf47d5a07"
+  },
+  {
+    "path": "/home/agent/.nuget/packages/newtonsoft.json/13.0.3/newtonsoft.json.13.0.3.nupkg",
+    "sha256": "872fc189e638ab1056555b03aaa38f68bcb54286e221aa646eb1129babf63c77"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/C2Probe.csproj",
+    "sha256": "fe09ccfc868ce2709c8b3b8926447ee9ab7c41d69fa2b050771bec7ab1325eb2"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/C2Stubs.cs",
+    "sha256": "d0857739e563bdcc4cd49157400eb2a2bc039a00c592f2d23dbce07536e97e7b"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoriteActionChecks.cs",
+    "sha256": "032422e6dbd784dc7507d0250ac2b0cfc3e67d5ce825b4623a66e01fbc5346be"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoriteFolderPublicationProbe.cs",
+    "sha256": "e37b1a8f1a382170f003ed75a6a3eb110ddd7e333943e3452692ae2bca67d6b2"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoritePagingProbe.cs",
+    "sha256": "62a7a3bf7b5a21fc9fec76ec688d9babcad5e5105c5712034d56b117ef1bfc0c"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoritePublicationProbe.cs",
+    "sha256": "0e44931091942ea94ac7ef130f1c8b2cb21085cdcdd9fa18bd0a4593fb36eb2b"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/Program.cs",
+    "sha256": "b7fa78b30785090b5ec4bf592b43ecc17e4c0f53da70eb9b0c74706a07b2600b"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/run.sh",
+    "sha256": "1c84653ae991c49892a7af3dc2e6b33ba40727d9f071ab4d7033b44bdc57d27b"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/C3Probe.csproj",
+    "sha256": "db7f082c147490b7e14f20b338e6047abdd3ad4b35663ede27890835e8d1cffc"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/C3Stubs.cs",
+    "sha256": "e10d39a60f208b558f499eca3ca11ae12a2f96d6e2fb5d231f81af1e5ad92fae"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/Program.cs",
+    "sha256": "5528a6289b1863feaa54d40def4ffc0b7a3e6bd70498858c0c27e1d41b78ddee"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/run.sh",
+    "sha256": "424e8c024dbb66dba840adf59934c2361a4f8104ee321d45738d54ee1fd26482"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/run-all.py",
+    "sha256": "afc18ae7e9fa6256a0b63e49846d90f2d4d8ae8ebdb32b0e4c753bcd6ecd11f5"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/run-all.sh",
+    "sha256": "6b9cc38288b5bea7e07e50bed43a6c2027923ebcf0acf5c706f33a7dce1fd941"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Api/User/FavoriteAPI.cs",
+    "sha256": "1e1d56bdeb5b9716e49c6160e92a3a31bcd17362121db0a80bbd7717bb81105d"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Api/VideoAPI.cs",
+    "sha256": "75c3442540f758a842b97b235d06f79b22445626817b794fd6e4a6f696a5421d"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/BiliLite.UWP.csproj",
+    "sha256": "b0ccc591ddc5c1f8fd469e9c22cb735ca121fd2b64be5a0ba536ff59adfe8677"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Helpers/HttpHelper.cs",
+    "sha256": "b12e457a75a133e9298fb77ad982b33986c2f95da2562b4f031b1fd692424d13"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Helpers/MessageCenter.cs",
+    "sha256": "376489239b4be6b4c1c895cb9bed4b984259fecee98b9c3dfce58e1557415085"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Helpers/Utils.cs",
+    "sha256": "9db1e9c608e60ccd73e041ce3ebf5ba75cc205059714c9a22e35214c4c645952"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/Api/MediaList/FavoriteResourceListDto.cs",
+    "sha256": "5e77c1efd42dce4a1dc3352e4d15a209a56e4f34c3d079e0223508dd6e074239"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/Api/MediaList/MediaListResourceListDto.cs",
+    "sha256": "dd0e851b024d3019eb0dc9efa2b09a70e4615d33420ad016d522a4b37648f75d"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/Api/MediaList/WatchLaterListDto.cs",
+    "sha256": "8a9d2461c8b95cb5ae719df9087fe77572cfc0e53dd17deb0660767d817ba5ae"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/ApiModel.cs",
+    "sha256": "6493168767c4c9a92637b3ac82b9ec7d67e92ac2840cf0680655887996611671"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/MediaListResources.cs",
+    "sha256": "28d8575924e1629c70c9967dd9384c2f71bead2a49844d4089ba9735df05a7fc"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/ReturnModel.cs",
+    "sha256": "0c5192f37d4447954937a8b226b5667dba77ed09f3d5a345b226e1e6c8994a1c"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/VideoCollections.cs",
+    "sha256": "10bb7413f695ba6e30ae6a009f2947c9629eecfb16d5c5e01a26e672187b93b3"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/VideoQueue.cs",
+    "sha256": "5995471cc7eee24552ed1d3e591a95b2d87f38fb239b3493c21aa1f4702812e5"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Modules/Detail/FavoriteDetailVM.cs",
+    "sha256": "daf13e90f68cff339e4a9dc9fc345187e09beeda5c27f4053383efdd2d7aba26"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Modules/IModules.cs",
+    "sha256": "cef5334b540d7e74513d59b513e3d7671fce98e9be62b7d50bad471df14ed3c6"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Modules/RelayCommand.cs",
+    "sha256": "2941ad18ba1a0aed08d0803cb6ddead223d20e750d4541f4284ecb828a1c74e8"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Modules/User/MyFollowVideoVM.cs",
+    "sha256": "5007c7536241ef521d37ff19cccaa18fe9e684f82fba63bed85bd94fe50a4ebb"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Modules/User/WatchLaterVM.cs",
+    "sha256": "a4e5352781121760011d288726ea5b9c0945135785beddd28647665f5e3a545a"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Pages/User/FavoriteDetailPage.xaml",
+    "sha256": "6ba4b39ad8fb715c72efa21725814298abb42231ce959d32f5dd2ce2af6a5eeb"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Pages/User/FavoriteDetailPage.xaml.cs",
+    "sha256": "67eceec25894c3c6b00a10b09d7f61702478a9c845d8d88e6431b2c9cf06b17b"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Pages/User/FavoritePage.xaml",
+    "sha256": "ac486d5e7109c425af4fd30542c4adf6837ceb40a9dc265cd90f9e0e361b04c0"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Pages/User/FavoritePage.xaml.cs",
+    "sha256": "0e9ebc2046ad057fbdbc3b9961ebd81b96395a0ce7b4adeda53d210ed0ca7558"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Pages/VideoDetailPage.xaml",
+    "sha256": "7c9202b9effda98f91def99f7348ed2e2b1bfccb4c345b80d669f0d61560a2e8"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Pages/VideoDetailPage.xaml.cs",
+    "sha256": "a057e1a6bde0b29f62809e51bf7f691c9ed28a56865cd391b7982a091ef118e3"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/ApiEnvelope.cs",
+    "sha256": "050317cddde277c46c6169f3878cb6c7accef3cec0dbbf018006cbc411948421"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/ApiParseResult.cs",
+    "sha256": "f708c0a8cf8cddad1aa2f3b0abc1346cde0a10cf37313c4fee9aecd3c0c0e3ab"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/MediaList/FavoriteResourceListMapper.cs",
+    "sha256": "8f5d94e5d1979ae70c0123d33f4910f16a29a1bffc6a6ec68f6a3fcafe007c75"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/MediaList/FavoriteResourceListParser.cs",
+    "sha256": "ad261bfa93ae3345364375ab09883100eb6d7ceecd9863929a875fa24eff84e5"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/MediaList/MediaListFailureText.cs",
+    "sha256": "100ad1d115b1830467d75fcd151d950e30f68f0ac8e3a2655ad20e57f0ad2122"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/MediaList/MediaListResourceListMapper.cs",
+    "sha256": "321ecca555c437294781519f3ad3edf87380e13e7aa7bf5aea49ae63e5454215"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/MediaList/MediaListResourceListParser.cs",
+    "sha256": "3465f247ad6da58afa510a6b6bd4143647368189d88ec332625a3e4dca9c20b7"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/MediaList/WatchLaterListParser.cs",
+    "sha256": "aa353652aff0efa4c6d979acff40e5ee906263e6f0baea9d86502d51b0949cc9"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/Video/VideoEnvelope.cs",
+    "sha256": "286b4cd4cba70378cf1bdb0e57f0b850d221cd40d3d228a9e05f70ab14ede82d"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/Video/WebVideoActionParser.cs",
+    "sha256": "ba0d9f2f482539b6327053ed0601af50a72907889a37f3148b5516fbac5500cf"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Services/MediaListService.cs",
+    "sha256": "836ad612b8740600ad6a5c1e33a2d0f5913ec726877cd134b9b6f10593e00f6d"
+  },
+  {
+    "path": "/workspace/work/maintenance-foundation/quality/dotnet/dotnet",
+    "sha256": "db40da462b13ec4c07df7a75c4b0395223d360b8dc9a477d9e31fb71759b05f4"
+  },
+  {
+    "path": "/workspace/work/maintenance-foundation/quality/dotnet/packs/Microsoft.NETCore.App.Ref/8.0.33/ref/net8.0/System.Runtime.dll",
+    "sha256": "20b0357b92db5aea8c402747d1c39ae5f91fa061df91625f20542285659638f2"
+  },
+  {
+    "path": "/workspace/work/maintenance-foundation/quality/dotnet/sdk/8.0.427/Roslyn/bincore/csc.dll",
+    "sha256": "2b9a5bbe002b353e44c78506e1bccbbc55dcdf2338abb11a68a5056329cb7334"
+  },
+  {
+    "path": "/workspace/work/maintenance-foundation/quality/dotnet/shared/Microsoft.NETCore.App/8.0.33/System.Private.CoreLib.dll",
+    "sha256": "98fec20c823887e41d4fbd2d2e900175e5b1ba7d671e29704c9ce4632dcc5432"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/obj/HttpResults.actual.cs",
+    "sha256": "6df7b868c05bfa188a13c15601c17215f5c81437ccae7214aaa7e0d70a22f4d2"
+  },
+  {
+    "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/obj/Utils.DeserializeJson.actual.cs",
+    "sha256": "98c845e0a6f4f4c14cbeb7028488ffc70a62fd05dc83ed805d2458a31da9438c"
+  }
+]

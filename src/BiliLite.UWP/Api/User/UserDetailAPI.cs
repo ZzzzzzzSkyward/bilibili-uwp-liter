@@ -78,7 +78,7 @@ namespace BiliLite.Api.User
             {
                 method = RestSharp.Method.Get,
                 baseUrl = $"{ApiHelper.API_BASE_URL}/x/space/wbi/arc/search",
-                parameter = $"mid={mid}&ps={pagesize}&tid={tid}&pn={page}&keyword={keyword}&order={order.ToString()}",
+                parameter = $"mid={mid}&ps={pagesize}&tid={tid}&pn={page}&keyword={System.Uri.EscapeDataString(keyword ?? "")}&order={order.ToString()}",
                 need_cookie=true,
                 headers = VideoHeader
             };
@@ -145,7 +145,7 @@ namespace BiliLite.Api.User
             if (tid==-1&& keyword != "")
             {
                 api.baseUrl = $"{ApiHelper.API_BASE_URL}/x/relation/followings/search";
-                api.parameter += $"&name={keyword}";
+                api.parameter += $"&name={System.Uri.EscapeDataString(keyword ?? "")}";
             }
             if (tid != -1)
             {

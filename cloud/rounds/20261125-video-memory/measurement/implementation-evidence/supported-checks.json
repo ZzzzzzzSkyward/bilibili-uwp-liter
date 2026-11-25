@@ -1,0 +1,246 @@
+{
+  "schemaVersion": 1,
+  "status": "PASS-supported-only-after-T1-T3",
+  "sourceHead": "7356b94893377558191b0d70576a52bae704c1f9",
+  "interpreter": {
+    "path": "/workspace/work/maintenance-foundation/package-layout/powershell/pwsh",
+    "edition": "Core",
+    "version": "7.7.0",
+    "platform": "Unix"
+  },
+  "commands": {
+    "main": [
+      "python3",
+      "tools/tests/video-memory/run.py",
+      "--powershell",
+      "/workspace/work/maintenance-foundation/package-layout/powershell/pwsh",
+      "--output-directory",
+      "/workspace/work/video-memory/tooling-fix/t1-t3/final-supported"
+    ],
+    "mainExit": 0,
+    "outerInvocationCount": 46,
+    "controlledGroupCount": 21,
+    "revisionCheckCount": 106,
+    "publicMarkInvocationsInsideMarkerHelper": 55,
+    "acceptedSyntheticMarkerRows": 52,
+    "byInvocation": [
+      {
+        "label": "metadata-valid",
+        "exit": 0
+      },
+      {
+        "label": "metadata-reject-unit",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-unit-array",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-schema-string",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-missing",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-artifact",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-list-hash",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-cycle-order",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-cycle-string",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-date-local",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-pid-string",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-nonfinite",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-path-traversal",
+        "exit": 1
+      },
+      {
+        "label": "metadata-reject-unavailable-no-reason",
+        "exit": 1
+      },
+      {
+        "label": "metadata-invalid-json",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-prewarm",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-baseline",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-opened",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-post-close",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-settled",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-idle60",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-idle300",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-background",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-minimized",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-restored",
+        "exit": 1
+      },
+      {
+        "label": "checkpoint-native-host-feed-step",
+        "exit": 1
+      },
+      {
+        "label": "collect-native-host",
+        "exit": 1
+      },
+      {
+        "label": "invalid-phase-before-metadata-read",
+        "exit": 1
+      },
+      {
+        "label": "bad--IntervalSeconds-0",
+        "exit": 1
+      },
+      {
+        "label": "bad--DurationSeconds--1",
+        "exit": 1
+      },
+      {
+        "label": "bad--IntervalSeconds-NaN",
+        "exit": 1
+      },
+      {
+        "label": "mark-first",
+        "exit": 0
+      },
+      {
+        "label": "duplicate-marker",
+        "exit": 1
+      },
+      {
+        "label": "case-variant-duplicate-marker",
+        "exit": 1
+      },
+      {
+        "label": "incomplete-run-completion",
+        "exit": 1
+      },
+      {
+        "label": "target-mismatch",
+        "exit": 1
+      },
+      {
+        "label": "occupied-lock",
+        "exit": 1
+      },
+      {
+        "label": "mark-next",
+        "exit": 0
+      },
+      {
+        "label": "backward-cycle",
+        "exit": 1
+      },
+      {
+        "label": "completed-backwards",
+        "exit": 1
+      },
+      {
+        "label": "unbound-existing-directory",
+        "exit": 1
+      },
+      {
+        "label": "metadata-binding-tamper",
+        "exit": 1
+      },
+      {
+        "label": "partial-line-preservation",
+        "exit": 1
+      },
+      {
+        "label": "complete-synthetic-marker-sequence",
+        "exit": 0
+      },
+      {
+        "label": "actual-private-functions-controlled",
+        "exit": 0
+      },
+      {
+        "label": "t1-t3-actual-code-regressions",
+        "exit": 0
+      }
+    ]
+  },
+  "parser": {
+    "command": [
+      "/workspace/work/maintenance-foundation/package-layout/powershell/pwsh",
+      "-NoProfile",
+      "-File",
+      "/workspace/work/video-memory/tooling-fix/t1-t3/parse-revised.ps1"
+    ],
+    "exit": 0,
+    "fileCount": 4,
+    "astErrors": 0,
+    "unchangedCoreAndGuard": [
+      "Read-RequiredClrProperty",
+      "New-MemorySample",
+      "Write-Record",
+      "native public host guard"
+    ]
+  },
+  "artifacts": {
+    "/workspace/work/video-memory/tooling-fix/t1-t3/final-supported/commands.json": "40130f620b4bf3d6f0162546aedac9b2ccd676e941b416716585c31bdad9fa13",
+    "/workspace/work/video-memory/tooling-fix/t1-t3/final-supported/results.json": "c5cb6161972021782255bb752f04aaf77eed6f74456907ca20a8fb8894f3d7c2",
+    "/workspace/work/video-memory/tooling-fix/t1-t3/final-supported/controlled/controlled-results.json": "ca6b7bce4e0d0c238fba7032eef212c40d7edfabace4cd517e96eb11fc3434db",
+    "/workspace/work/video-memory/tooling-fix/t1-t3/final-supported/revisions/revision-results.json": "42ae4be863b5eaf86feb3d439c8c6e7f0862c689aae6c80e556d05428c255953",
+    "/workspace/work/video-memory/tooling-fix/t1-t3/parse-revised.ps1": "c1a8c296f2a24dba388158e5becd2ee34852a25e7655438291e54160b7580ea7",
+    "/workspace/work/video-memory/tooling-fix/t1-t3/parse-revised.json": "be34f41beeff6effdfb2d878a2a17a0741a194588dafdccaf350b6d93192d90d",
+    "/workspace/work/video-memory/tooling-fix/t1-t3/revision-artifact-binding.json": "8b37d26ce960ce3bc202c663f5a7758f76f8a4da978199b1b63ca6c516d8d741",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/implementation-evidence/t1-t3-corrections.json": "c43e24a9590db99107e2351958316f27475c5976adaca8c06be2b2c513315796"
+  },
+  "nativeWindowsPowerShell51": "BLOCKED/UNVERIFIED",
+  "nativeWindowsHarmlessPidSample": "BLOCKED/UNVERIFIED",
+  "uwpFiftyVideoMemoryResult": "BLOCKED/UNVERIFIED",
+  "summaryTool": "not delivered",
+  "aggregateInventory": "unchanged 51 logical/52 executable; no product suite/build/package/control rerun",
+  "gitMutation": "none; read-only rev-parse only"
+}

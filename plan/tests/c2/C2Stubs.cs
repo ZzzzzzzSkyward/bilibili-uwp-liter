@@ -74,7 +74,7 @@ namespace BiliLite.Helpers
         }
     }
 
-    public static class Utils
+    public static partial class Utils
     {
         public static Task<HttpResults> Request(this BiliLite.Api.ApiModel api)
         {

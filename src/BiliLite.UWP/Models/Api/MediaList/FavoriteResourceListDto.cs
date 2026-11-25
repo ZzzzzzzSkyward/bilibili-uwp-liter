@@ -16,7 +16,7 @@ namespace BiliLite.Models.Api.MediaList
         [JsonProperty("medias")]
         public List<FavoriteResourceItemDto> Medias { get; set; }
 
-        /// <summary>还有下一页；今天页面用 media_count 判翻页，这个值只原样带上，不改路由</summary>
+        /// <summary>普通收藏夹的下一页标志；缺失/null 由页面保留总数兼容规则</summary>
         [JsonProperty("has_more")]
         public bool? HasMore { get; set; }
     }

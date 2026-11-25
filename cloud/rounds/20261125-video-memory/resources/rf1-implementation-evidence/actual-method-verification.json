@@ -1,0 +1,24 @@
+[
+  {
+    "name": "old284be",
+    "complete_control_bodies_identical": 51,
+    "body_rewrites": 0,
+    "critical_spans": {
+      "private async void DanmuSettingUpdateDanmaku_Click(": "5aadfbe4d0c0cb772da4e77e4d351783beba0b05c877d8ba4270f4559fe2310c",
+      "private async Task SetDanmaku(": "d3990baea0ec182b73692b50056b6732903080e85b73c9f829737877f26a1c78",
+      "private bool IsPlaybackWorkCurrent(": "c997278639a8d6a402d6d9b8d3c80eea8c5dcb571727c063c7dfe367207c878c",
+      "private async Task LoadDanmaku(": "a58fc8056e8f793d256717c17752a341ecd49d2af9234ef1d5a1e0a9d84adcbd"
+    }
+  },
+  {
+    "name": "final",
+    "complete_control_bodies_identical": 51,
+    "body_rewrites": 0,
+    "critical_spans": {
+      "private async void DanmuSettingUpdateDanmaku_Click(": "5aadfbe4d0c0cb772da4e77e4d351783beba0b05c877d8ba4270f4559fe2310c",
+      "private async Task SetDanmaku(": "d3990baea0ec182b73692b50056b6732903080e85b73c9f829737877f26a1c78",
+      "private bool IsPlaybackWorkCurrent(": "7ee4a330af7d08f19425de06dbe5ff66a62cbd90e6f3cd54bb8600eaab3b4adf",
+      "private async Task LoadDanmaku(": "a58fc8056e8f793d256717c17752a341ecd49d2af9234ef1d5a1e0a9d84adcbd"
+    }
+  }
+]

@@ -1,0 +1,32 @@
+{
+  "raw_source_outside_only_two_public_method_spans_identical": true,
+  "changed_method_spans": {
+    "public void ShowTransitionPending(string targetTitle)": {
+      "old_sha256": "84a5f42e8afee297d9e01e80aae4fbb6d584ed7edd4663f0e6f72668c57866c9",
+      "final_sha256": "e71d93ea6bcadf32e1c3ae251f78f9bc2924c9cd640a3d466896cb7d9577ca5f"
+    },
+    "public void ClearTransitionPending()": {
+      "old_sha256": "608ff1bcfe088687688ece54f01301e6e6793b0a9999fd6b550ffbe7d3092d48",
+      "final_sha256": "0c2cb85c3513fe6546eb0aa028238322b77dc835529ab56364cb83f1cf09a77f"
+    }
+  },
+  "unchanged_critical_method_spans": {
+    "private void UpdatePlaybackControlEligibility()": "4dda7f18294892c63c261992fc950238973ac6c3a9efa105be13aad1202c187d",
+    "private bool IsPlaybackWorkCurrent(": "7ee4a330af7d08f19425de06dbe5ff66a62cbd90e6f3cd54bb8600eaab3b4adf",
+    "private async Task SetPlayItem(": "d6f27637506af69f68e812f02a42e3aa4a2d840e8443ddfd80e49ada7db9367f",
+    "private async Task SwitchLocalTrackAsync(": "db300142093a56f281791bddd1a2b0ade69f5436cd110e9c467199eacf0d408c",
+    "private async Task<Grid> GenerateSubtitleItem(": "5789d03300d297cb7bc6115ee0622417b5773960544b3b0899ec2bb8167fbcb7",
+    "private static string HistoryKey(": "086cebdec2b9df868d31e901ea95d1f55a9d01adf6f38cbcfc4b50c2c1eeeb4c",
+    "private async Task CheckpointHistoryAsync(": "dd4c99fff059e2826cc38406f2856d93e9cada60778c0c6dfc80a8b08b9a2c91",
+    "private async Task DrainHistoryReportsAsync(": "fbe717498eeec8ef05406967315a5d87f43458664727ffcf9255bc5c8dd20492",
+    "private async Task FlushPlaybackAsync(": "1eabca671ac7e235439a254a1722a83749f6f97eda63ec532ec18113812775ae",
+    "public async void Dispose()": "9ca52e232a920aefde9af499a74410b8fb86d46776ced58bceb12eaa43082201"
+  },
+  "every_test_stub_extractor_runner_project_assertion_byte_unchanged": true,
+  "old_RF1_residual_execution_and_evidence_receipts_unchanged": true,
+  "first_failed_full_gate_receipts_immutable": {
+    "/workspace/work/video-memory/final-verification/combined-final/aggregate/results.json": "aee9bff87ec5fd891b40b6a89f4289d4e1b298a9f5d4504fe5f7b3be34426a17",
+    "/workspace/work/video-memory/final-verification/combined-final/aggregate/logs/batch_ux1d.log": "3296315f77d40ab1471d05180ae70c36665d171e5ade7f7273c1c56300da91ce"
+  },
+  "no_comment_string_or_unreachable_assignment_workaround": true
+}

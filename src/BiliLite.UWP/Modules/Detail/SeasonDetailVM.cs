@@ -83,18 +83,31 @@ namespace BiliLite.Modules
             set { _nothingPlay = value; DoPropertyChanged("NothingPlay"); }
         }
 
+        private long _loadGeneration;
+
+        public void InvalidateLoad()
+        {
+            _loadGeneration++;
+        }
+
         public async Task LoadSeasonDetail(string season_id)
         {
+            var generation = ++_loadGeneration;
             try
             {
                 Loaded = false;
+                if (generation != _loadGeneration) return;
                 Loading = true;
+                if (generation != _loadGeneration) return;
                 ShowError = false;
+                if (generation != _loadGeneration) return;
 
                 //整页信息（标题/封面/评分/地区/追番状态）只在 pgc/view/web/season 上，
                 //ep/list 只有片单和分区，拿它当整页信息会让 Detail 全空
                 var seasonDetail = await seasonApi.Detail(season_id).Request();
+                if (generation != _loadGeneration) return;
                 var seasonData = await seasonDetail.GetResult<SeasonDetailModel>();
+                if (generation != _loadGeneration) return;
                 var detail = seasonData != null && seasonData.success ? seasonData.result : null;
                 if (detail == null)
                 {
@@ -102,47 +115,62 @@ namespace BiliLite.Modules
                     LogHelper.Log("番剧详情解析失败 season=" + season_id + " endpoint=pgc/view/web/season", LogType.ERROR);
                 }
 
-                var parsed = WebSeasonEpListParser.ParseWebSeasonEpList(
-                    await seasonApi.EpList(season_id).Request());
+                if (generation != _loadGeneration) return;
+                var episodeResponse = await seasonApi.EpList(season_id).Request();
+                if (generation != _loadGeneration) return;
+                var parsed = WebSeasonEpListParser.ParseWebSeasonEpList(episodeResponse);
                 if (!parsed.IsSuccess)
                 {
                     //解析层只给结论，用户看什么由这里定：错误面板，不弹 toast
                     ShowError = true;
+                    if (generation != _loadGeneration) return;
                     ErrorMsg = parsed.Message;
                     return;
                 }
 
                 //通过解析才发布；空但合法的季照样发布，由页面显示空状态
                 var season = WebSeasonEpListMapper.MapWebSeasonEpList(parsed.Value);
-                Detail = detail ?? season.Detail;
+                var acceptedDetail = detail ?? season.Detail;
                 //season 只给 season_title 时页面标题也得有字
-                if (string.IsNullOrEmpty(Detail.title))
+                if (string.IsNullOrEmpty(acceptedDetail.title))
                 {
-                    Detail.title = Detail.season_title;
+                    acceptedDetail.title = acceptedDetail.season_title;
                 }
                 //下载面板与历史行为都吃 ep/list 的合并列表（含分区预告、已按 ep 号去重），
                 //season 自带的 episodes 只有正片，不能拿它顶替
                 if (season.Detail.episodes != null && season.Detail.episodes.Count > 0)
                 {
-                    Detail.episodes = season.Detail.episodes;
+                    acceptedDetail.episodes = season.Detail.episodes;
                 }
+                if (generation != _loadGeneration) return;
+                // 属性通知同步执行，绑定回调可能关闭页面或开始新一轮加载。
+                Detail = acceptedDetail;
+                if (generation != _loadGeneration) return;
                 Episodes = season.Episodes;
+                if (generation != _loadGeneration) return;
                 ShowEpisodes = Episodes.Count > 0;
+                if (generation != _loadGeneration) return;
                 Previews = season.Previews;
+                if (generation != _loadGeneration) return;
                 ShowPreview = Previews.Count > 0;
+                if (generation != _loadGeneration) return;
                 NothingPlay = !ShowEpisodes && !ShowPreview;
+                if (generation != _loadGeneration) return;
                 Loaded = true;
             }
             catch (Exception ex)
             {
+                if (generation != _loadGeneration) return;
                 var handel = HandelError<AnimeHomeModel>(ex);
+                if (generation != _loadGeneration) return;
                 //异常只落到错误面板：解析路径不弹 toast
                 ShowError = true;
+                if (generation != _loadGeneration) return;
                 ErrorMsg = handel.message;
             }
             finally
             {
-                Loading = false;
+                if (generation == _loadGeneration) Loading = false;
             }
         }
 

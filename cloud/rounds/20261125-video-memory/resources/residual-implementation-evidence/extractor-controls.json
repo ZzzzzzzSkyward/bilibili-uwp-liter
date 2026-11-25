@@ -1,0 +1,31 @@
+{
+  "extractor_sha256": "211a8168286dcd7a34a762f329333789b99b9364b3dafc8eeeccbde6e7e12b2b",
+  "cases": [
+    {
+      "case": "missing",
+      "command": [
+        "python3",
+        "/workspace/bilibili-uwp-liter/plan/tests/playersess/extract-player-lifetime.py",
+        "--source",
+        "/workspace/work/video-memory/player-residual-fix/extractor-missing.cs",
+        "--out",
+        "/workspace/work/video-memory/player-residual-fix/extractor-missing"
+      ],
+      "exit": 1,
+      "expected_rejection": true
+    },
+    {
+      "case": "duplicate",
+      "command": [
+        "python3",
+        "/workspace/bilibili-uwp-liter/plan/tests/playersess/extract-player-lifetime.py",
+        "--source",
+        "/workspace/work/video-memory/player-residual-fix/extractor-duplicate.cs",
+        "--out",
+        "/workspace/work/video-memory/player-residual-fix/extractor-duplicate"
+      ],
+      "exit": 1,
+      "expected_rejection": true
+    }
+  ]
+}

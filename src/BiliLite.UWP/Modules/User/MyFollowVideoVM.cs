@@ -28,26 +28,15 @@ namespace BiliLite.Modules
         }
         public ICommand RefreshCommand { get; private set; }
         public ICommand LoadMoreCommand { get; private set; }
-        private bool stack_will_overflow = false;
-        private bool inited_favorite = false;
         private ObservableCollection<FavoriteItemModel> _myFavorite;
         public ObservableCollection<FavoriteItemModel> MyFavorite
         {
-            get
-            {
-                stack_will_overflow = false;
-                return _myFavorite;
-            }
+            get { return _myFavorite; }
             set
             {
+                if (ReferenceEquals(_myFavorite, value)) return;
                 _myFavorite = value;
-                if (stack_will_overflow && inited_favorite) return;
-                if (_myFavorite != value || !inited_favorite)
-                {
-                    inited_favorite = true;
-                    DoPropertyChanged("MyFavorite");
-                }
-                stack_will_overflow = true;
+                DoPropertyChanged("MyFavorite");
             }
         }
 
@@ -77,20 +66,37 @@ namespace BiliLite.Modules
                     var data = await results.GetJson<ApiDataModel<JObject>>();
                     if (data.success)
                     {
-                        if (data.data["space_infos"][0]["mediaListResponse"]!=null)
+                        // 先完成当前分支的响应读取，避免后续字段失败时发布半页收藏夹。
+                        ObservableCollection<FavoriteItemModel> created = null;
+                        FavoriteItemModel defaultFolder = null;
+                        var hasMore = false;
+                        var loadCreated = data.data["space_infos"][0]["mediaListResponse"] != null;
+                        if (loadCreated)
                         {
-                            MyFavorite =await data.data["space_infos"][0]["mediaListResponse"]["list"].ToString().DeserializeJson<ObservableCollection<FavoriteItemModel>>();
-                            if (MyFavorite == null)
+                            created = await data.data["space_infos"][0]["mediaListResponse"]["list"].ToString().DeserializeJson<ObservableCollection<FavoriteItemModel>>();
+                            if (created == null)
                             {
-                                MyFavorite = new ObservableCollection<FavoriteItemModel>();
+                                created = new ObservableCollection<FavoriteItemModel>();
                             }
-                            MyFavorite.Insert(0,await data.data["default_folder"]["folder_detail"].ToString().DeserializeJson<FavoriteItemModel>());
-                            HasMore = (bool)data.data["space_infos"][0]["mediaListResponse"]["has_more"];
+                            defaultFolder = await data.data["default_folder"]["folder_detail"].ToString().DeserializeJson<FavoriteItemModel>();
+                            hasMore = (bool)data.data["space_infos"][0]["mediaListResponse"]["has_more"];
+                        }
+                        ObservableCollection<FavoriteItemModel> collected = null;
+                        var loadCollected = data.data["space_infos"][1]["mediaListResponse"] != null;
+                        if (loadCollected)
+                        {
+                            collected = await data.data["space_infos"][1]["mediaListResponse"]["list"].ToString().DeserializeJson<ObservableCollection<FavoriteItemModel>>();
+                        }
+                        if (loadCreated)
+                        {
+                            MyFavorite = created;
+                            MyFavorite.Insert(0, defaultFolder);
+                            HasMore = hasMore;
                             Page ++;
                         }
-                        if (data.data["space_infos"][1]["mediaListResponse"]!=null)
+                        if (loadCollected)
                         {
-                            CollectFavorite = await data.data["space_infos"][1]["mediaListResponse"]["list"].ToString().DeserializeJson<ObservableCollection<FavoriteItemModel>>();
+                            CollectFavorite = collected;
                         }
                     }
                     else
@@ -130,11 +136,12 @@ namespace BiliLite.Modules
                     if (data.success)
                     {
                         var ls  = await data.data["list"].ToString().DeserializeJson<List<FavoriteItemModel>>();
+                        var hasMore = (bool)data.data["has_more"];
                         foreach (var item in ls)
                         {
                             MyFavorite.Add(item);
                         }
-                        HasMore = (bool)data.data["has_more"];
+                        HasMore = hasMore;
                         Page++;
                     }
                     else

@@ -1,0 +1,416 @@
+{
+  "original": {
+    "exit": 1,
+    "player_cases": 39,
+    "passed": 14,
+    "failed": 25,
+    "cases": [
+      {
+        "name": "active",
+        "status": "PASS"
+      },
+      {
+        "name": "ordinary-close",
+        "status": "PASS"
+      },
+      {
+        "name": "late-empty-close",
+        "status": "PASS"
+      },
+      {
+        "name": "subtitle-pending-close",
+        "status": "PASS"
+      },
+      {
+        "name": "late-info-close",
+        "status": "FAIL"
+      },
+      {
+        "name": "public-terminal-fresh-live-unload-50",
+        "status": "FAIL"
+      },
+      {
+        "name": "quality-close-False",
+        "status": "FAIL"
+      },
+      {
+        "name": "quality-close-True",
+        "status": "FAIL"
+      },
+      {
+        "name": "replacement-same=False-success=False-info=False",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=False-success=False-info=True",
+        "status": "FAIL"
+      },
+      {
+        "name": "replacement-same=False-success=True-info=False",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=False-success=True-info=True",
+        "status": "FAIL"
+      },
+      {
+        "name": "replacement-same=True-success=False-info=False",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=True-success=False-info=True",
+        "status": "FAIL"
+      },
+      {
+        "name": "replacement-same=True-success=True-info=False",
+        "status": "FAIL"
+      },
+      {
+        "name": "replacement-same=True-success=True-info=True",
+        "status": "FAIL"
+      },
+      {
+        "name": "info-late-nodes",
+        "status": "FAIL"
+      },
+      {
+        "name": "info-late-online",
+        "status": "FAIL"
+      },
+      {
+        "name": "node-close-50",
+        "status": "FAIL"
+      },
+      {
+        "name": "picker-subtitle=False-replace=False-cancel=False",
+        "status": "FAIL"
+      },
+      {
+        "name": "picker-subtitle=False-replace=False-cancel=True",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=False-replace=True-cancel=False",
+        "status": "FAIL"
+      },
+      {
+        "name": "picker-subtitle=False-replace=True-cancel=True",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=True-replace=False-cancel=False",
+        "status": "FAIL"
+      },
+      {
+        "name": "picker-subtitle=True-replace=False-cancel=True",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=True-replace=True-cancel=False",
+        "status": "FAIL"
+      },
+      {
+        "name": "picker-subtitle=True-replace=True-cancel=True",
+        "status": "PASS"
+      },
+      {
+        "name": "track-rollback-replace=False",
+        "status": "FAIL"
+      },
+      {
+        "name": "track-rollback-replace=True",
+        "status": "FAIL"
+      },
+      {
+        "name": "track-same-reference-fault=False",
+        "status": "FAIL"
+      },
+      {
+        "name": "track-same-reference-fault=True",
+        "status": "FAIL"
+      },
+      {
+        "name": "subtitle-same-reference-replacement-50",
+        "status": "PASS"
+      },
+      {
+        "name": "danmaku-full-chain-replace=False",
+        "status": "FAIL"
+      },
+      {
+        "name": "danmaku-full-chain-replace=True",
+        "status": "FAIL"
+      },
+      {
+        "name": "pending-interaction-same-reference-50",
+        "status": "FAIL"
+      },
+      {
+        "name": "late-info-fault-cancel-50",
+        "status": "PASS"
+      },
+      {
+        "name": "engine-live-late-close-public-callback-50",
+        "status": "FAIL"
+      },
+      {
+        "name": "live-fallback-open-close-fault-cancel-50",
+        "status": "PASS"
+      },
+      {
+        "name": "settings-three-refresh-once-after-50-loads",
+        "status": "FAIL"
+      }
+    ],
+    "root_models": [
+      "ROOT_MODEL mode=active cycles=50 timers=50 survivors=50",
+      "ROOT_MODEL mode=ordinary-close cycles=50 timers=0 survivors=0",
+      "ROOT_MODEL mode=late-empty-close cycles=50 timers=0 survivors=0",
+      "ROOT_MODEL mode=subtitle-pending-close cycles=50 timers=0 survivors=0",
+      "ROOT_MODEL mode=late-info-close cycles=50 timers=50 survivors=50"
+    ],
+    "late_quality": [
+      "LATE_QUALITY success=False cycles=50 opens=0 sessions=0 dialogs=50",
+      "LATE_QUALITY success=True cycles=50 opens=50 sessions=50 dialogs=0"
+    ],
+    "settings": [
+      "SETTINGS loads=50 allHandlersAtMostOnce=False boldHandlers=50 toggleUpdates=50"
+    ],
+    "graphics_50": [
+      {
+        "caseName": "current-source-50",
+        "renders": 50,
+        "undisposed": {
+          "format": 50,
+          "target": 50,
+          "layout": 50,
+          "geometry": 50,
+          "style": 50
+        },
+        "outputsUsable": 50,
+        "deviceDisposals": 0
+      }
+    ],
+    "graphics_stages": [
+      "GRAPHICS_STAGE 50-render-returned-output FAIL ASSERT EXPECTED_CLEAN_FAILED after50 completed renders",
+      "GRAPHICS_STAGE suspended-save-source-order FAIL ASSERT cleanup failures=1",
+      "GRAPHICS_STAGE 23-fault-boundaries FAIL ASSERT cleanup failures=21",
+      "GRAPHICS_STAGE 2-suspended-async-faults FAIL ASSERT cleanup failures=2",
+      "GRAPHICS_STAGE 50-parameter-output-comparisons FAIL ASSERT cleanup failures=50"
+    ],
+    "graphics_other": [
+      "ORDER current-source PASS",
+      "FAULT current-source cases=23 undisposedTotal=77 COMPLETE",
+      "ASYNC_FAULT current-source cases=2 COMPLETE",
+      "PARAMETER_OUTPUT_COMPARISON renders=50 COMPLETE (stub contract, not pixel output)"
+    ],
+    "log_sha256": "2e75634dbe13ea66cf3ac7b988635423f4c3a38a7cf772548c2e97f9fc4e6da3"
+  },
+  "fixed": {
+    "exit": 0,
+    "player_cases": 39,
+    "passed": 39,
+    "failed": 0,
+    "cases": [
+      {
+        "name": "active",
+        "status": "PASS"
+      },
+      {
+        "name": "ordinary-close",
+        "status": "PASS"
+      },
+      {
+        "name": "late-empty-close",
+        "status": "PASS"
+      },
+      {
+        "name": "subtitle-pending-close",
+        "status": "PASS"
+      },
+      {
+        "name": "late-info-close",
+        "status": "PASS"
+      },
+      {
+        "name": "public-terminal-fresh-live-unload-50",
+        "status": "PASS"
+      },
+      {
+        "name": "quality-close-False",
+        "status": "PASS"
+      },
+      {
+        "name": "quality-close-True",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=False-success=False-info=False",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=False-success=False-info=True",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=False-success=True-info=False",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=False-success=True-info=True",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=True-success=False-info=False",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=True-success=False-info=True",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=True-success=True-info=False",
+        "status": "PASS"
+      },
+      {
+        "name": "replacement-same=True-success=True-info=True",
+        "status": "PASS"
+      },
+      {
+        "name": "info-late-nodes",
+        "status": "PASS"
+      },
+      {
+        "name": "info-late-online",
+        "status": "PASS"
+      },
+      {
+        "name": "node-close-50",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=False-replace=False-cancel=False",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=False-replace=False-cancel=True",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=False-replace=True-cancel=False",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=False-replace=True-cancel=True",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=True-replace=False-cancel=False",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=True-replace=False-cancel=True",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=True-replace=True-cancel=False",
+        "status": "PASS"
+      },
+      {
+        "name": "picker-subtitle=True-replace=True-cancel=True",
+        "status": "PASS"
+      },
+      {
+        "name": "track-rollback-replace=False",
+        "status": "PASS"
+      },
+      {
+        "name": "track-rollback-replace=True",
+        "status": "PASS"
+      },
+      {
+        "name": "track-same-reference-fault=False",
+        "status": "PASS"
+      },
+      {
+        "name": "track-same-reference-fault=True",
+        "status": "PASS"
+      },
+      {
+        "name": "subtitle-same-reference-replacement-50",
+        "status": "PASS"
+      },
+      {
+        "name": "danmaku-full-chain-replace=False",
+        "status": "PASS"
+      },
+      {
+        "name": "danmaku-full-chain-replace=True",
+        "status": "PASS"
+      },
+      {
+        "name": "pending-interaction-same-reference-50",
+        "status": "PASS"
+      },
+      {
+        "name": "late-info-fault-cancel-50",
+        "status": "PASS"
+      },
+      {
+        "name": "engine-live-late-close-public-callback-50",
+        "status": "PASS"
+      },
+      {
+        "name": "live-fallback-open-close-fault-cancel-50",
+        "status": "PASS"
+      },
+      {
+        "name": "settings-three-refresh-once-after-50-loads",
+        "status": "PASS"
+      }
+    ],
+    "root_models": [
+      "ROOT_MODEL mode=active cycles=50 timers=50 survivors=50",
+      "ROOT_MODEL mode=ordinary-close cycles=50 timers=0 survivors=0",
+      "ROOT_MODEL mode=late-empty-close cycles=50 timers=0 survivors=0",
+      "ROOT_MODEL mode=subtitle-pending-close cycles=50 timers=0 survivors=0",
+      "ROOT_MODEL mode=late-info-close cycles=50 timers=0 survivors=0"
+    ],
+    "late_quality": [
+      "LATE_QUALITY success=False cycles=50 opens=0 sessions=0 dialogs=0",
+      "LATE_QUALITY success=True cycles=50 opens=0 sessions=0 dialogs=0"
+    ],
+    "settings": [
+      "SETTINGS loads=50 allHandlersAtMostOnce=True boldHandlers=1 toggleUpdates=1"
+    ],
+    "graphics_50": [
+      {
+        "caseName": "current-source-50",
+        "renders": 50,
+        "undisposed": {
+          "format": 0,
+          "target": 0,
+          "layout": 0,
+          "geometry": 0,
+          "style": 0
+        },
+        "outputsUsable": 50,
+        "deviceDisposals": 0
+      }
+    ],
+    "graphics_stages": [
+      "GRAPHICS_STAGE 50-render-returned-output PASS",
+      "GRAPHICS_STAGE suspended-save-source-order PASS",
+      "GRAPHICS_STAGE 23-fault-boundaries PASS",
+      "GRAPHICS_STAGE 2-suspended-async-faults PASS",
+      "GRAPHICS_STAGE 50-parameter-output-comparisons PASS"
+    ],
+    "graphics_other": [
+      "ORDER current-source PASS",
+      "FAULT current-source cases=23 undisposedTotal=0 COMPLETE",
+      "ASYNC_FAULT current-source cases=2 COMPLETE",
+      "PARAMETER_OUTPUT_COMPARISON renders=50 COMPLETE (stub contract, not pixel output)"
+    ],
+    "log_sha256": "dea896bc251de6e2442e0cb553070dec25feef94348c03c82e89a50e576e5219"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "original_Program_after_only_residual_dispatch_removal": true,
+  "original_240_checks_and_prior_39_groups_preserved": true,
+  "unchanged_fixture_bytes": {
+    "HistoryCheckpointProbe.cs": "48ce7e2ba9884f0fd0791893367054eeb90fd6ff907ef37746c0797349c00e5f",
+    "HistoryStorageProbe.cs": "b1fb6568851ab4c15b689d4fa89af1a121a59eb6b0a8a05568758f438367ad1f",
+    "HistoryStorageStubs.cs": "e865e8a598ac7e5b5b391e9dd63a131f9d0e7c3ad3305d5536c0caec37432acd",
+    "PlayerLifetimeProbe.cs": "82fa7034ca8085325c388d65e9e0cc1ab388b8580e556adeaf986a9cc7c72a6b",
+    "SubtitleGraphicsBaseline.cs": "d7844c564cba44289294913062eacd09ee54512fdc33bbe9533a079e797e0bb7",
+    "SubtitleGraphicsProbe.cs": "a6fb7a1dc157691ead5cc147d336e3b695c821b7ef5bbf134091b4d223580764",
+    "SubtitleGraphicsStubs.cs": "47d6260a14bad0dec2ce8fe4f16342b22734a46f392ca8f9f3d096126d1df754"
+  },
+  "unchanged_product_spans": {
+    "private async Task<Grid> GenerateSubtitleItem(": "5789d03300d297cb7bc6115ee0622417b5773960544b3b0899ec2bb8167fbcb7",
+    "private static string HistoryKey(": "086cebdec2b9df868d31e901ea95d1f55a9d01adf6f38cbcfc4b50c2c1eeeb4c",
+    "private async Task CheckpointHistoryAsync(": "dd4c99fff059e2826cc38406f2856d93e9cada60778c0c6dfc80a8b08b9a2c91",
+    "private async Task DrainHistoryReportsAsync(": "fbe717498eeec8ef05406967315a5d87f43458664727ffcf9255bc5c8dd20492",
+    "private async Task FlushPlaybackAsync(": "1eabca671ac7e235439a254a1722a83749f6f97eda63ec532ec18113812775ae"
+  },
+  "initial_execution_and_11_evidence_receipts_unchanged": true,
+  "initial_VM_and_base_bytes_match_pre_residual_snapshots": true,
+  "season_accepted_source_and_all_7_fixture_hashes_unchanged": true,
+  "season_selected_original_assertions": 141,
+  "season_selected_lifetime_checks": 497
+}

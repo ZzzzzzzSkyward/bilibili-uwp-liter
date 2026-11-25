@@ -1,0 +1,252 @@
+{
+  "status": "FROZEN_RELEASED",
+  "scope": "AF1 Videos reference getter/setter and obsolete flags; existing AS3 paging/commands unchanged",
+  "baseline_VM_sha256": "9e75a062fbee0bcfba9bff2a94aabd398894fdf21a1fe37307dd2028813875c1",
+  "own_final_bytes": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Modules/Detail/FavoriteDetailVM.cs",
+      "sha256": "daf13e90f68cff339e4a9dc9fc345187e09beeda5c27f4053383efdd2d7aba26"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/Program.cs",
+      "sha256": "cd0a567c33aae46d97d5a1d71767686c2d8af59145ead0f497338beb802e6e99"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoritePublicationProbe.cs",
+      "sha256": "0e44931091942ea94ac7ef130f1c8b2cb21085cdcdd9fa18bd0a4593fb36eb2b"
+    }
+  ],
+  "authority": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/af1-fix-dispatch.md",
+      "sha256": "ed3cd15363838dab7ec340cebf29acf638dfdb7ef49da9aae7fe6fa1c273b265"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/contracts/af1-requirements.md",
+      "sha256": "2011975b4174431dc4fe6e6630e0a234d6b950aa6f56200d111c256b09705e35"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/contracts/af1-evidence.md",
+      "sha256": "1b54b51aacbe8658c3417e1f3de36e4f818194dd88f99a8abd400bd7c22474bd"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/af1-review.md",
+      "sha256": "00a9207e0294dea358ebe1e6035e18506bce6a994d837ba0f2d6744c450e20cb"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/af1-review-evidence.md",
+      "sha256": "7a6ccd18a3d492efe368cf119ea6fe8b461631200f90ca684bd3fb44d0ce194b"
+    }
+  ],
+  "proof_fixture": {
+    "path": "/workspace/work/api-shape-comparison/contracts/af1/replay/plan/tests/c2/ResidualProbe.cs",
+    "sha256": "93f0b8123245e4b95b1e3572bdafd6ddb6ca84d620a4f6599ce48ef478d90af6"
+  },
+  "equality": {
+    "same_final_fixture_stubs_tools_dependencies_old_new": true,
+    "old_source_is_complete_AS3_fixed_9e75": true,
+    "old_new_only_VM_property_and_two_flags_delta": true,
+    "entire_LoadFavoriteInfo_and_all_command_bytes_equal": true,
+    "all51_scoped_inputs_identical_green_before_after": true,
+    "original_Program_exact_after_removing_one_dispatch": true,
+    "ResidualProbe_body_preserved_except_namespace_entrypoint": true,
+    "original_AS3_product_adjacent_comments_and_execution_evidence_preserved": true
+  },
+  "unchanged_original_files": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/C2Probe.csproj",
+      "initial_sha256": "242c9c855cd7543e9af2923d4bffcdf5a7d510bcc90f77578b6922163ecb399c",
+      "final_sha256": "242c9c855cd7543e9af2923d4bffcdf5a7d510bcc90f77578b6922163ecb399c"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/C2Stubs.cs",
+      "initial_sha256": "ccccf197a344e6fbe7d5d597a769d4cc1fcf19d976d68f34e3f6b856b66fc8b9",
+      "final_sha256": "ccccf197a344e6fbe7d5d597a769d4cc1fcf19d976d68f34e3f6b856b66fc8b9"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/run.sh",
+      "initial_sha256": "808681b957b83a14054b3fe2dc080a0eeb64a52e9dfda5494dbe3dd2d8c7357a",
+      "final_sha256": "808681b957b83a14054b3fe2dc080a0eeb64a52e9dfda5494dbe3dd2d8c7357a"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoriteActionChecks.cs",
+      "initial_sha256": "032422e6dbd784dc7507d0250ac2b0cfc3e67d5ce825b4623a66e01fbc5346be",
+      "final_sha256": "032422e6dbd784dc7507d0250ac2b0cfc3e67d5ce825b4623a66e01fbc5346be"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoritePagingProbe.cs",
+      "initial_sha256": "62a7a3bf7b5a21fc9fec76ec688d9babcad5e5105c5712034d56b117ef1bfc0c",
+      "final_sha256": "62a7a3bf7b5a21fc9fec76ec688d9babcad5e5105c5712034d56b117ef1bfc0c"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/C3Probe.csproj",
+      "initial_sha256": "db7f082c147490b7e14f20b338e6047abdd3ad4b35663ede27890835e8d1cffc",
+      "final_sha256": "db7f082c147490b7e14f20b338e6047abdd3ad4b35663ede27890835e8d1cffc"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/C3Stubs.cs",
+      "initial_sha256": "e10d39a60f208b558f499eca3ca11ae12a2f96d6e2fb5d231f81af1e5ad92fae",
+      "final_sha256": "e10d39a60f208b558f499eca3ca11ae12a2f96d6e2fb5d231f81af1e5ad92fae"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/Program.cs",
+      "initial_sha256": "5528a6289b1863feaa54d40def4ffc0b7a3e6bd70498858c0c27e1d41b78ddee",
+      "final_sha256": "5528a6289b1863feaa54d40def4ffc0b7a3e6bd70498858c0c27e1d41b78ddee"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/run.sh",
+      "initial_sha256": "424e8c024dbb66dba840adf59934c2361a4f8104ee321d45738d54ee1fd26482",
+      "final_sha256": "424e8c024dbb66dba840adf59934c2361a4f8104ee321d45738d54ee1fd26482"
+    }
+  ],
+  "preserved_prior_release_bytes": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Models/Api/MediaList/FavoriteResourceListDto.cs",
+      "sha256": "5e77c1efd42dce4a1dc3352e4d15a209a56e4f34c3d079e0223508dd6e074239"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/MediaList/FavoriteResourceListParser.cs",
+      "sha256": "ad261bfa93ae3345364375ab09883100eb6d7ceecd9863929a875fa24eff84e5"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Parsing/MediaList/FavoriteResourceListMapper.cs",
+      "sha256": "8f5d94e5d1979ae70c0123d33f4910f16a29a1bffc6a6ec68f6a3fcafe007c75"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoritePagingProbe.cs",
+      "sha256": "62a7a3bf7b5a21fc9fec76ec688d9babcad5e5105c5712034d56b117ef1bfc0c"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/favorite/execution.md",
+      "sha256": "bbb15f4a6bbbe1bccf7c8af222c97b6af752d43f78a15ba38f48cae9b1156792"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/favorite/evidence/receipt.json",
+      "sha256": "482d4ff982d32cd0739d485502479de71dd50e0365bd06181fef3e4e0e35529f"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/favorite/evidence/final-inputs.json",
+      "sha256": "899f5fccfa77581da38e449edd69f181ef5bc16b60c93ce0cbfb1505a5cba91f"
+    }
+  ],
+  "prior_release_manifest": {
+    "path": "/workspace/work/api-shape-comparison/favorite-execution/release-manifest.json",
+    "sha256": "edf80766e5a29bca60d2c2e7c0143a284191ac8bec2166e7929134118b194125"
+  },
+  "private_bindings": [
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/initial.json",
+      "sha256": "b0a119b59ef1968aa9462200030d3d1676a6e67ab2004abc8d9b16a4c2c38b85"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/final-fixture-original-source.json",
+      "sha256": "835fbbb042bfa5cd27ed94c3aacffeb5188e02aa12dcfbf2690be06da835c8f6"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/repaired-before.json",
+      "sha256": "4e150cabc97ee41ec6225855a8c0f8218657342ce01ea60d119bd64b76b5173d"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/repaired-after.json",
+      "sha256": "4e150cabc97ee41ec6225855a8c0f8218657342ce01ea60d119bd64b76b5173d"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/final-source-manifest.json",
+      "sha256": "d627898ad8a5973a23fb0f1fe0e95b4698d58b3bc74262b1d7c12b8a05b7f9d5"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/bind.py",
+      "sha256": "8529453ce3796135fcd682e30b215f896a6b53b791a7a62f4d4d2d10488e665d"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/own.diff",
+      "sha256": "091d981c9e6a538f7e0c9c03f382d1d02a0bbf3794618f9f4d7f40046443c5cd"
+    }
+  ],
+  "reports": {
+    "original-red": {
+      "files": [
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/original-red/results.json",
+          "sha256": "d4ec68ef7dea7dc550c39724e242b66db14eb46ef78575bfb957a6ceaf0683b9"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/original-red/summary.md",
+          "sha256": "6ec2383e48c5df393271d39eecf057be9f15aaf5b9affdc24d92487997a4db30"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/original-red/logs/batch_c2.log",
+          "sha256": "87f13ac4dc9cc0117d50668d9de6032ea4da0aa28766c6239cedb41e6daec659"
+        }
+      ],
+      "overall": {
+        "suite_status": "FAIL",
+        "complete_required": false,
+        "logical_pass": 0,
+        "executable_pass": 0
+      },
+      "selected_stages": [
+        {
+          "id": "batch:c2",
+          "status": "FAIL",
+          "exit_code": 134
+        }
+      ]
+    },
+    "repaired-green": {
+      "files": [
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/repaired-green/results.json",
+          "sha256": "b0dfbfa8498607ba7991021bccff9f7cbbcab550388ffddea536078668829570"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/repaired-green/summary.md",
+          "sha256": "6b7bff4ff43e0585c0e92a048a46bd55f2e2ecc8f79640958791e4a47058ae93"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/repaired-green/logs/batch_c2.log",
+          "sha256": "8e20721a40741c06d4d342accee146e704732ae91e4fc6f6af2fff909801d045"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/repaired-green/logs/batch_c3.log",
+          "sha256": "8895452266b1240336ecca241b353883c5341a4e14fdc359eeed82dfcd3590e1"
+        }
+      ],
+      "overall": {
+        "suite_status": "PARTIAL_PASS",
+        "complete_required": false,
+        "logical_pass": 2,
+        "executable_pass": 2
+      },
+      "selected_stages": [
+        {
+          "id": "batch:c2",
+          "status": "PASS",
+          "exit_code": 0
+        },
+        {
+          "id": "batch:c3",
+          "status": "PASS",
+          "exit_code": 0
+        }
+      ]
+    }
+  },
+  "counts": {
+    "AF1_residual_original_positive_pass": 10,
+    "AF1_residual_original_fail": 2,
+    "AF1_residual_repaired_pass": 12,
+    "AF1_added_original_pass": 283,
+    "AF1_added_original_fail": 123,
+    "AF1_added_repaired_pass": 406,
+    "unchanged_c2_Program": 451,
+    "unchanged_action": 563,
+    "unchanged_AS3_original": 9,
+    "unchanged_AS3_compatibility": 124,
+    "unchanged_AS3_present_empty": 8,
+    "unchanged_AS3_added": 1070,
+    "c3": 117
+  },
+  "no_Git_mutation_publication_cache_dependency_live_write": true,
+  "custody": "All own source/test/private artifact/repository evidence read+write RELEASED; no pending build/gate; independent owning/fresh re-review pending."
+}

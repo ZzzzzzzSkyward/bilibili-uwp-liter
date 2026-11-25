@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "status": "FROZEN-T1-T3-corrected-released-for-same-independent-implementation-reviewer",
+  "sourceHead": "7356b94893377558191b0d70576a52bae704c1f9",
+  "hashAlgorithm": "SHA256",
+  "files": {
+    "/workspace/bilibili-uwp-liter/tools/measure-video-memory.ps1": "668b5c06ff519d6f9500a9e087889e5504099cd84c0fb0fcf6bade4f2011474f",
+    "/workspace/bilibili-uwp-liter/tools/tests/video-memory/run.py": "20d38a64ba753c25663497e0304dcd70e752a7450266ff6a307736cfffc8de44",
+    "/workspace/bilibili-uwp-liter/tools/tests/video-memory/controlled.ps1": "26031002342388927e02d216955109a02efeb648f072ea05b60b7db4b48ffd93",
+    "/workspace/bilibili-uwp-liter/tools/tests/video-memory/markers.ps1": "9b3371eb53083c583ff6493457bbaebfaad96a08f0e3d7eec108eab9591e4ccb",
+    "/workspace/bilibili-uwp-liter/tools/tests/video-memory/revisions.ps1": "62d788ea675302f7f915e787d51f7e5e14817413e1a42df4bd7baa4055116701",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/execution.md": "d5cecba5b1087c67a7a261f2609fe28659a6bff1386ef8a34340ab3afdc772c9",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/implementation-evidence/supported-checks.json": "a241289d334f001ac92333918a4bbfa2d78d5684bf2f0e0d0a1c731a5673c423",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/implementation-evidence/t1-t3-corrections.json": "c43e24a9590db99107e2351958316f27475c5976adaca8c06be2b2c513315796"
+  },
+  "reviewedInputs": {
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/requirements.md": "f6e6eb823cd8e34dcdf4e815a2b060f182a5af3349dcd526f93448a929065dd4",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/windows-protocol.md": "ebf596457b179158d95335cfdb05b989e6b364706bb348e50e004e29e18f5e77",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/evidence.md": "6c716ef495893bcf528ac863d76d9895e97c02a6471125f07e568cf02c2661a5",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/review-evidence.md": "260849650e659ac0bda6a1c86e39fa9ce783755f6c4158ba8d44088c329a6552",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/final-review.md": "e903be02d710ab19d35e82e987e1ac18238806ac58cd05db3cfefe8c5660a8e9",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/measurement/implementation-review-evidence.md": "c79d1ab0728275b191f4628da5bfddcb132972e983fbea385314bc880e9da43c",
+    "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-video-memory/tooling-fix-dispatch.md": "a23670490bd2218b357242ae623f64afe5ae4721508b84bbb6a108c0232e51a4",
+    "/workspace/work/video-memory/measurement/Measure-Checkpoint.ps1": "ed765e055c6db2a4a52b25d4839fe7c0f019db393b7e24cacc7e1320477015eb",
+    "/workspace/work/video-memory/measurement/revision-mr1-mr2/release-binding.json": "3d5273230699f3ea4ea875719dede2f56e2ea5b659841fe8e9ee21efb213907a"
+  },
+  "rawArtifactBinding": {
+    "path": "/workspace/work/video-memory/tooling-fix/t1-t3/revision-artifact-binding.json",
+    "sha256": "8b37d26ce960ce3bc202c663f5a7758f76f8a4da978199b1b63ca6c516d8d741"
+  },
+  "originalReleasePreserved": {
+    "path": "/workspace/work/video-memory/tooling-fix/t1-t3/original/cloud/rounds/20261125-video-memory/measurement/implementation-evidence/release-binding.json",
+    "sha256": "e1781a28f1925496ea402ee8d8964be4189eb4541e497ca03250ebddbb1de5e9"
+  },
+  "nativeValidation": "BLOCKED: Windows PowerShell 5.1/actual PID/UWP/RAM/heap/GPU",
+  "publication": "not granted/not performed",
+  "optionalSummary": "not delivered"
+}

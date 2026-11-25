@@ -1,0 +1,35 @@
+{
+  "only_product_delta": {
+    "old": "return !_disposed && generation == _playItemGeneration && ReferenceEquals(CurrentPlayItem, item);",
+    "new": "return item != null && !_disposed && generation == _playItemGeneration && ReferenceEquals(CurrentPlayItem, item);"
+  },
+  "prior58_case_bodies_and_dispatch_byte_identical_after_addition_removal": true,
+  "residual_stub_old_prefix_byte_identical": true,
+  "unchanged_owning_files": {
+    "PlayerLifetimeStubs.cs": "3f220267a9f41ca4781a671f9903fce7eee5cbe2e62243ea6dc64e99446009fc",
+    "PlayerLifetimeProbe.cs": "82fa7034ca8085325c388d65e9e0cc1ab388b8580e556adeaf986a9cc7c72a6b",
+    "Program.cs": "eecb9205367c71c1ca3dbfa017033763cb12faeeeb0a6078b4378559541272ab",
+    ".gitignore": "6c5082c7e6de3e350189c67a1aacf757485ecc26e0a3cf96683528565f3e5f12",
+    "run.sh": "5d3f8dbb01bdf82e7190ef69170acf235ba84893d7de8a1cd3242f7b345580a0",
+    "SubtitleGraphicsBaseline.cs": "d7844c564cba44289294913062eacd09ee54512fdc33bbe9533a079e797e0bb7",
+    "SubtitleGraphicsProbe.cs": "a6fb7a1dc157691ead5cc147d336e3b695c821b7ef5bbf134091b4d223580764",
+    "HistoryStorageProbe.cs": "b1fb6568851ab4c15b689d4fa89af1a121a59eb6b0a8a05568758f438367ad1f",
+    "HistoryStorageStubs.cs": "e865e8a598ac7e5b5b391e9dd63a131f9d0e7c3ad3305d5536c0caec37432acd",
+    "SubtitleGraphicsStubs.cs": "47d6260a14bad0dec2ce8fe4f16342b22734a46f392ca8f9f3d096126d1df754",
+    "HistoryCheckpointProbe.cs": "48ce7e2ba9884f0fd0791893367054eeb90fd6ff907ef37746c0797349c00e5f",
+    "PlayersessProbe.csproj": "71129cbbabc56f21a6613247958b7adc9d801e20189749a453df5829795bedae"
+  },
+  "unchanged_product_spans": {
+    "private async Task<Grid> GenerateSubtitleItem(": "5789d03300d297cb7bc6115ee0622417b5773960544b3b0899ec2bb8167fbcb7",
+    "private static string HistoryKey(": "086cebdec2b9df868d31e901ea95d1f55a9d01adf6f38cbcfc4b50c2c1eeeb4c",
+    "private async Task CheckpointHistoryAsync(": "dd4c99fff059e2826cc38406f2856d93e9cada60778c0c6dfc80a8b08b9a2c91",
+    "private async Task DrainHistoryReportsAsync(": "fbe717498eeec8ef05406967315a5d87f43458664727ffcf9255bc5c8dd20492",
+    "private async Task FlushPlaybackAsync(": "1eabca671ac7e235439a254a1722a83749f6f97eda63ec532ec18113812775ae",
+    "public async void Dispose()": "9ca52e232a920aefde9af499a74410b8fb86d46776ced58bceb12eaa43082201",
+    "private async Task SetDanmaku(": "d3990baea0ec182b73692b50056b6732903080e85b73c9f829737877f26a1c78",
+    "private async Task LoadDanmaku(": "a58fc8056e8f793d256717c17752a341ecd49d2af9234ef1d5a1e0a9d84adcbd"
+  },
+  "previous_residual_execution_and_11_evidence_receipts_unchanged": true,
+  "initial_240_39_graphics_and_history_bytes_preserved": true,
+  "only_product_delta_raw_bytes_verified": true
+}

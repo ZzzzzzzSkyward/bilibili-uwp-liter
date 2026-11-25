@@ -1,0 +1,8 @@
+{
+  "host": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "powershell": null,
+  "Windows_UWP_build_or_native_UI_attempt_in_RF1": false,
+  "native_UI_XAML_cache_crash_RAM_service_claims": false,
+  "prior_capability_receipt_sha256": "f4a7a7e35fafcc37450584831f2019c464ce57e332cb99891b166b3d54a37c04",
+  "no_full_or_unrelated_selected_suite": true
+}

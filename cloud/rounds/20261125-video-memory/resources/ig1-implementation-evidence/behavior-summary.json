@@ -1,0 +1,34 @@
+{
+  "baseline": {
+    "source_sha256": "b3823bdb9fe15e7f90465a78446f6480fc81c8c92832de6f72d1762621a0a3b7",
+    "ux1d_log": "/workspace/work/video-memory/player-ig1-fix/baseline-report/logs/batch_ux1d.log",
+    "ux1d_sha256": "3296315f77d40ab1471d05180ae70c36665d171e5ade7f7273c1c56300da91ce",
+    "ux1d_ok_assertions": 54,
+    "ux1d_failure": [
+      "FAIL source: the next button does not stay enabled-but-dead while pending"
+    ],
+    "ux1d_complete_107": false,
+    "clear_inline_true_check_reached": false,
+    "playersess_log": "/workspace/work/video-memory/player-ig1-fix/baseline-report/logs/batch_playersess.log",
+    "playersess_sha256": "ebbfd7545a2fc33c22846b3edf644911dbbe205544bb60637311d56b7701ee24",
+    "original_checks_retained": true,
+    "residual66_passed": 66,
+    "lifetime39_passed": 39,
+    "graphics5_passed": 5
+  },
+  "final": {
+    "source_sha256": "262e0719cf4589ebd9e493937f377bcc95d43e092962aad30dbfc137275bcb89",
+    "ux1d_log": "/workspace/work/video-memory/player-ig1-fix/final-report/logs/batch_ux1d.log",
+    "ux1d_sha256": "46a15d3d120a5550b8b33380301ca8cd7aef5747c05f842d4d184c1fc152fe34",
+    "ux1d_ok_assertions": 107,
+    "ux1d_failure": [],
+    "ux1d_complete_107": true,
+    "clear_inline_true_check_reached": true,
+    "playersess_log": "/workspace/work/video-memory/player-ig1-fix/final-report/logs/batch_playersess.log",
+    "playersess_sha256": "ebbfd7545a2fc33c22846b3edf644911dbbe205544bb60637311d56b7701ee24",
+    "original_checks_retained": true,
+    "residual66_passed": 66,
+    "lifetime39_passed": 39,
+    "graphics5_passed": 5
+  }
+}

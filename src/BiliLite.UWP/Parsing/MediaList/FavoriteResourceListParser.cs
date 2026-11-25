@@ -7,7 +7,7 @@ namespace BiliLite.Parsing.MediaList
 {
     /// <summary>
     /// /x/v3/fav/resource/list 的解析：data 信封、收藏夹信息与这一页的视频。
-    /// 不判断翻页（页面用 media_count 判），不发布、不弹提示、不记日志。
+    /// 不判断翻页（由页面结合来源与 has_more 判），不发布、不弹提示、不记日志。
     ///
     /// 字段/行为约定（媒体：收藏夹详情页夹具见 plan/tests/c3 的 source 断言，解析层由 c2 直接执行）
     ///
@@ -18,7 +18,7 @@ namespace BiliLite.Parsing.MediaList
     /// | data.info       | object   | 收藏夹信息（标题、mid）  | 缺失/null = null（第 1 页由发布者拦） |
     /// | data.medias     | array    | 这一页的视频，顺序原样   | 缺失/null = 空表（空收藏夹不是错误）  |
     /// | data.medias     | 其它类型 | —                        | Payload，定位 data.medias             |
-    /// | data.has_more   | bool     | 还有下一页               | 缺失/null = false（只原样带上）       |
+    /// | data.has_more   | bool     | 还有下一页               | 缺失/null = null（保留兼容规则）       |
     /// | data.has_more   | 其它类型 | —                        | Payload，定位 data.has_more           |
     ///
     /// 1. info 缺失给 null、不判失败：改造前它在页面第一条 `FavoriteInfo.mid` 上 NRE 再被 catch

@@ -1,0 +1,20 @@
+{
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+  "powershell": null,
+  "MSBuild": null,
+  "actual_Win2D_UWP_assets_present": false,
+  "Windows_build_command": [
+    "powershell",
+    "-NoProfile",
+    "-ExecutionPolicy",
+    "Bypass",
+    "-File",
+    "./build-release-x64.ps1",
+    "-Fast",
+    "-NoVersionBump",
+    "-Restore"
+  ],
+  "native_measurement": "UNVERIFIED/EXTERNAL",
+  "build_exit": null,
+  "blocked": "[Errno 2] No such file or directory: 'powershell'"
+}

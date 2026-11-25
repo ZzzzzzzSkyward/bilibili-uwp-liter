@@ -25,6 +25,8 @@ namespace BiliLite.Pages
     /// </summary>
     public sealed partial class SeasonDetailPage : PlayPage
     {
+        private bool _isClosed;
+        private long _detailGeneration;
         SeasonDetailVM seasonDetailVM;
         SeasonReviewVM seasonReviewVM;
         string season_id = "";
@@ -55,6 +57,7 @@ namespace BiliLite.Pages
 
         private void SubscribeClosedPage()
         {
+            if (_isClosed) return;
             if (this.Parent is MyFrame frame)
             {
                 frame.ClosedPage -= SeasonDetailPage_ClosedPage;
@@ -72,6 +75,7 @@ namespace BiliLite.Pages
 
         private void SubscribeShare()
         {
+            if (_isClosed) return;
             DataTransferManager dataTransferManager = DataTransferManager.GetForCurrentView();
             dataTransferManager.DataRequested -= DataTransferManager_DataRequested;
             dataTransferManager.DataRequested += DataTransferManager_DataRequested;
@@ -88,6 +92,10 @@ namespace BiliLite.Pages
         }
         private void ClosePage()
         {
+            if (_isClosed) return;
+            _isClosed = true;
+            _detailGeneration++;
+            seasonDetailVM?.InvalidateLoad();
             UnsubscribeClosedPage();
             ReleaseShare();
             if (seasonDetailVM != null)
@@ -113,41 +121,49 @@ namespace BiliLite.Pages
 
         protected async override void OnNavigatedTo(NavigationEventArgs e)
         {
-            base.OnNavigatedTo(e);
-            SubscribeClosedPage();
-            SubscribeShare();
-
-            if (e.NavigationMode == NavigationMode.New)
+            if (_isClosed) return;
+            try
             {
-                if (SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_FULL_SCREEN, false))
+                base.OnNavigatedTo(e);
+                SubscribeClosedPage();
+                SubscribeShare();
+
+                if (e.NavigationMode == NavigationMode.New)
                 {
-                    player.IsFullScreen = true;
+                    if (SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_FULL_SCREEN, false))
+                    {
+                        player.IsFullScreen = true;
+                    }
+                    else
+                    {
+                        player.IsFullWindow = SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_FULL_WINDOW, false);
+                    }
+                    pivot.SelectedIndex = SettingHelper.GetValue<int>(SettingHelper.UI.DETAIL_DISPLAY, 0);
+                    if (e.Parameter is object[])
+                    {
+                        var pars = e.Parameter as object[];
+                        season_id = pars[0].ToString();
+                        ep_id = pars[1].ToString();
+                    }
+                    else
+                    {
+                        season_id = e.Parameter.ToString();
+                    }
+
+                    await InitSeasonDetail();
                 }
                 else
                 {
-                    player.IsFullWindow = SettingHelper.GetValue<bool>(SettingHelper.Player.AUTO_FULL_WINDOW, false);
+                    Title = seasonDetailVM?.Detail?.title ?? "视频详情";
+                    MessageCenter.ChangeTitle(Title);
                 }
-                pivot.SelectedIndex = SettingHelper.GetValue<int>(SettingHelper.UI.DETAIL_DISPLAY, 0);
-                if (e.Parameter is object[])
-                {
-                    var pars = e.Parameter as object[];
-                    season_id = pars[0].ToString();
-                    ep_id = pars[1].ToString();
-                }
-                else
-                {
-                    season_id = e.Parameter.ToString();
-                }
-
-                await InitSeasonDetail();
             }
-            else
+            catch (Exception ex)
             {
-                Title = seasonDetailVM?.Detail?.title ?? "视频详情";
-                MessageCenter.ChangeTitle(Title);
+                if (!_isClosed) LogHelper.Log("番剧页面导航失败", LogType.ERROR, ex);
             }
-
         }
+
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
             ReleaseShare();
@@ -157,18 +173,25 @@ namespace BiliLite.Pages
 
         private async Task InitSeasonDetail()
         {
-            await seasonDetailVM.LoadSeasonDetail(season_id);
-
-            if (seasonDetailVM.Detail != null)
+            if (_isClosed) return;
+            var generation = ++_detailGeneration;
+            try
             {
-                ChangeTitle(seasonDetailVM.Detail.title);
+                await seasonDetailVM.LoadSeasonDetail(season_id);
+                if (_isClosed || generation != _detailGeneration) return;
 
-
-                seasonReviewVM.MediaID = seasonDetailVM.Detail.media_id;
-
-                InitializePlayInfo();
-                CreateQR();
-
+                if (seasonDetailVM.Detail != null)
+                {
+                    ChangeTitle(seasonDetailVM.Detail.title);
+                    seasonReviewVM.MediaID = seasonDetailVM.Detail.media_id;
+                    InitializePlayInfo();
+                    CreateQR();
+                }
+            }
+            catch (Exception ex)
+            {
+                if (!_isClosed && generation == _detailGeneration)
+                    LogHelper.Log("番剧页面初始化失败", LogType.ERROR, ex);
             }
         }
 
@@ -271,7 +294,7 @@ namespace BiliLite.Pages
             {
                 ClosePage();
             }
-            
+
             base.OnNavigatingFrom(e);
         }
         public void ChangeTitle(string title)
@@ -305,7 +328,7 @@ namespace BiliLite.Pages
             Utils.ShowMessageToast("已复制链接到剪切板");
         }
 
-       
+
 
         private void PlayerControl_FullScreenEvent(object sender, bool e)
         {
@@ -353,7 +376,7 @@ namespace BiliLite.Pages
                 ep_id = seasonDetailVM.Episodes[e].id.ToString();
                 aid = seasonDetailVM.Episodes[e].aid;
             }
-           
+
             CreateQR();
             comment.LoadComment(new LoadCommentInfo()
             {
@@ -616,7 +639,7 @@ namespace BiliLite.Pages
             var item = SeasonList.SelectedItem as SeasonDetailSeasonItemModel;
             if (item.season_id.ToString() != season_id)
             {
-                
+
                 MessageCenter.NavigateToPage(this, new NavigationInfo()
                 {
                     icon = Symbol.Play,
@@ -677,7 +700,7 @@ namespace BiliLite.Pages
             seasonReviewVM.Like(item);
         }
 
-       
+
         private void btnReviewDislike_Click(object sender, RoutedEventArgs e)
         {
             var item = (sender as HyperlinkButton).DataContext as SeasonShortReviewItemModel;
@@ -692,7 +715,7 @@ namespace BiliLite.Pages
                 Utils.ShowMessageToast("请先登录后再操作");
                 return;
             }
-            
+
             SendReviewDialog sendReviewDialog = new SendReviewDialog(seasonReviewVM.MediaID);
             await sendReviewDialog.ShowAsync();
         }

@@ -39,4 +39,28 @@ out.parent.mkdir(exist_ok=True)
 out.write_text("using System;\nusing System.Threading.Tasks;\nusing BiliLite.Models;\nusing Newtonsoft.Json;\nusing Newtonsoft.Json.Linq;\nnamespace BiliLite.Helpers {\n" + body + "\n}\n")
 PYDECODER
 
+# Compile the complete actual async Task.Run JSON helper, never a probe implementation.
+python3 - "$repo" <<'PYDESERIALIZER'
+from pathlib import Path
+import re
+import sys
+repo = Path(sys.argv[1])
+source = (repo / "src/BiliLite.UWP/Helpers/Utils.cs").read_text(encoding="utf-8-sig")
+marker = "        public static async Task<T> DeserializeJson<T>(this string results)\n"
+end_marker = "        public static string ToSimplifiedChinese(string content)\n"
+assert len(re.findall(r"^\s*public\s+static\s+async\s+Task<T>\s+DeserializeJson<T>\s*\(", source, re.M)) == 1, "DeserializeJson declaration must be unique"
+assert source.count(marker) == 1 and source.count(end_marker) == 1, "DeserializeJson boundaries must be unique"
+start = source.index(marker)
+end = source.index(end_marker)
+assert end > start, "DeserializeJson boundaries must be ordered"
+method = source[start:end]
+assert method.startswith(marker + "        {\n"), "DeserializeJson opening boundary is incomplete"
+assert method.endswith("            });\n        }\n"), "DeserializeJson closing boundary is incomplete"
+assert method.count("{") == method.count("}") == 2, "DeserializeJson method/lambda bodies must be complete"
+assert method.count("return await Task.Run<T>(() =>") == 1, "DeserializeJson must retain its actual async Task.Run boundary"
+out = repo / "plan/tests/c2/obj/Utils.DeserializeJson.actual.cs"
+out.parent.mkdir(exist_ok=True)
+out.write_text("using System.Threading.Tasks;\nusing Newtonsoft.Json;\nnamespace BiliLite.Helpers {\n    public static partial class Utils\n    {\n" + method + "    }\n}\n")
+PYDESERIALIZER
+
 "$dotnet" run --project "$probe" -c Debug

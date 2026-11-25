@@ -1,0 +1,305 @@
+{
+  "status": "FROZEN_RELEASED",
+  "scope": "AF2 MyFavorite property/two flags and existing response-read-before-publication ordering only",
+  "baseline_VM_sha256": "98a1ef21f38816cb020eb7512fdd4c05fbfb0abd168c7f9e729edf23f59bcabe",
+  "own_final_bytes": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Modules/User/MyFollowVideoVM.cs",
+      "sha256": "5007c7536241ef521d37ff19cccaa18fe9e684f82fba63bed85bd94fe50a4ebb"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoriteFolderPublicationProbe.cs",
+      "sha256": "e37b1a8f1a382170f003ed75a6a3eb110ddd7e333943e3452692ae2bca67d6b2"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/Program.cs",
+      "sha256": "b7fa78b30785090b5ec4bf592b43ecc17e4c0f53da70eb9b0c74706a07b2600b"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/C2Probe.csproj",
+      "sha256": "fe09ccfc868ce2709c8b3b8926447ee9ab7c41d69fa2b050771bec7ab1325eb2"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/C2Stubs.cs",
+      "sha256": "d0857739e563bdcc4cd49157400eb2a2bc039a00c592f2d23dbce07536e97e7b"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/run.sh",
+      "sha256": "1c84653ae991c49892a7af3dc2e6b33ba40727d9f071ab4d7033b44bdc57d27b"
+    }
+  ],
+  "authority": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/af2-fix-dispatch.md",
+      "sha256": "e3ba4bc045d8c116268a791575504db73a15e242af72e23689e5fb112ba6f3a6"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/contracts/af2-requirements.md",
+      "sha256": "59c218ffc0cea3729329c309b90e5bb01bd41890e1ddfea87f70ab22d550d872"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/contracts/af2-evidence.md",
+      "sha256": "d62de98ddd4be7f0749ae2ebef706188a20f2a0744262878ecebbb4cbbf8c61f"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/contracts/af2-amendment.md",
+      "sha256": "adffc5d0cc574f7a2546f5cdb0a71585824feecb7abd89949e45a1a452f97b5b"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/af2-amendment-review.md",
+      "sha256": "e2d087a46bb3a749453384ebd6900d632564b11f6c56167fb6ba12b99f809490"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/af2-amendment-review-evidence.md",
+      "sha256": "7705d95bc17960ac83eb39c91b3129b40e9a6a1791358d1b7130fa2aa6114dc0"
+    }
+  ],
+  "frozen_original_proofs": [
+    {
+      "path": "/workspace/work/api-shape-comparison/contracts/af2/snapshot/plan/tests/c2/AF2Probe.cs",
+      "sha256": "dbe4ccfc7069a3bb0e70aef8ce6f31380abffe814913549848793990bece5600"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/contracts/af2/original-red.log",
+      "sha256": "70e2f715173bb72ffb93480095833a81aa9b15d8899bf1930f37d120c4b5a7ad"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/contracts/af2/receipt.json",
+      "sha256": "e7408ffb075dbd04c493b3799d711d06962ba83ef702e2d52c337dbaaf8c8fed"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/contracts/af2/revision-safe/snapshot/plan/tests/c2/AF2SafeBoundaryProbe.cs",
+      "sha256": "1152ff012aee889035ca755028362d06a53f99dcf2627557e29eddb7d8c9cda7"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/contracts/af2/revision-safe/original-red.log",
+      "sha256": "2842319599d5931e29b0db769b4fe9a743e4e0bc772bb87cf150ffc693d412b8"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/contracts/af2/revision-receipt.json",
+      "sha256": "023d4946c3548210b3f5b26130346e93ac69f6153e662edcc4f0d5986de3a39a"
+    }
+  ],
+  "unsafe_discovery_history_only": [
+    {
+      "path": "/workspace/work/api-shape-comparison/contracts/af2/revision-history/FailureBoundaryProbe.cs",
+      "sha256": "660ee714f00eaee830321cb3856dae1eea598ef83003b4e5d02f5bf100ce8864"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/contracts/af2/revision-history/failure-boundary.log",
+      "sha256": "094e8d3a59c0841b274bc4beff95f7e8bd96fefccf4e971994169506396c428d"
+    }
+  ],
+  "equality": {
+    "same_final_fixture_stubs_extractor_tools_dependencies_old_new": true,
+    "old_source_complete_original_98a1": true,
+    "old_new_product_delta_only_granted_VM_spans": true,
+    "CollectFavorite_DelFavorite_Sort_Refresh_LoadMore_item_model_and_all_other_product_spans_exact": true,
+    "all56_scoped_inputs_identical_green_before_after": true,
+    "Program_exact_after_removing_one_dispatch": true,
+    "stubs_exact_after_reverting_only_partial_modifier": true,
+    "project_exact_after_removing_two_Compile_entries": true,
+    "run_script_and_old_HttpResults_extractor_exact_after_removing_added_helper_block": true,
+    "original13_and_safe37_bodies_preserved_except_namespace_entrypoint": true,
+    "helper_output_equals_complete_actual_Task_Run_method": true
+  },
+  "unchanged_original_fixture_files": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoriteActionChecks.cs",
+      "initial_sha256": "032422e6dbd784dc7507d0250ac2b0cfc3e67d5ce825b4623a66e01fbc5346be",
+      "final_sha256": "032422e6dbd784dc7507d0250ac2b0cfc3e67d5ce825b4623a66e01fbc5346be"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoritePagingProbe.cs",
+      "initial_sha256": "62a7a3bf7b5a21fc9fec76ec688d9babcad5e5105c5712034d56b117ef1bfc0c",
+      "final_sha256": "62a7a3bf7b5a21fc9fec76ec688d9babcad5e5105c5712034d56b117ef1bfc0c"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoritePublicationProbe.cs",
+      "initial_sha256": "0e44931091942ea94ac7ef130f1c8b2cb21085cdcdd9fa18bd0a4593fb36eb2b",
+      "final_sha256": "0e44931091942ea94ac7ef130f1c8b2cb21085cdcdd9fa18bd0a4593fb36eb2b"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/C3Probe.csproj",
+      "initial_sha256": "db7f082c147490b7e14f20b338e6047abdd3ad4b35663ede27890835e8d1cffc",
+      "final_sha256": "db7f082c147490b7e14f20b338e6047abdd3ad4b35663ede27890835e8d1cffc"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/C3Stubs.cs",
+      "initial_sha256": "e10d39a60f208b558f499eca3ca11ae12a2f96d6e2fb5d231f81af1e5ad92fae",
+      "final_sha256": "e10d39a60f208b558f499eca3ca11ae12a2f96d6e2fb5d231f81af1e5ad92fae"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/Program.cs",
+      "initial_sha256": "5528a6289b1863feaa54d40def4ffc0b7a3e6bd70498858c0c27e1d41b78ddee",
+      "final_sha256": "5528a6289b1863feaa54d40def4ffc0b7a3e6bd70498858c0c27e1d41b78ddee"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c3/run.sh",
+      "initial_sha256": "424e8c024dbb66dba840adf59934c2361a4f8104ee321d45738d54ee1fd26482",
+      "final_sha256": "424e8c024dbb66dba840adf59934c2361a4f8104ee321d45738d54ee1fd26482"
+    }
+  ],
+  "preserved_AF1_release_bytes": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Modules/Detail/FavoriteDetailVM.cs",
+      "sha256": "daf13e90f68cff339e4a9dc9fc345187e09beeda5c27f4053383efdd2d7aba26"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/c2/FavoritePublicationProbe.cs",
+      "sha256": "0e44931091942ea94ac7ef130f1c8b2cb21085cdcdd9fa18bd0a4593fb36eb2b"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/favorite/af1-execution.md",
+      "sha256": "5a3ab37334bdb695c8bad86a0deff713b87aea0c8396612b2e355fefa1025bc1"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/favorite/af1-evidence/receipt.json",
+      "sha256": "70c198f1fa824d8db7e82d2d92fff5040cfe27cd3b32bafe3dd9777b5f95d20c"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-api-shape-comparison/favorite/af1-evidence/final-inputs.json",
+      "sha256": "d627898ad8a5973a23fb0f1fe0e95b4698d58b3bc74262b1d7c12b8a05b7f9d5"
+    }
+  ],
+  "AF1_release_manifest": {
+    "path": "/workspace/work/api-shape-comparison/favorite-af1-execution/release-manifest.json",
+    "sha256": "96a3b3f1f344b42cfc838c706b38a409f460209203f9a78c595072e46289c0bf"
+  },
+  "support_binding_notice": "New project/partial-stub/extractor inputs supersede blanket earlier full-harness equivalence; old methods/assertions are unchanged and all rerun on extended harness.",
+  "private_bindings": [
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/initial.json",
+      "sha256": "904f294d1d9a2f32d408455cbaa26e4bfea0740a50ded404630c44f19571f396"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/final-fixture-original-source.json",
+      "sha256": "1256f9cbc5b535f1cdba940873e8dad03d96b783fabc2753b3d7d8c3810edcb0"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/repaired-before.json",
+      "sha256": "f66f284b5616400f4ce82a109c5d91998460dcca8cfe35e885ace99dd4d757fb"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/repaired-after.json",
+      "sha256": "f66f284b5616400f4ce82a109c5d91998460dcca8cfe35e885ace99dd4d757fb"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/final-source-manifest.json",
+      "sha256": "dac938bae90457d0ae261087005657dc4163f8f0c77de9655d11cf9079ef711c"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/bind.py",
+      "sha256": "664dc3b14d25c3f9ea98d725e98a7847ca9a544bb45081700d2240a79ae856a2"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/own.diff",
+      "sha256": "67cf13f0608fb40dbfd11dbcdc1c9993b892cba52b025c1a77003215cd8c6541"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/verify-extractor.py",
+      "sha256": "18cfacfb07333cc447e0b7dacaf59828cf05ae796fe4c54b373259243f78b293"
+    },
+    {
+      "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/extractor-controls.json",
+      "sha256": "f3247def1d5af65b4eea67ae1be2088474683ea9881093bbd04e20ecd9cbda06"
+    }
+  ],
+  "reports": {
+    "original-red": {
+      "files": [
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/original-red/results.json",
+          "sha256": "d8e7edc82b788b2c2d66bf9356b38197ac1fae682c9d516ef0983667a79b1956"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/original-red/summary.md",
+          "sha256": "6ec2383e48c5df393271d39eecf057be9f15aaf5b9affdc24d92487997a4db30"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/original-red/logs/batch_c2.log",
+          "sha256": "b34e645684da3c3ea8891289b0d6e98848e37befe67d822531307e3c0b190adb"
+        }
+      ],
+      "overall": {
+        "suite_status": "FAIL",
+        "complete_required": false,
+        "logical_pass": 0,
+        "executable_pass": 0
+      },
+      "selected_stages": [
+        {
+          "id": "batch:c2",
+          "status": "FAIL",
+          "exit_code": 134
+        }
+      ]
+    },
+    "repaired-green": {
+      "files": [
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/repaired-green/results.json",
+          "sha256": "d5739696cf7e01fa0c0f3ba6d4bfb056e8d0334786c182459e1ea68b035a5ef7"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/repaired-green/summary.md",
+          "sha256": "6b7bff4ff43e0585c0e92a048a46bd55f2e2ecc8f79640958791e4a47058ae93"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/repaired-green/logs/batch_c2.log",
+          "sha256": "0f62c76cb7f5f698ed1b2a33d08462ae8131cea708c7c115647cb9d704dec122"
+        },
+        {
+          "path": "/workspace/work/api-shape-comparison/favorite-af2-execution/repaired-green/logs/batch_c3.log",
+          "sha256": "8895452266b1240336ecca241b353883c5341a4e14fdc359eeed82dfcd3590e1"
+        }
+      ],
+      "overall": {
+        "suite_status": "PARTIAL_PASS",
+        "complete_required": false,
+        "logical_pass": 2,
+        "executable_pass": 2
+      },
+      "selected_stages": [
+        {
+          "id": "batch:c2",
+          "status": "PASS",
+          "exit_code": 0
+        },
+        {
+          "id": "batch:c3",
+          "status": "PASS",
+          "exit_code": 0
+        }
+      ]
+    }
+  },
+  "counts": {
+    "AF2_original_positive_pass": 11,
+    "AF2_original_fail": 2,
+    "AF2_original_repaired_pass": 13,
+    "AF2_safe_original_pass": 17,
+    "AF2_safe_original_fail": 20,
+    "AF2_safe_repaired_pass": 37,
+    "AF2_added_original_pass": 467,
+    "AF2_added_original_fail": 106,
+    "AF2_added_repaired_pass": 573,
+    "extractor_controls": 10,
+    "unchanged_c2_Program": 451,
+    "unchanged_actions": 563,
+    "unchanged_AS3_original": 9,
+    "unchanged_AS3_compatibility": 124,
+    "unchanged_AS3_present_empty": 8,
+    "unchanged_AS3_added": 1070,
+    "unchanged_AF1_residual": 12,
+    "unchanged_AF1_added": 406,
+    "c3": 117
+  },
+  "fixed_times_UTC": {
+    "checkpoint": "2026-11-25 07:41:29",
+    "deadline": "2026-11-25 08:51:29",
+    "observed_during_freeze": "2026-11-25 04:07:32"
+  },
+  "no_Git_mutation_publication_main_doc_cache_dependency_foreign_or_live_write": true,
+  "custody": "All own source/test/private artifact/repository evidence read+write RELEASED; no pending build/response gate/async command; owning/fresh re-review pending."
+}

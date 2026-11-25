@@ -6,7 +6,7 @@ namespace BiliLite.Parsing.MediaList
 {
     /// <summary>
     /// fav/resource/list 的一页 → 收藏夹详情页正在渲染的那份模型。
-    /// 只搬字段：翻页（media_count）和选中/批量操作仍留在 FavoriteDetailVM。
+    /// 只搬显示字段：翻页（原始 has_more 与 media_count）和选中/批量操作仍留在 FavoriteDetailVM。
     ///
     /// 1. medias 缺失/null 给空集合：第 1 页由此显示空状态，第 2 页什么都不追加。
     /// 2. info 缺失给 null：第 1 页缺它就不发布（标题、mid 都要它），判断在 VM。

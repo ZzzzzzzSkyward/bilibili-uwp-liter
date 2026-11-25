@@ -42,26 +42,14 @@ namespace BiliLite.Modules
             set { _FavoriteInfo = value; DoPropertyChanged("FavoriteInfo"); }
         }
         private ObservableCollection<FavoriteInfoVideoItemModel> _videos;
-        private bool stack_will_overflow = false;
-        private bool inited_favorite = false;
-
         public ObservableCollection<FavoriteInfoVideoItemModel> Videos
         {
-            get
-            {
-                stack_will_overflow = false;
-                return _videos;
-            }
+            get { return _videos; }
             set
             {
+                if (ReferenceEquals(_videos, value)) return;
                 _videos = value;
-                if (stack_will_overflow && inited_favorite) return;
-                if (_videos != value || !inited_favorite)
-                {
-                    inited_favorite = true;
-                    DoPropertyChanged("Videos");
-                }
-                stack_will_overflow = true;
+                DoPropertyChanged("Videos");
             }
         }
 
@@ -166,7 +154,11 @@ namespace BiliLite.Modules
                         Videos.Add(item);
                     }
                 }
-                if (Videos.Count != FavoriteInfo.media_count)
+                // 普通收藏夹采用本页的明确标志；缺失/null 和合集仍保留原来的总数规则。
+                var hasMore = Type != 21 && parsed.Value.HasMore.HasValue
+                    ? parsed.Value.HasMore.Value && data.medias.Count > 0
+                    : Videos.Count != FavoriteInfo.media_count;
+                if (hasMore)
                 {
                     ShowLoadMore = true;
                     Page++;

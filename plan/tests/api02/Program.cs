@@ -32,6 +32,7 @@ internal static class Program
         await CounterTracksConsecutiveFailures();
         Console.WriteLine("PASS " + assertions + " original API02 assertions");
         await SearchRequestChecks.RunAsync();
+        await ApiQueryShapeProbe.RunAsync();
     }
 
     private static async Task FailedRefreshKeepsTimestamp()

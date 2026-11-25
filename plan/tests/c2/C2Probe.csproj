@@ -38,6 +38,8 @@
     <Compile Include="../../../src/BiliLite.UWP/Parsing/Video/WebVideoActionParser.cs" Link="WebVideoActionParser.cs" />
     <Compile Include="../../../src/BiliLite.UWP/Parsing/Video/VideoEnvelope.cs" Link="VideoEnvelope.cs" />
     <Compile Include="obj/HttpResults.actual.cs" />
+    <Compile Include="../../../src/BiliLite.UWP/Modules/User/MyFollowVideoVM.cs" Link="MyFollowVideoVM.cs" />
+    <Compile Include="obj/Utils.DeserializeJson.actual.cs" />
   </ItemGroup>
 
 </Project>

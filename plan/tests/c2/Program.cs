@@ -137,6 +137,9 @@ namespace C2Probe
             ProjectEntries();
 
             await FavoriteActionChecks.Run();
+            await FavoritePagingProbe.Run();
+            await FavoritePublicationProbe.Run();
+            await FavoriteFolderPublicationProbe.Run();
             Console.WriteLine("PASS " + _passed + " assertions");
             return 0;
         }

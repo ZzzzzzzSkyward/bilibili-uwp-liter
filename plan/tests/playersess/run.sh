@@ -44,4 +44,9 @@ history_source="${PLAYER_HISTORY_SOURCE:-$repo/src/BiliLite.UWP/Controls/PlayerC
     ' "$history_source"
     printf '%s\n' '}}'
 } > "$scratch/ActualHistoryCheckpoint.cs"
-"$dotnet" run --project "$probe" -c Debug -p:HistoryCheckpointSource="$scratch/ActualHistoryCheckpoint.cs" -- "$@"
+python3 "$repo/plan/tests/playersess/extract-player-lifetime.py" --source "${PLAYER_LIFETIME_SOURCE:-$repo/src/BiliLite.UWP/Controls/PlayerControl.xaml.cs}" --out "$scratch"
+if [ -n "${PLAYER_LIFETIME_EVIDENCE_DIR:-}" ]; then
+    mkdir -p "$PLAYER_LIFETIME_EVIDENCE_DIR"
+    cp "$scratch/PlayerResidualSlices.g.cs" "$scratch/PlayerResidualBoundary.g.cs" "$scratch/PlayerResidualCoordinator.g.cs" "$scratch/ActualIModules.g.cs" "$scratch/PlayerLifetimeSlices.g.cs" "$scratch/ActualScoped.g.cs" "$scratch/TrackSwitchCoordinator.g.cs" "$scratch/player-lifetime-manifest.json" "$PLAYER_LIFETIME_EVIDENCE_DIR/"
+fi
+"$dotnet" run --project "$probe" -c Debug -p:ResidualSource="$scratch/PlayerResidualSlices.g.cs" -p:ResidualBoundary="$scratch/PlayerResidualBoundary.g.cs" -p:ResidualCoordinator="$scratch/PlayerResidualCoordinator.g.cs" -p:ActualIModules="$scratch/ActualIModules.g.cs" -p:HistoryCheckpointSource="$scratch/ActualHistoryCheckpoint.cs" -p:TrackSwitchSource="$scratch/TrackSwitchCoordinator.g.cs" -p:PlayerLifetimeSource="$scratch/PlayerLifetimeSlices.g.cs" -p:SubtitleGraphicsSource="$scratch/ActualScoped.g.cs" -- "$@"

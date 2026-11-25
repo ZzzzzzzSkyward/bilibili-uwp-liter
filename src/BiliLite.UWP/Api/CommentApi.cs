@@ -48,7 +48,7 @@ namespace BiliLite.Api
             var mode = sort == CommentSort.Hot ? 3 : 2;
             var pagination = new { offset = offsetStr };
             var paginationStr = JsonConvert.SerializeObject(pagination);
-            var parameters = $"oid={oid}&ps={ps}&mode={mode}&type={type}&pagination_str={paginationStr}";
+            var parameters = $"oid={oid}&ps={ps}&mode={mode}&type={type}&pagination_str={Uri.EscapeDataString(paginationStr)}";
 
             if (login)
             {

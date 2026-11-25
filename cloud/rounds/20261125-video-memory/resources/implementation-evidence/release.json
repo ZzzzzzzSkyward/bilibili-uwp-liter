@@ -1,0 +1,15 @@
+{
+  "final_source_sha256": "8682d1505752a2dfd99e835259d45429cf78ee3e358caf39553b1375a7d4a3cc",
+  "baseline_source_sha256": "18fac7cc1afcdf38f5896364f1606dd05446358965f3aae51cff00a7929b1e4f",
+  "original_log": "/workspace/work/video-memory/player-fix/original-red.log",
+  "final_log": "/workspace/work/video-memory/player-fix/fixed-green.log",
+  "comparison_status": "/workspace/work/video-memory/player-fix/comparison-status.json",
+  "owning_final_exit": 0,
+  "selected_exit": 0,
+  "selected_suite_status": "PARTIAL_PASS",
+  "selected_complete_required": false,
+  "raw_inputs_and_outputs": "/workspace/work/video-memory/player-fix",
+  "no_full_aggregate": true,
+  "no_Git_mutation": true,
+  "files_frozen": true
+}

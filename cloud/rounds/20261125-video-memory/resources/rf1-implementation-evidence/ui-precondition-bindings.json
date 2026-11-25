@@ -1,0 +1,57 @@
+{
+  "classification": "source precondition only; no native pointer/XAML delivery",
+  "files": {
+    "src/BiliLite.UWP/Controls/PlayerControl.xaml": "6d7ce0ee0b80867f7445d8cc1ecf932c9cb0fd31ad35c2645120606141a89db1",
+    "src/BiliLite.UWP/Pages/SeasonDetailPage.xaml": "ac68653a40f45232eda971e10ad1ae9af02f352efc2e712c846eeead21bc667c",
+    "src/BiliLite.UWP/Pages/SeasonDetailPage.xaml.cs": "c91ceea2e58aa8318311841eaf22ef473711710c6222289baa6bed9b79bf4f5d",
+    "src/BiliLite.UWP/Pages/VideoDetailPage.xaml": "7c9202b9effda98f91def99f7348ed2e2b1bfccb4c345b80d669f0d61560a2e8"
+  },
+  "actual_enabled_update_handler": {
+    "{http://schemas.microsoft.com/winfx/2006/xaml}Name": "DanmuSettingUpdateDanmaku",
+    "BorderThickness": "0",
+    "Click": "DanmuSettingUpdateDanmaku_Click",
+    "Grid.Column": "1",
+    "Foreground": "White"
+  },
+  "season_player_ancestors": [
+    {
+      "tag": "PlayerControl",
+      "name": "player",
+      "input_or_visibility": {}
+    },
+    {
+      "tag": "Grid",
+      "name": null,
+      "input_or_visibility": {}
+    },
+    {
+      "tag": "Grid",
+      "name": null,
+      "input_or_visibility": {}
+    },
+    {
+      "tag": "Grid",
+      "name": "detail",
+      "input_or_visibility": {}
+    },
+    {
+      "tag": "Grid",
+      "name": null,
+      "input_or_visibility": {}
+    },
+    {
+      "tag": "PlayPage",
+      "name": null,
+      "input_or_visibility": {}
+    }
+  ],
+  "empty_detail_or_NothingPlay_can_leave_public_initialization_uncalled": true,
+  "Video_before_first_load_hidden_ancestor_not_relied_on": true,
+  "fixture_default_boundary": "public CurrentPlayItem is set null only to remove its synthetic initial item and match the actual constructor; no private lifecycle flag reset or fake Initialize",
+  "real_constructor_default": {
+    "property": "public PlayInfo CurrentPlayItem { get; set; }",
+    "initializer": null,
+    "complete_constructor_sha256": "3bfbbf24a16e635b80559d5cbce42fbed0251de2adee782fd96266c676f91401",
+    "constructor_assigns_CurrentPlayItem": false
+  }
+}

@@ -21,4 +21,6 @@ else
 fi
 
 export DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1 DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
-"$dotnet" run --project "$probe" -c Debug
+source_root="${SEASON_SOURCE_ROOT:-$repo}"
+python3 "$repo/plan/tests/season1/extract-lifetime.py" --source-root "$source_root" --output "$repo/plan/tests/season1/obj/SeasonLifetimeSlices.g.cs"
+"$dotnet" run --project "$probe" -c Debug -p:SeasonSourceRoot="$source_root"

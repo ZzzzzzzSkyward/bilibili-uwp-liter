@@ -97,8 +97,16 @@ namespace BiliLite.Helpers
         /// FindLongestValidJsonString 双 JSON 兜底；夹具都是单个文档，兜底只把同一份正文再解一次，探针省掉它，
         /// 但仍然记一条日志，好让"解码失败"和"调用方自己记的错误"在断言里分得开。
         /// </summary>
+        public static Func<HttpResults, Type, Task<object>> DecodeFixture;
+
+        private async Task<BiliLite.Models.ApiResultModel<T>> Decode<T>()
+        {
+            return (BiliLite.Models.ApiResultModel<T>)await DecodeFixture(this, typeof(T));
+        }
+
         public Task<BiliLite.Models.ApiResultModel<T>> GetResult<T>()
         {
+            if (DecodeFixture != null) return Decode<T>();
             try
             {
                 return Task.FromResult(
@@ -175,10 +183,13 @@ namespace BiliLite.Api
         /// 只有 ep/list 的失败会落到页面的错误面板上；Detail 失败产品只记日志、照旧发布片单。
         /// </summary>
         public static bool FailNextEpListRequest;
+        public static Func<SeasonApiCall, Task<BiliLite.Helpers.HttpResults>> AsyncFixture;
 
         public static void Reset()
         {
             Calls.Clear();
+            AsyncFixture = null;
+            BiliLite.Helpers.HttpResults.DecodeFixture = null;
             Fixture = call => "{\"code\":-404,\"message\":\"啥都木有\"}";
             FailNextEpListRequest = false;
         }
@@ -201,6 +212,7 @@ namespace BiliLite.Api
             {
                 Handler = () =>
                 {
+                    if (AsyncFixture != null) return AsyncFixture(call);
                     if (endpoint == SeasonEndpoint.EpList && FailNextEpListRequest)
                     {
                         FailNextEpListRequest = false;

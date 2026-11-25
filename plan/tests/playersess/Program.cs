@@ -62,6 +62,13 @@ namespace PlayersessProbe
             ProgressCheckpointCases();
             HistoryCheckpointProbe.Run(Check).GetAwaiter().GetResult();
 
+            try { ResourceProbe.PlayerLifetimeProbe.Run(); }
+            catch (Exception error) { Fail("Player lifetime: " + error); }
+            Check(SubtitleGraphicsProbe.GraphicsLifetimeProbe.RunCases().GetAwaiter().GetResult() == 0, "actual subtitle graphics ownership");
+
+            try { ResidualProbe.PlayerResidualProbe.Run(); }
+            catch (Exception error) { Fail("Residual player ownership: " + error); }
+
             Console.WriteLine();
             if (failures.Count == 0)
             {

@@ -17,6 +17,15 @@
   <ItemGroup>
     <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\VideoPlayHistoryHelper.cs" Link="VideoPlayHistoryHelper.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Helpers\SettingHelper.cs" Link="SettingHelper.cs" />
+    <Compile Include="$(ResidualSource)" Link="PlayerResidualSlices.g.cs" />
+    <Compile Include="$(ResidualBoundary)" Link="PlayerResidualBoundary.g.cs" />
+    <Compile Include="$(ResidualCoordinator)" Link="PlayerResidualCoordinator.g.cs" />
+    <Compile Include="$(ActualIModules)" Link="ActualIModules.g.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Modules\Player\InteractionVideoVM.cs" Link="ActualInteractionVideoVM.cs" />
+    <Compile Include="$(TrackSwitchSource)" Link="TrackSwitchCoordinator.g.cs" />
+    <Compile Include="$(PlayerLifetimeSource)" Link="PlayerLifetimeSlices.g.cs" />
+    <Compile Include="$(SubtitleGraphicsSource)" Link="ActualScoped.g.cs" />
+    <Compile Include="..\..\..\src\BiliLite.UWP\Services\LocalMedia\LocalMediaAsyncLoadGuard.cs" Link="LocalMediaAsyncLoadGuard.cs" />
     <Compile Include="$(HistoryCheckpointSource)" Link="ActualHistoryCheckpoint.cs" />
     <Compile Include="..\..\..\src\BiliLite.UWP\Services\PlayerSessionState.cs" Link="PlayerSessionState.cs" />
   </ItemGroup>

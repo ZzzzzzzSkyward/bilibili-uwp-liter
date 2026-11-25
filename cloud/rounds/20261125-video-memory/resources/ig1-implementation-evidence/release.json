@@ -1,0 +1,17 @@
+{
+  "status": "FROZEN / RELEASED FOR OWNING AND FRESH IG1 REVIEW",
+  "source_sha256": "262e0719cf4589ebd9e493937f377bcc95d43e092962aad30dbfc137275bcb89",
+  "changed_product_files": 1,
+  "changed_product_method_spans": 2,
+  "test_stub_extractor_assertion_changes": 0,
+  "baseline_selected_exit": 1,
+  "final_selected_exit": 0,
+  "final_selected_status": "PARTIAL_PASS",
+  "complete_required": false,
+  "all66_39_5_original240_retained": true,
+  "ux1d_final_assertions": 107,
+  "diff_check_exit": 0,
+  "no_full_suite_Git_main_docs_native_or_other_permission_used": true,
+  "raw_private_artifacts": "/workspace/work/video-memory/player-ig1-fix",
+  "deadline": "2026-11-25 08:29:30 UTC"
+}
