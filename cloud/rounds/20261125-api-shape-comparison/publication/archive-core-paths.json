@@ -1,0 +1,1704 @@
+{
+  "schemaVersion": 1,
+  "state": "ROOT_CORE_FROZEN_FOR_INDEPENDENT_REVIEW",
+  "frozenUtc": "2026-11-25T05:40:14.911908+00:00",
+  "baseDocCommit": "db0d2512500d0fbc9ecace16aa301669b3cbdcdb",
+  "sourceCommit": "ff5d2855bb62ef6459a724ffae6101b812a7369d",
+  "baseTree": "2512ac9dbc3181d2940cd4a3453a41c35c7d7520",
+  "protectedMaster": "7ac3146808bd1410dcccf2ec566ea09e2900cc0e",
+  "selfPath": "cloud/rounds/20261125-api-shape-comparison/publication/archive-core-paths.json",
+  "selfHashExcluded": true,
+  "reviewerProspectiveOutputs": [
+    "cloud/rounds/20261125-api-shape-comparison/publication/archive-review.md",
+    "cloud/rounds/20261125-api-shape-comparison/publication/archive-review-evidence.json"
+  ],
+  "finalPrivateBinding": "/workspace/work/api-shape-comparison/combined-archive-review/final-manifest.json",
+  "entries": [
+    {
+      "path": "cloud/memory/INDEX.md",
+      "mode": "100644",
+      "size": 3633,
+      "sha256": "9d76a0ff5d0d97d9c93dafcc0bbf78671b1fc23f515f04c47857d2d4562122e2",
+      "canonical_blob": "57bf24608b906dd32ccd4a26c8f0f6f679809880"
+    },
+    {
+      "path": "cloud/memory/deadline-20261125.md",
+      "mode": "100644",
+      "size": 7069,
+      "sha256": "e443ff43e61700901f0198e2cc632134927037adcdd55d69f221c5fdb61c0e62",
+      "canonical_blob": "d692f5790e7f3377fde2700844dedf9e2a1a795d"
+    },
+    {
+      "path": "cloud/memory/runs/20261125-api-shape-comparison.md",
+      "mode": "100644",
+      "size": 4561,
+      "sha256": "96040c5a8cc77ef06df936af342ac2306147a465e828e81de907d648f8d1e11d",
+      "canonical_blob": "3da8b01e7dc5f7c1dc22ba117a81483b9ce4f048"
+    },
+    {
+      "path": "cloud/memory/runs/20261125-timeboxed-maintenance.md",
+      "mode": "100644",
+      "size": 5605,
+      "sha256": "ec8f4fb00cc8cea59fe114d6a5c2e38b9147ca994a44575afe5388a42391b15c",
+      "canonical_blob": "8c8014df181ef915592d2b9c05e0c1a000420c8b"
+    },
+    {
+      "path": "cloud/memory/runs/20261125-video-memory.md",
+      "mode": "100644",
+      "size": 7217,
+      "sha256": "8f27e89bb3db8a23cdae2f338fbbb8a1143dc73d5d277c62e8efdb8e20e4639d",
+      "canonical_blob": "1419ba33323bf2643dd5c56b17344a9cc92187d8"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/accepted-requirements-binding.md",
+      "mode": "100644",
+      "size": 1487,
+      "sha256": "f2d6efe236f8729b2a8601732eca2770374b941335236b9981dbcdbead7c8651",
+      "canonical_blob": "bb089ec5d59cc82fcd9417a982a72768978689f2"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af1-amendment-dispatch.md",
+      "mode": "100644",
+      "size": 3316,
+      "sha256": "86ef31c4dab258bdcf0a46be569a5756a2d4d9ba65745951242c27e6bb3beed5",
+      "canonical_blob": "4e94f598c8b4c22cdd52b6e2707c95bf4a65b087"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af1-audit-evidence/evidence.md",
+      "mode": "100644",
+      "size": 7201,
+      "sha256": "39968c5407daaf6ed99bc09c39aa186f1a7f90d6a6f412399b5f3bffd8fdad65",
+      "canonical_blob": "7dd8d30d3d3b1d3f09633f9cd9753f7f0c8da483"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af1-final-audit.md",
+      "mode": "100644",
+      "size": 2282,
+      "sha256": "e823d12b54ce46b62786e2b9c38db05f8cc624aa0d1891ed294adbeb022642ff",
+      "canonical_blob": "c4ae256ddf42b28f5d83ab86e5db156893f0003b"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af1-fix-dispatch.md",
+      "mode": "100644",
+      "size": 3308,
+      "sha256": "ed3cd15363838dab7ec340cebf29acf638dfdb7ef49da9aae7fe6fa1c273b265",
+      "canonical_blob": "96e8ada7654baac36efd8cbe3792fbf5843b7a87"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af1-implementation-review-dispatch.md",
+      "mode": "100644",
+      "size": 2888,
+      "sha256": "6a6f5b93e22f8a3497c59084a05f747079b29c88b53a3dd66cbdcb1c1af06540",
+      "canonical_blob": "031c9781f34bbe8285f3d58fb41640697068e96e"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af1-review-dispatch.md",
+      "mode": "100644",
+      "size": 2048,
+      "sha256": "35bd730eeac829a99961d5325bf10190873b3bc994dfb16564457bfa23ae0461",
+      "canonical_blob": "27909f180d93a3f5a61d518588b6df1e2ae9c7e9"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af1-review-evidence.md",
+      "mode": "100644",
+      "size": 10414,
+      "sha256": "7a6ccd18a3d492efe368cf119ea6fe8b461631200f90ca684bd3fb44d0ce194b",
+      "canonical_blob": "0135de635abf95ee15e4d3ad32e0b5cad1cf7fe3"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af1-review.md",
+      "mode": "100644",
+      "size": 4703,
+      "sha256": "00a9207e0294dea358ebe1e6035e18506bce6a994d837ba0f2d6744c450e20cb",
+      "canonical_blob": "95d368a0c8d0e34d69e18d06c8484e7664707daa"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-amendment-review-evidence.md",
+      "mode": "100644",
+      "size": 11298,
+      "sha256": "7705d95bc17960ac83eb39c91b3129b40e9a6a1791358d1b7130fa2aa6114dc0",
+      "canonical_blob": "94a78b514f47ddc9ff03f6a4660e0bf37e3f97e5"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-amendment-review.md",
+      "mode": "100644",
+      "size": 4324,
+      "sha256": "e2d087a46bb3a749453384ebd6900d632564b11f6c56167fb6ba12b99f809490",
+      "canonical_blob": "0a6699159bb20d5f6e3e34d92b7e1e8bf58c6a27"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-audit-evidence/evidence.md",
+      "mode": "100644",
+      "size": 9338,
+      "sha256": "f25a54e2872333c6b33f0aaac5af91481e316cf7c099cff4dd8f962a42f8b533",
+      "canonical_blob": "7022e88dcb427fcb743e16da142fd49e4df9d572"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-audit-evidence/progress.md",
+      "mode": "100644",
+      "size": 493,
+      "sha256": "4cd4308e6cf7099d726907a1fb6de7d88e623914e949eaaab61cfe3da333edcb",
+      "canonical_blob": "d93e280ce2bb7b2b13776f7a7d7e6694db5c1986"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-discovery-dispatch.md",
+      "mode": "100644",
+      "size": 2894,
+      "sha256": "1643501f7fef0a952eb4711f848ed9e45d9d17efe7034221f405af3827ebee33",
+      "canonical_blob": "11b74081a138468ea5a7223d5bdcb196c55712d2"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-final-audit.md",
+      "mode": "100644",
+      "size": 2411,
+      "sha256": "f43a6b083d18b7ff0a14f526db5e2e631745402ecea4915a9e3e228daa3517e4",
+      "canonical_blob": "d9e52cde0ebc2951216c2fd431c8371e4727c1c2"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-fix-dispatch.md",
+      "mode": "100644",
+      "size": 4479,
+      "sha256": "e3ba4bc045d8c116268a791575504db73a15e242af72e23689e5fb112ba6f3a6",
+      "canonical_blob": "9a35c88de47de063c41b3aa362be6b7f6a146be7"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-implementation-review-dispatch.md",
+      "mode": "100644",
+      "size": 3652,
+      "sha256": "5e76bb77a7afcecf2e14d4286e069f245d6ce7e1fca6182b265918f068d97e46",
+      "canonical_blob": "9be6874fa0974e435eb597ebaf0e3a50976e5f22"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-rereview-dispatch.md",
+      "mode": "100644",
+      "size": 2322,
+      "sha256": "118781a5e767cfbd286f84e5ef2afd49fd69ce05447c1f8f46e88fd1c28f58ff",
+      "canonical_blob": "080c8bc439ae4afb5e869d4e7de8311154f0c2c6"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-review-dispatch.md",
+      "mode": "100644",
+      "size": 2230,
+      "sha256": "a35176d8cbfc398780cf5f0cf96e304d5057e3f8b4e63e1a6a0a1e7a260ab322",
+      "canonical_blob": "687b97fd8069444c13c67a12883d07d7a6db5ddf"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-review-evidence.md",
+      "mode": "100644",
+      "size": 11371,
+      "sha256": "387dcc07fa2b641b7e6551c8c413ad90f1eaabbad5480469de59dd96bc90c4de",
+      "canonical_blob": "100805aca1d9e5b2218ee491c86cc3157178864e"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-review.md",
+      "mode": "100644",
+      "size": 6551,
+      "sha256": "72150ccffc45e4f6c1d3953fceca8657ace7bb19981cbd9dc77e0ef77120687e",
+      "canonical_blob": "d75da280f67938fd880664ca15f23bd447c52684"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/af2-revision-dispatch.md",
+      "mode": "100644",
+      "size": 4199,
+      "sha256": "bd0d85e279f8c569f6f5194576003379951cefcd7e65d8a32ba9614903381aed",
+      "canonical_blob": "13a35b32a292d234f4ea37ade6db19388de87437"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/as3-review-evidence.md",
+      "mode": "100644",
+      "size": 9942,
+      "sha256": "b195481c5d37892b99fcf91e7d335f403e1dfde5689980782131224dccbb78ae",
+      "canonical_blob": "78908664d91b5c3b11756cd046d636558674f917"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/as3-review.md",
+      "mode": "100644",
+      "size": 3675,
+      "sha256": "02e419f61f8d5334a97f11bd957eac9d4029a5377f33eb52b8fb0e336e20a2e4",
+      "canonical_blob": "721e2ce960aac4544a1b2a5e161c3f53ee1519a0"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/audit-evidence/evidence.md",
+      "mode": "100644",
+      "size": 8800,
+      "sha256": "9d75893ea6471bc78fcbcd7ae72ea86a71796e6161fb8ecabad5962ef0b6bfaa",
+      "canonical_blob": "5fec42ed91774b2e19e8b340163a48783a5695b5"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/audit-evidence/progress.md",
+      "mode": "100644",
+      "size": 624,
+      "sha256": "06d159b20ca4e47a894cc35314b16a171a50ed309c99e70a99ed24ea05ec3ca8",
+      "canonical_blob": "4de02281cb89b9bd1b54c468eb80240579c15b88"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/audit-evidence/residual-finding.md",
+      "mode": "100644",
+      "size": 2077,
+      "sha256": "b61b820e4e0b31ab7de7a6a00f00988612cf2cd2b840e58695b30be92e77094d",
+      "canonical_blob": "c6fce2eac93ffbcb37fce8cd42a922fbc3804416"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/checkpoint.md",
+      "mode": "100644",
+      "size": 14401,
+      "sha256": "372e8dce4b6f91f242988a429bf4835b205fba79a7de0a29b0ee11abdc689327",
+      "canonical_blob": "994c1ac9672b8bc732e97c4270cc2c3637ec67c5"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/combined-closeout-plan.md",
+      "mode": "100644",
+      "size": 5871,
+      "sha256": "7e639e45f37aea99eb1a89cb39c0ab853268931a747ffad6bd2a8e5eb67ed366",
+      "canonical_blob": "50067156e47609a19ed58c25ff731f0bdc822aa8"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/contracts/af1-evidence.md",
+      "mode": "100644",
+      "size": 7004,
+      "sha256": "1b54b51aacbe8658c3417e1f3de36e4f818194dd88f99a8abd400bd7c22474bd",
+      "canonical_blob": "d9e9604b446656d2ca0d0365a217736107dfdb75"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/contracts/af1-requirements.md",
+      "mode": "100644",
+      "size": 9104,
+      "sha256": "2011975b4174431dc4fe6e6630e0a234d6b950aa6f56200d111c256b09705e35",
+      "canonical_blob": "447086db1ccee2eb3fc4bd1a96d2a273bce40c5d"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/contracts/af2-amendment.md",
+      "mode": "100644",
+      "size": 8678,
+      "sha256": "adffc5d0cc574f7a2546f5cdb0a71585824feecb7abd89949e45a1a452f97b5b",
+      "canonical_blob": "76fd230e5934a72cc6015b7a446ca5bbb114715f"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/contracts/af2-evidence.md",
+      "mode": "100644",
+      "size": 9445,
+      "sha256": "d62de98ddd4be7f0749ae2ebef706188a20f2a0744262878ecebbb4cbbf8c61f",
+      "canonical_blob": "39969c33b1b1a91fd6ea8e8d4a90094f247c848e"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/contracts/af2-requirements.md",
+      "mode": "100644",
+      "size": 14979,
+      "sha256": "59c218ffc0cea3729329c309b90e5bb01bd41890e1ddfea87f70ab22d550d872",
+      "canonical_blob": "e84046b5d2e3902ccad97c0ea49e383c2e572dcd"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/contracts/as3-amendment.md",
+      "mode": "100644",
+      "size": 5967,
+      "sha256": "f9b8ad2510be719d756e62c18cee0094e67108879a4f6dacc3bf4f53bb5c85d5",
+      "canonical_blob": "c6a900fb98521daddb48b7b688802e06ab2e2ca8"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/contracts/evidence.md",
+      "mode": "100644",
+      "size": 13123,
+      "sha256": "e77cdc73394da25003b07b54962093762abd3c94e6915f721d31f27688f4c100",
+      "canonical_blob": "facca14a0e1556bca64b66335ae1ba86c650c275"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/contracts/matrix.md",
+      "mode": "100644",
+      "size": 8081,
+      "sha256": "eada9b2f99640ed8ecdfbe85629fd20c5b858709520b0f7e8334f911112071f2",
+      "canonical_blob": "13b7a2ca11f17f308a1673251176da6c27351493"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/contracts/requirements.md",
+      "mode": "100644",
+      "size": 14312,
+      "sha256": "a097e905f6193e24014a11e2769dcc23156485ea078e01de6d93ea5d2c778aa2",
+      "canonical_blob": "7523218c9459b8b2fdff46b54ee59e004aa84f23"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/discovery-dispatch.md",
+      "mode": "100644",
+      "size": 4478,
+      "sha256": "64caa401ecf0080663f0a511cfce3160ee8aa3f5fe162ef33e0b1608864f9072",
+      "canonical_blob": "d8acf4ba7a588eec9ffcc8d02b7282823c28259f"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation-preparation-dispatch.md",
+      "mode": "100644",
+      "size": 3194,
+      "sha256": "cadf9c26beea1b5783a09815efa757e7c00688c1cb361c45ceb1b21726d18c8e",
+      "canonical_blob": "91f317bdbaf9d4a79955e928d178b4d8098d4068"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/combined-reconciled-draft.md",
+      "mode": "100644",
+      "size": 58055,
+      "sha256": "e9faadf54afff2b29d64ebf2ab103ffa683160ec3b22635978402e9c4fd0887b",
+      "canonical_blob": "97b30e772d19395881414dc72e4b45f3a11c3acb"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/combined-reconciliation-dispatch.md",
+      "mode": "100644",
+      "size": 2525,
+      "sha256": "8520b5f07f0d4a38d896640ddae10c8958b8ac3b4ab366812491aa11ec1c564d",
+      "canonical_blob": "63e9a4265945fe68952f5edcee2159353821867e"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction-dispatch.md",
+      "mode": "100644",
+      "size": 1406,
+      "sha256": "c3193ba715d7c0e557c6175ceca90e76b2736e112fb84b07794d7565e2f6ee03",
+      "canonical_blob": "9b8766f78d6e7b459813212641727b791ddd0cc8"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction-review-dispatch.md",
+      "mode": "100644",
+      "size": 1294,
+      "sha256": "df8d572e2998011e79f764cd8235fc32f003bfd37f66a7fc8282e3626094ced6",
+      "canonical_blob": "fdf32b2d1869f9779f174b4e13d5b2950cf7b4fd"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction-review-evidence/checks.json",
+      "mode": "100644",
+      "size": 2733,
+      "sha256": "acf0e1de1081fae88e750a2be86b406d7893c261db9679f1390aafa59a752f41",
+      "canonical_blob": "3ec33b34ff67896458c706060ce626f21cd2d04f"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction-review-evidence/input-bindings.json",
+      "mode": "100644",
+      "size": 13941,
+      "sha256": "ff0f6abb87436705508924f1af34894e19bdb40ef4b3ca124e76b09318274214",
+      "canonical_blob": "e5cf4e679e9e9ee132aa94810fd04310358dafa9"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction-review-evidence/release.json",
+      "mode": "100644",
+      "size": 2137,
+      "sha256": "16cb0d0ce9ee38a7c3d67d67c98233b28d87fa8fc2def7a24ddf54e9431ba9a6",
+      "canonical_blob": "f32c038457a07e3d75b07e6946236b0231fd7d9c"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction-review.md",
+      "mode": "100644",
+      "size": 4260,
+      "sha256": "b2757135ca37e4a2d8a7fcf119298815593afcddc7346b4a58c3a6fa22450f61",
+      "canonical_blob": "6ac04f2d27628c2e6a7df5441f1403b52242d198"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction/evidence/bindings.json",
+      "mode": "100644",
+      "size": 4224,
+      "sha256": "a4dc3e022e39660193d52fe57afa2e3a4816481c5dbd01f017c63f85d9fcdd8a",
+      "canonical_blob": "b590f77f075eff70aabb1ca2fe524c0cfbaf5778"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction/evidence/checks.json",
+      "mode": "100644",
+      "size": 1845,
+      "sha256": "490d91308a7897925a58b34edded3c0c546784ad4c4d5f7d7eaf81e9f275e89c",
+      "canonical_blob": "0f55ccf865f959deb89000198ef6cf3822022dcc"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction/evidence/main-paths.json",
+      "mode": "100644",
+      "size": 1077,
+      "sha256": "2bd4ff2b3eede59803f515aa5f3e3dd8bbc90ade77c571686a1a099118b342ce",
+      "canonical_blob": "5c0b7cc1a78e4c1119075e06da7e4a70c202ca62"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction/evidence/release.json",
+      "mode": "100644",
+      "size": 1945,
+      "sha256": "8f79ca5e2deebedc055d81b79731ecb4c427df7799e38abff36fd16908bcfdb9",
+      "canonical_blob": "42ab3cd1d344ea5647d219a24302ce79429dd672"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/correction/execution.md",
+      "mode": "100644",
+      "size": 3390,
+      "sha256": "cea45eb9e86cbc84d49bea1776b45c173f8a884aa06269fc0a5f3e0b1ae0fdca",
+      "canonical_blob": "cde742d8ce35a327a0b5621ac2ca1ba11d322e32"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/draft-api-comparison.md",
+      "mode": "100644",
+      "size": 13861,
+      "sha256": "76dafbe67e4f69ed6667d91ec5e833bdd560cfc2d67dce020d45d0b015a08f96",
+      "canonical_blob": "7226c4cfe21b0fe7468ffaca7cb9d5431480e9c6"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/evidence/checks.json",
+      "mode": "100644",
+      "size": 1972,
+      "sha256": "6a045dd9c309a5f3beebc13eddec873ee7cb24966598c94c8594ff28aef59139",
+      "canonical_blob": "e86e1e9ea203c2e12118239bf9a68debfce55be8"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/evidence/cli-checks.json",
+      "mode": "100644",
+      "size": 1781,
+      "sha256": "95dbd7113c4d33e1e15e962e7916ab65b9838de84818e282a71ab1731babdd92",
+      "canonical_blob": "e7d9599d134cab00a9cc667dd5f464edfd91428c"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/evidence/input-bindings.json",
+      "mode": "100644",
+      "size": 7951,
+      "sha256": "ec0d7a17398863e557655c4011c0016b696bedccd3dafda7ffdfe367f5ec1d8b",
+      "canonical_blob": "345ccf00aefc971c6924ca7d8237ef736a650b4e"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/evidence/main-paths.json",
+      "mode": "100644",
+      "size": 2146,
+      "sha256": "a2fc8b49e35dffac8bdf662ceda8d3c98ca5412851b871f118965e0e098b0af5",
+      "canonical_blob": "b83027b914c0a2bfa1560c733297b9ca54caf849"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/evidence/release.json",
+      "mode": "100644",
+      "size": 2185,
+      "sha256": "a0194a36b59fb467ddebede9a6cc929917a9ffb7ffe17f83f547fa95d6faf862",
+      "canonical_blob": "b6f2666d54d7fbbeea62e9d75aa14e50393f9dba"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/execution.md",
+      "mode": "100644",
+      "size": 8614,
+      "sha256": "d16b6c4e5c95ad32c819f34565e1b813877e0bda9b795745869dad7c7f4748df",
+      "canonical_blob": "ae8c49a3942131fd4c347f1e885b5e66f5cec7bc"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/final-review.md",
+      "mode": "100644",
+      "size": 6412,
+      "sha256": "08933ea8c522e54ab155eae4ac2ddb67c5ae772f1de5c303dc6e2914b5018923",
+      "canonical_blob": "ab7e1811bc764801de0b6c7e31698ddce6ae5534"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/main-execution-dispatch.md",
+      "mode": "100644",
+      "size": 5341,
+      "sha256": "ffaa0f305263b252df7d6aca2b54bcc90229048f99794778029ffc43fefb525b",
+      "canonical_blob": "fdc2ce091f4d5ad551a9d36c392d9bed673f6692"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/preparation.md",
+      "mode": "100644",
+      "size": 8415,
+      "sha256": "9a4a3161642018c4e455d3afa6b9f104bc2fedc005ff3ad48b46ffe0fe68aa4b",
+      "canonical_blob": "16e1b1dab9fde553c6ceb845f9ac3032b0bef6ab"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/proposed-main-doc-edits.md",
+      "mode": "100644",
+      "size": 13491,
+      "sha256": "02754a043b1902e0da251d7987c72799ac11d4cb0e90ef4aca8f08553bebc363",
+      "canonical_blob": "2c0d509e32cac2a39b958304a77979f8cc9935f8"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/publication-grant.md",
+      "mode": "100644",
+      "size": 3188,
+      "sha256": "be8ad1dfa3c1f0ce39a8283290606ceb2643eea78130bac0ceb50c660798447e",
+      "canonical_blob": "9ab551552d5d8a731b54fb2bce18521a6fb0ad6c"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/publication.md",
+      "mode": "100644",
+      "size": 7044,
+      "sha256": "173d2251f5efcb54d4e0f6ee73fe7004ef86d633f1059aab577be307fda30969",
+      "canonical_blob": "3409cd4836da6c5db3b16f719ef83d4e381554e5"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/review-dispatch.md",
+      "mode": "100644",
+      "size": 2751,
+      "sha256": "87bcd3e32c4c26e2b1bd8c23bfc31ad2b42df25ae11804ee0e5f9a97da7eed88",
+      "canonical_blob": "b20cbf276a760ba1c7f76e42ebe4513f0a4bb214"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/review-evidence/assessment.md",
+      "mode": "100644",
+      "size": 4468,
+      "sha256": "73add1df271fc396ab58feae1a4f65b0449ac0653b95b0c416828a835024ae5b",
+      "canonical_blob": "e11cfdd6e39876e22e562493c3c4fab1d50613d2"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/review-evidence/input-bindings.json",
+      "mode": "100644",
+      "size": 10794,
+      "sha256": "5748bce34a72a4e76202657a74dc9992b999bc76a47fd59eb43058ca4180f1dc",
+      "canonical_blob": "cf36424a40923b81e583cf4acd8a8f83c8dfb2c8"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/review-evidence/provenance-checks.json",
+      "mode": "100644",
+      "size": 9837,
+      "sha256": "1a81da1a8d0e9dad51524e830b7aaa3e705aebcaf79723df2152521f4cc5c227",
+      "canonical_blob": "fff28c91687c3622c3a520dcff5fabff13ed3ab9"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/review-evidence/release.json",
+      "mode": "100644",
+      "size": 2522,
+      "sha256": "53238a75fd60d6f06f188dda28890d488aaf1cbc43503ab78c246cd77db307e0",
+      "canonical_blob": "47e1806f4752f79e5d2ba9a44cbffd91fec6e7ec"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/review-evidence/static-checks.json",
+      "mode": "100644",
+      "size": 2603,
+      "sha256": "74c05e666d21560405fb23b4c5210ff7991d680edbcc44473ce7d7475c72860d",
+      "canonical_blob": "ad4115e2fb800988d98199bf4f0e85dae51e20c0"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/execution-dispatch.md",
+      "mode": "100644",
+      "size": 6812,
+      "sha256": "473b9034184b5461e60237fcbef24a147e3ceec6df3556b977527d0fa584f372",
+      "canonical_blob": "22f7e5d444bf4e6cdc7a1433f8071d8c4477e0ba"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/execution-preparation.md",
+      "mode": "100644",
+      "size": 4160,
+      "sha256": "c89b0d2de1cf6db3ce7fccdfb36fd6b1946eeac2c5b9239ccbaaafc92c8fb7af",
+      "canonical_blob": "b411c7c917eeba977d9e6b2b2fa0a190c4394432"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/favorite/af1-final-review.md",
+      "mode": "100644",
+      "size": 3458,
+      "sha256": "9db79384a8b3fcf33d6e31844cd399d81037613db6a84563a54e393b1b3a1a43",
+      "canonical_blob": "72267e45a0ae6484e8c861beaa2d0a310050f3fc"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/favorite/af1-review-evidence.md",
+      "mode": "100644",
+      "size": 10112,
+      "sha256": "ed2c50888979c0b92268830008c4012fb263d08dd1bbd7ba9e9ac8f4348d2a5d",
+      "canonical_blob": "0430e0f6854ca87d84799370639a3a8e9c856da0"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/favorite/af2-final-review.md",
+      "mode": "100644",
+      "size": 4106,
+      "sha256": "b57b53f7ae43c8841e10f9070e32c38e409dd519c114e9ceae6e9d29b8646da6",
+      "canonical_blob": "d58d7eadf95e9a12b47fc39faaa6562374a7e17d"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/favorite/af2-review-evidence.md",
+      "mode": "100644",
+      "size": 11393,
+      "sha256": "f961e1413a4ee92ca49f685e3f86ae7e3172dedc399f7def42f86c9f5d2e99b2",
+      "canonical_blob": "76617ba1d46fb95042280e7007920ca4eda17c9b"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/favorite/final-review.md",
+      "mode": "100644",
+      "size": 4000,
+      "sha256": "278d5beed06300bc16430315e17010f3f78d89aff6eaafd539f97539d320cc75",
+      "canonical_blob": "627b60bd1416bed41f1062f22cc8a02d1937cec5"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/favorite/review-evidence.md",
+      "mode": "100644",
+      "size": 10924,
+      "sha256": "0e006ba23510350a82f7881c16c3ca4b35b202974cfb8883a548a672d44461ab",
+      "canonical_blob": "a0ddd6e79e1549cac2e0fdb229aae0fe2c4aee3c"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/final-audit.md",
+      "mode": "100644",
+      "size": 4959,
+      "sha256": "520914650383518830039a9049bb4d9c398aac43e0eb199cc0651914577a1549",
+      "canonical_blob": "c1edf67708eb57e5d50bf3c58c90717c9b7ea262"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/evidence.md",
+      "mode": "100644",
+      "size": 21145,
+      "sha256": "a8a9356cdd30c9116b72e39e6780036672701b40c2310ee835054b2a6c789641",
+      "canonical_blob": "7e469702bbda6a4aba1caa94a3686979964a2dd3"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/execution-preparation.md",
+      "mode": "100644",
+      "size": 2892,
+      "sha256": "f08db5072ed8c1ad4304debe762ea9a960843287c7b174d35860b32c805d44ed",
+      "canonical_blob": "208fcc360062af01f43f10088ce425dd3fa061c1"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/fi1-amendment.md",
+      "mode": "100644",
+      "size": 11920,
+      "sha256": "346566bb67b9ec3f14663266b973eaac5dc1bdbfb40aea4dc21500c9000a2fed",
+      "canonical_blob": "fddbb6b5499cd861a9e30870526ac1ce150fe1d6"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/fi1-review-evidence.md",
+      "mode": "100644",
+      "size": 8376,
+      "sha256": "c7dcfb5afdefa2e311ed811859bd57dfcf518ec486dc6304caaa5bbed349b529",
+      "canonical_blob": "3af394882ed301ed5dfc39f15732859f54fa260a"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/fi1-review.md",
+      "mode": "100644",
+      "size": 4315,
+      "sha256": "631407d9a346f1d433aca01b13b15dce572314138a976e41b3e478bc8929abe5",
+      "canonical_blob": "8a6b163ccf281623968395a42400385a2a271eb5"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/plan.md",
+      "mode": "100644",
+      "size": 3579,
+      "sha256": "236a959474506e5aa81c69d5edbf554c83435db2c86ef6628dce9c241e63c029",
+      "canonical_blob": "a79b4d2f8ee516a217f1e8ae528e99bdae6ec09b"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/requirements.md",
+      "mode": "100644",
+      "size": 13005,
+      "sha256": "388bf069bdcb4ab0360159f8827a1c6d4c2101788975cf740c36ba2ee95a603c",
+      "canonical_blob": "ecc988dab5c67982c2f23722dde3b44727b78f8d"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/rereview-dispatch.md",
+      "mode": "100644",
+      "size": 1942,
+      "sha256": "33bd7fcdfe1728f5ebf52c3021ce20a08cd173ecdf1909118e48a9f0ba9c446e",
+      "canonical_blob": "ca8e4e049e13a2c593a72bd2df98fd69cb42c336"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/review-dispatch.md",
+      "mode": "100644",
+      "size": 3137,
+      "sha256": "e8f1851463053a209b400b9b0749edb41b9427337a3f2ca1247835e1022e15c3",
+      "canonical_blob": "b564849b949e9724eea35282bbd746bbc39a8153"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/review-evidence.md",
+      "mode": "100644",
+      "size": 9622,
+      "sha256": "5444922416dd109229248ee96e5bfcfde6d0ab1b6ddb8788321aeae199ca40e7",
+      "canonical_blob": "6a0cbc68c37c32b663e56abef9fe156d627743f2"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/review.md",
+      "mode": "100644",
+      "size": 6680,
+      "sha256": "6129f1af188469efba646d2974a33745932af4408aae7bec9caf1e10464c413b",
+      "canonical_blob": "0265f15d2680729ad98e9bed972b7ff52b5d6d8d"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/followup/revision-dispatch.md",
+      "mode": "100644",
+      "size": 2777,
+      "sha256": "4a8ec41a3f4b2f7f711d0117b2d307f226ffb2773d90baa24f76fbf1a6c63b29",
+      "canonical_blob": "0ed2b1a1d0e168754966a781cdf72a385740a993"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/fresh-audit-dispatch.md",
+      "mode": "100644",
+      "size": 3030,
+      "sha256": "81baa63f92530ec6f5982c19711ab1726afc4c9ce20aa3ee624621e2b68b3132",
+      "canonical_blob": "48fdfa33f238a1dc90b0488253b746fb16b92be0"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/implementation-review-dispatch.md",
+      "mode": "100644",
+      "size": 4588,
+      "sha256": "c975d906afe38ab0fa180024c3ce9e5282d33fa27b01ac385b5b9d12c7ce0adc",
+      "canonical_blob": "e8e2e00326d718b4eeacaa4289a2606976504c6a"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/plan.md",
+      "mode": "100644",
+      "size": 8906,
+      "sha256": "cf0dc6758c0b7836f1e708db7921dfc4ad19d297e2eda34afe7df626cf05da38",
+      "canonical_blob": "480a46dc408cf7a0137ec36da9db240c06bf5bbc"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/archive-grant.md",
+      "mode": "100644",
+      "size": 3151,
+      "sha256": "576e3dd698dc2f02ec2f68636835cbd94b032fcea9c74722996773abd8c305f1",
+      "canonical_blob": "16a99cfa8db2557b41cd6015e2b1f2d492be413f"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/archive-preparation.md",
+      "mode": "100644",
+      "size": 2759,
+      "sha256": "0d2f2923d796a2721bf320cea5387541bb3af8fc20d260f1b389c0d2e4d5bfbb",
+      "canonical_blob": "c110e5a0d1bb9f0e8a14f86ff9c9f929ccb2e73b"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/archive-review-dispatch.md",
+      "mode": "100644",
+      "size": 3778,
+      "sha256": "05583dc23d53738640623cf73a48878a64a26b8cd343497d289d30c2791e9223",
+      "canonical_blob": "bc236c0bd20e8048f97971eb1905ca8e800da49e"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/corrected-manifest-dispatch.md",
+      "mode": "100644",
+      "size": 2495,
+      "sha256": "37e682d9d2cb86fe9dc359d7e6a259ba57e95b49e4b2bbb0328777e5f7712ab9",
+      "canonical_blob": "da6c5b1572f22ebd3d5f8f87178d6360465ffaac"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/execution.md",
+      "mode": "100644",
+      "size": 5436,
+      "sha256": "33fe24f161e532f62c6f8e313e1f6838a63bea5f17da5921e81464602ebc5745",
+      "canonical_blob": "9d502d2e577465591c7615b752b680ebf4f4c589"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/final-manifest-dispatch.md",
+      "mode": "100644",
+      "size": 2335,
+      "sha256": "329e1e8d9d185211e2fe3b735afc32a99cf59ae1600f14c73e540b3a99f3a569",
+      "canonical_blob": "e1bcbf514354e41903ba9143ed654011e59b0fe3"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/final-manifest-preparation.md",
+      "mode": "100644",
+      "size": 7002,
+      "sha256": "f7d6ffea7602726b6e254e587ca8cc1388c004330f3ff95d6537b45cfa5131ef",
+      "canonical_blob": "70e4341aac16f3c5162c8d3da67c9d23b928e829"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/manifest-review-dispatch.md",
+      "mode": "100644",
+      "size": 3148,
+      "sha256": "555350d59ee1415f7b19369f1939e16709ba00fb5b4d1a925a11602e9d02cff9",
+      "canonical_blob": "353573ca7b65491fc3c214f6ca864b7961680bbb"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/manifest-review-evidence.md",
+      "mode": "100644",
+      "size": 10936,
+      "sha256": "7f10affa647bbbf36973ea95e9c0a81e5571676752bd52af108f0de5b907f8b6",
+      "canonical_blob": "168cf896a435a2eb34cca86449860d219312ad0a"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/manifest-review.md",
+      "mode": "100644",
+      "size": 3415,
+      "sha256": "17620cc25c8d7dd254ee7739b52188abb05fa5b3ed59f02123a4fdffc3a5f2a8",
+      "canonical_blob": "97966e7712879758a9a91da02f9ae2629d2427af"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/preparation-dispatch.md",
+      "mode": "100644",
+      "size": 3854,
+      "sha256": "4f5db034e4247825e34c6ef523c48807056e0d25e3fad4c6f0a71e731079a4ce",
+      "canonical_blob": "f52514d33c76d88519f08c0329c64e41f54ef728"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/preparation.md",
+      "mode": "100644",
+      "size": 10684,
+      "sha256": "52bc8fc6458ec8ef0305d36f156f7c7ca2f559768ea502e7a400ac0b497b5807",
+      "canonical_blob": "6044df5dc936225d58cfcc0dbb1c131a9fd496c2"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/readiness.md",
+      "mode": "100644",
+      "size": 4495,
+      "sha256": "6cf54dbe474040e0d826298d9555d69231f6bd1067bea593f58b940046dfdec9",
+      "canonical_blob": "e0bc3134deb712dd3f8d4d6fb0c4e5c5f53d7116"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/root-document-check.json",
+      "mode": "100644",
+      "size": 751,
+      "sha256": "25659d4c67a487d15998caf4da1079b399798f1b159b9bad633f42e10ade6fa4",
+      "canonical_blob": "10680d838513ee2f31f248937b16f5ff5b2b78fd"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/root-hosted-check.md",
+      "mode": "100644",
+      "size": 1013,
+      "sha256": "d3e1b97a4476bc214c49a73a14da756e22d76f58f38c65773c4f2b60b054f697",
+      "canonical_blob": "b57e60566999828f1b1fed3651c31b0668aa1398"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/root-source-check.md",
+      "mode": "100644",
+      "size": 1535,
+      "sha256": "5abfa7a619b0d65cf90e20efce56f942e65394bda872d260566a2b61d69e002b",
+      "canonical_blob": "69aa964e42757d65e65b588833ceb562061224c9"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/source-grant.md",
+      "mode": "100644",
+      "size": 3758,
+      "sha256": "4e66cc122025b4403e31605950e4c4805f802f00793e7dbc48166b2d904e87ec",
+      "canonical_blob": "399bea8ac1b7b9c6a488413437a019261f4fe97f"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/source-inputs.candidate.json",
+      "mode": "100644",
+      "size": 256327,
+      "sha256": "4520b83afdc058731da2a1922692e68a09dbfe04e7e7c147e77141f2a421a721",
+      "canonical_blob": "15fc1bfff33b389e382257f412c0753c0f35a1f0"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/source-inputs.json",
+      "mode": "100644",
+      "size": 416119,
+      "sha256": "7a0b23cd5f0bc50130ea1173a1f2fc81fd5407c0b90e89a81a48e6ae9c94a48a",
+      "canonical_blob": "1583b4c43777ff2828ea325b17e7604d14bd774d"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/source-paths.candidate.json",
+      "mode": "100644",
+      "size": 79815,
+      "sha256": "951390d03d1b49ea5f12cbdd3aab665a1672f6c69f378f4d5710d828885baaf4",
+      "canonical_blob": "a9f28296700184364e3b850b578f8de520a3be7d"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/publication/source-paths.json",
+      "mode": "100644",
+      "size": 129129,
+      "sha256": "04d63a257e73a4e7927a4517037b194ee870ccc1880c2fb05d0685a6aa0a2737",
+      "canonical_blob": "abedcbcdd8cda1d81fc3c3e0c01b440a16b5dcc1"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/query/final-review.md",
+      "mode": "100644",
+      "size": 4336,
+      "sha256": "acd4d2183f1a5a5fb35b98e33fde650de230515e85f63cb541d81406cbf93945",
+      "canonical_blob": "8981dd03f21635c1754ae35a3bb9c99370369636"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/query/review-evidence.md",
+      "mode": "100644",
+      "size": 10859,
+      "sha256": "b4c4b5c6f08dedee74db77188032680eb46c3c82465dcc7677cbfa1fb11f1301",
+      "canonical_blob": "4c24140c1c6f969557f8dd9085153df6a384648a"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/requirements-rereview-dispatch.md",
+      "mode": "100644",
+      "size": 1985,
+      "sha256": "4495765b8b7703dd3da35a905c66375745b3d026a29301ae253806275a4237c5",
+      "canonical_blob": "f4e526d61f5d24a29e9c915f30301234763c9b3d"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/requirements-review-dispatch.md",
+      "mode": "100644",
+      "size": 2995,
+      "sha256": "f2d9af7f4a556cf4583c05dd927adc90367b20d468af5319b17c27a6c157cb7e",
+      "canonical_blob": "cedf343809679580722696fe9a8032ebb9769335"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/requirements-revision-dispatch.md",
+      "mode": "100644",
+      "size": 2700,
+      "sha256": "47dc279d3d595aa9788122e9df8b55ced2c82e61fb0ff78c2e8f0cb38cfdf83d",
+      "canonical_blob": "5dd8cc84b8f1792f606e0c88c9f0a7193fb7553e"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/review-evidence.md",
+      "mode": "100644",
+      "size": 14431,
+      "sha256": "854e1949571d213f81b396ee80a9ad3eac8616ad381d47d9c89f4a151a5f6bc0",
+      "canonical_blob": "4717c4812b68f417ef84eb97de1c5ec91f5488ca"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/review.md",
+      "mode": "100644",
+      "size": 7082,
+      "sha256": "d844df0ca0fa41556e4fef0bb7a4f34f5a01ad2b688a11aa0ca91039b2342fdb",
+      "canonical_blob": "e68d2772c9d7ee2f86d21e86ea35d2acae2f95ae"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/safe-parallel-integration-adoption.md",
+      "mode": "100644",
+      "size": 2954,
+      "sha256": "b7b18bea96e8512e9c83936b7539bd78804ae8a788a9fa8c0381b7c4aa41f378",
+      "canonical_blob": "684b2343abe2279a644c314d3375ce0262c4f03a"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/safe-parallel-integration-proposal.md",
+      "mode": "100644",
+      "size": 4980,
+      "sha256": "ec174907a35cbb5c57c091f20261980acc389ae5f22608aea8a50587e037f450",
+      "canonical_blob": "392ec42f1d666a0d263e2689cd07ca487b4390b2"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/scheduling-review.md",
+      "mode": "100644",
+      "size": 7559,
+      "sha256": "66ffb52f634a819220ffc2f53895ea5e2419bb2073f236c3d03fa9befce5a69f",
+      "canonical_blob": "4d39be80919a857a2f7d5efe42af19993f5bc3df"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/scope-decision.md",
+      "mode": "100644",
+      "size": 1911,
+      "sha256": "67822f0c573b01681bd2311910626c328c98b7252a97b5e9e68b327fe7fca911",
+      "canonical_blob": "95fa6a51b57457c87c1926331df738f4d15e52b6"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/siblings/count-clarification.md",
+      "mode": "100644",
+      "size": 1016,
+      "sha256": "7d4e0addca501e790324f15bead8680c2d9799f820364e20c141d2782f631b94",
+      "canonical_blob": "1b4bd6cf46c750f9939afb61067a9bf1f5347a61"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/siblings/evidence.md",
+      "mode": "100644",
+      "size": 18257,
+      "sha256": "de6a4e7406490f935a7e5a02e78d7dfe4c1e82b54131653c7fc420cbc5256e33",
+      "canonical_blob": "a7cf49b9ed4a8c5c0ab76c1d7f3de895a234b66d"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/siblings/inventory.md",
+      "mode": "100644",
+      "size": 8547,
+      "sha256": "4e11d09238de04d0254f0608f2210acb976fa2ce131b742b4aed191dde58ee30",
+      "canonical_blob": "44b0c64560e07c6e240d125696e0573116f6a08e"
+    },
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/siblings/requirements.md",
+      "mode": "100644",
+      "size": 12151,
+      "sha256": "c1936ede5063d9cb27ec947b15be7f35118cf1034be071e0dae46bf83b1acdbc",
+      "canonical_blob": "e6a332cdf0503fb611e1c9ad1e313a5fccc74bb4"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/accepted-requirements-binding.md",
+      "mode": "100644",
+      "size": 1434,
+      "sha256": "302dc057af98a2153c3c0de918ac3b33ddfeafefb664b722f7d13a158329ad1a",
+      "canonical_blob": "2e719ed20c0c9c6ef252f8f4581a4acd6b79bbb3"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/audit-evidence/bindings-and-scope.md",
+      "mode": "100644",
+      "size": 10110,
+      "sha256": "97a84037cf46f53ec5a25c04a7748c40693d066ea27d919234433f9242cef23f",
+      "canonical_blob": "03823a30b92d271f5944e23c7ebed9ac0ca23a5d"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/audit-evidence/ended-history.md",
+      "mode": "100644",
+      "size": 3954,
+      "sha256": "c7bcdcd8ed756632b5ce0a9e54b03f46ce9cfef601a9ce45c3d88cf59d48159a",
+      "canonical_blob": "09fba4a7c79d3d459af3d1c514f782807c1955d6"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/audit-evidence/interaction-child.md",
+      "mode": "100644",
+      "size": 4179,
+      "sha256": "fe99acc0e3c7a55b8e843dbd0cb559f1e8a6713c77afc5b0443bcb2abe019f3c",
+      "canonical_blob": "1e8c85f25db80b8298910d1af2b5fe178e2199b2"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/audit-evidence/node-danmaku.md",
+      "mode": "100644",
+      "size": 3254,
+      "sha256": "e302664f06f83424269e355ae7c0e2136d4365472cefb5d07785af97d81c6b8e",
+      "canonical_blob": "54f6e3335b2cd6de0aadabd134ceb52331334127"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/checkpoint.md",
+      "mode": "100644",
+      "size": 20149,
+      "sha256": "4ff60454fdfb3af10af60eefac56ec1ce934583154419822a3cfc4f6b8c8a1cf",
+      "canonical_blob": "f7227f4947577c6c2b6f429e89e6cd2db30b3aab"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/corrected-verification-dispatch.md",
+      "mode": "100644",
+      "size": 3763,
+      "sha256": "63b3d7590ba95b7e3a54ffa5f4f300ffafe33bfe88fd0e1f3acbce6d6b544235",
+      "canonical_blob": "197bf8791f0691d16906637a4dedbe892803fb4d"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/discovery-coordination.md",
+      "mode": "100644",
+      "size": 5549,
+      "sha256": "efb19d18d75bb606001c4fa2f93703078c6175a0b859b83e099cf7ca84c002e9",
+      "canonical_blob": "2c650ff78dc414b52b846bfa42bc58d6a714ea94"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/documentation-preparation-dispatch.md",
+      "mode": "100644",
+      "size": 3669,
+      "sha256": "e056e0d37af09f591da2bd298e0281da389e2dc4f7323c1e0513a2d7d414ccf2",
+      "canonical_blob": "26f931186e4df9f0f000bd93348b172aaf4ab3be"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/documentation/draft-video-memory.md",
+      "mode": "100644",
+      "size": 19134,
+      "sha256": "2079bf60ea77742c7d95dfaf4689eef24c4749c4b9bd41776ea6e5449fc681e8",
+      "canonical_blob": "e075e10e573252554a9ec8687ec185b9ca27db38"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/documentation/preparation.md",
+      "mode": "100644",
+      "size": 10495,
+      "sha256": "368b6a20250daf4fb1011d3d57037fd701f55c07aa7dc9a91a565830410e6b96",
+      "canonical_blob": "fb8241885f934ced07e5dec520ad346583dae4fc"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/documentation/proposed-main-doc-edits.md",
+      "mode": "100644",
+      "size": 17123,
+      "sha256": "a57fb6ff400d9313591273dbf86359390e5a1470e4c07f25ffd324b20f15f70a",
+      "canonical_blob": "592179e3190f79006fafe903aad02b06a562f4a6"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/execution-dispatch.md",
+      "mode": "100644",
+      "size": 8832,
+      "sha256": "60a4f9aca97d29a363da5e2175cf65b2da825ea5780d955e13a67a23544413a6",
+      "canonical_blob": "12f2c74e23c612491d3bf8adb609fa690e5cc720"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/final-audit.md",
+      "mode": "100644",
+      "size": 8094,
+      "sha256": "3b564ffbfd6276f26b0c63fa25ed617dd3ae3acaa2d5536fb862c281011a8e90",
+      "canonical_blob": "629e5f5f28190f9442eb3e76c765290d00e3f962"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/final-verification-dispatch.md",
+      "mode": "100644",
+      "size": 5577,
+      "sha256": "18ad7f63d4e641f996331cea0ef5fbb4b46e4b42008d7e1e38ee11bb9354aef6",
+      "canonical_blob": "0a2f0569bfb9f2384c300e8cc6dd7b52ce044833"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/fresh-audit-dispatch.md",
+      "mode": "100644",
+      "size": 4046,
+      "sha256": "09ef0b66b365f029145ccf50f4a7c02b9c1ff601dacf2245fb4b7c6ae7ee56a3",
+      "canonical_blob": "a2463b771178c4e59cf6567fe22a2853cc083da2"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics-dispatch.md",
+      "mode": "100644",
+      "size": 2755,
+      "sha256": "49f1ff96108e2c9610d454fd1650541ba02f16f8ff4ce27a121484dd11749daf",
+      "canonical_blob": "3764e7b8e25430a35480563c4c490d59086c9a32"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics-review-dispatch.md",
+      "mode": "100644",
+      "size": 2648,
+      "sha256": "d265a796f964471b57c1fed95b183ba119f8761dd2346a59363e8317b1499084",
+      "canonical_blob": "e7bbbb383a684cc8e5b04814317bbc8351da1c75"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics/evidence.md",
+      "mode": "100644",
+      "size": 14928,
+      "sha256": "54db896b6b930c297ce61558cf9a0e4d2439f3342734ca4afa5e7ee1995f7090",
+      "canonical_blob": "2fc3669c133d987ae2ce16659d52b0d8de786b4f"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics/final-review.md",
+      "mode": "100644",
+      "size": 6231,
+      "sha256": "d5404c5bef5b05b7c59663ea05bf3316ce0eaa5fb4df450baccf7db90703ff33",
+      "canonical_blob": "da52b1cfd75c43fabf6ee23d477286361c9cffe3"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics/implementation-review-evidence.md",
+      "mode": "100644",
+      "size": 11996,
+      "sha256": "c06ebe388375f4e3fcd79f3385c12e53933725b11fff7f45fedf49978776ce8c",
+      "canonical_blob": "285832ec3d11419de431e51f335c7566e9f7e414"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics/release.md",
+      "mode": "100644",
+      "size": 1755,
+      "sha256": "3b13af4bf025e094c6d5649e180f93342bca0fa5cd5cfebf5fc2663f51a7abcf",
+      "canonical_blob": "9dea046d1701971b93aab7053d44d8fc52cb9a39"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics/requirements.md",
+      "mode": "100644",
+      "size": 11620,
+      "sha256": "fe8c2514db39a06181a8ea7aeafa2223239cb394918c757ca9828eecc7847263",
+      "canonical_blob": "e195d396d4f20859488ff14df364d5e1fe8c8579"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics/residual-rebinding-evidence.md",
+      "mode": "100644",
+      "size": 8111,
+      "sha256": "101010a5ff7977b111a8782c43939d3e3d8da25b82cb9efe3267a6a299f79973",
+      "canonical_blob": "964a4c1e11b5fae4180d3a0f04a34ca74d4074e5"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics/residual-rebinding-review.md",
+      "mode": "100644",
+      "size": 3460,
+      "sha256": "23f63927ec9d3184fbe3b79d504531aad03fbf6841a875ad6a9e8cffd53a86ad",
+      "canonical_blob": "d1bd3f5ff489321489048017eb6ea8b627071085"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics/review-evidence.md",
+      "mode": "100644",
+      "size": 11742,
+      "sha256": "21c09807315958bae3e2dd396edfb6fa7f4eb26f2fd77eea7456b4b2b7476032",
+      "canonical_blob": "39971d08bb8c0a3aed5290b316657c3965d359e0"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/graphics/review.md",
+      "mode": "100644",
+      "size": 6182,
+      "sha256": "26b6fdaf2ee911cb50a48a4c24730dc1d292c38b9ea3543717a55b92ec934253",
+      "canonical_blob": "e8819779f97e2aff925b3e31eef75e11b8e127dc"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/ig1-audit-evidence/bindings-and-proof.md",
+      "mode": "100644",
+      "size": 8139,
+      "sha256": "80f08e19e44112ac6f530ff5356f8b2a18487a496f3b9d36a5e5851b912a9dcd",
+      "canonical_blob": "c7e6f9fcc6236c1f240ba5168d04c4946d02c3ca"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/ig1-final-audit.md",
+      "mode": "100644",
+      "size": 3179,
+      "sha256": "788cf531554fbdbff7eb39c7661332e824ace56743d42fae8ff08311d0e2aa5c",
+      "canonical_blob": "94005f5cc54895460f4325b65d3fe1a739d361ea"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/ig1-fix-dispatch.md",
+      "mode": "100644",
+      "size": 2741,
+      "sha256": "ecf6446f65c4d7c9e5906ad376cad8ff368046343c9fdd7d7019b3a06b832796",
+      "canonical_blob": "40f29436dd6dbdc1051eae8ca0b1c108e9580436"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/ig1-implementation-review-dispatch.md",
+      "mode": "100644",
+      "size": 2765,
+      "sha256": "18aaecf0d508278ea8d5fffdd09030060e4156bf6a4269d8f61266856cccca36",
+      "canonical_blob": "08c41dbe0d9ccaf8df5c40d09a48faa477555d29"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/implementation-review-dispatch.md",
+      "mode": "100644",
+      "size": 5525,
+      "sha256": "d13b07577069872b35557c70d476429af12474966b97bed9f66d51a1fc40603f",
+      "canonical_blob": "0b00972fa651bb0f620a65801168afddd4739708"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/intake-observations.md",
+      "mode": "100644",
+      "size": 3055,
+      "sha256": "77b926d69e8108a1e9fe25749917a965d91a036238c30e084e711fe5259486cf",
+      "canonical_blob": "89cbb1f8cd516f54b414274c26894993d7cedbe0"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/integration-correction-review-dispatch.md",
+      "mode": "100644",
+      "size": 3267,
+      "sha256": "e2cfef380ab299c1cda706f0d1513d9cc633f8ac412a43e10cb8531d6a09131b",
+      "canonical_blob": "f4d70d84b393236b95b0e387085ab2311db127c7"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/integration-preparation-dispatch.md",
+      "mode": "100644",
+      "size": 2677,
+      "sha256": "87477b89235cbe2b516ae0f7ce2c927789c9be45933f0c9ae8f7562c170c65c4",
+      "canonical_blob": "4add625186427e61562b65497b8d889a943bf159"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/interpreter-provenance-dispatch.md",
+      "mode": "100644",
+      "size": 2744,
+      "sha256": "c5f5932baa6755ed3f5e0ff73c03b3abc337ecac74084b154ab5163ceac588ff",
+      "canonical_blob": "ca30dd0d37c4d974d50b80c7c0163c74b3280a2c"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/lifetime-decision.md",
+      "mode": "100644",
+      "size": 1602,
+      "sha256": "e1e6686b5bd55c67562edbe4f2b780be5b9bd0f9849618079c5acc1d899e1dbb",
+      "canonical_blob": "0836d477bb89a581d427e18e6e51815d396eefd8"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/managed-revision-dispatch.md",
+      "mode": "100644",
+      "size": 2069,
+      "sha256": "3f3435c0c13cb887d02042678a0ea64e8b83d1b4aa897a12ea6c36b37397cddb",
+      "canonical_blob": "e02189828216cc4a63b56bcb66b94146e0b7fcf1"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/managed/evidence.md",
+      "mode": "100644",
+      "size": 17101,
+      "sha256": "3875817369edc4ae2e7e720e8602717b46ef03d862b1cdcfd7289fb417b94d13",
+      "canonical_blob": "bb9db7afbb2e7f7f024400df693af85894e70cba"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/managed/final-review.md",
+      "mode": "100644",
+      "size": 4085,
+      "sha256": "7ab53643da47f1344cbf070c5a4c02afc94ef61a935ae615143d9ded168ebccf",
+      "canonical_blob": "88feb2d33ff74db35a6da7028474183b82fe09d6"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/managed/implementation-review-evidence.md",
+      "mode": "100644",
+      "size": 11309,
+      "sha256": "e973997c75ad0e8ee677116585f7da0d2dd0489f8927645ea08a0a6b1b062cca",
+      "canonical_blob": "1ca575170e2c9378fb0557532621bbd265eb20ab"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/managed/lifetime-reconciliation.md",
+      "mode": "100644",
+      "size": 15449,
+      "sha256": "cf5d001a7df0c878ed9f840516a2a461c85cef3f35386d4276b30fe279dfcdc0",
+      "canonical_blob": "3a61fec4b98aeb058b79ec6a09f396671d67f67b"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/managed/requirements.md",
+      "mode": "100644",
+      "size": 15856,
+      "sha256": "d82395fdaebd5a845536776de7cc78dbb40a3a297d629ca8d2afc8384a90ca39",
+      "canonical_blob": "d55329fd8ed12eb2593ffe3ef9c1e3d7bcb9134a"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/managed/review-evidence.md",
+      "mode": "100644",
+      "size": 15197,
+      "sha256": "aa9c0b3f55b019fb3e25345af63e4a28cb7cf22cf7b0d2adcf7488d4b61f7554",
+      "canonical_blob": "582c099d6b4f53da53db218a3ecf245e407a444b"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/managed/review.md",
+      "mode": "100644",
+      "size": 7155,
+      "sha256": "78bbdf106ac3423fc562e80e6f22a8196ecb0339fbd29dbf4aa168fababd473f",
+      "canonical_blob": "cc218ce155f3314b67eeb5b7e86113e0b65aa582"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/managed/source-proof.md",
+      "mode": "100644",
+      "size": 16240,
+      "sha256": "b6502e161ca9c06ca65cee89ed770f4ee4a018f0d160c00d4325810985f6cb22",
+      "canonical_blob": "a014875292e34d2b0f4482fd843acf24ca6cbcd8"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/measurement-revision-dispatch.md",
+      "mode": "100644",
+      "size": 2189,
+      "sha256": "b739c03e91e4efbc43b41a1ba8d123d9fac1b3d13281a2b3dfada0e021058010",
+      "canonical_blob": "251061ba6269c7157d81efa1eeb50195587618b6"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/measurement/evidence.md",
+      "mode": "100644",
+      "size": 17434,
+      "sha256": "6c716ef495893bcf528ac863d76d9895e97c02a6471125f07e568cf02c2661a5",
+      "canonical_blob": "afe292512daf4e74fe6b9abbb36baf3205b88879"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/measurement/final-review.md",
+      "mode": "100644",
+      "size": 3760,
+      "sha256": "c7caf0ab97cb78e5048ab1b7bd79e10ac2713854ea423742f92c2a3c5334763d",
+      "canonical_blob": "c713fc64d284f77e26ce983b6c827b0a91e4646f"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/measurement/implementation-review-evidence.md",
+      "mode": "100644",
+      "size": 8882,
+      "sha256": "16420a7e05a5c360284458cf0116ea14cd5e91c811c069ccbec92e762e38bdd0",
+      "canonical_blob": "f18d6a553db27908d15f431a72e07af8806e91c9"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/measurement/requirements.md",
+      "mode": "100644",
+      "size": 19801,
+      "sha256": "f6e6eb823cd8e34dcdf4e815a2b060f182a5af3349dcd526f93448a929065dd4",
+      "canonical_blob": "92407b899aedfe085322496eabadcda7fa37e814"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/measurement/review-evidence.md",
+      "mode": "100644",
+      "size": 7320,
+      "sha256": "260849650e659ac0bda6a1c86e39fa9ce783755f6c4158ba8d44088c329a6552",
+      "canonical_blob": "cc705f4140d63a37a4862e31e1297fac56505d51"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/measurement/review.md",
+      "mode": "100644",
+      "size": 3199,
+      "sha256": "0abf5ad3ea17cc693e1df4f8b6cbe35731de0690b885aee17eabb6642b913170",
+      "canonical_blob": "a33f238cfa77b8cf27b06e170a2c359e89fc90f0"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/measurement/windows-protocol.md",
+      "mode": "100644",
+      "size": 21590,
+      "sha256": "ebf596457b179158d95335cfdb05b989e6b364706bb348e50e004e29e18f5e77",
+      "canonical_blob": "79d24e099a66a7a3006393bb1df76b4cf54bb511"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/plan.md",
+      "mode": "100644",
+      "size": 8392,
+      "sha256": "d09c96ff18a4872fe93c980087bf55ae40ad663824032fabee09d538e297d308",
+      "canonical_blob": "100a0a4596ee96c8fedf716e187dd83b4fac8143"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/publication-and-docs-preparation.md",
+      "mode": "100644",
+      "size": 6218,
+      "sha256": "7ea168bdeaa71a1b851147e96bc10b9ee5c5a709cee1b817905c2bec88db3e8c",
+      "canonical_blob": "c5f6998d532bf3804e808dd545d3bcae509f2516"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/requirements-review-dispatch.md",
+      "mode": "100644",
+      "size": 3845,
+      "sha256": "c10daec273b8a10cc9bf0ec9f2198844e1be43d4a9bac0e246465337f6c68c13",
+      "canonical_blob": "ec1e29e58f6a85c85027af09f34afe11062b98a1"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/residual-amendment-dispatch.md",
+      "mode": "100644",
+      "size": 3276,
+      "sha256": "16054331af2bf4e03684c408e517a79bfc4019639aae1d464f9cc7905adf9c81",
+      "canonical_blob": "6905a788685226ededb351fcab7c42fea6451555"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/residual-audit-evidence/bindings-and-assessment.md",
+      "mode": "100644",
+      "size": 7981,
+      "sha256": "73b6b47885eb2dbca3e483f145fdfbdc9a58ad70264bbeac4c5ec050bc41f84c",
+      "canonical_blob": "91dc28caa4701d5bc23115f0c795705cfe8d814e"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/residual-audit-evidence/empty-refresh.md",
+      "mode": "100644",
+      "size": 5586,
+      "sha256": "642d8c96abee3cb5917c58e0305cc72dfeca85a4f46255e0c5218ce7ab1ace8f",
+      "canonical_blob": "95cb3cc08dbf3239a774117a9c518d1df06e5d6f"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/residual-final-audit.md",
+      "mode": "100644",
+      "size": 6405,
+      "sha256": "27768801f8ec00bb70c907090c4ae17ff5c0270f2eb4bd457f424ec4f12968c8",
+      "canonical_blob": "67bb0ecbf956371c9e87247f8144ac447696965b"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/residual-fix-dispatch.md",
+      "mode": "100644",
+      "size": 4787,
+      "sha256": "7bcad1da9a224170cba07436773e318c5b70d86891bbd4703733508f750b1242",
+      "canonical_blob": "96cedb49fbf7455d36e68f64f7086e2942989761"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/residual-implementation-review-dispatch.md",
+      "mode": "100644",
+      "size": 4941,
+      "sha256": "f453624520c66f94815eba4bdc736e0a18083955c35975356f87fd9e8aa232cd",
+      "canonical_blob": "235cd591d4e9869411e526e25bfb9bb57e1fb9a7"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/residual-review-dispatch.md",
+      "mode": "100644",
+      "size": 2339,
+      "sha256": "31251dc879c51d23e143dac323d05c90bd8b87a22544caddf7196a6095b1181e",
+      "canonical_blob": "a15731243f37bcc22006a1d52619ba8f8b60917a"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources-revision-dispatch.md",
+      "mode": "100644",
+      "size": 3089,
+      "sha256": "449c6a6ccaa7c46f71ab4d0f065f7132d2e00aa5c4a795b751514d45233bfbcd",
+      "canonical_blob": "2222ca221982fe25b76cee6e79bbe512ab0ca16d"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/RR1-lifetime.md",
+      "mode": "100644",
+      "size": 12435,
+      "sha256": "d3bad6d0c43830d6339877d9fceba1166b7ae586eb1c6445d45285f62a270492",
+      "canonical_blob": "53f0e63b747b47cd5a727b5e930e5ba73faccb8a"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/evidence.md",
+      "mode": "100644",
+      "size": 20273,
+      "sha256": "5d433ed477147d88219e055740aa1461df54a9f8da164b834fbc298d48336606",
+      "canonical_blob": "bbcb4277e37b840947c1f0e5952856458914cf50"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/final-review.md",
+      "mode": "100644",
+      "size": 7983,
+      "sha256": "dd3818015ea5b22c728d87f325be6bcd4c3ee13f0c4f4f28727722b20ffa5e0a",
+      "canonical_blob": "735c49fd72b7b3ccc3e91821608752a9c5d791a3"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/ig1-final-review.md",
+      "mode": "100644",
+      "size": 3747,
+      "sha256": "d359299d43bcbf0f4f23ba7bca586fa03d133aac08b39c72f359c99d1f071cb1",
+      "canonical_blob": "44dae924d6ca3b7795d1676451d5c91df23309c1"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/ig1-implementation-review-evidence.md",
+      "mode": "100644",
+      "size": 7207,
+      "sha256": "bfc7d229da319fb98e784945927ad176af89dae477314bebfcd6004414d4644d",
+      "canonical_blob": "51335a725650e6c6e3e971d916c925956dae64e1"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/ig1-review-evidence.md",
+      "mode": "100644",
+      "size": 6110,
+      "sha256": "2bd6e2293395ec759d7bcc1dbf266ed161e8b515ba865c570fb2b784a69ca1a7",
+      "canonical_blob": "2184c80c8bb89323d482834e0bbf92536ede06d0"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/ig1-review.md",
+      "mode": "100644",
+      "size": 4335,
+      "sha256": "033aba8ae121732ad806938046eb8f3c4f13e7129b418dca0355e86b5bea2c13",
+      "canonical_blob": "5b4d631b6a89316cf33a6960254f038e4f9855df"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/implementation-review-evidence.md",
+      "mode": "100644",
+      "size": 8845,
+      "sha256": "dfba01709bf85459ecd3aa0e7b7ecb8a26f8841a7ee0143bd9ff3e7edea9d8bc",
+      "canonical_blob": "540f59f878d7f8fd1fb63ccfe781ef239df9bcc8"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/requirements.md",
+      "mode": "100644",
+      "size": 15398,
+      "sha256": "04b7be3fc12239829d911237c39f2db2d8bc67c9fbc553fb27b2de39ac342358",
+      "canonical_blob": "54d6ad9e1054df019138d58e600125e30127d9f5"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/residual-evidence.md",
+      "mode": "100644",
+      "size": 10317,
+      "sha256": "ae797691807c994069f7faa1a0dc9e009748dc8ae000c1a75df242478f583ba4",
+      "canonical_blob": "50920c65857f0d69a74d4c471f93cbc91dcfb46f"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/residual-final-review.md",
+      "mode": "100644",
+      "size": 6245,
+      "sha256": "938f1a9c6611538b331786e8c333223012be271b74284e80d8e2579b2a1706eb",
+      "canonical_blob": "e3921525e7ab43ccce043a60394029324efc5fb8"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/residual-implementation-review-evidence.md",
+      "mode": "100644",
+      "size": 9391,
+      "sha256": "b16e24464676888406aa5a1ae78041b7ccc6e0326d1d8ec02e409c137ac66b10",
+      "canonical_blob": "904809e5bafb79528e91bed581ac4b443b2faa05"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/residual-requirements.md",
+      "mode": "100644",
+      "size": 19487,
+      "sha256": "bdb0d7b0a8f7880ed4557047e6fe3ad144f1364eb1d46c833d2e8151e6ec5ca4",
+      "canonical_blob": "afdd72d069d941dddf461d30c04d179b0eb266f4"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/residual-review-evidence.md",
+      "mode": "100644",
+      "size": 9041,
+      "sha256": "b847eac9a1fe61a6b2d8c3c257fb68ed046c356e33127e42d5078e45ec1b1fe2",
+      "canonical_blob": "bbc19362254c8a6d52488fb73408d86eb24b8e24"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/residual-review.md",
+      "mode": "100644",
+      "size": 5883,
+      "sha256": "68a7b832214e9addde6397eb4bf041732cde926db3b9b31b87ddd89aceb8398c",
+      "canonical_blob": "cf4e87c12c815938d07c99af2daf87a140c6131c"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/review-evidence.md",
+      "mode": "100644",
+      "size": 16084,
+      "sha256": "1dad7d24ba7c3225bb0cd486c768f32d602a0d2b3160e9d137f2ccfd4e9a9f2f",
+      "canonical_blob": "e408c4b29f75a4f7f11694132d515b90baa9ecce"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/review.md",
+      "mode": "100644",
+      "size": 6622,
+      "sha256": "af75ffbf3c453377a381aa19b84600090ebc28ef5358e6c940ef80e8c2d5e654",
+      "canonical_blob": "1df463649f2e5ee638ed6b1cb1ca441652854755"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/rf1-evidence.md",
+      "mode": "100644",
+      "size": 7750,
+      "sha256": "96797a90dca7581e9d230b334034f8e1accad6f1feb76e28b5ec1c9823d3026c",
+      "canonical_blob": "4f75101c68abf8d44c8c49677b6d0bae8de610ba"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/rf1-final-review.md",
+      "mode": "100644",
+      "size": 4279,
+      "sha256": "3ce9bb36b910c3ec5c758b824a2055b5deceb884bfb5773d28b715b9cb9d5855",
+      "canonical_blob": "d6bba3646dc44de378c1b04b2d6c1dd0363c7d9d"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/rf1-implementation-review-evidence.md",
+      "mode": "100644",
+      "size": 7916,
+      "sha256": "d7ccbb0867e873c4b411cefcd861da873b5488b62071f9b886232f2056d091f4",
+      "canonical_blob": "e8ef8466ffaa02448b89eada1978f014e825e264"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/rf1-requirements.md",
+      "mode": "100644",
+      "size": 9123,
+      "sha256": "ae1f47366b164493c45d43fd364cbefcf7aa5de0e287519d21cf69a35c34a31d",
+      "canonical_blob": "8911acd879f52b56742e02e48cbdcef01c2f66b4"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/rf1-review-evidence.md",
+      "mode": "100644",
+      "size": 6742,
+      "sha256": "37ad3e15c5cacc95b2c145b46f81a9bee99e5f9c602ddbb25a689d4da2d2ce83",
+      "canonical_blob": "5d5c06473afa6addb85d208c798906599ae5aaed"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/resources/rf1-review.md",
+      "mode": "100644",
+      "size": 5019,
+      "sha256": "6c5db06cd1885627fba0cbcd321b4f2c3ab4e11928f260b8bac8a1516d15da74",
+      "canonical_blob": "9f7bbea398b0079963922fd94c7bca4e001d440c"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/rf1-amendment-dispatch.md",
+      "mode": "100644",
+      "size": 2852,
+      "sha256": "bc11b2025f5903ad2cca5d4a3038c8ce932b4d0a93d173eb406c05ce67235729",
+      "canonical_blob": "2ae635dd40a7bff131730d75001b1cfb88400d21"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/rf1-audit-evidence/bindings-and-proof.md",
+      "mode": "100644",
+      "size": 8532,
+      "sha256": "134bfe35c70aa928127404b59fdd7020361014aa5f70c9e9bdf3a96b6e266685",
+      "canonical_blob": "572a29f8bdfc4db99be4cde58ac85b3b0bfd63b5"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/rf1-final-audit.md",
+      "mode": "100644",
+      "size": 3934,
+      "sha256": "f4b3d8bb66c0052abe919a611211fbfd69838ba56db7b9b036d2c4b6f4f49d3c",
+      "canonical_blob": "c693ddc75dbcea385f4d2c9fd03c4fc19041f3aa"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/rf1-fix-dispatch.md",
+      "mode": "100644",
+      "size": 3476,
+      "sha256": "b93d447be4e669ba41d898681f24604fd2767f69021a805c2aad8c359b80426d",
+      "canonical_blob": "2c6162ff87fc47eb8b0c5b3c22da72552386c524"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/rf1-implementation-review-dispatch.md",
+      "mode": "100644",
+      "size": 2884,
+      "sha256": "74df81c2d905cdbbbdcbb17dac076f0ae83c1fb55e8942ef8d67d613e710281d",
+      "canonical_blob": "99058d05c638e392b039fac4749416e115fb52e8"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/rf1-review-dispatch.md",
+      "mode": "100644",
+      "size": 1808,
+      "sha256": "1c17b9a1f54795bf17ca364b18042da132baff84791fd77fac860e00dd4af687",
+      "canonical_blob": "1dc227201a6d896fd7f3e1e4088b0446d651ca04"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/tooling-fix-dispatch.md",
+      "mode": "100644",
+      "size": 3323,
+      "sha256": "a23670490bd2218b357242ae623f64afe5ae4721508b84bbb6a108c0232e51a4",
+      "canonical_blob": "62c5ce00fc29f9531311354997f9f310d4e0aad4"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/verification/corrected-execution.md",
+      "mode": "100644",
+      "size": 3065,
+      "sha256": "f0ddebd71e55fafbda1cb176680cc7dc1b90d70d866121c2a187f92dae0481fd",
+      "canonical_blob": "829eaa77212f34f6ceffce0ccb76f51c94c4380d"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/verification/evidence/corrected-common-gate.md",
+      "mode": "100644",
+      "size": 9716,
+      "sha256": "547f5584b1eb88254ad371313f03f7b1acb66a96b9799304d621dc3f8b647bc7",
+      "canonical_blob": "a2b07d395a9f62f79d91bcd11a172b1614fae656"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/verification/evidence/final-common-gate.md",
+      "mode": "100644",
+      "size": 8994,
+      "sha256": "8b4c2cf586914aa3d59cfae0d6e9b7544984c47790336d02dfbb64a61e145205",
+      "canonical_blob": "2e0d073f430c1dfaed6a640e9ea3621676d40967"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/verification/evidence/interpreter-checks.md",
+      "mode": "100644",
+      "size": 5894,
+      "sha256": "09529a1c756ad91b7dabbf17eba0b3c1b9356281a258a21c2b3899b59fcf3b92",
+      "canonical_blob": "0fe78dfc81ea69d285fadcf702262fd4120e2956"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/verification/evidence/reuse-bindings.md",
+      "mode": "100644",
+      "size": 8864,
+      "sha256": "38f1dc883ea908dce7fbdf15f56d1ee5efc5b90ab5df36f758129bb6a010785e",
+      "canonical_blob": "1284724de7e440f13c3bb83fe64057427f310076"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/verification/execution.md",
+      "mode": "100644",
+      "size": 3417,
+      "sha256": "acd6e82a35f83f810e0b4ee93f2d9147450c90d3960a890498990dbc2cfdd878",
+      "canonical_blob": "4fde47e8d4980bf9017031703d7985c7ca34efc0"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/verification/interpreter-checks.md",
+      "mode": "100644",
+      "size": 2807,
+      "sha256": "8a2c6a65bc1ff7e39dbc5280a2aa7a341b5e12a81a2fc22c6115fb9bda520143",
+      "canonical_blob": "dfd468a3def44e6be5f200ca2031706df878f4f0"
+    },
+    {
+      "path": "cloud/rounds/20261125-video-memory/verification/preparation.md",
+      "mode": "100644",
+      "size": 9685,
+      "sha256": "6a3e76e559036fb77fe83882de64bbfd7b126a3d1a2fc85b747bb8b76524e4f4",
+      "canonical_blob": "edd3f2a11ba8ac1e2402fd34c0027bc6d475f620"
+    }
+  ],
+  "counts": {
+    "corePayload": 240,
+    "coreBytes": 2490255
+  },
+  "custody": "All root current-round/memory outputs frozen; no writes until independent verdict except exact reviewer outputs. Conditional mechanical grant needs PASS and root dispatch; final private manifest includes this core file and review outputs.",
+  "deadlineUtc": "2026-11-25T08:29:30Z"
+}

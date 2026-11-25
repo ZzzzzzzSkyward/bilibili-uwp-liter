@@ -1,0 +1,3 @@
+# Fresh API audit progress
+
+ACTIVE scoped reader; owning projects have not been built. Read accepted AS1–AS3/amendment, releases/bindings, actual builders/signer/transport/parsers, personal-space/following callers and favorite/comment UI publication. Independent execution, if needed, uses only `/workspace/work/api-shape-comparison/fresh-audit/snapshot/` with copied full current c2 Compile dependencies and a private entry point; scoped baseline binding is `source-inputs-before.json`. No main source/test/index/ref/cache mutation or service call. Final result/custody remains pending until `final-audit.md` is written.

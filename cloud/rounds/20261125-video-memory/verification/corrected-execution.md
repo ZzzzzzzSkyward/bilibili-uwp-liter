@@ -1,0 +1,15 @@
+# Corrected combined gate — LOCAL COMPLETE PASS / FROZEN / RELEASED
+
+The newly authorized complete command finished **exit0, PASS, complete_required=true:51/51 logical and52/52 executable stages PASS**. Every required stage was selected/available and exited0; no missing, extra, skipped, failed, blocked, timeout, cancellation, inventory/prerequisite error or truncated log. The original failed gate remains unchanged.
+
+```bash
+bash plan/tests/run-all.sh --tools-root /workspace/work/maintenance-foundation/quality --output /workspace/work/video-memory/final-verification/combined-corrected/aggregate
+```
+
+Actual run:2026-11-25T04:47:18.515995+00:00→04:48:46.033301+00:00,87.534s. This one new run is justified by accepted IG1's two-method Control correction, final SHA256 `262e0719cf4589ebd9e493937f377bcc95d43e092962aad30dbfc137275bcb89`. It is the **only** non-cloud runnable-byte difference from the first failed935-input gate; all tests/assertions remain unchanged. UX1D now passes its complete107 assertions; current player66 residual/39 lifetime/five graphics groups and original240/aggregate241, season141+497, recovery348, g5335 and all query/AS3/AF1/AF2 regressions pass in their existing rows.
+
+Fresh935-source before/after snapshots are equal, source manifest `c40d13c9428fa910b7066d223ac12a9295f136f213acab7303865cc6e401dc1d`. All5073 exact quality SDK/runtime/ref/NuGet files,732 PowerShell installation files, current recorded host binaries/metadata/launch libraries and final review inputs remain unchanged. All84 latest owning-byte checks pass; index/HEAD/local refs are unchanged. Provenance remains **dirty local dev7356b94893377558191b0d70576a52bae704c1f9**, not a clean or pushed combined-source commit. [Exact evidence](evidence/corrected-common-gate.md) binds report/source/tool/generated/reuse/old-failure receipts and all43 changed/new runnable paths for later immutable blob comparison.
+
+Current sampler46/21/106/55calls52rows, separate package15 and supported runner14 receipts were reused by relevant exact inputs; no separate label rerun. Actual generated helper/decoder/source manifests and all nine ephemeral player files, including history, were retained without script edits. Native Windows/VS/UWP/XAML/PS5.1/PID/decoded50video/heap/RAM/GPU/pixels/WinRT/service/session/signing/install/startup and actual pushed-SHA hosted CI remain unverified. BR-21 remains native-unmeasured.
+
+Independent `memory_integration_executor` (`gpt-6.1-sol/high`) releases all read/build/write custody. Sole repository writes are this receipt and corrected-common-gate.md; private artifacts are frozen under `/workspace/work/video-memory/final-verification/combined-corrected/`. No product/test/assertion/main-doc/index/ref change, installation, commit/push or automatic retry occurred. First failed execution.md/final-common-gate.md and combined-final/** remain exact. Current absolute deadline08:29:30UTC/16:29:30AsiaShanghai was not reset. This PASS permits root's separate exact source-publication review/window, not publication by the verifier.

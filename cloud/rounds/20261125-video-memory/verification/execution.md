@@ -1,0 +1,17 @@
+# Combined memory/API gate — FAIL / FROZEN / RETURNED TO ROOT
+
+The one authorized complete combined command finished **exit1, FAIL, complete_required=false**. **50/51 logical and51/52 executable stages PASS**; sole failure is `batch:ux1d`. All52 required stages were selected, available and executed, including the later suffix and both AUTH01B members. No skip, missing input, timeout, cancellation, inventory/prerequisite error or truncated stage log occurred.
+
+```bash
+bash plan/tests/run-all.sh --tools-root /workspace/work/maintenance-foundation/quality --output /workspace/work/video-memory/final-verification/combined-final/aggregate
+```
+
+`ux1d` compiled, passed54 assertions, then failed its existing source assertion at `plan/tests/ux1d/Program.cs:247`: **“source: the next button does not stay enabled-but-dead while pending.”** It expects `BottomBtnNext.IsEnabled = false;` literally inside ShowTransitionPending. Current Control delegates eligibility to UpdatePlaybackControlEligibility; ClearTransitionPending also delegates rather than containing the later literal-true expectation. This identifies the concrete source-check mismatch; the verifier makes no automatic repair or behavioral waiver. The original test and source remain untouched. Exact stage/log/source/report hashes are in [final-common-gate.md](evidence/final-common-gate.md). Root must route the failure to the owning review/repair process; this report does **not** enable source publication.
+
+Fresh935-file non-cloud source snapshots match before/after, including all20 new runnable inputs, AF2 real-helper extraction/c2 support/folder fixture, all root runner/build/workflow dependencies and runtime source reads. All5073 exact SDK/runtime/ref/NuGet files and732 PowerShell installation files are unchanged. All67 current scoped owner-byte comparisons pass; index/HEAD/refs and final review inputs remain unchanged. Actual provenance is **dirty local dev7356b94893377558191b0d70576a52bae704c1f9**, not a clean/pushed combined-source commit.
+
+Passing stages retain playersess original240/aggregate241,39 lifetime/five graphics/prior58 residual plus8 RF1 groups; season original141 plus497; recovery348; g5335; query original12/search1258 plus3831; c2 original451/action563/AS3/AF1 and AF2 original13/safe37/added573; c3117. UX1D's assertions after its failure were not reached. Current sampler46/21/106/55calls52rows/package15 and supported runner14 receipts were reused within their documented identity scope, without extra reruns or historic Python/OS-byte claims.
+
+Private source/generated/tool/report snapshots and raw logs are frozen under `/workspace/work/video-memory/final-verification/combined-final/`. All nine ephemeral player files, including the actual history wrapper, were retained during the one run without script edits.178 static syntax/XML source checks pass; warnings are retained. Those facts do not change the failing gate verdict.
+
+Independent `memory_integration_executor` (`gpt-6.1-sol/high`) releases all read/build/write custody. No source/test/assertion/main-doc/index/ref edit, install, commit/push, suite rerun or failure-driven selected rerun occurred. Fixed checkpoint07:41:29UTC/hard deadline08:51:29UTC were not moved. Windows/UWP/XAML/PS5.1/PID/decoded50video/RAM/native/GPU/service/session/signing/startup and actual hosted CI remain unverified external gates; BR-21 remains native-unmeasured.

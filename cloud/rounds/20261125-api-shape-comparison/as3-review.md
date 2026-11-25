@@ -1,0 +1,18 @@
+# AS3 precedence amendment — independent re-review
+
+Verdict: **PASS**. The sole P1 in the initial [review.md](review.md) is closed by the amended [contracts/requirements.md](contracts/requirements.md) AS3 decision table and [contracts/as3-amendment.md](contracts/as3-amendment.md), as bound by the root [requirements-revision-dispatch.md](requirements-revision-dispatch.md). No unresolved scoped P0/P1/P2 finding remains. Initial review/evidence and original proofs are preserved as history.
+
+The amendment makes the precedence exact:
+
+- A successful first empty page with valid info keeps the existing early return for both sources and all valid flag shapes: publish info/ownership fields as today, set Nothing, preserve the pre-call Videos reference/content, leave Page1, hide Load more and clear Loading. Missing first-page info still rejects publication before either row or paging change.
+- On a successful normal-source append, a present boolean is authoritative: true plus decoded rows offers more and increments Page once; false or no decoded rows stops without incrementing. Only this present-boolean source branch gains an empty-append stop.
+- Normal absent/null flags and every Type21 valid flag retain the exact count-based `!=` rule, including empty appends. Incoming append info is ignored; existing accepted info and row identity/order stay intact. Type21 does not consume a synthetic flag as its paging authority.
+- Transport/business/envelope/payload failures, including malformed present boolean, keep accepted rows/info/Page and current hidden-load-more/Nothing/Loading/notice behavior. The decision table runs only after accepted publication. Retry uses the same Page. String IDs, null-row filtering and optional-list semantics remain unchanged.
+
+I inspected the complete unchanged actual VM/API/parser/mapper and replayed only the new supplemental source fixtures in exclusive re-review scratch: **124 unchanged-green compatibility checks PASS**, plus the two expected original-source present-boolean empty failures with all six positive route/encoding/retention/completion controls PASS. These separate current compatibility behavior from the intentionally repaired cases. See [as3-review-evidence.md](as3-review-evidence.md) for hashes, commands and exact outcomes.
+
+All initial source/fixture hashes, twelve baseline snapshots, full linked production/stub inputs and frozen original red outcomes remain unchanged. Original query15/25 and favorite6/9 proofs were not rerun or overwritten. AS1/AS2 and pinned source/provenance acceptance from the first review remain in force, including the current WBI `!'()*` sanitizer and opaque serialized cursor boundary.
+
+PASS is for the revised three-repair requirements only. The final unchanged real-source fixtures must still demonstrate old red→repaired green while preserving the124 compatibility checks, original assertions and affected regressions. Account P4/P5 hold, U2 identity/session/protocol and credential/proto prerequisites remain excluded. Native/live/session success is not inferred. Keep the51logical/52executable inventory and stable integrated gate.
+
+All re-review artifact/source/fixture read custody is **RELEASED**. Private re-review outputs are frozen under `/workspace/work/api-shape-comparison/requirements-review/as3-rereview/`. Sole repository writes in this turn are `as3-review.md` and `as3-review-evidence.md`; initial review/evidence, sources/tests/tools/main docs/index/refs/caches were not modified. API execution remains blocked until memory safe integration, baseline rebinding and root's exact file grants; this PASS opens no current source/index/ref/publication window.

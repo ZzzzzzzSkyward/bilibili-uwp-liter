@@ -1,0 +1,5 @@
+# Python maintenance count — factual clarification
+
+Independent documentation review DOC-S3-COUNT corrected an earlier inventory shorthand. Pinned Python commit425f5200f5fa17a316b93cdf21643513d9a3075f adds **two guard branches**, one each in video_stream_cmp and audio_stream_cmp. Each checks both operands and returns0; `git show --numstat` reports **four added lines**, not four guard locations. Root independently read the exact immutable diff on2026-11-25 without executing foreign source. Earlier frozen inventory/evidence remains historical; use this clarification and the corrected main guide for this count.
+
+The substantive-change date,89-day narrow-maintenance qualification, inherited-catalog caveat, exact pin, GPL license and independent-lineage conclusion are unchanged. No endpoint/service freshness or native/player outcome is implied. See ../documentation/final-review.md and the subsequent same-owner correction/re-review. No implementation or test rerun is warranted by this wording correction.

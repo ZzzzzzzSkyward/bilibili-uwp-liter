@@ -1,0 +1,87 @@
+{
+  "utc": "2026-11-25T05:25:07.769863+00:00",
+  "status": "PASS",
+  "errors": [],
+  "releaseVerifiedFiles": 15,
+  "criticalInputs": 56,
+  "criticalChangesSinceAuthorRelease": [
+    "cloud/memory/deadline-20261125.md"
+  ],
+  "trackedSnapshotCount": 1245,
+  "nonCloudTrackedChanges": [
+    "bug_report.md",
+    "docs/README.md",
+    "docs/ROADMAP.md",
+    "document/BILIBILI_API_RESEARCH.md",
+    "document/DIAGNOSTICS.md",
+    "plan/PLAN.md",
+    "plan/VALIDATION.md"
+  ],
+  "concurrentCloudTrackedChanges": [],
+  "untrackedNonCloud": [
+    "document/BILIBILI_API_SHAPE_COMPARISON.md",
+    "document/VIDEO_MEMORY.md"
+  ],
+  "testedCommittedBlobs": 935,
+  "testedWorkingChanges": [
+    "bug_report.md",
+    "docs/README.md",
+    "docs/ROADMAP.md",
+    "document/BILIBILI_API_RESEARCH.md",
+    "document/DIAGNOSTICS.md",
+    "plan/PLAN.md",
+    "plan/VALIDATION.md"
+  ],
+  "testedWorkingUnchanged": 928,
+  "unchangedNonMarkdownTracked": 963,
+  "history": {
+    "document/BILIBILI_API_RESEARCH.md": {
+      "baseSha256": "7ece057656d2292de668ef1e40373b9247ae69109761f78b5f6e7a37887089c3",
+      "oldBytes": 37982,
+      "exactPrefix": true
+    },
+    "document/DIAGNOSTICS.md": {
+      "baseSha256": "7f0b02957ddf5ab09484dbb0c0873f28a396d4f889708cae3ef4c2b709b08fd8",
+      "oldBytes": 1391,
+      "exactPrefix": true
+    },
+    "plan/VALIDATION.md": {
+      "oldBytes": 50325,
+      "restoredSha256": "40f043a5ea39e38111565f3ead465dce83591fe87f266376587ea856773aaf47",
+      "baseSha256": "40f043a5ea39e38111565f3ead465dce83591fe87f266376587ea856773aaf47",
+      "exactOldPreserved": true
+    },
+    "bug_report.md BR31-67": {
+      "oldSha256": "564616796cb07c403254cb8837aed6bc117df482f59c9f2e447e8db949840a0b",
+      "currentSha256": "564616796cb07c403254cb8837aed6bc117df482f59c9f2e447e8db949840a0b",
+      "exactPreserved": true
+    }
+  },
+  "markdownLinksChecked": 343,
+  "pinnedOwnObjects": 67,
+  "pinnedSiblingObjects": 63,
+  "head": "ff5d2855bb62ef6459a724ffae6101b812a7369d",
+  "indexSha256": "733dbe245cafbb74f3a1c8bdbf62ac800e3c4a829abb8c6a2c4aa58a52f9b48e",
+  "indexMatchesInitial": true,
+  "localRefsUnchanged": true,
+  "toolCliFlags": [
+    "Action",
+    "ActualEngine",
+    "ActualQuality",
+    "CompletedCycles",
+    "Cycle",
+    "DurationSeconds",
+    "IntervalSeconds",
+    "MediaLabel",
+    "MediaPart",
+    "MetadataPath",
+    "Mode",
+    "Note",
+    "ObservedPlayers",
+    "Phase",
+    "RunDirectory",
+    "Status"
+  ],
+  "unknownCliFlags": [],
+  "scope": "Static Markdown/object/hash/source reads only; no suites, builds, samplers, native/process/service calls or Git mutations."
+}

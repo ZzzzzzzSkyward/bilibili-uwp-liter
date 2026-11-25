@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "utc": "2026-11-25T05:33:45.444300+00:00",
+  "status": "PASS",
+  "errors": [],
+  "issueClosed": "DOC-S3-COUNT",
+  "sourceCommit": "ff5d2855bb62ef6459a724ffae6101b812a7369d",
+  "correctedGuideSha256": "0c867a526a7b1f9fb5a0247e5225fd6c190320e28d8567d82f007de0fc76ac1c",
+  "reverseReplacementMatchesOriginalGuide": true,
+  "eightOtherMainPathsUnchanged": [
+    "bug_report.md",
+    "docs/ROADMAP.md",
+    "plan/PLAN.md",
+    "plan/VALIDATION.md",
+    "document/DIAGNOSTICS.md",
+    "document/VIDEO_MEMORY.md",
+    "docs/README.md",
+    "document/BILIBILI_API_RESEARCH.md"
+  ],
+  "guideLinksAndHeadingsUnchanged": true,
+  "prior343LinkChecksReusedByExactByteBinding": true,
+  "priorCliSourceProtocolReviewReusedByExactByteBinding": true,
+  "historicalDocumentationManifestEntries": 21,
+  "frozenHistoricalOutputsUnchangedCount": 20,
+  "observedRootAuthorityDrift": [
+    {
+      "path": "cloud/rounds/20261125-api-shape-comparison/documentation/publication-grant.md",
+      "capturedSha256": "43c021a8885ece816e5b88e8d2d89512b171093bf31367371d32e374a650afa0",
+      "currentSha256": "9f83af1939694184600cf3017f78ce5cd51eaace565a934a0d44525b6f393468",
+      "classification": "Root-owned mutable publication authority updated to corrected bundle; remains PREPARED / INACTIVE; not a frozen author/reviewer output."
+    }
+  ],
+  "priorReviewReleaseSha256": "53238a75fd60d6f06f188dda28890d488aaf1cbc43503ab78c246cd77db307e0",
+  "allFrozenHistoricalOutputsUnchanged": true,
+  "criticalInputsRechecked": 60,
+  "trackedNonMarkdownUnchanged": 963,
+  "nonCloudTrackedMainChanges": [
+    "bug_report.md",
+    "docs/README.md",
+    "docs/ROADMAP.md",
+    "document/BILIBILI_API_RESEARCH.md",
+    "document/DIAGNOSTICS.md",
+    "plan/PLAN.md",
+    "plan/VALIDATION.md"
+  ],
+  "nonCloudNewMainPaths": [
+    "document/BILIBILI_API_SHAPE_COMPARISON.md",
+    "document/VIDEO_MEMORY.md"
+  ],
+  "testedWorkingInputsUnchanged": 928,
+  "testedWorkingMainMarkdownChanges": [
+    "bug_report.md",
+    "docs/README.md",
+    "docs/ROADMAP.md",
+    "document/BILIBILI_API_RESEARCH.md",
+    "document/DIAGNOSTICS.md",
+    "plan/PLAN.md",
+    "plan/VALIDATION.md"
+  ],
+  "prior935CommittedBlobChecksReused": "same immutable sourceC; all current tested runnable inputs and source manifest unchanged",
+  "indexBytesUnchanged": true,
+  "localRefsUnchanged": true,
+  "immutablePythonPatchSha256": "30d8e1bbeb9c6363af1aedff90b8f0474ef281a288bbf8e3ed053832402d5333",
+  "guardBranches": 2,
+  "addedLines": 4,
+  "numstat": "4\t0\tbilibili_api/video.py",
+  "allNineWhitespace": "PASS",
+  "scope": "Independent static hash/object/source-diff checks only; no tests/build/sampler/network/native/service invocation; no main/source/test/Git writes."
+}
