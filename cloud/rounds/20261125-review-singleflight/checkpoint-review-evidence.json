@@ -1,0 +1,135 @@
+{
+  "verdict": "PASS",
+  "ownership": "FROZEN/RELEASED",
+  "reviewed_utc": "2026-11-25T09:20:40.968688+00:00",
+  "scope": "EXACT_FROZEN_PAYLOAD_AND_PROCEDURE; NOT_ACTUAL_COMMIT_OR_PUSH",
+  "deadline_utc": "2026-11-25T09:22:09+00:00",
+  "expected_parent": "86e0e56e67c05aadc34500ee5f65bdcdce3a5277",
+  "protected_master": "7ac3146808bd1410dcccf2ec566ea09e2900cc0e",
+  "script": {
+    "path": "/workspace/work/review-singleflight/deadline/timed_push_v2_exact_literals.py",
+    "sha256": "086649cdad64e14d0176d8fc3f59fb7fc668f8c0203ae0f1591c0983bbbdada8"
+  },
+  "acceptances": {
+    "implementation": "PASS/FROZEN/RELEASED; current six raw hashes match implementation, independent review and actual6015-file fullgate input map",
+    "documentation": "PASS/FROZEN/RELEASED; four current hashes match independent review",
+    "full_gate": "actual exit0 51/51logical,52/52executable PASS/complete_required=true; all52 stage exits0; dirtyH provenance",
+    "results_sha256": "333280c7d72c0ad34d73352075184e50193a5b08ee26a13f95789ddab077d421",
+    "selected": "Separate2/2 PARTIAL_PASS/complete_required=false; new74 real-VM checks",
+    "real_VM_assessment": "Held real VM dispatch and exact extracted pivot, all entry/notification/collection cases, zero-ID owner, failures/retry, completion observer, opaque cursor/HTML/terminal assertions are meaningful; baseline duplicate/zero and partial guard fail desired assertions",
+    "history_preservation": "Original assertions retained; four test additions preserve ordered original lines except one Main return becomes stricter conjunction; first CHANGES and amendment history retained"
+  },
+  "refs": {
+    "HEAD": "86e0e56e67c05aadc34500ee5f65bdcdce3a5277",
+    "tracking_dev": "86e0e56e67c05aadc34500ee5f65bdcdce3a5277",
+    "actual_server_dev": "86e0e56e67c05aadc34500ee5f65bdcdce3a5277",
+    "actual_server_master": "7ac3146808bd1410dcccf2ec566ea09e2900cc0e",
+    "local_master_refs": {
+      "refs/heads/master": null,
+      "refs/remotes/origin/master": null
+    },
+    "index_empty": true
+  },
+  "nonpayload": {
+    "materialized_leaves_bytes_modes_verified": 1683,
+    "sparse_absent_unchanged_skip_worktree_count": 0,
+    "all_6015_fullgate_current_inputs_verified_except_four_released_mainDocs": true
+  },
+  "source_test_bindings": [
+    {
+      "path": "src/BiliLite.UWP/Modules/Season/SeasonReviewVM.cs",
+      "sha256": "a5c469aca12414c4c117c066d511fd59d3f50d04364d6685918f739ed544b736"
+    },
+    {
+      "path": "plan/tests/season1/Season1Probe.csproj",
+      "sha256": "a19c29a05a8c70197b9a9d80fd3a575c8adf2a5abadaa7f587bebbe0ef15a12c"
+    },
+    {
+      "path": "plan/tests/season1/Season1Stubs.cs",
+      "sha256": "4376b03b890c6f76ee745ac51dbce32a075ce3c7524ca8f09c1091414488e59d"
+    },
+    {
+      "path": "plan/tests/season1/SeasonReviewOwnershipProbe.cs",
+      "sha256": "c7ec3c2c4920016321b052d121d0382e5a3872f003813d752100228861b8ef22"
+    },
+    {
+      "path": "plan/tests/season1/extract-lifetime.py",
+      "sha256": "ba22a20df7d2b0ed138c7c400937bc514445d988635e2e300bbf3fbf0615d4b4"
+    },
+    {
+      "path": "plan/tests/season1/Program.cs",
+      "sha256": "3b6d337fd61bd6d83aecb21a7db58946ddac34239f7efea2290c250b21fb805e"
+    }
+  ],
+  "mainDoc_bindings": [
+    {
+      "path": "bug_report.md",
+      "baseline_sha256": "7addfe4d40a7c3216e57b51a3d95907a680b9666864c4c68f58b221a4c8765df",
+      "sha256": "1a7f40aada0b888c5e030074b171f03a76bf751136fa2b0290848e8d61f3bbd7",
+      "changes": [
+        {
+          "operation": "insert",
+          "old_lines": 0,
+          "new_lines": 10
+        }
+      ],
+      "history_preserved": true
+    },
+    {
+      "path": "plan/PLAN.md",
+      "baseline_sha256": "81dc094614c99d68d703af8624ab5e58c4aef76ebfbcb9db1d5e3d09093d9051",
+      "sha256": "233b0fc6de8589d576a3a7e84d5cd5bb9043ccb9b0d598e341917057bc1bfdd0",
+      "changes": [
+        {
+          "operation": "insert",
+          "old_lines": 0,
+          "new_lines": 10
+        }
+      ],
+      "history_preserved": true
+    },
+    {
+      "path": "plan/VALIDATION.md",
+      "baseline_sha256": "13e41e608c88e7ccdefc0c870fd743ae41ed05fc40e228afa18faca50033f460",
+      "sha256": "d84aaf74cd4aa7e81bff6fcb861f2f3ea96af9fdad388e9a6ebc201e7ccd8da0",
+      "changes": [
+        {
+          "operation": "insert",
+          "old_lines": 0,
+          "new_lines": 11
+        }
+      ],
+      "history_preserved": true
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "baseline_sha256": "14c225740ff8718c0c99874e478b35f27d19482b5f74d015248b58bf27794fa4",
+      "sha256": "ce6751d5c6c048f91b29c174616237348b81cb3362a8b57ceca325e2cef38ebc",
+      "changes": [
+        {
+          "operation": "replace",
+          "old_lines": 1,
+          "new_lines": 1
+        },
+        {
+          "operation": "insert",
+          "old_lines": 0,
+          "new_lines": 7
+        }
+      ],
+      "history_preserved": true
+    }
+  ],
+  "manifest_policy": "Exact actual eligible changed/untracked paths only; no symlinks/executable/raw logs/cases/source snapshots/cache/binary; regular100644. Both frozen reviewer outputs included later in private manifest without self-SHA loop.",
+  "procedure": "Unchanged reviewed v2; sole-parent commit separately granted; empty index/global clean/exact tree/hash checks required after commit; private exact grant; activate before09:21:29; T-30 ref/local recheck; absolute09:22:09 nonforce dev-only Popen; delay>=1sec failclosed; private raw receipt",
+  "limits": [
+    "No actual commit/push/activation acceptance here; any payload/ref drift invalidates release",
+    "Windows/UWP/native/event-delivery/service/session/write/account/live/decoded50video/RAM/roots/heap/GPU/signing/install/startup/hosted remain UNFINISHED/UNVERIFIED",
+    "Nine deleted playersess temporary bytes reconstructed deterministically; no direct-observation claim",
+    "Runner14/package15/sampler not rerun or newly authenticated; no whole-OS identity claim",
+    "Sparse absent leaves preserved as skip-worktree; materialized nonpayload leaves independently verified"
+  ],
+  "findings": [],
+  "private_raw_audit": "/workspace/work/review-singleflight/deadline-review/final/raw-audit.json",
+  "release": "These two repo outputs frozen; private final-manifest/release bind their final bytes and every actual payload. Publisher must copy reviewed manifest bytes into its allowed private deadline namespace without changing SHA before guarded activation."
+}

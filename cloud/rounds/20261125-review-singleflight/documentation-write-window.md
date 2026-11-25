@@ -1,0 +1,7 @@
+# Conditional main-document write window
+
+Root opens the exact four-main-document write window from documentation-dispatch.md **only after** verification.md and verification-evidence.json record terminal actual fullgate result, stable before/after input hashes, and explicit FROZEN/RELEASED build/input custody. Until then private drafts only; do not change gate inputs while it runs. Source/test hashes remain independently reviewed/frozen and final-review.md is PASS.
+
+Documentation owner may observe that release and then promptly update only bug_report.md, plan/PLAN.md, plan/VALIDATION.md and docs/ROADMAP.md plus own documentation.md/documentation-evidence.json. Bind actual report/hash/counts; if fullgate is not PASS mark unfinished rather than claim complete. All Windows/native/50video/hosted/account/live limits stay explicit. Avoid provisional fullgate claims or old-source substitution. Use private prepared drafts; preserve unrelated text/history.
+
+Freeze/release exact four-file hashes, execution/evidence and private release immediately after applying/verifying (aim under one minute after gate release). No new source/test/build/Git work. If no terminal custody release by09:18:00UTC, do not change mainDocs; write concise unfinished evidence and release for deadline archive. This file and root dispatch authorize only that conditional window, not a Git transaction. Fixed cutoff09:22:09UTC.

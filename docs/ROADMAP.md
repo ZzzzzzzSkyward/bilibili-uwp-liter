@@ -13,7 +13,7 @@
 | 发布线 | `master`，tip 为 1.0.9.61 同步（2026-11-07）+ 仓库文档化提交 |
 | 分叉点 | `e2c7958`（2026-10-31）；`dev` 在此之后 510 个提交，`master` 8 个（两次同步提交的内容 `dev` 已全部包含） |
 | 设备验收策略 | 维护者的设备检查「默认通过」；只有真实报告的缺陷才重开（`plan/VALIDATION.md`） |
-| 探针 | 44 目录批次（43 net8.0 项目 + shell-only stab）+ 7 逻辑 legacy 探针 / 8 可执行阶段 = 51/52；当前 changed-source 完整 gate PASS、complete_required=true，详见 §6。历史 QF1/runner 50/51 仍为原快照证据 |
+| 探针 | 44 目录批次（43 net8.0 项目 + shell-only stab）+ 7 逻辑 legacy 探针 / 8 可执行阶段 = 51/52；sourceE完整 gate PASS为旧已绑定快照，详见 §6；新增BR75候选完整gate/独立审查PASS，见1.8。历史 QF1/runner 50/51 仍为原快照证据 |
 
 ## 1. 未完成项
 
@@ -72,6 +72,13 @@
 - `d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 交付FI1/FD1/FI2/FI3/SR1：独立conditions/results与reentrant通知所有权、order code优先/旧fallback、仅Integer0终止非空index页、dynamic offset与short-review cursor单值编码。见[当前字段/兼容表](../document/BILIBILI_API_SHAPE_COMPARISON.md)、[BR70–74](../bug_report.md)。
 - [最终index owning](../cloud/rounds/20261125-index-dynamic-contracts/later-pgc/final-review.md)、[最终SR1 owning](../cloud/rounds/20261125-index-dynamic-contracts/short-review/final-review.md)、[FD1 owning](../cloud/rounds/20261125-index-dynamic-contracts/dynamic/final-review.md)、[final fresh](../cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)与[完整gate](../cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)均PASS；[publication receipt](../cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)已核对最终committed字节身份。Final fresh为PGC140/140、SR13446/3446、118/118、34/34，season790/API028795；fresh的G4179仅精确绑定沿用，后续完整suite正常执行既有G4 stage。
 - Windows实际navigation/conditions/selection/grid/order/terminal/feed/review分页与错误重试未验证，按[新增VALIDATION](../plan/VALIDATION.md)跟进。UNVERIFIED：最近已接受的[实际sourceE hosted观察](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-hosted-source-e.md)于2026-11-25 07:35:28UTC以 `head_sha=d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 过滤Actions collection，返回 `total_count=0` / `workflow_runs=[]`，尚未建立E的hosted result，不推断原因。2026-11-25 06:07:01UTC旧run45434541348/head169b2b0（queued/null）仅为历史观察，不能认证E；BR21native-unmeasured、50视频/RAM/root/heap/GPU/PS5.1/playback/安装签名启动、accountP4/P5hold/U2前置不变。
+
+### 1.8 [~] Season review read所有权（BR75，源码/离线完成，native未验证）
+
+- 来源：[BR75](../bug_report.md)、[执行证据](../cloud/rounds/20261125-review-singleflight/execution.md)。public读与Refresh/LoadMore共用单VM claim，覆盖zero-ID、同步通知与异常completion释放；原API/auth/write/paging保持。
+- 74新增ownership断言通过；selected season1+api02为2/2 **PARTIAL_PASS**、complete_required=false；本候选[独立实现审查](../cloud/rounds/20261125-review-singleflight/final-review.md)PASS，[实际完整gate](../cloud/rounds/20261125-review-singleflight/verification.md)exit0、51/51logical与52/52executable **PASS**、finished=true、complete_required=true。 原实现duplicate/zero-ID与GetItems-only候选的completion Refresh回归失败已保留，未提交/新CI均未声称。
+- 下一步：[新增Windows场景](../plan/VALIDATION.md)快速离开/重入pending review pivot，无duplicate rows/spinner reset；idle refresh/more、error retry与cursor retention。Windows/UWP/XAML、真实service/session/write/account/live、50decoded视频/RAM/roots/heap/GPU、签名安装启动仍未验证；BR21、accountP4/P5hold与U2前置保持，旧device-passed行不重开。
+- [实际baselineH hosted观察](../cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md)：2026-11-25 08:58:49UTC对H`86e0e56e67c05aadc34500ee5f65bdcdce3a5277`过滤返回total_count0/workflow_runs[]。这是exactH事实；本次改动/未来checkpoint没有hosted PASS，旧queued run仅历史。
 
 ## 2. 已知债务
 

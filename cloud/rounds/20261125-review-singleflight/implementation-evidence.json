@@ -1,0 +1,141 @@
+{
+  "status": "FROZEN/RELEASED",
+  "utc": "2026-11-25T09:12:05.493563+00:00",
+  "head": "86e0e56e67c05aadc34500ee5f65bdcdce3a5277",
+  "startup_ff_only": {
+    "exit": 0,
+    "output": "Already up to date.",
+    "released": true
+  },
+  "source_test_files": [
+    {
+      "path": "src/BiliLite.UWP/Modules/Season/SeasonReviewVM.cs",
+      "sha256": "a5c469aca12414c4c117c066d511fd59d3f50d04364d6685918f739ed544b736"
+    },
+    {
+      "path": "plan/tests/season1/Season1Probe.csproj",
+      "sha256": "a19c29a05a8c70197b9a9d80fd3a575c8adf2a5abadaa7f587bebbe0ef15a12c"
+    },
+    {
+      "path": "plan/tests/season1/Season1Stubs.cs",
+      "sha256": "4376b03b890c6f76ee745ac51dbce32a075ce3c7524ca8f09c1091414488e59d"
+    },
+    {
+      "path": "plan/tests/season1/SeasonReviewOwnershipProbe.cs",
+      "sha256": "c7ec3c2c4920016321b052d121d0382e5a3872f003813d752100228861b8ef22"
+    },
+    {
+      "path": "plan/tests/season1/extract-lifetime.py",
+      "sha256": "ba22a20df7d2b0ed138c7c400937bc514445d988635e2e300bbf3fbf0615d4b4"
+    },
+    {
+      "path": "plan/tests/season1/Program.cs",
+      "sha256": "3b6d337fd61bd6d83aecb21a7db58946ddac34239f7efea2290c250b21fb805e"
+    }
+  ],
+  "existing_lines_preserved": {
+    "plan/tests/season1/Program.cs": true,
+    "plan/tests/season1/Season1Stubs.cs": true,
+    "plan/tests/season1/extract-lifetime.py": true,
+    "plan/tests/season1/Season1Probe.csproj": true
+  },
+  "diff_check_exit": 0,
+  "targeted": {
+    "command": "bash plan/tests/run-all.sh --tools-root /workspace/work/review-singleflight/implementation/tools --only batch:season1 --only batch:api02 --output /workspace/work/review-singleflight/implementation/targeted",
+    "exit": 0,
+    "status": "PARTIAL_PASS",
+    "complete_required": false,
+    "selected": 2,
+    "passed": 2,
+    "results": "/workspace/work/review-singleflight/implementation/targeted/results.json",
+    "review_owner_assertions": 74
+  },
+  "regression": [
+    {
+      "case": "original durable pivot acceptance",
+      "exit": 134,
+      "observed": "duplicate-dispatch assertion fails, then bounded 2-second rejected-call wait fails; not a passing suite"
+    },
+    {
+      "case": "original durable ZeroId acceptance via isolated reflection entry only",
+      "exit": 1,
+      "observed": "four durable ZeroId assertions fail; initial private entry compile typo retained in original-zero-build-error.log and corrected before final receipt"
+    },
+    {
+      "case": "reviewed GetItems-only prospective guard with complete durable suite",
+      "exit": 1,
+      "observed": "10 desired assertions fail including LoadingFalse Refresh state preservation"
+    }
+  ],
+  "raw": [
+    {
+      "path": "/workspace/work/review-singleflight/implementation/baseline-SeasonReviewVM.cs",
+      "sha256": "c6e36bf65234c3dfc59471d4d3793891b4d4d033b2962e6e2e4912ca1d819abb"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/edit.py",
+      "sha256": "9c6a0b9e04a1f9ec72fd8541183fb559d357d27ee46b9a7e7d8cbbec943a1d3b"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/freeze.py",
+      "sha256": "bab6d61ef4d341ff7d695eb913cac47eae2e7a11ecda944dda5603ffbadc2c4f"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/getitems-only.log",
+      "sha256": "fa09d4174d36155eaa1ea8983432f3b74bc71de6472cd1a385ad12f61bb7b16e"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/original-zero-build-error.log",
+      "sha256": "1a05ec42c637ea1e2094dd40a4d510413a5db577adf56f380cd63894710f9a6b"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/original-zero.log",
+      "sha256": "d0b738ba84ef27e31d3531634b2834e5ede24061ddf15c248ff17c7373c6dfdd"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/original.log",
+      "sha256": "8b03bf1b793002d6581d8dc2470082e202f7857f50026b9e53d86cb03f5567b1"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/regression-results.json",
+      "sha256": "3598e3c815a31039da26390d2a4f8899886519c69cff179d7e8d399d3baadce7"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/regression.py",
+      "sha256": "3efcfde642abd56fdd3758b1c12299957c169810e17e70ad59e2cdc43f1f16fc"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/season1-dev.log",
+      "sha256": "faea924431fee37e5b5f394df17a1aba3b6b7cab3522c6b061c750a653fd6005"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/targeted/logs/batch_api02.log",
+      "sha256": "20382fb646a6dff990bc3009037174a804b4eabc4a1592b12f5571f7f8e28e09"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/targeted/logs/batch_season1.log",
+      "sha256": "13f35c48cd1de7ac0642b8fee3d416b99ce103f960e197053ab7b4cd1b98247d"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/targeted/results.json",
+      "sha256": "78c96b268e2a952cc9f38666ab957167b9e4339a2f1aa5255864c4661fc4eb3f"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/targeted/summary.md",
+      "sha256": "b58539467006384257c3a1cfc8125bd12ab30fdf326f5c7f29ac303e928f7f18"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/targeted.log",
+      "sha256": "39d86ccd1bcdce7e675d6137741a1cea26322d0f1f89976b87296201db2f08db"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/implementation/zero-baseline.py",
+      "sha256": "20f21c6560b9ffb84529ab558f62366bcb6ef6e685ddf0247d035432b1811d8f"
+    }
+  ],
+  "limits": [
+    "selected gate only; full aggregate delegated after release",
+    "No Windows build/native/device/hosted CI result",
+    "No stage/commit/push; source remains uncommitted for separately authorized publisher"
+  ]
+}

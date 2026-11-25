@@ -1,0 +1,81 @@
+{
+  "review": "PASS",
+  "scope": "STATIC_PREPARATION_ONLY_NOT_IMPLEMENTATION_OR_FINAL_PAYLOAD_ACCEPTANCE",
+  "reviewed_utc": "2026-11-25T09:02:52.737702+00:00",
+  "original": {
+    "path": "/workspace/work/deadline-checkpoint/timed_push_with_docs.py",
+    "sha256": "99d8eacaf1d38de7b6317a846cc6fe39690cd01b1a31c6ef867da1650edd03bc"
+  },
+  "prepared": {
+    "path": "/workspace/work/review-singleflight/deadline/timed_push_v1_archive_only.py",
+    "sha256": "b8f4f8be1d6ead09450e415460d254cb378e0cc628dc211bdb596b04e3585d3c"
+  },
+  "syntax": "PASS compile() without execution",
+  "exact_replacement_reproduction": "PASS; all six substitutions reproduced prepared bytes exactly",
+  "unchanged_function_asts": [
+    "stamp",
+    "require",
+    "digest",
+    "git",
+    "remote_refs",
+    "optional_local_master_refs",
+    "local_checks",
+    "wait_until",
+    "main"
+  ],
+  "changed_function_asts": [
+    "validate_inputs"
+  ],
+  "fixed_bindings": {
+    "deadline_utc": "2026-11-25T09:22:09+00:00",
+    "deadline_ns": 1795598529000000000,
+    "expected_parent": "86e0e56e67c05aadc34500ee5f65bdcdce3a5277",
+    "protected_master": "7ac3146808bd1410dcccf2ec566ea09e2900cc0e",
+    "local_master_refs": {
+      "refs/heads/master": null,
+      "refs/remotes/origin/master": null
+    }
+  },
+  "path_policy": {
+    "round_prefix": "cloud/rounds/20261125-review-singleflight/",
+    "memory_literals": [
+      "cloud/memory/INDEX.md",
+      "cloud/memory/deadline-extension-20261125.md",
+      "cloud/memory/runs/20261125-review-singleflight.md"
+    ],
+    "suffixes": [
+      ".md",
+      ".json"
+    ],
+    "mode": "100644",
+    "source_test_main_document_allowed": false
+  },
+  "reviewed_guards": {
+    "sole_parent_branch_and_tracking": "PASS lines70-76",
+    "empty_index_and_globally_clean_worktree": "PASS lines77-78; preparation currently has known root metadata drift, so not activatable",
+    "exact_changed_paths_mode_blob_and_content": "PASS lines79-91,114-122",
+    "private_manifest_digest_and_final_grant": "PASS lines94-123,140-142",
+    "actual_server_dev_master_checks": "PASS lines49-55,154-155,160-162,185-188",
+    "dev_only_nonforce_Popen": "PASS one Popen of constant PUSH, lines18,173",
+    "activation_before_T_minus_40": "PASS line141; 09:21:29UTC hard boundary",
+    "T_minus_30_recheck": "PASS lines159-165; 09:21:39UTC",
+    "absolute_wait_and_no_early_push": "PASS lines126-132,169-173",
+    "delay_at_least_one_second_rejected": "PASS line172",
+    "private_raw_push_and_terminal_receipts": "PASS lines143-150,167-197"
+  },
+  "observed_state": {
+    "head_and_tracking_parent": "86e0e56e67c05aadc34500ee5f65bdcdce3a5277",
+    "actual_server_dev": "86e0e56e67c05aadc34500ee5f65bdcdce3a5277",
+    "actual_server_master": "7ac3146808bd1410dcccf2ec566ea09e2900cc0e",
+    "local_master_refs_absent": true,
+    "index_empty": true,
+    "worktree_clean": false,
+    "worktree_drift": "Root-owned cloud metadata; expected preparation state, not publication readiness",
+    "fetch_push_origin_equal": true
+  },
+  "no_timed_script_execution": true,
+  "no_git_index_or_ref_mutation": true,
+  "raw_receipts": "/workspace/work/review-singleflight/deadline-review/read-only-ref-receipts.json",
+  "findings": [],
+  "release": "Reviewer outputs frozen after this report; no activation/stage/commit/push permission; later final payload requires separate dispatch and exact review."
+}

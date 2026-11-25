@@ -4,6 +4,9 @@
 
 | 日期 | 类型 | 文件 | 一行摘要 |
 | --- | --- | --- | --- |
+| 2026-11-25 | 扩展轮源码/离线完成 | `runs/20261125-review-singleflight.md` | One-VM review-read ownership fix/new74 assertions and actual51/52 completePASS; root/source/build custody released for exact deadline checkpoint, Windows50video/native/hosted gates explicitly unfinished. |
+| 2026-11-25 | 扩展轮进行中 | `runs/20261125-review-singleflight.md` | Thirty-minute extension investigates real review-pivot duplicate reads and notification/command ownership; frozen amended requirements PASS, source/verification/checkpoint separately gated. |
+| 2026-11-25 | 最新时限覆盖 | `deadline-extension-20261125.md` | User extended thirty minutes from08:52:09UTC; fixed09:22:09UTC/17:22:09AsiaShanghai checkpoint, bounded season-review ownership discovery and explicit unfinished status. |
 | 2026-11-24 | 规范 | `decisions.md` | 云端执行规范 v1 生效 |
 | 2026-11-24 | 进行中 | `runs/20261124-maintenance-foundation.md` | Maintenance orchestration, origin/dev synchronization, 20-minute wake-up, three-domain requirements and verification baseline; use the round checkpoint to resume. |
 | 2026-11-25 | 踩坑 | `pitfalls.md` | Bash/SDK reproducibility, real global credential wrapper, GitHub expression contexts, metadata deadlines/cancellation, and public-versus-active signing certificate evidence. |

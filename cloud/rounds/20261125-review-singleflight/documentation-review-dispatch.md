@@ -1,0 +1,5 @@
+# Independent bounded documentation review
+
+Start only after root dispatch and documentation owner frozen release. Sole outputs: this round `documentation-review.md`, `documentation-review-evidence.json`; private `/workspace/work/review-singleflight/documentation-review/**`. No source/test/mainDoc/Git/shared-build mutations. Read documentation-dispatch.md, owner report/hashes, final accepted source/test/verification/review facts and actual four-document diff against baseline86e0.
+
+Check concise accurate defect/disposition/next-device checks, exact changed-source full-vs-selected gate counts/hashes, observed-baseline-vs-fixed denominators, exactH hosted observation UNVERIFIED, old queued run historical only, no native/50video/memory/Windows claims, old plans/device-passed/history and unrelated text retained. Verify added links and root current evidence. Preserve first CHANGES history and accepted amendment. Give PASS/CHANGES with binding, freeze/release promptly. Fixed09:22:09UTC, so prioritize this narrow final-doc review when dispatched.

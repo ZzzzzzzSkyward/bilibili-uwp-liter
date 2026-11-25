@@ -1,0 +1,5 @@
+# Root read-only requirement concern
+
+Before accepting requirements, inspect commands during the synchronous `Loading=false` completion notification while a private GetItems claim remains held. Existing `Refresh` checks only public Loading, then clears Items/Next before calling GetItems. A private claim in GetItems alone may prevent a second dispatch yet still permit RefreshCommand to clear rows/cursor inside the owner's completion notification. LoadMore may similarly need quiet rejected behavior (although it has no pre-call state reset). Requirements3 says claim spans completion notifications; requirements2/4 require rejected calls/no busy-command mutations.
+
+Reviewer should either demonstrate why the required semantics are already sufficient, or record actionable CHANGES to explicitly include command admission checks against the same private owner state and completion-notification command assertions within the same exact SeasonReviewVM product file. This is a read-only concern, not a product implementation grant or dictated design. Keep parse/paging/API/write paths unchanged.

@@ -559,3 +559,13 @@ immutable-A完整实际builder及SeasonReviewVM→LoadMore/retry fixture证明�
 `d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 的SR1仅把ShortReview现有cursor operand改为一次value escaping；default/explicit null/empty均继续包含cursor=，一次query decode后等于next或空串。配置host、media_id/ps20/sort/default0、GET/noCookie与已有可选access_key的条件/值/末尾位置保持；没有app/WBI签名、VM/parser/response/paging/count/total/error/Refresh迁移。[requirements PASS](cloud/rounds/20261125-index-dynamic-contracts/short-review/review.md)、[owning PASS](cloud/rounds/20261125-index-dynamic-contracts/short-review/final-review.md)、[final fresh PASS](cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)和[完整gate](cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)绑定原fixture3446/3446与maintained API028795 PASS；[publication receipt](cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)提供实际E身份。
 
 SR1 maintained新增3424与原fixture3446分母不同：同一3420请求矩阵分别加4 default controls或26 default/实际VM controls。原response→Next→LoadMore/failedappend/retry/Refresh保持，没有VM修复声明。真实短评浏览/翻页/失败重试及service/session未验证，不授权review写动作。
+
+## BR-75 — season review重复读取与同步通知所有权（2026-11-25源码审计）
+
+真实review pivot→public GetItems的held-response proof发现重复读取/rows，zero-ID调用可误清另一个owner，命令在同步完成通知中又可重入Refresh清rows/cursor。这是源码/synthetic审计，不是用户或设备报告。
+
+仅SeasonReviewVM增加同一实例private read claim，public GetItems和Refresh/LoadMore共同接纳；Refresh先取得claim再reset，拒绝调用不改rows/Next/Loading、不做cleanup。claim跨同步Loading/CanLoadMore/collection/completion通知，zero-ID不释放他人，completion observer抛错后仍释放。原response/paging/count/total/content与API/auth/write保持。
+
+[执行与回归证据](cloud/rounds/20261125-review-singleflight/execution.md)：74新增ownership断言通过；selected season1+api02为2/2 **PARTIAL_PASS**、complete_required=false；本候选[独立实现审查](cloud/rounds/20261125-review-singleflight/final-review.md)PASS，[实际完整gate](cloud/rounds/20261125-review-singleflight/verification.md)exit0、51/51logical与52/52executable **PASS**、finished=true、complete_required=true。 existing season1实际VM/命令/精确pivot fixture保留原断言；原实现duplicate/zero-ID及GetItems-only候选completion Refresh均按预期失败，不冒充通过。
+
+[实际baselineH hosted观察](cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md)：2026-11-25 08:58:49UTC对H`86e0e56e67c05aadc34500ee5f65bdcdce3a5277`过滤返回total_count0/workflow_runs[]。这是exactH事实；本次改动/未来checkpoint没有hosted PASS，旧queued run仅历史。 Windows/UWP/XAML、真实service/session/write/account/live、50decoded视频/RAM/roots/heap/GPU、签名安装启动仍未验证；BR21、accountP4/P5hold与U2前置保持，旧device-passed行不重开。 新Windows快速离开/重入review pivot、spinner/rows、idle refresh/more、error retry/last-good cursor场景见[VALIDATION](plan/VALIDATION.md)。

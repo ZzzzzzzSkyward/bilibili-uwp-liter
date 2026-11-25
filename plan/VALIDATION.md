@@ -104,6 +104,17 @@ starts that.
 
 当前本地完整51/52 PASS与上述实际设备结果分开。UNVERIFIED：最近已接受的[实际sourceE hosted观察](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-hosted-source-e.md)于2026-11-25 07:35:28UTC以 `head_sha=d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 过滤Actions collection，返回 `total_count=0` / `workflow_runs=[]`，尚未建立E的hosted result，不推断原因。2026-11-25 06:07:01UTC旧run45434541348/head169b2b0（queued/null）仅为历史观察，不能认证E。特殊cursor/metadata只是synthetic边界覆盖，sanitized真实response来源另记；没有实际服务结果不写可用性PASS。原始JSONL/log/capture/profiler文件留Git外。BR21的50真实视频/RAM/root/heap/GPU/PS5.1/playback/签名安装启动及accountP4/P5hold/U2/live/session前置不因本表解除。
 
+## 2026-11-25 — season review所有权新增Windows跟进（未运行）
+
+[BR75](../bug_report.md)的单VM read claim及existing-season1 synthetic回归不能代替Windows/binding/service。74新增ownership断言通过；selected season1+api02为2/2 **PARTIAL_PASS**、complete_required=false；本候选[独立实现审查](../cloud/rounds/20261125-review-singleflight/final-review.md)PASS，[实际完整gate](../cloud/rounds/20261125-review-singleflight/verification.md)exit0、51/51logical与52/52executable **PASS**、finished=true、complete_required=true。
+
+| 范围 | 实际Windows/UI要观察 |
+| --- | --- |
+| review pivot pending | 从真实Season detail进入短评，请求等待时快速离开/重入该pivot；只有一份read/rows，spinner不被拒绝调用提前reset，无重复追加。等待中的Refresh/LoadMore不清rows或last-good Next。 |
+| idle与失败恢复 | 完成后idle Refresh正常清rows/reset cursor并请求一次，LoadMore继续可用；业务/transport/解码错误后可正常retry，failed append保留rows与last-good cursor。同步binding通知不能重入命令夺owner；completion listener异常只在受控fixture记为synthetic。 |
+
+先按既有Windows build流程记录source/artifact/设备/时间与真实结果，不进行review写动作。Windows/UWP/XAML、真实service/session/write/account/live、50decoded视频/RAM/roots/heap/GPU、签名安装启动仍未验证；BR21、accountP4/P5hold与U2前置保持，旧device-passed行不重开。
+
 ## Shipped 2026-11-01 — the batch that was uncommitted, now built
 
 Compiled with `build-release-x64.ps1 -Fast -NoVersionBump -SkipProjectReferences` (0 errors), probes green:

@@ -72,6 +72,8 @@ namespace BiliLite.Helpers
         public string message { get; set; }
         public string results { get; set; }
 
+        public Task<T> GetJson<T>() { throw new InvalidOperationException("Review write decode must not execute"); }
+
         public JObject GetJObject()
         {
             JObject value;
@@ -148,6 +150,8 @@ namespace BiliLite.Api
         }
     }
 
+    public enum ReviewType { Short }
+
     public enum SeasonIdType
     {
         SeasonId,
@@ -199,6 +203,15 @@ namespace BiliLite.Api
             Fixture = call => "{\"code\":-404,\"message\":\"啥都木有\"}";
             FailNextEpListRequest = false;
         }
+
+        public static Func<int, string, Task<BiliLite.Helpers.HttpResults>> ReviewFixture;
+        public ApiModel ShortReview(int mediaId, string next)
+        {
+            return new ApiModel { Handler = () => ReviewFixture(mediaId, next) };
+        }
+        public ApiModel LikeReview(int mediaId, int reviewId, ReviewType type) { throw new InvalidOperationException("Review write must not execute"); }
+        public ApiModel DislikeReview(int mediaId, int reviewId, ReviewType type) { throw new InvalidOperationException("Review write must not execute"); }
+        public ApiModel SendShortReview(int mediaId, string content, bool share, int score) { throw new InvalidOperationException("Review write must not execute"); }
 
         public ApiModel Detail(string id, SeasonIdType type = SeasonIdType.SeasonId)
         {

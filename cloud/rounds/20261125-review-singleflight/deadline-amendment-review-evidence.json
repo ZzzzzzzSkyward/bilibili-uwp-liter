@@ -1,0 +1,93 @@
+{
+  "review": "PASS",
+  "scope": "STATIC_V2_ELIGIBILITY_AND_PROCEDURE_ONLY",
+  "reviewed_utc": "2026-11-25T09:07:20.599861+00:00",
+  "script_bindings": {
+    "original": {
+      "path": "/workspace/work/deadline-checkpoint/timed_push_with_docs.py",
+      "sha256": "99d8eacaf1d38de7b6317a846cc6fe39690cd01b1a31c6ef867da1650edd03bc"
+    },
+    "v1": {
+      "path": "/workspace/work/review-singleflight/deadline/timed_push_v1_archive_only.py",
+      "sha256": "b8f4f8be1d6ead09450e415460d254cb378e0cc628dc211bdb596b04e3585d3c"
+    },
+    "v2": {
+      "path": "/workspace/work/review-singleflight/deadline/timed_push_v2_exact_literals.py",
+      "sha256": "086649cdad64e14d0176d8fc3f59fb7fc668f8c0203ae0f1591c0983bbbdada8"
+    }
+  },
+  "original_and_v1_unchanged": true,
+  "syntax": "PASS compile() without execution",
+  "exact_substitution_reproduction": "PASS; v1 plus two declared narrow substitutions exactly equals v2 bytes",
+  "changed_function_asts": [
+    "validate_inputs"
+  ],
+  "all_other_function_asts": "IDENTICAL",
+  "exact_literal_modes": {
+    "src/BiliLite.UWP/Modules/Season/SeasonReviewVM.cs": "100644",
+    "plan/tests/season1/Season1Probe.csproj": "100644",
+    "plan/tests/season1/Season1Stubs.cs": "100644",
+    "plan/tests/season1/SeasonReviewOwnershipProbe.cs": "100644",
+    "plan/tests/season1/extract-lifetime.py": "100644",
+    "plan/tests/season1/Program.cs": "100644",
+    "bug_report.md": "100644",
+    "plan/PLAN.md": "100644",
+    "plan/VALIDATION.md": "100644",
+    "docs/ROADMAP.md": "100644"
+  },
+  "independent_baseline": {
+    "bug_report.md": {
+      "mode": "100644",
+      "kind": "blob",
+      "blob": "6e5c2fcc47d4051ffeb2cfd6c8d8486d05d3fdab"
+    },
+    "docs/ROADMAP.md": {
+      "mode": "100644",
+      "kind": "blob",
+      "blob": "6e9b7cbc996d19dedc82b9135e25458a29402b72"
+    },
+    "plan/PLAN.md": {
+      "mode": "100644",
+      "kind": "blob",
+      "blob": "842fe97b765b1c628a8ea1357af33ebc91097aa3"
+    },
+    "plan/VALIDATION.md": {
+      "mode": "100644",
+      "kind": "blob",
+      "blob": "4c73e2d3f5f182b72e20ae40bfb7141c6b9bae59"
+    },
+    "plan/tests/season1/Program.cs": {
+      "mode": "100644",
+      "kind": "blob",
+      "blob": "a74e63ee0ae6fc97d143e8fdcead2c064de7486f"
+    },
+    "plan/tests/season1/Season1Probe.csproj": {
+      "mode": "100644",
+      "kind": "blob",
+      "blob": "e8d216c516c8d5aac153ef795e78de58f2faa69d"
+    },
+    "plan/tests/season1/Season1Stubs.cs": {
+      "mode": "100644",
+      "kind": "blob",
+      "blob": "a628d1863327c1156de19ae86e99ca0cc3130153"
+    },
+    "plan/tests/season1/extract-lifetime.py": {
+      "mode": "100644",
+      "kind": "blob",
+      "blob": "a57218a3c42478d34394b7cacea1907ab3ed6820"
+    },
+    "src/BiliLite.UWP/Modules/Season/SeasonReviewVM.cs": {
+      "mode": "100644",
+      "kind": "blob",
+      "blob": "9893375f7692971cadf23ec8a41bfedadc8764fd"
+    }
+  },
+  "new_path": "plan/tests/season1/SeasonReviewOwnershipProbe.cs; new regular100644 only",
+  "metadata_policy": "Unchanged current-round prefix and three memory literals; suffix .md/.json and regular100644; no broad source/test/main-doc eligibility",
+  "symlink_policy": "All literal/metadata manifest modes regular100644; unchanged local_checks verifies committed kind blob and exact mode/blob/SHA256; mode120000 rejected",
+  "guard_preservation": "Fixed deadline/epoch,parent,protected master,absent local master refs,branch,tracking,index/global clean,exact manifest and hashes,private grant,digest,T-40 activation,T-30 local/actual-server recheck,absolute target wait,nonforce dev-only Popen,delay>=1second failclosed,private raw receipts: unchanged from independently reviewed v1",
+  "findings": [],
+  "no_execution_activation_or_git_writes": true,
+  "raw_receipt": "/workspace/work/review-singleflight/deadline-review/amendment/baseline-mode-receipt.json",
+  "release": "FROZEN; final content/manifest/commit acceptance and root transaction grant remain separate"
+}

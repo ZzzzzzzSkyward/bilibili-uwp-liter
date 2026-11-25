@@ -100,6 +100,17 @@ public partial class SeasonPage : PlayPage {
 }
 public partial class Shell {
 ''' + shell + '\n}\n' + frame + '\n}\n'
+    review = extract(page, 'private async void pivot_SelectionChanged(object sender, SelectionChangedEventArgs e)')
+    output += """
+namespace SeasonReviewCallerHarness {
+public class SelectionChangedEventArgs : EventArgs {}
+public class Pivot { public int SelectedIndex; }
+public class Caller {
+public Pivot pivot = new Pivot();
+public BiliLite.Modules.Season.SeasonReviewVM seasonReviewVM;
+public Caller(BiliLite.Modules.Season.SeasonReviewVM vm) { seasonReviewVM = vm; }
+public void Enter(int index) { pivot.SelectedIndex=index; pivot_SelectionChanged(null, new SelectionChangedEventArgs()); }
+""" + review + '\n}\n}\n'
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(output)
     args.output.with_suffix('.manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')

@@ -26,6 +26,7 @@
     <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Parsing/Season/WebSeasonEpListMapper.cs" Link="WebSeasonEpListMapper.cs" />
     <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Models/Api/Season/Web/WebSeasonEpListDto.cs" Link="WebSeasonEpListDto.cs" />
     <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Models/ReturnModel.cs" Link="ReturnModel.cs" />
+    <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Modules/Season/SeasonReviewVM.cs" Link="SeasonReviewVM.cs" />
     <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Modules/IModules.cs" Link="IModules.cs" />
     <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Modules/RelayCommand.cs" Link="RelayCommand.cs" />
     <Compile Include="$(SeasonSourceRoot)/src/BiliLite.UWP/Modules/Detail/SeasonDetailVM.cs" Link="SeasonDetailVM.cs" />

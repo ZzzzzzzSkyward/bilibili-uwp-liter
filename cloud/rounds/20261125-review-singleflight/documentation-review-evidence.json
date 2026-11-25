@@ -1,0 +1,300 @@
+{
+  "utc": "2026-11-25T09:18:20.045205+00:00",
+  "verdict": "PASS",
+  "ownership": "FROZEN/RELEASED",
+  "open_findings": [],
+  "documentation_files": [
+    {
+      "path": "bug_report.md",
+      "baseline_sha256": "7addfe4d40a7c3216e57b51a3d95907a680b9666864c4c68f58b221a4c8765df",
+      "sha256": "1a7f40aada0b888c5e030074b171f03a76bf751136fa2b0290848e8d61f3bbd7",
+      "changes": [
+        {
+          "operation": "insert",
+          "old_lines": 0,
+          "new_lines": 10
+        }
+      ],
+      "history_preserved": true
+    },
+    {
+      "path": "plan/PLAN.md",
+      "baseline_sha256": "81dc094614c99d68d703af8624ab5e58c4aef76ebfbcb9db1d5e3d09093d9051",
+      "sha256": "233b0fc6de8589d576a3a7e84d5cd5bb9043ccb9b0d598e341917057bc1bfdd0",
+      "changes": [
+        {
+          "operation": "insert",
+          "old_lines": 0,
+          "new_lines": 10
+        }
+      ],
+      "history_preserved": true
+    },
+    {
+      "path": "plan/VALIDATION.md",
+      "baseline_sha256": "13e41e608c88e7ccdefc0c870fd743ae41ed05fc40e228afa18faca50033f460",
+      "sha256": "d84aaf74cd4aa7e81bff6fcb861f2f3ea96af9fdad388e9a6ebc201e7ccd8da0",
+      "changes": [
+        {
+          "operation": "insert",
+          "old_lines": 0,
+          "new_lines": 11
+        }
+      ],
+      "history_preserved": true
+    },
+    {
+      "path": "docs/ROADMAP.md",
+      "baseline_sha256": "14c225740ff8718c0c99874e478b35f27d19482b5f74d015248b58bf27794fa4",
+      "sha256": "ce6751d5c6c048f91b29c174616237348b81cb3362a8b57ceca325e2cef38ebc",
+      "changes": [
+        {
+          "operation": "replace",
+          "old_lines": 1,
+          "new_lines": 1
+        },
+        {
+          "operation": "insert",
+          "old_lines": 0,
+          "new_lines": 7
+        }
+      ],
+      "history_preserved": true
+    }
+  ],
+  "inputs": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/documentation-dispatch.md",
+      "sha256": "bccdbb3c7fc6371a3b46ecc74e063e0d79d328e71f26275f7e8f5fe407321c71"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/documentation-write-window.md",
+      "sha256": "1a40800a1a2cc21bce2915ee5ca38185448ef3a49fa6c2470818c0c4e47586f4"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/documentation-review-dispatch.md",
+      "sha256": "8dfbfc7454f215ea2a59673189dd18df649329afd1c268c943c82a0680b3ab7c"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/documentation.md",
+      "sha256": "7784e67290c9d7daa0c1e2e11a12535d914a3f8e4ecc055b4d2096808ee5e869"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/documentation-evidence.json",
+      "sha256": "2d47dfe24d2c4d8df2b7478da7c755c2b73e5e8f53d76165603228230b18253f"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/verification.md",
+      "sha256": "4aab27c1c407e9c32f22b45495164ba0d92d255506fea61c6f235e4ffba055b1"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/verification-evidence.json",
+      "sha256": "3bdadb326f73ca8ab17ace011f3c14ecd085a672aaa04b0c03ca6eaa5830193b"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/final-review.md",
+      "sha256": "a7685a694bd43c8f172981e12e0b7c596fc389d152ebd03c6cd1a0f36f6cd3f9"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/final-review-evidence.json",
+      "sha256": "4f85bdb9e97fa108b4246bbf3164d90f75b7b931e7d31aeaef3217b97bcbdc32"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md",
+      "sha256": "659230818ecd652325a37710c09ce046e316b32e7999ded8bb679fa3c12e1799"
+    }
+  ],
+  "private_audit_sha256": "45e2731468f8d4264d1944dedf012dc1d66bf9f59fdc234aac1463c555557cbc",
+  "independent_audit": {
+    "utc": "2026-11-25T09:17:55.255204+00:00",
+    "files": [
+      {
+        "path": "bug_report.md",
+        "baseline_sha256": "7addfe4d40a7c3216e57b51a3d95907a680b9666864c4c68f58b221a4c8765df",
+        "sha256": "1a7f40aada0b888c5e030074b171f03a76bf751136fa2b0290848e8d61f3bbd7",
+        "changes": [
+          {
+            "operation": "insert",
+            "old_lines": 0,
+            "new_lines": 10
+          }
+        ],
+        "history_preserved": true
+      },
+      {
+        "path": "plan/PLAN.md",
+        "baseline_sha256": "81dc094614c99d68d703af8624ab5e58c4aef76ebfbcb9db1d5e3d09093d9051",
+        "sha256": "233b0fc6de8589d576a3a7e84d5cd5bb9043ccb9b0d598e341917057bc1bfdd0",
+        "changes": [
+          {
+            "operation": "insert",
+            "old_lines": 0,
+            "new_lines": 10
+          }
+        ],
+        "history_preserved": true
+      },
+      {
+        "path": "plan/VALIDATION.md",
+        "baseline_sha256": "13e41e608c88e7ccdefc0c870fd743ae41ed05fc40e228afa18faca50033f460",
+        "sha256": "d84aaf74cd4aa7e81bff6fcb861f2f3ea96af9fdad388e9a6ebc201e7ccd8da0",
+        "changes": [
+          {
+            "operation": "insert",
+            "old_lines": 0,
+            "new_lines": 11
+          }
+        ],
+        "history_preserved": true
+      },
+      {
+        "path": "docs/ROADMAP.md",
+        "baseline_sha256": "14c225740ff8718c0c99874e478b35f27d19482b5f74d015248b58bf27794fa4",
+        "sha256": "ce6751d5c6c048f91b29c174616237348b81cb3362a8b57ceca325e2cef38ebc",
+        "changes": [
+          {
+            "operation": "replace",
+            "old_lines": 1,
+            "new_lines": 1
+          },
+          {
+            "operation": "insert",
+            "old_lines": 0,
+            "new_lines": 7
+          }
+        ],
+        "history_preserved": true
+      }
+    ],
+    "new_relative_links_verified": [
+      {
+        "from": "bug_report.md",
+        "target": "cloud/rounds/20261125-review-singleflight/execution.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/execution.md"
+      },
+      {
+        "from": "bug_report.md",
+        "target": "cloud/rounds/20261125-review-singleflight/final-review.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/final-review.md"
+      },
+      {
+        "from": "bug_report.md",
+        "target": "cloud/rounds/20261125-review-singleflight/verification.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/verification.md"
+      },
+      {
+        "from": "bug_report.md",
+        "target": "cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md"
+      },
+      {
+        "from": "bug_report.md",
+        "target": "plan/VALIDATION.md",
+        "resolved": "/workspace/bilibili-uwp-liter/plan/VALIDATION.md"
+      },
+      {
+        "from": "plan/PLAN.md",
+        "target": "../bug_report.md",
+        "resolved": "/workspace/bilibili-uwp-liter/bug_report.md"
+      },
+      {
+        "from": "plan/PLAN.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/execution.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/execution.md"
+      },
+      {
+        "from": "plan/PLAN.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/final-review.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/final-review.md"
+      },
+      {
+        "from": "plan/PLAN.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/verification.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/verification.md"
+      },
+      {
+        "from": "plan/PLAN.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md"
+      },
+      {
+        "from": "plan/PLAN.md",
+        "target": "VALIDATION.md",
+        "resolved": "/workspace/bilibili-uwp-liter/plan/VALIDATION.md"
+      },
+      {
+        "from": "plan/VALIDATION.md",
+        "target": "../bug_report.md",
+        "resolved": "/workspace/bilibili-uwp-liter/bug_report.md"
+      },
+      {
+        "from": "plan/VALIDATION.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/final-review.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/final-review.md"
+      },
+      {
+        "from": "plan/VALIDATION.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/verification.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/verification.md"
+      },
+      {
+        "from": "docs/ROADMAP.md",
+        "target": "../bug_report.md",
+        "resolved": "/workspace/bilibili-uwp-liter/bug_report.md"
+      },
+      {
+        "from": "docs/ROADMAP.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/execution.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/execution.md"
+      },
+      {
+        "from": "docs/ROADMAP.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/final-review.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/final-review.md"
+      },
+      {
+        "from": "docs/ROADMAP.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/verification.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/verification.md"
+      },
+      {
+        "from": "docs/ROADMAP.md",
+        "target": "../plan/VALIDATION.md",
+        "resolved": "/workspace/bilibili-uwp-liter/plan/VALIDATION.md"
+      },
+      {
+        "from": "docs/ROADMAP.md",
+        "target": "../cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md",
+        "resolved": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md"
+      }
+    ],
+    "fullgate": {
+      "actual_result_sha256": "333280c7d72c0ad34d73352075184e50193a5b08ee26a13f95789ddab077d421",
+      "suite_status": "PASS",
+      "logical_pass": 51,
+      "executable_pass": 52,
+      "complete_required": true,
+      "dirty_head": "86e0e56e67c05aadc34500ee5f65bdcdce3a5277",
+      "provenance_limits_retained": [
+        "Actual playersess temporary files were deleted before the capture monitor observed them. Nine deterministic extraction files were reconstructed privately from frozen source and generator; no claim of direct observation of those actual deleted bytes. Reconstruction manifest retained privately.",
+        "No Windows/UWP/native/device/event-delivery/decoded50video/hosted CI claim",
+        "No product/test/mainDoc/Git/index/ref write; no stage/commit/push"
+      ],
+      "original_return_line_qualification": "One old return line becomes stricter lifetime && index && review; no original assertion changed."
+    },
+    "separate_selected_gate": {
+      "suite_status": "PARTIAL_PASS",
+      "selected": 2,
+      "complete_required": false
+    },
+    "only_read_operations_and_private_audit_writes": true
+  },
+  "review_sha256": "be890f4d9f196da643ca3eac5a192a1afb5c23ca9775a02dd702a30dbabd344a",
+  "actual_fullgate_results_sha256": "333280c7d72c0ad34d73352075184e50193a5b08ee26a13f95789ddab077d421",
+  "limits": [
+    "Document review; no new build/test/native/hosted run",
+    "Fullgate deleted playersess temporary bytes reconstructed, not directly observed",
+    "Original Main return line replaced by stricter conjunction; original assertions retained",
+    "No source/test/main-document/Git/shared-build writes"
+  ]
+}

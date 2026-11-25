@@ -33,6 +33,16 @@ are the 1.0.9.42 section in `plan/VALIDATION.md` and have not been run, and no p
 The 2026-11-06 entries (`01e51a7`, `798a03a`, `4dc85ce`) are compiled (`-Fast`, 0 errors) and probe-covered
 (`cardlayout` 761, `playertoolbar` 90, `toastalign` 41, `g3` 342, `g5` 200); none has been on a device.
 
+### 2026-11-25 season review：源码/离线完成，native未验证
+
+[BR75](../bug_report.md)记录review pivot重复public读、zero-ID false release和同步命令通知重入。仅SeasonReviewVM增加同一实例private read claim，public GetItems和Refresh/LoadMore共同接纳；Refresh先取得claim再reset，拒绝调用不改rows/Next/Loading、不做cleanup。claim跨同步Loading/CanLoadMore/collection/completion通知，zero-ID不释放他人，completion observer抛错后仍释放。原response/paging/count/total/content与API/auth/write保持。
+
+[执行证据](../cloud/rounds/20261125-review-singleflight/execution.md)：74新增ownership断言通过；selected season1+api02为2/2 **PARTIAL_PASS**、complete_required=false；本候选[独立实现审查](../cloud/rounds/20261125-review-singleflight/final-review.md)PASS，[实际完整gate](../cloud/rounds/20261125-review-singleflight/verification.md)exit0、51/51logical与52/52executable **PASS**、finished=true、complete_required=true。 原有season1 assertions/fixtures保留；真实VM与命令/精确pivot覆盖74新增断言，原实现与GetItems-only候选回归失败分开记录。源码仍是未提交候选，未声称新commit/CI。
+
+完整gate实际运行于dirty H`86e0e56e67c05aadc34500ee5f65bdcdce3a5277`，非clean/new-commit run；2026-11-25T09:13:04.150586+00:00→2026-11-25T09:16:06.094957+00:00，6015个noncloud/source/tool/NuGet输入前后稳定。Results SHA256`333280c7d72c0ad34d73352075184e50193a5b08ee26a13f95789ddab077d421`；before/after输入manifest文件SHA256`6459dca56f682f0d97579cf6fd3576b4c6b7b3c4067b384ebd53046a7a73872b`。原season141/lifetime497/PGC152保持，新增review74另计；API02仍8795（含SR13424），不是再加3424。Runner14/package15/sampler各自独立，未冒称本轮重跑或52stage组成。
+
+[实际baselineH hosted观察](../cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md)：2026-11-25 08:58:49UTC对H`86e0e56e67c05aadc34500ee5f65bdcdce3a5277`过滤返回total_count0/workflow_runs[]。这是exactH事实；本次改动/未来checkpoint没有hosted PASS，旧queued run仅历史。 Windows/UWP/XAML、真实service/session/write/account/live、50decoded视频/RAM/roots/heap/GPU、签名安装启动仍未验证；BR21、accountP4/P5hold与U2前置保持，旧device-passed行不重开。 设备跟进见[新增VALIDATION](VALIDATION.md)。
+
 ### 2026-11-25 index/dynamic：sourceE源码与完整离线PASS，native未验证
 
 `d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 实际交付FI1/FD1/FI2/FI3/SR1；[publication receipt](../cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)把最终committed blobs绑定到真实执行字节。[FI1 owning](../cloud/rounds/20261125-index-dynamic-contracts/index/final-review.md)、[FI2/FI3 owning](../cloud/rounds/20261125-index-dynamic-contracts/later-pgc/final-review.md)、[FD1 owning](../cloud/rounds/20261125-index-dynamic-contracts/dynamic/final-review.md)、[SR1 owning](../cloud/rounds/20261125-index-dynamic-contracts/short-review/final-review.md)、[final fresh](../cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)均PASS。旧sourceC/docsD/archiveA及sourceC初次ux1dFAIL/corrected52PASS仍为各自历史结果。

@@ -1,0 +1,76 @@
+{
+  "utc": "2026-11-25T09:03:51.872471+00:00",
+  "verdict": "CHANGES",
+  "ownership": "FROZEN/RELEASED",
+  "findings": [
+    {
+      "id": "R1",
+      "priority": "P1",
+      "summary": "GetItems-only guard permits destructive Refresh during Loading=false owner notification",
+      "required": "Authorize same-owner command admission before Refresh mutation; add completion command regression"
+    }
+  ],
+  "release_verified": true,
+  "discovery_bindings_verified": true,
+  "prospective_command": [
+    "python3",
+    "/workspace/work/review-singleflight/requirements-review/independent-requirements-review.py"
+  ],
+  "exit": 0,
+  "observed": "COMPLETION_REFRESH before=1 after=0 next= dispatches=1",
+  "files": [
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/requirements.md",
+      "sha256": "714d4e403ea72280ca52ded1ca7832cf7d16be67b03572e973e531dd1846e80d"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Modules/Season/SeasonReviewVM.cs",
+      "sha256": "c6e36bf65234c3dfc59471d4d3793891b4d4d033b2962e6e2e4912ca1d819abb"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/src/BiliLite.UWP/Pages/SeasonDetailPage.xaml.cs",
+      "sha256": "c91ceea2e58aa8318311841eaf22ef473711710c6222289baa6bed9b79bf4f5d"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/requirements-review/prospective/SeasonReviewVM.cs",
+      "sha256": "1ad1f570e63fb3507c0d4d1b86be21700a2c80f1566fd224303efe9cba3b7c15"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/requirements-review/prospective/Program.cs",
+      "sha256": "6ed8f94657f1cd2414d9b1174b5a8682353b4768533d00af1a77d46c7752e24a"
+    },
+    {
+      "path": "/workspace/work/review-singleflight/requirements-review/prospective.log",
+      "sha256": "8adda5bfbbf0e32b1691daecf9c7bd1a47300f109ff1cb6546457007969413f6"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/requirements-evidence.md",
+      "sha256": "e6d38f630119a894f281fe93a96a37cc72f37e06c39976fb5959d17b63eeb0e0"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/cloud/rounds/20261125-review-singleflight/root-review-question.md",
+      "sha256": "0c6adb8fc97835cf2c8a5091f1f253556693b1c8d90ca51fece2ddf364eca65f"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/season1/Season1Probe.csproj",
+      "sha256": "8eb31a41d340d0b159b20f3ef950961dc0c0fcb16e5a4f69b3bdef5054a44e52"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/season1/Season1Stubs.cs",
+      "sha256": "a27b570ad6be0a060606fd6f1099776c24bcb4cffc9c27e32dfbcb3facab4248"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/season1/extract-lifetime.py",
+      "sha256": "9945c8583bbb1dfdc8d5eead112a6be2b0920fb4f3939251274982b5d2d0a204"
+    },
+    {
+      "path": "/workspace/bilibili-uwp-liter/plan/tests/season1/Program.cs",
+      "sha256": "9e0d0af8d9299965de65d6903ac30f9ddb5f2fff79d21630fb52ff2aeb7c64c4"
+    }
+  ],
+  "review_sha256": "e88351a20e84963182e173d791a6a8b77c2ffeec136feb1ddc2a766e7583a395",
+  "limits": [
+    "Private prospective fixture only; no product patch or durable test run",
+    "No Windows/native/device/hosted verification"
+  ]
+}

@@ -41,10 +41,30 @@ namespace BiliLite.Modules.Season
         }
 
         public string Next { get; set; } = "";
+        private bool _readOwned;
+
+        private bool TryOwnRead()
+        {
+            if (_readOwned || Loading) { return false; }
+            _readOwned = true;
+            return true;
+        }
+
         public async Task GetItems()
+        {
+            if (MediaID == 0 || !TryOwnRead()) { return; }
+            await ReadItems(false);
+        }
+
+        private async Task ReadItems(bool refresh)
         {
             try
             {
+                if (refresh)
+                {
+                    Items.Clear();
+                    Next = "";
+                }
                 if (MediaID == 0) { return; }
                 Loading = true;
                 CanLoadMore = false;
@@ -92,26 +112,25 @@ namespace BiliLite.Modules.Season
             }
             finally
             {
-                Loading = false;
+                try
+                {
+                    Loading = false;
+                }
+                finally
+                {
+                    _readOwned = false;
+                }
             }
         }
 
         public async void Refresh()
         {
-            if (Loading)
-            {
-                return;
-            }
-            Items.Clear();
-            Next = "";
-            await GetItems();
+            if (!TryOwnRead()) { return; }
+            await ReadItems(true);
         }
         public async void LoadMore()
         {
-            if (Loading)
-            {
-                return;
-            }
+            if (_readOwned || Loading) { return; }
             await GetItems();
         }
 
