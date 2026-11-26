@@ -1,3 +1,0 @@
-# First FD1 PASS metadata — immutable history
-
-The three adjacent files are exact copies of the first independent PASS report, binding and release before metadata-only evidence packaging correction. Their hashes are recorded in ../review-evidence/relocation.json. Historical raw repository paths in these exact copies are superseded and do not describe current storage. Full unchanged stdout, receipts and diff remain in `/workspace/work/index-dynamic-contracts/dynamic-review/evidence-hygiene/raw/`. The current review metadata will bind the executor's separately corrected release before freezing. No code, fixture, assertion, result or acceptance changed and no test reran.

@@ -1,8 +1,0 @@
-{
-  "original_Program_byte_preserved_after_removing_four_additive_lines": true,
-  "original_240_assertions_preserved": true,
-  "history_fixture_bytes_unchanged": true,
-  "renderer_baseline_method_exact_original_bytes": true,
-  "source_fields_extracted_actual_if_present": true,
-  "fixture_stub_extractor_dependency_inputs_unchanged_between_final_original_and_final_fixed": true
-}

@@ -4,7 +4,7 @@ Read-only external process sampler and operator marker. Targets Windows PowerShe
 .DESCRIPTION
 Prepare metadata outside a NEW run directory. ValidateMetadata never creates outputs.
 Collect and Checkpoint require Windows; Mark records operator observations, not UI verification.
-See cloud/rounds/20261125-video-memory/measurement/execution.md for the metadata contract.
+See document/VIDEO_MEMORY.md for the metadata contract.
 .EXAMPLE
 .\tools\measure-video-memory.ps1 -Mode ValidateMetadata -MetadataPath C:\captures\fixture.json
 .EXAMPLE

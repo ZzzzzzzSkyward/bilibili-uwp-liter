@@ -1,7 +1,0 @@
-# Corrected-head hosted validation — authorized window
-
-Independent final-review.md now records **Source PASS; P1-01 CLOSED** for corrected metadata capture and tests; fourteen controls/full 50/51 pass. workflow-env-review.md approves the exact runtime-path repair, published as c4e9dba; latest receipt 169b2b0 contains unchanged source/workflow bytes. Existing runner_executor holds the exclusive window for the approved final hosted observation/receipt only.
-
-Read current refs and actual run history first. If an actual run already covers the corrected source/workflow (exact head, or explicitly hash-proven metadata-only equivalent), observe it without a duplicate request. Otherwise send the one newly authorized structured workflow_dispatch with ref=dev for this corrected revision. The previous HTTP422 attempt belongs to the invalid earlier workflow and must not be reused as the current verdict. No further code/settings/permission/identity/branch/release change is granted.
-
-Observe the real event/head/job/conclusion/artifacts to terminal status, or record an explicit current rejection/external blocker without cause guessing. Record corrected-hosted-execution.md and update execution.md's current status/header, preserving old failures as labeled history. A 204 alone is not PASS. No unchanged local suite rerun. After actual result, exact-file receipt commit/push and remote equality, release all ownership and finish artifact/status so reviewer/docs owner can close. Do not create receipt-push loops or infer source CI from local parsing.

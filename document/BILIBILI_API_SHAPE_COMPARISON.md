@@ -4,7 +4,7 @@
 
 ## 1. 不可变来源、license 与维护证据
 
-下列仓库公开元数据在2026-11-25观察为 nonarchived/non-disabled，源码缓存以完整commit detached、clean冻结。首选90日窗口从2026-08-27起；检查了具体实现变更，不以stars、issue、bot/README时间代替。完整库存/拒绝候选见 [inventory](../cloud/rounds/20261125-api-shape-comparison/siblings/inventory.md)。
+下列仓库公开元数据在2026-11-25观察为 nonarchived/non-disabled，源码缓存以完整commit detached、clean冻结。首选90日窗口从2026-08-27起；检查了具体实现变更，不以stars、issue、bot/README时间代替。
 
 | 来源/谱系 | 分支、不可变pin与pin日期UTC | License at pin | 实质维护依据与限制 |
 | --- | --- | --- | --- |
@@ -18,7 +18,7 @@ Python来源是已归档 Nemo2011 分支的维护fork，只计一个谱系；三
 
 ## 2. 字段级观察与不同请求家族
 
-完整路径/行号/强度见 [sibling evidence E1–E8](../cloud/rounds/20261125-api-shape-comparison/siblings/evidence.md) 与 [本地caller矩阵](../cloud/rounds/20261125-api-shape-comparison/contracts/matrix.md)。以下是观察到的实现期望，非通用API schema：
+以下是观察到的实现期望，非通用API schema：
 
 | 字段/家族 | 固定源码中的观察 | 本地处理边界 |
 | --- | --- | --- |
@@ -31,7 +31,7 @@ Python来源是已归档 Nemo2011 分支的维护fork，只计一个谱系；三
 
 ## 3. AS1/AS2：编码在query parser之前，保留当前signer
 
-AS1的目标是 `UserDetailAPI.SubmitVideos`（含SubmitVideosWbi alias）与现有Followings name-bearing search branch；AS2是 `CommentApi.CommentV2`。独立 [初审](../cloud/rounds/20261125-api-shape-comparison/review.md) 接受其源码缺陷与范围；最终需求由 [AS3复审PASS](../cloud/rounds/20261125-api-shape-comparison/as3-review.md) 闭合。实际三处production expression修复已获 [query implementation PASS](../cloud/rounds/20261125-api-shape-comparison/query/final-review.md)，无global signer改动。
+AS1的目标是 `UserDetailAPI.SubmitVideos`（含SubmitVideosWbi alias）与现有Followings name-bearing search branch；AS2是 `CommentApi.CommentV2`。三处production expression修复已随 `ff5d285` 落地，无global signer改动。
 
 | 原行为/真实源码synthetic反例 | 目标行为 |
 | --- | --- |
@@ -59,25 +59,25 @@ AS1保留null interpolation的empty效果和null/empty keyword原分支、tid=-1
 | Type21 | absent | COUNT | COUNT | FIRST-EMPTY |
 | Type21 | null | COUNT | COUNT | FIRST-EMPTY |
 
-这等价于 [审定16-row矩阵](../cloud/rounds/20261125-api-shape-comparison/contracts/requirements.md#as3--favorite-detail-consumes-its-endpoints-has_more-p1) 的empty/nonempty分开情况。FIRST-EMPTY沿用既有提前返回：发布有效info/ownership/collect，Nothing=true，保留pre-call Videos引用/内容、Page1不动、隐藏Load more、Loading=false；不再计算COUNT。第一页missinginfo则拒绝publication并保留旧info/rows/Page1，Nothing=false、隐藏Load more、Loading=false与既有notice。
+这等价于审定 16-row 矩阵的empty/nonempty分开情况。FIRST-EMPTY沿用既有提前返回：发布有效info/ownership/collect，Nothing=true，保留pre-call Videos引用/内容、Page1不动、隐藏Load more、Loading=false；不再计算COUNT。第一页missinginfo则拒绝publication并保留旧info/rows/Page1，Nothing=false、隐藏Load more、Loading=false与既有notice。
 
 正常presentboolean empty append才新增terminal规则。例如Page2/prior1row/count42/empty：normal true/false →OFF/Page2；normal absent/null与Type21任意validflag →COUNT真/Page3（原行为）。count相等则COUNT false/Page2。不能用无条件empty早退覆盖这些兼容分支。
 
-Malformed presentboolean仍typed Payload失败，包含Type21既有校验。transport/business/envelope/payload失败append保留rows/info/Page，沿用ShowLoadMore=false/Nothing=false/Loading=false及分类notice；不执行新paging决定，retry仍请求同Page。stringIDs/null-row/optionalpayload/code0action与现有encodedkeyword/pn保持。AS3实现已获 [favorite implementation PASS](../cloud/rounds/20261125-api-shape-comparison/favorite/final-review.md)，以下AF1/AF2再修正通知/响应提交边界。
+Malformed presentboolean仍typed Payload失败，包含Type21既有校验。transport/business/envelope/payload失败append保留rows/info/Page，沿用ShowLoadMore=false/Nothing=false/Loading=false及分类notice；不执行新paging决定，retry仍请求同Page。stringIDs/null-row/optionalpayload/code0action与现有encodedkeyword/pn保持。AS3随 `ff5d285` 落地，以下AF1/AF2再修正通知/响应提交边界。
 
 ## 5. AF1/AF2：引用通知与响应解码先于提交
 
-AF1修复FavoriteDetailVM.Videos的引用发布：getter纯读；相同引用（含null与listener同引用echo）不通知，distinct引用先存再通知一次，同内容不同collection仍发布。移除旧双flag，保留AS3全方法与command策略。通知驱动的绑定observer在initial→Search→Refresh时能跟随真实新collection，不靠polling掩盖丢失notification。[owning PASS](../cloud/rounds/20261125-api-shape-comparison/favorite/af1-final-review.md)、[fresh PASS](../cloud/rounds/20261125-api-shape-comparison/af1-final-audit.md)。
+AF1修复FavoriteDetailVM.Videos的引用发布：getter纯读；相同引用（含null与listener同引用echo）不通知，distinct引用先存再通知一次，同内容不同collection仍发布。移除旧双flag，保留AS3全方法与command策略。通知驱动的绑定observer在initial→Search→Refresh时能跟随真实新collection，不靠polling掩盖丢失notification。
 
-AF2对MyFollowVideoVM.MyFavorite执行同样reference-notification规则，CollectFavorite原setter保持。LoadFavorite先完成其既有selected created-list/null fallback、default folder、explicit bool和collected-list解码，再按原成功顺序发布created reference→default Insert0→HasMore→Page→collected。LoadCreateList先完成list与flag转换再Add；拒绝late malformed metadata不先留下部分row，retry同Page不复制失败前插入的row。保留原duplicates/nullrow、CLR-absent vs JSON-null、legacy salvage/casts/defaults/envelopes/request/helper/sourcefamily，不新增endpoint、typedparser/auth迁移或宽松schema。[owning PASS](../cloud/rounds/20261125-api-shape-comparison/favorite/af2-final-review.md)、[fresh PASS](../cloud/rounds/20261125-api-shape-comparison/af2-final-audit.md)。这些不是任意throwing/reentrant subscriber的通用事务或rollback保证。
+AF2对MyFollowVideoVM.MyFavorite执行同样reference-notification规则，CollectFavorite原setter保持。LoadFavorite先完成其既有selected created-list/null fallback、default folder、explicit bool和collected-list解码，再按原成功顺序发布created reference→default Insert0→HasMore→Page→collected。LoadCreateList先完成list与flag转换再Add；拒绝late malformed metadata不先留下部分row，retry同Page不复制失败前插入的row。保留原duplicates/nullrow、CLR-absent vs JSON-null、legacy salvage/casts/defaults/envelopes/request/helper/sourcefamily，不新增endpoint、typedparser/auth迁移或宽松schema。这些不是任意throwing/reentrant subscriber的通用事务或rollback保证。
 
 ## 6. sourceC的实际证据、保留项与下一门禁（历史）
 
 Discovery基线是 `7356b94893377558191b0d70576a52bae704c1f9` 的12个冻结API/transport/parser snapshot，另有同时进行的memory改动；不是把moving whole tree当稳定commit。初审独立重现相同fixtures：query25checks中15个原红、favorite9checks中6个原红。AS3补充124原绿compatibility checks独立PASS；presentboolean empty两例原红（8checks中的2个失败），均为完整本地源码+syntheticdelivery，不是服务器capture或最终修复绿。
 
-实际同fixture红→绿与owning/fresh检查已闭环：query3831 checks原175失败→0，保留原12+search1258；AS3保留9/8/124compatibility与added1070；AF1/AF2保持原proof与真实notifier/helper边界。上述是不同denominator，不合并成native覆盖率。最终 [corrected combined gate](../cloud/rounds/20261125-video-memory/verification/corrected-execution.md) 为51/51logical、52/52executable PASS，complete_required=true，结果SHA256 `ca43ccc8c2b5fe8b33327965e4f18c4ab7e73c3926e91b09adf9020026575a16`；935文件sourcemanifest `c40d13c9428fa910b7066d223ac12a9295f136f213acab7303865cc6e401dc1d`。工具/runner14/package15仍独立。初次完整gate的ux1d FAIL保持历史，IG1真实两方法修正后新run通过，未改tests。
+上述修复均为同fixture red→green；各fixture分母不同，不合并成native覆盖率。combined门为51/51logical、52/52executable PASS（`ff5d285`）；初次完整gate的ux1d FAIL保持历史，IG1真实两方法修正后新run通过，未改tests。工具/runner14/package15仍独立。
 
-完整测试运行于 dirty dev`7356b94893377558191b0d70576a52bae704c1f9`，生成的Git metadata可能反映该执行基线。随后实际普通提交/推送为 [source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)，唯一parent7356、tree`2565a48424882c76acfe3217c7fb610b7b193b91`。[publication receipt](../cloud/rounds/20261125-api-shape-comparison/publication/execution.md) 与 [独立 blob/ref 核对](../cloud/rounds/20261125-api-shape-comparison/publication/root-source-check.md) 已检查107个payload路径及935个测试输入的实际committed blobs与测试字节一致；不是以commit标签重跑suite。Hosted：UNVERIFIED：2026-11-25 05:09:51 UTC 的实际 Actions collection 只见旧 run45434541348（head169b2b0、queued/null），没有本次 sourceC 的 hosted result。
+完整测试运行于 dirty dev7356，生成的Git metadata可能反映该执行基线。随后实际普通提交/推送为 [source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)；107个payload路径及935个测试输入的实际committed blobs已核对与测试字节一致，不是以commit标签重跑suite。Hosted：UNVERIFIED，2026-11-25 05:09:51 UTC 的实际 Actions collection 只见旧 run45434541348（head169b2b0、queued/null），没有本次 sourceC 的 hosted result。
 
 不可变本地源码/fixture：[UserDetailAPI](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/ff5d2855bb62ef6459a724ffae6101b812a7369d/src/BiliLite.UWP/Api/User/UserDetailAPI.cs)、[CommentApi](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/ff5d2855bb62ef6459a724ffae6101b812a7369d/src/BiliLite.UWP/Api/CommentApi.cs)、[FavoriteDetailVM](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/ff5d2855bb62ef6459a724ffae6101b812a7369d/src/BiliLite.UWP/Modules/Detail/FavoriteDetailVM.cs)、[MyFollowVideoVM](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/blob/ff5d2855bb62ef6459a724ffae6101b812a7369d/src/BiliLite.UWP/Modules/User/MyFollowVideoVM.cs)、[API02 fixtures](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/tree/ff5d2855bb62ef6459a724ffae6101b812a7369d/plan/tests/api02)、[C2 fixtures](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/tree/ff5d2855bb62ef6459a724ffae6101b812a7369d/plan/tests/c2)。以上路径均固定在sourceC；最终review/完整报告保留各自历史时点及范围。
 
@@ -85,7 +85,7 @@ Discovery基线是 `7356b94893377558191b0d70576a52bae704c1f9` 的12个冻结API/
 
 以下原段落只描述sourceC/docD时点；当前sourceE处置见§7，不把后续源码成果归入C。
 
-[FI1 amended requirements PASS](../cloud/rounds/20261125-api-shape-comparison/followup/fi1-review.md) 与 [FD1 requirements acceptance](../cloud/rounds/20261125-api-shape-comparison/followup/review.md) 已完成；**未实现、未进入本次sourceC/完整gate修复范围**。FI1拟修SeasonIndexVM freshconditions/results ownership与reentrant命令；FD1拟在WebDynamicFeedApi把已接受opaqueoffset编码为一个值。原118-check与34-checksupplement仍有desired-safe failures，不宣称118/118或34/34。必须待本批source/docs/archive release、fresh safe baseline与精确owner grant，再作samefixture oldred→newgreen/owning/fresh/gate。不得把它们误标AS1–AS3的既有修复。
+FI1/FD1 当时只有 requirements 接受，**未实现、未进入本次 sourceC/完整 gate 修复范围**：FI1 拟修 SeasonIndexVM fresh conditions/results ownership 与 reentrant 命令；FD1 拟在 WebDynamicFeedApi 把已接受 opaque offset 编码为一个值。二者随后在 `d11dbf8` 落地，见 §7；不得把它们误标 AS1–AS3 的既有修复。
 
 U1/U5/U8/U9/PB1、typedfavoriteack/optionalpayload/boundedinteger/nullrow/initiating-detail所有权保持。OAuth `/api/v2/oauth2/refresh_token`与credential/session/cookie provenance不降级；账号P4/P5仍hold。Live U2仍FAILED/BLOCKED：先取得可信existingBUVID或验证appfallback、token/hosts/auth/protocol/cancel及受控session，再审查完整活动路径，保留BR-63重连；本研究不提供这些条件。未确认的watchlater签名/alternative route不作新修复。
 
@@ -93,7 +93,7 @@ Windows VS/UWP build、真实cookie/account/session、搜索/评论/收藏服务
 
 ## 7. sourceE：PGC index与opaque cursor后续处置
 
-`d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 交付FI1/FD1/FI2/FI3/SR1。[publication receipt](../cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)提供实际committed字节身份；[FI1 owning](../cloud/rounds/20261125-index-dynamic-contracts/index/final-review.md)、[FI2/FI3 owning](../cloud/rounds/20261125-index-dynamic-contracts/later-pgc/final-review.md)、[FD1 owning](../cloud/rounds/20261125-index-dynamic-contracts/dynamic/final-review.md)、[SR1 owning](../cloud/rounds/20261125-index-dynamic-contracts/short-review/final-review.md)及[final fresh](../cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)均PASS。旧sourceC的AS1–3/AF1/AF2与memory成果、dirty7356/935source/ca43报告、首次ux1d失败及后续corrected52PASS均保持历史，不替代本轮结果。
+`d11dbf8` 交付FI1/FD1/FI2/FI3/SR1，并经独立 owning/fresh 审查。旧sourceC的AS1–3/AF1/AF2与memory成果、首次ux1d失败及后续corrected结果均保持历史，不替代本轮结果。
 
 | 范围 | 具体行为 | 保留边界 |
 | --- | --- | --- |
@@ -126,9 +126,9 @@ FI3兼容规则：
 
 Final fresh的G4179以完整精确source/fixture/reference/tool/report绑定沿用，没有再跑；新完整suite随后正常运行既有G4 stage。上述source fixtures使用synthetic delivery与通用managed平台原语，既不是live capture也不证明native UI。
 
-[实际完整gate](../cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)与[精确报告证据](../cloud/rounds/20261125-index-dynamic-contracts/verification/evidence/final-common-gate.md)：exit0，51/51logical、52/52executable PASS，finished=true、complete_required=true，所有52 required/selected/available/exit0，无missing/extra/skip/error/timeout/cancel/truncation。实际06:52:25.306397→06:55:21.987887UTC，176.681秒，**dirty A`7fc3c524fde4139d01e7ecd362647ca771c64ea8`**。Results SHA256`12d25b77236ce59569f831494e8220212c25e30b5c5d871eee6833ff33d0d6d1`；940输入canonical SHA256`3c5dd387072e163c5b99c27fbd17a36bc93f06b3a6f734e433d4e07e205c104e`；raw source-before.json文件SHA256`f9f79d74cfc8ec65722c6abcecb38f83f221701a804d8809af7eda6ee8b791b3`，后二者是不同序列化层的hash。sourceE已按实际committed blobs绑定；该报告仍不能改称clean-E run。
+本地完整门为 51/51logical、52/52executable PASS，所有52行 exit0、无missing/extra/skip/error/timeout/cancel/truncation；执行于 **dirty A`7fc3c524fde4139d01e7ecd362647ca771c64ea8`** 后按实际committed blobs绑定，报告仍不能改称clean-E run。
 
-All940source与5073quality/732PowerShell/120review-requirement-history输入前后稳定。11runnable路径为8existing modifications+3new tests，929其他A输入保持。Runner14、current sampler46invocations/21groups/106checks/55helpercalls52syntheticrows和package15只按精确相关输入/工具/报告沿用，分母独立，未为标签再跑；LinuxCore7.7不代表WindowsPS5.1或native samples。UNVERIFIED：最近已接受的[实际sourceE hosted观察](../cloud/rounds/20261125-index-dynamic-contracts/publication/root-hosted-source-e.md)于2026-11-25 07:35:28UTC以 `head_sha=d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 过滤Actions collection，返回 `total_count=0` / `workflow_runs=[]`，尚未建立E的hosted result，不推断原因。2026-11-25 06:07:01UTC旧run45434541348/head169b2b0（queued/null）仅为历史观察，不能认证E。
+Runner14、sampler 与 package15 只按精确相关输入/工具/报告沿用，分母独立，未为标签再跑；LinuxCore7.7不代表WindowsPS5.1或native samples。Hosted UNVERIFIED：`d11dbf8` 没有 hosted result（旧 run45434541348/head169b2b0 仅为历史观察）。
 
 ### 不可变源码入口与真实跟进
 

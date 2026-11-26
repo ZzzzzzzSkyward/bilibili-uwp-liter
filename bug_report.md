@@ -15,7 +15,7 @@ the report, not a diagnosis.
 
 Use [VIDEO_MEMORY](document/VIDEO_MEMORY.md) for artifact/source/tool/run/fixture and PID+start binding, prewarm/warm0, active/post-close/settled checkpoints at 5/10/25/50, idle60/300, attempted/completed counts and repeated matched controls. Separate process trends from managed-root/native/GPU attribution. Unavailable metrics remain null with a reason; operator Mark events do not verify playback.
 
-[Source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) is published and [independently bound to the tested blobs](cloud/rounds/20261125-api-shape-comparison/publication/root-source-check.md). The [corrected local gate](cloud/rounds/20261125-video-memory/verification/corrected-execution.md) passed 51/51 logical and 52/52 executable stages with complete_required=true. The first integration remains a recorded FAIL: 50/51 logical and 51/52 executable stages passed; IG1's two real method assignments corrected the ux1d failure with tests unchanged. At 05:09:51 UTC on 2026-11-25, the actual Actions collection contained only old queued run45434541348 at head169b2b0; no hosted result for sourceC was established. Windows build/PS5.1, actual PID/50 decoded videos, cache/codec/WinRT, roots/heap/GPU/pixels and live/account/session acceptance remain unverified. Follow [additive validation](plan/VALIDATION.md); historical device rows stay unchanged.
+[Source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) 已提交/推送并经独立核对绑定到已测 blobs。本地完整门为 51/51 logical、52/52 executable PASS，属源码/离线结论。Hosted UNVERIFIED：2026-11-25 05:09:51 UTC 的 Actions collection 只有旧 queued run45434541348（head169b2b0），未建立 sourceC 的 hosted result。Windows build/PS5.1、actual PID/50 decoded videos、cache/codec/WinRT、roots/heap/GPU/pixels 与 live/account/session 验收仍未验证。Follow [additive validation](plan/VALIDATION.md); historical device rows stay unchanged.
 
 ## BR-31 — 文案规范：短文本不写解释，图标不与文字重复（维护者 2026-11-01）
 
@@ -510,7 +510,7 @@ getter，主评论与每条回复都走它；`VideoDetailPage.xaml.cs:372` 的�
 
 [source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) 的处置：显式close终结旧所有者，正常重开使用fresh owner；活页history/unload/refresh保持。替代项按当前switch与transition共同决定可用性；close先解绑child/context；旧节点工作不能发布或解锁新lease；旧ended可完成原report，suffix不能操作B。无item的Update拒绝工作；Show/Clear执行真正null-safe Next赋值。五个自有绘制临时对象确定性cleanup，共享device和返回图像保持原归属。
 
-[残留owning PASS](cloud/rounds/20261125-video-memory/resources/residual-final-review.md)、[RF1 fresh PASS](cloud/rounds/20261125-video-memory/rf1-final-audit.md)、[IG1 fresh PASS](cloud/rounds/20261125-video-memory/ig1-final-audit.md) 与[corrected完整gate](cloud/rounds/20261125-video-memory/verification/corrected-execution.md)接受这些有界源码行为。BR-21/native RAM仍未测量，不宣称永久native泄漏、字节节省或像素等价。实际源码/fixtures固定在 [VIDEO_MEMORY](document/VIDEO_MEMORY.md) 的sourceC链接；新增native场景见 [VALIDATION](plan/VALIDATION.md)。
+残留、RF1 与 IG1 的独立审查（`ff5d285`）接受这些有界源码行为。BR-21/native RAM仍未测量，不宣称永久native泄漏、字节节省或像素等价。实际源码/fixtures固定在 [VIDEO_MEMORY](document/VIDEO_MEMORY.md) 的sourceC链接；新增native场景见 [VALIDATION](plan/VALIDATION.md)。
 
 ## BR-69 — query/cursor边界与收藏绑定/响应发布（2026-11-25源码审计）
 
@@ -518,33 +518,33 @@ getter，主评论与每条回复都走它；`VideoDetailPage.xaml.cs:372` 的�
 
 [source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d) 的处置：AS1/AS2在query parser之前保护一个value，保留global WBI sanitation/signing和请求家族；AS3使用normal present boolean，absent/null/Type21保留count`!=`及first-empty/failed append/同Page retry。AF1/AF2仅对distinct reference存储后通知一次，相同引用echo/null不通知；folder先完成selected list/default/flag/collected解码再发布，拒绝的append metadata不留下可在retry重复的row。原legacy casts/null/salvage/duplicates与CollectFavorite策略保持；没有新endpoint/parser/auth迁移，也不保证任意subscriber的通用事务。
 
-[当前比较](document/BILIBILI_API_SHAPE_COMPARISON.md)、[query PASS](cloud/rounds/20261125-api-shape-comparison/query/final-review.md)、[AS3 PASS](cloud/rounds/20261125-api-shape-comparison/favorite/final-review.md)、[AF1 fresh PASS](cloud/rounds/20261125-api-shape-comparison/af1-final-audit.md)、[AF2 fresh PASS](cloud/rounds/20261125-api-shape-comparison/af2-final-audit.md)与 [corrected combined gate](cloud/rounds/20261125-video-memory/verification/corrected-execution.md) 绑定离线接受范围；实际sourceC代码/fixtures见当前比较。Windows/cookie/service/live/account/session/write均未验证；U2/P4/P5 hold不变。
+[当前比较](document/BILIBILI_API_SHAPE_COMPARISON.md) 把 `ff5d285` 的 query/AS3/AF1/AF2 修复绑定为离线接受范围。Windows/cookie/service/live/account/session/write均未验证；U2/P4/P5 hold不变。
 
 ## BR-70 — PGC index初始加载与请求所有权（2026-11-25源码审计；后续源码处置见下）
 
 **docD时点的历史计划：**
 
-FI1实际源码proof显示fresh navigation可在conditions完成后不请求首个result；被拒的并发load又可能释放另一个result owner，造成重复发布和Page递增。修订需求也要求conditions/Refresh/selection的互斥与reentrant安全，同时保留grid autofill。[FI1 requirements PASS](cloud/rounds/20261125-api-shape-comparison/followup/fi1-review.md)仅是规格接受：**UNIMPLEMENTED**，不在[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)的修复/gate声明中。下一步待当前批source/docs/archive释放与fresh safe baseline后，按精确SeasonIndexVM/season1 grant执行相同fixture原红→新绿、owning/fresh与完整gate。保留app signing/page/pagesize/data/filter/order/default/has_next/error策略，不迁parser/auth。
+FI1 当时仅为规格接受、代码未实现（随后在 `d11dbf8` 落地，见下）。保留app signing/page/pagesize/data/filter/order/default/has_next/error策略，不迁parser/auth。
 
 **sourceE当前处置（源码/离线；Windows未验证）**：`d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 已实现FI1独立conditions/results所有权。全新constructor导航在metadata可用后请求首个result；冲突的Refresh/selection/LoadMore/direct entry在状态通知或release前安静拒绝。Conditions持有到同步metadata publication结束，result先取得owner再发Loading/reset通知；rows/Page提交后才Loading=false，旧完成不能释放真实grid新取得的page2 owner。metadata失败后一次合法Refresh可重试。保留原app请求/签名、legacy casts/filter/default及first/append/empty/error/retry语义；code选择与terminal规则另见BR72/73。
 
-[FI1 owning PASS](cloud/rounds/20261125-index-dynamic-contracts/index/final-review.md)、[最终FI2/FI3 owning PASS](cloud/rounds/20261125-index-dynamic-contracts/later-pgc/final-review.md)、[final fresh PASS](cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md) 和 [完整gate](cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)绑定最终候选。原118/118、supplement34/34、versioned PGC140/140和season790通过；[publication receipt](cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)把该真实执行字节绑定到最终E，不重命名旧sourceC的52PASS。真实Windows导航/同步binding/grid rendering与service/session未验证，按[新增场景](plan/VALIDATION.md)跟进。
+FI1/FI2/FI3 的 owning 与 final fresh 审查绑定 `d11dbf8`，原 PGC/season 分母与旧 sourceC 结果分开记录。真实Windows导航/同步binding/grid rendering与service/session未验证，按[新增场景](plan/VALIDATION.md)跟进。
 
 ## BR-71 — polymer dynamic opaque offset query value（2026-11-25源码审计；后续源码处置见下）
 
 **docD时点的历史计划：**
 
-FD1实际parser→builder→URI proof显示raw +/%/&/#或duplicate offset可改变已接受token或query controls。[需求接受](cloud/rounds/20261125-api-shape-comparison/followup/review.md)仍是**UNIMPLEMENTED**，不在[source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)的修复/gate声明中。后续精确WebDynamicFeedApi/API02 grant需将现有nonnull offset编码一次，保留null省略/empty包含、all/video/article、cookies/page/features及byte-identical parser/mapper/source cursor所有权；相同fixture原红→新绿、owning/fresh/gate后才能标done。没有app/WBI/route/parser迁移。
+FD1 当时为需求接受、代码未实现（随后在 `d11dbf8` 落地，见下）：保留null省略/empty包含、all/video/article、cookies/page/features及byte-identical parser/mapper/source cursor所有权。没有app/WBI/route/parser迁移。
 
 **sourceE当前处置（源码/离线；服务未验证）**：`d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 的FD1只在原nonnull offset插值处编码一次。真实builder→ApiModel.url→Uri→一次query decode保留opaque值与唯一controls；null仍省略offset，empty仍包含一个空offset。保留all/video/article、page/timezone/features、GET/cookies与unsigned web家族；parser/mapper/Home/User source-bound cursor、legacy encoded/signed与gRPC家族不变。
 
-[FD1 owning PASS](cloud/rounds/20261125-index-dynamic-contracts/dynamic/final-review.md)、[final fresh PASS](cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)和[完整gate](cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)关闭原24个FD1失败。原API025371中的FD1270断言保留；SR1加入后当前API02为8795 PASS。实际sourceE绑定见[publication receipt](cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)；特殊cursor是synthetic fixture，不是live capture。真实feed分页/failedappend/retry/cookie/service/session未验证。
+FD1 的 owning/fresh 审查与完整门关闭该 fixture 的失败（`d11dbf8`），原 API02 断言保留。特殊cursor是synthetic fixture，不是live capture。真实feed分页/failedappend/retry/cookie/service/session未验证。
 
 ## BR-72 — PGC order的请求code优先于展示label（2026-11-25源码审计）
 
 完整实际VM/page/grid/API/signer fixture证明，默认order3在field4先返回时会误选4，或别项label等于3抢走真正field3。`d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 的FI2先按decoded keyword精确匹配Parameter.order；未命中才保留旧label匹配，再保留首项fallback。保持default3、目录顺序、未知opaque code、原string equality及编码；不trim/case-fold/数值化/规范化。用户实际selection仍发送current.keyword。
 
-[修订需求PASS](cloud/rounds/20261125-index-dynamic-contracts/later-pgc/amendment-review.md)、[owning PASS](cloud/rounds/20261125-index-dynamic-contracts/later-pgc/final-review.md)、[final fresh PASS](cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)和[完整gate](cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)接受有界源码行为；[publication receipt](cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)提供实际E身份。Versioned PGC-REV1-140为140/140，真实服务order目录与Windows选择/刷新未验证。原错误Refresh oracle与CHANGES仍为历史，没有移植兄弟默认值、传输或UI政策。
+FI2/FI3 的修订需求与 owning/fresh 审查接受有界源码行为（`d11dbf8`）；真实服务order目录与Windows选择/刷新未验证。原错误Refresh oracle与CHANGES仍为历史，没有移植兄弟默认值、传输或UI政策。
 
 ## BR-73 — PGC index非空terminal页的integer0（2026-11-25源码审计）
 
@@ -556,7 +556,7 @@ FD1实际parser→builder→URI proof显示raw +/%/&/#或duplicate offset可改�
 
 immutable-A完整实际builder及SeasonReviewVM→LoadMore/retry fixture证明，已接受的string Next含+/%/&/#时，raw cursor会丢失表示或改写controls。原3446检查中488desired-safe失败，1572active compatibility全部通过；这些是synthetic输入，不是live capture或生产字符频率。
 
-`d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 的SR1仅把ShortReview现有cursor operand改为一次value escaping；default/explicit null/empty均继续包含cursor=，一次query decode后等于next或空串。配置host、media_id/ps20/sort/default0、GET/noCookie与已有可选access_key的条件/值/末尾位置保持；没有app/WBI签名、VM/parser/response/paging/count/total/error/Refresh迁移。[requirements PASS](cloud/rounds/20261125-index-dynamic-contracts/short-review/review.md)、[owning PASS](cloud/rounds/20261125-index-dynamic-contracts/short-review/final-review.md)、[final fresh PASS](cloud/rounds/20261125-index-dynamic-contracts/final-fresh-audit.md)和[完整gate](cloud/rounds/20261125-index-dynamic-contracts/verification/execution.md)绑定原fixture3446/3446与maintained API028795 PASS；[publication receipt](cloud/rounds/20261125-index-dynamic-contracts/publication/execution.md) 与 [root独立blob/ref核对](cloud/rounds/20261125-index-dynamic-contracts/publication/root-source-check.json)提供实际E身份。
+`d11dbf867c1896bce7d41956a4b78fc2580d5a5c` 的SR1仅把ShortReview现有cursor operand改为一次value escaping；default/explicit null/empty均继续包含cursor=，一次query decode后等于next或空串。配置host、media_id/ps20/sort/default0、GET/noCookie与已有可选access_key的条件/值/末尾位置保持；没有app/WBI签名、VM/parser/response/paging/count/total/error/Refresh迁移。owning/fresh 审查与完整门按原 fixture 与 maintained API02 分母绑定（`d11dbf8`）。
 
 SR1 maintained新增3424与原fixture3446分母不同：同一3420请求矩阵分别加4 default controls或26 default/实际VM controls。原response→Next→LoadMore/failedappend/retry/Refresh保持，没有VM修复声明。真实短评浏览/翻页/失败重试及service/session未验证，不授权review写动作。
 
@@ -566,9 +566,9 @@ SR1 maintained新增3424与原fixture3446分母不同：同一3420请求矩阵�
 
 仅SeasonReviewVM增加同一实例private read claim，public GetItems和Refresh/LoadMore共同接纳；Refresh先取得claim再reset，拒绝调用不改rows/Next/Loading、不做cleanup。claim跨同步Loading/CanLoadMore/collection/completion通知，zero-ID不释放他人，completion observer抛错后仍释放。原response/paging/count/total/content与API/auth/write保持。
 
-[执行与回归证据](cloud/rounds/20261125-review-singleflight/execution.md)：74新增ownership断言通过；selected season1+api02为2/2 **PARTIAL_PASS**、complete_required=false；本候选[独立实现审查](cloud/rounds/20261125-review-singleflight/final-review.md)PASS，[实际完整gate](cloud/rounds/20261125-review-singleflight/verification.md)exit0、51/51logical与52/52executable **PASS**、finished=true、complete_required=true。 existing season1实际VM/命令/精确pivot fixture保留原断言；原实现duplicate/zero-ID及GetItems-only候选completion Refresh均按预期失败，不冒充通过。
+提交 `16c48de`；独立实现审查 PASS，实际完整门 51/51logical、52/52executable PASS，existing season1 实际VM/命令/精确pivot fixture保留原断言。原实现duplicate/zero-ID及GetItems-only候选completion Refresh均按预期失败，不冒充通过。
 
-[实际baselineH hosted观察](cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md)：2026-11-25 08:58:49UTC对H`86e0e56e67c05aadc34500ee5f65bdcdce3a5277`过滤返回total_count0/workflow_runs[]。这是exactH事实；本次改动/未来checkpoint没有hosted PASS，旧queued run仅历史。 Windows/UWP/XAML、真实service/session/write/account/live、50decoded视频/RAM/roots/heap/GPU、签名安装启动仍未验证；BR21、accountP4/P5hold与U2前置保持，旧device-passed行不重开。 新Windows快速离开/重入review pivot、spinner/rows、idle refresh/more、error retry/last-good cursor场景见[VALIDATION](plan/VALIDATION.md)。
+Hosted UNVERIFIED：2026-11-25 08:58:49UTC 对 H 过滤 Actions 返回 total_count0，本次改动/未来checkpoint没有hosted PASS，旧queued run仅历史。 Windows/UWP/XAML、真实service/session/write/account/live、50decoded视频/RAM/roots/heap/GPU、签名安装启动仍未验证；BR21、accountP4/P5hold与U2前置保持，旧device-passed行不重开。 新Windows场景见[VALIDATION](plan/VALIDATION.md)。
 
 ## BR-76 — 打开应用后加载不出任何东西：热门页 43 秒打了 966 次 show/popular/index（维护者 2026-11-15，22:04 日志）
 

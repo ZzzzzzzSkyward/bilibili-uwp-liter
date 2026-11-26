@@ -1,7 +1,0 @@
-# Package-layout implementation review
-
-Independent reviewer: `package_final_review`, `gpt-6.1-sol` / `xhigh`. Read repo/cloud instructions, memory index, this round's PASS requirements/review, execution/evidence and exact committed two-file diff. Own only `final-review.md`; no implementation/requirement/main-doc/history edits.
-
-Review the source/test commit identified by execution.md against its parent, preserving unrelated API/search work. Confirm exact old check order/reader/caller and all other script bytes remain, root existence and strict 65,536-byte **uncompressed Int64** bound, no full-build execution/version mutation or broad packaging change. Review the permanent probe's parser/top-level AST exact-function source fidelity, no top-level sentinel execution, 15 unchanged red/green cases, old-diagnostic/boundary/compression/corrupt/missing controls, loader/path/cleanup/exit behavior, hashes and raw decisive logs. No copied algorithm, generated tracked assets or false usable-package claim.
-
-PASS/CHANGES must state actionable P0/P1/P2, structure quality and exact verified platform limits. PowerShell Core/Linux fixture behavior does not establish Windows PowerShell 5.1, UWP/MSIX signing/install/launch or release readiness. The zero-byte structural-predicate case is an explicitly reviewed limitation, not a bootable package. Do not broaden scope to a PE/signature validator or unrelated build playbook changes.

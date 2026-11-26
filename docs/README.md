@@ -47,8 +47,8 @@
 | [README.md](../README.md) | 项目简介、功能概览、下载、目录结构、致谢 |
 | [bug_report.md](../bug_report.md) | 缺陷报告（BR-nn）：现象、已核对的路径、下一步需要的证据 |
 | [code_review.md](../code_review.md) | 当前这一轮外部评审的发现与处置 |
-| [cloud/README.md](../cloud/README.md) | 云端执行工作区入口：读顺序、目录用途与规则速记 |
-| [cloud/CONTRACT.md](../cloud/CONTRACT.md) | 云端统一执行规范：分支、角色与模型路由、轮次、文件即通道、提交规则 |
+| [cloud/REPO.md](../cloud/REPO.md) | 本仓库执行参数：分支、依赖、构建/测试/CI 命令与仓库注意事项 |
+| [cloud/HISTORY.md](../cloud/HISTORY.md) | 已落地行为历史：一行一次行为 + 落地提交 |
 
 ## 约定
 

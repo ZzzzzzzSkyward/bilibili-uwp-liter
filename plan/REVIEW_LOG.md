@@ -23,37 +23,34 @@ below were removed on purpose — they are all fixed and `git log` has them.
 
 以下使用文件审查记录而非虚构 reviewer commit；其源码提交已推送。旧表处置完整保留。
 
-| Review evidence | Reviewed source/test commit | Disposition |
+| Review | Reviewed source/test commit | Disposition |
 | --- | --- | --- |
-| [U1/PB1](../cloud/rounds/20261124-maintenance-foundation/logic-data-errors/final-review.md) | `5eec54e` / `edbd873` | PASS：四动作 csrf 编码与单一有界业务码读取；独立不可变源码 red/green，无未闭环 P0/P1/P2 |
-| [QF1](../cloud/rounds/20261124-maintenance-foundation/verification/final-review.md) | `ca99149` | PASS：当前源 harness、历史串行尾巴正负控、完整 50 逻辑/51 阶段 sweep；不把旧 literal 恢复成产品要求 |
-| [U9](../cloud/rounds/20261124-api-request-maintenance/favorites/final-review.md) | `7ff548b` | PASS：两处分隔，真实 builder 64 failures → 451 PASS，sign recorder 边界明确 |
-| [U5/U8](../cloud/rounds/20261124-api-request-maintenance/search/final-review.md) | `f594c9b` | PASS：直接身份/area 兼容/真实签名与 app order，api02/shared-stub regressions；不声称实际 cookie/session |
-| [E1](../cloud/rounds/20261124-api-request-maintenance/comment-recovery/final-review.md) | `1c7f6e4` | PASS：single-flight、实际 typed response、保草稿重试与最早 Closing retirement；真实 dialog 153 checks / comments 1070 |
-| [QF3](../cloud/rounds/20261124-package-layout-guard/final-review.md) | `8f55968` | PASS：仅补根启动器存在/<64 KiB；独立 actual-function 15 cases red/green、结构/所有权接受；零字节接受是限定 predicate，不是可启动认证 |
+| U1/PB1 | `5eec54e` / `edbd873` | PASS：四动作 csrf 编码与单一有界业务码读取；无未闭环 P0/P1/P2 |
+| QF1 | `ca99149` | PASS：当前源 harness 对齐；不把旧 literal 恢复成产品要求 |
+| U9 | `7ff548b` | PASS：两处分隔，sign recorder 边界明确，不证明密码学 |
+| U5/U8 | `f594c9b` | PASS：直接身份/area 兼容、真实签名与 app order；不声称实际 cookie/session |
+| E1 | `1c7f6e4` | PASS：single-flight、实际 typed response、保草稿重试与最早 Closing retirement |
+| QF3 | `8f55968` | PASS：仅补根启动器存在与 <64 KiB；零字节接受是限定 predicate，不是可启动认证 |
 
 这些实现审查包含实际离线重跑，故不适用下文历史“static only”的范围描述。其 PASS 均局限于
 assigned source/offline scope，Windows compile/PS5.1/installed launch/device/live-session 仍 FAILED/BLOCKED。
-QF2 的 [独立复审](../cloud/rounds/20261124-verification-runner/final-review.md) 对 runner 源码 **PASS / P1 CLOSED**（`9c33bce`），修正 workflow 源码 PASS（`c4e9dba`）。最初 metadata/preflight 未遵从整套 deadline/signal 的 P1 由真实 red→green 闭环，14/14 外部控制与 changed-runner 完整 50/51 PASS；原 compiler/extraction/default/assertion bodies 保留。最初 workflow job env 的 runner context 错误导致 HTTP422，现已移至 GITHUB_ENV runtime step，旧证据保留。
+QF2 的 runner 源码在 `9c33bce` 修好 metadata/preflight 的 deadline/signal 遵从，修正 workflow 为 `c4e9dba`；原 compiler/extraction/default/assertion bodies 保留，独立 runner 源码复审 PASS / P1 CLOSED。旧 HTTP422 是已修配置的历史失败。
 
-[当前 hosted receipt](../cloud/rounds/20261124-verification-runner/corrected-hosted-execution.md) 是 corrected-head workflow_dispatch run [45434541348](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348)，head `169b2b0a0205a14cad7d24558920250989720cc2`；2026-11-24 16:17:58 UTC QUEUED、0 jobs/0 artifacts。**Hosted PENDING/UNVERIFIED**，源码 PASS 不表示 hosted PASS；排队也不是 failed job 或已证 outage/permission blocker。
+Hosted 为 run [45434541348](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs/45434541348)，head `169b2b0`；2026-11-24 16:17:58 UTC 观察为 QUEUED、0 jobs/0 artifacts。**Hosted PENDING/UNVERIFIED**，源码 PASS 不表示 hosted PASS；排队也不是 failed job 或已证 outage/permission blocker。
 
 ## 2026-11-25 recovery / integrity reviews
 
-| Review evidence | Reviewed source | Disposition |
+| Review | Reviewed source | Disposition |
 | --- | --- | --- |
-| [Boundaries final](../cloud/rounds/20261125-recovery-integrity/boundaries/final-review.md) | `0514966` / `1b6af65` | PASS：favorite typed acknowledgement/Sort containment、payload overflow/null-row/raw paging、detail/login/favorite-list ownership；原断言与真实源red→green完整保留，standalone AttentionUP兼容。 |
-| [Storage final](../cloud/rounds/20261125-recovery-integrity/storage/final-review.md) | `bdba9eb` | PASS：S1–S4深值有序snapshot/初始化/registry事务/admitted reopen，playersess240、LM02及LM03/05；进程内保证，无跨进程/崩溃承诺。 |
-| [FA-01 evidence](../cloud/rounds/20261125-recovery-integrity/storage/implementation-evidence/fa01-red-green.md) / [fresh final](../cloud/rounds/20261125-recovery-integrity/final-audit.md) | `7fe7a5f` | CLOSED：不可用registry entry typed registry-read，214 genuine failures→653 additive PASS与实际page-refresh composition；保留bytes/grants/后续重试。 |
-| [Recovery final](../cloud/rounds/20261125-recovery-integrity/recovery/final-review.md) / [fresh audit](../cloud/rounds/20261125-recovery-integrity/final-audit.md) | `7fe7a5f` | PASS：RF1/RF2/FA-01–09/P2-CR1全部CLOSED；真实取消失败重试、部分残留classification、MultiFLV/空media/typed mixed retry/selection snapshot、真实login bool/collection-object authority与owned-show finally。最终 348保留原 312/208/139；无未闭环scoped P0/P1/P2，结构与UWP兼容源码形状接受。 |
+| Boundaries | `0514966` / `1b6af65` | PASS：favorite typed acknowledgement/Sort containment、payload overflow/null-row/raw paging、detail/login/favorite-list ownership；standalone AttentionUP 兼容。 |
+| Storage | `bdba9eb` | PASS：深值有序 snapshot、首次初始化、registry 事务与 admitted reopen；仅进程内保证，无跨进程/崩溃恢复承诺。 |
+| FA-01 | `7fe7a5f` | CLOSED：不可用 registry entry 在受控读取中返回 typed registry-read，保留 bytes/grants 与后续重试。 |
+| Recovery | `7fe7a5f` | PASS：RF1/RF2/FA-01–09/P2-CR1 全部 CLOSED；取消失败重试、部分残留分类、MultiFLV/空 media/typed mixed retry/selection snapshot、login bool/collection-object authority 与 owned-show finally；无未闭环 scoped P0/P1/P2。 |
 
-[最终集成](../cloud/rounds/20261125-recovery-integrity/verification/execution.md) 实跑 51/51 逻辑、52/52 可执行 PASS、complete_required=true，
-recovery 348 / g5 335；915 source/5073 tool bytes绑定最终已推源码，独立14 controls/package15按精确输入复用。
-历史50/51、初始51/52、139/208/312与早期CHANGES审查仍为对应快照记录，不代表最终状态。
-这些为源码/离线结论，不改历史设备默认验收，也不表示native/服务/Windows编译/安装启动通过。
-Root 2026-11-25 04:11 Asia/Shanghai 实际Actions collection仅有旧 169b2b0的45434541348 queued/null；
-未建立 7fe7a5f hosted run/result；即使旧head后来PASS也不认证当前inventory/runnable bytes。
-新增native/session/并发场景见 [VALIDATION.md](VALIDATION.md#2026-11-25--恢复与数据完整性的新增-windows-跟进未运行)。
+最终集成 51/51 逻辑、52/52 可执行 PASS（`7fe7a5f`）；历史 50/51、初始 51/52 与早期 CHANGES 审查仍为各自快照记录。
+这些为源码/离线结论，不改历史设备默认验收，也不表示 native/服务/Windows 编译/安装启动通过。
+Hosted UNVERIFIED：Actions 只有旧 run45434541348（head169b2b0、queued/null），不认证当前 inventory/runnable bytes。
+新增 native/session/并发场景见 [VALIDATION.md](VALIDATION.md#2026-11-25--恢复与数据完整性的新增-windows-跟进未运行)。
 
 ## Standing review notes
 

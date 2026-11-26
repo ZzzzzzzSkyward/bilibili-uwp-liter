@@ -1,5 +1,0 @@
-# Root hosted-CI observation — no accepted sourceC result
-
-At2026-11-25 05:28UTC root used the connected GitHub read-only fetch for `repos/ZzzzzzzSkyward/bilibili-uwp-liter/actions/runs?head_sha=ff5d2855bb62ef6459a724ffae6101b812a7369d&per_page=10`. Actual response: total_count0, workflow_runs[]. Thus no sourceC hosted run/result was established. Earlier05:09:51 branch collection containing only old queued45434541348/head169b2b0 remains historical, not sourceC acceptance.
-
-A separate read-only attempt to inspect `actions/workflows/offline-probes.yml` metadata was rejected by the connector URL allowlist (INVALID_ARGUMENT). This does not establish that the repository workflow is disabled, absent or broken. Its checked-in dev-push/PR/manual configuration was read locally; configuration is not execution. No workflow dispatch/rerun, settings/auth/branch change or cause inference occurred. Hosted CI remains UNVERIFIED; current local complete52PASS and native/Windows/live/session gates remain separate.

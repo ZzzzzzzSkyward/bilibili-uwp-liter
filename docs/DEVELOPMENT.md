@@ -12,7 +12,7 @@
 | .NET SDK | 8.0+（`BiliLite.gRPC`、`BiliLite.WebApi` 是 SDK 风格项目；UWP 项目本身走 MSBuild 而非 dotnet CLI）。批次探针需要 **8.0** 目标包，`plan/tests/run.sh` 还需要 `$UPSTREAM_UNIT_TOOLS` 下的 8.0.427 SDK |
 | PowerShell | Windows PowerShell 5.1 即可（脚本自带 UTF-8 输出设置） |
 | Bash / Python | 完整离线 runner 用 Linux、Bash ≥4、Python ≥3.9（标准库），以及 awk/sed/grep/cut/cp/mktemp 等现有脚本工具；Windows 的单批次可用 Git/MSYS2 Bash，UWP 构建仍走 Windows |
-| 网络 | 拉依赖与 `git push` 需要；本机 GitHub 的 TLS 会间歇性中断。本地维护者可用 `sync-dev.ps1` 重试；云端 agent 不运行该 rebase/stash 脚本，按 §7 的串行授权与普通 Git 流程处理 |
+| 网络 | 拉依赖与 `git push` 需要；本机 GitHub 的 TLS 会间歇性中断。本地维护者可用 `sync-dev.ps1` 重试；自动化 agent 不运行该 rebase/stash 脚本，按 §7 的串行授权与普通 Git 流程处理 |
 
 App 的接口基址与 appkey 编译在产品里，不在运行时读取环境变量；离线探针的工具根、PATH 和缓存需要按 §6 设置。
 
@@ -178,8 +178,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File ./plan/tests/package-layout-
 
 ## 7. 提交与同步
 
-以下同步脚本仅供本地维护者使用。云端 agent 按适用的串行授权使用普通 fetch、获授权的 fast-forward-only
-集成与 nonforce push；不运行 `sync-dev.ps1`，不 rebase，也不自动 stash 或改写其他 owner 的并发工作。
+以下同步脚本仅供本地维护者使用。自动化 agent 不运行 `sync-dev.ps1`，改用普通 `git fetch`、获授权的
+fast-forward-only 集成与 nonforce push；不 rebase，也不自动 stash 或改写其他 owner 的并发工作。
 不能安全快进时保留现有工作并记录阻塞，等待相应的集成授权。
 
 ```powershell

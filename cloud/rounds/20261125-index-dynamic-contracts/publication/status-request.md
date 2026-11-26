@@ -1,3 +1,0 @@
-# Active source publication status request
-
-Root requests the sole active combined_source_publisher to record its actual current transaction progress or blocker in publication/status.md (conciseMDonly) or its imminent finalexecutionreceipt. Sourcegrantwasactivated after independentPASS; continue that exact31path/current940/tree/nonforce transaction, no new scope or redundant retests. Ifwaitingoncommand, recordactualcommand/session/state; ifblocked, identifyprecisereason andpreserveindex/commit/history. No secondGitownerexists. This isstatus/coordinationonly,notweakenedchecks,newGitrightsorpermissionquestion. Deadline08:29:30UTCunchanged; rootneedsexactcurrentstageforremainingdocumentation/archiveplanning.

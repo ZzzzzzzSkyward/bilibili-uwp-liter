@@ -6,16 +6,16 @@ BR-21 仍是 **native-unmeasured**：本轮已取得窄源码所有权修复、�
 
 | 范围 | 最终已审源码结果 | 证据 |
 | --- | --- | --- |
-| Season M1 | 终结页/失效VM拒绝迟到metadata/episode与后续页面发布；活页refresh、独立VM重载和fresh owner保留 | [组件PASS](../cloud/rounds/20261125-video-memory/managed/final-review.md) |
-| Player R1/R2/R3/RR1 | terminal Dispose/public/Loaded/await链拒绝迟到info/quality；live unload/reload可用，设置每次刷新但自有handler只注册一次 | [组件初审历史](../cloud/rounds/20261125-video-memory/resources/final-review.md)、[残留修复PASS](../cloud/rounds/20261125-video-memory/resources/residual-final-review.md) |
-| PF1/FA1/FA2/FA3 | 替代项立即取得轨道/Next可用状态并组合current switch/transition限制；close同步解绑互动child/context，允许有限detached工作；新节点独占pool/segment/initial load lease，旧finally不能unlock；ended在history await后复验原owner而保留原report及current modes | [残留PASS](../cloud/rounds/20261125-video-memory/resources/residual-final-review.md)、[RF1后fresh闭环](../cloud/rounds/20261125-video-memory/rf1-final-audit.md) |
-| RF1 | Season初始加载/失败/无可播项时enabled Update入口拒绝null item，不授权工作或抛未处理async-void异常；真正current refresh保持 | [owning](../cloud/rounds/20261125-video-memory/resources/rf1-final-review.md)、[fresh](../cloud/rounds/20261125-video-memory/rf1-final-audit.md) |
-| IG1 | Show实际null-safe Next=false；Clear仅当无current local switch才Next=true。保留terminal/labels/overlay，既有tests未改 | [owning](../cloud/rounds/20261125-video-memory/resources/ig1-final-review.md)、[fresh](../cloud/rounds/20261125-video-memory/ig1-final-audit.md) |
-| G1 | 五个自有绘制临时对象确定性cleanup；borrowed device/returned image不关闭。完整renderer经后续hash重绑未变 | [graphics PASS](../cloud/rounds/20261125-video-memory/graphics/final-review.md)、[最终不变span](../cloud/rounds/20261125-video-memory/resources/ig1-final-review.md) |
-| 外部工具 | 当前 Linux PSCore7.7：46次调用（6次exit0、40次预期exit1）、21组、106检查、55 helper calls/52 synthetic rows PASS；typednull/identity/order/stop/disposal有界行为，不代表PS5.1或native samples | [tool PASS](../cloud/rounds/20261125-video-memory/measurement/final-review.md)、[当前interpreter证据](../cloud/rounds/20261125-video-memory/verification/evidence/interpreter-checks.md) |
-| combined local gate | corrected **51/51 logical、52/52 executable PASS、complete_required=true**；source935文件manifest c40d13c9…，results ca43ccc8…；执行时为 dirty7356b948 上的 local bytes；随后按实际 committed blobs 绑定 sourceC | [corrected report](../cloud/rounds/20261125-video-memory/verification/corrected-execution.md)、[exact evidence](../cloud/rounds/20261125-video-memory/verification/evidence/corrected-common-gate.md) |
+| Season M1 | 终结页/失效VM拒绝迟到metadata/episode与后续页面发布；活页refresh、独立VM重载和fresh owner保留 | `ff5d285` |
+| Player R1/R2/R3/RR1 | terminal Dispose/public/Loaded/await链拒绝迟到info/quality；live unload/reload可用，设置每次刷新但自有handler只注册一次 | `ff5d285` |
+| PF1/FA1/FA2/FA3 | 替代项立即取得轨道/Next可用状态并组合current switch/transition限制；close同步解绑互动child/context，允许有限detached工作；新节点独占pool/segment/initial load lease，旧finally不能unlock；ended在history await后复验原owner而保留原report及current modes | `ff5d285` |
+| RF1 | Season初始加载/失败/无可播项时enabled Update入口拒绝null item，不授权工作或抛未处理async-void异常；真正current refresh保持 | `ff5d285` |
+| IG1 | Show实际null-safe Next=false；Clear仅当无current local switch才Next=true。保留terminal/labels/overlay，既有tests未改 | `ff5d285` |
+| G1 | 五个自有绘制临时对象确定性cleanup；borrowed device/returned image不关闭。完整renderer经后续hash重绑未变 | `ff5d285` |
+| 外部工具 | 四种模式覆盖 typed-null/identity/order/stop/disposal 的有界行为；不代表 PS5.1 或 native samples | `ff5d285` |
+| combined local gate | 51/51 logical、52/52 executable PASS；执行时为 dirty7356 上的 local bytes，随后按实际 committed blobs 绑定 sourceC | `ff5d285` |
 
-源码已普通提交/推送为 [source `ff5d2855`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)。其唯一 parent 为 `7356b94893377558191b0d70576a52bae704c1f9`，tree 为 `2565a48424882c76acfe3217c7fb610b7b193b91`；[publication receipt](../cloud/rounds/20261125-api-shape-comparison/publication/execution.md) 与 [独立 blob/ref 核对](../cloud/rounds/20261125-api-shape-comparison/publication/root-source-check.md) 证明107个交付路径和935个已测输入的实际 committed blob 与测试时字节一致。测试本身运行于 dirty7356，不把生成的 Git metadata 改称 clean-C run。Hosted：UNVERIFIED：2026-11-25 05:09:51 UTC 的实际 Actions collection 只见旧 run45434541348（head169b2b0、queued/null），没有本次 sourceC 的 hosted result。
+源码已普通提交/推送为 [source `ff5d285`](https://github.com/ZzzzzzzSkyward/bilibili-uwp-liter/commit/ff5d2855bb62ef6459a724ffae6101b812a7369d)。交付路径与已测输入的实际 committed blob 已由独立核对绑定；测试本身运行于 dirty7356，不把生成的 Git metadata 改称 clean-C run。Hosted：UNVERIFIED，2026-11-25 05:09:51 UTC 的实际 Actions collection 只见旧 run45434541348（head169b2b0、queued/null），没有本次 sourceC 的 hosted result。
 
 第一轮完整gate保留为50/51 logical、51/52 executable PASS/1FAIL（ux1d maintained source assertion）。IG1两处真实可执行assignment修正后，所有tests/assertions字节不变，新的完整run才得到PASS；未删断言、未把失败改成历史通过。
 显式 Close/Dispose 终结该 page/player，之后正常用户打开要取得全新所有者。同一仍存活的页面可以刷新、切集、历史返回或视觉 unload/reload；这些与关闭、最小化、后台播放分开。独立 VM 的加载代际可继续复用。Windows 原生缓存若把已终结实例重新交付，应记录真实路径再审查路由，不恢复私有 terminal 标记。
@@ -168,7 +168,7 @@ $target = @{ TargetProcessId=$observedProcessId; ExpectedProcessStartUtc=$boundS
 
 另做明确标为 intrusive 的同配置/fixture诊断重复：VS2022 UWP Memory Usage 在 warm0、settled5/10/25/50、idle300及A活动正控取快照，记录 profiler 引发的collection，核对旧 page/player/VM/task/timer/event 的 Paths to Root。未支持则记录 runtime/VS/target/错误，不能假定 dotnet-gcdump/counters 能附加这个 UWP runtime。
 
-原生归因先只读发现 `Get-Command wpr.exe,wpa.exe`、`wpr.exe -status/-profiles/-help heap/-help start`；只用本机实际支持的 profile/provider。Store-app heap binding 使用 observed executable leaf、**PackageFullName** 和 manifest AppId。保存原有 HeapTracingConfig，只启停本 run 的录制，在 finally 恢复本 run 改过的配置；不取消他人录制。完整可运行 heap 步骤与官方语法依据见 [Windows protocol](../cloud/rounds/20261125-video-memory/measurement/windows-protocol.md#4-attribute-managed-nativemedia-and-gpu-retention)。检查事件丢失、PID/start、symbols/PDB和 outstanding allocation stacks。WPR heap 不覆盖所有 VirtualAlloc/custom/media/GPU；不能用 privateBytes减managed heap 算 native。GPU只用实际枚举支持的计数/profile，缺失记 null+原因。
+原生归因先只读发现 `Get-Command wpr.exe,wpa.exe`、`wpr.exe -status/-profiles/-help heap/-help start`；只用本机实际支持的 profile/provider。Store-app heap binding 使用 observed executable leaf、**PackageFullName** 和 manifest AppId。保存原有 HeapTracingConfig，只启停本 run 的录制，在 finally 恢复本 run 改过的配置；不取消他人录制。完整可运行 heap 步骤与官方语法依据见 `wpr.exe -help heap` 与 `wpr.exe -help start` 输出。检查事件丢失、PID/start、symbols/PDB和 outstanding allocation stacks。WPR heap 不覆盖所有 VirtualAlloc/custom/media/GPU；不能用 privateBytes减managed heap 算 native。GPU只用实际枚举支持的计数/profile，缺失记 null+原因。
 
 | 证据 | 允许结论 |
 | --- | --- |
