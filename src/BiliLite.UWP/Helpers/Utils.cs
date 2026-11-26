@@ -441,14 +441,6 @@ namespace BiliLite.Helpers
 
         public static T ObjectClone<T>(this T obj)
         {
-            var type = typeof(T);
-
-            if (!type.IsSerializable)
-                return default(T);
-
-            if (Object.ReferenceEquals(obj, null))
-                return default(T);
-
             IFormatter format = new BinaryFormatter();
 
             using (MemoryStream ms = new MemoryStream())

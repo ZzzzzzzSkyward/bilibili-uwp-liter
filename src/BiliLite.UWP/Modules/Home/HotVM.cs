@@ -131,10 +131,6 @@ namespace BiliLite.Modules
                 return;
             }
             var last = HotItems.LastOrDefault();
-            if (last == null)
-            {
-                return;
-            }
             await GetPopular(last.idx, last.param, true);
         }
     }

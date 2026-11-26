@@ -200,7 +200,7 @@ namespace BiliLite.Modules
                         try
                         {
                         var readStamp = DownloadPathCoordinator.CaptureRead(episodeItem.Path);
-                        if (candidates != null) candidates[downloadedItem][episodeItem.Path] = readStamp;
+                        candidates[downloadedItem][episodeItem.Path] = readStamp;
                         //检查是否存在info.json
                         var episodeInfoFile = await episodeItem.TryGetItemAsync("info.json") as StorageFile;
                         if (episodeInfoFile == null)
