@@ -78,6 +78,8 @@ bash plan/tests/run-all.sh --tools-root /absolute/path/to/probe-tools
 ## 当前状态
 
 - 开发线 `dev`：唯一开发线；当前修复与验证状态见 [docs/ROADMAP.md](docs/ROADMAP.md)。
+- 本地构建产物 `1.0.9.68`：`Z:\BiliLite.Packages_1.0.9.68_x64_Test\BiliLite.Packages_1.0.9.68_x64.msix`
+  （全量 Release|x64，0 errors；`loadmore` 14、`recovery` 348；未做设备验收）。
 - 发布线 `master`：最新发布 `1.0.9.61`（2026-11-07，tag `20261107`）。
 - 已知缺口：后台播放归属与内存测量（BR-21）、维护者保留的账号解析批次、直播发现/鉴权的身份与会话前置，
   以及新改动的 Windows/真实会话验收，详见 [docs/ROADMAP.md](docs/ROADMAP.md)。

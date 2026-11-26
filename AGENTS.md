@@ -5,7 +5,6 @@
 - 工作分支是 `dev`，也是唯一开发分支；`master` 只是发布线。
 - 开工前依次执行 `git fetch origin --prune` → `git checkout dev` → `git pull --ff-only`，并要求工作区干净。
 - `master` 只接收发布同步、tag 与发布说明：**不得 force-push，也不得改写它的历史**。
-- 版本号自增属于触发它的那次改动的同一个提交，不单独补提交。
 - 构建、探针与发布命令见 [cloud/REPO.md](cloud/REPO.md) 与
   [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md#6-探针离线行为测试)。
 
@@ -43,8 +42,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Cle
 
 - Every run **without** `-NoVersionBump` increments the revision of both
   `src/BiliLite.UWP/Package.appxmanifest` and `src/BiliLite.Packages/Package.appxmanifest` before
-  building. The bump belongs to the same commit as the change that triggered it. `-NoVersionBump`
-  exists for compile loops and failed retries only.
+  building. Packaging is a separate, optional step: a change needs no release, no bump and no MSIX
+  to be complete. `-NoVersionBump` keeps compile loops from touching the manifests.
 - `-Fast` skips NuGet restore, MSIX packaging and the WebApi/ApiTester/Win32Tools projects.
 - `-SkipProjectReferences` compiles `BiliLite.UWP` only; it requires `BiliLite.gRPC` and
   `BiliLite.JSBridge` outputs to exist already (see §7.1).
@@ -187,9 +186,10 @@ XAML
   `NETSDK1138` warnings are expected.
 - Behaviour gate: the probe batches that cover the touched area exit 0; add assertions to the batch
   that already owns the code instead of creating a new one whenever possible.
-- Release gate: one plain `build-release-x64.ps1` run before publishing; check that the emitted
-  package is `BiliLite.Packages_<version>_x64_Test\BiliLite.Packages_<version>_x64.msix` and that
-  `entrypoint/BiliLiter.exe` exists inside it with a root `BiliLiter.exe` under 64 KB.
+- Packaging check, only when a package is wanted: run plain `build-release-x64.ps1` and verify the
+  emitted package is `BiliLite.Packages_<version>_x64_Test\BiliLite.Packages_<version>_x64.msix` with
+  `entrypoint/BiliLiter.exe` inside it and a root `BiliLiter.exe` under 64 KB. Nothing requires this
+  for an ordinary change.
 - Device gate: only the maintainer can pass it. Do not claim a layout, playback, or account change
   was verified when it was only compiled.
 

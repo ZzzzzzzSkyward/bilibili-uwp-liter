@@ -15,7 +15,7 @@
 
 - 工作副本使用 **partial clone + sparse-checkout**（`--filter=blob:limit=102400`），曾缺 29 个 >100 KB 的 blob，skip-worktree 下 `git status` 仍可干净。先检查当前 checkout 的真实文件；缺失时记录限制，**不要改 sparse 配置，也不要 `git fetch` 这些 blob**。
 - **仅在实际缺文件时构建受阻**：`src/BiliLite.gRPC/bilibili/app/dynamic/v2/dynamic.proto` 等被排除 → `BiliLite.gRPC` 编译失败 → `BiliLite.UWP` 缺 `BiliLite.gRPC.dll`（`WMC1006`）；`CS2001` 指向 `PlayerControl.xaml.cs`、`DynamicVM.cs`、`VideoDetailPage.xaml.cs`、`EFontAwesomeIcon.cs` 也是同一原因。`plan/tests/playersess/run.sh` 会因读被排除的源文件抛 `FileNotFoundException`。**这是环境限制，不是代码缺陷**：记录命令与错误后继续，不要改代码、不要拉 blob。
-- 习惯 `-Fast -NoVersionBump` 做编译循环：不带 `-NoVersionBump` 的每次构建都会自增两个 `Package.appxmanifest` 的修订号，并必须与改动同提交。
+- 习惯 `-Fast -NoVersionBump` 做编译循环：不带 `-NoVersionBump` 的每次构建都会自增两个 `Package.appxmanifest` 的修订号。出包是可选的独立步骤，普通改动不需要它。
 - `build-release-x64.bat` 结尾有 `pause`，脚本/agent 环境禁用，直接用 `.ps1`。
 - 探针脚本显式用 Bash：`sh` 可能是 dash，不支持 `BASH_SOURCE`/`pipefail`，LF 文件也会失败。`*.sh` 还必须是 LF；路径/选项带 `^M` 时恢复 LF，换行修复不能替代 Bash。
 - Windows PowerShell 5.1 按 GBK 输出中文：调用时设 `[Console]::OutputEncoding=[Text.Encoding]::UTF8`，读旧日志用 `iconv -f GB18030 -t UTF-8 -c`。

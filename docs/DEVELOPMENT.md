@@ -35,7 +35,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\build-release-x64.ps1 -Res
 （默认 `Z:\`，目录必须已存在）。不要直接调 MSBuild：还原、输出目录、版本号递增都在脚本里。
 
 - 每次运行（除 `-NoVersionBump`）都会把 `src/BiliLite.UWP/Package.appxmanifest` 与
-  `src/BiliLite.Packages/Package.appxmanifest` 的修订号 +1。这个改动要和触发构建的代码改动进同一个提交；
+  `src/BiliLite.Packages/Package.appxmanifest` 的修订号 +1；出包是可选步骤，普通改动不要求出包或升版本。
   不要手改清单版本。
 - 日常编译循环：`-Fast -NoVersionBump`（约 1 分钟，只编译 `BiliLite.UWP`，不出包）。
 - 依赖或 `obj` 不可信时加 `-Clean`。
