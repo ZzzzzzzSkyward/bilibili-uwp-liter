@@ -314,6 +314,7 @@
     <Compile Include="Controls\MessageToast.xaml.cs">
       <DependentUpon>MessageToast.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\AutoLoadMoreGate.cs" />
     <Compile Include="Controls\MyAdaptiveGridView.cs" />
     <Compile Include="Controls\MyFrame.cs" />
     <Compile Include="Controls\MyListView.cs" />

@@ -64,6 +64,28 @@ namespace BiliLite.Helpers
         }
 
         /// <summary>
+        /// 单次请求的时间上限。WinRT 的 HttpClient 自身没有超时，连接被黑洞时会一直挂着，
+        /// 页面就永远停在 loading（2026-11-15 的日志里 region/index、feed/index 一直挂到进程结束）。
+        /// </summary>
+        private static readonly TimeSpan RequestTimeout = TimeSpan.FromSeconds(20);
+
+        private static async Task<HttpResponseMessage> GetAsync(HttpClient client, string url)
+        {
+            using (var timeout = new CancellationTokenSource(RequestTimeout))
+            {
+                return await client.GetAsync(new Uri(url)).AsTask(timeout.Token);
+            }
+        }
+
+        private static async Task<HttpResponseMessage> PostAsync(HttpClient client, string url, IHttpContent content)
+        {
+            using (var timeout = new CancellationTokenSource(RequestTimeout))
+            {
+                return await client.PostAsync(new Uri(url), content).AsTask(timeout.Token);
+            }
+        }
+
+        /// <summary>
         /// 发送一个GET请求
         /// </summary>
         /// <param name="url"></param>
@@ -113,7 +135,7 @@ namespace BiliLite.Helpers
                             client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0");
                     }
                     Console.WriteLine(endpoint);
-                    var response = await client.GetAsync(new Uri(url));
+                    var response = await GetAsync(client, url);
                     LogRequest(requestId, "GET", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     if (!response.IsSuccessStatusCode)
                     {
@@ -273,7 +295,7 @@ namespace BiliLite.Helpers
                         }
                     }
 
-                    var response = await client.GetAsync(new Uri(url));
+                    var response = await GetAsync(client, url);
                     LogRequest(requestId, "GET", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     response.EnsureSuccessStatusCode();
                     return (await response.Content.ReadAsInputStreamAsync()).AsStreamForRead();
@@ -317,7 +339,7 @@ namespace BiliLite.Helpers
                         }
                     }
 
-                    var response = await client.GetAsync(new Uri(url));
+                    var response = await GetAsync(client, url);
                     LogRequest(requestId, "GET", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     response.EnsureSuccessStatusCode();
                     return await response.Content.ReadAsBufferAsync();
@@ -361,7 +383,7 @@ namespace BiliLite.Helpers
                         }
                     }
 
-                    var response = await client.GetAsync(new Uri(url));
+                    var response = await GetAsync(client, url);
                     LogRequest(requestId, "GET", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     response.EnsureSuccessStatusCode();
                     var buffer = await response.Content.ReadAsBufferAsync();
@@ -409,7 +431,7 @@ namespace BiliLite.Helpers
                             client.DefaultRequestHeaders.Add(item.Key, item.Value);
                         }
                     }
-                    var response = await client.PostAsync(new Uri(url), new HttpStringContent(body, Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/x-www-form-urlencoded"));
+                    var response = await PostAsync(client, url, new HttpStringContent(body, Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/x-www-form-urlencoded"));
                     LogRequest(requestId, "POST", endpoint, "status=" + (int)response.StatusCode + " durationMs=" + stopwatch.ElapsedMilliseconds);
                     if (!response.IsSuccessStatusCode)
                     {

@@ -569,3 +569,37 @@ SR1 maintained新增3424与原fixture3446分母不同：同一3420请求矩阵�
 [执行与回归证据](cloud/rounds/20261125-review-singleflight/execution.md)：74新增ownership断言通过；selected season1+api02为2/2 **PARTIAL_PASS**、complete_required=false；本候选[独立实现审查](cloud/rounds/20261125-review-singleflight/final-review.md)PASS，[实际完整gate](cloud/rounds/20261125-review-singleflight/verification.md)exit0、51/51logical与52/52executable **PASS**、finished=true、complete_required=true。 existing season1实际VM/命令/精确pivot fixture保留原断言；原实现duplicate/zero-ID及GetItems-only候选completion Refresh均按预期失败，不冒充通过。
 
 [实际baselineH hosted观察](cloud/rounds/20261125-review-singleflight/root-hosted-baseline.md)：2026-11-25 08:58:49UTC对H`86e0e56e67c05aadc34500ee5f65bdcdce3a5277`过滤返回total_count0/workflow_runs[]。这是exactH事实；本次改动/未来checkpoint没有hosted PASS，旧queued run仅历史。 Windows/UWP/XAML、真实service/session/write/account/live、50decoded视频/RAM/roots/heap/GPU、签名安装启动仍未验证；BR21、accountP4/P5hold与U2前置保持，旧device-passed行不重开。 新Windows快速离开/重入review pivot、spinner/rows、idle refresh/more、error retry/last-good cursor场景见[VALIDATION](plan/VALIDATION.md)。
+
+## BR-76 — 打开应用后加载不出任何东西：热门页 43 秒打了 966 次 show/popular/index（维护者 2026-11-15，22:04 日志）
+
+现象：`https://app.bilibili.com/x/v2/show/popular/index` 以 ~33 ms 的间隔自己刷屏，先 `code=78000 app not data`、
+再 `412 PreconditionFailed`；同时 `feed/index`、`region/index`、`account/mine` 全程没有返回，界面什么都加载不出来。
+
+定位（`LocalState\log\20261115.log`，session `1a51a3…`）：
+
+- 22:03:59 进「热门」，首屏 `http-000006` 用了 7174 ms 才回来（`code=0`）；
+- 22:04:01 切到「动态」，「热门」页被 `NavigationCacheMode.Enabled` 缓存、脱离可视树，`ScrollableHeight` 停在 0；
+- 22:04:07 首屏回来填上 `HotItems`、`HotVM.Loading` 置 false，`MyAdaptiveGridView` 的 `Loading` 回调判定
+  「`ScrollableHeight == 0` 且 `CanLoadMore`」就自动翻一页；成功页让内容变长，下一轮又判定「还没填满」……
+  43 秒 966 次（50 次成功、913 次 78000、2 次 412）。失败也走 `finally { Loading = false; }`，循环因此没有出口；
+- 每次失败还 `Utils.ShowMessageToast` 一次，913 个全窗口 `Popup`；
+- `HttpBaseProtocolFilter` + `new HttpClient` 没有超时，黑洞连接一进去就再不回来（重启后 22:05:38 复现
+  `HResult=0x80072EFD`，23.7 s）；
+- 反证：22:05:38 重启后同样的代码与 appkey 全部 `status=200`、无一条 `API failure`——78000/412 是这波自造的限流，
+  不是签名或接口失效。
+
+处理（本条目提交时已落地）：
+
+- `Controls/AutoLoadMoreGate.cs`：自动翻页闸门，只有「内容真的变长过」才允许再自动翻一次，失败/空页不增长就不再翻；
+- `Controls/MyAdaptiveGridView.cs`：`Loading` 变 false 时要过闸门，且先满足 `IsLoaded && ActualHeight > 0`（缓存页不在树上）；
+  `ItemsSource` 与集合变更重新上膛；滚动翻页只排除 `ScrollableHeight <= 0` 的空列表误判，不看 `Loading`
+  （只有 4 个页面绑了它，用它会把其余页面的滚动翻页堵死）；
+- `Modules/Home/HotVM.cs`：`GetPopular(..., quiet)`，翻页失败不再弹 toast；
+- `Helpers/HttpHelper.cs`：单次请求 20 s 超时（`AsTask(CancellationToken)`），黑洞连接不会再挂到进程结束；
+- `plan/tests/loadmore`：链接编译真实闸门源码回放日志（首屏 1 次 + 成功 49 页 + 失败 900 页），有闸门 51 次请求、
+  无闸门 950 次。
+
+验收（待真机；本条目目前只有源码审计、离线探针 `plan/tests/loadmore`（51 次 vs 950 次）与编译验证，没有设备日志）：进「热门」后立刻切走，30 秒内日志里 `popular/index` 请求数不超过 2，不再出现成串 78000/412，也不再弹 toast。
+
+打包 1.0.9.67（历史产物；`Z:` 是易失卷，该目录已不在盘上）：`Z:\BiliLite.Packages_1.0.9.67_x64_Test\BiliLite.Packages_1.0.9.67_x64.msix`（`build-release-x64.ps1`
+递增两个 `Package.appxmanifest`；本机装的是 1.0.9.66，所以先把清单基线对齐到 1.0.9.66 再让脚本 +1，落点才是可覆盖安装的 .67）。

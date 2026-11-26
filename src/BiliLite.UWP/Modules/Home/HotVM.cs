@@ -43,7 +43,10 @@ namespace BiliLite.Modules
             set { _topItems = value; DoPropertyChanged("TopItems"); }
         }
 
-        public async Task GetPopular(string idx = "0", string last_param = "")
+        /// <summary>
+        /// 取热门。quiet=true 时失败不弹 toast：翻页是自动的，一次限流会连弹几百个弹窗。
+        /// </summary>
+        public async Task GetPopular(string idx = "0", string last_param = "", bool quiet = false)
         {
             try
             {
@@ -79,19 +82,27 @@ namespace BiliLite.Modules
                     }
                     else
                     {
-                        Utils.ShowMessageToast(data["message"].ToString());
+                        if (!quiet)
+                        {
+                            Utils.ShowMessageToast(data["message"].ToString());
+                        }
                     }
                 }
                 else
                 {
-                    Utils.ShowMessageToast(results.message);
-
+                    if (!quiet)
+                    {
+                        Utils.ShowMessageToast(results.message);
+                    }
                 }
             }
             catch (Exception ex)
             {
                 var handel = HandelError<AnimeHomeModel>(ex);
-                Utils.ShowMessageToast(handel.message);
+                if (!quiet)
+                {
+                    Utils.ShowMessageToast(handel.message);
+                }
             }
             finally
             {
@@ -120,7 +131,11 @@ namespace BiliLite.Modules
                 return;
             }
             var last = HotItems.LastOrDefault();
-            await GetPopular(last.idx, last.param);
+            if (last == null)
+            {
+                return;
+            }
+            await GetPopular(last.idx, last.param, true);
         }
     }
     public class HotTopItemModel 
