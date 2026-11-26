@@ -376,7 +376,3 @@ plan/tests/**/captures/
 Thumbs.db
 desktop.ini
 .DS_Store
-
-# 云端执行工作区（临时产物与日志不提交）
-cloud/rounds/*/tmp/
-cloud/**/*.log

@@ -94,10 +94,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\sync-dev.ps1            # 
 powershell -NoProfile -ExecutionPolicy Bypass -File .\watch-remote.ps1 -Fetch # block until remote moves
 ```
 
-Cloud agents follow the applicable serialized grant: ordinary fetch, fast-forward-only integration
-when granted, and nonforce push. Do not invoke `sync-dev.ps1`, rebase, or automatically stash or
-rewrite concurrent work; preserve other owners' work and record any integration blocker.
-
 ## 2. Repo map
 
 | Path | What it is |
